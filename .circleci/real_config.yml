@@ -2054,10 +2054,9 @@ jobs:
             image:
               cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
               cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
-            environment:
-              environment_variables:
-                 # Some ports are not working, disable them so distributed jobs work.
-                 - NCCL_IB_HCA=mlx6_0:0
+            environment_variables:
+              # Some ports are not working, disable them so distributed jobs work.
+              - NCCL_IB_HCA=mlx6_0:0
           checkpoint_storage:
             type: shared_fs
             host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
@@ -3037,10 +3036,9 @@ workflows:
               image:
                 cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
                 cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
-              environment:
-                environment_variables:
-                   # Some ports are not working, disable them so distributed jobs work.
-                   - NCCL_IB_HCA=mlx6_0:0
+              environment_variables:
+                # Some ports are not working, disable them so distributed jobs work.
+                - NCCL_IB_HCA=mlx6_0:0
             checkpoint_storage:
               type: shared_fs
               host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
