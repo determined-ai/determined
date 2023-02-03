@@ -1408,9 +1408,9 @@ const EmptySection: React.FC = () => {
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
+  Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  DataCards: <CardsSection />,
   Dropdowns: <DropdownsSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
