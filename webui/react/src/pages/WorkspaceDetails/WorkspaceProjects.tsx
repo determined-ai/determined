@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
@@ -335,7 +336,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Space size="middle" wrap>
+          <Card.Group>
             {projects.map((project) => (
               <ProjectCard
                 fetchProjects={fetchProjects}
@@ -344,7 +345,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 workspaceArchived={workspace?.archived}
               />
             ))}
-          </Space>
+          </Card.Group>
         );
       case GridListView.List:
         return (

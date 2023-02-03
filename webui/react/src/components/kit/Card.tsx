@@ -1,4 +1,4 @@
-import { Dropdown, MenuProps } from 'antd';
+import { Dropdown, MenuProps, Space } from 'antd';
 import React from 'react';
 
 import Icon from 'shared/components/Icon';
@@ -17,7 +17,7 @@ interface CardProps {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const Card: React.FC<CardProps> = ({
+const Card: Card = ({
   actionMenu,
   children,
   disabled = false,
@@ -52,5 +52,24 @@ const Card: React.FC<CardProps> = ({
     </div>
   );
 };
+
+type Card = React.FC<CardProps> & {
+  Group: React.FC<CardGroupProps>;
+};
+
+interface CardGroupProps {
+  children?: React.ReactNode;
+  wrap?: boolean;
+}
+
+const CardGroup: React.FC<CardGroupProps> = ({ children, wrap = true }: CardGroupProps) => {
+  return (
+    <Space size="middle" wrap={wrap}>
+      {children}
+    </Space>
+  );
+};
+
+Card.Group = CardGroup;
 
 export default Card;

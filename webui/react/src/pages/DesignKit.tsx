@@ -1022,7 +1022,7 @@ const CardsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Card default</strong>
-        <Space size="middle">
+        <Card.Group>
           <div>
             <p>Card with actions</p>
             <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
@@ -1031,7 +1031,7 @@ const CardsSection: React.FC = () => {
             <p>Card without actions</p>
             <Card />
           </div>
-        </Space>
+        </Card.Group>
         <strong>Considerations</strong>
         <ul>
           <li>Ensure links are tab-able.</li>
@@ -1047,7 +1047,7 @@ const CardsSection: React.FC = () => {
           <li>
             Project card (<code>{'<ProjectCard>'}</code>)
           </li>
-          <Space size="middle">
+          <Card.Group>
             <ProjectCard project={project} />
             <ProjectCard project={{ ...project, archived: true }} />
             <ProjectCard
@@ -1056,7 +1056,7 @@ const CardsSection: React.FC = () => {
                 name: 'Project with a very long name that spans many lines and eventually gets cut off at some point',
               }}
             />
-          </Space>
+          </Card.Group>
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>
