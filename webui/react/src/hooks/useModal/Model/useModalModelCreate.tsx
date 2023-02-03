@@ -9,6 +9,7 @@ import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
@@ -70,6 +71,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   //   NotLoaded: () => undefined,
   // });
   // const updateInfo = useUpdateDeterminedInfo(); // TODO: uncomment this before merge!!!
+  const { canViewModelWorkspace } = usePermissions();
   const loadableWorkspaces = useWorkspaces();
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws,
@@ -229,7 +231,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               <Dropdown
                 arrow
                 className={css.workspacDropdown}
-                disabled={!workspaces.length}
+                disabled={!workspaces.length || !canViewModelWorkspace}
                 dropdownRender={(menu) =>
                   React.cloneElement(menu as React.ReactElement, {
                     style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
