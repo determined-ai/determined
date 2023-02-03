@@ -143,3 +143,13 @@ def test_master_host() -> None:
         + "resolution problem, a certificate problem, a firewall problem, or some other\n"
         + "networking error.",
     )
+
+
+@pytest.mark.e2e_slurm
+def test_cifar10_pytorch_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
+    config["searcher"]["max_length"] = {"epochs": 1}
+    config["records_per_epoch"] = 5000
+    config["max_restarts"] = 0
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_pytorch"), 1)
