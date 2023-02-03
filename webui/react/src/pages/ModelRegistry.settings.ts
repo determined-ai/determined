@@ -13,11 +13,13 @@ export type ModelColumnName =
   | 'name'
   | 'tags'
   | 'numVersions'
-  | 'user';
+  | 'user'
+  | 'workspace';
 
 export const DEFAULT_COLUMNS: ModelColumnName[] = [
   'name',
   'description',
+  'workspace',
   'numVersions',
   'lastUpdatedTime',
   'tags',
@@ -34,9 +36,11 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelColumnName, number> = {
   numVersions: 74,
   tags: 106,
   user: 85,
+  workspace: 130,
 };
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelsRequestSortBy => {
-  return Object.values(V1GetModelsRequestSortBy).includes(String(sortKey));
+  const sortKeys = [...Object.values(V1GetModelsRequestSortBy), 'workspace'];
+  return sortKeys.includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
@@ -47,6 +51,7 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelsRequestSortBy;
   tags?: string[];
   users?: string[];
+  workspace?: string[];
 }
 
 const config = (id: string): SettingsConfig<Settings> => {
@@ -73,6 +78,7 @@ const config = (id: string): SettingsConfig<Settings> => {
             literal('tags'),
             literal('numVersions'),
             literal('user'),
+            literal('workspace'),
           ]),
         ),
       },
@@ -127,6 +133,11 @@ const config = (id: string): SettingsConfig<Settings> => {
       users: {
         defaultValue: undefined,
         storageKey: 'users',
+        type: union([undefinedType, array(string)]),
+      },
+      workspace: {
+        defaultValue: [],
+        storageKey: 'workspace',
         type: union([undefinedType, array(string)]),
       },
     },

@@ -1,0 +1,10 @@
+.item {
+  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+
+  .name {
+    margin-left: 5px;
+  }
+}
