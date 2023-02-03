@@ -113,9 +113,10 @@ def test_upload_thread_normal_case() -> None:
 
 
 def test_upload_thread_exception_case() -> None:
-    # 1. Set up custom hook to capture threads fail
+    # 1. Define custom hook to capture threads fail
     #    with exception. This hook is triggered when
     #    a thread exits with exception.
+    #    Also store orignal excepthook for reset later.
     import threading
 
     threads_with_exception = set()
@@ -125,7 +126,6 @@ def test_upload_thread_exception_case() -> None:
         threads_with_exception.add(thread_name)
 
     original_excepthook = threading.excepthook
-    threading.excepthook = custom_excepthook
 
     # 2. Define function that throws exception
     def upload_function(paths: List[pathlib.Path]) -> None:
@@ -134,8 +134,11 @@ def test_upload_thread_exception_case() -> None:
     # 3. Set up a _TensorboardUploadThread instance
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
 
-    # 4. start, run, and join the _TensorboardUploadThread instance
     try:
+        # 4. overwrite excepthook
+        threading.excepthook = custom_excepthook
+
+        # 5. start, run, and join the _TensorboardUploadThread instance
         upload_thread.start()
         thread_ident = upload_thread.ident
         upload_thread.upload(
@@ -145,6 +148,7 @@ def test_upload_thread_exception_case() -> None:
         upload_thread.close()
         upload_thread.join()
     finally:
+        # 6. Reset excepthook
         threading.excepthook = original_excepthook
 
     # 5. Check that _TensorboardUploadThread instance did not
