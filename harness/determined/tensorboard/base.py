@@ -26,7 +26,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self,
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
-        async_upload: bool = False,
+        async_upload: bool = True,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
