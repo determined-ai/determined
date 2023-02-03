@@ -1,5 +1,5 @@
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, ModalFuncProps } from 'antd';
+import { Button, Dropdown, MenuProps, ModalFuncProps, Tooltip } from 'antd';
 import { SelectInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -23,7 +23,6 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalModelCreate.module.scss';
-// import { useDeterminedInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 
 const FORM_ID = 'create-model-form';
 
@@ -66,11 +65,6 @@ const DEFAULT_MODAL_STATE = {
 };
 
 const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
-  // const loadableInfo = Loadable.match(useDeterminedInfo(), { // TODO: uncomment this before merge!!!
-  //   Loaded: (info) => info,
-  //   NotLoaded: () => undefined,
-  // });
-  // const updateInfo = useUpdateDeterminedInfo(); // TODO: uncomment this before merge!!!
   const { canViewModelWorkspace } = usePermissions();
   const loadableWorkspaces = useWorkspaces();
   const workspaces = Loadable.match(loadableWorkspaces, {
@@ -228,34 +222,38 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               name="workspace"
               required
               rules={[{ message: 'Please select a workspace!', required: true }]}>
-              <Dropdown
-                arrow
-                className={css.workspacDropdown}
-                disabled={!workspaces.length || !canViewModelWorkspace}
-                dropdownRender={(menu) =>
-                  React.cloneElement(menu as React.ReactElement, {
-                    style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
-                  })
-                }
-                getPopupContainer={(triggerNode) => triggerNode}
-                menu={{
-                  items: workspaceItems,
-                  onSelect,
-                  selectable: true,
-                }}
-                trigger={['click']}>
-                <Button>
-                  <span
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      minWidth: '175px',
-                    }}>
-                    {selectedWorkspace ? selectedWorkspace : 'Select a workspace'}
-                    <DownOutlined style={{ marginLeft: '10px' }} />
-                  </span>
-                </Button>
-              </Dropdown>
+              <Tooltip
+                placement="top"
+                title={canViewModelWorkspace ? 'Insuficient permissions!' : ''}>
+                <Dropdown
+                  arrow
+                  className={css.workspacDropdown}
+                  disabled={!workspaces.length || !canViewModelWorkspace}
+                  dropdownRender={(menu) =>
+                    React.cloneElement(menu as React.ReactElement, {
+                      style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
+                    })
+                  }
+                  getPopupContainer={(triggerNode) => triggerNode}
+                  menu={{
+                    items: workspaceItems,
+                    onSelect,
+                    selectable: true,
+                  }}
+                  trigger={['click']}>
+                  <Button>
+                    <span
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        minWidth: '175px',
+                      }}>
+                      {selectedWorkspace || 'Select a workspace'}
+                      <DownOutlined style={{ marginLeft: '10px' }} />
+                    </span>
+                  </Button>
+                </Dropdown>
+              </Tooltip>
             </Form.Item>
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />
