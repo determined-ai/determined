@@ -200,36 +200,20 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 
 /* Model Table Column Renderers */
 
-export const modelNameRenderer = (
-  value: string,
-  record: ModelItem,
-  workspaceId?: number,
-): React.ReactNode => {
-  const path = workspaceId
-    ? paths.modelDetailsInWorkspace(record.id, workspaceId)
-    : paths.modelDetails(String(record.id));
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
+  <Space className={css.wordBreak}>
+    <div style={{ paddingInline: 4 }}>
+      <Icon name="model" size="medium" />
+    </div>
+    <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
+  </Space>
+);
 
-  return (
-    <Space className={css.wordBreak}>
-      <div style={{ paddingInline: 4 }}>
-        <Icon name="model" size="medium" />
-      </div>
-      <Link path={path}>{value}</Link>
-    </Space>
-  );
-};
-
-export const modelVersionNameRenderer = (
-  value: string,
-  record: ModelVersion,
-  workspaceId?: number,
-): React.ReactNode => {
-  const path = workspaceId
-    ? paths.modelVersionDetailsInWorkspace(record.model.id, record.version, workspaceId)
-    : paths.modelVersionDetails(String(record.model.id), record.version);
-
-  return <Link path={path}>{value ? value : `Version ${record.version}`}</Link>;
-};
+export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
+  <Link path={paths.modelVersionDetails(String(record.model.id), record.version)}>
+    {value ? value : 'Version ' + record.version}
+  </Link>
+);
 
 export const modelVersionNumberRenderer = (
   value: string,

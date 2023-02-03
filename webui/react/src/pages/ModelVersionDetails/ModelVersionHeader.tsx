@@ -40,7 +40,7 @@ interface Props {
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
-  workspace?: Workspace;
+  workspace: Workspace;
 }
 
 const ModelVersionHeader: React.FC<Props> = ({
@@ -196,28 +196,22 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
               <LeftOutlined style={{ marginRight: 10 }} />
             </Link>
           </Breadcrumb.Item>
-          {workspace && (
-            <>
-              <Breadcrumb.Item>
-                <Link
-                  path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
-                  {workspace.name}
-                </Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Separator />
-            </>
-          )}
+          <Breadcrumb.Item>
+            <Link
+              path={paths.workspaceDetails(
+                modelVersion.model.workspaceId,
+                WorkspaceDetailsTab.ModelRegistry,
+              )}>
+              {workspace.name}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Separator />
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link
-              path={
-                workspace
-                  ? paths.modelDetailsInWorkspace(modelVersion.model.id, workspace.id)
-                  : paths.modelDetails(String(modelVersion.model.id))
-              }>
+            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
               {modelVersion.model.name} ({modelVersion.model.id})
             </Link>
           </Breadcrumb.Item>

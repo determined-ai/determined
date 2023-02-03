@@ -7,7 +7,6 @@ import {
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
@@ -62,10 +61,6 @@ import settingsConfig, {
 
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
-type Params = {
-  workspaceId?: string;
-};
-
 interface Props {
   workspace?: Workspace;
 }
@@ -86,8 +81,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { workspaceId: workspaceIdParam } = useParams<Params>();
-  const workspaceId = isNaN(Number(workspaceIdParam)) ? undefined : Number(workspaceIdParam);
   const { canViewModelRegistry } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -420,7 +413,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
         onCell: onRightClickableCell,
-        render: (value: string, record: ModelItem) => modelNameRenderer(value, record, workspaceId),
+        render: modelNameRenderer,
         sorter: true,
         title: 'Name',
       },

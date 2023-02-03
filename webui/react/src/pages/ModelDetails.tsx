@@ -28,7 +28,6 @@ import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
-  getWorkspace,
   patchModel,
   patchModelVersion,
   unarchiveModel,
@@ -41,7 +40,8 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { useUsers } from 'stores/users';
-import { Metadata, ModelVersion, ModelVersions, Workspace } from 'types';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -56,23 +56,24 @@ import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdow
 
 type Params = {
   modelId: string;
-  workspaceId?: string;
 };
 
 const ModelDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
-  const [workspace, setWorkspace] = useState<Workspace | undefined>(undefined);
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { workspaceId: workspaceIdParam } = useParams<Params>();
-  const workspaceId = isNaN(Number(workspaceIdParam)) ? undefined : Number(workspaceIdParam);
   const users = Loadable.match(useUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const workspaces = Loadable.getOrElse([], useWorkspaces());
+  const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
+
   const { canModifyModelVersion } = usePermissions();
 
   const {
@@ -101,16 +102,6 @@ const ModelDetails: React.FC = () => {
     }
   }, [modelId, pageError, settings]);
 
-  const fetchWorkspace = useCallback(async () => {
-    if (!workspaceId) return;
-    try {
-      const response = await getWorkspace({ id: workspaceId });
-      setWorkspace(response);
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch workspace.' });
-    }
-  }, [workspaceId]);
-
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
     useModalModelDownload();
 
@@ -122,7 +113,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    fetchWorkspace();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -240,8 +231,7 @@ const ModelDetails: React.FC = () => {
       {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
-        render: (value: string, record: ModelVersion) =>
-          modelVersionNameRenderer(value, record, workspaceId),
+        render: modelVersionNameRenderer,
         title: 'Name',
       },
       {
@@ -284,7 +274,6 @@ const ModelDetails: React.FC = () => {
     saveVersionDescription,
     users,
     canModifyModelVersion,
-    workspaceId,
   ]);
 
   const handleTableChange = useCallback(
@@ -457,7 +446,7 @@ const ModelDetails: React.FC = () => {
     if (isNotFound(pageError)) return <PageNotFound />;
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model) {
+  } else if (!model || !workspace) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 

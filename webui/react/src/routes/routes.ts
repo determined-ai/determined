@@ -10,24 +10,6 @@ const routes: RouteConfig[] = [
     title: 'Interactive Task',
   },
   {
-    id: 'modelVersionDetails',
-    needAuth: true,
-    path: '/workspaces/:workspaceId/models/:modelId/versions/:versionNum/:tab',
-    title: 'Version Details',
-  },
-  {
-    id: 'modelVersionDetails',
-    needAuth: true,
-    path: '/workspaces/:workspaceId/models/:modelId/versions/:versionNum',
-    title: 'Version Details',
-  },
-  {
-    id: 'modelDetails',
-    needAuth: true,
-    path: '/workspaces/:workspaceId/models/:modelId',
-    title: 'Model Details',
-  },
-  {
     id: 'workspaceDetails',
     needAuth: true,
     path: '/workspaces/:workspaceId/:tab',

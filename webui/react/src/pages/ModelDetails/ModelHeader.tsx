@@ -31,7 +31,7 @@ interface Props {
   onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
-  workspace?: Workspace;
+  workspace: Workspace;
 }
 
 const ModelHeader: React.FC<Props> = ({
@@ -129,17 +129,12 @@ const ModelHeader: React.FC<Props> = ({
               <LeftOutlined className={css.leftIcon} />
             </Link>
           </Breadcrumb.Item>
-          {workspace && (
-            <>
-              <Breadcrumb.Item>
-                <Link
-                  path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
-                  {workspace.name}
-                </Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Separator />
-            </>
-          )}
+          <Breadcrumb.Item>
+            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+              {workspace.name}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Separator />
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
