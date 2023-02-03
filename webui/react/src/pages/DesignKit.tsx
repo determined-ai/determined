@@ -1053,7 +1053,7 @@ const CardsSection: React.FC = () => {
             <ProjectCard
               project={{
                 ...project,
-                name: 'Project with a very long name that spans many lines and eventually gets cut off at some point',
+                name: 'Project with a very long name that spans many lines and eventually gets cut off at some point when there is a lot of text',
               }}
             />
           </Card.Group>

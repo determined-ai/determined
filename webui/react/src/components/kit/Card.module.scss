@@ -2,7 +2,6 @@
   --transition-duration: 0.25s;
   --transition-delay: 0.05s;
   background-color: var(--theme-surface);
-  border: solid var(--theme-stroke-width-strong) transparent;
   border-radius: var(--theme-border-radius-weak);
   box-shadow: 0 1.6px 3.6px 1.6px rgba(0, 0, 0, 0.13);
   color: var(--theme-surface-on);
@@ -40,7 +39,7 @@
     }
   }
   &:focus {
-    border-color: var(--theme-ix-border-active);
+    outline: var(--theme-stroke-width-strong) solid var(--theme-ix-border-active);
   }
 }
 .group {

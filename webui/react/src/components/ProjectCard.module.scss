@@ -4,20 +4,23 @@
   gap: 8px;
   height: 100%;
   justify-content: space-between;
+  margin-bottom: 8px;
   margin-inline: 8px;
 
+  .name {
+    font-size: 13px;
+    line-height: 20px;
+  }
   .footer {
     display: flex;
-    font-size: 11px;
+    font-size: 12px;
     justify-content: space-between;
 
     .experiments {
-      align-items: flex-end;
       align-self: end;
-      display: flex;
-      gap: 4px;
 
       & > span {
+        align-items: center;
         display: flex;
         gap: 4px;
       }
