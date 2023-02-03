@@ -122,7 +122,7 @@ args_description = Cmd(
                     "--agents",
                     type=int,
                     default=1,
-                    help="number of agents to start (on this machine)",
+                    help=argparse.SUPPRESS,
                 ),
                 Arg(
                     "--master-port",
