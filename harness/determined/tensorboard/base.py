@@ -26,7 +26,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self,
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
-        async_upload: bool = True,
+        async_upload: bool = False,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
@@ -34,7 +34,8 @@ class TensorboardManager(metaclass=abc.ABCMeta):
 
         self.upload_thread = None
         if async_upload:
-            self.upload_thread = _TensorboardUploadThread(self._sync_impl())
+            print("SWY initialize upload thread")
+            self.upload_thread = _TensorboardUploadThread(self._sync_impl)
             self.upload_thread.start()
 
     def list_tb_files(
@@ -91,8 +92,10 @@ class TensorboardManager(metaclass=abc.ABCMeta):
     ) -> None:
         paths = self.to_sync(selector)
         if self.upload_thread is not None and self.upload_thread.is_alive():
+            print(f"SWY Putting paths {paths} in upload_thread")
             self.upload_thread.upload(_UploadTask(paths=paths, mangler=mangler, rank=rank))
         else:
+            print(f"SWY Sync upload paths {paths} in main thread")
             self._sync_impl(paths, mangler, rank)
 
     @abc.abstractmethod
@@ -156,6 +159,7 @@ class _TensorboardUploadThread(threading.Thread):
             # Try-catch is used to avoid exception from
             # one failed sync attempt to cause the thread to exit.
             try:
+                print("SWY calling self._upload_function")
                 self._upload_function(task.paths, task.mangler, task.rank)
             except Exception as e:
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
