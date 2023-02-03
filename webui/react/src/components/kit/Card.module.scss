@@ -2,9 +2,9 @@
   --transition-duration: 0.25s;
   --transition-delay: 0.05s;
   background-color: var(--theme-surface);
-  border: solid var(--theme-stroke-width-strong) var(--theme-ix-border);
+  border: solid var(--theme-stroke-width-strong) transparent;
   border-radius: var(--theme-border-radius-weak);
-  box-shadow: var(--theme-elevation-weak);
+  box-shadow: 0 1.6px 3.6px 1.6px rgba(0, 0, 0, 0.13);
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
@@ -42,4 +42,8 @@
   &:focus {
     border-color: var(--theme-ix-border-active);
   }
+}
+.group {
+  // This padding stops the box-shadows from being cut off.
+  padding: 3px;
 }

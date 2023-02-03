@@ -64,7 +64,7 @@ interface CardGroupProps {
 
 const CardGroup: React.FC<CardGroupProps> = ({ children, wrap = true }: CardGroupProps) => {
   return (
-    <Space size="middle" wrap={wrap}>
+    <Space className={css.group} size="middle" wrap={wrap}>
       {children}
     </Space>
   );
