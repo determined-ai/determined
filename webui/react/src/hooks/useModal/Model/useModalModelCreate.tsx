@@ -47,6 +47,7 @@ interface ModalState {
   modelDescription: string;
   modelName: string;
   tags: string[];
+  workspace: string;
   visible: boolean;
 }
 
@@ -61,7 +62,7 @@ const DEFAULT_MODAL_STATE = {
   modelName: '',
   tags: [],
   visible: false,
-  workspace: '',
+  workspace: '1',
 };
 
 const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
@@ -71,12 +72,10 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     Loaded: (ws) => ws,
     NotLoaded: () => [],
   });
-  const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
   const [form] = Form.useForm<FormInputs>();
-  const modelName = Form.useWatch(['modelName', 'workspace'], form);
-
+  const modelName = Form.useWatch('modelName', form);
   const handleOnClose = useCallback(
     (reason?: ModalCloseReason) => {
       onClose?.(reason, modalState.checkpoints, modalState.modelName || undefined);
@@ -174,15 +173,16 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
 
   const onSelect = useCallback(
     (info: SelectInfo) => {
-      const ws = workspaces.find(({ id }) => String(id) === info.key);
-
-      if (ws) {
-        setModalState((prev) => ({ ...prev, workspace: info.key }));
-        setSelectedWorkspace(ws.name);
-      }
+      setModalState((prev) => ({ ...prev, workspace: info.key }));
     },
-    [workspaces],
+    [],
   );
+
+  const workspaceName = useMemo(() => {
+    const name = workspaces.find((ws) => String(ws.id) === modalState.workspace)?.name || '';
+
+    return name;
+  }, [workspaces, modalState.workspace]);
 
   const workspaceItems: MenuProps['items'] = useMemo(
     () =>
@@ -214,17 +214,13 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               label="Model name"
               name="modelName"
               required
-              rules={[{ message: 'Model name is required ', required: true }]}>
+              requiredMessage="Model name is required ">
               <Input onChange={handleNameChange} />
             </Form.Item>
-            <Form.Item
-              label="Workspaces"
-              name="workspace"
-              required
-              rules={[{ message: 'Please select a workspace!', required: true }]}>
-              <Tooltip
-                placement="top"
-                title={canViewModelWorkspace ? 'Insuficient permissions!' : ''}>
+            <Tooltip
+              placement="bottom"
+              title={!canViewModelWorkspace ? 'Insuficient permissions!' : ''}>
+              <Form.Item label="Workspaces" name="workspace">
                 <Dropdown
                   arrow
                   className={css.workspacDropdown}
@@ -236,6 +232,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                   }
                   getPopupContainer={(triggerNode) => triggerNode}
                   menu={{
+                    defaultSelectedKeys: ['1'],
                     items: workspaceItems,
                     onSelect,
                     selectable: true,
@@ -248,13 +245,13 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                         justifyContent: 'space-between',
                         minWidth: '175px',
                       }}>
-                      {selectedWorkspace || 'Select a workspace'}
+                      {workspaceName}
                       <DownOutlined style={{ marginLeft: '10px' }} />
                     </span>
                   </Button>
                 </Dropdown>
-              </Tooltip>
-            </Form.Item>
+              </Form.Item>
+            </Tooltip>
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />
             </Form.Item>
@@ -290,9 +287,9 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     [
       form,
       canViewModelWorkspace,
-      selectedWorkspace,
       workspaceItems,
       workspaces,
+      modalState.workspace,
       onSelect,
       handleDescriptionChange,
       handleMetadataChange,
@@ -311,7 +308,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         icon: null,
         maskClosable: true,
         okButtonProps: {
-          disabled: !modelName || !selectedWorkspace,
+          disabled: !modelName,
           form: FORM_ID,
           htmlType: 'submit',
         },
@@ -320,7 +317,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         title: 'Create Model',
       };
     },
-    [getModalContent, handleOk, modelName, selectedWorkspace],
+    [getModalContent, handleOk, modelName],
   );
 
   /**
