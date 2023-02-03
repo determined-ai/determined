@@ -151,6 +151,6 @@ def test_upload_thread_exception_case() -> None:
         # 6. Reset excepthook
         threading.excepthook = original_excepthook
 
-    # 5. Check that _TensorboardUploadThread instance did not
+    # 7. Check that _TensorboardUploadThread instance did not
     #    throw exception
     assert thread_ident not in threads_with_exception
