@@ -125,7 +125,9 @@ func (a *apiServer) GetModels(
 		query = query.Where("m.user_id IN (?)", bun.In(req.UserIds))
 	}
 	if len(req.Labels) > 0 {
-		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(m.labels))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
+		query = query.Where(
+			`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(m.labels))`,
+			strings.Join(req.Labels, ","))
 	}
 	if req.Name != "" {
 		query = query.Where("m.name ILIKE ('%%' || ? || '%%')", req.Name)
@@ -237,7 +239,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	}
 
 	getResp := &apiv1.GetModelsResponse{}
-	db.Bun().NewSelect().
+	_ = db.Bun().NewSelect().
 		Model(&getResp.Models).
 		ModelTableExpr("models as m").
 		Column("m.id").

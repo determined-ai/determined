@@ -5,8 +5,9 @@ package mocks
 import (
 	context "context"
 
-	mock "github.com/stretchr/testify/mock"
 	bun "github.com/uptrace/bun"
+
+	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
 
@@ -89,7 +90,7 @@ func (_m *ModelAuthZ) CanGetModels(ctx context.Context, curUser model.User, work
 }
 
 // FilterEditableModelsQuery provides a mock function with given fields: ctx, curUser, query
-func (_m *ExperimentAuthZ) FilterEditableModelsQuery(ctx context.Context, curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error) {
+func (_m *ModelAuthZ) FilterEditableModelsQuery(ctx context.Context, curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error) {
 	ret := _m.Called(ctx, curUser, query)
 
 	var r0 *bun.SelectQuery
