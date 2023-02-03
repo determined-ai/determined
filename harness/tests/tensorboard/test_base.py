@@ -98,11 +98,14 @@ def test_upload_thread_normal_case() -> None:
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
 
     upload_thread.start()
-    upload_thread.upload(
-        [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
+    task = tensorboard.base._UploadTask(
+        paths=[pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")],
+        mangler=lambda p, __: p,
+        rank=0,
     )
-    upload_thread.upload([pathlib.Path("test_value/file3.json")])
-    # Call close to exit thread
+    upload_thread.upload(task)
+    upload_thread.upload(task)
+
     upload_thread.close()
     upload_thread.join()
 

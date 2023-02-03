@@ -4,6 +4,7 @@ import pathlib
 import queue
 import threading
 import time
+from dataclasses import dataclass
 from typing import Callable, List
 
 from determined import tensorboard
@@ -108,9 +109,20 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
     return tensorboard.BatchMetricWriter(writer)
 
 
+@dataclass
+class _UploadTask:
+    paths: List[pathlib.Path]
+    mangler: Callable[[pathlib.Path, int], pathlib.Path]
+    rank: int
+
+
 class _TensorboardUploadThread(threading.Thread):
     def __init__(
-        self, upload_function: Callable[[List[pathlib.Path]], None], work_queue_max_size: int = 50
+        self,
+        upload_function: Callable[
+            [List[pathlib.Path], Callable[[pathlib.Path, int], pathlib.Path], int], None
+        ],
+        work_queue_max_size: int = 50,
     ) -> None:
         self._upload_function = upload_function
 
@@ -120,22 +132,24 @@ class _TensorboardUploadThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            file_paths = self._work_queue.get()
+            task = self._work_queue.get()
 
             # None is the sentinel value
             # to signal the thread to exit
-            if file_paths is None:
+            if task is None:
                 return
 
             # Try-catch is used to avoid exception from
             # one failed sync attempt to cause the thread to exit.
             try:
-                self._upload_function(file_paths)
+                print("try call function")
+                self._upload_function(task.paths, task.mangler, task.rank)
             except Exception as e:
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
 
-    def upload(self, paths: List[pathlib.Path]) -> None:
-        self._work_queue.put(paths)
+    def upload(self, task: _UploadTask) -> None:
+        print("uploaded")
+        self._work_queue.put(task)
 
     def close(self) -> None:
         self._work_queue.put(None)
