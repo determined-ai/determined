@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"gopkg.in/inf.v0"
-
 	k8sV1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -41,6 +40,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
+// ResourceTypeNvidia describes the GPU resource type.
 const ResourceTypeNvidia = "nvidia.com/gpu"
 
 type podMetadata struct {
@@ -933,13 +933,11 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	// Look up quotas for our resource pools' namespaces
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
-		if k8serrors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
+			// TODO: figure out how we want to handle multiple quotas per namespace?
 			continue
 		} else if err != nil {
 			return nil, err
-		} else if quotaList == nil || len(quotaList.Items) != 1 {
-			// TOOD: figure out how we want to handle multiple quotas per namespace?
-			continue
 		}
 
 		namespaceToQuota[namespace] = quotaList.Items[0]
@@ -1191,7 +1189,7 @@ func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
 func (p *pods) containersPerResourcePool() map[string]int {
 	counts := make(map[string]int, len(p.namespaceToPoolName))
 	for _, pool := range p.podNameToResourcePool {
-		counts[pool] = counts[pool] + 1
+		counts[pool]++
 	}
 	return counts
 }
