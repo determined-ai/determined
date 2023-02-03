@@ -105,7 +105,7 @@ class _TensorboardUploadThread(threading.Thread):
     ) -> None:
         self._upload_function = upload_function
 
-        self._work_queue = queue.Queue(maxsize=work_queue_max_size)
+        self._work_queue: queue.Queue = queue.Queue(maxsize=work_queue_max_size)
 
         super().__init__()
 

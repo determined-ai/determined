@@ -1,9 +1,10 @@
 import pathlib
+from unittest import mock
+
 import pytest
 
 from determined import tensorboard
 from tests.tensorboard import test_util
-from unittest import mock
 
 HOST_PATH = pathlib.Path(__file__).resolve().parent.joinpath("test_tensorboard_host")
 STORAGE_PATH = HOST_PATH.joinpath("test_storage_path")
