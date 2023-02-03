@@ -1,11 +1,13 @@
 import json
 import logging
 import os
+import queue
 import subprocess
 import sys
 import tempfile
+import threading
 import time
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import boto3
 import requests
@@ -17,10 +19,12 @@ from determined.tensorboard import fetchers
 
 TENSORBOARD_TRIGGER_READY_MSG = "TensorBoard contains metrics"
 TRIGGER_WAITING_MSG = "TensorBoard waits on metrics"
-TICK_INTERVAL = 1
-MAX_WAIT_TIME = 600
-TB_RESPONSE_WAIT_TIME = 300
 
+TICK_INTERVAL = 1  # How many seconds to wait on each iteration of our check loop
+MAX_WAIT_TIME = 600  # How many seconds to wait for the first metric file to download
+TB_RESPONSE_WAIT_TIME = 300  # How many seconds to wait for TensorBoard to initially start up
+WORK_QUEUE_MAX_SIZE = 20  # Size of the threading work queue for fetching
+FULL_ITERATION_SLEEP_TIME = 20  # How long to wait between a full iteration run (in seconds)
 
 logger = logging.getLogger("determined.exec.tensorboard")
 
@@ -124,6 +128,17 @@ def start_tensorboard(
         logger.debug(f"tensorboard args: {tb_args}")
         tensorboard_process = subprocess.Popen(tb_args)
         tb_fetch_manager = TBFetchManager()
+        work_queue: queue.Queue = queue.Queue(maxsize=WORK_QUEUE_MAX_SIZE)
+
+        iteration_thread = TBFetchIterationThread(
+            fetcher=fetcher, work_queue=work_queue, daemon=True
+        )
+        fetch_thread = TBFetchThread(
+            fetcher=fetcher,
+            work_queue=work_queue,
+            new_file_callback=tb_fetch_manager.on_file_fetched,
+            daemon=True,
+        )
 
         with det.util.forward_signals(tensorboard_process):
             try:
@@ -142,17 +157,19 @@ def start_tensorboard(
 
                 # Continuously loop checking for new files
                 stop_time = time.time() + MAX_WAIT_TIME
+                iteration_thread.start()
+                fetch_thread.start()
                 while True:
                     raise_if_dead(tensorboard_process)
 
                     # Check if we have reached a timeout without downloading any files
-                    if tb_fetch_manager.num_fetched_files == 0 and time.time() > stop_time:
+                    if tb_fetch_manager.get_num_fetched_files() == 0 and time.time() > stop_time:
                         raise RuntimeError("No new files were fetched before the timeout.")
 
                     time.sleep(TICK_INTERVAL)
                     # TODO: Note that this call is blocking and serial. We won't check
                     # the stop time until this completely finishes
-                    fetcher.fetch_new(new_file_callback=tb_fetch_manager.on_file_fetched)
+                    # fetcher.fetch_all_serial(new_file_callback=tb_fetch_manager.on_file_fetched)
 
             finally:
                 if tensorboard_process.poll() is None:
@@ -161,17 +178,71 @@ def start_tensorboard(
 
 
 class TBFetchManager:
-    def __init__(self) -> None:
-        self._ready = False
-        self.num_fetched_files = 0
+    """Simple Container Class to manage the state of the TensorBoard remote fetchers"""
 
-    # TODO: If we support multi-threaded fetching in the future, this will
-    # need a lock
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._ready = False
+        self._num_fetched_files = 0
+
     def on_file_fetched(self) -> None:
-        if not self._ready:
-            self._ready = True
-            print(TENSORBOARD_TRIGGER_READY_MSG, flush=True)
-        self.num_fetched_files += 1
+        with self._lock:
+            if not self._ready:
+                self._ready = True
+                print(TENSORBOARD_TRIGGER_READY_MSG, flush=True)
+            self._num_fetched_files += 1
+
+    def get_num_fetched_files(self) -> int:
+        with self._lock:
+            return self._num_fetched_files
+
+
+class TBFetchIterationThread(threading.Thread):
+    """Thread to continuously iterate over the fetchers files and add them to a threading.Queue
+
+    Note: We are making the assumption that there will only be one of these running per process.
+    If we add more, then the base fetcher will need to support locking around the _file_records
+    dictionary. Defined in <ROOT>/harness/determined/tensorboard/fetchers/base.py
+    """
+
+    def __init__(
+        self,
+        fetcher: fetchers.Fetcher,
+        work_queue: queue.Queue,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        self._fetcher = fetcher
+        self._work_queue = work_queue
+        super().__init__(*args, **kwargs)
+
+    def run(self) -> None:
+        while True:
+            for filepath in self._fetcher.list_all_generator():
+                self._work_queue.put(filepath, block=True)
+            time.sleep(FULL_ITERATION_SLEEP_TIME)
+
+
+class TBFetchThread(threading.Thread):
+    """Thread to continuously read from the queue and fetch the files"""
+
+    def __init__(
+        self,
+        fetcher: fetchers.Fetcher,
+        work_queue: queue.Queue,
+        new_file_callback: Callable,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        self._fetcher = fetcher
+        self._work_queue = work_queue
+        self._new_file_callback = new_file_callback
+        super().__init__(*args, **kwargs)
+
+    def run(self) -> None:
+        while True:
+            filepath = self._work_queue.get(block=True)
+            self._fetcher._fetch(filepath, self._new_file_callback)
 
 
 if __name__ == "__main__":
@@ -184,7 +255,8 @@ if __name__ == "__main__":
     with open(storage_config_path) as config_file:
         storage_config = json.load(config_file)
 
-    determined.common.set_logger(determined.common.util.debug_mode())
+    # determined.common.set_logger(determined.common.util.debug_mode())
+    determined.common.set_logger(True)
     logger.debug(
         f"Tensorboard (v{tb_version}) Initializing...\n"
         f"\tstorage_config_path: {storage_config_path}\n"

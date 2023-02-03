@@ -264,7 +264,7 @@ def run_tensorboard_fetcher_test(
         num_retries = 5
         for retry_num in range(num_retries + 1):
             try:
-                fetcher.fetch_new()
+                fetcher.fetch_all_serial()
                 verify_files(expected_files)
                 break
             except AssertionError as e:
@@ -278,7 +278,7 @@ def run_tensorboard_fetcher_test(
 
     try:
         # (Empty Sync) Ensure empty sync is ok
-        fetcher.fetch_new()
+        fetcher.fetch_all_serial()
         local_file_list = list_files(local_sync_dir)
         assert len(local_file_list) == 0
 
