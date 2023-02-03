@@ -291,6 +291,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     },
     [
       form,
+      canViewModelWorkspace,
       selectedWorkspace,
       workspaceItems,
       workspaces,
