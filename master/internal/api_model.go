@@ -5,11 +5,11 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -90,52 +90,58 @@ func (a *apiServer) GetModels(
 	ctx context.Context, req *apiv1.GetModelsRequest,
 ) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
-	idFilterExpr := req.Id
-	nameFilter := "%" + req.Name + "%"
-	descFilterExpr := "%" + req.Description + "%"
-	archFilterExpr := ""
-	workspaceIDFilterExpr := 0
+
+	query := db.Bun().NewSelect().
+		Model(&resp.Models).
+		ModelTableExpr("models as m").
+		Column("m.id").
+		Column("m.name").
+		Column("m.description").
+		Column("m.notes").
+		Column("m.metadata").
+		Column("m.user_id").
+		Column("m.workspace_id").
+		Column("m.archived").
+		ColumnExpr("array_to_json(m.labels) AS labels").
+		ColumnExpr("proto_time(m.last_updated_time) AS last_updated_time").
+		ColumnExpr("proto_time(m.creation_time) AS creation_time").
+		Column("u.username").
+		ColumnExpr("COUNT(mv.version) as num_versions").
+		Join("LEFT JOIN model_versions as mv ON mv.model_id = m.id").
+		Join("LEFT JOIN users as u ON u.id = m.user_id").
+		GroupExpr("m.id").
+		GroupExpr("u.id")
+
+	if req.Id != 0 {
+		query = query.Where("m.id = ?", req.Id)
+	}
 	if req.Archived != nil {
-		archFilterExpr = strconv.FormatBool(req.Archived.Value)
+		query = query.Where("m.archived = ?", req.Archived.Value)
 	}
-	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0, len(req.UserIds))
-	for _, userID := range req.UserIds {
-		userIds = append(userIds, strconv.Itoa(int(userID)))
+	if len(req.Users) > 0 {
+		query = query.Where("u.username IN (?)", bun.In(req.Users))
 	}
-	userIDFilterExpr := strings.Join(userIds, ",")
-	labelFilterExpr := strings.Join(req.Labels, ",")
-	// Construct the ordering expression.
-	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
-		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetModelsRequest_SORT_BY_NAME:              "name",
-		apiv1.GetModelsRequest_SORT_BY_DESCRIPTION:       "description",
-		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
-		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
-		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+	if len(req.UserIds) > 0 {
+		query = query.Where("m.user_id IN (?)", bun.In(req.UserIds))
 	}
-	orderByMap := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	if len(req.Labels) > 0 {
+		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(m.labels))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
 	}
-	orderExpr := ""
-	switch _, ok := sortColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case sortColMap[req.SortBy] != "id":
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
+	if req.Name != "" {
+		query = query.Where("m.name ILIKE ('%%' || ? || '%%')", req.Name)
+	}
+	if req.Description != "" {
+		query = query.Where("m.description ILIKE ('%%' || ? || '%%')", req.Description)
 	}
 
+	// get current user (needed for permissions)
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// filter on workspace name or ID
+	workspaceIDFilterExpr := 0
 	if req.WorkspaceId != nil { // default is to use workspace ID
 		workspaceIDFilterExpr = int(*req.WorkspaceId)
 	} else if req.WorkspaceName != nil {
@@ -156,24 +162,51 @@ func (a *apiServer) GetModels(
 				"current user %q doesn't have view permissions in the given workspace with id: %v.",
 				curUser.Username, workspaceIDFilterExpr)
 		}
+		query = query.Where("m.workspace_id = ?", workspaceIDFilterExpr)
 	}
-	err = a.m.db.QueryProtof(
-		"get_models",
-		[]interface{}{orderExpr},
-		&resp.Models,
-		idFilterExpr,
-		archFilterExpr,
-		userFilterExpr,
-		userIDFilterExpr,
-		labelFilterExpr,
-		nameFilter,
-		descFilterExpr,
-		workspaceIDFilterExpr,
-	)
+
+	// Construct the ordering expression.
+	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
+		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
+		apiv1.GetModelsRequest_SORT_BY_NAME:              "name",
+		apiv1.GetModelsRequest_SORT_BY_DESCRIPTION:       "description",
+		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "m.creation_time",
+		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "m.last_updated_time",
+		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+	}
+	orderByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	}
+	orderExpr := ""
+	switch _, ok := sortColMap[req.SortBy]; {
+	case !ok:
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	case sortColMap[req.SortBy] != "id":
+		orderExpr = fmt.Sprintf(
+			"%s %s, id %s",
+			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
+		)
+	default:
+		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
+	}
+	query = query.OrderExpr(orderExpr)
+
+	// if editable, filter
+	// if (req.Editable == true) {
+	// 	if query, err = modelauth.AuthZProvider.Get().
+	// 		FilterEditableModelsQuery(ctx, *curUser, query); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
-	return resp, a.paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
+
+	return resp, nil
 }
 
 func (a *apiServer) GetModelLabels(
