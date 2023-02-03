@@ -230,6 +230,21 @@ def wait_for_ntsc_state(
     wait_state_ntsc(session, typ, ntsc_id, lambda s: s == state, timeout)
 
 
+def only_tensorboard_can_launch(
+    session: Session, workspace: int, typ: str, exp_id: Optional[int] = None
+) -> None:
+    """
+    Tensorboard requires the 'view experiment' permission rather than the 'create NSC' permission
+    and so can be launched in some workspaces other NSCs can't.
+    """
+    if typ == "tensorboard":
+        launch_ntsc(session, workspace, typ, exp_id)
+        return
+
+    with pytest.raises(errors.ForbiddenException):
+        launch_ntsc(session, workspace, typ, exp_id)
+
+
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
 def test_ntsc_iface_access() -> None:
@@ -289,10 +304,9 @@ def test_ntsc_iface_access() -> None:
             launch_ntsc(
                 session, workspaces[0].id, typ, experiment_id
             )  # user 0 should be able to launch in workspace 0.
-            with pytest.raises(errors.ForbiddenException):
-                launch_ntsc(
-                    session, workspaces[1].id, typ, experiment_id
-                )  # user 0 should not be able to launch in workspace 1.
+
+            # user 0 should be able to launch tensorboards and not NSCs in workspace 1.
+            only_tensorboard_can_launch(session, workspaces[1].id, typ, experiment_id)
 
             # user 1
             assert can_access_logs(
@@ -308,10 +322,9 @@ def test_ntsc_iface_access() -> None:
                     session, typ, created_id, 1
                 )  # user 1 should not be able to set priority.
             assert "access denied" in fe.value.message
-            with pytest.raises(errors.ForbiddenException):
-                launch_ntsc(session, workspaces[0].id, typ, experiment_id)
-            with pytest.raises(errors.ForbiddenException):
-                launch_ntsc(session, workspaces[1].id, typ, experiment_id)
+            # user 1 should be able to launch tensorboards but not NSCs in either workspace.
+            only_tensorboard_can_launch(session, workspaces[0].id, typ, experiment_id)
+            only_tensorboard_can_launch(session, workspaces[1].id, typ, experiment_id)
 
             # user 2
             assert not can_access_logs(
