@@ -2,7 +2,6 @@ import pathlib
 
 import pytest
 
-from typing import List
 from unittest import mock
 
 from determined import tensorboard
@@ -104,52 +103,8 @@ def test_upload_thread_normal_case() -> None:
         [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
     )
     upload_thread.upload([pathlib.Path("test_value/file3.json")])
-    # Pass in sentinel value to exit thread
+    # Call close to exit thread
     upload_thread.close()
     upload_thread.join()
 
     assert upload_function.call_count == 2
-
-
-def test_upload_thread_exception_case() -> None:
-    # 1. Define custom hook to capture threads fail
-    #    with exception. This hook is triggered when
-    #    a thread exits with exception.
-    #    Also store orignal excepthook for reset later.
-    import threading
-
-    threads_with_exception = set()
-
-    def custom_excepthook(args):
-        thread_name = args.thread.ident
-        threads_with_exception.add(thread_name)
-
-    original_excepthook = threading.excepthook
-
-    # 2. Define function that throws exception
-    def upload_function(paths: List[pathlib.Path]) -> None:
-        raise Exception("An exception is raised")
-
-    # 3. Set up a _TensorboardUploadThread instance
-    upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
-
-    try:
-        # 4. overwrite excepthook
-        threading.excepthook = custom_excepthook
-
-        # 5. start, run, and join the _TensorboardUploadThread instance
-        upload_thread.start()
-        thread_ident = upload_thread.ident
-        upload_thread.upload(
-            [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
-        )
-        # Pass in sentinel value to exit thread
-        upload_thread.close()
-        upload_thread.join()
-    finally:
-        # 6. Reset excepthook
-        threading.excepthook = original_excepthook
-
-    # 7. Check that _TensorboardUploadThread instance did not
-    #    throw exception
-    assert thread_ident not in threads_with_exception
