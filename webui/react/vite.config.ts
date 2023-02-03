@@ -1,29 +1,75 @@
+import crypto from 'crypto';
 import fs from 'fs';
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import path from 'path';
+
+import react from '@vitejs/plugin-react';
+import MagicString from 'magic-string';
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+// want to fallback in case of empty string, hence no ??
+const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
+
+// https://github.com/swagger-api/swagger-codegen/issues/10027
+const portableFetchFix = () => ({
+  name: 'fix-portable-fetch',
+  transform: (source: string, id: string) => {
+    if (id.endsWith('api-ts-sdk/api.ts')) {
+      const newSource = new MagicString(source.replace('import * as portableFetch from "portable-fetch"', 'import portableFetch from "portable-fetch"'));
+      return {
+        code: newSource.toString(),
+        map: newSource.generateMap(),
+      };
+    }
+  },
+});
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/, /notebook/],
+    },
+    outDir: 'build',
+    sourcemap: true,
+  },
   css: {
+    modules: {
+      generateScopedName: (name, filename) => {
+        const basename = path.basename(filename).split('.')[0];
+        const hashable = `${basename}_${name}`;
+        const hash = crypto.createHash('sha256').update(filename).digest('hex').substring(0, 5);
+
+        return `${hashable}_${hash}`;
+      },
+    },
     preprocessorOptions: {
       scss: {
         additionalData: fs.readFileSync('./src/shared/styles/global.scss'),
       },
-    }
+    },
   },
   define: {
-    'process.env.IS_DEV': JSON.stringify(process.env.DET_NODE_ENV === 'development'),
+    'process.env.IS_DEV': JSON.stringify(mode === 'development'),
+    'process.env.PUBLIC_URL': JSON.stringify(process.env.PUBLIC_URL || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     'process.env.VERSION': '"0.19.11-dev0"',
   },
-  plugins: [tsconfigPaths(), react()],
-  resolve: {
-    alias: [
-      {
-        find: 'react/jsx-runtime.js',
-        replacement: 'react/jsx-runtime'
-      }
-    ]
+  optimizeDeps: {
+    include: ['notebook'],
   },
-})
+  plugins: [tsconfigPaths(), react(), portableFetchFix(), cspHtml()],
+  resolve: {
+    alias: {
+      // needed for react-dnd
+      'react/jsx-runtime.js': 'react/jsx-runtime',
+    },
+  },
+  server: {
+    open: true,
+    proxy: {
+      '/api': { target: webpackProxyUrl },
+      '/proxy': { target: webpackProxyUrl },
+    },
+  },
+}));

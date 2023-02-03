@@ -22,7 +22,7 @@ get-deps: check-requirements node_modules/done.stamp
 .PHONY: build
 build: check-requirements build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js vite.config.ts
 	npm run build
 	touch $@
 

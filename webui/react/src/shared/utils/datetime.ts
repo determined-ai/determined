@@ -1,15 +1,10 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-
-// TODO: check types for this.
-// @ts-ignore
 import humanizeDuration from 'humanize-duration';
 
 import { StartEndTimes } from 'types';
 
 dayjs.extend(utc);
-
-/* eslint-disable @typescript-eslint/no-var-requires */
 
 export const DURATION_SECOND = 1000;
 export const DURATION_MINUTE = 60 * DURATION_SECOND;
