@@ -1,6 +1,7 @@
 import abc
 import logging
 import pathlib
+import queue
 import threading
 import time
 from typing import Callable, List
@@ -103,7 +104,6 @@ class _TensorboardUploadThread(threading.Thread):
         self, upload_function: Callable[[List[pathlib.Path]], None], work_queue_max_size: int = 50
     ) -> None:
         self._upload_function = upload_function
-        import queue
 
         self._work_queue = queue.Queue(maxsize=work_queue_max_size)
 
