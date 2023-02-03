@@ -103,7 +103,9 @@ type PodsInfo struct {
 }
 
 // SummarizeResources summerize pods resource.
-type SummarizeResources struct{}
+type SummarizeResources struct {
+	PoolName string
+}
 
 type reattachAllocationPods struct {
 	numPods      int
@@ -786,10 +788,19 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 }
 
 func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
-	summary := p.summarize(ctx)
+	summary, err := p.summarize(ctx)
+	if err != nil {
+		ctx.Respond(err)
+		return
+	}
+
 	slots := 0
-	for _, node := range summary {
-		slots += len(node.Slots)
+	if len(msg.PoolName) > 0 {
+		slots = len(summary[msg.PoolName].Slots)
+	} else {
+		for _, pool := range summary {
+			slots += len(pool.Slots)
+		}
 	}
 	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
@@ -888,14 +899,23 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, p.summarize(ctx)))
+		summary, err := p.summarize(ctx)
+		if err != nil {
+			ctx.Respond(apiCtx.JSON(http.StatusInternalServerError, err))
+		}
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
 }
 
 func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
-	summaries := p.summarize(ctx)
+	summaries, err := p.summarize(ctx)
+	if err != nil {
+		ctx.Respond(err)
+		return
+	}
+
 	response := &apiv1.GetAgentsResponse{}
 
 	for _, summary := range summaries {
@@ -904,24 +924,21 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 	ctx.Respond(response)
 }
 
-// summarize will return all nodes currently in the k8 cluster that have GPUs as agents.
-// It will map currently running Determined pods to the slots on these Nodes, marking all other
-// slots as Free, even if they are being used by other k8 pods.
-func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
+// summarize describes pods' available resources. When there's exactly one resource pool and that
+// pool has no quotas configured, it uses the whole cluster's info. Otherwise, it uses namespaces'
+// quotas to derive that info.
+func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	namespaceToQuota := make(map[string]k8sV1.ResourceQuota)
 
 	// Look up quotas for our resource pools' namespaces
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
 		if k8serrors.IsNotFound(err) {
-			ctx.Log().WithError(err).
-				WithField("namespace", namespace).
-				Error("quota for namespace not found")
 			continue
 		} else if err != nil {
-			panic(err.Error())
+			return nil, err
 		} else if quotaList == nil || len(quotaList.Items) != 1 {
-			// TOOD: figure out how to handle multiple quotas per namespace?
+			// TOOD: figure out how we want to handle multiple quotas per namespace?
 			continue
 		}
 
@@ -938,7 +955,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 
 		// If there's no quota for our only resource pool's namespace
 		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
-			return p.summarizeCluster(ctx)
+			return p.summarizeCluster(ctx), nil
 		}
 	}
 
@@ -1003,7 +1020,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		}
 	}
 
-	return summaries
+	return summaries, nil
 }
 
 func (p *pods) summarizeCluster(ctx *actor.Context) map[string]model.AgentSummary {

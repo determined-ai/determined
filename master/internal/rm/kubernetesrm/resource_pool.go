@@ -168,7 +168,7 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 func (k *kubernetesResourcePool) summarizePods(
 	ctx *actor.Context,
 ) (*PodsInfo, error) {
-	resp := ctx.Ask(k.podsActor, SummarizeResources{})
+	resp := ctx.Ask(k.podsActor, SummarizeResources{PoolName: k.poolConfig.PoolName})
 	if err := resp.Error(); err != nil {
 		return nil, err
 	}
