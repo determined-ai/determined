@@ -1,6 +1,7 @@
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
+export NODE_OPTIONS=--max-old-space-size=6144
 source_files := $(shell find src public -type f)
 
 .PHONY: default
