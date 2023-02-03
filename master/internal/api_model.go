@@ -193,13 +193,13 @@ func (a *apiServer) GetModels(
 	}
 	query = query.OrderExpr(orderExpr)
 
-	// if editable, filter
-	// if (req.Editable == true) {
-	// 	if query, err = modelauth.AuthZProvider.Get().
-	// 		FilterEditableModelsQuery(ctx, *curUser, query); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
+	// if requested editable models, filter through authz
+	if req.Editable == true {
+		if query, err = modelauth.AuthZProvider.Get().
+			FilterEditableModelsQuery(ctx, *curUser, query); err != nil {
+			return nil, err
+		}
+	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {

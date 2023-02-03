@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	bun "github.com/uptrace/bun"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
 
@@ -80,6 +81,29 @@ func (_m *ModelAuthZ) CanGetModels(ctx context.Context, curUser model.User, work
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, model.User, int32) error); ok {
 		r1 = rf(ctx, curUser, workspaceID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FilterEditableModelsQuery provides a mock function with given fields: ctx, curUser, query
+func (_m *ExperimentAuthZ) FilterEditableModelsQuery(ctx context.Context, curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error) {
+	ret := _m.Called(ctx, curUser, query)
+
+	var r0 *bun.SelectQuery
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *bun.SelectQuery) *bun.SelectQuery); ok {
+		r0 = rf(ctx, curUser, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bun.SelectQuery)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, *bun.SelectQuery) error); ok {
+		r1 = rf(ctx, curUser, query)
 	} else {
 		r1 = ret.Error(1)
 	}
