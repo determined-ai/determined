@@ -7,6 +7,8 @@ import MagicString from 'magic-string';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+import { cspHtml } from './src/shared/configs/vite-plugin-csp';
+
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
@@ -26,6 +28,7 @@ const portableFetchFix = () => ({
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: process.env.PUBLIC_URL || '',
   build: {
     commonjsOptions: {
       include: [/node_modules/, /notebook/],
@@ -58,7 +61,18 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['notebook'],
   },
-  plugins: [tsconfigPaths(), react(), portableFetchFix(), cspHtml()],
+  plugins: [tsconfigPaths(), react(), portableFetchFix(), cspHtml({
+    cspRules: {
+      'frame-src': ["'self'", 'netlify.determined.ai'],
+      'object-src': ["'none'"],
+      'script-src': ["'self'", 'cdn.segment.com'],
+      'style-src': ["'self'", "'unsafe-inline'"],
+    },
+    hashEnabled: {
+      'script-src': true,
+      'style-src': false,
+    },
+  })],
   resolve: {
     alias: {
       // needed for react-dnd
