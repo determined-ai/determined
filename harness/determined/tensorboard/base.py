@@ -26,12 +26,16 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self,
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
-        async_upload: bool = False,
+        async_upload: bool = True,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
         self.last_sync = 0.0
-        self.upload_thread = _TensorboardUploadThread(self._sync_impl()) if async_upload else None
+
+        self.upload_thread = None
+        if async_upload:
+            self.upload_thread = _TensorboardUploadThread(self._sync_impl())
+            self.upload_thread.start()
 
     def list_tb_files(
         self,

@@ -224,6 +224,9 @@ class TrainContext:
             return None
         return float(r.json()["metric"])
 
+    def close(self) -> None:
+        self._tensorboard_manager.close()
+
 
 class DummyTrainContext(TrainContext):
     def __init__(self) -> None:

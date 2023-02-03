@@ -53,6 +53,8 @@ class Context:
     def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
         self.preempt.close()
         self.distributed.close()
+        self.train.close()
+        self.checkpoint.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
             self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
