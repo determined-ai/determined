@@ -38,7 +38,7 @@ func (a *apiServer) Login(
 	ctx context.Context, req *apiv1.LoginRequest,
 ) (*apiv1.LoginResponse, error) {
 	if a.m.config.InternalConfig.ExternalSessions.JwtKey != "" {
-		return nil, status.Error(codes.FailedPrecondition, "authentication is configured to be external")
+		return nil, status.Error(codes.FailedPrecondition, "please run `det auth login` to authenticate")
 	}
 
 	if req.Username == "" {
