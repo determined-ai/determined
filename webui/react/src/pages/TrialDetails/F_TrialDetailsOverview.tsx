@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
+import { ChartGrid, ChartProps, Serie, TRAIN_PREFIX, VAL_PREFIX } from 'components/kit/LineChart';
 import usePermissions from 'hooks/usePermissions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, TrialDetails } from 'types';
@@ -12,9 +12,6 @@ export interface Props {
   experiment: ExperimentBase;
   trial?: TrialDetails;
 }
-
-const TRAIN_PREFIX = /^(t_|train_|training_)/;
-const VAL_PREFIX = /^(v_|val_|validation_)/;
 
 const isMetricNameMatch = (t: Metric, v: Metric) => {
   const t_stripped = t.name.replace(TRAIN_PREFIX, '');
@@ -46,7 +43,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   }, [metrics]);
 
   const chartsProps = useMemo(() => {
-    const out: ChartsProps = [];
+    const out: ChartProps = [];
 
     pairedMetrics?.forEach(([trainingMetric, valMetric]) => {
       // this code doesnt depend on their being training or validation metrics
@@ -65,7 +62,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
       out.push({
         series,
-        title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
+        xLabel: 'Batch',
       });
     });
     return out;

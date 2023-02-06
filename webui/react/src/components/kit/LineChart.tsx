@@ -23,9 +23,12 @@ import css from './LineChart.module.scss';
  * @param {string} [name] - Name to display in legend and toolip instead of Series number.
  */
 
+export const TRAIN_PREFIX = /(t_|train_|training_)/;
+export const VAL_PREFIX = /(v_|val_|validation_)/;
+
 export interface Serie {
   color?: string;
-  data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
+  data: Partial<Record<XAxisDomain, [number, number][]>>;
   key?: number;
   metricType?: MetricType;
   name?: string;
@@ -59,6 +62,8 @@ interface Props {
   yLabel?: string;
   yTickValues?: uPlot.Axis.Values;
 }
+
+export type ChartProps = Props[];
 
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
