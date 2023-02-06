@@ -21,40 +21,43 @@ interface CspHtmlPluginConfig {
 
 export const cspHtml = ({ cspRules, hashEnabled = {} }: CspHtmlPluginConfig): Plugin => ({
   name: 'csp-html',
-  async transformIndexHtml(html: string) {
-    const finalCspRules: CspRuleConfig = {
-      'base-uri': ["'self'"],
-      ...cspRules,
-    };
-    const hashRules = Object.entries(hashEnabled) as [CspHashDirective, boolean][];
-    if (hashRules.length) {
-      const cheerio = await import('cheerio');
-      const $ = cheerio.load(html);
-      hashRules.forEach(([directive, enabled]: [CspHashDirective, boolean]) => {
-        if (!enabled) return;
-        const [tag] = directive.split('-');
-        $(tag).each((_, el) => {
-          const source = $(el).html();
-          if (source) {
-            const hash = crypto.createHash('sha256').update(source).digest('base64');
-            finalCspRules[directive] = (finalCspRules[directive] || []).concat([
-              `'sha256-${hash}'`,
-            ]);
-          }
+  transformIndexHtml: {
+    async handler(html: string) {
+      const finalCspRules: CspRuleConfig = {
+        'base-uri': ["'self'"],
+        ...cspRules,
+      };
+      const hashRules = Object.entries(hashEnabled) as [CspHashDirective, boolean][];
+      if (hashRules.length) {
+        const cheerio = await import('cheerio');
+        const $ = cheerio.load(html);
+        hashRules.forEach(([directive, enabled]: [CspHashDirective, boolean]) => {
+          if (!enabled) return;
+          const [tag] = directive.split('-');
+          $(tag).each((_, el) => {
+            const source = $(el).html();
+            if (source) {
+              const hash = crypto.createHash('sha256').update(source).digest('base64');
+              finalCspRules[directive] = (finalCspRules[directive] || []).concat([
+                `'sha256-${hash}'`,
+              ]);
+            }
+          });
         });
-      });
-    }
-    const content = Object.entries(finalCspRules)
-      .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-      .join('; ');
-    return [
-      {
-        attrs: {
-          content,
-          'http-equiv': 'Content-Security-Policy',
+      }
+      const content = Object.entries(finalCspRules)
+        .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
+        .join('; ');
+      return [
+        {
+          attrs: {
+            content,
+            'http-equiv': 'Content-Security-Policy',
+          },
+          tag: 'meta',
         },
-        tag: 'meta',
-      },
-    ];
+      ];
+    },
+    order: 'post',
   },
 });
