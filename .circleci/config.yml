@@ -749,7 +749,7 @@ commands:
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: |
