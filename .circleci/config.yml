@@ -2368,7 +2368,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2383,7 +2383,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2402,7 +2402,7 @@ workflows:
       # Legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2419,7 +2419,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2439,7 +2439,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2459,7 +2459,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2570,7 +2570,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2584,7 +2584,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2602,7 +2602,7 @@ workflows:
       # Requestable legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2618,7 +2618,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2642,7 +2642,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -2661,7 +2661,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
