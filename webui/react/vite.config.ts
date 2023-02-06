@@ -4,7 +4,7 @@ import path from 'path';
 
 import react from '@vitejs/plugin-react';
 import MagicString from 'magic-string';
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin, UserConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { cspHtml } from './src/shared/configs/vite-plugin-csp';
@@ -26,11 +26,35 @@ const portableFetchFix = () => ({
   },
 });
 
-console.log('public_url is ', JSON.stringify(process.env.PUBLIC_URL));
+const publicUrlBaseHref = (): Plugin => {
+  let config: UserConfig;
+    return ({
+        config(c) {
+          config = c;
+        },
+        name: 'public-url-base-href',
+        transformIndexHtml: {
+            handler() {
+                return config.base ? [
+                    {
+                        attrs: {
+                            href: config.base,
+                        },
+                        tag: 'meta',
+                    },
+                ] : [];
+            },
+        },
+    });
+};
+
+// public_url as / breaks the link component -- assuming that CRA did something
+// to prevent that, idk
+const publicUrl = (process.env.PUBLIC_URL || '') === '/' ? undefined : process.env.PUBLIC_URL;
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: process.env.PUBLIC_URL,
+  base: publicUrl,
   build: {
     commonjsOptions: {
       include: [/node_modules/, /notebook/],
@@ -56,14 +80,14 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
-    'process.env.PUBLIC_URL': JSON.stringify(process.env.PUBLIC_URL || ''),
+    'process.env.PUBLIC_URL': JSON.stringify(publicUrl || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     'process.env.VERSION': '"0.19.11-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
   },
-  plugins: [tsconfigPaths(), react(), portableFetchFix(), cspHtml({
+  plugins: [tsconfigPaths(), react(), portableFetchFix(), publicUrlBaseHref(), cspHtml({
     cspRules: {
       'frame-src': ["'self'", 'netlify.determined.ai'],
       'object-src': ["'none'"],
