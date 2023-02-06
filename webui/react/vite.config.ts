@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-import react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
 import { defineConfig, Plugin, UserConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
