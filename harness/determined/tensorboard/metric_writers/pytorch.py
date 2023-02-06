@@ -1,7 +1,3 @@
-from typing import Any, Union
-
-import numpy as np
-
 from determined import tensorboard
 
 # As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools 59.6.0.  The

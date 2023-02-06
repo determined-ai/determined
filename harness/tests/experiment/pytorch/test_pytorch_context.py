@@ -60,7 +60,10 @@ class TestPyTorchContext:
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
 
-    def test_context_method(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    def test_context_method(
+            self, monkeypatch: monkeypatch.MonkeyPatch,
+            tmp_path: pathlib.Path
+    ) -> None:
         def mock_get_base_path(dummy: Dict[str, Any]) -> pathlib.Path:
             return tmp_path
 
