@@ -88,7 +88,6 @@ func (a *NSCAuthZBasic) CanGetTensorboard(
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZBasic) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-	experimentIDs []int32, trialIDs []int32,
 ) error {
 	return nil
 }

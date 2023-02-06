@@ -1,7 +1,14 @@
+import contextlib
+from typing import Dict, Generator, List, Tuple
+
 import pytest
 
+from determined import cli
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
-from tests import api_utils
+from determined.common.api import authentication, bindings, errors
+from tests import api_utils, utils
+from tests.api_utils import configure_token_store, create_test_user, determined_test_session
+from tests.cluster.test_workspace_org import setup_workspaces
 
 from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
 from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
@@ -9,6 +16,66 @@ from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
 
 def roles_not_implemented() -> bool:
     return "Unimplemented" in det_cmd(["rbac", "my-permissions"]).stderr.decode()
+
+
+def rbac_disabled() -> bool:
+    try:
+        return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
+    except (errors.APIException, errors.MasterNotFoundException):
+        return True
+
+
+@contextlib.contextmanager
+def create_workspaces_with_users(
+    assignments_list: List[List[Tuple[int, List[str]]]]
+) -> Generator[
+    Tuple[List[bindings.v1Workspace], Dict[int, authentication.Credentials]], None, None
+]:
+    """
+    eg:
+    perm_assigments = [
+        [
+            (1, ["Editor", "Viewer"]),
+            (2, ["Viewer"]),
+        ],
+        [
+            (1, ["Viewer"]),
+        ]
+    ]
+    """
+    configure_token_store(ADMIN_CREDENTIALS)
+    rid_to_creds: Dict[int, authentication.Credentials] = {}
+    with setup_workspaces(count=len(assignments_list)) as workspaces:
+        for workspace, user_list in zip(workspaces, assignments_list):
+            for (rid, roles) in user_list:
+                if rid not in rid_to_creds:
+                    rid_to_creds[rid] = create_test_user()
+                for role in roles:
+                    cli.rbac.assign_role(
+                        utils.CliArgsMock(
+                            username_to_assign=rid_to_creds[rid].username,
+                            workspace_name=workspace.name,
+                            role_name=role,
+                        )
+                    )
+        yield workspaces, rid_to_creds
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+def test_user_role_setup() -> None:
+    perm_assigments = [
+        [
+            (1, ["Editor", "Viewer"]),
+            (2, ["Viewer"]),
+        ],
+        [
+            (1, ["Viewer"]),
+        ],
+    ]
+    with create_workspaces_with_users(perm_assigments) as (workspaces, rid_to_creds):
+        assert len(rid_to_creds) == 2
+        assert len(workspaces) == 2
 
 
 @pytest.mark.e2e_cpu
