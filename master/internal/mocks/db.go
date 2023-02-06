@@ -10,11 +10,11 @@ import (
 
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
-	lttb "github.com/determined-ai/determined/master/internal/lttb"
-
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
+
+	sql "database/sql"
 
 	time "time"
 
@@ -1699,51 +1699,26 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 }
 
 // TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches
-func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) ([]lttb.Point, []lttb.Point, []lttb.Point, time.Time, error) {
+func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (*sql.Rows, error) {
 	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches)
 
-	var r0 []lttb.Point
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
+	var r0 *sql.Rows
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) *sql.Rows); ok {
 		r0 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]lttb.Point)
+			r0 = ret.Get(0).(*sql.Rows)
 		}
 	}
 
-	var r1 []lttb.Point
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int) error); ok {
 		r1 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]lttb.Point)
-		}
+		r1 = ret.Error(1)
 	}
 
-	var r2 []lttb.Point
-	if rf, ok := ret.Get(2).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
-		r2 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]lttb.Point)
-		}
-	}
-
-	var r3 time.Time
-	if rf, ok := ret.Get(3).(func(int32, time.Time, string, int, int) time.Time); ok {
-		r3 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		r3 = ret.Get(3).(time.Time)
-	}
-
-	var r4 error
-	if rf, ok := ret.Get(4).(func(int32, time.Time, string, int, int) error); ok {
-		r4 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
+	return r0, r1
 }
 
 // TrainingTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
@@ -2238,51 +2213,26 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 }
 
 // ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) ([]lttb.Point, []lttb.Point, []lttb.Point, time.Time, error) {
+func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (*sql.Rows, error) {
 	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches)
 
-	var r0 []lttb.Point
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
+	var r0 *sql.Rows
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) *sql.Rows); ok {
 		r0 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]lttb.Point)
+			r0 = ret.Get(0).(*sql.Rows)
 		}
 	}
 
-	var r1 []lttb.Point
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int) error); ok {
 		r1 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]lttb.Point)
-		}
+		r1 = ret.Error(1)
 	}
 
-	var r2 []lttb.Point
-	if rf, ok := ret.Get(2).(func(int32, time.Time, string, int, int) []lttb.Point); ok {
-		r2 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]lttb.Point)
-		}
-	}
-
-	var r3 time.Time
-	if rf, ok := ret.Get(3).(func(int32, time.Time, string, int, int) time.Time); ok {
-		r3 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		r3 = ret.Get(3).(time.Time)
-	}
-
-	var r4 error
-	if rf, ok := ret.Get(4).(func(int32, time.Time, string, int, int) error); ok {
-		r4 = rf(trialID, startTime, metricName, startBatches, endBatches)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
+	return r0, r1
 }
 
 // ValidationTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime

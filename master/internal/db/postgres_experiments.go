@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -474,52 +473,12 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-func timeToFloat(t time.Time) float64 {
-	// If time.Time is the empty value, UnixNano will return the farthest back
-	// timestamp a float can represent, which is some large negative value.
-	if t.IsZero() {
-		return 0
-	}
-	return float64(t.UnixNano()) / 1e9
-}
-
-func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point) (
-	[]lttb.Point, []lttb.Point, []lttb.Point, time.Time,
-) {
-	var maxEndTime time.Time
-	var avg_metrics map[string]float64
-	for rows.Next() {
-		var batches uint
-		var value float64
-		var endTime time.Time
-		var metrics *string
-		err := rows.Scan(&batches, &value, &endTime, &metrics)
-		if err != nil {
-			continue
-		}
-		if metrics != nil {
-			err = json.Unmarshal([]byte(*metrics), &avg_metrics)
-			if err != nil {
-				continue
-			}
-		}
-		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
-		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(avg_metrics["epoch"]), Y: value})
-		if endTime.After(maxEndTime) {
-			maxEndTime = endTime
-		}
-	}
-	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime
-}
-
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
-	maxEndTime time.Time, err error,
+	startBatches int, endBatches int) (rows *sql.Rows, err error,
 ) {
-	rows, err := db.sql.Query(`
+	rows, err = db.sql.Query(`
 SELECT
   total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
@@ -535,21 +494,18 @@ WHERE t.id=$2
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		defer rows.Close()
+		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime = scanMetricsSeries(
-		rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch)
-	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime, nil
+	return rows, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
-	maxEndTime time.Time, err error,
+	startBatches int, endBatches int) (rows *sql.Rows, err error,
 ) {
-	rows, err := db.sql.Query(`
+	rows, err = db.sql.Query(`
 SELECT
   v.total_batches AS batches,
   (v.metrics->'validation_metrics'->>$1)::float8 AS value,
@@ -565,12 +521,10 @@ WHERE t.id=$2
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		defer rows.Close()
 	}
-	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime = scanMetricsSeries(
-		rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch)
-	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime, nil
+	return rows, nil
 }
 
 type hpImportanceDataWrapper struct {

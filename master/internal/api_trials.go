@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -52,6 +53,48 @@ var (
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 )
+
+func (a *apiServer) timeToFloat(t time.Time) float64 {
+	// If time.Time is the empty value, UnixNano will return the farthest back
+	// timestamp a float can represent, which is some large negative value.
+	if t.IsZero() {
+		return 0
+	}
+	return float64(t.UnixNano()) / 1e9
+}
+
+func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
+	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point, maxEndtime time.Time,
+) {
+	var maxEndTime time.Time
+	var avg_metrics map[string]float64
+	for rows.Next() {
+		var batches uint
+		var value float64
+		var endTime time.Time
+		var metrics *string
+		err := rows.Scan(&batches, &value, &endTime, &metrics)
+		if err != nil {
+			panic(err)
+		}
+		if metrics != nil {
+			err = json.Unmarshal([]byte(*metrics), &avg_metrics)
+			if err != nil {
+				panic(err)
+			}
+		}
+		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
+		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: a.timeToFloat(endTime), Y: value})
+		// For now we will always search for an "epoch" value but this can be updated in the future
+		// to accept or expect a dynamic list of poossible x-axis values.
+		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(avg_metrics["epoch"]), Y: value})
+		if endTime.After(maxEndTime) {
+			maxEndTime = endTime
+		}
+	}
+	defer rows.Close()
+	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime
+}
 
 func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 	trialID int, actionFunc func(context.Context, model.User, *model.Experiment) error,
@@ -649,7 +692,7 @@ func (a *apiServer) appendToMetricsBatch(metrics []*apiv1.SummarizedMetric,
 	return metrics
 }
 
-func timeFromFloat64(ts float64) time.Time {
+func (a *apiServer) timeFromFloat64(ts float64) time.Time {
 	secs := int64(ts)
 	nsecs := int64((ts - float64(secs)) * 1e9)
 	return time.Unix(secs, nsecs)
@@ -660,7 +703,7 @@ func (a *apiServer) appendToMetricsTime(metrics []*apiv1.SummarizedMetric,
 ) []*apiv1.SummarizedMetric {
 	for _, in := range metricSeries {
 		out := apiv1.DataPointTime{
-			Time:  timestamppb.New(timeFromFloat64(in.X)),
+			Time:  timestamppb.New(a.timeFromFloat64(in.X)),
 			Value: in.Y,
 		}
 		m.Time = append(m.Time, &out)
@@ -691,7 +734,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	var startTime time.Time
 	var err error
-
+	var rows *sql.Rows
 	var metrics []*apiv1.SummarizedMetric
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
@@ -702,12 +745,13 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _, err = a.m.db.TrainingMetricsSeries(
+			rows, err = a.m.db.TrainingMetricsSeries(
 				trialID, startTime, name, startBatches, endBatches)
-			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
+			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _ = a.scanMetricsSeries(rows)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
@@ -719,12 +763,13 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _, err = a.m.db.ValidationMetricsSeries(
+			rows, err = a.m.db.ValidationMetricsSeries(
 				trialID, startTime, name, startBatches, endBatches)
-			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
+			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _ = a.scanMetricsSeries(rows)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)

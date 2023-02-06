@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -1587,6 +1588,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
+	var rows *sql.Rows
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1604,11 +1606,15 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, _, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		rows, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
+		metricSeries, _, _, endTime = a.scanMetricsSeries(
+			rows)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, _, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		rows, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
+		metricSeries, _, _, endTime = a.scanMetricsSeries(
+			rows)
 	default:
 		panic("Invalid metric type")
 	}
@@ -1643,6 +1649,7 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
+	var rows *sql.Rows
 	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
 	trial.TrialId = trialID
 
@@ -1662,11 +1669,15 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, _, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		rows, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
+		metricSeries, _, _, endTime = a.scanMetricsSeries(
+			rows)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, _, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		rows, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
+		metricSeries, _, _, endTime = a.scanMetricsSeries(
+			rows)
 	default:
 		panic("Invalid metric type")
 	}

@@ -2,13 +2,13 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -126,11 +126,9 @@ type DB interface {
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
-		maxEndTime time.Time, err error)
+		startBatches int, endBatches int) (rows *sql.Rows, err error)
 	ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
-		maxEndTime time.Time, err error)
+		startBatches int, endBatches int) (rows *sql.Rows, err error)
 	FetchHPImportanceTrainingData(experimentID int, metric string) (
 		map[int][]model.HPImportanceTrialData, error)
 	FetchHPImportanceValidationData(experimentID int, metric string) (
