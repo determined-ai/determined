@@ -2048,6 +2048,21 @@ export interface V1DataPointTime {
     value: number;
 }
 
+export interface V1DataPointEpoch {
+    /**
+     * Total batches processed by the time this measurement is taken.
+     * @type {Date}
+     * @memberof V1DataPointTime
+     */
+    epoch: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPointTime
+     */
+    value: number;
+}
+
 /**
  * 
  * @export
@@ -8211,6 +8226,12 @@ export interface V1SummarizedMetric {
      * @memberof V1SummarizedMetric
      */
     time?: Array<V1DataPointTime>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1SummarizedMetric
+     */
+    epochs?: Array<V1DataPointEpoch>;
     /**
      * Type of metrics (training, validation, or unset).
      * @type {V1MetricType}

@@ -487,20 +487,25 @@ func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime, metr
 	[]lttb.Point, []lttb.Point, []lttb.Point, time.Time,
 ) {
 	var maxEndTime time.Time
+	var avg_metrics map[string]float64
 	for rows.Next() {
 		var batches uint
 		var value float64
-		var epoch *uint
 		var endTime time.Time
-		err := rows.Scan(&batches, &value, &endTime, &epoch)
+		var metrics *string
+		err := rows.Scan(&batches, &value, &endTime, &metrics)
 		if err != nil {
 			continue
 		}
+		if metrics != nil {
+			err = json.Unmarshal([]byte(*metrics), &avg_metrics)
+			if err != nil {
+				continue
+			}
+		}
 		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-		if epoch != nil {
-			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(*epoch), Y: value})
-		}
+		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(avg_metrics["epoch"]), Y: value})
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime
 		}
@@ -519,7 +524,7 @@ SELECT
   total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
   s.end_time as end_time,
-  (s.metrics->'avg_metrics'->>'epoch')::int AS epoch
+  s.metrics->>'avg_metrics' AS metrics
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.id=$2
@@ -549,7 +554,7 @@ SELECT
   v.total_batches AS batches,
   (v.metrics->'validation_metrics'->>$1)::float8 AS value,
   v.end_time as end_time,
-  (v.metrics->'avg_metrics'->>'epoch')::int AS epoch
+  v.metrics->>'avg_metrics' AS metrics
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
