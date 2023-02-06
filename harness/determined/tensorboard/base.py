@@ -92,10 +92,8 @@ class TensorboardManager(metaclass=abc.ABCMeta):
     ) -> None:
         paths = self.to_sync(selector)
         if self.upload_thread is not None and self.upload_thread.is_alive():
-            print(f"SWY Putting paths {paths} in upload_thread")
             self.upload_thread.upload(_UploadTask(paths=paths, mangler=mangler, rank=rank))
         else:
-            print(f"SWY Sync upload paths {paths} in main thread")
             self._sync_impl(paths, mangler, rank)
 
     @abc.abstractmethod
@@ -159,7 +157,6 @@ class _TensorboardUploadThread(threading.Thread):
             # Try-catch is used to avoid exception from
             # one failed sync attempt to cause the thread to exit.
             try:
-                print("SWY calling self._upload_function")
                 self._upload_function(task.paths, task.mangler, task.rank)
             except Exception as e:
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
