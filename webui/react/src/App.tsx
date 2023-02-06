@@ -24,7 +24,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
 import { useAuth } from 'stores/auth';
-import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
+import { initInfo, useDeterminedInfo, useFetchDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification, useInitApi } from 'utils/dialogApi';
@@ -55,7 +55,7 @@ const AppView: React.FC = () => {
     });
   }, [infoLoadable]);
 
-  const fetchInfo = useEnsureInfoFetched(canceler);
+  const fetchInfo = useFetchDeterminedInfo(canceler);
   const fetchUsers = useFetchUsers(canceler);
   const fetchCurrentUser = useEnsureCurrentUserFetched(canceler);
 

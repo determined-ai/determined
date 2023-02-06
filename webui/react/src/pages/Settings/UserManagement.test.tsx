@@ -11,7 +11,6 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -62,15 +61,13 @@ const Container: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
   const { setAuth, setAuthCheck } = useAuth();
-  const updateInfo = useUpdateDeterminedInfo();
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
     setAuth({ isAuthenticated: true });
     setAuthCheck();
     updateCurrentUser(currentUser.id);
-    updateInfo({ ...initInfo, featureSwitches: [], rbacEnabled: false });
-  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth, updateInfo]);
+  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth]);
 
   useEffect(() => {
     loadUsers();
@@ -89,17 +86,15 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <DeterminedInfoProvider>
-      <StoreProvider>
-        <UsersProvider>
-          <AuthProvider>
-            <DndProvider backend={HTML5Backend}>
-              <Container />
-            </DndProvider>
-          </AuthProvider>
-        </UsersProvider>
-      </StoreProvider>
-    </DeterminedInfoProvider>,
+    <StoreProvider>
+      <UsersProvider>
+        <AuthProvider>
+          <DndProvider backend={HTML5Backend}>
+            <Container />
+          </DndProvider>
+        </AuthProvider>
+      </UsersProvider>
+    </StoreProvider>,
   );
 
 describe('UserManagement', () => {
