@@ -28,7 +28,7 @@ const portableFetchFix = () => ({
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: process.env.PUBLIC_URL,
+  base: process.env.PUBLIC_URL || '/',
   build: {
     commonjsOptions: {
       include: [/node_modules/, /notebook/],
