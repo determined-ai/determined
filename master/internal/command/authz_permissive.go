@@ -79,12 +79,9 @@ func (a *NSCAuthZPermissive) CanGetTensorboard(
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZPermissive) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-	experimentIDs []int32, trialIDs []int32,
 ) error {
-	_ = (&NSCAuthZRBAC{}).CanTerminateTensorboard(ctx, curUser, workspaceID, experimentIDs,
-		trialIDs)
-	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID, experimentIDs,
-		trialIDs)
+	_ = (&NSCAuthZRBAC{}).CanTerminateTensorboard(ctx, curUser, workspaceID)
+	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID)
 }
 
 func init() {
