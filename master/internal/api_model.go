@@ -26,7 +26,8 @@ import (
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
-func (a *apiServer) ModelFromIdentifier(ctx context.Context, identifier string) (*modelv1.Model, error) {
+func (a *apiServer) ModelFromIdentifier(ctx context.Context, identifier string) (*modelv1.Model,
+	error) {
 	var err error
 	m := &modelv1.Model{}
 
