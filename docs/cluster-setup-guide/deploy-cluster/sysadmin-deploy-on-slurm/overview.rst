@@ -5,15 +5,16 @@
 +--------------------------------------------+
 | Supported Versions                         |
 +============================================+
-| Slurm >= 20.02 (for versions greater than  |
-| 22.05.2 see :ref:`slurm-known-issues`)     |
+| Slurm >= 20.02 (excluding 22.05.5 through  |
+| at least 22.05.8 - see                     |
+| :ref:`slurm-known-issues`)                 |
 |                                            |
 | PBS >= 2021.1.2                            |
 +--------------------------------------------+
 | Apptainer >= 1.0 Singularity >= 3.7 or     |
 | Enroot >= 3.4.0 or PodMan >= 3.3.1         |
 +--------------------------------------------+
-| Launcher (`hpe-hpc-launcher`) >= 3.2.0     |
+| Launcher (`hpe-hpc-launcher`) >= 3.2.2     |
 +--------------------------------------------+
 | Java >= 1.8                                |
 +--------------------------------------------+

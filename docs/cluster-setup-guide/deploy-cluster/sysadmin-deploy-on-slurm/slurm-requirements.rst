@@ -23,8 +23,8 @@ Deploying the Determined HPC Launcher on Slurm/PBS has the following requirement
    Note: More restrictive Linux distribution dependencies may be required by your choice of
    Slurm/PBS version and container runtime (Singularity/Apptainer®, Podman, or NVIDIA® Enroot).
 
--  Slurm 20.02 or greater (for versions greater than 22.05.2 see :ref:`slurm-known-issues`) or PBS
-   2021.1.2 or greater.
+-  Slurm 20.02 or greater (excluding 22.05.5 through at least 22.05.8 - see
+   :ref:`slurm-known-issues`) or PBS 2021.1.2 or greater.
 
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
