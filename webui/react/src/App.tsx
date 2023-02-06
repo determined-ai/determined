@@ -24,7 +24,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
 import { useAuth } from 'stores/auth';
-import { initInfo, useDeterminedInfo, useFetchDeterminedInfo } from 'stores/determinedInfo';
+import { initInfo, useDeterminedInfo, fetchDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification, useInitApi } from 'utils/dialogApi';
@@ -55,7 +55,6 @@ const AppView: React.FC = () => {
     });
   }, [infoLoadable]);
 
-  const fetchInfo = useFetchDeterminedInfo(canceler);
   const fetchUsers = useFetchUsers(canceler);
   const fetchCurrentUser = useEnsureCurrentUserFetched(canceler);
 
@@ -68,7 +67,7 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   // Poll every 10 minutes
-  usePolling(fetchInfo, { interval: 600000 });
+  usePolling(() => fetchDeterminedInfo(canceler), { interval: 600000 });
 
   useEffect(() => {
     if (isAuthenticated) {
