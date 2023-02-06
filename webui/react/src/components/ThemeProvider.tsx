@@ -45,6 +45,9 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       Select: {
         colorBgContainer: 'transparent',
       },
+      Tree: {
+        colorBgContainer: 'transparent',
+      },
     },
     token: {
       borderRadius: 2,
