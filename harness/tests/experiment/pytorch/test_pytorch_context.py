@@ -5,6 +5,7 @@ import pathlib
 import determined as det
 from typing import Any, Dict
 from _pytest import monkeypatch
+
 from determined import errors, pytorch, tensorboard
 
 
@@ -61,8 +62,7 @@ class TestPyTorchContext:
         assert scaler == self.context._scaler
 
     def test_context_method(
-            self, monkeypatch: monkeypatch.MonkeyPatch,
-            tmp_path: pathlib.Path
+        self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
     ) -> None:
         def mock_get_base_path(dummy: Dict[str, Any]) -> pathlib.Path:
             return tmp_path

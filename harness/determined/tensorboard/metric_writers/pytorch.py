@@ -1,3 +1,6 @@
+import pathlib
+from typing import Union
+
 from determined import tensorboard
 
 # As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools 59.6.0.  The
@@ -31,12 +34,12 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
     """
 
-    def __init__(self, log_dir=None) -> None:
+    def __init__(self, log_dir: Union[pathlib.Path, None] = None) -> None:
 
         if log_dir is None:
             log_dir = tensorboard.get_base_path({})
 
-        super().__init__(log_dir=log_dir)
+        super().__init__(log_dir=log_dir)  # type: ignore
 
         # Point to self for compatability with old functionality
         # Since there are still references to logger.writer.add_scalar() in callback methods
@@ -44,4 +47,4 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
 
     def reset(self) -> None:
         # flush AND close the writer so that the next attempt to write will create a new file
-        self.close()
+        self.close()  # type: ignore
