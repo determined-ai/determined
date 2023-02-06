@@ -108,7 +108,7 @@
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.0",
-    "@vitejs/plugin-react": "^3.1.0",
+    "@vitejs/plugin-react-swc": "^3.1.0",
     "browserslist": "^4.21.4",
     "cheerio": "^1.0.0-rc.12",
     "craco-sass-resources-loader": "^1.1.0",
