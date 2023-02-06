@@ -12,10 +12,6 @@ from determined.core import DistributedContext, TensorboardMode
 logger = logging.getLogger("determined.core")
 
 
-class XAxisOption(enum.Enum):
-    EPOCH = "epoch"
-
-
 class EarlyExitReason(enum.Enum):
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     # This is generally unnecessary; just exit early.
