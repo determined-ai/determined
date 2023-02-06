@@ -1,8 +1,12 @@
 import pytest
 import torch
+import pathlib
 
 import determined as det
-from determined import errors, pytorch
+from typing import Any, Dict
+from _pytest import monkeypatch
+from determined import errors, pytorch, tensorboard
+
 
 
 class TestPyTorchContext:
@@ -55,3 +59,25 @@ class TestPyTorchContext:
         scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
+
+    def test_context_method(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+        def mock_get_base_path(dummy: Dict[str, Any]) -> pathlib.Path:
+            return tmp_path
+
+        monkeypatch.setattr(tensorboard, "get_base_path", mock_get_base_path)
+
+        assert self.context.tbd_writer is None
+        files = list(tmp_path.iterdir())
+        assert len(files) == 0
+
+        with self.context.get_tensorboard_writer() as writer:
+            writer.add_scalar("foo", 7, 0)
+            writer.add_scalar("foo", 8, 1)
+
+        with self.context.get_tensorboard_writer() as writer:
+            writer.add_scalar("foo", 9, 2)
+            writer.add_scalar("foo", 10, 3)
+            writer.add_scalar("foo", 11, 4)
+
+        files = list(tmp_path.iterdir())
+        assert len(files) == 2
