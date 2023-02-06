@@ -35,7 +35,10 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
     """
 
-    def __init__(self, log_dir=tensorboard.get_base_path({})) -> None:
+    def __init__(self, log_dir=None) -> None:
+
+        if log_dir is None:
+            log_dir = tensorboard.get_base_path({})
 
         super().__init__(log_dir=log_dir)
 
