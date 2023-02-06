@@ -134,7 +134,9 @@ func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
+		if status.Code(err) == codes.Unknown {
+			err = apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}()
 
 	getResponse, err := a.GetTensorboard(ctx,
@@ -149,8 +151,7 @@ func (a *apiServer) KillTensorboard(
 	}
 
 	err = command.AuthZProvider.Get().CanTerminateTensorboard(
-		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId),
-		getResponse.Tensorboard.ExperimentIds, getResponse.Tensorboard.TrialIds)
+		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +163,9 @@ func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
+		if status.Code(err) == codes.Unknown {
+			err = apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}()
 
 	getResponse, err := a.GetTensorboard(ctx,
@@ -195,6 +198,7 @@ func (a *apiServer) LaunchTensorboard(
 		err = errors.New("must set experiment or trial ids")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
 	if err != nil {
 		return nil, err

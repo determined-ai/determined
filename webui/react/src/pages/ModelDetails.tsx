@@ -23,6 +23,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
@@ -67,6 +68,7 @@ const ModelDetails: React.FC = () => {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
+  const { canModifyModelVersion } = usePermissions();
 
   const {
     settings,
@@ -195,7 +197,7 @@ const ModelDetails: React.FC = () => {
       <Input
         className={css.descriptionRenderer}
         defaultValue={record.comment ?? ''}
-        disabled={record.model.archived}
+        disabled={record.model.archived || !canModifyModelVersion({ modelVersion: record })}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         title={record.model.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -258,7 +260,14 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription, users]);
+  }, [
+    deleteModelVersion,
+    downloadModel,
+    saveModelVersionTags,
+    saveVersionDescription,
+    users,
+    canModifyModelVersion,
+  ]);
 
   const handleTableChange = useCallback(
     (

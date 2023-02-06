@@ -37,7 +37,7 @@ const Spinner: React.FC<Props> = ({
             <Icon name="spinner" size={size} />
           </div>
         }
-        spinning={spinning}
+        spinning={!!spinning}
         tip={tip}
         {...props}>
         {conditionalRender ? (spinning ? null : props.children) : props.children}

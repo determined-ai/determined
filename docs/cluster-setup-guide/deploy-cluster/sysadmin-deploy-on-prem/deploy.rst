@@ -89,12 +89,6 @@ For production deployments, you'll want to :ref:`use a cluster configuration fil
 
    det deploy local cluster-up --master-config-path <path to master.yaml>
 
-If you want to create more than one agent locally, you can use:
-
-.. code::
-
-   det deploy local cluster-up --agents <number of agents>
-
 Stop a Single-Node Cluster
 ==========================
 

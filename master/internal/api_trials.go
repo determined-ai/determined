@@ -695,13 +695,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
-			if xAxis == apiv1.XAxis_X_AXIS_TIME {
-				metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
-				metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
-			} else {
-				metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
-				metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
-			}
+			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
@@ -713,13 +710,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
-			if xAxis == apiv1.XAxis_X_AXIS_TIME {
-				metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
-				metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
-			} else {
-				metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
-				metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
-			}
+			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
 		}
 	}
 	return metrics, nil

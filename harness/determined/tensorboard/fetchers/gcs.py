@@ -3,7 +3,7 @@ import logging
 import os
 import posixpath
 import urllib
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List, Tuple
 
 from .base import Fetcher
 
@@ -29,7 +29,7 @@ class GCSFetcher(Fetcher):
         for blob in blobs:
             yield (blob.name, blob.updated)
 
-    def fetch_new(self) -> int:
+    def fetch_new(self, new_file_callback: Callable = lambda: None) -> int:
         new_files = []
         bucket = self.client.bucket(self.bucket_name)
 
@@ -55,5 +55,6 @@ class GCSFetcher(Fetcher):
             bucket.blob(filepath).download_to_filename(local_path)
 
             logger.debug(f"Downloaded file to local: {local_path}")
+            new_file_callback()
 
         return len(new_files)

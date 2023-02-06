@@ -6,7 +6,7 @@ import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { UserRolesService } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
 import { useCurrentUser } from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
@@ -31,7 +31,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
   const currentUser = useCurrentUser();
-  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
+  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   usePolling(fetchWorkspaces);
 
@@ -42,10 +42,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const rbacEnabled = useFeature().isOn('rbac'),
+    mockAllPermission = useFeature().isOn('mock_permissions_all'),
+    mockReadPermission = useFeature().isOn('mock_permissions_read');
   usePolling(
     () => {
-      if (rbacEnabled && currentUser !== NotLoaded) {
+      if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
         fetchMyRoles();
       }
     },

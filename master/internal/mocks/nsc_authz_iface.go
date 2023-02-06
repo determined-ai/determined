@@ -138,13 +138,13 @@ func (_m *NSCAuthZ) CanTerminateNSC(ctx context.Context, curUser model.User, wor
 	return r0
 }
 
-// CanTerminateTensorboard provides a mock function with given fields: ctx, curUser, workspaceID, experimentIDs, trialIDs
-func (_m *NSCAuthZ) CanTerminateTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, experimentIDs []int32, trialIDs []int32) error {
-	ret := _m.Called(ctx, curUser, workspaceID, experimentIDs, trialIDs)
+// CanTerminateTensorboard provides a mock function with given fields: ctx, curUser, workspaceID
+func (_m *NSCAuthZ) CanTerminateTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) error {
+	ret := _m.Called(ctx, curUser, workspaceID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID, []int32, []int32) error); ok {
-		r0 = rf(ctx, curUser, workspaceID, experimentIDs, trialIDs)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) error); ok {
+		r0 = rf(ctx, curUser, workspaceID)
 	} else {
 		r0 = ret.Error(0)
 	}

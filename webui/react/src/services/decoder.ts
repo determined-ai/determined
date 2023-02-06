@@ -266,6 +266,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     notes: model.notes,
     numVersions: model.numVersions,
     userId: model.userId ?? 0,
+    workspaceId: model.workspaceId,
   };
 };
 
@@ -623,6 +624,10 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
       value: pt.value,
     })),
     name: m.name,
+    time: m.time?.map((pt) => ({
+      time: pt.time,
+      value: pt.value,
+    })),
     type:
       m.type === Sdk.V1MetricType.TRAINING
         ? types.MetricType.Training

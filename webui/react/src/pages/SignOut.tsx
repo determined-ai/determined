@@ -8,7 +8,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { UserRolesService } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
 import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -24,8 +24,8 @@ const SignOut: React.FC = () => {
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
-      UserRolesService.resetUserAssignmentsAndRoles();
-      updateCurrentUser(-1);
+      PermissionsStore.resetMyAssignmentsAndRoles();
+      updateCurrentUser(null);
       try {
         await logout({});
       } catch (e) {

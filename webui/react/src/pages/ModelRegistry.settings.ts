@@ -49,86 +49,89 @@ export interface Settings extends InteractiveTableSettings {
   users?: string[];
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/models',
-  settings: {
-    archived: {
-      defaultValue: undefined,
-      storageKey: 'archived',
-      type: union([undefinedType, boolean]),
-    },
-    columns: {
-      defaultValue: DEFAULT_COLUMNS,
-      skipUrlEncoding: true,
-      storageKey: 'columns',
-      type: array(
-        union([
-          literal('action'),
-          literal('archived'),
-          literal('description'),
-          literal('lastUpdatedTime'),
-          literal('name'),
-          literal('tags'),
-          literal('numVersions'),
-          literal('user'),
+const config = (id: string): SettingsConfig<Settings> => {
+  const storagePath = `model-registry-${id}`;
+
+  return {
+    settings: {
+      archived: {
+        defaultValue: undefined,
+        storageKey: 'archived',
+        type: union([undefinedType, boolean]),
+      },
+      columns: {
+        defaultValue: DEFAULT_COLUMNS,
+        skipUrlEncoding: true,
+        storageKey: 'columns',
+        type: array(
+          union([
+            literal('action'),
+            literal('archived'),
+            literal('description'),
+            literal('lastUpdatedTime'),
+            literal('name'),
+            literal('tags'),
+            literal('numVersions'),
+            literal('user'),
+          ]),
+        ),
+      },
+      columnWidths: {
+        defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+        skipUrlEncoding: true,
+        storageKey: 'columnWidths',
+        type: array(number),
+      },
+      description: {
+        defaultValue: undefined,
+        storageKey: 'description',
+        type: union([undefinedType, string]),
+      },
+      name: {
+        defaultValue: undefined,
+        storageKey: 'name',
+        type: union([undefinedType, string]),
+      },
+      sortDesc: {
+        defaultValue: true,
+        storageKey: 'sortDesc',
+        type: boolean,
+      },
+      sortKey: {
+        defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
+        storageKey: 'sortKey',
+        type: union([
+          literal(V1GetModelsRequestSortBy.CREATIONTIME),
+          literal(V1GetModelsRequestSortBy.UNSPECIFIED),
+          literal(V1GetModelsRequestSortBy.LASTUPDATEDTIME),
+          literal(V1GetModelsRequestSortBy.NAME),
+          literal(V1GetModelsRequestSortBy.NUMVERSIONS),
+          literal(V1GetModelsRequestSortBy.UNSPECIFIED),
         ]),
-      ),
+      },
+      tableLimit: {
+        defaultValue: MINIMUM_PAGE_SIZE,
+        storageKey: 'tableLimit',
+        type: number,
+      },
+      tableOffset: {
+        defaultValue: 0,
+        storageKey: 'tableOffset',
+        type: number,
+      },
+      tags: {
+        defaultValue: undefined,
+        storageKey: 'tags',
+        type: union([undefinedType, array(string)]),
+      },
+      users: {
+        defaultValue: undefined,
+        storageKey: 'users',
+        type: union([undefinedType, array(string)]),
+      },
     },
-    columnWidths: {
-      defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      skipUrlEncoding: true,
-      storageKey: 'columnWidths',
-      type: array(number),
-    },
-    description: {
-      defaultValue: undefined,
-      storageKey: 'description',
-      type: union([undefinedType, string]),
-    },
-    name: {
-      defaultValue: undefined,
-      storageKey: 'name',
-      type: union([undefinedType, string]),
-    },
-    sortDesc: {
-      defaultValue: true,
-      storageKey: 'sortDesc',
-      type: boolean,
-    },
-    sortKey: {
-      defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
-      storageKey: 'sortKey',
-      type: union([
-        literal(V1GetModelsRequestSortBy.CREATIONTIME),
-        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
-        literal(V1GetModelsRequestSortBy.LASTUPDATEDTIME),
-        literal(V1GetModelsRequestSortBy.NAME),
-        literal(V1GetModelsRequestSortBy.NUMVERSIONS),
-        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
-      ]),
-    },
-    tableLimit: {
-      defaultValue: MINIMUM_PAGE_SIZE,
-      storageKey: 'tableLimit',
-      type: number,
-    },
-    tableOffset: {
-      defaultValue: 0,
-      storageKey: 'tableOffset',
-      type: number,
-    },
-    tags: {
-      defaultValue: undefined,
-      storageKey: 'tags',
-      type: union([undefinedType, array(string)]),
-    },
-    users: {
-      defaultValue: undefined,
-      storageKey: 'users',
-      type: union([undefinedType, array(string)]),
-    },
-  },
-  storagePath: 'model-registry',
+    storagePath,
+  };
 };
 
 export default config;

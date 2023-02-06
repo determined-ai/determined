@@ -176,7 +176,7 @@ export const useUsers = (cfg?: FetchUsersConfig): Loadable<Readonly<UserPage>> =
   return Loaded(userPage);
 };
 
-export const useUpdateCurrentUser = (): ((id: number) => void) => {
+export const useUpdateCurrentUser = (): ((id: number | null) => void) => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -185,8 +185,8 @@ export const useUpdateCurrentUser = (): ((id: number) => void) => {
 
   const { updateCurrentUser } = context;
   const callback = useCallback(
-    (id: number) => {
-      if (id <= 0) {
+    (id: number | null) => {
+      if (id === null) {
         updateCurrentUser(() => NotLoaded);
       } else {
         updateCurrentUser(() => Loaded(id));

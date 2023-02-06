@@ -15,7 +15,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
-import { UserRolesService } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
 import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 
@@ -51,7 +51,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
+  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {

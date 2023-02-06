@@ -27,6 +27,7 @@ import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
+import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -39,6 +40,7 @@ type Params = {
 
 export const WorkspaceDetailsTab = {
   Members: 'members',
+  ModelRegistry: 'modelRegistry',
   Projects: 'projects',
   Tasks: 'tasks',
 } as const;
@@ -76,7 +78,7 @@ const WorkspaceDetails: React.FC = () => {
   const workspaceId = workspaceID ?? '';
   const id = parseInt(workspaceId);
   const navigate = useNavigate();
-  const { canViewWorkspace } = usePermissions();
+  const { canViewWorkspace, canViewModelRegistry } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -194,9 +196,18 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
+    if (canViewModelRegistry) {
+      items.push({
+        children: <ModelRegistry workspace={workspace} />,
+        key: WorkspaceDetailsTab.ModelRegistry,
+        label: 'Model Registry',
+      });
+    }
+
     return items;
   }, [
     addableUsersAndGroups,
+    canViewModelRegistry,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,

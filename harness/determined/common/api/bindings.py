@@ -6120,7 +6120,6 @@ class v1Model:
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     notes: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -6134,10 +6133,10 @@ class v1Model:
         numVersions: int,
         userId: int,
         username: str,
+        workspaceId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.archived = archived
         self.creationTime = creationTime
@@ -6148,14 +6147,13 @@ class v1Model:
         self.numVersions = numVersions
         self.userId = userId
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(notes, Unset):
             self.notes = notes
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Model":
@@ -6169,6 +6167,7 @@ class v1Model:
             "numVersions": obj["numVersions"],
             "userId": obj["userId"],
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
@@ -6176,8 +6175,6 @@ class v1Model:
             kwargs["labels"] = obj["labels"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -6191,6 +6188,7 @@ class v1Model:
             "numVersions": self.numVersions,
             "userId": self.userId,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
@@ -6198,8 +6196,6 @@ class v1Model:
             out["labels"] = self.labels
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
         return out
 
 class v1ModelVersion:
@@ -6697,7 +6693,7 @@ class v1PatchModel:
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
 
     def __init__(
@@ -6708,7 +6704,7 @@ class v1PatchModel:
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
