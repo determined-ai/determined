@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => ({
       include: [/node_modules/, /notebook/],
     },
     outDir: 'build',
-    sourcemap: true,
+    sourcemap: mode === 'production',
   },
   css: {
     modules: {
