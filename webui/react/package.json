@@ -9,7 +9,7 @@
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "vite serve",
-    "build": "tsc; NODE_OPTIONS=--max-old-space-size=6144 vite build --mode=${DET_NODE_ENV:-production}",
+    "build": "tsc; vite build --mode=${DET_NODE_ENV:-production}",
     "prettier": "prettier",
     "eslint": "eslint",
     "stylelint": "stylelint --config .stylelintrc.js",
