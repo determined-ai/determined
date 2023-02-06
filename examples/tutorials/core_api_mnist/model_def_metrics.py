@@ -9,9 +9,8 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
-# NEW: imports
+# NEW: import Determined
 import determined as det
-import pathlib
 
 
 class Net(nn.Module):
