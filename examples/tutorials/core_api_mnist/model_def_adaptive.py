@@ -73,7 +73,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
                 break
 
 
-# NEW: Modified function header to include op for reporting training progress to master
+# NEW: Modified function header to include op for reporting training progress to master and return test loss
 def test(args, model, device, test_loader, core_context, steps_completed, op):
 
     model.eval()
@@ -99,8 +99,6 @@ def test(args, model, device, test_loader, core_context, steps_completed, op):
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss},
     )
-
-    return test_loss
 
 
 def load_state(checkpoint_directory):
@@ -156,7 +154,7 @@ def main(core_context):
     parser.add_argument(
         "--log-interval",
         type=int,
-        default=10,
+        default=100,
         metavar="N",
         help="how many batches to wait before logging training status",
     )
@@ -205,6 +203,7 @@ def main(core_context):
     # NEW: Pass relevant hparams to model and optimizer
     model = Net(hparams).to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
+
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
     # NEW: Iterate through the core_context.searcher.operations() to decide how long to train for.
@@ -220,7 +219,7 @@ def main(core_context):
 
             # NEW: Pass op into train and test functions
             train(args, model, device, train_loader, optimizer, core_context, epoch, op)
-            test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
+            test(args, model, device, test_loader, core_context, steps_completed, op)
 
             scheduler.step()
             if args.save_model:

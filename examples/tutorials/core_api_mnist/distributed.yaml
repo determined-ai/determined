@@ -25,12 +25,13 @@ hyperparameters:
     minval: .2
     maxval: .8
 max_restarts: 0
+records_per_epoch: 60000
 searcher:
   name: adaptive_asha
   metric: test_loss
   smaller_is_better: true
-  max_trials: 16
+  max_trials: 500
   max_length:
-    batches: 938 #60,000 training images with batch size 64
+    epochs: 20
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 4

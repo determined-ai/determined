@@ -147,7 +147,7 @@ def main(core_context):
     parser.add_argument(
         "--log-interval",
         type=int,
-        default=10,
+        default=100,
         metavar="N",
         help="how many batches to wait before logging training status",
     )
