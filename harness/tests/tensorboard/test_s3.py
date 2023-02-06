@@ -46,7 +46,13 @@ def test_s3_lifecycle(monkeypatch: monkeypatch.MonkeyPatch, prefix: Optional[str
     env = test_util.get_dummy_env()
     conf = copy.deepcopy(default_conf)
     conf["prefix"] = prefix
-    manager = tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
+    manager = tensorboard.build(
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        conf,
+        async_upload=False,
+    )
     assert isinstance(manager, tensorboard.S3TensorboardManager)
 
     tfevents_path = "uuid-123/tensorboard/experiment/1/trial/1/events.out.tfevents.example"
@@ -75,7 +81,11 @@ def test_s3_faulty_lifecycle(monkeypatch: monkeypatch.MonkeyPatch) -> None:
     monkeypatch.setattr("boto3.client", s3.s3_faulty_client)
     env = test_util.get_dummy_env()
     manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, default_conf
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        default_conf,
+        async_upload=False,
     )
 
     with pytest.raises(exceptions.S3UploadFailedError):
