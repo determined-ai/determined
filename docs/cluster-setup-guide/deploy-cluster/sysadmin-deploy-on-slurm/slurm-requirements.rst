@@ -54,6 +54,30 @@ The launcher has the following additional requirements on the installation node:
 -  Access to the Slurm or PBS command line interface for the cluster
 -  Access to a cluster-wide file system with a consistent path names across the cluster
 
+.. _proxy-config-requirements:
+
+**********************************
+ Proxy Configuration Requirements
+**********************************
+
+If internet connectivity requires a use of a proxy, verify the following requirements:
+
+-  Ensure that the proxy variables are defined in `/etc/environment` (or `/etc/sysconfig/proxy` on
+   SLES).
+
+-  Ensure that the `no_proxy` setting covers the login and admin nodes. If these nodes may be
+   referenced by short names known only within the cluster, they must explicitly be included in the
+   `no_proxy` setting.
+
+-  If your experiment code communicates between compute nodes with a protocol that honors proxy
+   environment variables, you should additionally include the names of all compute nodes in the
+   `no_proxy` variable setting.
+
+The HPC launcher imports `http_proxy`, `https_proxy`, `ftp_proxy`, `rsync_proxy`, `gopher_proxy`,
+`socks_proxy`, `socks5_server`, and `no_proxy` from `/etc/environment` and `/etc/sysconfig/proxy`.
+These environment variables are automatically exported in lowercase and uppercase into any launched
+jobs and containers.
+
 .. _slurm-config-requirements:
 
 ********************
