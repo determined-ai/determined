@@ -1,3 +1,5 @@
+# Participate in the hyperparameter search offered by the Determined master
+
 from __future__ import print_function
 import argparse
 import torch

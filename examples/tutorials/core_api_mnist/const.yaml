@@ -1,4 +1,5 @@
 name: coreapi_mnist_tutorial
+description: A bare-bones experiment configuration file to run the model_def.py script on a Determined cluster.
 entrypoint:  python3 model_def.py 
 max_restarts: 0
 searcher:

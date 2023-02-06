@@ -1,4 +1,4 @@
-# copy of https://github.com/pytorch/examples/blob/main/mnist/main.py renamed for consistency
+# The starting script. This script is the same as [main.py](https://github.com/pytorch/examples/blob/main/mnist/main.py) without the Determined integrations.
 
 from __future__ import print_function
 import argparse
