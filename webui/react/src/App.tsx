@@ -24,7 +24,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
 import { useAuth } from 'stores/auth';
-import { initInfo, useDeterminedInfo, fetchDeterminedInfo } from 'stores/determinedInfo';
+import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification, useInitApi } from 'utils/dialogApi';
