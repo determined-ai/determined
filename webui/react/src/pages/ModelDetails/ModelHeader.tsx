@@ -130,13 +130,18 @@ const ModelHeader: React.FC<Props> = ({
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+            <Link
+              path={
+                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+              }>
               {workspace.name}
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>Model Registry</Link>
+            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+              Model Registry
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>

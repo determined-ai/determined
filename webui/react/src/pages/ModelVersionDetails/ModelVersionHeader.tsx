@@ -198,16 +198,17 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
           </Breadcrumb.Item>
           <Breadcrumb.Item>
             <Link
-              path={paths.workspaceDetails(
-                modelVersion.model.workspaceId,
-                WorkspaceDetailsTab.ModelRegistry,
-              )}>
+              path={
+                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+              }>
               {workspace.name}
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>Model Registry</Link>
+            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+              Model Registry
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
