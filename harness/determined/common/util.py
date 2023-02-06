@@ -198,5 +198,8 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     # [1] https://tc39.es/ecma262/#sec-date-time-string-format
     # [2] https://bugs.python.org/issue35829
     if ts.endswith("Z"):
-        ts = ts[:-1] + "+00:00"
+        if "." in ts:
+            ts = ts[: ts.index(".")] + "+00:00"
+        else:
+            ts = ts[:-1] + "+00:00"
     return datetime.datetime.fromisoformat(ts)
