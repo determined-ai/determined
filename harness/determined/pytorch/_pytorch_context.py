@@ -9,7 +9,6 @@ import torch.nn as nn
 import determined as det
 from determined import profiler, pytorch, util
 from determined.horovod import hvd
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 # Apex is included only for GPU trials.
 try:
@@ -127,7 +126,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._stop_requested = False
 
-        self.tbd_writer = TorchWriter(self.get_tensorboard_path())
+        self.tbd_writer = None
 
     def get_global_batch_size(self) -> int:
         """
@@ -911,7 +910,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
 
-<<<<<<< HEAD
     def get_trial_seed(self) -> int:
         if self._trial_seed is None:
             raise det.errors.InternalException("Trial seed not set.")
@@ -954,6 +952,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             writer.add_scalar(value, idx)
             writer.add_images(images, idx)
         """
+
+        if self.tbd_writer is None:
+            from determined.tensorboard.metric_writers.pytorch import TorchWriter
+            self.tbd_writer = TorchWriter()
+
         try:
             yield self.tbd_writer
         finally:
