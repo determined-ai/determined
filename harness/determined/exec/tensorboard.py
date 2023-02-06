@@ -19,7 +19,7 @@ TENSORBOARD_TRIGGER_READY_MSG = "TensorBoard contains metrics"
 TRIGGER_WAITING_MSG = "TensorBoard waits on metrics"
 TICK_INTERVAL = 1
 MAX_WAIT_TIME = 600
-TB_RESPONSE_WAIT_TIME = 30
+TB_RESPONSE_WAIT_TIME = 300
 
 
 logger = logging.getLogger("determined.exec.tensorboard")
