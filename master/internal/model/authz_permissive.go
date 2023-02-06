@@ -12,7 +12,8 @@ type ModelAuthZPermissive struct{}
 
 // CanGetModels always returns true and a nil error.
 func (a *ModelAuthZPermissive) CanGetModels(ctx context.Context, curUser model.User,
-	workspaceID int32) (canGetModel bool, serverError error) {
+	workspaceID int32,
+) (canGetModel bool, serverError error) {
 	_, _ = (&ModelAuthZRBAC{}).CanGetModels(ctx, curUser, workspaceID)
 	return (&ModelAuthZBasic{}).CanGetModels(ctx, curUser, workspaceID)
 }

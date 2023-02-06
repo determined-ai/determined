@@ -282,7 +282,6 @@ func (a *NSCAuthZRBAC) CanGetTensorboard(
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZRBAC) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-	experimentIDs []int32, trialIDs []int32,
 ) error {
 	return a.CanTerminateNSC(ctx, curUser, workspaceID)
 }
