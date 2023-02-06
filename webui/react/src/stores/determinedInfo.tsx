@@ -33,7 +33,6 @@ export const useFetchDeterminedInfo = (canceler: AbortController) => {
       handleError(e);
     }
   }, [canceler]);
-
 };
 
 export const useDeterminedInfo = () => {
