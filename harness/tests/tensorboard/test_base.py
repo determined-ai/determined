@@ -18,6 +18,7 @@ def test_getting_manager_instance(tmp_path: pathlib.Path) -> None:
         env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
     )
     assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
+    manager.close()
 
 
 def test_setting_optional_variable(tmp_path: pathlib.Path) -> None:
@@ -28,10 +29,14 @@ def test_setting_optional_variable(tmp_path: pathlib.Path) -> None:
     }
     env = test_util.get_dummy_env()
     manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        checkpoint_config,
     )
     assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
     assert manager.base_path == pathlib.Path("test_value/tensorboard--0")
+    manager.close()
 
 
 def test_build_with_container_path(tmp_path: pathlib.Path) -> None:
@@ -50,6 +55,7 @@ def test_build_with_container_path(tmp_path: pathlib.Path) -> None:
     )
     assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
     assert manager.storage_path == tmp_path.joinpath("test_storage_path")
+    manager.close()
 
 
 def test_setting_storage_path(tmp_path: pathlib.Path) -> None:
@@ -60,10 +66,14 @@ def test_setting_storage_path(tmp_path: pathlib.Path) -> None:
     }
     env = test_util.get_dummy_env()
     manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        checkpoint_config,
     )
     assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
     assert manager.storage_path == STORAGE_PATH
+    manager.close()
 
 
 def test_unknown_type() -> None:
@@ -74,14 +84,22 @@ def test_unknown_type() -> None:
     with pytest.raises(TypeError, match="Unknown storage type: unknown"):
         env = test_util.get_dummy_env()
         tensorboard.build(
-            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
+            env.det_cluster_id,
+            env.det_experiment_id,
+            env.det_trial_id,
+            checkpoint_config,
         )
 
 
 def test_missing_type() -> None:
     with pytest.raises(TypeError, match="Missing 'type' parameter"):
         env = test_util.get_dummy_env()
-        tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, {})
+        tensorboard.build(
+            env.det_cluster_id,
+            env.det_experiment_id,
+            env.det_trial_id,
+            {},
+        )
 
 
 def test_illegal_type() -> None:
@@ -89,7 +107,10 @@ def test_illegal_type() -> None:
     with pytest.raises(TypeError, match="must be a string"):
         env = test_util.get_dummy_env()
         tensorboard.build(
-            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
+            env.det_cluster_id,
+            env.det_experiment_id,
+            env.det_trial_id,
+            checkpoint_config,
         )
 
 
