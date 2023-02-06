@@ -749,7 +749,7 @@ commands:
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: |
@@ -1879,6 +1879,88 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
+  danh-gcp-test:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      gke-version:
+        type: string
+        default: <<pipeline.parameters.gke-version>>
+      machine-type:
+        type: string
+        default: "n1-standard-8"
+      num-machines:
+        type: integer
+        default: 1
+      gpu-type:
+        type: string
+        default: "nvidia-tesla-k80"
+      gpus-per-machine:
+        type: integer
+        default: 1
+      slot-type:
+        type: string
+        default: gpu
+      slot-resource-requests-cpu:
+        type: integer
+        default: 0
+      region:
+        type: string
+        default: "us-west1"
+      node-locations:
+        type: string
+        default: "us-west1-b"
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+      environment-gpu-enabled:
+        type: string
+        default: "1"
+      environment-image:
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
+        type: string
+      accel-node-taints:
+        type: string
+        default: ""
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - set-slack-user-id
+      - setup-gke-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          labels: test-mark=<<parameters.mark>>
+          det-version: ${CIRCLE_SHA1}
+          gke-version: <<parameters.gke-version>>
+          machine-type: <<parameters.machine-type>>
+          num-machines: <<parameters.num-machines>>
+          gpu-type: <<parameters.gpu-type>>
+          gpus-per-machine: <<parameters.gpus-per-machine>>
+          slot-type: <<parameters.slot-type>>
+          slot-resource-requests-cpu: <<parameters.slot-resource-requests-cpu>>
+          region: <<parameters.region>>
+          node-locations: <<parameters.node-locations>>
+          environment-image: <<parameters.environment-image>>
+          accel-node-taints: <<parameters.accel-node-taints>>
+      - set-google-application-credentials
+      - terminate-gke-cluster:
+          cluster-id: ${CLUSTER_ID}
+          region: <<parameters.region>>
+
+
   test-e2e-gke:
     parameters:
       cluster-id-prefix:
@@ -2519,6 +2601,15 @@ workflows:
             - build-react
             - build-docs
           filters: *any-upstream
+
+      - danh-gcp-test:
+          name: danh-gcp-test
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-dev
+          cluster-id-prefix: "danh-test"
+          mark: "foo"
 
       # Distributed tests
       - request-e2e-cpu-distributed:
