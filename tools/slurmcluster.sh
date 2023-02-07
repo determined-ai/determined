@@ -39,6 +39,7 @@ DEBUGLEVEL=debug
 SKIP_DEVCLUSTER_STAGE=0
 # Variables that can be set before invoking the script (to change the default)
 DEFAULTIMAGE=${DEFAULTIMAGE-}
+SLOTTYPE=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -82,6 +83,10 @@ while [[ $# -gt 0 ]]; do
             DEFAULTIMAGE=$2
             shift 2
             ;;
+        --cpu)
+            SLOTTYPE=cpu
+            shift
+            ;;
         -s)
             SKIP_DEVCLUSTER_STAGE=1
             shift
@@ -97,6 +102,7 @@ while [[ $# -gt 0 ]]; do
             echo "  -e     Use enroot as a container host (otherwise singlarity)."
             echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
             echo "  -c     Use the specified {image} as the default image.  Useful with -d and for enroot."
+            echo "  --cpu  Force slot_type to cpu instead of the default (cuda)."
             echo "  -u     Use provided {username} to lookup the per-user port number."
             echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
             echo "  -s     Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
@@ -398,6 +404,10 @@ fi
 
 if [[ -n $DEFAULTIMAGE ]]; then
     OPT_DEFAULTIMAGE=$DEFAULTIMAGE
+fi
+
+if [[ -n $SLOTTYPE ]]; then
+    OPT_SLOTTYPE=$SLOTTYPE
 fi
 
 if [[ -n $DEVLAUNCHER ]]; then
