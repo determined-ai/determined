@@ -96,7 +96,7 @@ def do_request(
     if cert is None:
         cert = certs.cli_cert
 
-    # set the token and username based on a perset precedence order.
+    # set the token and username based on a preset precedence order.
     username = ""
     if auth is not None:
         if authenticated:
@@ -108,7 +108,7 @@ def do_request(
         if authenticated:
             h["Authorization"] = "Bearer {}".format(authentication.cli_auth.get_session_token())
         username = authentication.cli_auth.get_session_user()
-    elif h.get("Grpc-Metadata-x-allocation-token") is None:
+    elif authenticated and h.get("Grpc-Metadata-x-allocation-token") is None:
         allocation_token = authentication.get_allocation_token()
         if allocation_token:
             h["Grpc-Metadata-x-allocation-token"] = "Bearer {}".format(allocation_token)
