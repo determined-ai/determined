@@ -146,6 +146,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
+  const canAssignRolesFlag: boolean = canAssignRoles({});
   const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -154,7 +155,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   const checkAuth = useAuthCheck();
 
   const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined && rbacEnabled && canAssignRoles({})) {
+    if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
       try {
         const roles = await getUserRoles({ userId: user.id });
         setUserRoles(roles);
@@ -162,7 +163,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
-  }, [user, canAssignRoles, rbacEnabled]);
+  }, [user, canAssignRolesFlag, rbacEnabled]);
 
   useEffect(() => {
     fetchUserRoles();

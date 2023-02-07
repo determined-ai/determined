@@ -40,6 +40,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { useUsers } from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -58,6 +59,7 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +70,10 @@ const ModelDetails: React.FC = () => {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const workspaces = Loadable.getOrElse([], useWorkspaces());
+  const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
+
   const { canModifyModelVersion } = usePermissions();
 
   const {
@@ -107,6 +113,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -439,7 +446,7 @@ const ModelDetails: React.FC = () => {
     if (isNotFound(pageError)) return <PageNotFound />;
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model) {
+  } else if (!model || !workspace) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
@@ -450,6 +457,7 @@ const ModelDetails: React.FC = () => {
       headerComponent={
         <ModelHeader
           model={model.model}
+          workspace={workspace}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onSwitchArchive={switchArchive}
