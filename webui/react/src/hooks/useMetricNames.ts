@@ -30,8 +30,12 @@ const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => vo
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || []).filter((metric) => !xAxisMetrics.includes(metric)).forEach((metric) => (trainingMetricsMap[metric] = true));
-        (event.validationMetrics || []).filter((metric) => !xAxisMetrics.includes(metric)).forEach((metric) => (validationMetricsMap[metric] = true));
+        (event.trainingMetrics || [])
+          .filter((metric) => !xAxisMetrics.includes(metric))
+          .forEach((metric) => (trainingMetricsMap[metric] = true));
+        (event.validationMetrics || [])
+          .filter((metric) => !xAxisMetrics.includes(metric))
+          .forEach((metric) => (validationMetricsMap[metric] = true));
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [

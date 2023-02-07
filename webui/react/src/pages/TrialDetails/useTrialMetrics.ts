@@ -20,7 +20,6 @@ export interface TrialMetrics {
 }
 
 const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
-
   const rawData: [number, number][] = [];
   const rawTime: [number, number][] = [];
   const rawEpochs: [number, number][] = [];
