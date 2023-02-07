@@ -36,6 +36,7 @@ class DetCallback(TrainerCallback):
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
         self._check_searcher_compatibility(args)
+        self.updating_searcher = False
 
     def on_log(
         self,
@@ -45,34 +46,42 @@ class DetCallback(TrainerCallback):
         logs=None,
         **kwargs,
     ):
-        if state.is_world_process_zero:
-            metrics, metric_type = self._get_metrics(logs)
-            if metric_type == TRAIN:
-                # Prevents reporting metrics for the same step twice. This happens after
-                # training is completed and average training metrics are reported with
-                # the same step as the in-progress training metrics.
-                if self.last_metrics["train_step"] != state.global_step:
+        metrics, metric_type = self._get_metrics(logs)
+        if metric_type == TRAIN:
+            # Prevents reporting metrics for the same step twice. This happens after
+            # training is completed and average training metrics are reported with
+            # the same step as the in-progress training metrics.
+            if self.last_metrics["train_step"] != state.global_step:
+                if state.is_world_process_zero:
                     self.core_context.train.report_training_metrics(
                         steps_completed=state.global_step, metrics=metrics
                     )
-                    metrics["train_step"] = state.global_step
+                metrics["train_step"] = state.global_step
 
-            elif metric_type == EVAL:
-                # Prevents reporting metrics for the same step twice. This happens when
-                # after-training evaluation is completed, and it is reported with the same
-                # step as the last during-training evaluation.
-                if self.last_metrics["eval_step"] != state.global_step:
+        elif metric_type == EVAL:
+            # Prevents reporting metrics for the same step twice. This happens when
+            # after-training evaluation is completed, and it is reported with the same
+            # step as the last during-training evaluation.
+            if self.last_metrics["eval_step"] != state.global_step:
+                if state.is_world_process_zero:
                     self.core_context.train.report_validation_metrics(
                         steps_completed=state.global_step, metrics=metrics
                     )
-                    metrics["eval_step"] = state.global_step
-                    self.last_metrics.update(metrics)
-            else:
-                logging.warning(f"Metrics not reported: metric type = {metric_type}.")
+                metrics["eval_step"] = state.global_step
+        else:
+            logging.warning(f"Metrics not reported: metric type = {metric_type}.")
 
-            self.last_metrics.update(metrics)
+        self.last_metrics.update(metrics)
 
-        if self.core_context.preempt.should_preempt():
+        # Update searcher state after collecting the metrics.
+        if self.updating_searcher is True:
+            self._update_searcher(state, control)
+
+        # If searcher is NOT being updated and preemption signal is received
+        # (e.g., by pausing experiment in the WebUI), notify Trainer (via TrainerControl)
+        # to save the checkpoint. After the checkpoint is uploaded to Determined storage,
+        # the process is preempted (see on_save() method for details).
+        if self.updating_searcher is False and self.core_context.preempt.should_preempt():
             control.should_save = True
 
     def _get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
@@ -161,6 +170,10 @@ class DetCallback(TrainerCallback):
                 self.current_op.report_progress(state.global_step)
 
             if state.global_step >= self.current_op.length:
+                logging.info(
+                    f"Max length of {self.current_op.length} steps reached for current "
+                    f"searcher operation. Updating searcher."
+                )
                 self._update_searcher(state, control)
 
     def on_epoch_end(
@@ -176,9 +189,17 @@ class DetCallback(TrainerCallback):
                 self.current_op.report_progress(state.epoch)
 
             if round(state.epoch) >= self.current_op.length:
+                logging.info(
+                    f"Max length of {round(state.epoch)} epochs reached for current "
+                    f"searcher operation. Updating searcher."
+                )
                 self._update_searcher(state, control)
 
     def _update_searcher(self, state: TrainerState, control: TrainerControl) -> None:
+        if self._metrics_reported(state.global_step) is False:
+            self._wait_for_metrics(control)
+            return
+
         if state.is_world_process_zero:
             if self.last_metrics is None:
                 logging.warning(
@@ -187,21 +208,40 @@ class DetCallback(TrainerCallback):
                     f"evaluation metrics (--evaluation_strategy and --eval_steps). "
                     f"Reporting trainer_state.best_metric to the searcher."
                 )
-                self.current_op.report_completed(state.best_metric)
+                searcher_metric = state.best_metric
             elif self.searcher_metric not in self.last_metrics:
                 logging.warning(
                     f"Searcher metric {self.searcher_metric} from the yaml config file does not match any "
                     f"of the recorded metrics in {self.last_metrics}. "
                     f"Reporting trainer_state.best_metric to the searcher."
                 )
-                self.current_op.report_completed(state.best_metric)
+                searcher_metric = state.best_metric
             else:
-                self.current_op.report_completed(self.last_metrics[self.searcher_metric])
+                searcher_metric = self.last_metrics[self.searcher_metric]
+
+            logging.info(f"Metric reported to searcher: {searcher_metric}")
+            self.current_op.report_completed(searcher_metric)
+            self.updating_searcher = False
 
         try:
             self.current_op = next(self.searcher_ops)
         except StopIteration:
             control.should_training_stop = True
+
+    def _metrics_reported(self, step: int) -> bool:
+        return self.last_metrics["eval_step"] == step and self.last_metrics["train_step"] == step
+
+    def _wait_for_metrics(self, control: TrainerControl) -> None:
+        # Notify Trainer (via TrainerControl) to:
+        # (1) log current training metrics,
+        # (2) evaluate the model and log evaluation metrics,
+        # (3) save the checkpoint.
+        #  updating_searcher is as an internal flag that indicates we are
+        #  in the process of updating the searcher with the current metrics.
+        control.should_log = True
+        control.should_evaluate = True
+        control.should_save = True
+        self.updating_searcher = True
 
     def _check_searcher_compatibility(self, args: TrainingArguments) -> None:
         if self.searcher_unit == "batches":
