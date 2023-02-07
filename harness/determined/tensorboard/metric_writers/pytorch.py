@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import pathlib
 from typing import Union
 
@@ -39,12 +40,15 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
         if log_dir is None:
             log_dir = tensorboard.get_base_path({})
 
-        super().__init__(log_dir=log_dir)  # type: ignore
+        super().__init__(log_dir=log_dir)
 
         # Point to self for compatability with old functionality
         # Since there are still references to logger.writer.add_scalar() in callback methods
         self.writer = self
 
+    def add_scalar(self, *args) -> None:
+        SummaryWriter.add_scalar(self, *args)
+
     def reset(self) -> None:
         # flush AND close the writer so that the next attempt to write will create a new file
-        self.close()  # type: ignore
+        self.close()
