@@ -1,20 +1,3 @@
-.emptyBase {
-  margin-inline: auto;
-  margin-top: 150px;
-  max-width: 350px;
-  text-align: center;
-
-  .icon {
-    padding: 16px;
-  }
-  h4 {
-    margin-bottom: 8;
-  }
-  .description {
-    color: var(--theme-colors-monochrome-9);
-    font-size: 14px;
-  }
-}
 .tagsRenderer {
   :global([aria-label='new-tag-trigger']) {
     display: none !important;

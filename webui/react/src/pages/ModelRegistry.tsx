@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -609,18 +610,18 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
       title="Model Registry">
       {models.length === 0 && !isLoading && filterCount === 0 ? (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="model" size="mega" />
-          </div>
-          <h4>No Models Registered</h4>
-          <p className={css.description}>
-            Track important checkpoints and versions from your experiments.&nbsp;
-            <Link external path={paths.docs('/post-training/model-registry.html')}>
-              Learn more
-            </Link>
-          </p>
-        </div>
+        <Empty
+          description={
+            <>
+              Track important checkpoints and versions from your experiments.{' '}
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </>
+          }
+          icon="model"
+          title="No Models Registered"
+        />
       ) : (
         <InteractiveTable
           columns={columns}

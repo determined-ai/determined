@@ -5,6 +5,7 @@ import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
@@ -164,13 +165,15 @@ const PaginatedNotesCard: React.FC<Props> = ({
 
   if (notes.length === 0) {
     return (
-      <div className={css.emptyBase}>
-        <div className={css.messageContainer}>
-          <Icon name="document" size="mega" />
-          <p>No notes for this project</p>
-          <Button onClick={handleNewPage}>+ New Page</Button>
-        </div>
-      </div>
+      <Empty
+        description={
+          <>
+            <p>No notes for this project</p>
+            <Button onClick={handleNewPage}>+ New Page</Button>
+          </>
+        }
+        icon="document"
+      />
     );
   }
 

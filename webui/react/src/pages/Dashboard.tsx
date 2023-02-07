@@ -1,8 +1,9 @@
-import { Breadcrumb, Button, Empty } from 'antd';
+import { Breadcrumb, Button } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import Empty from 'components/kit/Empty';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -297,7 +298,18 @@ const Dashboard: React.FC = () => {
             showHeader={false}
           />
         ) : (
-          <Empty description="No Submissions" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description={
+              <>
+                Your recent experiments and tasks will show up here.{' '}
+                <Link external path={paths.docs('/quickstart-mdldev.html')}>
+                  Get started
+                </Link>
+              </>
+            }
+            icon="experiment"
+            title="No submissions"
+          />
         )}
       </Section>
       {modalJupyterLabContextHolder}
