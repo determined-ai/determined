@@ -61,7 +61,7 @@ const TrialDetailsComp: React.FC = () => {
     error: undefined,
   });
   const pageRef = useRef<HTMLElement>(null);
-  const chartFlagOn = useFeature().isOn('chart');
+  const chartFlagOn = true;
 
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;

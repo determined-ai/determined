@@ -87,7 +87,10 @@ func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: a.timeToFloat(endTime), Y: value})
 		// For now we will always search for an "epoch" value but this can be updated in the future
 		// to accept or expect a dynamic list of poossible x-axis values.
-		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(avg_metrics["epoch"]), Y: value})
+		epoch, ok := avg_metrics["epoch"]
+		if ok {
+			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(epoch), Y: value})
+		}
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime
 		}
