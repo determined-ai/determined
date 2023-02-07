@@ -68,7 +68,7 @@ const LearningCurve: React.FC<Props> = ({
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const chartComponent = true;
+  const chartComponent = useFeature().isOn('chart');
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);

@@ -79,7 +79,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
   } = useModalHyperparameterSearch({ experiment });
-  const chartFlagOn = true;
+  const chartFlagOn = useFeature().isOn('chart');
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 

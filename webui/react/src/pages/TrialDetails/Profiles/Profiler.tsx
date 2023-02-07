@@ -90,7 +90,7 @@ export const getSeriesForSeriesName = (name: string, index: number): uPlot.Serie
 });
 
 const Profiler: React.FC<Props> = ({ trial }) => {
-  const chartComponent = true;
+  const chartComponent = useFeature().isOn('chart');
 
   return (
     <SyncProvider>
