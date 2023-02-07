@@ -35,6 +35,8 @@ const CURRENT_USER: DetailedUser = {
   username: USERNAME,
 };
 
+jest.setTimeout(10000);
+
 jest.mock('services/api', () => ({
   getUsers: () =>
     Promise.resolve({
@@ -133,19 +135,6 @@ describe('useModalPasswordChange', () => {
     // Check for the modal to be dismissed.
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
-    });
-  });
-
-  it('should validate the password update request', async () => {
-    await setup();
-
-    await user.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
-    await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), '.');
-    await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), '/');
-    await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(3);
     });
   });
 

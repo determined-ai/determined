@@ -11,6 +11,7 @@ body,
   font-family: var(--font-family);
   font-size: 16px;
   height: calc(var(--vh, 1vh) * 100);
+  line-height: 1.5715;
   width: 100vw;
 }
 h1 {
@@ -52,7 +53,8 @@ code.block {
   background-color: var(--theme-stage);
 }
 .u-wrap {
-  overflow-x: hidden;
+  overflow-x: visible;
+  overflow-y: hidden;
 }
 
 /* diamond cursor for most charts, see closestPointPlugin.module.scss for charts with that plugin (LearningCurve) */

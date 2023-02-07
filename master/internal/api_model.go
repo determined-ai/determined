@@ -77,7 +77,7 @@ func (a *apiServer) GetModel(
 		return nil, err
 	}
 	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
-		*m.WorkspaceId); err != nil {
+		m.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
@@ -280,7 +280,7 @@ func (a *apiServer) PatchModel(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -344,7 +344,7 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
-	currWorkspaceID := *(currModel.WorkspaceId)
+	currWorkspaceID := currModel.WorkspaceId
 	if req.Model.WorkspaceId != nil || req.Model.WorkspaceName != nil {
 		w := workspacev1.Workspace{}
 		if req.Model.WorkspaceId != nil { // default
@@ -397,7 +397,7 @@ func (a *apiServer) ArchiveModel(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -426,7 +426,7 @@ func (a *apiServer) UnarchiveModel(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -461,7 +461,7 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 	holder := &modelv1.Model{}
@@ -491,7 +491,7 @@ func (a *apiServer) GetModelVersion(
 	}
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
@@ -517,7 +517,7 @@ func (a *apiServer) GetModelVersions(
 	}
 
 	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
-		*parentModel.WorkspaceId); err != nil {
+		parentModel.WorkspaceId); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
@@ -548,7 +548,7 @@ func (a *apiServer) PostModelVersion(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, modelResp,
-		*modelResp.WorkspaceId); err != nil {
+		modelResp.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -625,7 +625,7 @@ func (a *apiServer) PatchModelVersion(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -725,7 +725,7 @@ func (a *apiServer) DeleteModelVersion(
 		return nil, err
 	}
 	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-		*currModel.WorkspaceId); err != nil {
+		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 

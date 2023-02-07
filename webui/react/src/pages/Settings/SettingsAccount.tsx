@@ -1,4 +1,4 @@
-import { Divider, message } from 'antd';
+import { Divider } from 'antd';
 import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
@@ -9,6 +9,7 @@ import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
 import { useCurrentUser, useUpdateUser } from 'stores/users';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

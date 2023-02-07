@@ -37,6 +37,9 @@
     overflow: hidden;
 
     .actionButtons {
+      display: none; // action buttons are hidden when the cursor is not hovered on buttons
+    }
+    .navItemContainer:hover .actionButtons {
       align-items: center;
       display: flex;
     }

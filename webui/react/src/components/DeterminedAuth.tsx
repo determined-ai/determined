@@ -1,3 +1,4 @@
+import { ConfigProvider } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -14,7 +15,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
-import { UserRolesService } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
 import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 
@@ -32,6 +33,16 @@ interface FromValues {
 const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
+const buttonTheme = {
+  components: {
+    Button: {
+      colorPrimary: 'var(--theme-brand)',
+      colorPrimaryActive: 'var(--theme-brand-strong)',
+      colorPrimaryHover: 'var(--theme-brand-weak)',
+    },
+  },
+};
+
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
   const updateCurrentUser = useUpdateCurrentUser();
@@ -40,7 +51,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
+  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -114,9 +125,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
-          Sign In
-        </Button>
+        <ConfigProvider theme={buttonTheme}>
+          <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
+            Sign In
+          </Button>
+        </ConfigProvider>
       </Form.Item>
     </Form>
   );

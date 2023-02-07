@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 
 class Fetcher(metaclass=abc.ABCMeta):
@@ -15,8 +15,12 @@ class Fetcher(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def fetch_new(self) -> int:
+    def fetch_new(self, new_file_callback: Callable = lambda: None) -> int:
         """Fetches changed files found in storage paths to local disk.
+
+        Arguments:
+            new_file_callback (Callable, optional): Callback function that
+                is fired each time a new file is fetched
 
         Returns: count of new files fetched.
 

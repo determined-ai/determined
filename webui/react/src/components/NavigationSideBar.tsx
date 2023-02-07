@@ -252,7 +252,7 @@ const NavigationSideBar: React.FC = () => {
             <section className={css.launch}>
               <div className={css.launchBlock}>
                 <div className={css.launchButton}>
-                  <Button block type="ghost" onClick={() => openJupyterLabModal()}>
+                  <Button block ghost onClick={() => openJupyterLabModal()}>
                     Launch JupyterLab
                   </Button>
                 </div>
@@ -285,6 +285,11 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
+                  {canCreateWorkspace && (
+                    <Button type="text" onClick={handleCreateWorkspace}>
+                      <Icon name="add-small" size="tiny" />
+                    </Button>
+                  )}
                 </div>
               }
               icon="workspaces"

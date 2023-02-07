@@ -1,4 +1,4 @@
-import { ModalFuncProps, notification, Select } from 'antd';
+import { ModalFuncProps, Select } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Input from 'components/kit/Input';
@@ -15,6 +15,7 @@ import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { pluralizer } from 'shared/utils/string';
 import { Metadata, ModelItem } from 'types';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './useModalCheckpointRegister.module.scss';

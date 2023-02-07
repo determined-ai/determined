@@ -239,8 +239,7 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Tensorboards.
-	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
 	tbID := setupMockTensorboardActor(t, api.m)
@@ -264,8 +263,7 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
-	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
 		errors.New("other error"),
 	)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: string(tbID)})

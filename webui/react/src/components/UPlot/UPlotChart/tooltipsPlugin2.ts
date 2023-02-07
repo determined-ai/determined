@@ -154,6 +154,14 @@ export const tooltipsPlugin = (
 
   return {
     hooks: {
+      init: (uPlot: uPlot) => {
+        uPlot.over.onmouseenter = (e) => {
+          const originElement = e.relatedTarget as Element;
+          if (!originElement?.className?.includes('tooltip')) {
+            hide();
+          }
+        };
+      },
       ready: (uPlot: uPlot) => {
         tooltipEl = document.createElement('div');
         tooltipEl.className = css.tooltip;

@@ -266,8 +266,11 @@ The master supports the following configuration settings:
          Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Defaults to ``cuda`` for partitions where GPUs are detected
-         automatically, else ``cpu``. If GPUs cannot be detected automatically, for example when
+         in terms of ``slots``. Available values are ``cuda``, ``rocm`` and ``cpu``, where 1
+         ``cuda`` or ``rocm`` slot is 1 GPU. Otherwise, CPU slots are requested. The number of CPUs
+         allocated per node is 1, unless overridden by ``slots_per_node`` in the experiment
+         configuration. Defaults per-partition to ``cuda`` if GPU resources are found within the
+         partition, else ``cpu``. If GPUs cannot be detected automatically, for example when
          operating with ``gres_supported: false``, then this result may be overridden using
          ``partition_overrides``.
 
@@ -808,9 +811,6 @@ The master supports the following configuration settings:
                -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
                -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
                   is the role id of ``WorkspaceAdmin`` role.
-
-         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
-            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
 
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 

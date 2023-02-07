@@ -1,4 +1,4 @@
-import { notification, Select, Typography } from 'antd';
+import { Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -12,6 +12,7 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './useModalProjectMove.module.scss';

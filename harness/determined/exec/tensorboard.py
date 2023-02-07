@@ -17,8 +17,9 @@ from determined.tensorboard import fetchers
 
 TENSORBOARD_TRIGGER_READY_MSG = "TensorBoard contains metrics"
 TRIGGER_WAITING_MSG = "TensorBoard waits on metrics"
-FETCH_INTERVAL = 1
+TICK_INTERVAL = 1
 MAX_WAIT_TIME = 600
+TB_RESPONSE_WAIT_TIME = 300
 
 
 logger = logging.getLogger("determined.exec.tensorboard")
@@ -95,6 +96,12 @@ def check_tensorboard_responsive() -> bool:
     return False
 
 
+def raise_if_dead(p: subprocess.Popen) -> None:
+    ret_code = p.poll()
+    if ret_code is not None:
+        raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
+
+
 def start_tensorboard(
     storage_config: Dict[str, Any],
     tb_version: str,
@@ -102,53 +109,69 @@ def start_tensorboard(
     add_tb_args: List[str],
 ) -> int:
     """Start Tensorboard and look for new files."""
-
-    stop_time = time.time() + MAX_WAIT_TIME
-    triggered = False
-    responsive = False
-
     with tempfile.TemporaryDirectory() as local_dir:
-
         # Get fetcher and perform initial fetch
+        logger.debug(
+            f"Building fetcher...\n"
+            f"\tstorage_config: {storage_config}\n"
+            f"\tstorage_paths: {storage_paths}\n"
+            f"\tlocal_dir: {local_dir}"
+        )
         fetcher = fetchers.build(storage_config, storage_paths, local_dir)
-        num_fetched_files = fetcher.fetch_new()
 
         # Build Tensorboard args and launch process.
         tb_args = get_tensorboard_args(tb_version, local_dir, add_tb_args)
         logger.debug(f"tensorboard args: {tb_args}")
         tensorboard_process = subprocess.Popen(tb_args)
+        tb_fetch_manager = TBFetchManager()
+
         with det.util.forward_signals(tensorboard_process):
             try:
+                tb_unresponsive_stop_time = time.time() + TB_RESPONSE_WAIT_TIME
+
+                # Wait for the Tensorboard process to start responding before proceeding.
+                responsive = False
+                while not responsive:
+                    raise_if_dead(tensorboard_process)
+
+                    if time.time() > tb_unresponsive_stop_time:
+                        raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
+
+                    time.sleep(TICK_INTERVAL)
+                    responsive = check_tensorboard_responsive()
+
+                # Continuously loop checking for new files
+                stop_time = time.time() + MAX_WAIT_TIME
                 while True:
-                    ret_code = tensorboard_process.poll()
-                    if ret_code is not None:
-                        raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
+                    raise_if_dead(tensorboard_process)
 
-                    # Check if we have reached a timeout without receiving metrics
-                    if num_fetched_files == 0:
-                        if time.time() > stop_time:
-                            raise RuntimeError("No new files were fetched before the timeout.")
-                        else:
-                            print(TRIGGER_WAITING_MSG, flush=True)
+                    # Check if we have reached a timeout without downloading any files
+                    if tb_fetch_manager.num_fetched_files == 0 and time.time() > stop_time:
+                        raise RuntimeError("No new files were fetched before the timeout.")
 
-                    if not responsive:
-                        if time.time() > stop_time:
-                            raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
-                        responsive = check_tensorboard_responsive()
-
-                    if responsive and not triggered and num_fetched_files > 0:
-                        print(TENSORBOARD_TRIGGER_READY_MSG, flush=True)
-                        triggered = True
-
-                    time.sleep(FETCH_INTERVAL)
-                    num_fetched_files += fetcher.fetch_new()
+                    time.sleep(TICK_INTERVAL)
+                    # TODO: Note that this call is blocking and serial. We won't check
+                    # the stop time until this completely finishes
+                    fetcher.fetch_new(new_file_callback=tb_fetch_manager.on_file_fetched)
 
             finally:
                 if tensorboard_process.poll() is None:
                     logger.info("Killing tensorboard process")
                     tensorboard_process.kill()
 
-            return tensorboard_process.wait()
+
+class TBFetchManager:
+    def __init__(self) -> None:
+        self._ready = False
+        self.num_fetched_files = 0
+
+    # TODO: If we support multi-threaded fetching in the future, this will
+    # need a lock
+    def on_file_fetched(self) -> None:
+        if not self._ready:
+            self._ready = True
+            print(TENSORBOARD_TRIGGER_READY_MSG, flush=True)
+        self.num_fetched_files += 1
 
 
 if __name__ == "__main__":
@@ -162,6 +185,13 @@ if __name__ == "__main__":
         storage_config = json.load(config_file)
 
     determined.common.set_logger(determined.common.util.debug_mode())
+    logger.debug(
+        f"Tensorboard (v{tb_version}) Initializing...\n"
+        f"\tstorage_config_path: {storage_config_path}\n"
+        f"\tstorage_paths: {storage_paths}\n"
+        f"\tadditional_tb_args: {additional_tb_args}\n"
+        f"\tstorage_config: {storage_config}"
+    )
 
     ret = start_tensorboard(storage_config, tb_version, storage_paths, additional_tb_args)
     sys.exit(ret)

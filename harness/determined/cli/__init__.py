@@ -18,6 +18,7 @@ from determined.cli import (
     model,
     notebook,
     project,
+    rbac,
     remote,
     render,
     resources,

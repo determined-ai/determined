@@ -518,9 +518,15 @@ export interface MetricDatapoint {
   value: number;
 }
 
+export interface MetricDatapointTime {
+  time: Date;
+  value: number;
+}
+
 export interface MetricContainer {
   data: MetricDatapoint[];
   name: string;
+  time?: MetricDatapointTime[];
   type: MetricType;
 }
 
@@ -617,6 +623,7 @@ export interface ModelItem {
   notes?: string;
   numVersions: number;
   userId: number;
+  workspaceId: number;
 }
 
 export interface ModelVersion {

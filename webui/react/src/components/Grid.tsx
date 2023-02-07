@@ -16,6 +16,7 @@ export type GridMode = ValueOf<typeof GridMode>;
 interface Props {
   border?: boolean;
   children: React.ReactNode;
+  className?: string;
   count?: number;
   gap?: ShirtSize;
   minItemWidth?: number;
@@ -34,6 +35,7 @@ const Grid: React.FC<Props> = ({
   minItemWidth = 240,
   mode = GridMode.AutoFit,
   children,
+  className,
   count,
 }: Props) => {
   const style = {
@@ -42,6 +44,7 @@ const Grid: React.FC<Props> = ({
   };
   const classes = [css.base];
 
+  if (className) classes.push(className);
   if (border) classes.push(css.border);
   if (mode === GridMode.AutoFill || GridMode.AutoFit) {
     style.gridTemplateColumns = `repeat(${mode}, minmax(${minItemWidth}px, 1fr))`;

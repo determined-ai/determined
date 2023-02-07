@@ -244,11 +244,11 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
  Slurm Known Issues
 ********************
 
--  Jobs may fail to submit with Slurm versions after 22.05.2 with the message ``error: Unable to
-   allocate resources: Requested node configuration is not available``.
+-  Jobs may fail to submit with Slurm version 22.05.5 through at least 22.05.8 with the message
+   ``error: Unable to allocate resources: Requested node configuration is not available``.
 
    Until `Slurm Bug 15857 <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__ has been resolved,
-   consider using Slurm 22.05.2.
+   consider using Slurm 22.05.4.
 
 -  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
 

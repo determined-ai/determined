@@ -8,22 +8,32 @@
  Basic Requirements
 ********************
 
-Deploying Determined with Slurm/PBS has the following requirements.
+Deploying the Determined HPC Launcher on Slurm/PBS has the following requirements.
 
--  The login node, admin node, and compute nodes must be configured with Ubuntu 20.04 or later,
-   CentOS 7 or later, or SLES 15 or later.
+-  The login node, admin node, and compute nodes must be installed and configured with one of the
+   following Linux distributions:
 
-   -  User and group configuration must be consistent across all nodes of the HPC cluster
-   -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
-   -  A cluster-wide file system with consistent path names across the HPC cluster
+   -  Red Hat® Enterprise Linux (RHEL) or CentOS 7.9
+   -  RHEL or Rocky Linux® 8.5, 8.6
+   -  RHEL 9
+   -  SUSE® Linux Enterprise Server (SLES) 12 SP3 , 15 SP3, 15 SP4
+   -  Ubuntu® 20.04, 22.04
+   -  Cray OS (COS) 2.3, 2.4
 
--  Slurm 20.02 or greater (for versions greater than 22.05.2 see :ref:`slurm-known-issues`) or PBS
-   2021.1.2 or greater.
+   Note: More restrictive Linux distribution dependencies may be required by your choice of
+   Slurm/PBS version and container runtime (Singularity/Apptainer®, Podman, or NVIDIA® Enroot).
+
+-  Slurm 20.02 or greater (excluding 22.05.5 through at least 22.05.8 - see
+   :ref:`slurm-known-issues`) or PBS 2021.1.2 or greater.
 
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
 
--  A cluster-wide shared filesystem.
+-  A cluster-wide shared filesystem with consistent path names across the HPC cluster.
+
+-  User and group configuration must be consistent across all nodes.
+
+-  All nodes must be able to resolve the hostnames of all other nodes.
 
 -  To run jobs with GPUs, the Nvidia or AMD drivers must be installed on each compute node.
    Determined requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia
@@ -43,6 +53,30 @@ The launcher has the following additional requirements on the installation node:
 -  Sudo is configured to process configuration files present in the ``/etc/sudoers.d`` directory
 -  Access to the Slurm or PBS command line interface for the cluster
 -  Access to a cluster-wide file system with a consistent path names across the cluster
+
+.. _proxy-config-requirements:
+
+**********************************
+ Proxy Configuration Requirements
+**********************************
+
+If internet connectivity requires a use of a proxy, verify the following requirements:
+
+-  Ensure that the proxy variables are defined in `/etc/environment` (or `/etc/sysconfig/proxy` on
+   SLES).
+
+-  Ensure that the `no_proxy` setting covers the login and admin nodes. If these nodes may be
+   referenced by short names known only within the cluster, they must explicitly be included in the
+   `no_proxy` setting.
+
+-  If your experiment code communicates between compute nodes with a protocol that honors proxy
+   environment variables, you should additionally include the names of all compute nodes in the
+   `no_proxy` variable setting.
+
+The HPC launcher imports `http_proxy`, `https_proxy`, `ftp_proxy`, `rsync_proxy`, `gopher_proxy`,
+`socks_proxy`, `socks5_server`, and `no_proxy` from `/etc/environment` and `/etc/sysconfig/proxy`.
+These environment variables are automatically exported in lowercase and uppercase into any launched
+jobs and containers.
 
 .. _slurm-config-requirements:
 

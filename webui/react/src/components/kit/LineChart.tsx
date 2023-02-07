@@ -78,12 +78,18 @@ export const LineChart: React.FC<Props> = ({
   const isMetricPair: boolean = useMemo(() => {
     const mTypes = series.map((s) => s.metricType);
     return (
-      series.length === 2 &&
-      series[0].name === series[1].name &&
-      mTypes.includes(MetricType.Training) &&
-      mTypes.includes(MetricType.Validation)
+      (series.length === 2 &&
+        mTypes.includes(MetricType.Training) &&
+        mTypes.includes(MetricType.Validation)) ||
+      (series.length === 1 &&
+        (mTypes.includes(MetricType.Training) || mTypes.includes(MetricType.Validation)))
     );
   }, [series]);
+
+  const hasPopulatedSeries: boolean = useMemo(
+    () => !!series.find((serie) => serie.data[xAxis]?.length),
+    [series, xAxis],
+  );
 
   const seriesColors: string[] = useMemo(
     () =>
@@ -100,8 +106,11 @@ export const LineChart: React.FC<Props> = ({
   const seriesNames: string[] = useMemo(() => {
     return series.map(
       (s, idx) =>
-        (series.length > 1 && s.metricType ? `${s.metricType}_` : '') +
-        (s.name || `Series ${idx + 1}`),
+        (s.metricType === MetricType.Training
+          ? '[T] '
+          : s.metricType === MetricType.Validation
+          ? '[V] '
+          : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -185,7 +194,7 @@ export const LineChart: React.FC<Props> = ({
       cursor: {
         drag: { x: true, y: false },
       },
-      height,
+      height: height - (hasPopulatedSeries ? 0 : 20),
       legend: { show: false },
       plugins,
       scales: {
@@ -224,41 +233,48 @@ export const LineChart: React.FC<Props> = ({
     scale,
     series,
     seriesNames,
+    hasPopulatedSeries,
   ]);
 
   return (
     <div className="diamond-cursor">
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
-        allowDownload
+        allowDownload={hasPopulatedSeries}
         data={chartData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {series.map((s, idx) => (
-            <li className={css.legendItem} key={idx}>
-              <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
-                &mdash;
-              </span>
-              {seriesNames[idx]}
-            </li>
-          ))}
+          {hasPopulatedSeries ? (
+            series.map((s, idx) => (
+              <li className={css.legendItem} key={idx}>
+                <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
+                  &mdash;
+                </span>
+                {seriesNames[idx]}
+              </li>
+            ))
+          ) : (
+            <li>&nbsp;</li>
+          )}
         </div>
       )}
     </div>
   );
 };
 
+export type ChartsProps = Props[];
+
 /**
  * @typedef GroupProps {object}
  * Config for a grid of LineCharts.
- * @param {Props[]} chartsProps - Provide series to plot on each chart, and any chart-specific config.
+ * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time.
  */
 interface GroupProps {
-  chartsProps: Props[];
+  chartsProps: ChartsProps;
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({ chartsProps }: GroupProps) => {

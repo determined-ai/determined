@@ -55,7 +55,13 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   const componentUnmounting = useRef(false);
   const [modalProps, setModalProps] = useState<ModalFuncProps>();
   const prevModalProps = usePrevious(modalProps, undefined);
-  const [modal, contextHolder] = Modal.useModal();
+  const [modal, antdContextHolder] = Modal.useModal();
+
+  /**
+   * contextHolders have keys now, so elements that contain multiple modal
+   * contexts throw a duplicate key error.
+   */
+  const contextHolder = <>{antdContextHolder}</>;
 
   /**
    * The code to close the antd modal is separated out from the code that

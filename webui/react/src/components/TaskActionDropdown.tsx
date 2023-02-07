@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Modal } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
@@ -12,6 +12,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
+import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
@@ -43,7 +44,7 @@ const TaskActionDropdown: React.FC<Props> = ({
         action // Cases should match menu items.
       ) {
         case Action.Kill:
-          Modal.confirm({
+          modal.confirm({
             content: `
               Are you sure you want to kill
               this task?

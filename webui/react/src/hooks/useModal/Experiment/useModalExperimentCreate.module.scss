@@ -1,32 +1,5 @@
 .base:global(.ant-modal) {
-  & > :global(.ant-modal-content) {
-    & > :global(.ant-modal-body) {
-      padding: 0;
-
-      :global(.ant-modal-confirm-title) {
-        border-bottom: solid var(--theme-stroke-width) var(--theme-colors-monochrome-14);
-        height: 56px;
-        padding: 16px;
-      }
-      :global(.ant-modal-confirm-content) {
-        margin: 0;
-      }
-      :global(.ant-modal-confirm-btns) {
-        align-items: center;
-        border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-14);
-        display: flex;
-        height: 56px;
-        justify-content: flex-end;
-        margin: 0;
-        padding: 0 16px;
-        width: 100%;
-      }
-    }
-  }
   .error {
-    margin: 12px;
-  }
-  .form {
     margin: 12px;
   }
   .loading {

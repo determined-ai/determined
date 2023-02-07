@@ -1,4 +1,4 @@
-import { message, Select, Typography } from 'antd';
+import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -19,6 +19,7 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
 import { DetailedUser, UserRole } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';

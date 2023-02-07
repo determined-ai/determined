@@ -962,7 +962,7 @@ export const getActiveTasks: DetApi<
 > = {
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
-  request: () => detApi.Tasks.getActiveTasksCount(),
+  request: (_, options) => detApi.Tasks.getActiveTasksCount(options),
 };
 
 /* Webhooks */
@@ -1019,7 +1019,7 @@ export const getModels: DetApi<
       params.archived,
       undefined,
       undefined,
-      undefined,
+      params.workspaceId,
       getUserIds(params.users),
     ),
 };

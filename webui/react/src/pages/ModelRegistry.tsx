@@ -10,9 +10,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -32,6 +34,7 @@ import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -44,7 +47,7 @@ import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
-import { ModelItem } from 'types';
+import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -59,7 +62,11 @@ import settingsConfig, {
 
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
-const ModelRegistry: React.FC = () => {
+interface Props {
+  workspace?: Workspace;
+}
+
+const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
@@ -75,6 +82,7 @@ const ModelRegistry: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const { canViewModelRegistry } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate();
@@ -82,13 +90,16 @@ const ModelRegistry: React.FC = () => {
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
 
+  const settingConfig = useMemo(() => {
+    return settingsConfig(workspace?.id.toString() ?? 'global');
+  }, [workspace?.id]);
   const {
     activeSettings,
     isLoading: isLoadingSettings,
     settings,
     updateSettings,
     resetSettings,
-  } = useSettings<Settings>(settingsConfig);
+  } = useSettings<Settings>(settingConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -109,6 +120,7 @@ const ModelRegistry: React.FC = () => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
+          workspaceId: workspace?.id,
         },
         { signal: canceler.signal },
       );
@@ -126,7 +138,7 @@ const ModelRegistry: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, canceler.signal]);
+  }, [settings, workspace?.id, canceler.signal]);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -575,6 +587,10 @@ const ModelRegistry: React.FC = () => {
     [ModelActionMenu],
   );
 
+  if (!canViewModelRegistry) {
+    return <PageNotFound />;
+  }
+
   return (
     <Page
       containerRef={pageRef}
@@ -594,18 +610,18 @@ const ModelRegistry: React.FC = () => {
       }
       title="Model Registry">
       {models.length === 0 && !isLoading && filterCount === 0 ? (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="model" size="mega" />
-          </div>
-          <h4>No Models Registered</h4>
-          <p className={css.description}>
-            Track important checkpoints and versions from your experiments.&nbsp;
-            <Link external path={paths.docs('/post-training/model-registry.html')}>
-              Learn more
-            </Link>
-          </p>
-        </div>
+        <Empty
+          description={
+            <>
+              Track important checkpoints and versions from your experiments.{' '}
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </>
+          }
+          icon="model"
+          title="No Models Registered"
+        />
       ) : (
         <InteractiveTable
           columns={columns}
