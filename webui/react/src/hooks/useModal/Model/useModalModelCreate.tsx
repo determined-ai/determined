@@ -1,4 +1,4 @@
-import { ModalFuncProps, notification } from 'antd';
+import { ModalFuncProps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
@@ -13,6 +13,7 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';

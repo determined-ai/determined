@@ -1,4 +1,3 @@
-import { message } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -10,6 +9,7 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 interface Props {

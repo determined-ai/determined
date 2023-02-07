@@ -1,4 +1,5 @@
 import pathlib
+from unittest import mock
 
 import pytest
 
@@ -90,3 +91,19 @@ def test_illegal_type() -> None:
         tensorboard.build(
             env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
         )
+
+
+def test_upload_thread_normal_case() -> None:
+    upload_function = mock.Mock()
+    upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
+
+    upload_thread.start()
+    upload_thread.upload(
+        [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
+    )
+    upload_thread.upload([pathlib.Path("test_value/file3.json")])
+    # Call close to exit thread
+    upload_thread.close()
+    upload_thread.join()
+
+    assert upload_function.call_count == 2

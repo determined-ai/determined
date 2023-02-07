@@ -1,5 +1,4 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
@@ -15,6 +14,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+import { modal as modalApi } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
@@ -84,7 +84,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const handleDownloadLogs = useCallback(() => {
     if (!trial?.id) return;
-    const modal = Modal.confirm({
+    const modal = modalApi.confirm({
       content: (
         <div>
           We recommend using the Determined CLI to download trial logs:

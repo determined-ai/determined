@@ -89,7 +89,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 		if !errors.Is(err, db.ErrNotFound) {
 			return err
 		}
-		ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, *model.WorkspaceId)
+		ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, model.WorkspaceId)
 		if err != nil {
 			return err
 		}

@@ -3,7 +3,7 @@ import logging
 import os
 import posixpath
 import shutil
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List, Tuple
 
 from .base import Fetcher
 
@@ -27,7 +27,7 @@ class SharedFSFetcher(Fetcher):
                 mtime = os.path.getmtime(filepath)
                 yield (filepath, datetime.datetime.fromtimestamp(mtime))
 
-    def fetch_new(self) -> int:
+    def fetch_new(self, new_file_callback: Callable = lambda: None) -> int:
         new_files = []
 
         # Look at all files in our storage location.
@@ -51,5 +51,6 @@ class SharedFSFetcher(Fetcher):
             shutil.copyfile(filepath, local_path)
 
             logger.debug(f"Transfered '{filepath}' to '{local_path}'")
+            new_file_callback()
 
         return len(new_files)

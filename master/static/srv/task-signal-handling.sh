@@ -5,7 +5,7 @@ trap_and_forward_signals() {
         sig="$1"
         shift
         trapped_signal="yes"
-        if [ "${wait_child_pid}" ]; then
+        if [ "${wait_child_pid+x}" ]; then
             # If the child process isn't alive yet, then this is OK, whoever can just resend the signal.
             kill -s "$sig" "${wait_child_pid}" 2>/dev/null
         fi
@@ -36,7 +36,7 @@ wait_and_handle_signals() {
         # When a signal is sent to the shell, it will interrupt waits, after all traps have run. To
         # discern if the wait unblocked because of a signal or process exit, we set "trapped_signal"
         # in traps and check it here.
-        if [ -z "${trapped_signal}" ]; then
+        if [ -z "${trapped_signal+x}" ]; then
             exit $wait_child_exit
         else
             unset trapped_signal

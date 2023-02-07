@@ -4302,7 +4302,7 @@ export interface V1InitialOperations {
  */
 export interface V1Int32FieldFilter {
     /**
-     * TODO(ilia): add `exact`. Less than.
+     * Less than.
      * @type {number}
      * @memberof V1Int32FieldFilter
      */
@@ -5178,7 +5178,7 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * Id of the user who created this model.
      * @type {number}
@@ -5650,10 +5650,10 @@ export interface V1PatchModel {
     workspaceName?: string;
     /**
      * The id of the workspace associated with this model.
-     * @type {string}
+     * @type {number}
      * @memberof V1PatchModel
      */
-    workspaceId?: string;
+    workspaceId?: number;
 }
 
 /**
@@ -12697,7 +12697,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLt] Less than.
          * @param {number} [experimentIdFilterLte] Less than or equal.
          * @param {number} [experimentIdFilterGt] Greater than.
          * @param {number} [experimentIdFilterGte] Greater than or equal.
@@ -13847,7 +13847,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLt] Less than.
          * @param {number} [experimentIdFilterLte] Less than or equal.
          * @param {number} [experimentIdFilterGt] Greater than.
          * @param {number} [experimentIdFilterGte] Greater than or equal.
@@ -14372,7 +14372,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
          * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-         * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+         * @param {number} [experimentIdFilterLt] Less than.
          * @param {number} [experimentIdFilterLte] Less than or equal.
          * @param {number} [experimentIdFilterGt] Greater than.
          * @param {number} [experimentIdFilterGte] Greater than or equal.
@@ -14758,7 +14758,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
      * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
-     * @param {number} [experimentIdFilterLt] TODO(ilia): add &#x60;exact&#x60;. Less than.
+     * @param {number} [experimentIdFilterLt] Less than.
      * @param {number} [experimentIdFilterLte] Less than or equal.
      * @param {number} [experimentIdFilterGt] Greater than.
      * @param {number} [experimentIdFilterGte] Greater than or equal.

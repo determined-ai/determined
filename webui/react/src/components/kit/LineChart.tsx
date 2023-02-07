@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
-import { AlignedData } from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
@@ -18,14 +18,14 @@ import css from './LineChart.module.scss';
  * @typedef Serie
  * Represents a single Series to display on the chart.
  * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
- * @param {Record<string, [number, number][]>} data - An array of ordered [x, y] points for each axis.
+ * @param {Partial<Record<XAxisDomain, [x: number, y: number][]>>} data - An array of ordered [x, y] points for each axis.
  * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
  * @param {string} [name] - Name to display in legend and toolip instead of Series number.
  */
 
 export interface Serie {
   color?: string;
-  data: Record<string, [number, number][]>;
+  data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
   key?: number;
   metricType?: MetricType;
   name?: string;
@@ -55,7 +55,9 @@ interface Props {
   title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
+  xTickValues?: uPlot.Axis.Values;
   yLabel?: string;
+  yTickValues?: uPlot.Axis.Values;
 }
 
 export const LineChart: React.FC<Props> = ({
@@ -70,16 +72,24 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
+  xTickValues,
+  yTickValues,
 }: Props) => {
   const isMetricPair: boolean = useMemo(() => {
     const mTypes = series.map((s) => s.metricType);
     return (
-      series.length === 2 &&
-      series[0].name === series[1].name &&
-      mTypes.includes(MetricType.Training) &&
-      mTypes.includes(MetricType.Validation)
+      (series.length === 2 &&
+        mTypes.includes(MetricType.Training) &&
+        mTypes.includes(MetricType.Validation)) ||
+      (series.length === 1 &&
+        (mTypes.includes(MetricType.Training) || mTypes.includes(MetricType.Validation)))
     );
   }, [series]);
+
+  const hasPopulatedSeries: boolean = useMemo(
+    () => !!series.find((serie) => serie.data[xAxis]?.length),
+    [series, xAxis],
+  );
 
   const seriesColors: string[] = useMemo(
     () =>
@@ -96,8 +106,11 @@ export const LineChart: React.FC<Props> = ({
   const seriesNames: string[] = useMemo(() => {
     return series.map(
       (s, idx) =>
-        (series.length > 1 && s.metricType ? `${s.metricType}_` : '') +
-        (s.name || `Series ${idx + 1}`),
+        (s.metricType === MetricType.Training
+          ? '[T] '
+          : s.metricType === MetricType.Validation
+          ? '[V] '
+          : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -163,21 +176,25 @@ export const LineChart: React.FC<Props> = ({
           label: xLabel,
           scale: 'x',
           side: 2,
+          space: 120,
           ticks: { show: false },
+          values: xTickValues,
         },
         {
           font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
           grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
+          labelGap: 8,
           scale: 'y',
           side: 3,
           ticks: { show: false },
+          values: yTickValues,
         },
       ],
       cursor: {
         drag: { x: true, y: false },
       },
-      height,
+      height: height - (hasPopulatedSeries ? 0 : 20),
       legend: { show: false },
       plugins,
       scales: {
@@ -204,51 +221,60 @@ export const LineChart: React.FC<Props> = ({
       ],
     };
   }, [
-    series,
     seriesColors,
-    seriesNames,
-    height,
-    scale,
-    xAxis,
-    xLabel,
-    yLabel,
     onSeriesClick,
     onSeriesFocus,
+    xLabel,
+    xTickValues,
+    yLabel,
+    yTickValues,
+    height,
+    xAxis,
+    scale,
+    series,
+    seriesNames,
+    hasPopulatedSeries,
   ]);
 
   return (
-    <>
+    <div className="diamond-cursor">
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
-        allowDownload
+        allowDownload={hasPopulatedSeries}
         data={chartData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {series.map((s, idx) => (
-            <li className={css.legendItem} key={idx}>
-              <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
-                &mdash;
-              </span>
-              {seriesNames[idx]}
-            </li>
-          ))}
+          {hasPopulatedSeries ? (
+            series.map((s, idx) => (
+              <li className={css.legendItem} key={idx}>
+                <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
+                  &mdash;
+                </span>
+                {seriesNames[idx]}
+              </li>
+            ))
+          ) : (
+            <li>&nbsp;</li>
+          )}
         </div>
       )}
-    </>
+    </div>
   );
 };
+
+export type ChartsProps = Props[];
 
 /**
  * @typedef GroupProps {object}
  * Config for a grid of LineCharts.
- * @param {Props[]} chartsProps - Provide series to plot on each chart, and any chart-specific config.
+ * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time.
  */
 interface GroupProps {
-  chartsProps: Props[];
+  chartsProps: ChartsProps;
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({ chartsProps }: GroupProps) => {

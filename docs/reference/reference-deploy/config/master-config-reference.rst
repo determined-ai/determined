@@ -266,19 +266,25 @@ The master supports the following configuration settings:
          Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Defaults to ``cuda``.
+         in terms of ``slots``. Available values are ``cuda``, ``rocm`` and ``cpu``, where 1
+         ``cuda`` or ``rocm`` slot is 1 GPU. Otherwise, CPU slots are requested. The number of CPUs
+         allocated per node is 1, unless overridden by ``slots_per_node`` in the experiment
+         configuration. Defaults per-partition to ``cuda`` if GPU resources are found within the
+         partition, else ``cpu``. If GPUs cannot be detected automatically, for example when
+         operating with ``gres_supported: false``, then this result may be overridden using
+         ``partition_overrides``.
 
-         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
-            with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Partitions will
+            be represented as a resource pool with slot type ``cuda`` which can be overridden using
+            ``partition_overrides``.
 
-         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Any partitions with
-            GPUs will be represented as a resource pool with slot type ``rocm`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Partitions will be
+            represented as a resource pool with slot type ``rocm`` which can be overridden using
+            ``partition_overrides``.
 
          -  ``slot_type: cpu``: CPU resources will be requested for each compute slot. Partitions
-            that contain no GPUs will default to a resource pool with slot type ``cpu``. One node
-            will be allocated per slot.
+            will be represented as a resource pool with slot type ``cpu``. One node will be
+            allocated per slot.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
          distributed jobs. For example, when using horovod the IP address for the host on this
@@ -805,9 +811,6 @@ The master supports the following configuration settings:
                -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
                -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
                   is the role id of ``WorkspaceAdmin`` role.
-
-         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
-            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
 
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 

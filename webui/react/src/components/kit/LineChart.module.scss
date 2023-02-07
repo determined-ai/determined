@@ -1,23 +1,23 @@
 .chartgridContainer {
-  background-color: #f0f0f0;
+  background-color: var(--theme-background);
   min-height: 530px;
   overflow-y: hidden;
   padding: 5px;
 }
 .chartgridCell {
-  background-color: #f0f0f0;
+  background-color: var(--theme-background);
   padding: 0;
   padding-left: 6px;
   padding-right: 6px;
 }
 .chartgridCellCard {
-  background-color: #f6f6f6;
-  border: 1px solid #c2c2c2;
+  background-color: var(--theme-stage);
+  border: 1px solid var(--theme-stage-border);
   border-radius: 4px;
   padding: 24px;
 }
 .chartTitle {
-  background-color: #f6f6f6;
+  background-color: var(--theme-stage);
   font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
   font-size: 14px;
   margin-bottom: -18px !important;

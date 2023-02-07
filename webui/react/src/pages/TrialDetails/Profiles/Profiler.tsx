@@ -4,20 +4,24 @@ import uPlot from 'uplot';
 
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { Options } from 'components/UPlot/UPlotChart';
+import useFeature from 'hooks/useFeature';
 import { glasbeyColor } from 'shared/utils/color';
 import { TrialDetails } from 'types';
 
+import OldSystemMetricChart from './Charts/OldSystemMetricChart';
+import OldThroughputMetricChart from './Charts/OldThroughputMetricChart';
+import OldTimingMetricChart from './Charts/OldTimingMetricChart';
 import SystemMetricChart from './Charts/SystemMetricChart';
 import ThroughputMetricChart from './Charts/ThroughputMetricChart';
 import TimingMetricChart from './Charts/TimingMetricChart';
 import css from './Profiler.module.scss';
 import { getUnitForMetricName } from './utils';
 
-export const CHART_HEIGHT = 300;
-
 export interface Props {
   trial: TrialDetails;
 }
+
+export const CHART_HEIGHT = 300;
 
 /*
  * Shared uPlot chart options.
@@ -86,11 +90,23 @@ export const getSeriesForSeriesName = (name: string, index: number): uPlot.Serie
 });
 
 const Profiler: React.FC<Props> = ({ trial }) => {
+  const chartComponent = useFeature().isOn('chart');
+
   return (
     <SyncProvider>
-      <ThroughputMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
-      <TimingMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
-      <SystemMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+      {chartComponent ? (
+        <>
+          <ThroughputMetricChart trial={trial} />
+          <TimingMetricChart trial={trial} />
+          <SystemMetricChart trial={trial} />
+        </>
+      ) : (
+        <>
+          <OldThroughputMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+          <OldTimingMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+          <OldSystemMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+        </>
+      )}
     </SyncProvider>
   );
 };

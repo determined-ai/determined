@@ -504,6 +504,9 @@ commands:
     parameters:
       cluster-id:
         type: string
+      extra-tags:
+        type: string
+        default: ""
       det-version:
         type: string
       keypair:
@@ -553,6 +556,17 @@ commands:
             - run:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
+      - when:
+          condition:
+            << parameters.extra-tags >>
+          steps:
+            - run:
+                name: Add extra tags
+                command: |
+                  echo "<< parameters.extra-tags >>" | \
+                  sed 's/ /-/g' | \
+                  sed -r 's/([^,=]*=[^,=]*),?/--add-tag \1 /g' >> \
+                    /tmp/det-deploy-extra-args
 
       - run:
           name: Configure TLS arguments
@@ -606,6 +620,9 @@ commands:
     parameters:
       cluster-id:
         type: string
+      extra-tags:
+        type: string
+        default: ""
       det-version:
         type: string
       compute-agent-instance-type:
@@ -631,6 +648,7 @@ commands:
           cluster-id: <<parameters.cluster-id>>
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
+          extra-tags: <<parameters.extra-tags>>
           det-version: <<parameters.det-version>>
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
@@ -921,6 +939,15 @@ commands:
             - run: make -C master check
             - run: make -C agent check
 
+  make-package:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          no_output_timeout: 30m
+          command: make package
+
+
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1019,7 +1046,7 @@ jobs:
           version: 20.10.18
       - pre-package-and-push-system:
           check: false
-      - run: make package
+      - make-package
       - run: mkdir -p build/
       - run: docker tag determinedai/determined-master:${CIRCLE_SHA1}-amd64 determinedai/determined-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1051,7 +1078,7 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system:
           check: false
-      - run: make package
+      - make-package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
       - run:
@@ -1092,7 +1119,7 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run: make package
+      - make-package
       - run: make -C master publish
       - run: make -C agent publish
       - run: make -C model_hub build-docker
@@ -1275,7 +1302,7 @@ jobs:
           flags: "web"
           xtra_args: "-v"
       - store_test_results:
-          path: webui/react/coverage
+          path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
@@ -1379,7 +1406,7 @@ jobs:
   test-intg-agent:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - skip-if-docs-only
@@ -1671,7 +1698,7 @@ jobs:
         default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     parallelism: <<parameters.parallelism>>
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
@@ -1824,6 +1851,7 @@ jobs:
             - generate-tls-cert
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          extra-tags: test-mark=<<parameters.mark>>
           det-version: ${CIRCLE_SHA1}
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
@@ -2057,6 +2085,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          extra-tags: test-mark=fs
           det-version: ${CIRCLE_SHA1}
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>

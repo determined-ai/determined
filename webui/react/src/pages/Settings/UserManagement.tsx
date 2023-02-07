@@ -1,4 +1,4 @@
-import { Dropdown, message, Space } from 'antd';
+import { Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -33,6 +33,7 @@ import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
 import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
 

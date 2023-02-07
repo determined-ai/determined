@@ -1,7 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import type { DropDownProps, MenuProps } from 'antd';
 import { Dropdown } from 'antd';
-import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
@@ -10,6 +9,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
+import { modal } from 'utils/dialogApi';
 
 import css from './TaskBar.module.scss';
 interface Props {
@@ -33,7 +33,7 @@ export const TaskBar: React.FC<Props> = ({
   }, [id, name, resourcePool, type]);
 
   const deleteTask = useCallback((task: CommandTask) => {
-    Modal.confirm({
+    modal.confirm({
       content: `
       Are you sure you want to kill
       this task?

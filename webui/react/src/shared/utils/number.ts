@@ -32,11 +32,11 @@ export const humanReadableNumber = (num: number, precision = DEFAULT_PRECISION):
   } else if (!Number.isFinite(num)) {
     content = `${num < 0 ? '-' : ''}Infinity`;
   } else if (!Number.isInteger(num)) {
-    content = num.toFixed(precision);
+    content = num.toFixed(Math.max(precision, 0));
 
     const absoluteNum = Math.abs(num);
     if (absoluteNum < 0.01 || absoluteNum > 999) {
-      content = num.toExponential(precision);
+      content = num.toExponential(Math.max(precision, 0));
     }
   }
 

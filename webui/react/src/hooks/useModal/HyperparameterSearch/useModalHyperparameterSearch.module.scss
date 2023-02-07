@@ -1,143 +1,147 @@
-.modal:global(.ant-modal) > :global(.ant-modal-content) > :global(.ant-modal-body) {
+.modal:global(.ant-modal) > :global(.ant-modal-content) {
   padding: 0;
 
-  :global(.ant-modal-confirm-title) {
-    border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
-    padding: 16px;
-  }
-  :global(.ant-modal-confirm-content) {
-    margin: 0;
-  }
-  :global(.ant-modal-confirm-btns) {
-    display: none;
-  }
-  :global(.ant-form-item-explain) {
-    display: none;
-  }
-  :global(.ant-form-item) {
-    min-width: fit-content;
-  }
-  .base {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+  & > :global(.ant-modal-body) {
+    padding: 0;
 
-    :global(.ant-form-item) {
+    :global(.ant-modal-confirm-title) {
+      border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
+      padding: 16px;
+    }
+    :global(.ant-modal-confirm-content) {
       margin: 0;
     }
-    :global(.ant-input-number) {
-      width: 100%;
-    }
-    .disableArrows :global(.ant-input-number-handler-wrap) {
+    :global(.ant-modal-confirm-btns) {
       display: none;
     }
-    .fullWidth {
-      width: 100%;
+    :global(.ant-form-item-explain) {
+      display: none;
     }
-    .poolContainer {
+    :global(.ant-form-item) {
+      min-width: fit-content;
+    }
+    .base {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-    .inputRow {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 8px;
+      gap: 12px;
+      padding: 16px;
 
-      & > div {
-        flex: 1;
-      }
-    }
-    .sectionTitle {
-      font-size: 16px;
-      margin: 0;
-      margin-top: 4px;
-    }
-    .labelWithLink {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-    }
-    .searcherGroup {
-      display: flex;
-      gap: 8px;
-
-      :global(.ant-radio-button-wrapper) {
-        height: 100%;
-        padding: 16px;
-        padding-bottom: 12px;
-
-        .searcherButton {
-          align-items: center;
-          display: flex;
-          flex-direction: column;
-        }
-      }
-    }
-    .hyperparameterContainer {
-      display: grid;
-      gap: 8px;
-
-      .hyperparameterName {
-        align-items: center;
-        display: flex;
-      }
-      label {
-        align-self: end;
-
-        h2 {
-          border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
-          font-size: 1rem;
-          margin: 0;
-          text-align: center;
-        }
-      }
-      h3 {
-        font-size: 1rem;
-        font-weight: normal;
+      :global(.ant-form-item) {
         margin: 0;
       }
-    }
-    p {
-      margin: 0;
-    }
-    label:not(:global(.ant-checkbox-wrapper)) {
-      width: 100%;
-    }
-    .labelWithTooltip {
-      align-items: center;
-      display: flex;
-      gap: 4px;
+      :global(.ant-input-number) {
+        width: 100%;
+      }
+      .disableArrows :global(.ant-input-number-handler-wrap) {
+        display: none;
+      }
+      .fullWidth {
+        width: 100%;
+      }
+      .poolContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .inputRow {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
 
-      span {
-        height: min-content;
+        & > div {
+          flex: 1;
+        }
+      }
+      .sectionTitle {
+        font-size: 16px;
+        margin: 0;
+        margin-top: 4px;
+      }
+      .labelWithLink {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+      .searcherGroup {
+        display: flex;
+        gap: 8px;
+
+        :global(.ant-radio-button-wrapper) {
+          height: 100%;
+          padding: 16px;
+          padding-bottom: 12px;
+
+          .searcherButton {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+          }
+        }
+      }
+      .hyperparameterContainer {
+        display: grid;
+        gap: 8px;
+
+        .hyperparameterName {
+          align-items: center;
+          display: flex;
+        }
+        label {
+          align-self: end;
+
+          h2 {
+            border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
+            font-size: 1rem;
+            margin: 0;
+            text-align: center;
+          }
+        }
+        h3 {
+          font-size: 1rem;
+          font-weight: normal;
+          margin: 0;
+        }
+      }
+      p {
+        margin: 0;
+      }
+      label:not(:global(.ant-checkbox-wrapper)) {
+        width: 100%;
+      }
+      .labelWithTooltip {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+
+        span {
+          height: min-content;
+        }
       }
     }
-  }
-  .footer {
-    border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
-    display: flex;
-    flex-direction: row;
-    padding-block: 8px;
-    padding-inline: 16px;
+    .footer {
+      border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
+      display: flex;
+      flex-direction: row;
+      padding-block: 8px;
+      padding-inline: 16px;
 
-    .spacer {
-      flex-grow: 1;
+      .spacer {
+        flex-grow: 1;
+      }
     }
-  }
-  .error {
-    color: var(--theme-status-critical);
-    font-size: 12px;
-    grid-column: 1 / -1;
-    margin-block: -8px !important;
-  }
-  .warning {
-    color: var(--theme-status-warning);
-    font-size: 12px;
-    grid-column: 1 / -1;
-    margin-block: -8px !important;
+    .error {
+      color: var(--theme-status-critical);
+      font-size: 12px;
+      grid-column: 1 / -1;
+      margin-block: -8px !important;
+    }
+    .warning {
+      color: var(--theme-status-warning);
+      font-size: 12px;
+      grid-column: 1 / -1;
+      margin-block: -8px !important;
+    }
   }
 }
 

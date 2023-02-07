@@ -12,7 +12,7 @@ import (
 // NSCAuthZBasic is basic OSS controls.
 type NSCAuthZBasic struct{}
 
-// CanGetNSC returns a nil error.
+// CanGetNSC returns true and nil error.
 func (a *NSCAuthZBasic) CanGetNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, serverError error) {
@@ -77,9 +77,7 @@ func (a *NSCAuthZBasic) FilterTensorboards(
 	return tensorboards, nil
 }
 
-// CanGetTensorboard returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the tensorboard and a nil error.
+// CanGetTensorboard returns true and nil error.
 func (a *NSCAuthZBasic) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	experimentIDs []int32, trialIDs []int32,
@@ -90,7 +88,6 @@ func (a *NSCAuthZBasic) CanGetTensorboard(
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZBasic) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
-	experimentIDs []int32, trialIDs []int32,
 ) error {
 	return nil
 }

@@ -1,4 +1,3 @@
-import { notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -24,6 +23,7 @@ import { capitalize } from 'shared/utils/string';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
+import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './SignIn.module.scss';

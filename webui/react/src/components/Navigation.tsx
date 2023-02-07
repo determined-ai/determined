@@ -6,11 +6,12 @@ import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
+import { useCurrentUser } from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
-import { Loadable } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './Navigation.module.scss';
@@ -29,7 +30,8 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
+  const currentUser = useCurrentUser();
+  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   usePolling(fetchWorkspaces);
 
@@ -40,10 +42,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const rbacEnabled = useFeature().isOn('rbac'),
+    mockAllPermission = useFeature().isOn('mock_permissions_all'),
+    mockReadPermission = useFeature().isOn('mock_permissions_read');
   usePolling(
     () => {
-      if (rbacEnabled) {
+      if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
         fetchMyRoles();
       }
     },
