@@ -1060,7 +1060,12 @@ const CardsSection: React.FC = () => {
           <li>
             Stats overview (<code>{'<OverviewStats>'}</code>)
           </li>
-          <OverviewStats title="Active Experiments">0</OverviewStats>
+          <Card.Group>
+            <OverviewStats title="Active Experiments">0</OverviewStats>
+            <OverviewStats clickable title="Clickable card">
+              Example
+            </OverviewStats>
+          </Card.Group>
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>
