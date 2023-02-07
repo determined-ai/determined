@@ -2217,7 +2217,7 @@ export interface V1DisableAgentResponse {
      * @type {V1Agent}
      * @memberof V1DisableAgentResponse
      */
-    agent?: V1Agent;
+    agent: V1Agent;
 }
 
 /**
@@ -2231,7 +2231,7 @@ export interface V1DisableSlotResponse {
      * @type {V1Slot}
      * @memberof V1DisableSlotResponse
      */
-    slot?: V1Slot;
+    slot: V1Slot;
 }
 
 /**
@@ -2277,7 +2277,7 @@ export interface V1EnableAgentResponse {
      * @type {V1Agent}
      * @memberof V1EnableAgentResponse
      */
-    agent?: V1Agent;
+    agent: V1Agent;
 }
 
 /**
@@ -2291,7 +2291,7 @@ export interface V1EnableSlotResponse {
      * @type {V1Slot}
      * @memberof V1EnableSlotResponse
      */
-    slot?: V1Slot;
+    slot: V1Slot;
 }
 
 /**
@@ -2749,7 +2749,7 @@ export interface V1GetAgentResponse {
      * @type {V1Agent}
      * @memberof V1GetAgentResponse
      */
-    agent?: V1Agent;
+    agent: V1Agent;
 }
 
 /**
@@ -2774,7 +2774,7 @@ export interface V1GetAgentsResponse {
      * @type {Array<V1Agent>}
      * @memberof V1GetAgentsResponse
      */
-    agents?: Array<V1Agent>;
+    agents: Array<V1Agent>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -3740,7 +3740,7 @@ export interface V1GetSlotResponse {
      * @type {V1Slot}
      * @memberof V1GetSlotResponse
      */
-    slot?: V1Slot;
+    slot: V1Slot;
 }
 
 /**
@@ -3754,7 +3754,7 @@ export interface V1GetSlotsResponse {
      * @type {Array<V1Slot>}
      * @memberof V1GetSlotsResponse
      */
-    slots?: Array<V1Slot>;
+    slots: Array<V1Slot>;
 }
 
 /**
