@@ -204,6 +204,32 @@ def get_ntsc_details(session: Session, typ: str, ntsc_id: str) -> SharedNTSC:
         raise ValueError("unknown type")
 
 
+def list_ntsc(session: Session, typ: str, workspace_id: Optional[int] = None) -> List[SharedNTSC]:
+    assert typ in all_ntsc
+    if typ == "notebook":
+        return [
+            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
+            for ntsc in bindings.get_GetNotebooks(session, workspaceId=workspace_id).notebooks
+        ]
+    elif typ == "tensorboard":
+        return [
+            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
+            for ntsc in bindings.get_GetTensorboards(session, workspaceId=workspace_id).tensorboards
+        ]
+    elif typ == "shell":
+        return [
+            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
+            for ntsc in bindings.get_GetShells(session, workspaceId=workspace_id).shells
+        ]
+    elif typ == "command":
+        return [
+            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
+            for ntsc in bindings.get_GetCommands(session, workspaceId=workspace_id).commands
+        ]
+    else:
+        raise ValueError("unknown type")
+
+
 def wait_state_ntsc(
     session: Session,
     typ: str,
@@ -268,6 +294,9 @@ def test_ntsc_iface_access() -> None:
             [
                 (2, ["Viewer"]),
                 (0, ["Viewer"]),
+            ],
+            [
+                (0, ["Editor"]),
             ],
         ]
     ) as (workspaces, creds):
@@ -351,6 +380,29 @@ def test_ntsc_iface_access() -> None:
                     launch_ntsc(session, workspaces[0].id, typ, experiment_id)
                 with pytest.raises(errors.ForbiddenException):
                     launch_ntsc(session, workspaces[1].id, typ, experiment_id)
+
+            # test visibility
+            created_id2 = launch_ntsc(
+                determined_test_session(creds[0]), workspaces[2].id, typ, experiment_id
+            )
+
+            # none of the users should be able to get details
+            for cred in [creds[1], creds[2]]:
+                session = determined_test_session(cred)
+                with pytest.raises(errors.APIException) as e:
+                    get_ntsc_details(session, typ, created_id2)
+                assert e.value.status_code == 404
+                results = list_ntsc(session, typ)
+                for r in results:
+                    if r.id_ == created_id2:
+                        pytest.fail(f"should not be able to see {typ} {r.id_} in the list results")
+                with pytest.raises(errors.APIException) as e:
+                    list_ntsc(session, typ, workspace_id=workspaces[2].id)
+                # FIXME only notebooks return the correct 404.
+                assert e.value.status_code == 404, f"{typ} should fail with 404"
+                with pytest.raises(errors.APIException) as e:
+                    list_ntsc(session, typ, workspace_id=12532459)
+                assert e.value.status_code == 404, f"{typ} should fail with 404"
 
             # kill the ntsc
             kill_ntsc(determined_test_session(creds[0]), typ, created_id)
