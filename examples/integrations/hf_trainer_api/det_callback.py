@@ -188,9 +188,9 @@ class DetCallback(TrainerCallback):
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.epoch)
 
-            if round(state.epoch) >= self.current_op.length:
+            if state.epoch >= self.current_op.length:
                 logging.info(
-                    f"Max length of {round(state.epoch)} epochs reached for current "
+                    f"Max length of {state.epoch} epochs reached for current "
                     f"searcher operation. Updating searcher."
                 )
                 self._update_searcher(state, control)
