@@ -67,7 +67,7 @@ func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
 	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point, maxEndtime time.Time,
 ) {
 	var maxEndTime time.Time
-	var avg_metrics map[string]float64
+	var avgMetrics map[string]float64
 	for rows.Next() {
 		var batches uint
 		var value float64
@@ -78,7 +78,7 @@ func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
 			panic(err)
 		}
 		if metrics != nil {
-			err = json.Unmarshal([]byte(*metrics), &avg_metrics)
+			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
 			if err != nil {
 				panic(err)
 			}
@@ -87,9 +87,9 @@ func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: a.timeToFloat(endTime), Y: value})
 		// For now we will always search for an "epoch" value but this can be updated in the future
 		// to accept or expect a dynamic list of poossible x-axis values.
-		epoch, ok := avg_metrics["epoch"]
+		epoch, ok := avgMetrics["epoch"]
 		if ok {
-			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(epoch), Y: value})
+			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
 		}
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime

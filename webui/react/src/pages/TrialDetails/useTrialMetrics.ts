@@ -32,16 +32,14 @@ const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
   summ.time?.forEach((dataPoint) => {
     rawTime.push([new Date(dataPoint.time).getTime() / 1000, dataPoint.value]);
   });
-  
-  summ.epochs?.forEach((dataPoint) => rawEpochs.push([dataPoint.epoch, dataPoint.value]));
-
 
   const data: Partial<Record<XAxisDomain, [number, number][]>> = {
     [XAxisDomain.Batches]: rawData,
     [XAxisDomain.Time]: rawTime,
   };
 
-  if(summ.epochs){
+  if (summ.epochs) {
+    summ.epochs.forEach((dataPoint) => rawEpochs.push([dataPoint.epoch, dataPoint.value]));
     data[XAxisDomain.Epochs] = rawEpochs;
   }
 

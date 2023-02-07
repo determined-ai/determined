@@ -633,15 +633,15 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
       m.type === Sdk.V1MetricType.TRAINING
         ? types.MetricType.Training
         : types.MetricType.Validation,
-  } 
+  };
   if (m.epochs && m.epochs.length > 0){
-    metrics.epochs =  m.epochs.map((pt) => ({
+    metrics.epochs = m.epochs.map((pt) => ({
       epoch: pt.epoch,
       value: pt.value,
-    }))
+    }));
   }
-  return metrics
-}
+  return metrics;
+},
   );
 };
 

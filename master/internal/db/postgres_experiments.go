@@ -521,8 +521,8 @@ WHERE t.id=$2
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		defer rows.Close()
+		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	return rows, nil
 }
