@@ -76,7 +76,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
 
 # NEW: Modified function header to include op for reporting training progress to master and return test loss
-def test(args, model, device, test_loader, core_context, steps_completed, op):
+def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
 
     model.eval()
     test_loss = 0
@@ -102,6 +102,7 @@ def test(args, model, device, test_loader, core_context, steps_completed, op):
         metrics={"test_loss": test_loss},
     )
 
+    # NEW: return test_loss
 
 def load_state(checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)

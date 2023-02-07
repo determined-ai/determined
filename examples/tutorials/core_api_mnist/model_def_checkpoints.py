@@ -208,7 +208,6 @@ def main(core_context):
 
         # NEW: save checkpoint
         if args.save_model:
-
             checkpoint_metadata_dict = {"steps_completed": steps_completed}
 
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
