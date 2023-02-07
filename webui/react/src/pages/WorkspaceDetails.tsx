@@ -135,7 +135,7 @@ const WorkspaceDetails: React.FC = () => {
         return response.roles || [];
       });
     } catch (e) {
-      handleError(e);
+      handleError(e, { silent: true });
     }
   }, [canceler.signal, id, rbacEnabled]);
 
