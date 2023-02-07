@@ -15,7 +15,7 @@ type ExperimentsCache = {
 };
 
 // TODO: use js private intead of ts private for methods
-export class ExperimentsService {
+class ExperimentsService {
   #experimentsCache: WritableObservable<Map<string, ExperimentsCache>> = observable(Map());
   #experimentMap: WritableObservable<Map<number, ExperimentItem>> = observable(Map());
 
