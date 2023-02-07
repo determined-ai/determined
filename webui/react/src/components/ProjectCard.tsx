@@ -1,12 +1,11 @@
 import { Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { Project } from 'types';
 
 import Card from './kit/Card';
@@ -27,15 +26,13 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
     workspaceArchived,
   });
 
-  const handleCardClick = useCallback(() => {
-    routeToReactUrl(paths.projectDetails(project.id));
-  }, [project.id]);
-
   const classnames = [css.base];
   if (project.archived) classnames.push(css.archived);
 
   return (
-    <Card actionMenu={!project.immutable ? menuProps : undefined} onClick={handleCardClick}>
+    <Card
+      actionMenu={!project.immutable ? menuProps : undefined}
+      href={paths.projectDetails(project.id)}>
       <div className={classnames.join(' ')}>
         <Typography.Title className={css.name} ellipsis={{ rows: 5, tooltip: true }} level={5}>
           {project.name}

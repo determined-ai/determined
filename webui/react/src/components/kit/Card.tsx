@@ -1,6 +1,8 @@
 import { Dropdown, MenuProps, Space } from 'antd';
 import React from 'react';
 
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Link from 'components/Link';
 import Icon from 'shared/components/Icon';
 
 import Button from './Button';
@@ -12,6 +14,7 @@ interface CardProps {
   clickable?: boolean;
   disabled?: boolean;
   height?: number;
+  href?: string;
   onClick?: () => void;
   width?: number;
 }
@@ -26,32 +29,37 @@ const Card: Card = ({
   onClick,
   height = 184,
   width = 184,
+  href,
 }: CardProps) => {
   const classnames = [css.base];
   if (onClick || clickable) classnames.push(css.clickable);
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
   return (
-    <div
-      className={classnames.join(' ')}
-      style={{ minHeight: `${height}px`, width: `${width}px` }}
-      tabIndex={onClick ? 0 : -1}
-      onClick={onClick}>
-      {actionMenu && (
-        <div className={css.action}>
-          <Dropdown
-            disabled={disabled || !actionsAvailable}
-            menu={actionMenu}
-            placement="bottomRight"
-            trigger={['click']}>
-            <Button type="text" onClick={stopPropagation}>
-              <Icon name="overflow-horizontal" />
-            </Button>
-          </Dropdown>
-        </div>
-      )}
-      {children && <section className={css.content}>{children}</section>}
-    </div>
+    <ConditionalWrapper
+      condition={!!href}
+      wrapper={(children) => <Link path={href}>{children}</Link>}>
+      <div
+        className={classnames.join(' ')}
+        style={{ minHeight: `${height}px`, width: `${width}px` }}
+        tabIndex={onClick ? 0 : -1}
+        onClick={onClick}>
+        {actionMenu && (
+          <div className={css.action}>
+            <Dropdown
+              disabled={disabled || !actionsAvailable}
+              menu={actionMenu}
+              placement="bottomRight"
+              trigger={['click']}>
+              <Button type="text" onClick={stopPropagation}>
+                <Icon name="overflow-horizontal" />
+              </Button>
+            </Dropdown>
+          </div>
+        )}
+        {children && <section className={css.content}>{children}</section>}
+      </div>
+    </ConditionalWrapper>
   );
 };
 
