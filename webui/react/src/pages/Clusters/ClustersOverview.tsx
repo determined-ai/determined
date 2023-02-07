@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
+import Card from 'components/kit/Card';
 import Link from 'components/Link';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
@@ -9,7 +9,6 @@ import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { percent } from 'shared/utils/number';
 import { useClusterStore } from 'stores/cluster';
-import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -95,13 +94,13 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallStats />
       <ClusterOverallBar />
       <Section title="Resource Pools">
-        <Grid gap={ShirtSize.Large} minItemWidth={300} mode={GridMode.AutoFill}>
+        <Card.Group>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
               <ResourcePoolCard resourcePool={rp} />
             </Link>
           ))}
-        </Grid>
+        </Card.Group>
       </Section>
       {!!rpDetail && (
         <ResourcePoolDetails finally={hideModal} resourcePool={rpDetail} visible={!!rpDetail} />
