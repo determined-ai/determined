@@ -34,7 +34,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
 
         self.upload_thread = None
         if async_upload:
-            print("SWY initialize upload thread")
             self.upload_thread = _TensorboardUploadThread(self._sync_impl)
             self.upload_thread.start()
 
