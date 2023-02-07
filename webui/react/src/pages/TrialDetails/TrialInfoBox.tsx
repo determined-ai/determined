@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import Grid, { GridMode } from 'components/Grid';
+import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { humanReadableBytes } from 'shared/utils/string';
-import { ShirtSize } from 'themes';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 
 interface Props {
@@ -35,7 +34,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   return (
     <Section>
-      <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
+      <Card.Group>
         {trial?.runnerState && (
           <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}
@@ -57,7 +56,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             </OverviewStats>
           </CheckpointModalTrigger>
         )}
-      </Grid>
+      </Card.Group>
     </Section>
   );
 };
@@ -73,7 +72,7 @@ export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) =
   }, [experiment]);
   return (
     <Section>
-      <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
+      <Card.Group>
         {searcher?.metric && <OverviewStats title="Metric">{searcher.metric}</OverviewStats>}
         {searcher?.name && <OverviewStats title="Searcher">{searcher.name}</OverviewStats>}
         {experiment.numTrials > 0 && (
@@ -84,7 +83,7 @@ export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) =
             {`${experiment.checkpointCount} (${checkpointsSize})`}
           </OverviewStats>
         )}
-      </Grid>
+      </Card.Group>
     </Section>
   );
 };

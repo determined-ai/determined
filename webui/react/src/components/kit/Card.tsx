@@ -9,6 +9,7 @@ import css from './Card.module.scss';
 interface CardProps {
   actionMenu?: MenuProps;
   children?: React.ReactNode;
+  clickable?: boolean;
   disabled?: boolean;
   height?: number;
   onClick?: () => void;
@@ -20,13 +21,14 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 const Card: Card = ({
   actionMenu,
   children,
+  clickable,
   disabled = false,
   onClick,
   height = 184,
   width = 184,
 }: CardProps) => {
   const classnames = [css.base];
-  if (onClick) classnames.push(css.clickable);
+  if (onClick || clickable) classnames.push(css.clickable);
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
   return (

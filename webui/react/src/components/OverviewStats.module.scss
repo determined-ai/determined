@@ -1,35 +1,25 @@
 .base {
-  background-color: var(--theme-surface);
-  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 8px;
 
   .title {
-    color: var(--theme-suface-on-strong);
-    font-size: 11px;
-    word-break: break-word;
+    font-size: 12px;
+    font-weight: normal;
   }
   .info {
-    color: var(--theme-surface-on);
-    font-size: 18px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 13px;
 
-    & > small {
-      font-size: 14px;
+    & > :global(.ant-typography) {
+      margin: 0;
+
+      & small {
+        font-size: 12px;
+      }
     }
-  }
-}
-.base.focused {
-  background-color: var(--theme-surface-strong);
-}
-.clickable {
-  cursor: pointer;
-
-  .info {
-    color: var(--theme-status-active);
+    &.clickable > :global(.ant-typography) {
+      color: var(--theme-ix-on-active);
+    }
   }
 }
