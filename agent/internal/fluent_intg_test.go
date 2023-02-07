@@ -102,11 +102,19 @@ func TestFluentLoggingElastic(t *testing.T) {
 	// THEN fluent should parse all fields as expected and ship them to elastic.
 	logs, _, err := elastic.TaskLogs(taskID, 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
 	assert.NilError(t, err, "failed to retrieve task logs")
-	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
 
-	for i := 0; i < 4; i++ {
-		t.Logf("expected[%d] \n%+v actual[%d] \n%+v", i, expected[i], i, logs[i])
+	for i, l := range expected {
+		j, err := json.MarshalIndent(l, "", "  ")
+		assert.NilError(t, err)
+		t.Logf("expected[%d] = %s", i, j)
 	}
+	for i, l := range logs {
+		j, err := json.MarshalIndent(l, "", "  ")
+		assert.NilError(t, err)
+		t.Logf("actual[%d] = %s", i, j)
+	}
+
+	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
 
 	for i, l := range logs {
 		assertLogEquals(t, *l, expected[i])
@@ -154,10 +162,12 @@ func makeLogTestCase(taskID model.TaskID, agentID string) ([]model.TaskLog, stri
 			StdType:      ptrs.Ptr("stdout"),
 		},
 	}
+	//nolint:lll
 	actual := `[rank=4] 
 [rank=1] INFO: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)
 [rank=2] ERROR: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)
-[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]` // nolint:lll
+[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]
+`
 	return expected, actual
 }
 
