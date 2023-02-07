@@ -722,6 +722,9 @@ commands:
         type: env_var_name
       environment-image:
         type: string
+      storage-bucket:
+        type: string
+        default: "det-ci-373"
       accel-node-taints:
         type: string
         default: ""
@@ -753,7 +756,7 @@ commands:
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=det-ci"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
