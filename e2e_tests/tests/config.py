@@ -83,6 +83,10 @@ def custom_search_method_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/custom_search_method", path)
 
 
+def integrations_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/integrations", path)
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = util.safe_load_yaml_with_exceptions(f)
