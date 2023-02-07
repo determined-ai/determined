@@ -58,7 +58,8 @@ const Wait: React.FC = () => {
 
   const handleTaskError = (e: Error) => {
     handleError(e, {
-      publicMessage: 'Failed while waiting for command to be ready',
+      publicMessage:
+        'Failed while waiting for command to be ready. This may be caused by not having related permission',
       silent: false,
       type: ErrorType.Server,
     });

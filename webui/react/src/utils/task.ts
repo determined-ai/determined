@@ -156,10 +156,14 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
   return 'archived' in task && !('type' in task);
 };
 
-export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
+export const isTaskKillable = (
+  task: Type.AnyTask | Type.ExperimentItem,
+  canModifyWorkspaceNSC: boolean,
+): boolean => {
   return (
-    killableRunStates.includes(task.state as Type.RunState) ||
-    killableCommandStates.includes(task.state as Type.CommandState)
+    canModifyWorkspaceNSC &&
+    (killableRunStates.includes(task.state as Type.RunState) ||
+      killableCommandStates.includes(task.state as Type.CommandState))
   );
 };
 
