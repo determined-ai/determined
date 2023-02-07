@@ -48,7 +48,7 @@ const (
 	pbsSchedulerType       = "pbs"
 	slurmResourcesCarrier  = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
 	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
-	launcherMinimumVersion = "3.2.1"
+	launcherMinimumVersion = "3.2.2"
 )
 
 // schedulerTick periodically triggers the scheduler to act.
@@ -1292,10 +1292,11 @@ func checkMinimumLauncherVersion(version string) bool {
 // fetchHpcResourceDetails retrieves the details about HPC Resources.
 // This function uses HPC Resources manifest to retrieve the required details.
 // This function performs the following steps:
-// 	1. Launch the manifest.
-// 	2. Read the log file with details on HPC resources.
-// 	3. Parse and load the details into a predefined struct - HpcResourceDetails
-// 	4. Terminate the manifest.
+//  1. Launch the manifest.
+//  2. Read the log file with details on HPC resources.
+//  3. Parse and load the details into a predefined struct - HpcResourceDetails
+//  4. Terminate the manifest.
+//
 // Returns struct with HPC resource details - HpcResourceDetails.
 // This function also queries launcher version and warns user if minimum required
 // launcher version is not met.
@@ -1876,7 +1877,8 @@ func createSlurmResourcesManifest() *launcher.Manifest {
 }
 
 // If an auth_file was specified, load the content and return it to enable authorization
-//  with the launcher.  If the auth_file is configured, but does not exist we panic.
+//
+//	with the launcher.  If the auth_file is configured, but does not exist we panic.
 func loadAuthToken(config *config.DispatcherResourceManagerConfig) string {
 	if len(config.LauncherAuthFile) > 0 {
 		authToken, err := os.ReadFile(config.LauncherAuthFile)
