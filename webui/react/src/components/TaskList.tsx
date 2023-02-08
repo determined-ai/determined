@@ -125,6 +125,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
+  const { canModifyWorkspaceNSC } = usePermissions();
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -156,10 +157,11 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const hasKillable = useMemo(() => {
     for (const task of selectedTasks) {
-      if (isTaskKillable(task)) return true;
+      if (isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } })))
+        return true;
     }
     return false;
-  }, [selectedTasks]);
+  }, [selectedTasks, canModifyWorkspaceNSC]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -530,7 +532,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const handleBatchKill = useCallback(async () => {
     try {
       const promises = selectedTasks
-        .filter((task) => isTaskKillable(task))
+        .filter((task) =>
+          isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } })),
+        )
         .map((task) => killTask(task));
       await Promise.all(promises);
 
@@ -551,7 +555,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         type: ErrorType.Server,
       });
     }
-  }, [fetchAll, selectedTasks, updateSettings]);
+  }, [fetchAll, selectedTasks, updateSettings, canModifyWorkspaceNSC]);
 
   const showConfirmation = useCallback(() => {
     modal.confirm({

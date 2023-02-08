@@ -71,6 +71,7 @@ interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceAgentUserGroup: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceCheckpointStorage: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -171,6 +172,8 @@ const usePermissions = (): PermissionsHook => {
         canModifyWorkspaceAgentUserGroup(rbacOpts, args.workspace),
       canModifyWorkspaceCheckpointStorage: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceCheckpointStorage(rbacOpts, args.workspace),
+      canModifyWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
+        canModifyWorkspaceNSC(rbacOpts, args.workspace),
       canMoveExperiment: (args: ExperimentPermissionsArgs) =>
         canMoveExperiment(rbacOpts, args.experiment),
       canMoveExperimentsTo: (args: MovePermissionsArgs) =>
@@ -607,6 +610,14 @@ const canCreateWorkspaceNSC = (
     rbacAllPermission ||
     (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.CREATENSC)))
   );
+};
+
+const canModifyWorkspaceNSC = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.UPDATENSC);
 };
 
 /* Webhooks */
