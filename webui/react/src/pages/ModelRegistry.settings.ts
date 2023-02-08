@@ -51,7 +51,7 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelsRequestSortBy;
   tags?: string[];
   users?: string[];
-  workspace?: string[];
+  workspace?: number[];
 }
 
 const config = (id: string): SettingsConfig<Settings> => {
@@ -138,7 +138,7 @@ const config = (id: string): SettingsConfig<Settings> => {
       workspace: {
         defaultValue: [],
         storageKey: 'workspace',
-        type: union([undefinedType, array(string)]),
+        type: union([undefinedType, array(number)]),
       },
     },
     storagePath,

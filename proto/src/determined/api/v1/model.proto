@@ -83,6 +83,9 @@ message GetModelsRequest {
 
   // Limit the models to this model id.
   int32 id = 10;
+
+  // Limit models to those that belong to the following workspace ids.
+  repeated int32 workspace_ids = 14;
 }
 
 // Response to GetModelsRequest.

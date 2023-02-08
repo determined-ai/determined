@@ -13413,6 +13413,7 @@ def get_GetModels(
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
     workspaceName: "typing.Optional[str]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
@@ -13428,6 +13429,7 @@ def get_GetModels(
         "userIds": userIds,
         "users": users,
         "workspaceId": workspaceId,
+        "workspaceIds": workspaceIds,
         "workspaceName": workspaceName,
     }
     _resp = session._do_request(

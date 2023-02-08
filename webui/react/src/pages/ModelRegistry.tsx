@@ -126,6 +126,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
           workspaceId: workspace?.id,
+          workspaceIds: settings.workspace,
         },
         { signal: canceler.signal },
       );
@@ -317,7 +318,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.workspace?.map((ws) => ws)}
+        values={settings.workspace?.map((ws) => ws.toString())}
         width={220}
         onFilter={handleWorkspaceFilterApply}
         onReset={handleWorkspaceFilterReset}
@@ -419,13 +420,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
-  );
-
-  const filteredModels = models.filter(
-    (m) =>
-      !settings.workspace ||
-      settings.workspace.length === 0 ||
-      settings.workspace.findIndex((w) => parseInt(w) === m.workspaceId) !== -1,
   );
 
   const columns = useMemo(() => {
@@ -717,7 +711,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           columns={columns}
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
-          dataSource={filteredModels}
+          dataSource={models}
           loading={isLoading || isLoadingSettings}
           pagination={getFullPaginationConfig(
             {
