@@ -11,6 +11,7 @@ import { useCurrentUser } from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
+import { useInitApi } from 'utils/dialogApi';
 import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -23,6 +24,7 @@ interface Props {
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
+  useInitApi();
   const { ui } = useUI();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
