@@ -11,21 +11,21 @@ PROJECT_NAME = determined-agent
 ARCHS = amd64 arm64 ppc64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
-NVCR_REPO = nvcr.io/isv-ngc-partner/determined
+NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
 
 PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
 
-NVCR_MANIFESTS = \
-	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
-	$(NVCR_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
-	$(NVCR_REPO)/$(PROJECT_NAME):$(VERSION)
-
 DEV_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+
+NVCR_TAGS = \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(VERSION)
 
 .PHONY: clean
 clean:
@@ -115,14 +115,6 @@ define manifest_publish
 	done
 endef
 
-define docker_tag
-	for image in $(1); do \
-		tag=$$(echo $$image | sed -e 's|$(2)|$(3)|'); \
-		docker tag $$image $$tag; \
-		echo $$tag; \
-	done
-endef
-
 .PHONY: publish-dev
 publish-dev:
 	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
@@ -133,4 +125,7 @@ publish:
 
 .PHONY: publish-nvcr
 publish-nvcr:
-	@$(call manifest_publish, $(NVCR_MANIFESTS), $(shell $(call docker_tag, $(MULTI_ARCH_IMAGES), ^$(DOCKER_REPO)/, $(NVCR_REPO)/)))
+	for image in $(NVCR_TAGS); do \
+		docker tag $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-amd64 $$image; \
+		docker push $$image; \
+	done
