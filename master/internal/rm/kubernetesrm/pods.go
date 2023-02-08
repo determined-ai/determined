@@ -930,7 +930,7 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	namespaceToQuota := make(map[string]k8sV1.ResourceQuota)
 
-	// Look up quotas for our resource pools' namespaces
+	// Look up quotas for our resource pools' namespaces.
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
 		if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
