@@ -78,7 +78,7 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     test_loss = 0
     correct = 0
     with torch.no_grad():
-        for batch_idx, (data, target) in enumerate(test_loader):
+        for _, (data, target) in enumerate(test_loader):
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
@@ -144,6 +144,8 @@ def main(core_context):
         "--dry-run", action="store_true", default=False, help="quickly check a single pass"
     )
     parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
+
+    # NEW: change log interval to 100 to reduce network overhead
     parser.add_argument(
         "--log-interval",
         type=int,

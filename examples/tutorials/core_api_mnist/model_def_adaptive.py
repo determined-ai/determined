@@ -82,7 +82,7 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
     test_loss = 0
     correct = 0
     with torch.no_grad():
-        for batch_idx, (data, target) in enumerate(test_loader):
+        for _, (data, target) in enumerate(test_loader):
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
@@ -131,7 +131,7 @@ def main(core_context):
     parser.add_argument(
         "--epochs",
         type=int,
-        default=10,
+        default=14,
         metavar="N",
         help="number of epochs to train (default: 14)",
     )

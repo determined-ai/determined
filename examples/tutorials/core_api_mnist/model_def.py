@@ -1,4 +1,6 @@
-# The starting script. This script is the same as [main.py](https://github.com/pytorch/examples/blob/main/mnist/main.py) without the Determined integrations.
+# The starting script. This script is the same as PyTorch's official MNIST example[1].
+#
+# [1] github.com/pytorch/examples/blob/main/mnist/main.py
 
 from __future__ import print_function
 import argparse
