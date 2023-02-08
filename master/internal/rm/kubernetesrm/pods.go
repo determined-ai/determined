@@ -953,7 +953,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 
 		// If there's no quota for our only resource pool's namespace
 		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
-			return p.summarizeCluster(ctx), nil
+			return p.summarizeClusterByNodes(ctx), nil
 		}
 	}
 
@@ -1021,7 +1021,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	return summaries, nil
 }
 
-func (p *pods) summarizeCluster(ctx *actor.Context) map[string]model.AgentSummary {
+func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.AgentSummary {
 	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
 	for _, podHandler := range p.podNameToPodHandler {
 		podHandlers = append(podHandlers, podHandler)
