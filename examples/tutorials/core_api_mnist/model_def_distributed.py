@@ -82,7 +82,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
                 break
 
 
-def test(args, model, device, test_loader, core_context, steps_completed, op):
+def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
 
     model.eval()
     test_loss = 0
@@ -108,6 +108,8 @@ def test(args, model, device, test_loader, core_context, steps_completed, op):
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics={"test_loss": test_loss}
         )
+
+    return test_loss
 
 
 def load_state(checkpoint_directory):
