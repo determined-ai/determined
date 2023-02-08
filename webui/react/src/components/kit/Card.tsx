@@ -51,7 +51,7 @@ const Card: Card = ({
               menu={actionMenu}
               placement="bottomRight"
               trigger={['click']}>
-              <Button type="text" onClick={stopPropagation}>
+              <Button size="small" type="text" onClick={stopPropagation}>
                 <Icon name="overflow-horizontal" />
               </Button>
             </Dropdown>
