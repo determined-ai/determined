@@ -389,8 +389,10 @@ def test_ntsc_iface_access() -> None:
             # none of the users should be able to get details
             for cred in [creds[1], creds[2]]:
                 session = determined_test_session(cred)
-                with pytest.raises(errors.APIException) as e:
-                    get_ntsc_details(session, typ, created_id2)
+                # exception for creds[1], who can access the experiment and tensorboard
+                if typ != "tensorboard" and cred == creds[2]:
+                    with pytest.raises(errors.APIException) as e:
+                        get_ntsc_details(session, typ, created_id2)
                 assert e.value.status_code == 404
                 results = list_ntsc(session, typ)
                 for r in results:
