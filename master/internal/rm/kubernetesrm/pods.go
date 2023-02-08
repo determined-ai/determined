@@ -960,14 +960,10 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	containers := p.containersPerResourcePool()
 	summaries := make(map[string]model.AgentSummary, len(p.namespaceToPoolName))
 	for namespace, poolName := range p.namespaceToPoolName {
-		quota, quotaExists := namespaceToQuota[namespace]
+		slots := model.SlotsSummary{}
 		numContainers := containers[poolName]
-
-		var (
-			registeredTime time.Time
-			slots          map[string]model.SlotSummary
-		)
-		if quotaExists {
+		var registeredTime time.Time
+		if quota, quotaExists := namespaceToQuota[namespace]; quotaExists {
 			slots = make(map[string]model.SlotSummary)
 			registeredTime = quota.CreationTimestamp.Time
 
