@@ -486,3 +486,44 @@ def test_ntsc_proxy() -> None:
 
             # kill the ntsc
             kill_ntsc(determined_test_session(creds[0]), typ, created_id)
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
+def test_tsb_listed() -> None:
+    with create_workspaces_with_users(
+        [
+            [
+                (0, ["Editor"]),
+                (1, ["Viewer"]),
+            ],
+        ]
+    ) as ([workspace], creds):
+        pid = bindings.post_PostProject(
+            determined_test_session(creds[0]),
+            body=bindings.v1PostProjectRequest(name="test", workspaceId=workspace.id),
+            workspaceId=workspace.id,
+        ).project.id
+
+        session = determined_test_session(creds[0])
+
+        with logged_in_user(creds[0]):
+            # experiment for tensorboard
+            experiment_id = exp.create_experiment(
+                conf.fixtures_path("no_op/single.yaml"),
+                conf.fixtures_path("no_op"),
+                ["--project_id", str(pid)],
+            )
+
+            created_id = launch_ntsc(session, workspace.id, "tensorboard", experiment_id)
+
+            # list tensorboards and make sure it's included in the response.
+            tsbs = bindings.get_GetTensorboards(session, workspaceId=workspace.id).tensorboards
+            assert len(tsbs) == 1, "should be one tensorboard"
+            assert tsbs[0].id == created_id, "should be the tensorboard we created"
+
+            tsbs = bindings.get_GetTensorboards(
+                determined_test_session(credentials=creds[1]), workspaceId=workspace.id
+            ).tensorboards
+            assert len(tsbs) == 1, "should be one tensorboard"
+            assert tsbs[0].id == created_id, "should be the tensorboard we created"
