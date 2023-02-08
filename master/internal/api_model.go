@@ -216,7 +216,7 @@ func (a *apiServer) GetModelLabels(
 		ModelTableExpr("(?) AS sorted_labels", labelQuery).
 		Model(&resp.Labels).
 		ColumnExpr("sorted_labels.label")
-	err := opQuery.Scan(ctx)
+	err = opQuery.Scan(ctx)
 
 	return &resp, errors.Wrapf(err, "error getting model labels")
 }

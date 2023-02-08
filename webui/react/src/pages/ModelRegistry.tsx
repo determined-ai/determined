@@ -148,13 +148,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const fetchTags = useCallback(async () => {
     try {
-      const tags = await getModelLabels({ signal: canceler.signal });
+      const tags = await getModelLabels(
+        { workspaceId: workspace?.id },
+        { signal: canceler.signal },
+      );
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal]);
+  }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);

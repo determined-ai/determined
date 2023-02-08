@@ -435,6 +435,10 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   users?: string[];
 }
 
+export interface GetWorkspaceModelsParams {
+  workspaceId?: number;
+}
+
 export interface GetWorkspaceMembersParams {
   nameFilter?: string;
   workspaceId: number;

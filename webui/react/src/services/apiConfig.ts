@@ -1128,10 +1128,14 @@ export const deleteModelVersion: DetApi<
     detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
 };
 
-export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {
+export const getModelLabels: DetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+> = {
   name: 'getModelLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Models.getModelLabels(options),
+  request: (params, options) => detApi.Models.getModelLabels(params.workspaceId, options),
 };
 
 export const postModel: DetApi<
