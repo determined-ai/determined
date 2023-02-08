@@ -500,14 +500,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
-        key: 'workspace',
+        key: V1GetModelsRequestSortBy.WORKSPACE,
         render: (v: string, record: ModelItem) => workspaceRenderer(record),
-        sorter: (a: ModelItem, b: ModelItem): number => {
-          return alphaNumericSorter(
-            workspaces.find((w) => w.id === a.workspaceId)?.name ?? '',
-            workspaces.find((w) => w.id === b.workspaceId)?.name ?? '',
-          );
-        },
+        sorter: true,
         title: 'Workspace',
       },
       {

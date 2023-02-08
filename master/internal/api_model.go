@@ -118,6 +118,7 @@ func (a *apiServer) GetModels(
 		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
 		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
 		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+		apiv1.GetModelsRequest_SORT_BY_WORKSPACE:         "w.name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",

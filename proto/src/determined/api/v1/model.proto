@@ -45,6 +45,8 @@ message GetModelsRequest {
     SORT_BY_LAST_UPDATED_TIME = 5;
     // Returns models sorted by number of version.
     SORT_BY_NUM_VERSIONS = 6;
+    // Returns models sorted by workspace name.
+    SORT_BY_WORKSPACE = 7;
   }
 
   // Sort the models by the given field.
