@@ -1,5 +1,4 @@
 /* eslint-disable */
-/// <reference types="react-scripts" />
 /// <reference path="types.ts" />
 
 export {};
