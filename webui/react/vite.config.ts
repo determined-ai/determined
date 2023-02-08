@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
 import { defineConfig, Plugin, UserConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import checker from 'vite-plugin-checker';
 
 import { cspHtml } from './src/shared/configs/vite-plugin-csp';
 
@@ -17,7 +18,12 @@ const portableFetchFix = () => ({
   name: 'fix-portable-fetch',
   transform: (source: string, id: string) => {
     if (id.endsWith('api-ts-sdk/api.ts')) {
-      const newSource = new MagicString(source.replace('import * as portableFetch from "portable-fetch"', 'import portableFetch from "portable-fetch"'));
+      const newSource = new MagicString(
+        source.replace(
+          'import * as portableFetch from "portable-fetch"',
+          'import portableFetch from "portable-fetch"',
+        ),
+      );
       return {
         code: newSource.toString(),
         map: newSource.generateMap(),
@@ -28,24 +34,26 @@ const portableFetchFix = () => ({
 
 const publicUrlBaseHref = (): Plugin => {
   let config: UserConfig;
-    return ({
-        config(c) {
-          config = c;
-        },
-        name: 'public-url-base-href',
-        transformIndexHtml: {
-            handler() {
-                return config.base ? [
-                    {
-                        attrs: {
-                            href: config.base,
-                        },
-                        tag: 'meta',
-                    },
-                ] : [];
-            },
-        },
-    });
+  return {
+    config(c) {
+      config = c;
+    },
+    name: 'public-url-base-href',
+    transformIndexHtml: {
+      handler() {
+        return config.base
+          ? [
+              {
+                attrs: {
+                  href: config.base,
+                },
+                tag: 'meta',
+              },
+            ]
+          : [];
+      },
+    },
+  };
 };
 
 // public_url as / breaks the link component -- assuming that CRA did something
@@ -87,18 +95,27 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['notebook'],
   },
-  plugins: [tsconfigPaths(), react(), portableFetchFix(), publicUrlBaseHref(), cspHtml({
-    cspRules: {
-      'frame-src': ["'self'", 'netlify.determined.ai'],
-      'object-src': ["'none'"],
-      'script-src': ["'self'", 'cdn.segment.com'],
-      'style-src': ["'self'", "'unsafe-inline'"],
-    },
-    hashEnabled: {
-      'script-src': true,
-      'style-src': false,
-    },
-  })],
+  plugins: [
+    tsconfigPaths(),
+    react(),
+    portableFetchFix(),
+    publicUrlBaseHref(),
+    checker({
+      typescript: true,
+    }),
+    cspHtml({
+      cspRules: {
+        'frame-src': ["'self'", 'netlify.determined.ai'],
+        'object-src': ["'none'"],
+        'script-src': ["'self'", 'cdn.segment.com'],
+        'style-src': ["'self'", "'unsafe-inline'"],
+      },
+      hashEnabled: {
+        'script-src': true,
+        'style-src': false,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       // needed for react-dnd
