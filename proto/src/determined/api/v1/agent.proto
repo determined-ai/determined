@@ -65,9 +65,6 @@ message GetSlotsRequest {
 }
 // Response to GetSlotsRequest.
 message GetSlotsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "slots" ] }
-  };
   // The requested slots.
   repeated determined.agent.v1.Slot slots = 1;
 }
@@ -81,9 +78,6 @@ message GetSlotRequest {
 }
 // Response to GetSlotRequest.
 message GetSlotResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "slot" ] }
-  };
   // The requested slot.
   determined.agent.v1.Slot slot = 1;
 }
@@ -95,9 +89,6 @@ message EnableAgentRequest {
 }
 // Response to EnableAgentRequest.
 message EnableAgentResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "agent" ] }
-  };
   // The enabled agent.
   determined.agent.v1.Agent agent = 1;
 }
@@ -111,9 +102,6 @@ message DisableAgentRequest {
 }
 // Response to DisableAgentRequest.
 message DisableAgentResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "agent" ] }
-  };
   // The disabled agent.
   determined.agent.v1.Agent agent = 1;
 }
@@ -127,9 +115,6 @@ message EnableSlotRequest {
 }
 // Response to EnableSlotRequest.
 message EnableSlotResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "slot" ] }
-  };
   // The enabled slot.
   determined.agent.v1.Slot slot = 1;
 }
@@ -143,9 +128,6 @@ message DisableSlotRequest {
 }
 // Response to DisableSlotRequest.
 message DisableSlotResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "slot" ] }
-  };
   // The disabled slot.
   determined.agent.v1.Slot slot = 1;
 }
