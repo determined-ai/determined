@@ -103,6 +103,7 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
     )
 
     # NEW: return test_loss
+    return test_loss
 
 def load_state(checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
@@ -222,7 +223,7 @@ def main(core_context):
 
             # NEW: Pass op into train and test functions
             train(args, model, device, train_loader, optimizer, core_context, epoch, op)
-            test(args, model, device, test_loader, core_context, steps_completed, op)
+            test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
 
             scheduler.step()
             if args.save_model:

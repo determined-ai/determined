@@ -265,7 +265,7 @@ def main(core_context):
 
 if __name__ == "__main__":
     # NEW: Initialize process group using torch
-    dist.init_process_group("gloo")
+    dist.init_process_group("nccl")
 
     # NEW: Initialize distributed context using from_torch_distributed
     # (obtains info such as rank, size, etc. from default torch environment variables)

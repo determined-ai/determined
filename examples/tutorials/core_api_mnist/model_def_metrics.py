@@ -72,7 +72,7 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
                 break
 
 
-# NEW: modified function header to include core_context for metric reporting and a steps_completed parameter to plot metrics
+# NEW: modified function header to include args, epoch, test_loader, core_context for metric reporting and a steps_completed parameter to plot metrics
 def test(args, model, device, test_loader, epoch, core_context, steps_completed):
     model.eval()
     test_loss = 0
@@ -194,6 +194,8 @@ def main(core_context):
 
         # NEW: pass context to train and test functions as well
         train(args, model, device, train_loader, optimizer, epoch, core_context)
+        
+        # NEW: pass args, test_loader, epoch, and steps_completed into test
         test(args, model, device, test_loader, epoch, core_context, steps_completed=steps_completed)
         scheduler.step()
 
