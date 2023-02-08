@@ -1057,7 +1057,7 @@ func (p *pods) summarizeCluster(ctx *actor.Context) map[string]model.AgentSummar
 		case device.CUDA:
 			fallthrough
 		default:
-			resources := node.Status.Allocatable["nvidia.com/gpu"]
+			resources := node.Status.Allocatable[ResourceTypeNvidia]
 			numSlots = resources.Value()
 			deviceType = device.CUDA
 		}
