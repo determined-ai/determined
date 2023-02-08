@@ -63,6 +63,10 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       Progress: {
         marginXS: 0,
       },
+      Tooltip: {
+        colorBgDefault: 'var(--theme-float)',
+        colorTextLightSolid: 'var(--theme-float-on)',
+      },
     },
     token: {
       borderRadius: 2,
