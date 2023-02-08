@@ -11,6 +11,7 @@ import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 import { modal } from 'utils/dialogApi';
+import handleError from 'utils/error';
 
 import css from './TaskBar.module.scss';
 interface Props {
@@ -43,8 +44,16 @@ export const TaskBar: React.FC<Props> = ({
       icon: <ExclamationCircleOutlined />,
       okText: 'Kill',
       onOk: async () => {
-        await killTask(task);
-        routeToReactUrl(paths.taskList());
+        try {
+          await killTask(task);
+          routeToReactUrl(paths.taskList());
+        } catch (e) {
+          handleError(e, {
+            publicMessage: `Unable to kill task ${task.id}.`,
+            publicSubject: 'Kill failed.',
+            silent: false,
+          });
+        }
       },
       title: 'Confirm Task Kill',
     });
