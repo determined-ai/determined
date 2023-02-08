@@ -2204,47 +2204,55 @@ class v1DisableAgentRequest:
         return out
 
 class v1DisableAgentResponse:
+    agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
         self,
         *,
-        agent: "v1Agent",
+        agent: "typing.Union[v1Agent, None, Unset]" = _unset,
     ):
-        self.agent = agent
+        if not isinstance(agent, Unset):
+            self.agent = agent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DisableAgentResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "agent": v1Agent.from_json(obj["agent"]),
         }
+        if "agent" in obj:
+            kwargs["agent"] = v1Agent.from_json(obj["agent"]) if obj["agent"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "agent": self.agent.to_json(omit_unset),
         }
+        if not omit_unset or "agent" in vars(self):
+            out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
 class v1DisableSlotResponse:
+    slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
         self,
         *,
-        slot: "v1Slot",
+        slot: "typing.Union[v1Slot, None, Unset]" = _unset,
     ):
-        self.slot = slot
+        if not isinstance(slot, Unset):
+            self.slot = slot
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DisableSlotResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "slot": v1Slot.from_json(obj["slot"]),
         }
+        if "slot" in obj:
+            kwargs["slot"] = v1Slot.from_json(obj["slot"]) if obj["slot"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "slot": self.slot.to_json(omit_unset),
         }
+        if not omit_unset or "slot" in vars(self):
+            out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
 
 class v1DoubleFieldFilter:
@@ -2298,47 +2306,55 @@ class v1DoubleFieldFilter:
         return out
 
 class v1EnableAgentResponse:
+    agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
         self,
         *,
-        agent: "v1Agent",
+        agent: "typing.Union[v1Agent, None, Unset]" = _unset,
     ):
-        self.agent = agent
+        if not isinstance(agent, Unset):
+            self.agent = agent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1EnableAgentResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "agent": v1Agent.from_json(obj["agent"]),
         }
+        if "agent" in obj:
+            kwargs["agent"] = v1Agent.from_json(obj["agent"]) if obj["agent"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "agent": self.agent.to_json(omit_unset),
         }
+        if not omit_unset or "agent" in vars(self):
+            out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
 class v1EnableSlotResponse:
+    slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
         self,
         *,
-        slot: "v1Slot",
+        slot: "typing.Union[v1Slot, None, Unset]" = _unset,
     ):
-        self.slot = slot
+        if not isinstance(slot, Unset):
+            self.slot = slot
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1EnableSlotResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "slot": v1Slot.from_json(obj["slot"]),
         }
+        if "slot" in obj:
+            kwargs["slot"] = v1Slot.from_json(obj["slot"]) if obj["slot"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "slot": self.slot.to_json(omit_unset),
         }
+        if not omit_unset or "slot" in vars(self):
+            out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
 
 class v1EntityType(enum.Enum):
@@ -4221,47 +4237,55 @@ class v1GetShellsResponse:
         return out
 
 class v1GetSlotResponse:
+    slot: "typing.Optional[v1Slot]" = None
 
     def __init__(
         self,
         *,
-        slot: "v1Slot",
+        slot: "typing.Union[v1Slot, None, Unset]" = _unset,
     ):
-        self.slot = slot
+        if not isinstance(slot, Unset):
+            self.slot = slot
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSlotResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "slot": v1Slot.from_json(obj["slot"]),
         }
+        if "slot" in obj:
+            kwargs["slot"] = v1Slot.from_json(obj["slot"]) if obj["slot"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "slot": self.slot.to_json(omit_unset),
         }
+        if not omit_unset or "slot" in vars(self):
+            out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
 
 class v1GetSlotsResponse:
+    slots: "typing.Optional[typing.Sequence[v1Slot]]" = None
 
     def __init__(
         self,
         *,
-        slots: "typing.Sequence[v1Slot]",
+        slots: "typing.Union[typing.Sequence[v1Slot], None, Unset]" = _unset,
     ):
-        self.slots = slots
+        if not isinstance(slots, Unset):
+            self.slots = slots
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSlotsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "slots": [v1Slot.from_json(x) for x in obj["slots"]],
         }
+        if "slots" in obj:
+            kwargs["slots"] = [v1Slot.from_json(x) for x in obj["slots"]] if obj["slots"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "slots": [x.to_json(omit_unset) for x in self.slots],
         }
+        if not omit_unset or "slots" in vars(self):
+            out["slots"] = None if self.slots is None else [x.to_json(omit_unset) for x in self.slots]
         return out
 
 class v1GetTaskResponse:
