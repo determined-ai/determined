@@ -47,7 +47,7 @@ parameters:
     default: "1.21.14"
   master-build-resource-class:
     type: string
-    default: large
+    default: xlarge
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
