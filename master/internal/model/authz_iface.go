@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -32,6 +34,11 @@ type ModelAuthZ interface {
 	CanCreateModel(ctx context.Context,
 		curUser model.User, workspaceID int32,
 	) error
+
+	// GET /api/v1/models with filter to allow reading
+	FilterReadableModelsQuery(
+		ctx context.Context, curUser model.User, query *bun.SelectQuery,
+	) (*bun.SelectQuery, error)
 }
 
 // AuthZProvider is the authz registry for models.
