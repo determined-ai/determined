@@ -1,13 +1,21 @@
-import contextlib
 import dataclasses
 import time
-from typing import Callable, Generator, List, Optional, Set, Union
+from typing import Callable, List, Optional, Set, Union
 
 from determined.common.api import Session, bindings
 
 NTSC_TYPE = str  # Literal["notebook", "tensorboard", "shell", "command"]
 all_ntsc: Set[NTSC_TYPE] = {"notebook", "shell", "command", "tensorboard"}
 proxied_ntsc: Set[NTSC_TYPE] = {"notebook", "tensorboard"}
+
+
+@dataclasses.dataclass
+class SharedNTSC:
+    """a shared class representing some common attributes among NTSC"""
+
+    id_: str
+    typ: str
+    state: bindings.taskv1State
 
 
 def launch_ntsc(session: Session, workspace_id: int, typ: str, exp_id: Optional[int] = None) -> str:
@@ -80,13 +88,6 @@ def set_prio_ntsc(session: Session, typ: str, ntsc_id: str, prio: int) -> None:
         raise ValueError("unknown type")
 
 
-@dataclasses.dataclass
-class SharedNTSC:
-    id_: str
-    typ: str
-    state: bindings.taskv1State
-
-
 def get_ntsc_details(session: Session, typ: str, ntsc_id: str) -> SharedNTSC:
     assert typ in all_ntsc
     ntsc: Union[bindings.v1Notebook, bindings.v1Tensorboard, bindings.v1Shell, bindings.v1Command]
@@ -132,13 +133,14 @@ def list_ntsc(session: Session, typ: str, workspace_id: Optional[int] = None) ->
         raise ValueError("unknown type")
 
 
-def wait_state_ntsc(
+def wait_for_ntsc_state(
     session: Session,
     typ: str,
     ntsc_id: str,
     predicate: Callable[[bindings.taskv1State], bool],
     timeout: int = 10,
 ) -> Optional[bindings.taskv1State]:
+    """wait for ntsc to reach a state that satisfies the predicate"""
     assert typ in all_ntsc
     start = time.time()
     last_state = None
@@ -149,26 +151,3 @@ def wait_state_ntsc(
         if predicate(last_state):
             return last_state
         time.sleep(0.5)
-
-
-def wait_for_ntsc_state(
-    session: Session, typ: str, ntsc_id: str, state: bindings.taskv1State, timeout: int = 30
-) -> None:
-    assert typ in all_ntsc
-    wait_state_ntsc(session, typ, ntsc_id, lambda s: s == state, timeout)
-
-
-@contextlib.contextmanager
-def setup_notebooks(
-    session: Session, notebooks: List[bindings.v1LaunchNotebookRequest]
-) -> Generator[List[bindings.v1Notebook], None, None]:
-    created: List[bindings.v1Notebook] = []
-    try:
-        for nb_req in notebooks:
-            r = bindings.post_LaunchNotebook(session, body=nb_req)
-            created.append(r.notebook)
-        yield created
-
-    finally:
-        for nb in created:
-            bindings.post_KillNotebook(session, notebookId=nb.id)
