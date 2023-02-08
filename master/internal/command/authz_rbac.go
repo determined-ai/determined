@@ -240,8 +240,8 @@ func (a *NSCAuthZRBAC) FilterTensorboards(
 		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; !ok {
 			continue
 		}
-		for wID := range workspaceIDs {
-			if _, ok := filteredScopes[model.AccessScopeID(wID)]; !ok {
+		for _, wID := range workspaceIDs {
+			if _, ok := filteredScopes[wID]; !ok {
 				accessGranted = false
 				break
 			}
@@ -299,16 +299,16 @@ func tensorboardWorkspaces(
 		return nil, err
 	}
 
-	workspaceIDs := map[int]bool{}
+	workspaceIDs := map[model.AccessScopeID]bool{}
 	var workspaceIDList []model.AccessScopeID
-	for wID := range expIDsToWorkspaceIDs {
+	for _, wID := range expIDsToWorkspaceIDs {
 		workspaceIDs[wID] = true
 	}
-	for wID := range trialIDToWorkspaceIDs {
+	for _, wID := range trialIDToWorkspaceIDs {
 		workspaceIDs[wID] = true
 	}
 	for wID := range workspaceIDs {
-		workspaceIDList = append(workspaceIDList, model.AccessScopeID(wID))
+		workspaceIDList = append(workspaceIDList, wID)
 	}
 
 	return workspaceIDList, nil
