@@ -796,10 +796,10 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 
 	slots := 0
 	if len(msg.PoolName) > 0 {
-		slots = len(summary[msg.PoolName].Slots)
+		slots = numSlots(summary[msg.PoolName].Slots)
 	} else {
 		for _, pool := range summary {
-			slots += len(pool.Slots)
+			slots += numSlots(pool.Slots)
 		}
 	}
 	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
@@ -1192,4 +1192,17 @@ func (p *pods) containersPerResourcePool() map[string]int {
 		counts[pool]++
 	}
 	return counts
+}
+
+func numSlots(slots model.SlotsSummary) int {
+	slotCountsByType := make(map[device.Type]int)
+	for _, slot := range slots {
+		slotCountsByType[slot.Device.Type]++
+	}
+
+	if slotCountsByType[device.CUDA] > 0 {
+		return slotCountsByType[device.CUDA]
+	}
+
+	return slotCountsByType[device.CPU]
 }
