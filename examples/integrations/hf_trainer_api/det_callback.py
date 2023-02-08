@@ -221,7 +221,8 @@ class DetCallback(TrainerCallback):
 
             logging.info(f"Metric reported to searcher: {searcher_metric}")
             self.current_op.report_completed(searcher_metric)
-            self.updating_searcher = False
+
+        self.updating_searcher = False
 
         try:
             self.current_op = next(self.searcher_ops)
