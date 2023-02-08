@@ -102,7 +102,10 @@ message GetModelsResponse {
 }
 
 // Get a list of model labels.
-message GetModelLabelsRequest {}
+message GetModelLabelsRequest {
+  // Optional workspace ID to limit query for model tags.
+  optional int32 workspace_id = 1;
+}
 
 // Response to GetModelLabelsRequest.
 message GetModelLabelsResponse {
