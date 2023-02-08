@@ -4,9 +4,7 @@ import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, List, Optional
-from typing import OrderedDict as TypedOrderedDict
-from typing import Tuple, Union
+from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
 
@@ -115,7 +113,7 @@ RemoteTaskOldAPIs = {
     TaskTypeTensorBoard: "tensorboard",
 }
 
-RemoteTaskListTableHeaders: Dict[str, TypedOrderedDict[str, str]] = {
+RemoteTaskListTableHeaders: Dict[str, Dict[str, str]] = {
     "notebook": CommandTableHeader,
     "command cmd": CommandTableHeader,
     "shell": CommandTableHeader,

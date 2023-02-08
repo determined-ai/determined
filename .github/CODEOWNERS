@@ -9,11 +9,3 @@
 /master   @determined-ai/backend
 /agent    @determined-ai/backend
 /proto    @determined-ai/backend
-
-### individuals
-# Ilia cares about agent RM.
-/master/internal/resourcemanagers/ @ioga
-/master/internal/sproto/ @ioga
-/proto/src/determined/ @ioga
-/agent/internal/ @ioga
-

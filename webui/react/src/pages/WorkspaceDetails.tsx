@@ -40,7 +40,7 @@ type Params = {
 
 export const WorkspaceDetailsTab = {
   Members: 'members',
-  ModelRegistry: 'modelRegistry',
+  ModelRegistry: 'models',
   Projects: 'projects',
   Tasks: 'tasks',
 } as const;
@@ -135,7 +135,7 @@ const WorkspaceDetails: React.FC = () => {
         return response.roles || [];
       });
     } catch (e) {
-      handleError(e);
+      handleError(e, { silent: true });
     }
   }, [canceler.signal, id, rbacEnabled]);
 

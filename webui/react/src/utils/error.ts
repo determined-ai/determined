@@ -27,6 +27,7 @@ const openNotification = (e: DetError) => {
 
   notification?.({
     description: e.publicMessage || '',
+    key: e.name,
     message: e.publicSubject || listToStr([e.type, e.level]),
   });
 };

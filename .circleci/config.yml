@@ -47,7 +47,7 @@ parameters:
     default: "1.21.14"
   master-build-resource-class:
     type: string
-    default: large
+    default: xlarge
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -1148,8 +1148,12 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run: make -C master release
-      - run: make -C agent release
+      - run:
+          no_output_timeout: 30m
+          command: make -C master release
+      - run:
+          no_output_timeout: 30m
+          command: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs

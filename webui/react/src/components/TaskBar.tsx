@@ -3,6 +3,7 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -10,6 +11,7 @@ import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 import { modal } from 'utils/dialogApi';
+import handleError from 'utils/error';
 
 import css from './TaskBar.module.scss';
 interface Props {
@@ -27,6 +29,7 @@ export const TaskBar: React.FC<Props> = ({
   resourcePool,
   type,
 }: Props) => {
+  const { canModifyWorkspaceNSC } = usePermissions();
   const task = useMemo(() => {
     const commandTask = { id, name, resourcePool, type } as CommandTask;
     return commandTask;
@@ -41,8 +44,16 @@ export const TaskBar: React.FC<Props> = ({
       icon: <ExclamationCircleOutlined />,
       okText: 'Kill',
       onOk: async () => {
-        await killTask(task);
-        routeToReactUrl(paths.taskList());
+        try {
+          await killTask(task);
+          routeToReactUrl(paths.taskList());
+        } catch (e) {
+          handleError(e, {
+            publicMessage: `Unable to kill task ${task.id}.`,
+            publicSubject: 'Kill failed.',
+            silent: false,
+          });
+        }
       },
       title: 'Confirm Task Kill',
     });
@@ -68,12 +79,16 @@ export const TaskBar: React.FC<Props> = ({
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.Kill, label: 'Kill' },
+      {
+        disabled: !canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
+        key: MenuKey.Kill,
+        label: 'Kill',
+      },
       { key: MenuKey.ViewLogs, label: 'View Logs' },
     ];
 
     return { items: menuItems, onClick: onItemClick };
-  }, [task, deleteTask, handleViewLogsClick]);
+  }, [task, deleteTask, handleViewLogsClick, canModifyWorkspaceNSC]);
 
   return (
     <div className={css.base}>

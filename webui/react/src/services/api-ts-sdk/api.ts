@@ -2749,7 +2749,7 @@ export interface V1GetAgentResponse {
      * @type {V1Agent}
      * @memberof V1GetAgentResponse
      */
-    agent?: V1Agent;
+    agent: V1Agent;
 }
 
 /**
@@ -2774,7 +2774,7 @@ export interface V1GetAgentsResponse {
      * @type {Array<V1Agent>}
      * @memberof V1GetAgentsResponse
      */
-    agents?: Array<V1Agent>;
+    agents: Array<V1Agent>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}

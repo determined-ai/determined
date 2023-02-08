@@ -5,20 +5,6 @@
     white-space: nowrap;
   }
 }
-.emptyBase {
-  margin-inline: auto;
-  margin-top: 150px;
-  max-width: 350px;
-  text-align: center;
-
-  .icon {
-    padding: 16px;
-  }
-  h4 {
-    margin-bottom: 8;
-  }
-  .description {
-    color: var(--theme-colors-monochrome-9);
-    font-size: 14px;
-  }
+.grid {
+  padding-bottom: 16px;
 }

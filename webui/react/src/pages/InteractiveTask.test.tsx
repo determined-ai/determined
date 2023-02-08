@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
+import { UsersProvider } from 'stores/users';
 
 import InteractiveTask from './InteractiveTask';
 
@@ -35,11 +36,13 @@ const InteractiveTaskPageContainer: React.FC = () => {
 const InteractiveTaskContainer: React.FC = () => {
   return (
     <AuthProvider>
-      <UIProvider>
-        <HelmetProvider>
-          <InteractiveTaskPageContainer />
-        </HelmetProvider>
-      </UIProvider>
+      <UsersProvider>
+        <UIProvider>
+          <HelmetProvider>
+            <InteractiveTaskPageContainer />
+          </HelmetProvider>
+        </UIProvider>
+      </UsersProvider>
     </AuthProvider>
   );
 };
