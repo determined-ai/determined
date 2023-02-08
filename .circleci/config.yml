@@ -2696,7 +2696,7 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
-              compute-agent-instance-type: ["g4dn.12xlarge"]
+              compute-agent-instance-type: ["g4dn.4xlarge"]
 
       # GPU tests
       - request-gpu-tests:
