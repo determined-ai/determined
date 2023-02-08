@@ -2884,29 +2884,25 @@ class v1GetActiveTasksCountResponse:
         return out
 
 class v1GetAgentResponse:
-    agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
         self,
         *,
-        agent: "typing.Union[v1Agent, None, Unset]" = _unset,
+        agent: "v1Agent",
     ):
-        if not isinstance(agent, Unset):
-            self.agent = agent
+        self.agent = agent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAgentResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "agent": v1Agent.from_json(obj["agent"]),
         }
-        if "agent" in obj:
-            kwargs["agent"] = v1Agent.from_json(obj["agent"]) if obj["agent"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "agent": self.agent.to_json(omit_unset),
         }
-        if not omit_unset or "agent" in vars(self):
-            out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
 class v1GetAgentsRequestSortBy(enum.Enum):
@@ -2915,35 +2911,31 @@ class v1GetAgentsRequestSortBy(enum.Enum):
     SORT_BY_TIME = "SORT_BY_TIME"
 
 class v1GetAgentsResponse:
-    agents: "typing.Optional[typing.Sequence[v1Agent]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        agents: "typing.Union[typing.Sequence[v1Agent], None, Unset]" = _unset,
+        agents: "typing.Sequence[v1Agent]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        if not isinstance(agents, Unset):
-            self.agents = agents
+        self.agents = agents
         if not isinstance(pagination, Unset):
             self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAgentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "agents": [v1Agent.from_json(x) for x in obj["agents"]],
         }
-        if "agents" in obj:
-            kwargs["agents"] = [v1Agent.from_json(x) for x in obj["agents"]] if obj["agents"] is not None else None
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "agents": [x.to_json(omit_unset) for x in self.agents],
         }
-        if not omit_unset or "agents" in vars(self):
-            out["agents"] = None if self.agents is None else [x.to_json(omit_unset) for x in self.agents]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out

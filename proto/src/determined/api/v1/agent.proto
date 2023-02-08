@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/api/v1/pagination.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/agent/v1/agent.proto";
 
@@ -33,6 +34,10 @@ message GetAgentsRequest {
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "agents" ] }
+  };
+
   // The list of returned agents.
   repeated determined.agent.v1.Agent agents = 1;
   // Pagination information of the full dataset.
@@ -46,6 +51,9 @@ message GetAgentRequest {
 }
 // Response to GetAgentRequest.
 message GetAgentResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "agent" ] }
+  };
   // The requested agent.
   determined.agent.v1.Agent agent = 1;
 }
