@@ -286,7 +286,9 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps }: GroupProps) => 
     const xOpts = new Set<string>();
     chartsProps.forEach((chart) => {
       chart.series.forEach((serie) => {
-        Object.keys(serie.data).forEach((opt) => xOpts.add(opt));
+        Object.entries(serie.data)
+          .filter((dataPoints) => dataPoints[1].length > 0)
+          .forEach((opt) => xOpts.add(opt[0]));
       });
     });
     return Array.from(xOpts).sort();
