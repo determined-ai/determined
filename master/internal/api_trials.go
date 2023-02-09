@@ -695,7 +695,7 @@ func (a *apiServer) appendToMetricsBatch(metrics []*apiv1.SummarizedMetric,
 	return metrics
 }
 
-func (a *apiServer) timeFromFloat64(ts float64) time.Time {
+func timeFromFloat64(ts float64) time.Time {
 	secs := int64(ts)
 	nsecs := int64((ts - float64(secs)) * 1e9)
 	return time.Unix(secs, nsecs)
@@ -706,7 +706,7 @@ func (a *apiServer) appendToMetricsTime(metrics []*apiv1.SummarizedMetric,
 ) []*apiv1.SummarizedMetric {
 	for _, in := range metricSeries {
 		out := apiv1.DataPointTime{
-			Time:  timestamppb.New(a.timeFromFloat64(in.X)),
+			Time:  timestamppb.New(timeFromFloat64(in.X)),
 			Value: in.Y,
 		}
 		m.Time = append(m.Time, &out)

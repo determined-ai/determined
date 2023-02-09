@@ -624,6 +624,10 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
         batches: pt.batches,
         value: pt.value,
       })),
+      epochs: m.epochs?.map((pt) => ({
+        epoch: pt.epoch,
+        value: pt.value,
+      })),
       name: m.name,
       time: m.time?.map((pt) => ({
         time: pt.time,
@@ -634,12 +638,6 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
           ? types.MetricType.Training
           : types.MetricType.Validation,
     };
-    if (m.epochs && m.epochs.length > 0) {
-      metrics.epochs = m.epochs.map((pt) => ({
-        epoch: pt.epoch,
-        value: pt.value,
-      }));
-    }
     return metrics;
   });
 };
