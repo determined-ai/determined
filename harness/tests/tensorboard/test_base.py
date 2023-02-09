@@ -74,10 +74,7 @@ def test_unknown_type() -> None:
     with pytest.raises(TypeError, match="Unknown storage type: unknown"):
         env = test_util.get_dummy_env()
         tensorboard.build(
-            env.det_cluster_id,
-            env.det_experiment_id,
-            env.det_trial_id,
-            checkpoint_config,
+            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
         )
 
 
