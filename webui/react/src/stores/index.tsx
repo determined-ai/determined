@@ -11,7 +11,6 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import { AuthProvider } from './auth';
 import { ClusterProvider } from './cluster';
-import { DeterminedInfoProvider } from './determinedInfo';
 import { KnownRolesProvider } from './knowRoles';
 import { ProjectsProvider } from './projects';
 import { UsersProvider } from './users';
@@ -23,11 +22,9 @@ export const StoreProvider = ({ children }: { children: ReactNode }): ReactEleme
       <UsersProvider>
         <AuthProvider>
           <WorkspacesProvider>
-            <DeterminedInfoProvider>
-              <KnownRolesProvider>
-                <ProjectsProvider>{children}</ProjectsProvider>
-              </KnownRolesProvider>
-            </DeterminedInfoProvider>
+            <KnownRolesProvider>
+              <ProjectsProvider>{children}</ProjectsProvider>
+            </KnownRolesProvider>
           </WorkspacesProvider>
         </AuthProvider>
       </UsersProvider>
