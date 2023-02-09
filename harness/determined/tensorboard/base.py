@@ -175,5 +175,5 @@ class _TensorboardUploadThread(threading.Thread):
     def close(self) -> None:
         self._work_queue.put(None)
         while self.is_alive():
-            logging.info("Waiting for Tensorboard files to sync")
+            logging.info("Waiting for Tensorboard files to finish uploading")
             self.join(10)
