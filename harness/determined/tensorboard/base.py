@@ -26,7 +26,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self,
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
-        async_upload: bool = True,
+        async_upload: bool = False,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
@@ -35,7 +35,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self.upload_thread = None
         if async_upload:
             self.upload_thread = _TensorboardUploadThread(self._sync_impl)
-            self.upload_thread.start()
 
     def list_tb_files(
         self,
@@ -102,10 +101,21 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         """
         pass
 
+    def start_async_upload_thread(self) -> None:
+        if self.upload_thread is not None and not self.upload_thread.is_alive():
+            self.upload_thread.start()
+
     def close(self) -> None:
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.close()
             self.upload_thread.join()
+
+    def __enter__(self) -> "TensorboardManager":
+        self.start_async_upload_thread()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 def get_metric_writer() -> tensorboard.BatchMetricWriter:

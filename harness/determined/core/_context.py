@@ -39,22 +39,24 @@ class Context:
         preempt: Optional[core.PreemptContext] = None,
         train: Optional[core.TrainContext] = None,
         searcher: Optional[core.SearcherContext] = None,
+        tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
     ) -> None:
         self.checkpoint = checkpoint
         self.distributed = distributed or core.DummyDistributedContext()
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
+        self.tensorboard_manager = tensorboard_manager
 
     def __enter__(self) -> "Context":
         self.preempt.start()
+        self.tensorboard_manager.start_async_upload_thread()
         return self
 
     def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
         self.preempt.close()
         self.distributed.close()
-        self.train.close()
-        self.checkpoint.close()
+        self.tensorboard_manager.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
             self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
@@ -181,6 +183,7 @@ def init(
             str(info.trial.trial_id),
             info.trial._config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
+            async_upload=True,
         )
         if tensorboard_mode == core.TensorboardMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()
@@ -231,6 +234,7 @@ def init(
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
         preempt = core.DummyPreemptContext(distributed, preempt_mode)
+        tensorboard_manager = None
 
     _install_stacktrace_on_sigusr1()
 
@@ -240,4 +244,5 @@ def init(
         preempt=preempt,
         train=train,
         searcher=searcher,
+        tensorboard_manager=tensorboard_manager,
     )
