@@ -75,12 +75,12 @@ func (a *apiServer) scanMetricsSeries(rows *sql.Rows) (
 		var metrics *string
 		err := rows.Scan(&batches, &value, &endTime, &metrics)
 		if err != nil {
-			panic(err)
+			continue
 		}
 		if metrics != nil {
 			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
 			if err != nil {
-				panic(err)
+				continue
 			}
 		}
 		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
