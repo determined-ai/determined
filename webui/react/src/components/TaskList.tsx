@@ -70,8 +70,8 @@ import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
-import DynamicIcon from './DynamicIcon';
 import css from './TaskList.module.scss';
+import WorkspaceFilter from './WorkspaceFilter';
 
 const TensorBoardSourceType = {
   Experiment: 'Experiment',
@@ -484,12 +484,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
         filters: workspaces.map((ws) => ({
-          text: (
-            <div className={css.workspaceFilterItem}>
-              <DynamicIcon name={ws.name} size={24} />
-              <span className={css.workspaceFilterName}>{ws.name}</span>
-            </div>
-          ),
+          text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,

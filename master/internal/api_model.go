@@ -100,11 +100,16 @@ func (a *apiServer) GetModels(
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0, len(req.UserIds))
+	workspaceIds := make([]string, 0, len(req.WorkspaceIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
+	for _, workspaceID := range req.WorkspaceIds {
+		workspaceIds = append(workspaceIds, strconv.Itoa(int(workspaceID)))
+	}
 	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
+	workspaceIDsFilterExpr := strings.Join(workspaceIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
@@ -113,6 +118,7 @@ func (a *apiServer) GetModels(
 		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
 		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
 		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+		apiv1.GetModelsRequest_SORT_BY_WORKSPACE:         "w.name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -169,6 +175,7 @@ func (a *apiServer) GetModels(
 		nameFilter,
 		descFilterExpr,
 		workspaceIDFilterExpr,
+		workspaceIDsFilterExpr,
 	)
 	if err != nil {
 		return nil, err
@@ -205,7 +212,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", 0)
+		&getResp.Models, 0, "", "", "", "", modelName, "", 0, "")
 	if err != nil {
 		return err
 	}

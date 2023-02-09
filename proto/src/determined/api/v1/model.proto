@@ -45,6 +45,8 @@ message GetModelsRequest {
     SORT_BY_LAST_UPDATED_TIME = 5;
     // Returns models sorted by number of version.
     SORT_BY_NUM_VERSIONS = 6;
+    // Returns models sorted by workspace name.
+    SORT_BY_WORKSPACE = 7;
   }
 
   // Sort the models by the given field.
@@ -83,6 +85,9 @@ message GetModelsRequest {
 
   // Limit the models to this model id.
   int32 id = 10;
+
+  // Limit models to those that belong to the following workspace ids.
+  repeated int32 workspace_ids = 14;
 }
 
 // Response to GetModelsRequest.

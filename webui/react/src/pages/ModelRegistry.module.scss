@@ -16,3 +16,12 @@
     border: 1px solid var(--theme-status-active) !important;
   }
 }
+.centerVertically {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+.centerHorizontally {
+  display: flex;
+  justify-content: center;
+}

@@ -163,6 +163,7 @@ export interface GetModelsParams extends PaginationParams {
     | 'SORT_BY_NUM_VERSIONS';
   users?: string[];
   workspaceId?: number;
+  workspaceIds?: number[];
 }
 
 export interface GetModelParams {
