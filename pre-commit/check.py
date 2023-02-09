@@ -68,6 +68,7 @@ def unpushed_files() -> List[Path]:
 # check if PRECOMMIT_ENABLE_SLOW is set to true
 if os.environ.get("PRE_COMMIT_ENABLE_SLOW", "false") != "true":
     print("Skipping slow checks.")
+    print("Set PRE_COMMIT_ENABLE_SLOW=true to activate.")
     exit(0)
 
 PROJECT_NAME = "determined"
