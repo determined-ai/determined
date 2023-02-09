@@ -50,13 +50,15 @@ class Context:
 
     def __enter__(self) -> "Context":
         self.preempt.start()
-        self.tensorboard_manager.start_async_upload_thread()
+        if self.tensorboard_manager is not None:
+            self.tensorboard_manager.start_async_upload_thread()
         return self
 
     def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
         self.preempt.close()
         self.distributed.close()
-        self.tensorboard_manager.close()
+        if self.tensorboard_manager is not None:
+            self.tensorboard_manager.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
             self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
@@ -174,6 +176,7 @@ def init(
 
     train = None
     searcher = None
+    tensorboard_manager = None
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
@@ -234,7 +237,6 @@ def init(
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
         preempt = core.DummyPreemptContext(distributed, preempt_mode)
-        tensorboard_manager = None
 
     _install_stacktrace_on_sigusr1()
 

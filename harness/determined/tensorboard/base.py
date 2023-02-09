@@ -5,10 +5,9 @@ import queue
 import threading
 import time
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Any, Callable, List
 
 from determined import tensorboard
-from determined.common import util
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):
@@ -114,7 +113,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self.start_async_upload_thread()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any) -> None:
         self.close()
 
 
