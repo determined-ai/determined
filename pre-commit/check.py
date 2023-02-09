@@ -113,14 +113,13 @@ def run_rule(rule_path: Path) -> int:
     rule = rules[rule_path]
     os.chdir(rule_path)
     print(f'in direcotry "{rule_path.relative_to(root)}" run: {rule}')
-    if isinstance(rule, str):
-        os.system(rule)
-    else:
-        for cmd in rule:
-            return_code = os.system(cmd)
-            if return_code != 0:
-                print(f'command "{cmd}" failed with return code {return_code}', file=sys.stderr)
-                return return_code
+    cmds = rule if isinstance(rule, list) else [rule]
+    for cmd in cmds:
+        assert isinstance(cmd, str)
+        return_code = os.system(cmd)
+        if return_code != 0:
+            print(f'command "{cmd}" failed with return code {return_code}', file=sys.stderr)
+            return return_code
     return 0
 
 
