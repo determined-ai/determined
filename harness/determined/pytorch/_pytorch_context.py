@@ -20,9 +20,8 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import profiler, pytorch, util
+from determined import profiler, pytorch, tensorboard, util
 from determined.horovod import hvd
-from determined.tensorboard import MetricWriter
 
 # Apex is included only for GPU trials.
 try:
@@ -140,7 +139,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._stop_requested = False
 
-        self.tbd_writer = None  # type: Optional[MetricWriter]
+        self.tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
 
     def get_global_batch_size(self) -> int:
         """
@@ -957,7 +956,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         return self._core.train.get_tensorboard_path()
 
     @contextlib.contextmanager
-    def get_tensorboard_writer(self) -> Generator[MetricWriter, None, None]:
+    def get_tensorboard_writer(self) -> Generator[tensorboard.MetricWriter, None, None]:
         """
         Yield tensorboard writer to the user.
         To be used via the `with` statement, eg:
