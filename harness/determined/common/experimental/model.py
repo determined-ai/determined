@@ -133,7 +133,7 @@ class ModelSortBy(enum.Enum):
     DESCRIPTION = bindings.v1GetModelsRequestSortBy.SORT_BY_DESCRIPTION.value
     CREATION_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_CREATION_TIME.value
     LAST_UPDATED_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_LAST_UPDATED_TIME.value
-    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.valueNUM_
+    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.value
     WORKSPACE = bindings.v1GetModelsRequestSortBy.SORT_BY_WORKSPACE.value
 
     def _to_bindings(self) -> bindings.v1GetModelsRequestSortBy:
