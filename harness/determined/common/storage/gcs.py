@@ -37,18 +37,18 @@ class GCSStorageManager(storage.CloudStorageManager):
         prefix: Optional[str] = None,
         temp_dir: Optional[str] = None,
     ) -> None:
+        super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
+        import google.cloud.storage
         from google.auth import exceptions as auth_exceptions
 
         try:
-            super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-            import google.cloud.storage
-
             self.client = google.cloud.storage.Client()
-            self.bucket = self.client.bucket(bucket)
-            self.prefix = normalize_prefix(prefix)
 
         except auth_exceptions.GoogleAuthError as e:
             raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
+
+        self.bucket = self.client.bucket(bucket)
+        self.prefix = normalize_prefix(prefix)
 
     def get_storage_prefix(self, storage_id: str) -> str:
         return os.path.join(self.prefix, storage_id)
