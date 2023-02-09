@@ -58,14 +58,13 @@ def test_s3_lifecycle(
         tfevents_path = "uuid-123/tensorboard/experiment/1/trial/1/events.out.tfevents.example"
 
         manager.sync()
-        if prefix is not None:
-            tfevents_path = os.path.join(os.path.normpath(prefix).lstrip("/"), tfevents_path)
-        manager.close()
-        expected = (
-            "s3_bucket",
-            tfevents_path,
-        )
-        assert expected in manager.client.objects
+    if prefix is not None:
+        tfevents_path = os.path.join(os.path.normpath(prefix).lstrip("/"), tfevents_path)
+    expected = (
+        "s3_bucket",
+        tfevents_path,
+    )
+    assert expected in manager.client.objects
 
 
 def test_invalid_prefix(monkeypatch: monkeypatch.MonkeyPatch) -> None:
