@@ -219,6 +219,7 @@ const WorkspaceDetails: React.FC = () => {
   ]);
 
   const fetchAll = useCallback(async () => {
+    if (!canViewWorkspace({ workspace: { id } })) return;
     await Promise.allSettled([
       fetchWorkspace(),
       fetchUsers(),
@@ -227,6 +228,8 @@ const WorkspaceDetails: React.FC = () => {
       fetchRolesAssignableToScope(),
     ]);
   }, [
+    id,
+    canViewWorkspace,
     fetchWorkspace,
     fetchGroups,
     fetchUsers,
@@ -258,16 +261,14 @@ const WorkspaceDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
+  } else if (!canViewWorkspace({ workspace: { id } })) {
+    return <PageNotFound />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
     return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
-  }
-
-  if (!canViewWorkspace({ workspace: { id } })) {
-    return <PageNotFound />;
   }
 
   return (
