@@ -136,22 +136,15 @@ def find_rules(paths: List[Path]):
 def main():
     # define an arg to get the stage
     argparser = argparse.ArgumentParser()
-    argparser.add_argument(
-        "--stage",
-        choices=["pre-commit", "pre-push"],
-        default="pre-commit",
-        help="The stage of the git hook to run",
-    )
+    argparser.add_argument("files", nargs="*", type=str, help="files to check")
     args = argparser.parse_args()
 
-    failed_rules: Set[Path] = set()
     changed_files: List[Path] = []
-    if args.stage == "pre-commit":
-        changed_files = get_changed_files()
-    elif args.stage == "pre-push":
-        changed_files = unpushed_files()
-    else:
-        raise ValueError(f"unknown stage {args.stage}")
+    # changed_files = get_changed_files()
+    # changed_files = unpushed_files()
+    changed_files = [Path(x).absolute() for x in args.files]
+
+    failed_rules: Set[Path] = set()
     if len(changed_files) == 0:
         print("No changed files.")
         exit(0)
