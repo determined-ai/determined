@@ -1,4 +1,4 @@
-import { Observable, WritableObservable } from 'micro-observables';
+import { WritableObservable } from 'micro-observables';
 
 import { globalStorage } from 'globalStorage';
 import { Auth } from 'types';
@@ -23,13 +23,13 @@ const ensureAuthCookieSet = (token: string): void => {
 const internalAuth = new WritableObservable<Loadable<Auth>>(NotLoaded);
 const internalAuthChecked = new WritableObservable(false);
 
-export const auth = new Observable(internalAuth);
-export const authChecked = new Observable(internalAuthChecked);
+export const auth = internalAuth.readOnly();
+export const authChecked = internalAuth.readOnly();
 
 export const reset = (): void => {
   clearAuthCookie();
   globalStorage.removeAuthToken();
-  Observable.batch(() => {
+  WritableObservable.batch(() => {
     internalAuth.set(NotLoaded);
     internalAuthChecked.set(false);
   });
