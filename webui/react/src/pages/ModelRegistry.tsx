@@ -499,7 +499,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
-        isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
+        isFiltered: (settings: Settings) => !!settings.workspace,
         key: V1GetModelsRequestSortBy.WORKSPACE,
         render: (v: string, record: ModelItem) => workspaceRenderer(record),
         sorter: true,
