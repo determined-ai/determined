@@ -77,16 +77,15 @@ def test_list_tb_files(tmp_path: pathlib.Path) -> None:
     tb_files = manager.list_tb_files(0, lambda _: True)
 
     assert set(test_filepaths) == set(tb_files)
-    manager.close()
 
 
 def test_list_tb_files_nonexistent_directory(tmp_path: pathlib.Path) -> None:
     env = get_dummy_env()
     base_path = pathlib.Path("/non-existent-directory")
     sync_path = get_sync_path(env.det_cluster_id, env.det_experiment_id, env.det_trial_id)
-    with SharedFSTensorboardManager(str(tmp_path), base_path, sync_path) as manager:
-        assert not pathlib.Path(base_path).exists()
-        assert manager.list_tb_files(0, lambda _: True) == []
+    manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
+    assert not pathlib.Path(base_path).exists()
+    assert manager.list_tb_files(0, lambda _: True) == []
 
 
 test_data = [
