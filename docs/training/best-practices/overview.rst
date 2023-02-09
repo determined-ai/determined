@@ -13,8 +13,7 @@ Do:
    <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/LearningRateSchedule>`__
    and :class:`determined.pytorch.LRScheduler` as examples.
 
- asdfasdf
--  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),aaaaaaaaadf lasdf alsdf asdfl asdjf las;djf alksdjf al;sdjf ;l
+-  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),
    download to a `tempfile.TemporaryDirectory <https://docs.python.org/3/library/tempfile.html>`__
    unique to the Python process. This will avoid race conditions when using :ref:`distributed
    training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
