@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable, List
 
 from determined import tensorboard
+from determined.common import util
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):

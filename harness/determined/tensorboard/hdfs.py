@@ -30,7 +30,6 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
         self.client.makedirs(str(self.sync_path))
 
-    @util.preserve_random_state
     def _sync_impl(
         self,
         paths: List[pathlib.Path],

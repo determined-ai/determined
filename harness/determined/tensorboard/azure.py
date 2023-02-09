@@ -2,7 +2,6 @@ import logging
 import pathlib
 from typing import Any, Callable, List, Optional
 
-from determined.common import util
 from determined.tensorboard import base
 
 logger = logging.getLogger("determined.tensorboard")
@@ -30,7 +29,6 @@ class AzureTensorboardManager(base.TensorboardManager):
         )
         self.container = container if not container.endswith("/") else container[:-1]
 
-    @util.preserve_random_state
     def _sync_impl(
         self,
         paths: List[pathlib.Path],

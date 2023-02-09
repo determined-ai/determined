@@ -3,7 +3,6 @@ import os
 import pathlib
 from typing import Any, Callable, List, Optional
 
-from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
@@ -44,7 +43,6 @@ class S3TensorboardManager(base.TensorboardManager):
 
         self.prefix = normalize_prefix(prefix)
 
-    @util.preserve_random_state
     def _sync_impl(
         self,
         paths: List[pathlib.Path],

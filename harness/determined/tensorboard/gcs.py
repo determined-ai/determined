@@ -6,7 +6,6 @@ from typing import Any, Callable, List, Optional, no_type_check
 import requests.exceptions
 import urllib3.exceptions
 
-from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
@@ -36,7 +35,6 @@ class GCSTensorboardManager(base.TensorboardManager):
         return os.path.join(self.prefix, storage_id)
 
     @no_type_check
-    @util.preserve_random_state
     def _sync_impl(
         self,
         paths: List[pathlib.Path],
