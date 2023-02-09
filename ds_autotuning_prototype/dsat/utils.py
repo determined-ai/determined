@@ -1,17 +1,18 @@
 import collections
 import json
+import logging
 import os
 import pathlib
 import re
 import time
-from random import choice, uniform
-from typing import Any, Dict, List, Optional, Sequence, Union
-
-import torch
-from dsat import constants, utils
-from ruamel import yaml
+from contextlib import contextmanager
+from random import choice
+from typing import Any, Dict, List, Union
 
 import determined as det
+import torch
+from dsat import constants
+from ruamel import yaml
 
 
 def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
@@ -68,54 +69,109 @@ def get_decimal_number_in_line(line: str) -> float:
     return num
 
 
-def dsat_forward(core_context, op, model_engine, *args, **kwargs):
-    try:
-        output = model_engine(*args, **kwargs)
-    except SystemExit:
-        is_chief = core_context.distributed.rank == 0
-        try:
-            if is_chief:
-                model_info_profiling_results_dict = get_model_profiling_info_results_dict()
-                gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
-                model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
-                op.report_completed(
-                    model_info_profiling_results_dict
-                )  # TODO: Placeholder, will eventually pass entire results dict.
-            exit()
-        except Exception as e:
-            print(f"Caught additional error after catching DS exit.")
-            raise e
-    return output
-
-
-def wait_for_file_to_exist(
-    path: Union[str, pathlib.Path], check_limit: int = 3, sleep_time: int = 1
+@contextmanager
+def dsat_reporting_context(
+    core_context,
+    op,
+    steps_completed,
+    model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
+    ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
 ):
-    # TODO: Clean up, verify needed.
-    attempt = 1
-    while attempt <= check_limit:
-        if not os.path.isfile(path):
-            time.sleep(sleep_time)
-            attempt += 1
-            if attempt > check_limit:
-                raise FileNotFoundError
+    try:
+        yield
+    except RuntimeError as rte:
+        if "out of memory" in str(rte):
+            report_oom_and_exit(core_context, op, steps_completed)
+    except SystemExit as se:
+        if file_exists(model_info_profiling_path):
+            report_model_profiling_info_and_exit(
+                core_context, op, steps_completed, model_info_profiling_path
+            )
         else:
-            break
+            raise se
+    finally:
+        print("CALLING finallly block")
+
+
+def report_oom_and_exit(
+    core_context,
+    op,
+    steps_completed,
+):
+    is_chief = core_context.distributed.rank == 0
+    if is_chief:
+        logging.info(
+            "******************* GPU Out of Memory: Shutting down Trial ******************"
+        )
+        report_oom_dict = {constants.OOM_KEY: True}
+        core_context.train.report_validation_metrics(
+            steps_completed=steps_completed, metrics=report_oom_dict
+        )
+        op.report_completed(report_oom_dict)
+    exit()
+
+
+def report_model_profiling_info_and_exit(
+    core_context,
+    op,
+    steps_completed,
+    model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
+):
+    is_chief = core_context.distributed.rank == 0
+    if is_chief:
+        model_info_profiling_results_dict = get_model_profiling_info_results_dict(
+            path=model_info_profiling_path
+        )
+        gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
+        model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
+        core_context.train.report_validation_metrics(
+            steps_completed=steps_completed, metrics=model_info_profiling_results_dict
+        )
+        op.report_completed(model_info_profiling_results_dict)
+    exit()
+
+
+def report_ds_profiling_info_and_exit(
+    core_context,
+    op,
+    steps_completed,
+    ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
+):
+    is_chief = core_context.distributed.rank == 0
+    if is_chief:
+        model_info_profiling_results_dict = get_model_profiling_info_results_dict(
+            path=ds_profiler_output_path
+        )
+        gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
+        model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
+        core_context.train.report_validation_metrics(
+            steps_completed=steps_completed, metrics=model_info_profiling_results_dict
+        )
+        op.report_completed(model_info_profiling_results_dict)
+    exit()
+
+
+def file_exists(path: Union[str, pathlib.Path], check_limit: int = 3, sleep_time: int = 1):
+    # TODO: Clean up, verify needed.
+    for _ in range(check_limit):
+        if os.path.isfile(path):
+            return True
+        else:
+            time.sleep(sleep_time)
+    return False
 
 
 def get_model_profiling_info_results_dict(
-    path: Union[str, pathlib.Path] = constants.AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH
+    path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH
 ):
-    wait_for_file_to_exist(path)
     with open(path, "r") as output:
         results_dict = json.load(output)
         return results_dict
 
 
 def get_ds_profiler_results_dict(
-    path: Union[str, pathlib.Path] = constants.PROFILER_OUTPUT_FILE_PATH
+    path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH
 ):
-    wait_for_file_to_exist(path)
 
     metrics_with_units = {"iter latency", "FLOPS per GPU", "params per gpu"}
     metrics_without_units = {
@@ -171,13 +227,17 @@ def get_flattened_dict(d: dict, concat_str: str = "_") -> Dict[str, Any]:
     return flat_dict
 
 
-def dsat_metrics_converter(result: Union[float, Dict[str, Any]]):
+def dsat_metrics_converter(
+    result: Union[float, Dict[str, Any]],
+    profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
+):
+
     info = det.get_cluster_info()
     assert info is not None, "Must be run on cluster"
     searcher_config = info._trial_info._config["searcher"]
     # TODO: Prevent clashes w/ other non-DSAT custom searchers.
     is_autotuning = searcher_config["name"] == "custom"
-    if not is_autotuning:
+    if not is_autotuning or not file_exists(profiler_output_path):
         return result
     else:
         # TODO: Need some sleep checks/retries to ensure the file was written? Timing issues?
@@ -201,38 +261,3 @@ def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Unio
     zero_optim_dict = {key: choice(defaults) for key, defaults in keys_and_defaults.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
-
-
-# Taken from DS
-DEFAULT_TUNING_SPACE_ZERO_0 = {"zero_optimization": {"stage": 0}}
-
-DEFAULT_TUNING_SPACE_ZERO_1 = {
-    "zero_optimization": {
-        "stage": 1,
-        "reduce_bucket_size": [5e7, 5e8, 1e9],
-        "allgather_bucket_size": [5e7, 5e8, 1e9],
-    }
-}
-
-DEFAULT_TUNING_SPACE_ZERO_2 = {
-    "zero_optimization": {
-        "stage": 2,
-        "overlap_comm": [True, False],
-        "reduce_scatter": [False, True],
-        "reduce_bucket_size": [5e7, 5e8, 1e9],
-        "allgather_bucket_size": [5e7, 5e8, 1e9],
-        "contiguous_gradients": [False, True],
-    },
-}
-
-DEFAULT_TUNING_SPACE_ZERO_3 = {
-    "zero_optimization": {
-        "stage": 3,
-        "overlap_comm": [True, False],
-        "reduce_scatter": [False, True],
-        "reduce_bucket_size": [5e7, 5e8, 1e9],
-        "allgather_partitions": [True, False],
-        "allgather_bucket_size": [5e7, 5e8, 1e9],
-        "contiguous_gradients": [False, True],
-    },
-}

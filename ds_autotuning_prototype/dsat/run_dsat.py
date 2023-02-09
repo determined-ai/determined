@@ -5,10 +5,9 @@ import logging
 import uuid
 from typing import Any, Dict, List, Set, Union
 
-from dsat import constants, dsat_search_method, utils
-
 import determined as det
 from determined import searcher
+from dsat import constants, dsat_search_method, utils
 
 
 def get_parsed_args():
@@ -28,15 +27,13 @@ def main(core_context: det.core.Context) -> None:
         " python3 -m dsat.checkpoint_profiling_results_wrapper --prev_exit_code $?"
     )
 
-    all_search_method_classes = {"basic": dsat_search_method.DSATBasicSearchMethod}
-    search_method_name = submitted_config_dict["hyperparameters"]["autotuning_config"][
-        "search_method_name"
-    ]
+    all_search_method_classes = {"random": dsat_search_method.DSATRandomSearchMethod}
+    tuner_type = submitted_config_dict["hyperparameters"]["autotuning_config"]["tuner_type"]
     assert (
-        search_method_name in all_search_method_classes
+        tuner_type in all_search_method_classes
     ), f"search_method must be one of {list(all_search_method_classes)}"
 
-    search_method = all_search_method_classes[search_method_name](submitted_config_dict)
+    search_method = all_search_method_classes[tuner_type](submitted_config_dict)
     search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
     search_runner.run(submitted_config_dict, model_dir=".")

@@ -1,7 +1,9 @@
 import logging
+import sys
 from typing import Any, Dict, Optional
 
 import deepspeed
+import determined as det
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,19 +11,16 @@ from attrdict import AttrDict
 from dsat import utils
 from torch.utils.data import Dataset
 
-import determined as det
-
 
 class RandDataset(Dataset):
-    def __init__(self, num_records: int, dim: int) -> None:
-        self.num_records = num_records
-        self.records = torch.randn(num_records, dim)
+    def __init__(self, dim: int) -> None:
+        self.dim = dim
 
     def __len__(self) -> int:
-        return self.num_records
+        return 2 ** 16 - 1
 
     def __getitem__(self, idx: int) -> torch.Tensor:
-        return self.records[idx]
+        return torch.randn(self.dim)
 
 
 class MinimalModel(nn.Module):
@@ -49,7 +48,7 @@ def main(
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
     ds_config = utils.lower_case_dict_key(hparams.ds_config, "TYPE")
-    dataset = RandDataset(hparams.num_records, hparams.dim)
+    dataset = RandDataset(hparams.dim)
     model = MinimalModel(hparams.dim, hparams.layers)
 
     deepspeed.init_distributed()
@@ -67,34 +66,32 @@ def main(
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for batch in train_loader:
-                if fp16:
-                    batch = batch.half()
-                batch = batch.to(device)
-                outputs = utils.dsat_forward(core_context, op, model_engine, batch)
-                loss = F.mse_loss(outputs, batch)
-                model_engine.backward(loss)
-                model_engine.step()
-                if model_engine.is_gradient_accumulation_boundary():
-                    break
+                with utils.dsat_reporting_context(core_context, op, steps_completed):
+                    if fp16:
+                        batch = batch.half()
+                    batch = batch.to(device)
+                    logging.info(f"BATCH SIZE: {batch.shape[0]}")
+                    # outputs = utils.dsat_forward(
+                    #     core_context, op, model_engine, steps_completed, batch
+                    # )
+                    outputs = model_engine(batch)
+                    loss = F.mse_loss(outputs, batch)
+                    model_engine.backward(loss)
+                    model_engine.step()
+                    if model_engine.is_gradient_accumulation_boundary():
+                        break
 
             steps_completed += 1
+            if is_chief:
+                metrics_dict = {"loss": loss.item()}
+                metrics_dict = utils.dsat_metrics_converter(metrics_dict)
+                core_context.train.report_validation_metrics(
+                    steps_completed=steps_completed, metrics=metrics_dict
+                )
+                # TODO: Test reporting heterogeneous metrics at different steps
             if core_context.preempt.should_preempt():
                 return
         if is_chief:
-            # Just reporting trivial metrics in non DS AT cases for testing purposes.
-            metrics_dict = {"non_ds_at_placeholder": 0}
-            metrics_dict = utils.dsat_metrics_converter(metrics_dict)
-            print("METRICS_DICT", metrics_dict)
-            core_context.train.report_training_metrics(
-                steps_completed=steps_completed, metrics=metrics_dict
-            )
-            # TODO: for the Web UI visualization to appear, report_validation_metrics must be
-            # called with the relevant metrics passed in. This may require awkward changes in user
-            # code or we may need more/extended helper functions.  TBD.
-            core_context.train.report_validation_metrics(
-                steps_completed=steps_completed, metrics=metrics_dict
-            )
-            # TODO: Test reporting heterogeneous metrics at different steps
             op.report_completed(metrics_dict)
 
 

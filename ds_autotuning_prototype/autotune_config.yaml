@@ -11,7 +11,6 @@ searcher:
   smaller_is_better: False
 hyperparameters:
   dim: 1024
-  num_records: 1000
   layers: 100
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
   ds_config:
@@ -22,16 +21,8 @@ hyperparameters:
       params:
         lr: 1e-3
   autotuning_config: # Currently where search related configs are set. TODO: move to searcher field.
-    search_method_name: basic
-    zero_stages:
-      - 0
-      - 1
-      - 2
-      - 3
-    num_trials:
-      - 1
-      - 2
-      - 2
-      - 2
-# Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?)
+    tuner_type: random
+    tuner_num_trials: 5
+    num_tuning_micro_batch_sizes: 3
+    # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?)
 entrypoint: python3 -m determined.launch.torch_distributed python3 minimal_script.py

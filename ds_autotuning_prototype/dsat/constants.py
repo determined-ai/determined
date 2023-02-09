@@ -1,7 +1,7 @@
 DSAT_MAX_LENGTH_STEPS = 5
 WORKDIR_PATH = "/run/determined/workdir/"
-PROFILER_OUTPUT_FILE_PATH = WORKDIR_PATH + "flops_profiler_output.txt"
-AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH = WORKDIR_PATH + "model_info_profiling_results.json"
+DS_PROFILER_OUTPUT_PATH = WORKDIR_PATH + "flops_profiler_output.txt"
+MODEL_INFO_PROFILING_PATH = WORKDIR_PATH + "model_info_profiling_results.json"
 
 FLOPS_PROFILER_CONFIG = {
     "enabled": True,
@@ -9,7 +9,7 @@ FLOPS_PROFILER_CONFIG = {
     "module_depth": -1,
     "top_modules": 10,  # TODO: Verify that this is a reasonable value. Also let user config this whole section.
     "detailed": True,
-    "output_file": PROFILER_OUTPUT_FILE_PATH,
+    "output_file": DS_PROFILER_OUTPUT_PATH,
 }
 
 
@@ -21,7 +21,7 @@ MODEL_INFO_PROFILING_DS_CONFIG = {
     "autotuning": {
         "enabled": True,
         # The two fields below essentially use DS internals! Maybe fragile.
-        "model_info_path": AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH,
+        "model_info_path": MODEL_INFO_PROFILING_PATH,
         "model_info": {"profile": True},
     },
 }
@@ -47,3 +47,5 @@ NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
         "allgather_partitions": [True, False],
     },
 }
+
+OOM_KEY = "OOM"

@@ -3,11 +3,10 @@ import logging
 import pathlib
 import shutil
 
-import torch
-from dsat import constants, utils
-
 import determined as det
+import torch
 from determined.experimental.client import create_experiment
+from dsat import constants, utils
 
 
 def main(core_context: det.core.Context) -> None:
@@ -25,7 +24,7 @@ def main(core_context: det.core.Context) -> None:
             path,
             _,
         ):
-            for src_str in {constants.PROFILER_OUTPUT_FILE_PATH}:  # Previously wrote more to ckpt.
+            for src_str in {constants.DS_PROFILER_OUTPUT_PATH}:  # Previously wrote more to ckpt.
                 src = pathlib.Path(src_str)
                 dst = pathlib.Path(path).joinpath(src.name)
                 try:
