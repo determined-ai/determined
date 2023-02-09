@@ -80,7 +80,7 @@ interface PermissionsHook {
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
   canViewModelRegistry: boolean;
-  canViewModelWorkspace: boolean;
+  canViewModelWorkspace: (arg0: number) => boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   loading: boolean;
@@ -188,7 +188,7 @@ const usePermissions = (): PermissionsHook => {
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
       canViewModelRegistry: canViewModelRegistry(rbacOpts),
-      canViewModelWorkspace: canViewModelWorkspace(rbacOpts),
+      canViewModelWorkspace: (workspaceId: number) => canViewModelWorkspace(rbacOpts, workspaceId),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -263,13 +263,11 @@ const canViewModelRegistry = ({
   return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
 };
 
-const canViewModelWorkspace = ({
-  rbacReadPermission,
-  rbacEnabled,
-  userAssignments,
-  userRoles,
-}: RbacOptsProps): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
+const canViewModelWorkspace = (
+  { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspaceId: number,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
   return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 

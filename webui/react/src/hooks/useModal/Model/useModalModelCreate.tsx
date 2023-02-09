@@ -9,6 +9,7 @@ import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
@@ -67,9 +68,10 @@ const DEFAULT_MODAL_STATE = {
 
 const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   const { canViewModelWorkspace } = usePermissions();
+  const isRbacEnabled = useFeature().isOn('model_rbac');
   const loadableWorkspaces = useWorkspaces();
   const workspaces = Loadable.match(loadableWorkspaces, {
-    Loaded: (ws) => ws,
+    Loaded: (ws) => ws.filter(({ id }) => canViewModelWorkspace(id)),
     NotLoaded: () => [],
   });
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -214,41 +216,41 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               requiredMessage="Model name is required ">
               <Input onChange={handleNameChange} />
             </Form.Item>
-            <Tooltip
-              placement="bottom"
-              title={!canViewModelWorkspace ? 'Insuficient permissions!' : ''}>
-              <Form.Item label="Workspaces" name="workspace">
-                <Dropdown
-                  arrow
-                  className={css.workspacDropdown}
-                  disabled={!workspaces.length || !canViewModelWorkspace}
-                  dropdownRender={(menu) =>
-                    React.cloneElement(menu as React.ReactElement, {
-                      style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
-                    })
-                  }
-                  getPopupContainer={(triggerNode) => triggerNode}
-                  menu={{
-                    defaultSelectedKeys: ['1'],
-                    items: workspaceItems,
-                    onSelect,
-                    selectable: true,
-                  }}
-                  trigger={['click']}>
-                  <Button>
-                    <span
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        minWidth: '175px',
-                      }}>
-                      {workspaceName}
-                      <DownOutlined style={{ marginLeft: '10px' }} />
-                    </span>
-                  </Button>
-                </Dropdown>
-              </Form.Item>
-            </Tooltip>
+            {isRbacEnabled && (
+              <Tooltip placement="bottom">
+                <Form.Item label="Workspaces" name="workspace">
+                  <Dropdown
+                    arrow
+                    className={css.workspacDropdown}
+                    disabled={!workspaces.length}
+                    dropdownRender={(menu) =>
+                      React.cloneElement(menu as React.ReactElement, {
+                        style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
+                      })
+                    }
+                    getPopupContainer={(triggerNode) => triggerNode}
+                    menu={{
+                      defaultSelectedKeys: ['1'],
+                      items: workspaceItems,
+                      onSelect,
+                      selectable: true,
+                    }}
+                    trigger={['click']}>
+                    <Button>
+                      <span
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          minWidth: '175px',
+                        }}>
+                        {workspaceName}
+                        <DownOutlined style={{ marginLeft: '10px' }} />
+                      </span>
+                    </Button>
+                  </Dropdown>
+                </Form.Item>
+              </Tooltip>
+            )}
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />
             </Form.Item>
@@ -283,7 +285,6 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     },
     [
       form,
-      canViewModelWorkspace,
       workspaceItems,
       workspaces,
       workspaceName,
