@@ -44,7 +44,7 @@ const SignOut: React.FC = () => {
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);
       } else {
-        navigate(paths.login(), { state: location.state });
+        navigate(paths.login() + '?r=' + Math.random(), { state: location.state });
       }
     };
 
