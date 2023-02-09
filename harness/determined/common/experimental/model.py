@@ -125,6 +125,7 @@ class ModelSortBy(enum.Enum):
         DESCRIPTION
         CREATION_TIME
         LAST_UPDATED_TIME
+        WORKSPACE
     """
 
     UNSPECIFIED = bindings.v1GetModelsRequestSortBy.SORT_BY_UNSPECIFIED.value
@@ -132,7 +133,8 @@ class ModelSortBy(enum.Enum):
     DESCRIPTION = bindings.v1GetModelsRequestSortBy.SORT_BY_DESCRIPTION.value
     CREATION_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_CREATION_TIME.value
     LAST_UPDATED_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_LAST_UPDATED_TIME.value
-    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.value
+    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.valueNUM_
+    WORKSPACE = bindings.v1GetModelsRequestSortBy.SORT_BY_WORKSPACE.value
 
     def _to_bindings(self) -> bindings.v1GetModelsRequestSortBy:
         return bindings.v1GetModelsRequestSortBy(self.value)
