@@ -20,7 +20,7 @@ let notification: useAppProps['notification'] = antdNotification;
 let modal: useAppProps['modal'] = antdModal;
 let message: useAppProps['message'] = antdMessage;
 
-export const useInitApi = () => {
+export const useInitApi = (): void => {
   const api = App.useApp();
   // minimize reassignments
   useEffect(() => {

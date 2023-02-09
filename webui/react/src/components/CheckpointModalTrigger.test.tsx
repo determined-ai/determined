@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { AuthProvider, useAuth } from 'stores/auth';
+import { setAuth } from 'stores/auth';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
@@ -21,11 +21,9 @@ const user = userEvent.setup();
 const ModalTrigger: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
 
-  const { setAuth } = useAuth();
-
   useEffect(() => {
     setAuth({ isAuthenticated: true });
-  }, [setAuth]);
+  }, []);
 
   return (
     <CheckpointModalTrigger
@@ -38,11 +36,9 @@ const ModalTrigger: React.FC = () => {
 
 const setup = async () => {
   render(
-    <AuthProvider>
-      <UIProvider>
-        <ModalTrigger />
-      </UIProvider>
-    </AuthProvider>,
+    <UIProvider>
+      <ModalTrigger />
+    </UIProvider>,
   );
 
   await user.click(screen.getByRole('button'));
