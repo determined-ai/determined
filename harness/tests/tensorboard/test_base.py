@@ -92,10 +92,7 @@ def test_illegal_type() -> None:
     with pytest.raises(TypeError, match="must be a string"):
         env = test_util.get_dummy_env()
         tensorboard.build(
-            env.det_cluster_id,
-            env.det_experiment_id,
-            env.det_trial_id,
-            checkpoint_config,
+            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
         )
 
 
