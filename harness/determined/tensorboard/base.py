@@ -108,7 +108,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
     def close(self) -> None:
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.close()
-            self.upload_thread.join()
 
     def __enter__(self) -> "TensorboardManager":
         self.start_async_upload_thread()
@@ -175,3 +174,6 @@ class _TensorboardUploadThread(threading.Thread):
 
     def close(self) -> None:
         self._work_queue.put(None)
+        while self.is_alive():
+            logging.info("Waiting for Tensorboard files to sync")
+            self.join(10)

@@ -704,9 +704,6 @@ class CheckpointContext:
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
             self._tensorboard_manager.sync()
 
-    def close(self) -> None:
-        self._tensorboard_manager.close()
-
 
 class DummyCheckpointContext(CheckpointContext):
     def __init__(
