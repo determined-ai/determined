@@ -94,18 +94,18 @@ class GCSStorageManager(storage.CloudStorageManager):
         dst: Union[str, os.PathLike],
         selector: Optional[storage.Selector] = None,
     ) -> None:
-        from google.auth import exceptions as auth_exceptions
         from google.api_core import exceptions as api_exceptions
+        from google.auth import exceptions as auth_exceptions
 
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
         logging.info(f"Downloading {path} from GCS")
         found = False
 
+        # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
+        # you include a `delimiter="/"` you will get only the file-like blobs inside of a
+        # directory-like blob.
         try:
-            # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
-            # you include a `delimiter="/"` you will get only the file-like blobs inside of a
-            # directory-like blob.
             for blob in self.bucket.list_blobs(prefix=path):
                 found = True
                 relname = os.path.relpath(blob.name, path)
