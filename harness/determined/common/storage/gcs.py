@@ -37,12 +37,18 @@ class GCSStorageManager(storage.CloudStorageManager):
         prefix: Optional[str] = None,
         temp_dir: Optional[str] = None,
     ) -> None:
-        super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-        import google.cloud.storage
+        from google.auth import exceptions as auth_exceptions
 
-        self.client = google.cloud.storage.Client()
-        self.bucket = self.client.bucket(bucket)
-        self.prefix = normalize_prefix(prefix)
+        try:
+            super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
+            import google.cloud.storage
+
+            self.client = google.cloud.storage.Client()
+            self.bucket = self.client.bucket(bucket)
+            self.prefix = normalize_prefix(prefix)
+
+        except auth_exceptions.GoogleAuthError as e:
+            raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
     def get_storage_prefix(self, storage_id: str) -> str:
         return os.path.join(self.prefix, storage_id)
@@ -88,34 +94,46 @@ class GCSStorageManager(storage.CloudStorageManager):
         dst: Union[str, os.PathLike],
         selector: Optional[storage.Selector] = None,
     ) -> None:
+        from google.auth import exceptions as auth_exceptions
+        from google.api_core import exceptions as api_exceptions
+
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
         logging.info(f"Downloading {path} from GCS")
         found = False
-        # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
-        # you include a `delimiter="/"` you will get only the file-like blobs inside of a
-        # directory-like blob.
-        for blob in self.bucket.list_blobs(prefix=path):
-            found = True
-            relname = os.path.relpath(blob.name, path)
-            if blob.name.endswith("/"):
-                relname = os.path.join(relname, "")
-            if selector is not None and not selector(relname):
-                continue
-            _dst = os.path.join(dst, relname)
-            dst_dir = os.path.dirname(_dst)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir, exist_ok=True)
 
-            # Only create empty directory for keys that end with "/".
-            # See `upload` method for more context.
-            if blob.name.endswith("/"):
-                os.makedirs(_dst, exist_ok=True)
-                continue
+        try:
+            # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
+            # you include a `delimiter="/"` you will get only the file-like blobs inside of a
+            # directory-like blob.
+            for blob in self.bucket.list_blobs(prefix=path):
+                found = True
+                relname = os.path.relpath(blob.name, path)
+                if blob.name.endswith("/"):
+                    relname = os.path.join(relname, "")
+                if selector is not None and not selector(relname):
+                    continue
+                _dst = os.path.join(dst, relname)
+                dst_dir = os.path.dirname(_dst)
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir, exist_ok=True)
 
-            logging.debug(f"Downloading from GCS: {blob.name}")
+                # Only create empty directory for keys that end with "/".
+                # See `upload` method for more context.
+                if blob.name.endswith("/"):
+                    os.makedirs(_dst, exist_ok=True)
+                    continue
 
-            blob.download_to_filename(_dst)
+                logging.debug(f"Downloading from GCS: {blob.name}")
+
+                blob.download_to_filename(_dst)
+
+        except (
+            auth_exceptions.GoogleAuthError,
+            api_exceptions.Unauthorized,
+            api_exceptions.Forbidden,
+        ) as e:
+            raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
         if not found:
             raise errors.CheckpointNotFound(f"Did not find checkpoint {path} in GCS")

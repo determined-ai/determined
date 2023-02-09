@@ -191,9 +191,8 @@ class Checkpoint:
     ) -> None:
         try:
             self._download_direct(checkpoint_storage, local_ckpt_dir)
-        except errors.CheckpointNotFound:
-            raise
-        except Exception:
+
+        except errors.NoDirectStorageAccess:
             if checkpoint_storage["type"] != "s3" and checkpoint_storage["type"] != "gcs":
                 raise
 
