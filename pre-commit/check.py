@@ -16,23 +16,6 @@ def print_colored(skk, **kwargs):
     print("\033[93m {}\033[00m".format(skk), **kwargs)
 
 
-def get_git_commit_files(commit_hash: str) -> List[Path]:
-    output = os.popen(f"git diff-tree --no-commit-id --name-only -r {commit_hash}").read()
-    lines = output.split("\n")
-    lines = [x for x in lines if x]
-    files = [Path(x).absolute() for x in lines]
-    return files
-
-
-# get a list of paths to dirty and staged files from git
-def get_git_status() -> List[Path]:
-    git_status = os.popen("git status --porcelain").read()
-    git_status_list = git_status.split("\n")
-    git_status_list = [x for x in git_status_list if x]
-    files = [Path(x.split()[1]).absolute() for x in git_status_list]
-    return files
-
-
 # check if path a child of another path
 def is_child(path: Path, parent: Path) -> bool:
     assert path.is_absolute()
@@ -52,7 +35,7 @@ if os.environ.get("PRE_COMMIT_ENABLE_SLOW", "false") != "true":
 
 PROJECT_NAME = "determined"
 root = Path(os.getenv("PROJECT_ROOT", os.getcwd())).absolute()
-if not str(root).endswith(PROJECT_NAME) and not str(root).endswith("saas"):  # FIXME
+if not str(root).endswith(PROJECT_NAME):
     print(
         "Please run this script from the root of the project or set it using "
         + "PROJECT_ROOT env variable"
