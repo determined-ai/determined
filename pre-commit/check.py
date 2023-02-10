@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from typing import List, Union, Dict, Set
+from typing import List, Tuple, Union, Dict, Set
 from pathlib import Path
 import argparse
 import os
@@ -55,6 +55,8 @@ if not str(root).endswith(PROJECT_NAME) and not str(root).endswith("saas"):  # F
     exit(1)
 os.chdir(root)
 
+# rules are a mapping of different modules to their relative command(s) to run.
+# we might want to separate or support nested modules later on.
 rules: Dict[Path, Union[str, List[str]]] = {
     root
     / "harness": [
@@ -83,22 +85,24 @@ rules: Dict[Path, Union[str, List[str]]] = {
 
 # check if path is the same or child of one of the rules and execute the rule as
 # subprocess
-def run_rule(rule_path: Path) -> int:
+def run_rule(rule_path: Path) -> Tuple[int, str]:
     rule = rules[rule_path]
     os.chdir(rule_path)
     print(f'in direcotry "{rule_path.relative_to(root)}" run: {rule}')
     cmds = rule if isinstance(rule, list) else [rule]
-    for cmd in cmds:
+    for cmd in cmds:  # run commands sequentially with early breaking.
         assert isinstance(cmd, str)
         return_code = os.system(cmd)
         if return_code != 0:
-            print(f'command "{cmd}" failed with return code {return_code}', file=sys.stderr)
-            return return_code
-    return 0
+            # TODO: capture the actual stderr of the command and print/report (some of) it here.
+            msg = f'cwd: {rule_path} command: "{cmd}" failed with return code {return_code}'
+            print(msg, file=sys.stderr)
+            return (return_code, cmd)
+    return (0, "")
 
 
 def find_rules(paths: List[Path]):
-    resolved_paths = set()
+    resolved_paths: Set[Path] = set()
     for dirty_path in paths:
         for rule_path in rules.keys():
             if is_child(dirty_path, rule_path):
@@ -116,11 +120,11 @@ def main():
         print("No changed files.")
         exit(0)
 
-    failed_rules: Set[Path] = set()
+    failed_rules: Set[Tuple[Path, str]] = set()
     for rule_path in find_rules(changed_files):
-        rv = run_rule(rule_path)
-        if rv != 0:
-            failed_rules.add(rule_path)
+        exit_code, msg = run_rule(rule_path)
+        if exit_code != 0:
+            failed_rules.add((rule_path, msg))
     if len(failed_rules):
         print(
             f"{len(failed_rules)} check(s) failed {[str(r) for r in failed_rules]}", file=sys.stderr
