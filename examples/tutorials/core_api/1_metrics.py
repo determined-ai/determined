@@ -25,7 +25,7 @@ def main(core_context, increment_by):
                 steps_completed=steps_completed, metrics={"x": x}
             )
     # NEW: report a "validation" metric at the end.
-    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
+    core_context.train.report_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":

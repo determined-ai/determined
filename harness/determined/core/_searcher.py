@@ -32,6 +32,24 @@ def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
     return None
 
 
+def _parse_searcher_max_length(experiment_config: dict) -> Optional[int]:
+    searcher = experiment_config.get("searcher", {})
+
+    max_length = searcher.get("max_length")
+
+    if isinstance(max_length, int):
+        print("int!", max_length)
+        return max_length
+
+    if isinstance(max_length, dict):
+        print("dict!", int(next(max_length.values())))
+        return int(next(max_length.values()))
+
+    # Either a custom searcher (no max length configured) or a broken config.
+    print("None!", searcher)
+    return None
+
+
 class SearcherOperation:
     """
     A ``SearcherOperation`` is a request from the hyperparameter-search logic for the training
@@ -149,6 +167,8 @@ class SearcherContext:
 
     .. code:: python
 
+       # XXX: fixme
+
        # Assuming you configured the searcher in terms of batches,
        # the op.length is also interpeted as a batch count.
        # Note that you'll have to load your starting point from a
@@ -182,17 +202,23 @@ class SearcherContext:
         self,
         session: api.Session,
         dist: core.DistributedContext,
+        preempt: core.PreemptContext,
         trial_id: int,
         run_id: int,
         allocation_id: str,
+        max_length: Optional[int] = None,
         units: Optional[Unit] = None,
     ) -> None:
         self._session = session
         self._dist = dist
+        self._preempt = preempt
         self._trial_id = trial_id
         self._run_id = run_id
         self._allocation_id = allocation_id
-        self._units = units
+        self.max_length = max_length
+        self.units = units
+        # Start with the first op.
+        self._op = self._get_searcher_op()
 
     def _get_searcher_op(self) -> Optional[SearcherOperation]:
         logger.debug("_get_searcher_op()")
@@ -212,6 +238,7 @@ class SearcherContext:
         auto_ack: bool = True,
     ) -> Iterator[SearcherOperation]:
         """
+        # XXX: warning
         Iterate through all the operations this searcher has to offer.
 
         See :class:`~determined.core.SearcherMode` for details about calling requirements in
@@ -222,6 +249,14 @@ class SearcherContext:
         the ``searcher_mode`` setting because the Determined master needs a clear, unambiguous
         report of when an operation is completed.
         """
+        warnings.warn(
+            FutureWarning,
+            "searcher.operations() is deprecated and will be removed in the future.  Instead, you "
+            "should use a combination of searcher.max_length and searcher.units to decide how long "
+            "to train for, and use searcher.get_next_report() to check when you should validate "
+            "and report to the searcher with searcher.report_metric()",
+        )
+
         searcher_mode = SearcherMode(searcher_mode)
 
         if self._dist.rank == 0:
@@ -235,7 +270,7 @@ class SearcherContext:
                     _ = self._dist.broadcast(op and op.length)
                 if op is None:
                     if auto_ack:
-                        self.acknowledge_out_of_ops()
+                        self._acknowledge_out_of_ops()
                     break
                 yield op
                 if not op._completed:
@@ -257,6 +292,7 @@ class SearcherContext:
 
     def acknowledge_out_of_ops(self) -> None:
         """
+        # XXX: warning
         acknowledge_out_of_ops() tells the Determined master that you are shutting down because
         you have recognized the searcher has no more operations for you to complete at this time.
 
@@ -266,11 +302,20 @@ class SearcherContext:
         acknowledge_out_of_ops() is normally called automatically just before operations() raises a
         StopIteration, unless operations() is called with auto_ack=False.
         """
+        warnings.warn(
+            FutureWarning,
+            "searcher.acknowledge_out_of_ops() is deprecated and will be removed in the future; it "
+            "should not be called.  There is no replacement call; it will be handled automatically.",
+        )
+        self._acknowledge_out_of_ops()
+
+    def _acknowledge_out_of_ops(self) -> None:
         logger.debug(f"acknowledge_out_of_ops(allocation_id:{self._allocation_id})")
         self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")
 
     def get_configured_units(self) -> Optional[Unit]:
         """
+        # XXX: warning
         get_configured_units() reports what units were used in the searcher field of the experiment
         config.  If no units were configured, None is returned.
 
@@ -291,7 +336,79 @@ class SearcherContext:
              name: single
              max_length: 50
         """
-        return self._units
+        warnings.warn(
+            FutureWarning,
+            "searcher.get_configured_units() is deprecated and will be removed in the future; use "
+            "instead access searcher.units directly.",
+        )
+        return self.units
+
+    def report_progress(self, length: float) -> None:
+        """
+        ``report_progress()`` reports the training progress to the Determined master so the WebUI
+        can show accurate progress to users.
+
+        The unit of the length value passed to ``report_progress()`` must match the unit configured
+        for the seacher (``searcher.units``).  If ``searcher.units`` is None, but
+        ``searcher.max_length`` is not None, which is possible with some searcher configurations,
+        the unit of ``searcher.max_length`` is entirely user-defined; when treating ``.length`` as
+        batches, ``report_progress()`` should report batches, and when treating .length as epochs,
+        ``report_progress()`` must also be in epochs.
+        """
+        if self._dist.rank != 0:
+            raise RuntimeError("you must only call op.report_progress() from the chief worker")
+        logger.debug(f"op.report_progress({length})")
+        self._session.post(
+            f"/api/v1/trials/{self._trial_id}/progress",
+            data=det.util.json_encode(length),
+        )
+
+    def get_next_report(self) -> Optional[int]:
+        """
+        ``get_next_report()`` returns the length of the next searcher-requested validation, or None
+        if no reports have been requested.
+
+        Note that ``get_next_report()`` is not guaranteed to remain the same between calls to
+        ``report_metric()``; it is possible the searcher requests reports asynchronously, so you
+        should be careful not to save its output and assume the saved value is always up-to-date.
+        """
+        if self._op is None:
+            return None
+        return self._op.length
+
+    def report_metric(self, searcher_metric: Any) -> None:
+        """
+        ``report_metric()`` reports the validation result of the searcher metric to the searcher.
+
+        Metrics should be reported at the training lengths specified by
+        ``searcher.get_next_report()``.  If ``searcher.get_next_report()`` returns 10 and
+        ``searcher.units`` indicates the searcher is configured in epochs, then 10 epochs into
+        training, the trial should calculate validation metrics and report its searcher metric with
+        ``searcher.report_metric()``.
+
+        The metric reported value is usually a ``float`` but custom search methods may use any
+        json-serializable type as searcher metric.
+        """
+        if self._dist.rank != 0:
+            raise RuntimeError(
+                "you must only call searcher.report_completed() from the chief worker"
+            )
+        if self._op is None:
+            logger.info("ignoring report_metric(), since there is no report requested")
+            return
+        body = {"op": {"length": self._op.length}, "searcherMetric": searcher_metric}
+        logger.debug(f"report_metric({searcher_metric})")
+        self._session.post(
+            f"/api/v1/trials/{self._trial_id}/searcher/completed_operation",
+            data=det.util.json_encode(body),
+        )
+
+        # Get the next op.
+        self._op = self._get_searcher_op()
+        if self._op is None:
+            # Fun fact: the preemption ack and the out-of-ops ack are the same API call, so we
+            # can let the PreemptContext ack and we don't have to.
+            self._preempt._searcher_wants_preempt = True
 
 
 class DummySearcherOperation(SearcherOperation):
@@ -319,11 +436,13 @@ class DummySearcherOperation(SearcherOperation):
 
 
 class DummySearcherContext(SearcherContext):
-    """Yield a singe search op.  We need a way for this to be configurable."""
+    """Yield a singe search op.  The non-operations-based API yields Nones."""
 
     def __init__(self, dist: core.DistributedContext, length: int = 1) -> None:
         self._dist = dist
         self._length = length
+        self.max_length = None
+        self.units = None
 
     def operations(
         self,
@@ -360,4 +479,13 @@ class DummySearcherContext(SearcherContext):
         pass
 
     def get_configured_units(self) -> Optional[Unit]:
-        return Unit.EPOCHS
+        return None
+
+    def report_progress(self, length: float) -> None:
+        logger.info("progress report: {length}/{self._length}")
+
+    def get_next_report(self) -> Optional[int]:
+        return None
+
+    def report_metric(self, searcher_metric: Any) -> None:
+        logger.info("ignoring report_metric(), since there is no report requested")

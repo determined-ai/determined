@@ -193,13 +193,19 @@ def init(
             tensorboard_manager,
             tbd_writer,
         )
+
+        preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
+
         units = core._parse_searcher_units(info.trial._config)
+        max_length = core._parse_searcher_max_length(info.trial._config)
         searcher = core.SearcherContext(
             session,
             distributed,
+            preempt,
             info.trial.trial_id,
             info.trial._trial_run_id,
             info.allocation_id,
+            max_length,
             units,
         )
 
@@ -218,8 +224,6 @@ def init(
             tensorboard_mode,
             tensorboard_manager,
         )
-
-        preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
 
     else:
         # TODO: support checkpointing for non-trial tasks.

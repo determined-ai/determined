@@ -167,6 +167,7 @@ class PreemptContext:
         if self._dist.get_rank() == 0 or self._preempt_mode == PreemptMode.WorkersAskMaster:
             self._watcher = _PreemptionWatcher(session, allocation_id)
         self._ack_sent = False
+        self._searcher_wants_preempt = False
 
     def start(self) -> "PreemptContext":
         if self._started:
@@ -219,7 +220,7 @@ class PreemptContext:
             )
         if self._watcher is not None:
             # Have watcher; either this is the chief or we are in WorkersAskMaster mode.
-            out = self._watcher.should_preempt()
+            out = self._watcher.should_preempt() or self._searcher_wants_preempt
             if auto_ack and out and not self._ack_sent:
                 # Tell the master that user code has received the preemption signal.
                 self.acknowledge_preemption_signal()
