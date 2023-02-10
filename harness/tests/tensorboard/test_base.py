@@ -98,15 +98,23 @@ def test_upload_thread_normal_case() -> None:
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
 
     upload_thread.start()
-    task = tensorboard.base._UploadTask(
-        paths=[pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")],
-        mangler=lambda p, __: p,
-        rank=0,
+
+    path_info_list_1 = []
+    path_info_list_2 = []
+    path_info_list_1.append(
+        tensorboard.base.PathUploadInfo(
+            path="test_value/file1.json", mangled_relative_path="test_value/file1#1.json"
+        )
     )
-    upload_thread.upload(task)
-    upload_thread.upload(task)
+    path_info_list_2.append(
+        tensorboard.base.PathUploadInfo(
+            path="test_value/file2.json", mangled_relative_path="test_value/file2#1.json"
+        )
+    )
+
+    upload_thread.upload(path_info_list_1)
+    upload_thread.upload(path_info_list_2)
 
     upload_thread.close()
-    upload_thread.join()
 
     assert upload_function.call_count == 2

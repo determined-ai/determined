@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
 from determined.tensorboard import base
 
@@ -31,13 +31,11 @@ class AzureTensorboardManager(base.TensorboardManager):
 
     def _sync_impl(
         self,
-        paths: List[pathlib.Path],
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
+        path_info_list: List[base.PathUploadInfo],
     ) -> None:
-        for path in paths:
-            relative_path = path.relative_to(self.base_path)
-            mangled_relative_path = mangler(relative_path, rank)
+        for path_info in path_info_list:
+            path = path_info.path
+            mangled_relative_path = path_info.mangled_relative_path
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
 
             logger.debug(f"Uploading {path} to Azure: {self.container}/{mangled_path}")

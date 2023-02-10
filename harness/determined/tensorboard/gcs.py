@@ -1,7 +1,7 @@
 import logging
 import os
 import pathlib
-from typing import Any, Callable, List, Optional, no_type_check
+from typing import Any, List, Optional, no_type_check
 
 import requests.exceptions
 import urllib3.exceptions
@@ -35,15 +35,10 @@ class GCSTensorboardManager(base.TensorboardManager):
         return os.path.join(self.prefix, storage_id)
 
     @no_type_check
-    def _sync_impl(
-        self,
-        paths: List[pathlib.Path],
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
-    ) -> None:
-        for path in paths:
-            relative_path = path.relative_to(self.base_path)
-            mangled_relative_path = mangler(relative_path, rank)
+    def _sync_impl(self, path_info_list: List[base.PathUploadInfo]) -> None:
+        for path_info in path_info_list:
+            path = path_info.path
+            mangled_relative_path = path_info.mangled_relative_path
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
             to_path = self.get_storage_prefix(mangled_path)
 

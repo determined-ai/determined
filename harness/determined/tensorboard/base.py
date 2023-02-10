@@ -5,9 +5,15 @@ import queue
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, List
+from typing import Any, Callable, Dict, List
 
 from determined import tensorboard
+
+
+@dataclass
+class PathUploadInfo:
+    path: pathlib.Path
+    mangled_relative_path: pathlib.Path
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):
@@ -71,12 +77,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         return sync_paths
 
     @abc.abstractmethod
-    def _sync_impl(
-        self,
-        paths: List[pathlib.Path],
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
-    ) -> None:
+    def _sync_impl(self, path_info_list: List[PathUploadInfo]) -> None:
         """
         Save the object to the backing persistent storage.
         """
@@ -89,10 +90,15 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         rank: int = 0,
     ) -> None:
         paths = self.to_sync(selector)
+        path_list = []
+        for path in paths:
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            path_list.append(PathUploadInfo(path=path, mangled_relative_path=mangled_relative_path))
         if self.upload_thread is not None and self.upload_thread.is_alive():
-            self.upload_thread.upload(_UploadTask(paths=paths, mangler=mangler, rank=rank))
+            self.upload_thread.upload(path_list)
         else:
-            self._sync_impl(paths, mangler, rank)
+            self._sync_impl(path_list)
 
     @abc.abstractmethod
     def delete(self) -> None:
@@ -132,19 +138,10 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
     return tensorboard.BatchMetricWriter(writer)
 
 
-@dataclass
-class _UploadTask:
-    paths: List[pathlib.Path]
-    mangler: Callable[[pathlib.Path, int], pathlib.Path]
-    rank: int
-
-
 class _TensorboardUploadThread(threading.Thread):
     def __init__(
         self,
-        upload_function: Callable[
-            [List[pathlib.Path], Callable[[pathlib.Path, int], pathlib.Path], int], None
-        ],
+        upload_function: Callable[[List[PathUploadInfo]], None],
         work_queue_max_size: int = 50,
     ) -> None:
         self._upload_function = upload_function
@@ -155,22 +152,22 @@ class _TensorboardUploadThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            task = self._work_queue.get()
+            path_upload_info = self._work_queue.get()
 
             # None is the sentinel value
             # to signal the thread to exit
-            if task is None:
+            if path_upload_info is None:
                 return
 
             # Try-catch is used to avoid exception from
             # one failed sync attempt to cause the thread to exit.
             try:
-                self._upload_function(task.paths, task.mangler, task.rank)
+                self._upload_function(path_upload_info)
             except Exception as e:
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
 
-    def upload(self, task: _UploadTask) -> None:
-        self._work_queue.put(task)
+    def upload(self, path_upload_info: PathUploadInfo) -> None:
+        self._work_queue.put(path_upload_info)
 
     def close(self) -> None:
         self._work_queue.put(None)
