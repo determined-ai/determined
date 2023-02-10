@@ -24,7 +24,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useFetchKnownRoles } from 'stores/knowRoles';
+import { KnownRolesService } from 'stores/knowRoles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -133,8 +133,6 @@ const GroupManagement: React.FC = () => {
     }
   }, [canceler.signal, settings]);
 
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
-
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
       const response = await getGroup({ groupId });
@@ -166,9 +164,9 @@ const GroupManagement: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
     if (rbacEnabled) {
-      fetchKnownRoles();
+      KnownRolesService.fetchKnownRoles(canceler);
     }
-  }, [fetchKnownRoles, rbacEnabled]);
+  }, [rbacEnabled]);
 
   const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
     useModalCreateGroup({ onClose: fetchGroups, users: users });
