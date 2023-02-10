@@ -27,7 +27,9 @@ def test_s3_build(prefix: Optional[str]) -> None:
     env = test_util.get_dummy_env()
     conf = copy.deepcopy(default_conf)
     conf["prefix"] = prefix
-    manager = tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
+    manager = tensorboard.build(
+        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf, async_upload=False
+    )
     assert isinstance(manager, tensorboard.S3TensorboardManager)
 
 
@@ -37,7 +39,9 @@ def test_s3_build_missing_param() -> None:
 
     with pytest.raises(KeyError):
         env = test_util.get_dummy_env()
-        tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
+        tensorboard.build(
+            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf, async_upload=False
+        )
 
 
 @pytest.mark.parametrize("prefix", [None, "my/test/prefix/"])
@@ -73,14 +77,20 @@ def test_invalid_prefix(monkeypatch: monkeypatch.MonkeyPatch) -> None:
     conf["prefix"] = "my/invalid/../prefix"
 
     with pytest.raises(ValueError):
-        tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
+        tensorboard.build(
+            env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf, async_upload=False
+        )
 
 
 def test_s3_faulty_lifecycle(monkeypatch: monkeypatch.MonkeyPatch) -> None:
     monkeypatch.setattr("boto3.client", s3.s3_faulty_client)
     env = test_util.get_dummy_env()
     manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, default_conf
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        default_conf,
+        async_upload=False,
     )
 
     with pytest.raises(exceptions.S3UploadFailedError):

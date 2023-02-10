@@ -45,7 +45,7 @@ def build(
     trial_id: Optional[str],
     checkpoint_config: Dict[str, Any],
     container_path: Optional[str] = None,
-    async_upload: bool = False,
+    async_upload: bool = True,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
