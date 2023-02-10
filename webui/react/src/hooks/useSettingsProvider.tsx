@@ -95,17 +95,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading && !(checked && !user)) return <Spinner center spinning />;
-
   return (
-    <UserSettings.Provider
-      value={{
-        isLoading: isLoading,
-        querySettings: querySettings.current,
-        state: settingsState,
-        update,
-      }}>
-      {children}
-    </UserSettings.Provider>
+    <Spinner spinning={isLoading && !(checked && !user)} tip="Loading Page">
+      <UserSettings.Provider
+        value={{
+          isLoading: isLoading,
+          querySettings: querySettings.current,
+          state: settingsState,
+          update,
+        }}>
+        {children}
+      </UserSettings.Provider>
+    </Spinner>
   );
 };
