@@ -26,6 +26,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Queued,
     type: CommandType.JupyterLab,
     userId: 34,
+    workspaceId: 0,
   },
   [CommandType.Shell]: {
     ...SHARED_TASK,
@@ -38,6 +39,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Terminated,
     type: CommandType.Shell,
     userId: 34,
+    workspaceId: 0,
   },
   [CommandType.TensorBoard]: {
     ...SHARED_TASK,
@@ -50,6 +52,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Running,
     type: CommandType.TensorBoard,
     userId: 16,
+    workspaceId: 0,
   },
 };
 

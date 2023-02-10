@@ -35,6 +35,7 @@ describe('Experiment Utilities', () => {
         state: Type.CommandState.Queued,
         type: Type.CommandType.Command,
         userId: 345,
+        workspaceId: 0,
       };
       expect(utils.isExperiment(commandTask)).toBe(false);
     });

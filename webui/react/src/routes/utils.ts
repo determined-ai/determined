@@ -102,10 +102,17 @@ export const paths = {
     return `/experiments/${experimentId}/model_def`;
   },
   interactive: (command: CommandTask, maxSlotsExceeded = false): string => {
-    return `/interactive/${command.id}/${command.type}/
-      ${command.name}/${command.resourcePool}/${encodeURIComponent(
+    const path = [
+      'interactive',
+      command.id,
+      command.type,
+      command.name,
+      command.resourcePool,
       waitPageUrl(command),
-    )}?currentSlotsExceeded=${maxSlotsExceeded}`;
+    ]
+      .map(encodeURIComponent)
+      .join('/');
+    return `/${path}/?currentSlotsExceeded=${maxSlotsExceeded}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;

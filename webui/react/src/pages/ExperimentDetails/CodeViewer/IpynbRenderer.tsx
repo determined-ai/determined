@@ -1,6 +1,5 @@
+import NotebookJS from 'notebook';
 import React from 'react';
-
-import NotebookJS from 'vendor/notebook';
 
 import 'vendor/monokai.css';
 
