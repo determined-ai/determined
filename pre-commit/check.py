@@ -2,11 +2,12 @@
 
 from typing import Iterable, List, Tuple, Union, Dict, Set
 from pathlib import Path
+import multiprocessing
 import argparse
 import os
 import sys
+import concurrent.futures
 
-# TODO add option to run rules in parallel
 # TODO add option to pass in a git diff to check or git hash
 
 
@@ -112,10 +113,19 @@ def find_rules(paths: List[Path]):
 
 def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
     failed_rules: Set[Tuple[Path, str]] = set()
-    for rule_path in module_paths:
-        exit_code, msg = run_rule(rule_path)
-        if exit_code != 0:
-            failed_rules.add((rule_path, msg))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        # collect the future to args mapping so we can print module path.
+        future_to_rule = {
+            executor.submit(run_rule, rule_path): rule_path for rule_path in module_paths
+        }
+        for future in concurrent.futures.as_completed(future_to_rule):
+            rule_path = future_to_rule[future]
+            try:
+                return_code, cmd = future.result()
+                if return_code != 0:
+                    failed_rules.add((rule_path, cmd))
+            except Exception as exc:
+                print(f"{rule_path} generated an exception: {exc}", file=sys.stderr)
     return failed_rules
 
 
