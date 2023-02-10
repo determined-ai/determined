@@ -3,6 +3,7 @@
 from typing import Iterable, List, Tuple, Union, Dict, Set
 from pathlib import Path
 import multiprocessing
+import subprocess
 import argparse
 import os
 import sys
@@ -84,21 +85,21 @@ rules: Dict[Path, Union[str, List[str]]] = {
 }
 
 
-# check if path is the same or child of one of the rules and execute the rule as
-# subprocess
 def run_rule(rule_path: Path) -> Tuple[int, str]:
     rule = rules[rule_path]
-    os.chdir(rule_path)
-    print(f'in direcotry "{rule_path.relative_to(root)}" run: {rule}')
     cmds = rule if isinstance(rule, list) else [rule]
     for cmd in cmds:  # run commands sequentially with early breaking.
         assert isinstance(cmd, str)
-        return_code = os.system(cmd)
-        if return_code != 0:
-            # TODO: capture the actual stderr of the command and print/report (some of) it here.
-            msg = f'cwd: {rule_path} command: "{cmd}" failed with return code {return_code}'
-            print(msg, file=sys.stderr)
-            return (return_code, cmd)
+        proc = subprocess.run(
+            cmd,
+            cwd=rule_path,
+            shell=True,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if proc.returncode != 0:
+            return proc.returncode, proc.stderr.decode("utf-8")
     return (0, "")
 
 
