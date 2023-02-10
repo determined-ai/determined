@@ -1,4 +1,5 @@
-# Participate in the hyperparameter search offered by the Determined master
+# In this stage, rather than hardcoding model values, we switch to a hyperparameter search. You should expect to see a graph of trials in the
+# overview tab corresponding to the various trials initiated by the Adaptive ASHA hyperparameter search algorithm.
 
 from __future__ import print_function
 import argparse
@@ -8,15 +9,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
-import torch
+
 import determined as det
-import pathlib
 
 
 class Net(nn.Module):
-    # NEW: add hparams to __init__
+    # NEW: Add hparams to __init__.
     def __init__(self, hparams):
-        # NEW: soft code hyperparameters based on config
+        # NEW: Read hyperparameters provided for this trial.
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, hparams["n_filters1"], 3, 1)
         self.conv2 = nn.Conv2d(hparams["n_filters1"], hparams["n_filters2"], 3, 1)
@@ -41,7 +41,7 @@ class Net(nn.Module):
         return output
 
 
-# NEW: Modified function header to include op for reporting training progress to master
+# NEW: Modify function header to include op for reporting training progress to master.
 def train(args, model, device, train_loader, optimizer, core_context, epoch, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -56,15 +56,12 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
-                    (batch_idx) * len(data),
+                    batch_idx * len(data),
                     len(train_loader.dataset),
-                    100.0 * (batch_idx) / len(train_loader),
+                    100.0 * batch_idx / len(train_loader),
                     loss.item(),
                 )
             )
-
-            # NEW: report progress once in a while
-            op.report_progress(epoch)
 
             core_context.train.report_training_metrics(
                 steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
@@ -74,15 +71,18 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             if args.dry_run:
                 break
 
+    # NEW: Report progress once in a while.
+    op.report_progress(epoch)
 
-# NEW: Modified function header to include op for reporting training progress to master and return test loss
+
+# NEW: Modify function header to include op for reporting training progress to master and return test loss.
 def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
 
     model.eval()
     test_loss = 0
     correct = 0
     with torch.no_grad():
-        for _, (data, target) in enumerate(test_loader):
+        for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
@@ -102,8 +102,9 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
         metrics={"test_loss": test_loss},
     )
 
-    # NEW: return test_loss
+    # NEW: Return test_loss.
     return test_loss
+
 
 def load_state(checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
@@ -162,9 +163,6 @@ def main(core_context):
         metavar="N",
         help="how many batches to wait before logging training status",
     )
-    parser.add_argument(
-        "--save-model", action="store_true", default=True, help="For Saving the current Model"
-    )
 
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -201,10 +199,10 @@ def main(core_context):
     train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
-    # NEW: Get hparams chosen for this trial from cluster info object
+    # NEW: Get hparams chosen for this trial from cluster info object.
     hparams = info.trial.hparams
 
-    # NEW: Pass relevant hparams to model and optimizer
+    # NEW: Pass relevant hparams to model and optimizer.
     model = Net(hparams).to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
 
@@ -221,21 +219,20 @@ def main(core_context):
         while epoch < op.length:
             steps_completed = epoch * len(train_loader)
 
-            # NEW: Pass op into train and test functions
+            # NEW: Pass op into train() and test().
             train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
 
             scheduler.step()
-            if args.save_model:
 
-                checkpoint_metadata_dict = {
-                    "steps_completed": steps_completed,
-                }
+            checkpoint_metadata_dict = {
+                "steps_completed": steps_completed,
+            }
 
             epoch += 1
 
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
-                torch.save(model.state_dict(), str(path) + ("/checkpoint.pt"))
+                torch.save(model.state_dict(), path / "checkpoint.pt")
 
             if core_context.preempt.should_preempt():
                 return
@@ -245,6 +242,5 @@ def main(core_context):
 
 
 if __name__ == "__main__":
-
     with det.core.init() as core_context:
         main(core_context=core_context)

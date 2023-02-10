@@ -1,4 +1,5 @@
 name: coreapi_mnist_tutorial_metrics
+description: Report training and testing metrics to the master.
 entrypoint:  python3 model_def_metrics.py 
 max_restarts: 0
 searcher:

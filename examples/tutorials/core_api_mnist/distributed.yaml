@@ -1,5 +1,5 @@
 name: coreapi_mnist_tutorial_distributed
-description: Train the model across slots_per_trial nodes
+description: Train the model across slots_per_trial nodes.
 entrypoint: >-
    python3 -m determined.launch.torch_distributed
    python3 model_def_distributed.py
@@ -35,4 +35,9 @@ searcher:
   max_length:
     epochs: 20
 resources:
-  slots_per_trial: 4
+  slots_per_trial: 2
+environment:
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens

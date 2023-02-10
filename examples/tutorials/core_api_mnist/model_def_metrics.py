@@ -1,4 +1,5 @@
-# Report metrics to Determined
+# This script adds metric reporting via a Determined core.Context. This allows you to view metrics in the WebUI.
+# In this example we report training and testing losses as metrics to the Determined master.
 
 from __future__ import print_function
 import argparse
@@ -9,7 +10,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
-# NEW: import Determined
+# NEW: Import Determined.
 import determined as det
 
 
@@ -39,7 +40,7 @@ class Net(nn.Module):
         return output
 
 
-# NEW: modified function header to include core_context for metric reporting
+# NEW: Modify function header to include core_context for metric reporting.
 def train(args, model, device, train_loader, optimizer, epoch, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -49,19 +50,21 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
         loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
+
+        # NEW: Increment batch_idx by 1 in if statement to avoid reporting metrics at batch_idx 0.
         if (batch_idx + 1) % args.log_interval == 0:
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
-                    (batch_idx) * len(data),
+                    batch_idx * len(data),
                     len(train_loader.dataset),
-                    100.0 * (batch_idx) / len(train_loader),
+                    100.0 * batch_idx / len(train_loader),
                     loss.item(),
                 )
             )
 
-            # NEW: report training metrics to Determined master via core context.
+            # NEW: Report training metrics to Determined master via core_context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
             core_context.train.report_training_metrics(
                 steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
@@ -72,13 +75,13 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
                 break
 
 
-# NEW: modified function header to include args, epoch, test_loader, core_context for metric reporting and a steps_completed parameter to plot metrics
+# NEW: Modify function header to include args, epoch, test_loader, core_context for metric reporting and a steps_completed parameter to plot metrics.
 def test(args, model, device, test_loader, epoch, core_context, steps_completed):
     model.eval()
     test_loss = 0
     correct = 0
     with torch.no_grad():
-        for _, (data, target) in enumerate(test_loader):
+        for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
@@ -93,7 +96,7 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
         )
     )
 
-    # NEW: report validation metrics to Determined master via core context.
+    # NEW: Report validation metrics to Determined master via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss},
@@ -145,7 +148,7 @@ def main(core_context):
     )
     parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
 
-    # NEW: change log interval to 100 to reduce network overhead
+    # NEW: Change log interval to 100 to reduce network overhead.
     parser.add_argument(
         "--log-interval",
         type=int,
@@ -153,9 +156,8 @@ def main(core_context):
         metavar="N",
         help="how many batches to wait before logging training status",
     )
-    parser.add_argument(
-        "--save-model", action="store_true", default=False, help="For Saving the current Model"
-    )
+    # NEW: Remove save_model arg since this example only runs on Determined and we do not need it
+    # for model checkpointing as shown in later stages.
 
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -191,22 +193,21 @@ def main(core_context):
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
 
-        # NEW: steps_completed for plotting test metrics
+        # NEW: Calculate steps_completed for plotting test metrics.
         steps_completed = epoch * len(train_loader)
 
-        # NEW: pass context to train and test functions as well
+        # NEW: Pass core_context into train() and test().
         train(args, model, device, train_loader, optimizer, epoch, core_context)
-        
-        # NEW: pass args, test_loader, epoch, and steps_completed into test
+
+        # NEW: Pass args, test_loader, epoch, and steps_completed into test().
         test(args, model, device, test_loader, epoch, core_context, steps_completed=steps_completed)
         scheduler.step()
 
-    if args.save_model:
-        torch.save(model.state_dict(), "mnist_cnn.pt")
+        # NEW: Remove model saving logic, checkpointing shown in next stage.
 
 
 if __name__ == "__main__":
 
-    # NEW: establish context and pass to main function
+    # NEW: Establish new determined.core.Context and pass to main function
     with det.core.init() as core_context:
         main(core_context=core_context)

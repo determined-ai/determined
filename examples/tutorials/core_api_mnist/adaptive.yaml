@@ -1,5 +1,5 @@
 name: coreapi_mnist_tutorial_adaptive_search
-description: Use an adaptive ASHA search to optimize a hyperparameter
+description: Use an Adaptive ASHA hyperparameter search to optimize the model.
 hyperparameters:
   global_batch_size: 64
   learning_rate:
