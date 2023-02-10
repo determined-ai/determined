@@ -30,7 +30,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { KnownRolesService } from 'stores/knowRoles';
+import { KnownRolesService } from 'stores/knownRoles';
 import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';

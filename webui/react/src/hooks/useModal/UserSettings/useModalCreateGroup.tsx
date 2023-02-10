@@ -17,7 +17,7 @@ import {
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { KnownRolesService } from 'stores/knowRoles';
+import { KnownRolesService } from 'stores/knownRoles';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';

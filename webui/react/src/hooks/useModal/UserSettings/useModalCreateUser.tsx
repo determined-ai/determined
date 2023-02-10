@@ -17,7 +17,7 @@ import {
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { KnownRolesService } from 'stores/knowRoles';
+import { KnownRolesService } from 'stores/knownRoles';
 import { useCurrentUser } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
