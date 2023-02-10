@@ -6,7 +6,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { setAuth, setAuthChecked } from 'stores/auth';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 
 import * as hook from './useSettings';
@@ -101,11 +101,12 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
 };
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
+  const { setAuth, setAuthCheck } = useAuth();
   const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
-    setAuthChecked();
+    setAuthCheck();
     updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -126,9 +127,11 @@ const setup = async (
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <UIProvider>
-      <UsersProvider>
-        <Container>{children}</Container>
-      </UsersProvider>
+      <AuthProvider>
+        <UsersProvider>
+          <Container>{children}</Container>
+        </UsersProvider>
+      </AuthProvider>
     </UIProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

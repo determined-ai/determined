@@ -9,6 +9,7 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 //   WritableObservable,
 // } from 'utils/observable';
 
+import { AuthProvider } from './auth';
 import { ClusterProvider } from './cluster';
 import { KnownRolesProvider } from './knowRoles';
 import { ProjectsProvider } from './projects';
@@ -19,11 +20,13 @@ export const StoreProvider = ({ children }: { children: ReactNode }): ReactEleme
   <UIProvider>
     <ClusterProvider>
       <UsersProvider>
-        <WorkspacesProvider>
-          <KnownRolesProvider>
-            <ProjectsProvider>{children}</ProjectsProvider>
-          </KnownRolesProvider>
-        </WorkspacesProvider>
+        <AuthProvider>
+          <WorkspacesProvider>
+            <KnownRolesProvider>
+              <ProjectsProvider>{children}</ProjectsProvider>
+            </KnownRolesProvider>
+          </WorkspacesProvider>
+        </AuthProvider>
       </UsersProvider>
     </ClusterProvider>
   </UIProvider>

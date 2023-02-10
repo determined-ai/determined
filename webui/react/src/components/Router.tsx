@@ -1,4 +1,3 @@
-import { useObservable } from 'micro-observables';
 import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -6,15 +5,20 @@ import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { authChecked as observeAuthChecked, selectIsAuthenticated } from 'stores/auth';
+import { useAuth } from 'stores/auth';
+import { Loadable } from 'utils/loadable';
 
 interface Props {
   routes: RouteConfig[];
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const isAuthenticated = useObservable(selectIsAuthenticated);
-  const authChecked = useObservable(observeAuthChecked);
+  const loadableAuth = useAuth();
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
+  const authChecked = loadableAuth.authChecked;
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();

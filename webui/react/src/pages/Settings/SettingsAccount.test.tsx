@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -54,6 +54,7 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
+  const { setAuth } = useAuth();
   const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
@@ -61,11 +62,15 @@ const Container: React.FC = () => {
   const loadUsers = useCallback(() => {
     updateCurrentUser(currentUser.id);
   }, [updateCurrentUser]);
+  const getUsers = useCallback(async () => {
+    await fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
-    fetchUsers();
+    (async () => await getUsers())();
     setAuth({ isAuthenticated: true });
-  }, [fetchUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadUsers();
@@ -78,7 +83,9 @@ const setup = () =>
   render(
     <UIProvider>
       <UsersProvider>
-        <Container />
+        <AuthProvider>
+          <Container />
+        </AuthProvider>
       </UsersProvider>
     </UIProvider>,
   );

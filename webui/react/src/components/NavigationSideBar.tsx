@@ -21,7 +21,7 @@ import { paths } from 'routes/utils';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { selectIsAuthenticated } from 'stores/auth';
+import { useAuth } from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser } from 'stores/users';
@@ -119,7 +119,11 @@ const NavigationSideBar: React.FC = () => {
 
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
-  const isAuthenticated = useObservable(selectIsAuthenticated);
+  const loadableAuth = useAuth();
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
   const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,

@@ -1,11 +1,10 @@
 import { Map } from 'immutable';
-import { useObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
-import { authChecked } from 'stores/auth';
+import { useAuth } from 'stores/auth';
 import { useCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -35,12 +34,13 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const loadableAuth = useAuth();
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const checked = useObservable(authChecked);
+  const checked = loadableAuth.authChecked;
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');

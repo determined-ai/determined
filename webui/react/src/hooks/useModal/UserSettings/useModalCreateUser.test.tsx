@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import { PostUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
@@ -48,9 +49,11 @@ const setup = async () => {
   const view = render(
     <UIProvider>
       <UsersProvider>
-        <HistoryRouter history={history}>
-          <Container />
-        </HistoryRouter>
+        <AuthProvider>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
+        </AuthProvider>
       </UsersProvider>
     </UIProvider>,
   );

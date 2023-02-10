@@ -14,7 +14,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
-import { setAuth } from 'stores/auth';
+import { useAuth } from 'stores/auth';
 import { PermissionsStore } from 'stores/permissions';
 import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
@@ -46,6 +46,7 @@ const buttonTheme = {
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
   const updateCurrentUser = useUpdateCurrentUser();
+  const { setAuth } = useAuth();
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
@@ -91,7 +92,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, uiActions, fetchMyRoles, updateCurrentUser, rbacEnabled],
+    [canceler, setAuth, uiActions, fetchMyRoles, updateCurrentUser, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
