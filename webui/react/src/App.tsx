@@ -1,4 +1,5 @@
 import { App as AntdApp } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -23,7 +24,7 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
-import { useAuth } from 'stores/auth';
+import { auth as authObservable, selectIsAuthenticated } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
@@ -31,16 +32,15 @@ import { notification, useInitApi } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
+
 import 'antd/dist/reset.css';
 
 const AppView: React.FC = () => {
   useInitApi();
   const resize = useResize();
-  const { auth } = useAuth();
-  const isAuthenticated = Loadable.match(auth, {
-    Loaded: (auth) => auth.isAuthenticated,
-    NotLoaded: () => false,
-  });
+
+  const isAuthenticated = useObservable(selectIsAuthenticated);
+  const auth = useObservable(authObservable);
   const loadableUser = useCurrentUser();
   const infoLoadable = useDeterminedInfo();
   const info = Loadable.getOrElse(initInfo, infoLoadable);

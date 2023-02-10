@@ -10,7 +10,7 @@ import { MODAL_HEADER_LABEL_CREATE } from 'hooks/useModal/UserSettings/useModalC
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { AuthProvider, useAuth } from 'stores/auth';
+import { setAuth, setAuthChecked } from 'stores/auth';
 import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -61,16 +61,15 @@ const Container: React.FC = () => {
   const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
-  const { setAuth, setAuthCheck } = useAuth();
   const updateInfo = useUpdateDeterminedInfo();
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
     setAuth({ isAuthenticated: true });
-    setAuthCheck();
+    setAuthChecked();
     updateCurrentUser(currentUser.id);
     updateInfo({ ...initInfo, featureSwitches: [], rbacEnabled: false });
-  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth, updateInfo]);
+  }, [fetchUsers, updateCurrentUser, updateInfo]);
 
   useEffect(() => {
     loadUsers();
@@ -92,11 +91,9 @@ const setup = () =>
     <DeterminedInfoProvider>
       <StoreProvider>
         <UsersProvider>
-          <AuthProvider>
-            <DndProvider backend={HTML5Backend}>
-              <Container />
-            </DndProvider>
-          </AuthProvider>
+          <DndProvider backend={HTML5Backend}>
+            <Container />
+          </DndProvider>
         </UsersProvider>
       </StoreProvider>
     </DeterminedInfoProvider>,
@@ -119,6 +116,8 @@ describe('UserManagement', () => {
   it('should render modal for create user when click the button', async () => {
     setup();
     await user.click(await screen.findByLabelText(CREATE_USER_LABEL));
-    expect(screen.getByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).toBeInTheDocument();
+    waitFor(() => {
+      expect(screen.getByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).toBeInTheDocument();
+    });
   });
 });

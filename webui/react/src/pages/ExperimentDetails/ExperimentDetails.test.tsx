@@ -13,7 +13,6 @@ import {
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
 import { UsersProvider } from 'stores/users';
@@ -73,15 +72,13 @@ const setup = () => {
       <HelmetProvider>
         <WorkspacesProvider>
           <UsersProvider>
-            <AuthProvider>
-              <ClusterProvider>
-                <ProjectsProvider>
-                  <HistoryRouter history={history}>
-                    <ExperimentDetails />
-                  </HistoryRouter>
-                </ProjectsProvider>
-              </ClusterProvider>
-            </AuthProvider>
+            <ClusterProvider>
+              <ProjectsProvider>
+                <HistoryRouter history={history}>
+                  <ExperimentDetails />
+                </HistoryRouter>
+              </ProjectsProvider>
+            </ClusterProvider>
           </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>

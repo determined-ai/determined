@@ -298,8 +298,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   );
 
   useEffect(() => {
-    setField([
-      ...field.filter((f) => f.name[0] === 'workspaceId'),
+    setField((curField) => [
+      ...curField.filter((f) => f.name[0] === 'workspaceId'),
       { name: 'config', value: config || '' },
     ]);
   }, [config]);

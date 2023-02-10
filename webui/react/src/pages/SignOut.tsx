@@ -6,7 +6,7 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
+import { reset as resetAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
 import { useUpdateCurrentUser } from 'stores/users';
@@ -16,7 +16,6 @@ import { Loadable } from 'utils/loadable';
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { resetAuth } = useAuth();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [isSigningOut, setIsSigningOut] = useState(false);
   const updateCurrentUser = useUpdateCurrentUser();
@@ -49,14 +48,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [
-    navigate,
-    info.externalLogoutUri,
-    location.state,
-    updateCurrentUser,
-    isSigningOut,
-    resetAuth,
-  ]);
+  }, [navigate, info.externalLogoutUri, location.state, updateCurrentUser, isSigningOut]);
 
   return null;
 };
