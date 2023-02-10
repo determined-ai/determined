@@ -76,7 +76,7 @@ TensorboardTableHeader = OrderedDict(
         ("trialIds", "trialIds"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
-        ("workspaceId", "workspaceId"),
+        ("workspaceName", "workspaceName"),
     ]
 )
 
@@ -221,7 +221,6 @@ def list_tasks(args: Namespace) -> None:
             item["state"] = item["state"][6:]
         if "workspaceId" in item:
             wId = item["workspaceId"]
-            del item["workspaceId"]
             item["workspaceName"] = (
                 w_names[wId] if wId in w_names else f"missing workspace id {wId}"
             )
