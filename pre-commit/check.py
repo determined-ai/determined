@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from typing import List, Tuple, Union, Dict, Set
+from typing import Iterable, List, Tuple, Union, Dict, Set
 from pathlib import Path
 import argparse
 import os
@@ -110,6 +110,15 @@ def find_rules(paths: List[Path]):
     return resolved_paths
 
 
+def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
+    failed_rules: Set[Tuple[Path, str]] = set()
+    for rule_path in module_paths:
+        exit_code, msg = run_rule(rule_path)
+        if exit_code != 0:
+            failed_rules.add((rule_path, msg))
+    return failed_rules
+
+
 def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("files", nargs="*", type=str, help="files to check")
@@ -120,11 +129,7 @@ def main():
         print("No changed files.")
         exit(0)
 
-    failed_rules: Set[Tuple[Path, str]] = set()
-    for rule_path in find_rules(changed_files):
-        exit_code, msg = run_rule(rule_path)
-        if exit_code != 0:
-            failed_rules.add((rule_path, msg))
+    failed_rules = process_rules(find_rules(changed_files))
     if len(failed_rules):
         print(
             f"{len(failed_rules)} check(s) failed {[str(r) for r in failed_rules]}", file=sys.stderr
