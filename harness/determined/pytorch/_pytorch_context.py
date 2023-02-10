@@ -139,7 +139,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._stop_requested = False
 
-        self.tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
+        self._tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
 
     def get_global_batch_size(self) -> int:
         """
@@ -966,15 +966,15 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             writer.add_images(images, idx)
         """
 
-        if self.tbd_writer is None:
+        if self._tbd_writer is None:
             from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
-            self.tbd_writer = TorchWriter()
+            self._tbd_writer = TorchWriter()
 
         try:
-            yield self.tbd_writer
+            yield self._tbd_writer
         finally:
-            self.tbd_writer.reset()
+            self._tbd_writer.reset()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore

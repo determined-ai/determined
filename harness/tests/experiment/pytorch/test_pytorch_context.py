@@ -69,7 +69,7 @@ class TestPyTorchContext:
 
         monkeypatch.setattr(tensorboard, "get_base_path", mock_get_base_path)
 
-        assert self.context.tbd_writer is None
+        assert self.context._tbd_writer is None
         files = list(tmp_path.iterdir())
         assert len(files) == 0
 
