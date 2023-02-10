@@ -25,14 +25,14 @@ set the following option in the master config:
    security:
      authz:
        type: rbac
-Brand new Determined installations include two user accounts: Brand new Determined installations include two user accounts: Brand new Determined installations include two user accounts: -  ``admin`` user has full cluster access by default through pre-canned ``ClusterAdmin`` role.
+Brand new Determined installations include two user accounts: Brand new Determined installations include two user accounts: Brand new Determined installations include two user accounts: -  ``admin`` user has full cluster access by default through pre-canned ``ClusterAdmin`` role. asdf
    -  ``determined`` user has no permissions.
 
 Both accounts have empty passwords. You are encouraged to set strong passwords or deactivate these
 accounts for security reasons.
 
 Example setup - CLI
-=====================
+=======================
 
 In this section, we will configure a Determined instance to support a cluster administrator account,
 and a few engineers with varying level of access.
