@@ -27,15 +27,6 @@ def get_git_status() -> List[Path]:
     return files
 
 
-# gets last changed files
-def get_changed_files() -> List[Path]:
-    files = get_git_status()
-    if len(files) != 0:
-        return files
-    files = get_git_commit_files("HEAD")
-    return files
-
-
 # check if path a child of another path
 def is_child(path: Path, parent: Path) -> bool:
     assert path.is_absolute()
@@ -46,23 +37,6 @@ def is_child(path: Path, parent: Path) -> bool:
         if cur_path == parent:
             return True
     return False
-
-
-def unpushed_files() -> List[Path]:
-    """return all files that are committed but not pushed."""
-    # get upstream branch name
-    upstream_branch = (
-        os.popen("git rev-parse --abbrev-ref --symbolic-full-name @{u}").read().strip()
-    )
-    # get all commits that are on the current branch but not on the upstream branch
-    commits = os.popen(f"git log {upstream_branch}..HEAD --oneline").read().strip()
-    commits = [x.split()[0] for x in commits.split("\n")]
-    # get all files that are changed in the commits
-    files: List[Path] = []
-    for commit in commits:
-        files.extend(get_git_commit_files(commit))
-    # remove duplicates
-    return sorted(list(set(files)))
 
 
 # check if PRECOMMIT_ENABLE_SLOW is set to true
@@ -133,20 +107,16 @@ def find_rules(paths: List[Path]):
 
 
 def main():
-    # define an arg to get the stage
     argparser = argparse.ArgumentParser()
     argparser.add_argument("files", nargs="*", type=str, help="files to check")
     args = argparser.parse_args()
 
-    changed_files: List[Path] = []
-    # changed_files = get_changed_files()
-    # changed_files = unpushed_files()
     changed_files = [Path(x).absolute() for x in args.files]
-
-    failed_rules: Set[Path] = set()
     if len(changed_files) == 0:
         print("No changed files.")
         exit(0)
+
+    failed_rules: Set[Path] = set()
     for rule_path in find_rules(changed_files):
         rv = run_rule(rule_path)
         if rv != 0:

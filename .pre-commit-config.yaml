@@ -32,8 +32,8 @@ repos:
         exclude_types:
           - zsh
         args: [-w, -s, -l, -i, '4', -ci, -bn]
-      - id: all-check
-        name: Check.py Native Det
+      - id: local-checks
+        name: Run local checks
         description: run all local checks and format based on the directories changed.
         stages:
           - push
