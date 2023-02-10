@@ -76,7 +76,7 @@ TensorboardTableHeader = OrderedDict(
         ("trialIds", "trialIds"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
-        ("workspaceName", "workspaceName"),
+        ("workspaceId", "workspaceId"),
     ]
 )
 
