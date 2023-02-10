@@ -235,9 +235,17 @@ class TBFetchIterationThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            for filepath in self._fetcher.list_all_generator():
-                self._work_queue.put(filepath, block=True)
-            time.sleep(FULL_ITERATION_SLEEP_TIME)
+            try:
+                for filepath in self._fetcher.list_all_generator():
+                    self._work_queue.put(filepath, block=True)
+            except Exception as e:
+                logging.warning(
+                    f"Failure listing TensorBoard files from {self._fetcher}. Error: {e}"
+                    f" (retrying in {FULL_ITERATION_SLEEP_TIME}s)...",
+                    exc_info=True,
+                )
+            finally:
+                time.sleep(FULL_ITERATION_SLEEP_TIME)
 
 
 class TBFetchThread(threading.Thread):
@@ -258,8 +266,18 @@ class TBFetchThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            filepath = self._work_queue.get(block=True)
-            self._fetcher._fetch(filepath, self._new_file_callback)
+            try:
+                filepath = self._work_queue.get(block=True)
+                self._fetcher._fetch(filepath, self._new_file_callback)
+            except Exception as e:
+                logging.warning(
+                    f"Timeout fetching TensorBoard files from {self._fetcher}. Error: {e}"
+                    f" (retrying)...",
+                    exc_info=True,
+                )
+                # Put the failed filepath back onto the list
+                if filepath:
+                    self._work_queue.put(filepath, block=True)
 
 
 if __name__ == "__main__":

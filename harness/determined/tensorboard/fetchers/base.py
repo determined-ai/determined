@@ -44,21 +44,3 @@ class Fetcher(metaclass=abc.ABCMeta):
         for storage_path in self.storage_paths:
             for filepath in self._list(storage_path):
                 yield filepath
-
-    def fetch_all_serial(self, new_file_callback: Callable = lambda: None) -> int:
-        """Fetches all changed files found in storage paths in serial
-
-        Arguments:
-            new_file_callback (Callable, optional): Callback function that
-                is fired each time a new file is fetched
-
-        Returns: count of new files fetched.
-        """
-        new_files = []
-        # Look at all files in our storage location.
-        for filepath in self.list_all_generator():
-            new_files.append(filepath)
-        # Download the new or updated files.
-        for filepath in new_files:
-            self._fetch(filepath, new_file_callback)
-        return len(new_files)
