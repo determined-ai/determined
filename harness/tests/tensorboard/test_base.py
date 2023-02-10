@@ -126,12 +126,14 @@ def test_upload_thread_normal_case() -> None:
     path_info_list_2 = []
     path_info_list_1.append(
         tensorboard.base.PathUploadInfo(
-            path="test_value/file1.json", mangled_relative_path="test_value/file1#1.json"
+            path=pathlib.Path("test_value/file1.json"),
+            mangled_relative_path=pathlib.Path("test_value/file1#1.json"),
         )
     )
     path_info_list_2.append(
         tensorboard.base.PathUploadInfo(
-            path="test_value/file2.json", mangled_relative_path="test_value/file2#1.json"
+            path=pathlib.Path("test_value/file2.json"),
+            mangled_relative_path=pathlib.Path("test_value/file2#1.json"),
         )
     )
 

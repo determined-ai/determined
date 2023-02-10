@@ -1,5 +1,4 @@
 import logging
-import pathlib
 from typing import Any, List, Optional
 
 from determined.tensorboard import base

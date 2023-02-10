@@ -154,22 +154,22 @@ class _TensorboardUploadThread(threading.Thread):
 
     def run(self) -> None:
         while True:
-            path_upload_info = self._work_queue.get()
+            path_info_list = self._work_queue.get()
 
             # None is the sentinel value
             # to signal the thread to exit
-            if path_upload_info is None:
+            if path_info_list is None:
                 return
 
             # Try-catch is used to avoid exception from
             # one failed sync attempt to cause the thread to exit.
             try:
-                self._upload_function(path_upload_info)
+                self._upload_function(path_info_list)
             except Exception as e:
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
 
-    def upload(self, path_upload_info: PathUploadInfo) -> None:
-        self._work_queue.put(path_upload_info)
+    def upload(self, path_info_list: List[PathUploadInfo]) -> None:
+        self._work_queue.put(path_info_list)
 
     def close(self) -> None:
         self._work_queue.put(None)
