@@ -49,6 +49,7 @@ const (
 	slurmResourcesCarrier  = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
 	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
 	launcherMinimumVersion = "3.2.2"
+	root                   = "root"
 )
 
 // schedulerTick periodically triggers the scheduler to act.
@@ -671,7 +672,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		if impersonatedUser == "root" {
+		if impersonatedUser == root && m.rmConfig.UserName != root {
 			sendResourceStateChangedErrorResponse(ctx,
 				fmt.Errorf(
 					"You are logged in as Determined user '%s', however the user ID on the "+
