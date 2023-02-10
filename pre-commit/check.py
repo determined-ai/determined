@@ -12,6 +12,10 @@ import concurrent.futures
 # TODO add option to pass in a git diff to check or git hash
 
 
+def print_colored(skk, **kwargs):
+    print("\033[93m {}\033[00m".format(skk), **kwargs)
+
+
 def get_git_commit_files(commit_hash: str) -> List[Path]:
     output = os.popen(f"git diff-tree --no-commit-id --name-only -r {commit_hash}").read()
     lines = output.split("\n")
@@ -90,16 +94,17 @@ def run_rule(rule_path: Path) -> Tuple[int, str]:
     cmds = rule if isinstance(rule, list) else [rule]
     for cmd in cmds:  # run commands sequentially with early breaking.
         assert isinstance(cmd, str)
-        proc = subprocess.run(
-            cmd,
-            cwd=rule_path,
-            shell=True,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if proc.returncode != 0:
-            return proc.returncode, proc.stderr.decode("utf-8")
+        try:
+            subprocess.run(
+                cmd,
+                cwd=rule_path,
+                shell=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            return e.returncode, e.stderr.decode("utf-8")
     return (0, "")
 
 
@@ -122,9 +127,9 @@ def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
         for future in concurrent.futures.as_completed(future_to_rule):
             rule_path = future_to_rule[future]
             try:
-                return_code, cmd = future.result()
+                return_code, msg = future.result()
                 if return_code != 0:
-                    failed_rules.add((rule_path, cmd))
+                    failed_rules.add((rule_path, msg))
             except Exception as exc:
                 print(f"{rule_path} generated an exception: {exc}", file=sys.stderr)
     return failed_rules
@@ -142,9 +147,11 @@ def main():
 
     failed_rules = process_rules(find_rules(changed_files))
     if len(failed_rules):
-        print(
-            f"{len(failed_rules)} check(s) failed {[str(r) for r in failed_rules]}", file=sys.stderr
-        )
+        for rule_path, msg in failed_rules:
+            print_colored(f"{rule_path} failed", file=sys.stderr)
+            print(msg, file=sys.stderr)
+        print_colored(f"{len(failed_rules)} check(s) failed.", file=sys.stderr)
+
         exit(1)
 
 
