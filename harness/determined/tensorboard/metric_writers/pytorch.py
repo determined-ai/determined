@@ -1,4 +1,5 @@
 # mypy: ignore-errors
+# This is to silence mypy. All SummaryWriter methods are untyped, but are inherited here.
 import pathlib
 from typing import Union
 
