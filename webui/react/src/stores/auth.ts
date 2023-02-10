@@ -24,7 +24,7 @@ const internalAuth = new WritableObservable<Loadable<Auth>>(NotLoaded);
 const internalAuthChecked = new WritableObservable(false);
 
 export const auth = internalAuth.readOnly();
-export const authChecked = internalAuth.readOnly();
+export const authChecked = internalAuthChecked.readOnly();
 
 export const reset = (): void => {
   clearAuthCookie();
