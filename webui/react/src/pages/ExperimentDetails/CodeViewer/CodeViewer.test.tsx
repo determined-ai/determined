@@ -12,9 +12,8 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUser, UsersProvider, useUpdateCurrentUser } from 'stores/users';
-import { DetailedUser } from 'types';
+import { setAuth, setAuthChecked } from 'stores/auth';
+import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 
 import CodeViewer, { Props } from './CodeViewer';
 
@@ -105,12 +104,11 @@ const experimentIdMock = 123;
 const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
-  const { setAuth, setAuthCheck } = useAuth();
   const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
-    setAuthCheck();
+    setAuthChecked();
     updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -128,11 +126,9 @@ const setup = (
   render(
     <HistoryRouter history={history}>
       <UIProvider>
-        <AuthProvider>
-          <UsersProvider>
-            <Container {...props} />
-          </UsersProvider>
-        </AuthProvider>
+        <UsersProvider>
+          <Container {...props} />
+        </UsersProvider>
       </UIProvider>
     </HistoryRouter>,
   );

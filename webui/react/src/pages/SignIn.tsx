@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -20,7 +21,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
-import { useAuth } from 'stores/auth';
+import { authChecked as observeAuthChecked, selectIsAuthenticated } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
 import { notification } from 'utils/dialogApi';
@@ -42,12 +43,8 @@ const logoConfig: Record<RecordKey, string> = {
 const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
-  const loadableAuth = useAuth();
-  const authChecked = loadableAuth.authChecked;
-  const isAuthenticated = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.isAuthenticated,
-    NotLoaded: () => false,
-  });
+  const authChecked = useObservable(observeAuthChecked);
+  const isAuthenticated = useObservable(selectIsAuthenticated);
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');

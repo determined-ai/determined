@@ -1,3 +1,4 @@
+import { Observable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -5,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { updateDetApi } from 'services/apiConfig';
-import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
+import { AUTH_COOKIE_KEY, setAuth, setAuthChecked } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
@@ -13,7 +14,6 @@ import { Loadable } from 'utils/loadable';
 const useAuthCheck = (): (() => void) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
-  const { setAuth, setAuthCheck } = useAuth();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -47,21 +47,16 @@ const useAuthCheck = (): (() => void) => {
     if (authToken) {
       updateBearerToken(authToken);
 
-      setAuth({ isAuthenticated: true, token: authToken });
-      setAuthCheck();
+      Observable.batch(() => {
+        setAuth({ isAuthenticated: true, token: authToken });
+        setAuthChecked();
+      });
     } else if (info.externalLoginUri) {
       redirectToExternalSignin();
     } else {
-      setAuthCheck();
+      setAuthChecked();
     }
-  }, [
-    info.externalLoginUri,
-    location.search,
-    setAuth,
-    setAuthCheck,
-    redirectToExternalSignin,
-    updateBearerToken,
-  ]);
+  }, [info.externalLoginUri, location.search, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;
 };
