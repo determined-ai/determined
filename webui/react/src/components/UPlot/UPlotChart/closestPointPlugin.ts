@@ -1,5 +1,5 @@
 import { throttle } from 'throttle-debounce';
-import uPlot, { Options, Plugin } from 'uplot';
+import uPlot, { Plugin } from 'uplot';
 
 import { CheckpointsDict } from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { findInsertionIndex } from 'shared/utils/array';
@@ -15,7 +15,6 @@ interface Point {
 
 interface Props {
   checkpointsDict?: CheckpointsDict;
-  diamond?: boolean;
   distInPx?: number; // max cursor distance from data point to focus it (in pixel)
   getPointTooltipHTML?: (xVal: number, yVal: number, point: Point) => string;
   onPointClick?: (e: MouseEvent, point: Point) => void;

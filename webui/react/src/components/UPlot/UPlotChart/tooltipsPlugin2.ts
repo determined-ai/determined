@@ -28,7 +28,7 @@ export const tooltipsPlugin = (
     let html = '';
 
     const header: ChartTooltip =
-      typeof getXTooltipHeader === 'function' ? getXTooltipHeader(idx) : null;
+      typeof getXTooltipHeader === 'function' ? getXTooltipHeader(idx) : '';
 
     const yLabels: ChartTooltip[] =
       typeof getXTooltipYLabels === 'function' ? getXTooltipYLabels(idx) : [];

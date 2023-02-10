@@ -132,7 +132,6 @@ export const LineChart: React.FC<Props> = ({
         seriesColors,
       }),
       closestPointPlugin({
-        diamond: true,
         onPointClick,
         onPointFocus,
         yScale: 'y',

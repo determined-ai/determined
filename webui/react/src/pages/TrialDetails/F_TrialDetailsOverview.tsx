@@ -79,7 +79,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       if (!v) return;
       let pair: [Metric] | [Metric, Metric] = [v];
       const t_match = train.findIndex((t) => isMetricNameMatch(t, v));
-      if (t_match !== -1) pair = pair.concat(train.splice(t_match, 1)) as [Metric, Metric];
+      if (t_match !== -1) pair = train.splice(t_match, 1).concat(pair) as [Metric, Metric];
       out.push(pair);
     }
     out = out.concat(train.map((t) => [t]));
@@ -110,8 +110,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
       if (valMetric) {
         const valMetricKey = metricToKey(valMetric);
-        const valMetricData = data?.[valMetricKey];
-        if (valMetricData) series.push(valMetricData);
+        const valMetricSeries = data?.[valMetricKey];
+        if (valMetricSeries) series.push(valMetricSeries);
       }
 
       out.push({
@@ -119,7 +119,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         plugins: [
           closestPointPlugin({
             checkpointsDict,
-            diamond: true,
             onPointClick,
             yScale: 'y',
           }),
@@ -130,7 +129,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
               if (xVal === undefined) return '';
               const checkpoint = checkpointsDict?.[Math.floor(xVal)];
               if (!checkpoint) return '';
-              return '<div class="">⬦ Best Checkpoint <em>(click to view details)</em> </div>';
+              return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
             },
             isShownEmptyVal: false,
             seriesColors: series.map((s) => s.color ?? '#009BDE'),
@@ -139,7 +138,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         series,
         title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
         xAxis,
-        xLabel: 'Batch',
+        xLabel: 'Batches',
       });
     });
     return out;
