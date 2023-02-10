@@ -10,7 +10,6 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
@@ -325,8 +324,7 @@ const ModelVersionDetails: React.FC = () => {
     return <Message title="Model name is empty" />;
   } else if (isNaN(parseInt(versionNum))) {
     return <Message title={`Invalid Version ID ${versionNum}`} />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion || !workspace) {
@@ -346,7 +344,8 @@ const ModelVersionDetails: React.FC = () => {
           onUpdateTags={saveVersionTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       {/* TODO: Clean up once we standardize page layouts */}
       <div style={{ padding: 16 }}>
         <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />

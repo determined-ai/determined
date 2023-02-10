@@ -7,7 +7,6 @@ import Input from 'components/kit/Input';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -442,8 +441,7 @@ const ModelDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!model || !workspace) {
@@ -464,7 +462,8 @@ const ModelDetails: React.FC = () => {
           onUpdateTags={saveModelTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>

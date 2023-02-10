@@ -16,7 +16,6 @@ import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -666,14 +665,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [ModelActionMenu],
   );
 
-  if (!canViewModelRegistry) {
-    return <PageNotFound />;
-  }
-
   return (
     <Page
       containerRef={pageRef}
       id="models"
+      notFound={!canViewModelRegistry}
       options={
         <Space>
           <Toggle
