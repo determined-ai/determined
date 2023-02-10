@@ -8,10 +8,11 @@
   position: absolute;
   z-index: 99;
 
+  .checkpointHeader,
   .valueX,
   .valueY,
   .valueYEmpty {
-    margin: 5px 6px;
+    margin: 5px 6px 2px 6px;
     position: relative;
     white-space: nowrap;
   }
@@ -23,10 +24,8 @@
     opacity: 0.5;
   }
   .color {
-    border-color: var(--theme-float-border-strong);
     border-radius: 100%;
-    border-style: solid;
-    border-width: var(--theme-stroke-width);
+    border-width: 0;
     display: inline-block;
     height: 9px;
     left: 0;

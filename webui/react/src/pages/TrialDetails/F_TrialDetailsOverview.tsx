@@ -1,9 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import { UPlotPoint } from 'components/UPlot/types';
+import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
+import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { ExperimentBase, Metric, MetricType, TrialDetails } from 'types';
+import {
+  CheckpointWorkloadExtended,
+  ExperimentBase,
+  Metric,
+  MetricType,
+  TrialDetails,
+} from 'types';
 import { metricSorter, metricToKey } from 'utils/metric';
 
 import { useTrialMetrics } from './useTrialMetrics';
@@ -21,11 +33,40 @@ const isMetricNameMatch = (t: Metric, v: Metric) => {
   const v_stripped = v.name.replace(VAL_PREFIX, '');
   return t_stripped === v_stripped;
 };
+type XAxisVal = number;
+export type CheckpointsDict = Record<XAxisVal, CheckpointWorkloadExtended>;
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
   });
+  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
+
+  const checkpoint: CheckpointWorkloadExtended | undefined = useMemo(
+    () =>
+      trial?.bestAvailableCheckpoint
+        ? { ...trial.bestAvailableCheckpoint, experimentId: trial?.experimentId, trialId: trial.id }
+        : undefined,
+    [trial],
+  );
+
+  const { contextHolder, openCheckpoint } = useCheckpointFlow({
+    checkpoint,
+    config: experiment.config,
+    title: `Best checkpoint for Trial ${trial?.id}`,
+  });
+
+  const checkpointsDict = useMemo<CheckpointsDict>(() => {
+    return checkpoint && xAxis === XAxisDomain.Batches
+      ? {
+          [checkpoint?.totalBatches]: checkpoint,
+        }
+      : checkpoint?.endTime && xAxis === XAxisDomain.Time
+      ? {
+          [Math.floor(Date.parse(checkpoint?.endTime))]: checkpoint,
+        }
+      : {};
+  }, [checkpoint, xAxis]);
 
   const { metrics, data } = useTrialMetrics(trial);
 
@@ -38,7 +79,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       if (!v) return;
       let pair: [Metric] | [Metric, Metric] = [v];
       const t_match = train.findIndex((t) => isMetricNameMatch(t, v));
-      if (t_match !== -1) pair = pair.concat(train.splice(t_match, 1)) as [Metric, Metric];
+      if (t_match !== -1) pair = train.splice(t_match, 1).concat(pair) as [Metric, Metric];
       out.push(pair);
     }
     out = out.concat(train.map((t) => [t]));
@@ -53,28 +94,63 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       // naming just makes it easier to read
       const trainingMetricKey = metricToKey(trainingMetric);
       const trainingMetricSeries = data?.[trainingMetricKey];
+      const dataForAxis = trainingMetricSeries?.data[xAxis];
       if (!trainingMetricSeries) return;
+
+      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
+        const xVal = dataForAxis?.[point.idx]?.[0];
+        const selectedCheckpoint =
+          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
+        if (selectedCheckpoint) {
+          openCheckpoint();
+        }
+      };
 
       const series: Serie[] = [trainingMetricSeries];
 
       if (valMetric) {
         const valMetricKey = metricToKey(valMetric);
-        const valMetricData = data?.[valMetricKey];
-        if (valMetricData) series.push(valMetricData);
+        const valMetricSeries = data?.[valMetricKey];
+        if (valMetricSeries) series.push(valMetricSeries);
       }
 
       out.push({
+        onPointClick,
+        plugins: [
+          closestPointPlugin({
+            checkpointsDict,
+            onPointClick,
+            yScale: 'y',
+          }),
+          drawPointsPlugin(checkpointsDict),
+          tooltipsPlugin({
+            getXTooltipHeader(xIndex) {
+              const xVal = dataForAxis?.[xIndex]?.[0];
+              if (xVal === undefined) return '';
+              const checkpoint = checkpointsDict?.[Math.floor(xVal)];
+              if (!checkpoint) return '';
+              return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
+            },
+            isShownEmptyVal: false,
+            seriesColors: series.map((s) => s.color ?? '#009BDE'),
+          }),
+        ],
         series,
         title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
+        xAxis,
+        xLabel: 'Batches',
       });
     });
     return out;
-  }, [pairedMetrics, data]);
+  }, [pairedMetrics, data, xAxis, checkpointsDict, openCheckpoint]);
 
   return (
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
-      {showExperimentArtifacts ? <ChartGrid chartsProps={chartsProps} /> : null}
+      {showExperimentArtifacts ? (
+        <ChartGrid chartsProps={chartsProps} xAxis={xAxis} onXAxisChange={setXAxis} />
+      ) : null}
+      {contextHolder}
     </>
   );
 };

@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
+import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
@@ -13,6 +14,9 @@ import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
 
 import css from './LineChart.module.scss';
+
+export const TRAINING_SERIES_COLOR = '#009BDE';
+export const VALIDATION_SERIES_COLOR = '#F77B21';
 
 /**
  * @typedef Serie
@@ -47,8 +51,9 @@ export interface Serie {
 interface Props {
   focusedSeries?: number;
   height?: number;
-  onSeriesClick?: (event: MouseEvent, arg1: number) => void;
-  onSeriesFocus?: (arg0: number | null) => void;
+  onPointClick?: (event: MouseEvent, point: UPlotPoint) => void;
+  onPointFocus?: (point: UPlotPoint | undefined) => void;
+  plugins?: Plugin[];
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
@@ -63,9 +68,10 @@ interface Props {
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
   height = 350,
-  onSeriesClick,
-  onSeriesFocus,
+  onPointClick,
+  onPointFocus,
   scale = Scale.Linear,
+  plugins: propPlugins,
   series,
   showLegend = false,
   title,
@@ -75,32 +81,14 @@ export const LineChart: React.FC<Props> = ({
   xTickValues,
   yTickValues,
 }: Props) => {
-  const isMetricPair: boolean = useMemo(() => {
-    const mTypes = series.map((s) => s.metricType);
-    return (
-      (series.length === 2 &&
-        mTypes.includes(MetricType.Training) &&
-        mTypes.includes(MetricType.Validation)) ||
-      (series.length === 1 &&
-        (mTypes.includes(MetricType.Training) || mTypes.includes(MetricType.Validation)))
-    );
-  }, [series]);
-
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
   );
 
   const seriesColors: string[] = useMemo(
-    () =>
-      series.map(
-        (s, idx) =>
-          s.color ||
-          (isMetricPair && s.metricType === MetricType.Training && '#009BDE') ||
-          (isMetricPair && s.metricType === MetricType.Validation && '#F77B21') ||
-          glasbeyColor(idx),
-      ),
-    [series, isMetricPair],
+    () => series.map((s, i) => s.color ?? glasbeyColor(i)),
+    [series],
   );
 
   const seriesNames: string[] = useMemo(() => {
@@ -137,36 +125,18 @@ export const LineChart: React.FC<Props> = ({
   }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
-    const plugins = [
+    const plugins: Plugin[] = propPlugins ?? [
       tooltipsPlugin({
         isShownEmptyVal: false,
         // use specified color on Serie, or glasbeyColor
         seriesColors,
       }),
+      closestPointPlugin({
+        onPointClick,
+        onPointFocus,
+        yScale: 'y',
+      }),
     ];
-    if (onSeriesClick || onSeriesFocus) {
-      plugins.push(
-        closestPointPlugin({
-          diamond: true,
-          onPointClick: (e, point) => {
-            if (onSeriesClick) {
-              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
-              // return a serie.key (example: trialId), or the adjusted index
-              onSeriesClick(e, series[point.seriesIdx - 1].key || point.seriesIdx - 1);
-            }
-          },
-          onPointFocus: (point) => {
-            if (onSeriesFocus) {
-              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
-              // return a serie.key (example: trialId), or the adjusted index
-              // returns null when switching to no point being hovered over
-              onSeriesFocus(point ? series[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
-            }
-          },
-          yScale: 'y',
-        }),
-      );
-    }
 
     return {
       axes: [
@@ -206,7 +176,7 @@ export const LineChart: React.FC<Props> = ({
         },
       },
       series: [
-        { label: xAxis || xLabel || 'X' },
+        { label: xLabel ?? xAxis ?? 'X' },
         ...series.map((serie, idx) => {
           return {
             label: seriesNames[idx],
@@ -222,8 +192,8 @@ export const LineChart: React.FC<Props> = ({
     };
   }, [
     seriesColors,
-    onSeriesClick,
-    onSeriesFocus,
+    onPointClick,
+    onPointFocus,
     xLabel,
     xTickValues,
     yLabel,
@@ -234,6 +204,7 @@ export const LineChart: React.FC<Props> = ({
     series,
     seriesNames,
     hasPopulatedSeries,
+    propPlugins,
   ]);
 
   return (
@@ -275,64 +246,67 @@ export type ChartsProps = Props[];
  */
 interface GroupProps {
   chartsProps: ChartsProps;
+  onXAxisChange: (ax: XAxisDomain) => void;
+  xAxis: XAxisDomain;
 }
 
-export const ChartGrid: React.FC<GroupProps> = ({ chartsProps }: GroupProps) => {
-  // Scale control
-  const [scale, setScale] = useState<Scale>(Scale.Linear);
+export const ChartGrid: React.FC<GroupProps> = React.memo(
+  ({ chartsProps, xAxis, onXAxisChange }: GroupProps) => {
+    // Scale control
+    const [scale, setScale] = useState<Scale>(Scale.Linear);
 
-  // X-Axis control
-  const xAxisOptions = useMemo(() => {
-    const xOpts = new Set<string>();
-    chartsProps.forEach((chart) => {
-      chart.series.forEach((serie) => {
-        Object.keys(serie.data).forEach((opt) => xOpts.add(opt));
+    // X-Axis control
+    const xAxisOptions = useMemo(() => {
+      const xOpts = new Set<string>();
+      chartsProps.forEach((chart) => {
+        chart.series.forEach((serie) => {
+          Object.keys(serie.data).forEach((opt) => xOpts.add(opt));
+        });
       });
-    });
-    return Array.from(xOpts).sort();
-  }, [chartsProps]);
-  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
+      return Array.from(xOpts).sort();
+    }, [chartsProps]);
 
-  return (
-    <div className={css.chartgridContainer}>
-      <div className={css.filterContainer}>
-        <ScaleSelectFilter value={scale} onChange={setScale} />
-        {xAxisOptions && xAxisOptions.length > 1 && (
-          <XAxisFilter options={xAxisOptions} value={xAxis} onChange={setXAxis} />
-        )}
-      </div>
-      <SyncProvider>
-        <AutoSizer>
-          {({ height, width }) => {
-            const columnCount = Math.max(1, Math.floor(width / 540));
-            return (
-              <FixedSizeGrid
-                columnCount={columnCount}
-                columnWidth={Math.floor(width / columnCount)}
-                height={Math.min(
-                  height - 40,
-                  (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
-                )}
-                rowCount={Math.ceil(chartsProps.length / columnCount)}
-                rowHeight={480}
-                width={width}>
-                {({ columnIndex, rowIndex, style }) => {
-                  const cellIndex = rowIndex * columnCount + columnIndex;
-                  return (
-                    <div className={css.chartgridCell} key={cellIndex} style={style}>
-                      <div className={css.chartgridCellCard}>
-                        {cellIndex < chartsProps.length && (
-                          <LineChart {...chartsProps[cellIndex]} scale={scale} xAxis={xAxis} />
-                        )}
+    return (
+      <div className={css.chartgridContainer}>
+        <div className={css.filterContainer}>
+          <ScaleSelectFilter value={scale} onChange={setScale} />
+          {xAxisOptions && xAxisOptions.length > 1 && (
+            <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
+          )}
+        </div>
+        <SyncProvider>
+          <AutoSizer>
+            {({ height, width }) => {
+              const columnCount = Math.max(1, Math.floor(width / 540));
+              return (
+                <FixedSizeGrid
+                  columnCount={columnCount}
+                  columnWidth={Math.floor(width / columnCount)}
+                  height={Math.min(
+                    height - 40,
+                    (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+                  )}
+                  rowCount={Math.ceil(chartsProps.length / columnCount)}
+                  rowHeight={480}
+                  width={width}>
+                  {({ columnIndex, rowIndex, style }) => {
+                    const cellIndex = rowIndex * columnCount + columnIndex;
+                    return (
+                      <div className={css.chartgridCell} key={cellIndex} style={style}>
+                        <div className={css.chartgridCellCard}>
+                          {cellIndex < chartsProps.length && (
+                            <LineChart {...chartsProps[cellIndex]} scale={scale} xAxis={xAxis} />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                }}
-              </FixedSizeGrid>
-            );
-          }}
-        </AutoSizer>
-      </SyncProvider>
-    </div>
-  );
-};
+                    );
+                  }}
+                </FixedSizeGrid>
+              );
+            }}
+          </AutoSizer>
+        </SyncProvider>
+      </div>
+    );
+  },
+);

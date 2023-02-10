@@ -4,7 +4,7 @@ import {
   Card,
   Space,
 } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
@@ -30,6 +30,8 @@ import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
 import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable'; //TODO: Move to components/kit?
 import ThemeToggle from 'components/ThemeToggle'; //TODO: Move to components/kit? Add section to DesignKit page?
+import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
@@ -42,6 +44,7 @@ import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
+import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 
 const ComponentTitles = {
   ActionBar: 'ActionBar',
@@ -241,6 +244,7 @@ const DropdownsSection: React.FC = () => {
 
 const ChartsSection: React.FC = () => {
   const line1: Serie = {
+    color: '#009BDE',
     data: {
       [XAxisDomain.Batches]: [
         [0, -2],
@@ -297,6 +301,21 @@ const ChartsSection: React.FC = () => {
     name: 'Alt-Line',
   };
 
+  const checkpointsDict: CheckpointsDict = {
+    2: {
+      endTime: '2023-02-02T04:54:41.095204Z',
+      experimentId: 6,
+      resources: {
+        'checkpoint_file': 3,
+        'workload_sequencer.pkl': 88,
+      },
+      state: 'COMPLETED',
+      totalBatches: 100,
+      trialId: 6,
+      uuid: 'f2684332-98e1-4a78-a1f7-c8107f15db2a',
+    },
+  };
+  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -322,13 +341,38 @@ const ChartsSection: React.FC = () => {
         </p>
         <ChartGrid
           chartsProps={[
-            { series: [line1], showLegend: true, title: 'Sample1' },
+            {
+              plugins: [
+                drawPointsPlugin(checkpointsDict),
+                tooltipsPlugin({
+                  getXTooltipHeader(xIndex) {
+                    const xVal = line1.data[xAxis]?.[xIndex]?.[0];
+
+                    if (xVal === undefined) return '';
+                    const checkpoint = checkpointsDict?.[Math.floor(xVal)];
+                    if (!checkpoint) return '';
+                    return '<div>⬦ Best Checkpoint <em>(click to view details)</em> </div>';
+                  },
+                  isShownEmptyVal: false,
+                  seriesColors: ['#009BDE'],
+                }),
+              ],
+              series: [line1],
+              showLegend: true,
+              title: 'Sample1',
+              xAxis,
+              xLabel: xAxis,
+            },
             {
               series: [line2, line3],
               showLegend: true,
               title: 'Sample2',
+              xAxis,
+              xLabel: xAxis,
             },
           ]}
+          xAxis={xAxis}
+          onXAxisChange={setXAxis}
         />
       </Card>
     </ComponentSection>
