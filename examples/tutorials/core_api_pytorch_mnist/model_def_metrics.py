@@ -208,6 +208,6 @@ def main(core_context):
 
 if __name__ == "__main__":
 
-    # NEW: Establish new determined.core.Context and pass to main function
+    # NEW: Establish new determined.core.Context and pass to main function.
     with det.core.init() as core_context:
         main(core_context=core_context)

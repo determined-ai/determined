@@ -1,5 +1,5 @@
-# In this stage, rather than hardcoding model values, we switch to a hyperparameter search. You should expect to see a graph of trials in the
-# overview tab corresponding to the various trials initiated by the Adaptive ASHA hyperparameter search algorithm.
+# In this stage, we perform a hyperparameter search to search for optimal model parameters. You should expect to see a graph in the WebUI 
+# showing the various trials initiated by the Adaptive ASHA hyperparameter search algorithm.
 
 from __future__ import print_function
 import argparse

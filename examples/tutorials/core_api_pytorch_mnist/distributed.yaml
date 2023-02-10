@@ -36,8 +36,4 @@ searcher:
     epochs: 20
 resources:
   slots_per_trial: 2
-environment:
-  environment_variables:
-    - NCCL_DEBUG=INFO
-    # You may need to modify this to match your network configuration.
-    - NCCL_SOCKET_IFNAME=ens
+  

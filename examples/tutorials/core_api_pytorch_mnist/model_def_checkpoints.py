@@ -1,5 +1,5 @@
 # In this stage we add logic to save and load checkpoints in Determined.
-# We also introduce preemption support for pause/resume functionality in the WebUI.
+# We also introduce preemption support for enabling pause/resume functionality in the WebUI.
 
 from __future__ import print_function
 import argparse

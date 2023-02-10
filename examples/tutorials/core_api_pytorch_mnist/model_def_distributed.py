@@ -1,5 +1,5 @@
-# In this stage we introduce distributed training. You should be able to see multiple slots active in the Cluster tab depending on
-# the value you set for slots_per_trial you set in distributed.yaml, as well as logs appearing from multiple ranks, in the WebUI
+# In this stage we introduce distributed training. You should be able to see multiple slots active in the Cluster tab corresponding to
+# the value you set for slots_per_trial you set in distributed.yaml, as well as logs appearing from multiple ranks, in the WebUI.
 
 from __future__ import print_function
 import argparse
@@ -12,7 +12,7 @@ from torch.optim.lr_scheduler import StepLR
 
 import determined as det
 
-# NEW: Import torch distributed libraries
+# NEW: Import torch distributed libraries.
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -76,7 +76,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             if args.dry_run:
                 break
 
-    # NEW: Report progress only on rank 0
+    # NEW: Report progress only on rank 0.
     if core_context.distributed.rank == 0:
         op.report_progress(epoch)
 
@@ -102,7 +102,7 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
         )
     )
 
-    # NEW: report metrics only on rank 0
+    # NEW: Report metrics only on rank 0.
     if core_context.distributed.rank == 0:
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics={"test_loss": test_loss}
@@ -192,7 +192,7 @@ def main(core_context):
     train_kwargs = {"batch_size": args.batch_size}
     test_kwargs = {"batch_size": args.test_batch_size}
     if use_cuda:
-        # NEW: Remove DataLoader shuffle=True argument since it is mutually exlusive
+        # NEW: Remove DataLoader shuffle argument since it is mutually exlusive
         # with DistributedSampler shuffle, set shuffle=True there instead.
         cuda_kwargs = {"num_workers": 1, "pin_memory": True}
         train_kwargs.update(cuda_kwargs)
