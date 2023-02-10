@@ -35,4 +35,4 @@ searcher:
   max_length:
     epochs: 20
 resources:
-  slots_per_trial: 2
+  slots_per_trial: 4
