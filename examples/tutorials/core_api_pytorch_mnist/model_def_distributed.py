@@ -2,21 +2,20 @@
 # the value you set for slots_per_trial you set in distributed.yaml, as well as logs appearing from multiple ranks, in the WebUI.
 
 from __future__ import print_function
-
 import argparse
-
 import torch
-# NEW: Import torch distributed libraries.
-import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.optim.lr_scheduler import StepLR
-from torch.utils.data.distributed import DistributedSampler
 from torchvision import datasets, transforms
+from torch.optim.lr_scheduler import StepLR
 
 import determined as det
+
+# NEW: Import torch distributed libraries.
+import torch.distributed as dist
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 class Net(nn.Module):
