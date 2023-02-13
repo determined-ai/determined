@@ -95,7 +95,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
 
   useEffect(() => {
     if (workspaceId) setModalState({ ...modalState, workspace: workspaceId });
-  }, [workspaceId]);
+  }, [workspaceId, modalState]);
 
   const {
     modalClose,
