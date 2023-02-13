@@ -30,7 +30,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { RolesService } from 'stores/roles';
+import { RolesStore } from 'stores/roles';
 import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
@@ -182,7 +182,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     if (rbacEnabled) {
-      RolesService.fetchRoles(canceler);
+      RolesStore.fetchRoles(canceler);
     }
   }, [rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =

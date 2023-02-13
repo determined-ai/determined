@@ -17,7 +17,7 @@ import {
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { RolesService } from 'stores/roles';
+import { RolesStore } from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -50,7 +50,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
 
-  const rolesLoadable = RolesService.useRoles();
+  const rolesLoadable = RolesStore.useRoles();
   const roles = Loadable.getOrElse([], rolesLoadable);
 
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();

@@ -4,7 +4,7 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
-export class RolesService {
+export class RolesStore {
   static #roles: WritableObservable<Loadable<UserRole[]>> = observable(NotLoaded);
 
   static fetchRoles = async (canceler: AbortController): Promise<void> => {

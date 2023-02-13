@@ -24,7 +24,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { RolesService } from 'stores/roles';
+import { RolesStore } from 'stores/roles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -164,7 +164,7 @@ const GroupManagement: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
     if (rbacEnabled) {
-      RolesService.fetchRoles(canceler);
+      RolesStore.fetchRoles(canceler);
     }
   }, [rbacEnabled]);
 
