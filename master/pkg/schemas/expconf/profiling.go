@@ -1,7 +1,8 @@
 package expconf
 
-//go:generate ../gen.sh
 // ProfilingConfigV0 configures profiling in the harness.
+//
+//go:generate ../gen.sh
 type ProfilingConfigV0 struct {
 	RawEnabled       *bool `json:"enabled"`
 	RawBeginOnBatch  *int  `json:"begin_on_batch"`

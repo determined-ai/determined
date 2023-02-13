@@ -283,7 +283,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func mockExperimentS3(
 	t *testing.T, pgDB *db.PgDB, user model.User, folderPath string,
 ) *model.Experiment {

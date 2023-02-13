@@ -1,5 +1,5 @@
 run:
-  go: 1.18
+  go: 1.20
 
   # Deadline for individual linters to complete by.
   deadline: 1m

@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev16
+    default: v1dev17
   gke-version:
     type: string
     default: "1.21.14"
@@ -207,7 +207,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.18.10.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
 
   install-protoc:
@@ -1035,7 +1035,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1066,7 +1066,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1104,7 +1104,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1133,7 +1133,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1177,7 +1177,7 @@ jobs:
 
   publish-helm-gh:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     steps:
@@ -1325,7 +1325,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     resource_class: large
@@ -1342,7 +1342,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     steps:
@@ -1361,7 +1361,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     steps:
@@ -1375,7 +1375,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
     steps:

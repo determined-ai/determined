@@ -159,8 +159,9 @@ func NewAllocation(
 
 // Receive implements actor.Actor for the allocation.
 // The normal flow of an Allocation is to:
+//
 //	(1) request resources,
-// 	(2) receive resources,
+//	(2) receive resources,
 //	(3) start the given task on the resources and
 //	(4) monitor the task as it runs and handle releasing it's resources.
 //
