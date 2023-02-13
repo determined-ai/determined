@@ -96,6 +96,7 @@ class ModelVersion:
             "ModelVersion.from_json() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return cls._from_json(data, session)
 
@@ -391,6 +392,7 @@ class Model:
             "Model.from_json() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return cls._from_json(data, session)
 

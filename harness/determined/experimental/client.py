@@ -333,6 +333,7 @@ def get_model_by_id(model_id: int) -> Model:
         "Please call client.get_model() with either a string-type name or "
         "an integer-type model ID.",
         FutureWarning,
+        stacklevel=2,
     )
     assert _determined is not None
     return _determined.get_model(model_id)
