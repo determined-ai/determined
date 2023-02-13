@@ -484,9 +484,11 @@ export const postModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.postModelVersion);
 
-export const getModelLabels = generateDetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]>(
-  Config.getModelLabels,
-);
+export const getModelLabels = generateDetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+>(Config.getModelLabels);
 
 /* Workspaces */
 

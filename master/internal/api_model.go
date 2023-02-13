@@ -184,15 +184,41 @@ func (a *apiServer) GetModels(
 }
 
 func (a *apiServer) GetModelLabels(
-	_ context.Context, req *apiv1.GetModelLabelsRequest,
+	ctx context.Context, req *apiv1.GetModelLabelsRequest,
 ) (*apiv1.GetModelLabelsResponse, error) {
-	resp := &apiv1.GetModelLabelsResponse{}
-	err := a.m.db.QueryProto("get_model_labels", resp)
+	resp := apiv1.GetModelLabelsResponse{}
+
+	modelQuery := db.Bun().NewSelect().
+		ModelTableExpr("models as m").
+		Column("m.id").
+		ColumnExpr("UNNEST(m.labels) AS label")
+
+	if req.WorkspaceId != nil && int(*req.WorkspaceId) > 0 {
+		modelQuery = modelQuery.Where("workspace_id = ?", req.WorkspaceId)
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if modelQuery, err = modelauth.AuthZProvider.Get().
+		FilterReadableModelsQuery(ctx, *curUser, modelQuery); err != nil {
+		return nil, err
+	}
 
-	return resp, errors.Wrapf(err, "error getting model labels")
+	labelQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS all_labels", modelQuery).
+		Column("all_labels.label").
+		GroupExpr("all_labels.label").
+		OrderExpr("COUNT(DISTINCT(all_labels.id)) DESC, all_labels.label ASC")
+
+	opQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS sorted_labels", labelQuery).
+		Model(&resp.Labels).
+		ColumnExpr("sorted_labels.label")
+	err = opQuery.Scan(ctx)
+
+	return &resp, errors.Wrapf(err, "error getting model labels")
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {

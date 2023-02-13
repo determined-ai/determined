@@ -13333,8 +13333,12 @@ def get_GetModelDefTree(
 
 def get_GetModelLabels(
     session: "api.Session",
+    *,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetModelLabelsResponse":
-    _params = None
+    _params = {
+        "workspaceId": workspaceId,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/model/labels",
