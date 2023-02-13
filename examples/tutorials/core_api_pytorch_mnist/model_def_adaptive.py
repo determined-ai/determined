@@ -1,4 +1,4 @@
-# In this stage, we perform a hyperparameter search to search for optimal model parameters. You should expect to see a graph in the WebUI 
+# In this stage, we perform a hyperparameter search to search for optimal model parameters. You should expect to see a graph in the WebUI
 # showing the various trials initiated by the Adaptive ASHA hyperparameter search algorithm.
 
 from __future__ import print_function

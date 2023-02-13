@@ -183,7 +183,8 @@ def main(core_context):
     torch.manual_seed(args.seed)
 
     if use_cuda:
-        device = torch.device("cuda")
+        # NEW: Change selected device to the one with index of local_rank. 
+        device = torch.device(core_context.distributed.local_rank)
     elif use_mps:
         device = torch.device("mps")
     else:
