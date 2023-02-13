@@ -493,9 +493,8 @@ func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
 	var maxEndTime time.Time
 	var avgMetrics map[string]float64
 	var averageMetricsMap = make(map[string][]lttb.Point)
-	metricMeasurements := MetricMeasurements{
-		AverageMetrics: averageMetricsMap,
-	}
+	var metricMeasurements MetricMeasurements
+
 	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	for rows.Next() {
 		var batches uint
