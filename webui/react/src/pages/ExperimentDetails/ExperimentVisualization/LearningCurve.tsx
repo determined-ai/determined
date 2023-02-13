@@ -6,6 +6,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
@@ -92,6 +93,22 @@ const LearningCurve: React.FC<Props> = ({
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);
   }, []);
+
+  const handlePointClick = useCallback(
+    (e: MouseEvent, point: UPlotPoint) => {
+      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      if (trialId) handleTrialClick(e, trialId);
+    },
+    [handleTrialClick, trialIds],
+  );
+
+  const handlePointFocus = useCallback(
+    (point?: UPlotPoint) => {
+      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      if (trialId) handleTrialFocus(trialId);
+    },
+    [handleTrialFocus, trialIds],
+  );
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setHighlightedTrialId(record.id);
@@ -282,8 +299,8 @@ const LearningCurve: React.FC<Props> = ({
                 series={v2ChartData}
                 xLabel="Batches Processed"
                 yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
-                onSeriesClick={handleTrialClick}
-                onSeriesFocus={handleTrialFocus}
+                onPointClick={handlePointClick}
+                onPointFocus={handlePointFocus}
               />
             ) : (
               <LearningCurveChart

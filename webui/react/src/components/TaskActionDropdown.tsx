@@ -5,6 +5,7 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -34,7 +35,11 @@ const TaskActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
-  const isKillable = isTaskKillable(task);
+  const { canModifyWorkspaceNSC } = usePermissions();
+  const isKillable = isTaskKillable(
+    task,
+    canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
+  );
 
   const handleMenuClick = (params: MenuInfo): void => {
     params.domEvent.stopPropagation();

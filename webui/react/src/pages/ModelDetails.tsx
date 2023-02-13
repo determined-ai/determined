@@ -7,7 +7,6 @@ import Input from 'components/kit/Input';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -40,6 +39,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { useUsers } from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -58,6 +58,7 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +69,10 @@ const ModelDetails: React.FC = () => {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const workspaces = Loadable.getOrElse([], useWorkspaces());
+  const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
+
   const { canModifyModelVersion } = usePermissions();
 
   const {
@@ -107,6 +112,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -435,11 +441,10 @@ const ModelDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model) {
+  } else if (!model || !workspace) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
@@ -450,13 +455,15 @@ const ModelDetails: React.FC = () => {
       headerComponent={
         <ModelHeader
           model={model.model}
+          workspace={workspace}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>

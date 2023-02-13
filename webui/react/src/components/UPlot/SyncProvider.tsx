@@ -61,10 +61,15 @@ class SyncService {
     this.bounds.update((b) => {
       let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
       let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
-      if (max - min <= 0) {
+      const width = max - min;
+      if (width <= 0) {
         // default handling of min = max is not great
         min = Math.min(max, 0);
         max = 2 * max;
+      } else {
+        const margin = 0.02 * width;
+        max = max + margin;
+        min = min - margin;
       }
       return { ...b, unzoomedBounds: { max, min } };
     });

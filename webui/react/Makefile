@@ -1,6 +1,7 @@
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
+export NODE_OPTIONS=--max-old-space-size=6144
 source_files := $(shell find src public -type f)
 
 .PHONY: default
@@ -22,7 +23,7 @@ get-deps: check-requirements node_modules/done.stamp
 .PHONY: build
 build: check-requirements build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js vite.config.ts
 	npm run build
 	touch $@
 

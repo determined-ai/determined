@@ -70,8 +70,8 @@ import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
-import DynamicIcon from './DynamicIcon';
 import css from './TaskList.module.scss';
+import WorkspaceFilter from './WorkspaceFilter';
 
 const TensorBoardSourceType = {
   Experiment: 'Experiment',
@@ -125,6 +125,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
+  const { canModifyWorkspaceNSC } = usePermissions();
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -156,10 +157,11 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const hasKillable = useMemo(() => {
     for (const task of selectedTasks) {
-      if (isTaskKillable(task)) return true;
+      if (isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } })))
+        return true;
     }
     return false;
-  }, [selectedTasks]);
+  }, [selectedTasks, canModifyWorkspaceNSC]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -482,12 +484,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
         filters: workspaces.map((ws) => ({
-          text: (
-            <div className={css.workspaceFilterItem}>
-              <DynamicIcon name={ws.name} size={24} />
-              <span className={css.workspaceFilterName}>{ws.name}</span>
-            </div>
-          ),
+          text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
@@ -530,7 +527,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const handleBatchKill = useCallback(async () => {
     try {
       const promises = selectedTasks
-        .filter((task) => isTaskKillable(task))
+        .filter((task) =>
+          isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } })),
+        )
         .map((task) => killTask(task));
       await Promise.all(promises);
 
@@ -551,7 +550,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         type: ErrorType.Server,
       });
     }
-  }, [fetchAll, selectedTasks, updateSettings]);
+  }, [fetchAll, selectedTasks, updateSettings, canModifyWorkspaceNSC]);
 
   const showConfirmation = useCallback(() => {
     modal.confirm({

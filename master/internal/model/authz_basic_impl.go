@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
@@ -35,6 +37,13 @@ func (a *ModelAuthZBasic) CanCreateModel(ctx context.Context,
 	curUser model.User, workspaceID int32,
 ) error {
 	return nil
+}
+
+// FilterReadableModelsQuery returns the query unmodified and a nil error.
+func (a *ModelAuthZBasic) FilterReadableModelsQuery(
+	ctx context.Context, curUser model.User, query *bun.SelectQuery,
+) (*bun.SelectQuery, error) {
+	return query, nil
 }
 
 func init() {

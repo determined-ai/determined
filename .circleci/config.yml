@@ -47,7 +47,7 @@ parameters:
     default: "1.21.14"
   master-build-resource-class:
     type: string
-    default: large
+    default: xlarge
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -722,6 +722,9 @@ commands:
         type: env_var_name
       environment-image:
         type: string
+      storage-bucket:
+        type: string
+        default: "det-ci-373"
       accel-node-taints:
         type: string
         default: ""
@@ -749,11 +752,11 @@ commands:
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=det-ci"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
@@ -1148,8 +1151,12 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run: make -C master release
-      - run: make -C agent release
+      - run:
+          no_output_timeout: 30m
+          command: make -C master release
+      - run:
+          no_output_timeout: 30m
+          command: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
@@ -2368,7 +2375,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2383,7 +2390,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2402,7 +2409,7 @@ workflows:
       # Legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2419,7 +2426,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2439,7 +2446,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2459,7 +2466,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2570,7 +2577,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2584,7 +2591,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2602,7 +2609,7 @@ workflows:
       # Requestable legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2618,7 +2625,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2642,7 +2649,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -2661,7 +2668,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu

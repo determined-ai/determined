@@ -5,6 +5,15 @@ type unit = struct{}
 // Set is an unordered set of values of type T.
 type Set[T comparable] map[T]unit
 
+// FromKeys builds a set from the keys of a map.
+func FromKeys[M ~map[K]V, K comparable, V any](m M) Set[K] {
+	set := make(Set[K], len(m))
+	for key := range m {
+		set.Insert(key)
+	}
+	return set
+}
+
 // Making Set a defined type rather than a struct means we need the casting shenanigans below, but
 // it also allows normal indexing and iteration syntax to be used.
 

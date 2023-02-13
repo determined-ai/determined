@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Serie } from 'components/kit/LineChart';
+import { Serie, TRAINING_SERIES_COLOR, VALIDATION_SERIES_COLOR } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
@@ -8,7 +8,7 @@ import { compareTrials } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { Metric, MetricContainer, RunState, TrialDetails } from 'types';
+import { Metric, MetricContainer, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
@@ -41,6 +41,7 @@ const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
   };
 
   return {
+    color: summ.type === MetricType.Validation ? VALIDATION_SERIES_COLOR : TRAINING_SERIES_COLOR,
     data,
     metricType: summ.type,
     name: summ.name,

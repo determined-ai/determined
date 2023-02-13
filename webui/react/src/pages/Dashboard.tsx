@@ -1,8 +1,10 @@
-import { Breadcrumb, Button, Empty } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -39,7 +41,8 @@ import { Loadable } from 'utils/loadable';
 
 import css from './Dashboard.module.scss';
 
-const FETCH_LIMIT = 25;
+const SUBMISSIONS_FETCH_LIMIT = 25;
+const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
 const Dashboard: React.FC = () => {
@@ -64,28 +67,28 @@ const Dashboard: React.FC = () => {
     async (user: DetailedUser) => {
       const results = await Promise.allSettled([
         getCommands({
-          limit: FETCH_LIMIT,
+          limit: SUBMISSIONS_FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getJupyterLabs({
-          limit: FETCH_LIMIT,
+          limit: SUBMISSIONS_FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getShells({
-          limit: FETCH_LIMIT,
+          limit: SUBMISSIONS_FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getTensorBoards({
-          limit: FETCH_LIMIT,
+          limit: SUBMISSIONS_FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
@@ -106,7 +109,7 @@ const Dashboard: React.FC = () => {
       try {
         const response = await getExperiments(
           {
-            limit: FETCH_LIMIT,
+            limit: SUBMISSIONS_FETCH_LIMIT,
             orderBy: 'ORDER_BY_DESC',
             sortBy: 'SORT_BY_START_TIME',
             users: [user.id.toString()],
@@ -130,7 +133,7 @@ const Dashboard: React.FC = () => {
   const fetchProjects = useCallback(async () => {
     try {
       const projects = await getProjectsByUserActivity(
-        { limit: FETCH_LIMIT },
+        { limit: PROJECTS_FETCH_LIMIT },
         {
           signal: canceler.signal,
         },
@@ -202,9 +205,10 @@ const Dashboard: React.FC = () => {
           <Spinner center />
         </Section>
       ) : projects.length > 0 ? (
-        // hide Recent Projects header when empty:
-        <Section title="Recent Projects">
+        // hide Projects header when empty:
+        <Section title="Recently Viewed Projects">
           <Grid
+            className={css.grid}
             count={projects.length}
             gap={ShirtSize.Medium}
             minItemWidth={250}
@@ -215,13 +219,14 @@ const Dashboard: React.FC = () => {
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
+                showWorkspace
               />
             ))}
           </Grid>
         </Section>
       ) : null}
-      {/* show Recently Submitted header even when empty: */}
-      <Section title="Recently Submitted">
+      {/* show Submissions header even when empty: */}
+      <Section title="Your Recent Submissions">
         {submissionsLoading ? (
           <Spinner center />
         ) : submissions.length > 0 ? (
@@ -297,7 +302,18 @@ const Dashboard: React.FC = () => {
             showHeader={false}
           />
         ) : (
-          <Empty description="No Submissions" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description={
+              <>
+                Your recent experiments and tasks will show up here.{' '}
+                <Link external path={paths.docs('/quickstart-mdldev.html')}>
+                  Get started
+                </Link>
+              </>
+            }
+            icon="experiment"
+            title="No submissions"
+          />
         )}
       </Section>
       {modalJupyterLabContextHolder}

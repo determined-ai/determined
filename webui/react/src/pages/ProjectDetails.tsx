@@ -8,7 +8,6 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -28,7 +27,6 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
@@ -151,10 +149,7 @@ const ProjectDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
-  } else if (!permissions.canViewWorkspaces) {
-    return <NoPermissions />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
@@ -166,7 +161,8 @@ const ProjectDetails: React.FC = () => {
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails">
+      id="projectDetails"
+      notFound={(pageError && isNotFound(pageError)) || !permissions.canViewWorkspaces}>
       <BreadcrumbBar
         extra={
           <Space>

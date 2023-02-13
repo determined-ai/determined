@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -40,7 +39,7 @@ type Params = {
 
 export const WorkspaceDetailsTab = {
   Members: 'members',
-  ModelRegistry: 'modelRegistry',
+  ModelRegistry: 'models',
   Projects: 'projects',
   Tasks: 'tasks',
 } as const;
@@ -135,7 +134,7 @@ const WorkspaceDetails: React.FC = () => {
         return response.roles || [];
       });
     } catch (e) {
-      handleError(e);
+      handleError(e, { silent: true });
     }
   }, [canceler.signal, id, rbacEnabled]);
 
@@ -218,7 +217,9 @@ const WorkspaceDetails: React.FC = () => {
     workspaceAssignments,
   ]);
 
+  const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });
   const fetchAll = useCallback(async () => {
+    if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
       fetchUsers(),
@@ -227,6 +228,7 @@ const WorkspaceDetails: React.FC = () => {
       fetchRolesAssignableToScope(),
     ]);
   }, [
+    canViewWorkspaceFlag,
     fetchWorkspace,
     fetchGroups,
     fetchUsers,
@@ -258,16 +260,11 @@ const WorkspaceDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
     return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
-  }
-
-  if (!canViewWorkspace({ workspace: { id } })) {
-    return <PageNotFound />;
   }
 
   return (
@@ -283,7 +280,8 @@ const WorkspaceDetails: React.FC = () => {
         />
       }
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      notFound={(pageError && isNotFound(pageError)) || !canViewWorkspaceFlag}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane

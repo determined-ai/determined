@@ -102,10 +102,17 @@ export const paths = {
     return `/experiments/${experimentId}/model_def`;
   },
   interactive: (command: CommandTask, maxSlotsExceeded = false): string => {
-    return `/interactive/${command.id}/${command.type}/
-      ${command.name}/${command.resourcePool}/${encodeURIComponent(
+    const path = [
+      'interactive',
+      command.id,
+      command.type,
+      command.name,
+      command.resourcePool,
       waitPageUrl(command),
-    )}?currentSlotsExceeded=${maxSlotsExceeded}`;
+    ]
+      .map(encodeURIComponent)
+      .join('/');
+    return `/${path}/?currentSlotsExceeded=${maxSlotsExceeded}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
@@ -116,14 +123,14 @@ export const paths = {
   logout: (): string => {
     return '/logout';
   },
-  modelDetails: (modelName: string): string => {
-    return `/models/${encodeURIComponent(modelName)}`;
+  modelDetails: (modelNameOrId: string): string => {
+    return `/models/${encodeURIComponent(modelNameOrId)}`;
   },
   modelList: (): string => {
     return '/models';
   },
-  modelVersionDetails: (modelName: string, versionNum: number | string): string => {
-    return `/models/${encodeURIComponent(modelName)}/versions/${versionNum}`;
+  modelVersionDetails: (modelNameOrId: string, versionNum: number | string): string => {
+    return `/models/${encodeURIComponent(modelNameOrId)}/versions/${versionNum}`;
   },
   projectDetails: (projectId: number | string): string => {
     return `/projects/${projectId}/experiments`;

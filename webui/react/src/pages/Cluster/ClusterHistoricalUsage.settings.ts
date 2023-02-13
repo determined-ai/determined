@@ -17,7 +17,6 @@ export const GroupBy = {
 export type GroupBy = ValueOf<typeof GroupBy>;
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'cluster/historical-usage',
   settings: {
     after: {
       defaultValue: undefined,

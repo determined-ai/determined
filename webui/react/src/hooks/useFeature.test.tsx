@@ -1,17 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import React, { useEffect, useMemo } from 'react';
-
-import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
+import React from 'react';
 
 import useFeature, { ValidFeature } from './useFeature';
 
 const FeatureTest: React.FC = () => {
   const feature = useFeature();
-  const testInfo = useMemo(() => ({ ...initInfo, featureSwitches: ['webhooks'] }), []);
-  const updateInfo = useUpdateDeterminedInfo();
-  useEffect(() => {
-    updateInfo(testInfo);
-  }, [testInfo, updateInfo]);
 
   return (
     <ul>
@@ -22,14 +15,11 @@ const FeatureTest: React.FC = () => {
 };
 
 const setup = () => {
-  return render(
-    <DeterminedInfoProvider>
-      <FeatureTest />
-    </DeterminedInfoProvider>,
-  );
+  return render(<FeatureTest />);
 };
 
 describe('useFeature', () => {
+  // TODO: add test for a feature flag being on
   it('trials_comparison feature is not on', () => {
     setup();
     expect(screen.queryByText('trials_comparison')).not.toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
+import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
@@ -77,20 +77,13 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
     setIsOpen(open);
   }, []);
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  const handleFilter = useCallback((search: string, option: any) => {
-    /*
-     * `option.children` is one of the following:
-     * - undefined
-     * - string
-     * - string[]
-     */
+  const handleFilter = useCallback((search: string, option?: DefaultOptionType): boolean => {
     let label: string | null = null;
-    if (option.children) {
+    if (option?.children) {
       if (Array.isArray(option.children)) {
         label = option.children.join(' ');
-      } else if (option.children.props?.label) {
-        label = option.children.props?.label;
+      } else if (option.label) {
+        label = option.label.toString();
       } else if (typeof option.children === 'string') {
         label = option.children;
       }

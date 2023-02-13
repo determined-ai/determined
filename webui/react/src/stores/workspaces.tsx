@@ -153,6 +153,21 @@ export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise
   );
 };
 
+// On logout, clear old workspace records.
+export const useResetWorkspaces = (): (() => void) => {
+  const context = useContext(WorkspacesContext);
+
+  if (context === null) {
+    throw new Error('Attempted to use useResetWorkspaces outside of Workspace Context');
+  }
+
+  const { workspaces } = context;
+
+  return useCallback((): void => {
+    workspaces.set(NotLoaded);
+  }, [workspaces]);
+};
+
 export const useDeleteWorkspace = (): ((id: number) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
 

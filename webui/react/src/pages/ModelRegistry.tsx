@@ -8,12 +8,14 @@ import {
 } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -31,6 +33,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
+import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -46,6 +49,7 @@ import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -59,7 +63,7 @@ import settingsConfig, {
   Settings,
 } from './ModelRegistry.settings';
 
-const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
+const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description', 'workspace'];
 
 interface Props {
   workspace?: Workspace;
@@ -82,6 +86,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
   const { canViewModelRegistry } = usePermissions();
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate();
@@ -120,6 +125,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
           workspaceId: workspace?.id,
+          workspaceIds: settings.workspace,
         },
         { signal: canceler.signal },
       );
@@ -141,17 +147,25 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const fetchTags = useCallback(async () => {
     try {
-      const tags = await getModelLabels({ signal: canceler.signal });
+      const tags = await getModelLabels(
+        { workspaceId: workspace?.id },
+        { signal: canceler.signal },
+      );
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal]);
+  }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers()]);
-  }, [fetchModels, fetchTags, fetchUsers]);
+    await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);
+  }, [fetchModels, fetchTags, fetchUsers, fetchWorkspaces]);
+
+  const workspaces = Loadable.match(useWorkspaces(), {
+    Loaded: (ws) => ws,
+    NotLoaded: () => [],
+  });
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -286,6 +300,56 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const handleLabelFilterReset = useCallback(() => {
     updateSettings({ tags: undefined });
   }, [updateSettings]);
+
+  const handleWorkspaceFilterApply = useCallback(
+    (workspaces: string[]) => {
+      updateSettings({
+        row: undefined,
+        workspace: workspaces.length !== 0 ? workspaces : undefined,
+      });
+    },
+    [updateSettings],
+  );
+
+  const handleWorkspaceFilterReset = useCallback(() => {
+    updateSettings({ row: undefined, workspace: undefined });
+  }, [updateSettings]);
+
+  const workspaceFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        values={settings.workspace?.map((ws) => ws.toString())}
+        width={220}
+        onFilter={handleWorkspaceFilterApply}
+        onReset={handleWorkspaceFilterReset}
+      />
+    ),
+    [handleWorkspaceFilterApply, handleWorkspaceFilterReset, settings.workspace],
+  );
+
+  const workspaceRenderer = useCallback(
+    (record: ModelItem): React.ReactNode => {
+      const workspace = workspaces.find((u) => u.id === record.workspaceId);
+      const workspaceId = record.workspaceId;
+      return (
+        <Tooltip placement="top" title={workspace?.name}>
+          <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+            <Link
+              path={
+                workspaceId === 1
+                  ? paths.projectDetails(workspaceId)
+                  : paths.workspaceDetails(workspaceId)
+              }>
+              <DynamicIcon name={workspace?.name} size={24} />
+            </Link>
+          </div>
+        </Tooltip>
+      );
+    },
+    [workspaces],
+  );
 
   const labelFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => (
@@ -429,6 +493,21 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         title: 'Description',
       },
       {
+        align: 'center',
+        dataIndex: 'workspace',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
+        filterDropdown: workspaceFilterDropdown,
+        filters: workspaces.map((ws) => ({
+          text: <WorkspaceFilter workspace={ws} />,
+          value: ws.id,
+        })),
+        isFiltered: (settings: Settings) => !!settings.workspace,
+        key: V1GetModelsRequestSortBy.WORKSPACE,
+        render: (v: string, record: ModelItem) => workspaceRenderer(record),
+        sorter: true,
+        title: 'Workspace',
+      },
+      {
         align: 'right',
         dataIndex: 'numVersions',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numVersions'],
@@ -497,6 +576,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     setModelTags,
     ModelActionMenu,
     saveModelDescription,
+    workspaceFilterDropdown,
+    workspaceRenderer,
+    workspaces,
   ]);
 
   const handleTableChange = useCallback(
@@ -586,14 +668,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [ModelActionMenu],
   );
 
-  if (!canViewModelRegistry) {
-    return <PageNotFound />;
-  }
-
   return (
     <Page
       containerRef={pageRef}
       id="models"
+      notFound={!canViewModelRegistry}
       options={
         <Space>
           <Toggle
@@ -609,18 +688,18 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
       title="Model Registry">
       {models.length === 0 && !isLoading && filterCount === 0 ? (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="model" size="mega" />
-          </div>
-          <h4>No Models Registered</h4>
-          <p className={css.description}>
-            Track important checkpoints and versions from your experiments.&nbsp;
-            <Link external path={paths.docs('/post-training/model-registry.html')}>
-              Learn more
-            </Link>
-          </p>
-        </div>
+        <Empty
+          description={
+            <>
+              Track important checkpoints and versions from your experiments.{' '}
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </>
+          }
+          icon="model"
+          title="No Models Registered"
+        />
       ) : (
         <InteractiveTable
           columns={columns}

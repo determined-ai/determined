@@ -100,11 +100,16 @@ func (a *apiServer) GetModels(
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0, len(req.UserIds))
+	workspaceIds := make([]string, 0, len(req.WorkspaceIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
+	for _, workspaceID := range req.WorkspaceIds {
+		workspaceIds = append(workspaceIds, strconv.Itoa(int(workspaceID)))
+	}
 	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
+	workspaceIDsFilterExpr := strings.Join(workspaceIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
@@ -113,6 +118,7 @@ func (a *apiServer) GetModels(
 		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
 		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
 		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+		apiv1.GetModelsRequest_SORT_BY_WORKSPACE:         "w.name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -169,6 +175,7 @@ func (a *apiServer) GetModels(
 		nameFilter,
 		descFilterExpr,
 		workspaceIDFilterExpr,
+		workspaceIDsFilterExpr,
 	)
 	if err != nil {
 		return nil, err
@@ -177,15 +184,41 @@ func (a *apiServer) GetModels(
 }
 
 func (a *apiServer) GetModelLabels(
-	_ context.Context, req *apiv1.GetModelLabelsRequest,
+	ctx context.Context, req *apiv1.GetModelLabelsRequest,
 ) (*apiv1.GetModelLabelsResponse, error) {
-	resp := &apiv1.GetModelLabelsResponse{}
-	err := a.m.db.QueryProto("get_model_labels", resp)
+	resp := apiv1.GetModelLabelsResponse{}
+
+	modelQuery := db.Bun().NewSelect().
+		ModelTableExpr("models as m").
+		Column("m.id").
+		ColumnExpr("UNNEST(m.labels) AS label")
+
+	if req.WorkspaceId != nil && int(*req.WorkspaceId) > 0 {
+		modelQuery = modelQuery.Where("workspace_id = ?", req.WorkspaceId)
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if modelQuery, err = modelauth.AuthZProvider.Get().
+		FilterReadableModelsQuery(ctx, *curUser, modelQuery); err != nil {
+		return nil, err
+	}
 
-	return resp, errors.Wrapf(err, "error getting model labels")
+	labelQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS all_labels", modelQuery).
+		Column("all_labels.label").
+		GroupExpr("all_labels.label").
+		OrderExpr("COUNT(DISTINCT(all_labels.id)) DESC, all_labels.label ASC")
+
+	opQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS sorted_labels", labelQuery).
+		Model(&resp.Labels).
+		ColumnExpr("sorted_labels.label")
+	err = opQuery.Scan(ctx)
+
+	return &resp, errors.Wrapf(err, "error getting model labels")
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
@@ -205,7 +238,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", 0)
+		&getResp.Models, 0, "", "", "", "", modelName, "", 0, "")
 	if err != nil {
 		return err
 	}

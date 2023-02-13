@@ -45,6 +45,9 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       Select: {
         colorBgContainer: 'transparent',
       },
+      Tree: {
+        colorBgContainer: 'transparent',
+      },
     },
     token: {
       borderRadius: 2,
@@ -62,6 +65,10 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       },
       Progress: {
         marginXS: 0,
+      },
+      Tooltip: {
+        colorBgDefault: 'var(--theme-float)',
+        colorTextLightSolid: 'var(--theme-float-on)',
       },
     },
     token: {

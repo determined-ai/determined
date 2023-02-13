@@ -62,10 +62,10 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 		if p.slots > 0 {
 			return k8sV1.ResourceRequirements{
 				Limits: map[k8sV1.ResourceName]resource.Quantity{
-					"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
 				},
 				Requests: map[k8sV1.ResourceName]resource.Quantity{
-					"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
 				},
 			}
 		}

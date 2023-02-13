@@ -18,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -222,13 +221,13 @@ func newKubernetesResourceManager(
 func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		poolNamespaces := set.Set[string]{}
+		poolNamespaces := make(map[string]string)
 		for i := range k.poolsConfig {
 			if k.poolsConfig[i].KubernetesNamespace == "" {
 				k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
 			}
 
-			poolNamespaces.Insert(k.poolsConfig[i].KubernetesNamespace)
+			poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 		}
 
 		k.podsActor = Initialize(

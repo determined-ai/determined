@@ -2,37 +2,9 @@ $tooltip-offset: 5px;
 
 .point {
   border-radius: 100%;
-  display: none;
+  display: none !important;
   position: absolute;
   transform: translate(-50%, -50%);
-}
-
-/* diamond symbol on closestPointPlugin / LearningCurve charts;
- shared/styles/index.scss for others */
-
-.diamond {
-  border-radius: 0 !important;
-  display: none;
-  height: 0 !important;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 0 !important;
-}
-.diamond::before {
-  background-color: inherit;
-  content: '';
-  height: 7px;
-  position: absolute;
-  transform: scaleX(1.25) translateX(-40%) translateY(-40%) rotate(45deg);
-  width: 7px;
-}
-.diamond::after {
-  background-color: var(--theme-stage);
-  content: '';
-  height: 3px;
-  position: absolute;
-  transform: scaleX(1.25) translateX(-40%) translateY(-1px) rotate(45deg);
-  width: 3px;
 }
 .tooltip {
   display: none;

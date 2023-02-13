@@ -46,34 +46,16 @@ const useModalWorkspaceAddMember = ({
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
 
-  const handleFilter = useCallback(
-    (search: string, option?: SearchProp): boolean => {
-      if (!option) return false;
-      const label = option.label;
-      const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u) && !!label.props.user) {
-          const user = u as User;
-          return (
-            user?.displayName === label.props.user.displayName ||
-            user?.username === label.props.user.username
-          );
-        }
-        if (!isUser(u) && !!label.props.groupName) {
-          const group = u as V1Group;
-          return group.name === label.props.groupName;
-        }
-      });
-      if (!userOrGroup) return false;
-      if (isUser(userOrGroup)) {
-        const userOption = userOrGroup as User;
-        return userOption?.displayName?.includes(search) || userOption?.username?.includes(search);
-      } else {
-        const groupOption = userOrGroup as V1Group;
-        return groupOption?.name?.includes(search) || false;
-      }
-    },
-    [addableUsersAndGroups],
-  );
+  const handleFilter = useCallback((search: string, option?: SearchProp): boolean => {
+    if (!option) return false;
+    const label = option.label;
+    return (
+      label.props.groupName?.includes(search) ||
+      label.props.user?.username?.includes(search) ||
+      label.props.user?.displayName?.includes(search) ||
+      false
+    );
+  }, []);
 
   const handleSelect = useCallback(
     (value: string) => {
@@ -150,7 +132,7 @@ const useModalWorkspaceAddMember = ({
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
-              placeholder="Find user or group by display name or username"
+              placeholder="User or Group"
               showSearch
               size="large"
               onSelect={handleSelect}
