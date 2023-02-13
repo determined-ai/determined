@@ -109,8 +109,8 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         """
         pass
 
-    def start_async_upload_thread(self) -> None:
-        if self.upload_thread is not None and not self.upload_thread.is_alive():
+    def start(self) -> None:
+        if self.upload_thread is not None:
             self.upload_thread.start()
 
     def close(self) -> None:
@@ -118,7 +118,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
             self.upload_thread.close()
 
     def __enter__(self) -> "TensorboardManager":
-        self.start_async_upload_thread()
+        self.start()
         return self
 
     def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any) -> None:
