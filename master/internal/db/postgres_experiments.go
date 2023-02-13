@@ -492,7 +492,7 @@ func timeToFloat(t time.Time) float64 {
 	return float64(t.UnixNano()) / 1e9
 }
 
-func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
+func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string) MetricMeasurements {
 	var maxEndTime time.Time
 	var avgMetrics map[string]float64
 	averageMetricsMap := make(map[string][]lttb.Point)
@@ -516,14 +516,17 @@ func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
 		}
 		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-		// For now we will always search for an "epoch" value but this can be updated in the future
-		// to accept or expect a dynamic list of poossible x-axis values.
-		epoch, ok := avgMetrics["epoch"]
-		if ok {
-			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
-		}
-		if endTime.After(maxEndTime) {
-			maxEndTime = endTime
+
+		for _, xAxisLabel := range xAxisMetricLabels {
+			// For now we will always only search for an "epoch" value but this will be updated in the future
+			// to accept or expect a dynamic list of poossible x-axis values.
+			epoch, ok := avgMetrics[xAxisLabel]
+			if ok {
+				metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
+			}
+			if endTime.After(maxEndTime) {
+				maxEndTime = endTime
+			}
 		}
 	}
 	averageMetricsMap["epoch"] = metricSeriesEpoch
@@ -537,7 +540,7 @@ func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricMeasurements MetricMeasurements, err error,
+	startBatches int, endBatches int, xAxisMetricLabels []string) (metricMeasurements MetricMeasurements, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
@@ -558,7 +561,7 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 		defer rows.Close()
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	metricMeasurements = scanMetricsSeries(rows)
+	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels)
 	defer rows.Close()
 	return metricMeasurements, nil
 }
@@ -566,7 +569,7 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricMeasurements MetricMeasurements, err error,
+	startBatches int, endBatches int, xAxisMetricLabels []string) (metricMeasurements MetricMeasurements, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
@@ -587,7 +590,7 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 		defer rows.Close()
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	metricMeasurements = scanMetricsSeries(rows)
+	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels)
 	defer rows.Close()
 	return metricMeasurements, nil
 }

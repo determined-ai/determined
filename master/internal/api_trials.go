@@ -693,6 +693,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var err error
 	var metrics []*apiv1.SummarizedMetric
 	var metricMeasurements db.MetricMeasurements
+	xAxisLabelMetrics := []string{"epoch"}
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
@@ -703,7 +704,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches)
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
@@ -712,6 +713,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
 			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
+
+			// For now "epoch" is the only custom xAxis metric label supported so we
+			// build the `MetricSeriesEpoch` array. In the future this logic should
+			// be updated to support any number of xAxis metric options
 			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
 				maxDatapoints, logScale)
 			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesEpoch)
@@ -721,7 +726,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches)
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}

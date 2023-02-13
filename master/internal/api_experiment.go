@@ -1588,6 +1588,8 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
 	var metricMeasurements db.MetricMeasurements
+	xAxisLabelMetrics := []string{"epoch"}
+
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1606,10 +1608,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
 		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	default:
 		panic("Invalid metric type")
 	}
@@ -1646,7 +1648,7 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	var err error
 	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
 	var metricMeasurements db.MetricMeasurements
-
+	var xAxisLabelMetrics []string
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1666,10 +1668,10 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
 		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	default:
 		panic("Invalid metric type")
 	}
