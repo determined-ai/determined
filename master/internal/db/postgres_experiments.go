@@ -8,11 +8,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/internal/lttb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -492,7 +493,7 @@ func timeToFloat(t time.Time) float64 {
 func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
 	var maxEndTime time.Time
 	var avgMetrics map[string]float64
-	var averageMetricsMap = make(map[string][]lttb.Point)
+	averageMetricsMap := make(map[string][]lttb.Point)
 	var metricMeasurements MetricMeasurements
 
 	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
