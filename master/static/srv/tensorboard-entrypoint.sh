@@ -25,7 +25,9 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy
 
+set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
+set +x
 
 READINESS_REGEX="TensorBoard contains metrics"
 WAITING_REGEX="TensorBoard waits on metrics"
