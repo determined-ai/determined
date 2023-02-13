@@ -56,8 +56,8 @@ interface Props {
 const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const rolesLoadable = RolesStore.useRoles();
-  const knownRoles = Loadable.getOrElse([], rolesLoadable);
+
+  const knownRoles = RolesStore.useRoles();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -104,8 +104,8 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.match(rolesLoadable, {
-                Loaded: () =>
+              {Loadable.match(knownRoles, {
+                Loaded: (knownRoles) =>
                   knownRoles.map((r: UserRole) => (
                     <Select.Option
                       disabled={

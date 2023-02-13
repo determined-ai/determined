@@ -50,10 +50,9 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
 
-  const rolesLoadable = RolesStore.useRoles();
-  const roles = Loadable.getOrElse([], rolesLoadable);
-
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+
+  const roles = RolesStore.useRoles();
 
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
@@ -129,8 +128,8 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {Loadable.match(rolesLoadable, {
-                Loaded: () =>
+              {Loadable.match(roles, {
+                Loaded: (roles) =>
                   roles.map((r) => (
                     <Select.Option
                       disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
