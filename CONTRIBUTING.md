@@ -7,10 +7,6 @@ If you encounter an issue or would like to request a new feature, please create
 also join the [Slack](https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew)
 to get support and talk with other users and developers in real-time.
 
-## Project Roadmap
-
-<https://github.com/determined-ai/determined/wiki/Project-Roadmap>
-
 ## Contributing Changes
 
 We welcome outside contributions. If you'd like to make a contribution, please:
