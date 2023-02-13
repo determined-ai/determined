@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -1588,7 +1587,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var rows *sql.Rows
+	var metricMeasurements db.MetricMeasurements
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1606,27 +1605,23 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		rows, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
-		metricSeries, _, _, endTime = a.scanMetricsSeries(
-			rows)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		rows, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
-		metricSeries, _, _, endTime = a.scanMetricsSeries(
-			rows)
 	default:
 		panic("Invalid metric type")
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
-	if len(metricSeries) > 0 {
+	if len(metricMeasurements.Batches) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
 	if !seenBefore {
-		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
+		metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
 	}
 
 	for _, in := range metricSeries {
@@ -1649,8 +1644,9 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
-	var rows *sql.Rows
 	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
+	var metricMeasurements db.MetricMeasurements
+
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1669,27 +1665,23 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		rows, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
-		metricSeries, _, _, endTime = a.scanMetricsSeries(
-			rows)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		rows, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
-		metricSeries, _, _, endTime = a.scanMetricsSeries(
-			rows)
 	default:
 		panic("Invalid metric type")
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
-	if len(metricSeries) > 0 {
+	if len(metricMeasurements.Batches) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
 	if !seenBefore {
-		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
+		metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
 	}
 
 	for _, in := range metricSeries {

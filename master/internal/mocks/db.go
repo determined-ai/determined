@@ -8,13 +8,13 @@ import (
 
 	context "context"
 
+	db "github.com/determined-ai/determined/master/internal/db"
+
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/determined-ai/determined/master/pkg/model"
-
-	sql "database/sql"
 
 	time "time"
 
@@ -1699,16 +1699,14 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 }
 
 // TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches
-func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (*sql.Rows, error) {
+func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (db.MetricMeasurements, error) {
 	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches)
 
-	var r0 *sql.Rows
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) *sql.Rows); ok {
+	var r0 db.MetricMeasurements
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) db.MetricMeasurements); ok {
 		r0 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Rows)
-		}
+		r0 = ret.Get(0).(db.MetricMeasurements)
 	}
 
 	var r1 error
@@ -2213,16 +2211,14 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 }
 
 // ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (*sql.Rows, error) {
+func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int) (db.MetricMeasurements, error) {
 	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches)
 
-	var r0 *sql.Rows
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) *sql.Rows); ok {
+	var r0 db.MetricMeasurements
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int) db.MetricMeasurements); ok {
 		r0 = rf(trialID, startTime, metricName, startBatches, endBatches)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Rows)
-		}
+		r0 = ret.Get(0).(db.MetricMeasurements)
 	}
 
 	var r1 error

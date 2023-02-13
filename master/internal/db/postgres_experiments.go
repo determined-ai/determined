@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/google/uuid"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -473,12 +473,71 @@ SELECT t.id FROM (
 	return trials, err
 }
 
+type MetricMeasurements struct {
+	AverageMetrics map[string][]lttb.Point
+	Batches        []lttb.Point
+	Time           []lttb.Point
+	MaxEndTime     time.Time
+}
+
+func timeToFloat(t time.Time) float64 {
+	// If time.Time is the empty value, UnixNano will return the farthest back
+	// timestamp a float can represent, which is some large negative value.
+	if t.IsZero() {
+		return 0
+	}
+	return float64(t.UnixNano()) / 1e9
+}
+
+func scanMetricsSeries(rows *sql.Rows) MetricMeasurements {
+	var maxEndTime time.Time
+	var avgMetrics map[string]float64
+	var averageMetricsMap = make(map[string][]lttb.Point)
+	metricMeasurements := MetricMeasurements{
+		AverageMetrics: averageMetricsMap,
+	}
+	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
+	for rows.Next() {
+		var batches uint
+		var value float64
+		var endTime time.Time
+		var metrics *string
+		err := rows.Scan(&batches, &value, &endTime, &metrics)
+		if err != nil {
+			continue
+		}
+		if metrics != nil {
+			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
+			if err != nil {
+				continue
+			}
+		}
+		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
+		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
+		// For now we will always search for an "epoch" value but this can be updated in the future
+		// to accept or expect a dynamic list of poossible x-axis values.
+		epoch, ok := avgMetrics["epoch"]
+		if ok {
+			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
+		}
+		if endTime.After(maxEndTime) {
+			maxEndTime = endTime
+		}
+	}
+	averageMetricsMap["epoch"] = metricSeriesEpoch
+	metricMeasurements.AverageMetrics = averageMetricsMap
+	metricMeasurements.Batches = metricSeriesBatch
+	metricMeasurements.Time = metricSeriesTime
+	metricMeasurements.MaxEndTime = maxEndTime
+	return metricMeasurements
+}
+
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (rows *sql.Rows, err error,
+	startBatches int, endBatches int) (metricMeasurements MetricMeasurements, err error,
 ) {
-	rows, err = db.sql.Query(`
+	rows, err := db.sql.Query(`
 SELECT
   total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
@@ -495,17 +554,19 @@ WHERE t.id=$2
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
 		defer rows.Close()
-		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	return rows, nil
+	metricMeasurements = scanMetricsSeries(rows)
+	defer rows.Close()
+	return metricMeasurements, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (rows *sql.Rows, err error,
+	startBatches int, endBatches int) (metricMeasurements MetricMeasurements, err error,
 ) {
-	rows, err = db.sql.Query(`
+	rows, err := db.sql.Query(`
 SELECT
   v.total_batches AS batches,
   (v.metrics->'validation_metrics'->>$1)::float8 AS value,
@@ -522,9 +583,11 @@ WHERE t.id=$2
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
 		defer rows.Close()
-		return nil, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	return rows, nil
+	metricMeasurements = scanMetricsSeries(rows)
+	defer rows.Close()
+	return metricMeasurements, nil
 }
 
 type hpImportanceDataWrapper struct {
