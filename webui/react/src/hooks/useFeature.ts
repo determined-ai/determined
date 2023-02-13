@@ -10,7 +10,6 @@ export type ValidFeature =
   | 'mock_permissions_read'
   | 'trials_comparison'
   | 'mock_permissions_all'
-  | 'dashboard'
   | 'chart'
   | 'model_rbac';
 
