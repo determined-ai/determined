@@ -19263,10 +19263,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options: any = {}): FetchArgs {
+        getModelLabels(workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19279,6 +19280,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -19802,11 +19807,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(options);
+        getModelLabels(workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20044,11 +20050,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any) {
-            return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
+        getModelLabels(workspaceId?: number, options?: any) {
+            return ModelsApiFp(configuration).getModelLabels(workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20214,12 +20221,13 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of unique model labels (sorted by popularity).
+     * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelLabels(options?: any) {
-        return ModelsApiFp(this.configuration).getModelLabels(options)(this.fetch, this.basePath);
+    public getModelLabels(workspaceId?: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModelLabels(workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
