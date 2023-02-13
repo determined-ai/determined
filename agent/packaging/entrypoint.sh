@@ -9,6 +9,8 @@ if [ -f "$container_startup_script" ]; then
     if [ $exit_code -ne 0 ]; then
         echo "container_startup_script failed with exit code $exit_code" >&2
         exit 1
+    else
+        echo "container_startup_script succeeded"
     fi
 fi
 
