@@ -67,7 +67,8 @@ export interface ContextMenuProps<RecordType> {
   record: RecordType;
 }
 
-export interface ColumnDef<RecordType> extends Omit<ColumnType<RecordType>, 'onCell'> {
+export interface ColumnDef<RecordType>
+  extends Omit<ColumnType<RecordType>, 'onCell' | 'onHeaderCell'> {
   dataIndex: string;
   defaultWidth: number;
   isFiltered?: (s: unknown) => boolean;
@@ -113,9 +114,9 @@ interface HeaderCellProps {
   isResizing: boolean;
   minWidth: number;
   moveColumn: (source: number, destination: number) => void;
-  onResize: (e: DraggableEvent, data: DraggableData) => number;
-  onResizeStart: DraggableEventHandler;
-  onResizeStop: DraggableEventHandler;
+  onColumnResize: (e: DraggableEvent, data: DraggableData) => number;
+  onColumnResizeStart: DraggableEventHandler;
+  onColumnResizeStop: DraggableEventHandler;
   title: unknown;
   width: number;
 }
@@ -215,9 +216,9 @@ const ResizeShadow: React.FC<{ display: 'none' | 'block'; x: number }> = React.m
 );
 
 const HeaderCell = ({
-  onResize,
-  onResizeStart,
-  onResizeStop,
+  onColumnResize,
+  onColumnResizeStart,
+  onColumnResizeStop,
   width,
   className,
   columnName,
@@ -298,7 +299,7 @@ const HeaderCell = ({
       <DraggableCore
         nodeRef={resizingRef}
         onDrag={(e, data) => {
-          onResize(e, data);
+          onColumnResize(e, data);
           const newWidth = data.x < minWidth ? minWidth : data.x;
 
           if (newWidth !== xValue) setXValue(newWidth);
@@ -307,11 +308,11 @@ const HeaderCell = ({
           setShadowVisibility('block');
           const newWidth = data.x < minWidth ? minWidth : data.x;
           if (newWidth !== xValue) setXValue(newWidth);
-          onResizeStart(e, data);
+          onColumnResizeStart(e, data);
           setShadowVisibility('block');
         }}
         onStop={(e, data) => {
-          onResizeStop(e, data);
+          onColumnResizeStop(e, data);
           setShadowVisibility('none');
         }}>
         <span
@@ -553,9 +554,9 @@ const InteractiveTable = <T extends object>({
           isResizing,
           minWidth: columnDef.defaultWidth,
           moveColumn,
-          onResize: handleResize(index),
-          onResizeStart: handleResizeStart(index),
-          onResizeStop: handleResizeStop,
+          onColumnResize: handleResize(index),
+          onColumnResizeStart: handleResizeStart(index),
+          onColumnResizeStop: handleResizeStop,
           width: widthData?.widths[index] ?? columnDef.defaultWidth,
         };
       };

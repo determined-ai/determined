@@ -1,3 +1,4 @@
 declare module 'notebook' {
-    export default any;
+    const t: any
+    export default t;
 }

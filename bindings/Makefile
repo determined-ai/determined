@@ -1,6 +1,7 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_VER = 2.4.27
 CODEGEN_BIN := swagger-codegen-cli-$(CODEGEN_VER).jar
+TEMPLATES_JAR := templates/build/ts-globals-codegen-class.jar
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
 py_generator := generate_bindings.py
@@ -32,10 +33,14 @@ $(py_bindings_dest): $(SWAGGER_SPEC) $(py_generator)
 .PHONY: build/python
 build/python: $(py_bindings_dest)
 
-build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
+$(TEMPLATES_JAR):
+	$(MAKE) -C templates build
+
+build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN) $(TEMPLATES_JAR)
 	mkdir -p build/$*
-	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
-		-l typescript-fetch -o build/typescript-fetch
+	java -cp $(TEMPLATES_JAR):deps/$(CODEGEN_BIN) \
+	io.swagger.codegen.SwaggerCodegen generate -i $(SWAGGER_SPEC) -l \
+	typescript-fetch-globals -o build/typescript-fetch
 	$(MAKE) bindings-copy-over
 	touch build/typescript-fetch
 
