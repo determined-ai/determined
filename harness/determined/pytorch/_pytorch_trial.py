@@ -46,6 +46,7 @@ class PyTorchTrialController(det.TrialController):
                     "The on_checkpoint_end callback is deprecated, please use "
                     "on_checkpoint_write_end instead.",
                     FutureWarning,
+                    stacklevel=2,
                 )
 
         if len(self.context.models) == 0:
@@ -299,6 +300,7 @@ class PyTorchTrialController(det.TrialController):
                             "Only the chief worker's training metrics are being reported, due "
                             "to setting average_training_metrics to False.",
                             UserWarning,
+                            stacklevel=2,
                         )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"

@@ -272,6 +272,7 @@ class Determined:
             "Please call Determined.get_model() with either a string-type name or "
             "an integer-type model ID.",
             FutureWarning,
+            stacklevel=2,
         )
         return self.get_model(model_id)
 

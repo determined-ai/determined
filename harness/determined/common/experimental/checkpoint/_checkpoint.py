@@ -307,6 +307,7 @@ class Checkpoint:
             "  - det.keras.load_model_from_checkpoint_path()\n"
             "  - det.estimator.load_estimator_from_checkpoint_path()\n",
             FutureWarning,
+            stacklevel=2,
         )
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
@@ -394,6 +395,7 @@ class Checkpoint:
             "  - det.keras.load_model_from_checkpoint_path()\n"
             "  - det.estimator.load_estimator_from_checkpoint_path()\n",
             FutureWarning,
+            stacklevel=2,
         )
         checkpoint_dir = pathlib.Path(path)
         metadata = Checkpoint._parse_metadata(checkpoint_dir)
@@ -436,6 +438,7 @@ class Checkpoint:
             "Checkpoint.parse_metadata() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return Checkpoint._parse_metadata(directory)
 
@@ -464,6 +467,7 @@ class Checkpoint:
             "Checkpoint.get_type() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return Checkpoint._get_type(metadata)
 
@@ -524,5 +528,6 @@ class Checkpoint:
             "Checkpoint.from_json() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return cls._from_json(data, session)
