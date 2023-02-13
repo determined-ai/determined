@@ -17,7 +17,7 @@ import {
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
+import { RolesStore } from 'stores/roles';
 import { useCurrentUser } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
@@ -56,8 +56,8 @@ interface Props {
 const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const knowRolesLoadable = useKnownRoles();
-  const knownRoles = Loadable.getOrElse(initKnowRoles, knowRolesLoadable);
+
+  const knownRoles = RolesStore.useRoles();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -104,8 +104,8 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.match(knowRolesLoadable, {
-                Loaded: () =>
+              {Loadable.match(knownRoles, {
+                Loaded: (knownRoles) =>
                   knownRoles.map((r: UserRole) => (
                     <Select.Option
                       disabled={
