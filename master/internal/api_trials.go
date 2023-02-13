@@ -712,7 +712,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
 			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"], maxDatapoints, logScale)
+			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
+				maxDatapoints, logScale)
 			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesEpoch)
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
@@ -729,7 +730,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
 			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"], maxDatapoints, logScale)
+			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
+				maxDatapoints, logScale)
 			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesEpoch)
 		}
 	}

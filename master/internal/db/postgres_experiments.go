@@ -474,6 +474,8 @@ SELECT t.id FROM (
 	return trials, err
 }
 
+// MetricMeasurements represents a metric measured by all possible
+// independent variables.
 type MetricMeasurements struct {
 	AverageMetrics map[string][]lttb.Point
 	Batches        []lttb.Point
