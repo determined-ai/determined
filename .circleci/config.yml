@@ -100,10 +100,6 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
-  use-npm-v9:
-    steps:
-      - run: npm i -g npm@9.4.2
-
   skip-if-docs-only:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
@@ -1267,7 +1263,6 @@ jobs:
     docker:
       - image: cimg/node:16.14.2
     steps:
-      - use-npm-v9
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
@@ -1282,7 +1277,6 @@ jobs:
       - image: cimg/node:16.14.2
     resource_class: large
     steps:
-      - use-npm-v9
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
@@ -1304,7 +1298,6 @@ jobs:
           CI: "true"
     resource_class: xlarge
     steps:
-      - use-npm-v9
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
