@@ -51,6 +51,7 @@ interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateModelWorkspace: (arg0: number) => boolean;
   canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
@@ -80,7 +81,6 @@ interface PermissionsHook {
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
   canViewModelRegistry: boolean;
-  canCreateModelWorkspace: (arg0: number) => boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   loading: boolean;
@@ -140,6 +140,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
+      canCreateModelWorkspace: (workspaceId: number) =>
+        canCreateModelWorkspace(rbacOpts, workspaceId),
       canCreateNSC: canCreateNSC(rbacOpts),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
@@ -171,7 +173,6 @@ const usePermissions = (): PermissionsHook => {
         canModifyWorkspace(rbacOpts, args.workspace),
       canModifyWorkspaceAgentUserGroup: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceAgentUserGroup(rbacOpts, args.workspace),
-      canCreateModelWorkspace: (workspaceId: number) => canCreateModelWorkspace(rbacOpts, workspaceId),
       canModifyWorkspaceCheckpointStorage: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceCheckpointStorage(rbacOpts, args.workspace),
       canModifyWorkspaceNSC: (args: WorkspacePermissionsArgs) =>

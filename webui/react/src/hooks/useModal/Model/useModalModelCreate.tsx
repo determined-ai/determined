@@ -73,7 +73,10 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   const loadableWorkspaces = useWorkspaces();
   const location = useLocation().pathname;
   const isWorkspace = location.includes('/workspaces');
-  const workspaceId = useMemo(() => isWorkspace ? location.split('/')[2] : '', [isWorkspace, location]);
+  const workspaceId = useMemo(
+    () => (isWorkspace ? location.split('/')[2] : ''),
+    [isWorkspace, location],
+  );
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace(id)),
     NotLoaded: () => [],
