@@ -204,7 +204,9 @@ func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
+		if status.Code(err) == codes.Unknown {
+			err = apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

@@ -8,6 +8,7 @@ import pytest
 
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
+from determined.common.api._util import NTSC_Kind, wait_for_ntsc_state
 from tests import api_utils
 from tests import config as conf
 from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
@@ -503,6 +504,12 @@ def test_workspace_delete_notebook() -> None:
         assert outside_notebook.state not in TERMINATING_STATES
 
     # check that notebook is terminated or terminating.
+    wait_for_ntsc_state(
+        admin_session,
+        NTSC_Kind.notebook,
+        ntsc_id=created_resp.notebook.id,
+        predicate=lambda state: state in TERMINATING_STATES,
+    )
     notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
     assert notebook_resp.notebook.state in TERMINATING_STATES
 
