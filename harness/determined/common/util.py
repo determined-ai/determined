@@ -1,4 +1,3 @@
-import contextlib
 import datetime
 import functools
 import io
@@ -94,16 +93,6 @@ def preserve_random_state(fn: Callable) -> Callable:
             random.setstate(state)
 
     return wrapped
-
-
-@contextlib.contextmanager
-def preserve_random_state_context_manager(fn: Callable) -> Iterator[Callable]:
-    """A context manager to run a function with a fork of the random state."""
-    state = random.getstate()
-    try:
-        yield fn
-    finally:
-        random.setstate(state)
 
 
 def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any], str]) -> Any:

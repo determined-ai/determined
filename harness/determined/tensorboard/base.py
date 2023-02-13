@@ -99,8 +99,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.upload(path_list)
         else:
-            with util.preserve_random_state_context_manager(self._sync_impl) as _sync_impl:
-                _sync_impl(path_list)
+            util.preserve_random_state(self._sync_impl)(path_list)
 
     @abc.abstractmethod
     def delete(self) -> None:
