@@ -2,6 +2,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, ModalFuncProps, Tooltip } from 'antd';
 import { SelectInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Form from 'components/kit/Form';
@@ -67,11 +68,14 @@ const DEFAULT_MODAL_STATE = {
 };
 
 const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
-  const { canViewModelWorkspace } = usePermissions();
+  const { canCreateModelWorkspace } = usePermissions();
   const isRbacEnabled = useFeature().isOn('model_rbac');
   const loadableWorkspaces = useWorkspaces();
+  const location = useLocation().pathname;
+  const isWorkspace = location.includes('/workspaces');
+  const workspaceId = useMemo(() => isWorkspace ? location.split('/')[2] : '', [isWorkspace, location]);
   const workspaces = Loadable.match(loadableWorkspaces, {
-    Loaded: (ws) => ws.filter(({ id }) => canViewModelWorkspace(id)),
+    Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace(id)),
     NotLoaded: () => [],
   });
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -85,6 +89,10 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     },
     [modalState, onClose],
   );
+
+  useEffect(() => {
+    if (workspaceId) setModalState({ ...modalState, workspace: workspaceId });
+  }, [workspaceId]);
 
   const {
     modalClose,
@@ -222,7 +230,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                   <Dropdown
                     arrow
                     className={css.workspacDropdown}
-                    disabled={!workspaces.length}
+                    disabled={!workspaces.length || isWorkspace}
                     dropdownRender={(menu) =>
                       React.cloneElement(menu as React.ReactElement, {
                         style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
@@ -230,7 +238,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                     }
                     getPopupContainer={(triggerNode) => triggerNode}
                     menu={{
-                      defaultSelectedKeys: ['1'],
+                      defaultSelectedKeys: [modalState.workspace],
                       items: workspaceItems,
                       onSelect,
                       selectable: true,
@@ -285,9 +293,11 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     },
     [
       form,
+      isWorkspace,
       workspaceItems,
       workspaces,
       workspaceName,
+      modalState.workspace,
       onSelect,
       handleDescriptionChange,
       handleMetadataChange,
