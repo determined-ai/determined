@@ -35,7 +35,7 @@ func TestAgentSetupScript(t *testing.T) {
 		AgentReconnectBackoff:        5,
 	}
 
-	// nolint
+	//nolint
 	expected := `#!/bin/bash
 
 docker_args=()

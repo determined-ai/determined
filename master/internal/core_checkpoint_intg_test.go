@@ -165,13 +165,12 @@ func TestGetCheckpointEcho(t *testing.T) {
 		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
 			t.Name(), gitBranch)
 	}
-	var id string
 	cases := []struct {
 		DenyFuncName string
-		IDToReqCall  func(id string) error
+		IDToReqCall  func() error
 		Params       []any
 	}{
-		{"CanGetCheckpointTgz", func(id string) error {
+		{"CanGetCheckpointTgz", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
@@ -186,7 +185,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			checkTgz(t, rec.Body, id)
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
-		{"CanGetCheckpointZip", func(id string) error {
+		{"CanGetCheckpointZip", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
@@ -204,7 +203,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 	}
 
 	for _, curCase := range cases {
-		require.NoError(t, curCase.IDToReqCall(id))
+		require.NoError(t, curCase.IDToReqCall())
 	}
 }
 

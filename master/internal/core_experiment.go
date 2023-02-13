@@ -140,15 +140,15 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	return checkpointsWithMetric, nil
 }
 
-//	@Summary	Get individual file from modal definitions for download.
-//	@Tags		Experiments
-//	@ID			get-experiment-model-file
-//	@Accept		json
-//	@Produce	text/plain; charset=utf-8
-//	@Param		experiment_id	path	int		true	"Experiment ID"
-//	@Param		path			query	string	true	"Path to the target file"
-//	@Success	200				{}		string	""
-//	@Router		/experiments/{experiment_id}/file/download [get]
+// @Summary	Get individual file from modal definitions for download.
+// @Tags		Experiments
+// @ID			get-experiment-model-file
+// @Accept		json
+// @Produce	text/plain; charset=utf-8
+// @Param		experiment_id	path	int		true	"Experiment ID"
+// @Param		path			query	string	true	"Path to the target file"
+// @Success	200				{}		string	""
+// @Router		/experiments/{experiment_id}/file/download [get]
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
@@ -401,7 +401,7 @@ func (p ErrProjectNotFound) Error() string {
 func getCreateExperimentsProject(
 	m *Master, params *CreateExperimentParams, user *model.User, config expconf.ExperimentConfig,
 ) (*projectv1.Project, error) {
-	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams.
 	// CreateExperimentParams has highest priority.
 	var err error
 	projectID := 1

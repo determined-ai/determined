@@ -77,14 +77,14 @@ type queuedResourceRequest struct {
 //
 //     When requests come in they are buffered by the requestQueue until a worker becomes available
 //     at which point the longest queue request is forwarded to the available. Requests are buffered
-//     rather than forward right away because buffering makes it possible to cancel creation requests
-//     after they are created, but before they are executed. Since the actor system processes messages
-//     in a FIFO order, if all request were forwarded right away any cancellation request would only
-//     be processed after the creation request case already been processed, requiring an unnecessary
-//     resource creation and deletion. An example of this is when a large HP search is created and
-//     then killed moments later. By having requests be buffered, if a deletion request arrives
-//     prior to the creation request being executed, the requestQueue detects this and skips the
-//     unnecessary creation / deletion.
+//     rather than forward right away because buffering makes it possible to cancel creation
+//     requests after they are created, but before they are executed. Since the actor system
+//     processes messages in a FIFO order, if all request were forwarded right away any cancellation
+//     request would only be processed after the creation request case already been processed,
+//     requiring an unnecessary resource creation and deletion. An example of this is when a
+//     large HP search is created and then killed moments later. By having requests be buffered,
+//     if a deletion request arrives prior to the creation request being executed,
+//     the requestQueue detects this and skips the unnecessary creation / deletion.
 //
 //     The message protocol consists of `createKubernetesResources` and `deleteKubernetesResources`
 //     messages being sent to the requestQueue. If it forwards the request to a worker, the worker

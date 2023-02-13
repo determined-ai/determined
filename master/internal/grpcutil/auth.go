@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	// TODO switch to google.golang.org/protobuf/proto/.
+	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ import (
 )
 
 const (
-	// nolint:gosec // These are not potential hardcoded credentials.
+	//nolint:gosec // These are not potential hardcoded credentials.
 	gatewayTokenHeader    = "grpcgateway-authorization"
 	allocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"

@@ -137,3 +137,17 @@ linters:
     - decorder
     - errchkjson
     - grouper
+
+    # Below here are new linters from upgrading to 1.51.1.
+    - nonamedreturns
+    - nosnakecase
+    - musttag
+    - interfacebloat
+    - gosimple 
+    - prealloc
+    - interfacer
+    - structcheck
+    - unused
+    - nolintlint
+    - usestdlibvars
+    - exhaustruct

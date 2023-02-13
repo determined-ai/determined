@@ -3,7 +3,6 @@ package task
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -183,7 +182,6 @@ func TestRendezvousTimeout(t *testing.T) {
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
 
-	time.Sleep(-1)
 	assert.ErrorContains(t, r.checkTimeout(rendezvousTimeout{AllocationID: t1}),
 		"some containers are taking a long time")
 }

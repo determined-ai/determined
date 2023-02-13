@@ -287,7 +287,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
 	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig",
 		mock.Anything, mock.Anything).Return(fmt.Errorf("storageConfDeny"))
-	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
 		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
 			"type": "s3",
