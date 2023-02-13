@@ -570,7 +570,7 @@ SELECT
   v.total_batches AS batches,
   (v.metrics->'validation_metrics'->>$1)::float8 AS value,
   v.end_time as end_time,
-  v.metrics->>'avg_metrics' AS metrics
+  v.metrics->>'validation_metrics' AS metrics
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
