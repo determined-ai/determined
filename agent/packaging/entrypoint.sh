@@ -1,6 +1,6 @@
 #!/bin/bash
 
-container_startup_script="/usr/local/bin/container_startup.sh"
+container_startup_script="/usr/local/determined/container_startup_script"
 
 if [ -f "$container_startup_script" ]; then
     chmod +x $container_startup_script
