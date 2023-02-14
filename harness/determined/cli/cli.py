@@ -52,7 +52,7 @@ from determined.common.util import (
 )
 from determined.errors import EnterpriseOnlyError
 
-from .errors import FeatureFlagDisabled
+from .errors import CliError, FeatureFlagDisabled
 
 
 @authentication.required
@@ -192,13 +192,13 @@ def main(
 
         parsed_args = parser.parse_args(args)
 
-        def die(message: str, always_print_traceback: bool = False) -> None:
+        def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
             if always_print_traceback or debug_mode():
                 import traceback
 
                 traceback.print_exc(file=sys.stderr)
 
-            parser.exit(1, colored(message + "\n", "red"))
+            parser.exit(exit_code, colored(message + "\n", "red"))
 
         v = vars(parsed_args)
         if not v.get("func"):
@@ -280,6 +280,10 @@ def main(
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
         except FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
+        except CliError as e:
+            if e.e_stack:
+                print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
+            die(f"Error: {e.message}", exit_code=e.exit_code)
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
