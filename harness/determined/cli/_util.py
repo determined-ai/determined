@@ -1,7 +1,7 @@
 import argparse
 import functools
 import sys
-from typing import Any, Callable, Dict, List, Sequence, Union
+from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
@@ -9,7 +9,7 @@ from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
 
-from .errors import CliError, FeatureFlagDisabled
+from .errors import FeatureFlagDisabled
 
 output_format_args: Dict[str, declarative_argparse.Arg] = {
     "json": declarative_argparse.Arg(
@@ -113,10 +113,6 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
         return wrapper
 
     return decorator
-
-
-def report_cli_error(msg: Union[str, Exception]) -> None:
-    raise CliError(f"Error: {msg}")
 
 
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:

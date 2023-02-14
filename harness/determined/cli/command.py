@@ -10,6 +10,7 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import render
+from determined.cli.errors import CliArgError
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
 
@@ -199,7 +200,7 @@ def list_tasks(args: Namespace) -> None:
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found.')
+            raise CliArgError(f'Workspace "{args.workspace_name}" not found.')
 
         params["workspaceId"] = workspace.id
 

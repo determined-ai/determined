@@ -4,6 +4,7 @@ from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
 
 from determined import cli
+from determined.cli.errors import CliArgError
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
@@ -32,11 +33,9 @@ def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            cli.report_cli_error(f'Workspace "{args.workspace_name}" not found')
-            return None
+            raise CliArgError(f'Workspace "{args.workspace_name}" not found')
         if workspace.archived:
-            cli.report_cli_error(f'Workspace "{args.workspace_name}" is archived')
-            return None
+            raise CliArgError(f'Workspace "{args.workspace_name}" is archived')
         workspace_id = workspace.id
     return workspace_id
 
