@@ -3,14 +3,16 @@ import React from 'react';
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import { Workspace } from 'types';
 
 interface Props {
   enabled?: boolean;
+  workspace?: Workspace;
 }
 
-const JupyterLabButton: React.FC<Props> = ({ enabled }: Props) => {
+const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({});
+    useModalJupyterLab({ workspace });
 
   return (
     <>

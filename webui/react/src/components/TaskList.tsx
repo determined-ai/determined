@@ -636,6 +636,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           )}
           <JupyterLabButton
             enabled={workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC}
+            workspace={workspace}
           />
         </Space>
       }
