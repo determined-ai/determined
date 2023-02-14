@@ -967,7 +967,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         """
 
         if self._tbd_writer is None:
-            from determined.tensorboard.metric_writers.pytorch import TorchWriter
+            from determined.pytorch.tensorboard_writer import TorchWriter
 
             self._tbd_writer = TorchWriter()
 

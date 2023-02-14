@@ -132,9 +132,9 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
 
     except ModuleNotFoundError:
         logging.warning("TensorFlow writer not found")
-        from determined.tensorboard.metric_writers import pytorch
+        from determined.pytorch import tensorboard_writer
 
-        writer = pytorch.TorchWriter()
+        writer = tensorboard_writer.TorchWriter()
 
     return tensorboard.BatchMetricWriter(writer)
 

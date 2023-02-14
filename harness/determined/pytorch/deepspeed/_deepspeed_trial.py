@@ -19,7 +19,7 @@ import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
+from determined.pytorch.tensorboard_writer import TorchWriter
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return

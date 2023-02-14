@@ -276,7 +276,7 @@ class _PyTorchTrialController:
     def _create_metric_writer(
         cls: Type["_PyTorchTrialController"],
     ) -> tensorboard.BatchMetricWriter:
-        from determined.tensorboard.metric_writers.pytorch import TorchWriter
+        from determined.pytorch.tensorboard_writer import TorchWriter
 
         writer = TorchWriter()
         return tensorboard.BatchMetricWriter(writer)
