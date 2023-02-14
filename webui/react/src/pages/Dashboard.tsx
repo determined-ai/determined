@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
-import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
@@ -17,7 +16,6 @@ import {
   taskNameRenderer,
   taskTypeRenderer,
 } from 'components/Table/Table';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -58,8 +56,6 @@ const Dashboard: React.FC = () => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({});
   const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
@@ -178,28 +174,16 @@ const Dashboard: React.FC = () => {
     };
   }, [canceler, stopPolling]);
 
-  const JupyterLabButton = () => {
-    return !canCreateNSC ? (
-      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
-    ) : (
-      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
-        <div>
-          <Button disabled>Launch JupyterLab</Button>
-        </div>
-      </Tooltip>
-    );
-  };
-
   if (projectsLoading && submissionsLoading) {
     return (
-      <Page options={<JupyterLabButton />} title="Home">
+      <Page options={<JupyterLabButton hasPermissions={canCreateNSC} />} title="Home">
         <Spinner center />
       </Page>
     );
   }
 
   return (
-    <Page options={<JupyterLabButton />} title="Home">
+    <Page options={<JupyterLabButton hasPermissions={canCreateNSC} />} title="Home">
       {projectsLoading ? (
         <Section>
           <Spinner center />
@@ -316,7 +300,6 @@ const Dashboard: React.FC = () => {
           />
         )}
       </Section>
-      {modalJupyterLabContextHolder}
     </Page>
   );
 };
