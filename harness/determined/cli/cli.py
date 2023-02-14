@@ -52,7 +52,7 @@ from determined.common.util import (
 )
 from determined.errors import EnterpriseOnlyError
 
-from .errors import CliError, FeatureFlagDisabled
+from .errors import CliArgError, CliError, FeatureFlagDisabled
 
 
 @authentication.required
@@ -280,6 +280,8 @@ def main(
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
         except FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
+        except CliArgError as e:
+            die(f"Bad Input: {e.message}", exit_code=e.exit_code)
         except CliError as e:
             if e.e_stack:
                 print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
