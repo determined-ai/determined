@@ -56,7 +56,7 @@ def error_no_credentials() -> None:
         "Did you run %s?" % colored("aws configure", "yellow"),
     )
     raise CliError(
-        "See the AWS Documentation for information on how to use AWS credentials:",
+        "See the AWS Documentation for information on how to use AWS credentials: "
         "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
     )
 
