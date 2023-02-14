@@ -180,9 +180,6 @@ schedules to run.
 
       The ``-f`` option is the short form of ``--follow``.
 
-#. To view the uncategorized experiments, enter your username and password. If you deployed locally,
-   accept the default determined username with no password and click **Sign In**:
-
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
    ``http://localhost:8080/``. Accept the default ``determined`` username and click **Sign In**. No
