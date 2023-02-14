@@ -32,6 +32,14 @@ repos:
         exclude_types:
           - zsh
         args: [-w, -s, -l, -i, '4', -ci, -bn]
+      - id: local-checks
+        name: Run local checks
+        description: run all local checks and format based on the directories changed.
+        stages:
+          - push
+        entry: ./pre-commit/check.py
+        language: python
+
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
