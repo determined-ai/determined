@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
@@ -40,6 +42,14 @@ func (a *ModelAuthZPermissive) CanCreateModel(ctx context.Context,
 ) error {
 	_ = (&ModelAuthZRBAC{}).CanCreateModel(ctx, curUser, workspaceID)
 	return (&ModelAuthZBasic{}).CanCreateModel(ctx, curUser, workspaceID)
+}
+
+// FilterReadableModelsQuery returns query and a nil error.
+func (a *ModelAuthZPermissive) FilterReadableModelsQuery(
+	ctx context.Context, curUser model.User, query *bun.SelectQuery,
+) (*bun.SelectQuery, error) {
+	_, _ = (&ModelAuthZRBAC{}).FilterReadableModelsQuery(ctx, curUser, query)
+	return (&ModelAuthZBasic{}).FilterReadableModelsQuery(ctx, curUser, query)
 }
 
 func init() {
