@@ -51,6 +51,8 @@ exit_code=$?
 if [ $exit_code -ne 0 ]; then
     echo "startup_script failed with exit code $exit_code" >&2
     exit 1
+else
+    echo "startup_script succeeded"
 fi
 
 echo  | base64 --decode >/usr/local/determined/agent.yaml
