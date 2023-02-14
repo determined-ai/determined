@@ -111,6 +111,10 @@ def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
                 return_code, msg = future.result()
                 if return_code != 0:
                     failed_rules.add((rule_path, msg))
+                    print_colored(f"{rule_path} failed", file=sys.stderr)
+                    print(msg, file=sys.stderr)
+                else:
+                    print(f"{rule_path} passed")
             except Exception as exc:
                 print(f"{rule_path} generated an exception: {exc}", file=sys.stderr)
     return failed_rules
@@ -128,9 +132,6 @@ def main():
 
     failed_rules = process_rules(find_rules(changed_files))
     if len(failed_rules):
-        for rule_path, msg in failed_rules:
-            print_colored(f"{rule_path} failed", file=sys.stderr)
-            print(msg, file=sys.stderr)
         print_colored(f"{len(failed_rules)} check(s) failed.", file=sys.stderr)
 
         exit(1)
