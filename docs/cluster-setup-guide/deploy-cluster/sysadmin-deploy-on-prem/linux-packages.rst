@@ -27,7 +27,7 @@ If you are using an existing PostgreSQL installation, we recommend confirming th
 Run PostgreSQL in Docker
 ------------------------
 
-#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
+#. Pull the official Docker image for PostgreSQL. We recommend using version 10 or greater.
 
    .. code::
 
@@ -58,7 +58,7 @@ Run PostgreSQL in Docker
 Install PostgreSQL using ``apt`` or ``yum``
 -------------------------------------------
 
-#. Install PostgreSQL 10.
+#. Install PostgreSQL 10 or greater.
 
    On Debian distributions:
 
@@ -76,19 +76,28 @@ Install PostgreSQL using ``apt`` or ``yum``
       sudo systemctl start postgresql.service
       sudo systemctl enable postgresql.service
 
-#. Configure a system account that Determined will use to connect to PostgreSQL. For example, to use
-   the default ``postgres`` user but update its password:
+#. The authentication methods enabled by default may vary depending on the provider of your
+   PostgreSQL distribution. Ensure that an appropriate authentication method is configured in
+   ``pg_hba.conf`` to enable the ``determined-master`` to connect to the database.
+
+   When configuring the database connection (:ref:`configure_the_cluster`):
+
+   -  If you specify the ``db.hostname`` property, a PostgreSQL ``host`` (TCP/IP) connection will be
+      required.
+   -  If you omit the ``db.hostname`` property, a PostgreSQL ``local`` (Unix-domain socket)
+      connection will be required.
+
+#. Finally, create a database for Determined's use and configure a system account that Determined
+   will use to connect to the database. For example, the following commands will create a database
+   named ``determined``, a user named ``determined`` with the password ``determined-password``, and
+   then will grant the user access to the database:
 
    .. code::
 
-      sudo -u postgres psql postgres
-      postgres=# \password postgres
-
-#. Finally, create a database for Determined's use.
-
-   .. code::
-
+      sudo -u postgres psql
       postgres=# CREATE DATABASE determined;
+      postgres=# CREATE USER determined WITH ENCRYPTED PASSWORD 'determined-password';
+      postgres=# GRANT ALL PRIVILEGES ON DATABASE determined TO determined;
 
 Master and Agent
 ================
@@ -119,6 +128,8 @@ Master and Agent
    Before running the Determined agent, you will have to :ref:`install Docker <install-docker>` on
    each agent machine and, if the machine has GPUs, ensure that the :ref:`Nvidia Container Toolkit
    <validate-nvidia-container-toolkit>` is working as expected.
+
+.. _configure_the_cluster:
 
 *********************************
  Configure and Start the Cluster
