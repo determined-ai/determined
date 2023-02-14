@@ -5,16 +5,16 @@ import Tooltip from 'components/kit/Tooltip';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 
 interface Props {
-  hasPermissions?: boolean;
+  enabled?: boolean;
 }
 
-const JupyterLabButton: React.FC<Props> = ({ hasPermissions }: Props) => {
+const JupyterLabButton: React.FC<Props> = ({ enabled }: Props) => {
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab({});
 
   return (
     <>
-      {hasPermissions ? (
+      {enabled ? (
         <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
       ) : (
         <Tooltip placement="leftBottom" title="You do not have permission to launch JupyterLab">

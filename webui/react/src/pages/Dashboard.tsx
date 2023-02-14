@@ -176,14 +176,14 @@ const Dashboard: React.FC = () => {
 
   if (projectsLoading && submissionsLoading) {
     return (
-      <Page options={<JupyterLabButton hasPermissions={canCreateNSC} />} title="Home">
+      <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
         <Spinner center />
       </Page>
     );
   }
 
   return (
-    <Page options={<JupyterLabButton hasPermissions={canCreateNSC} />} title="Home">
+    <Page options={<JupyterLabButton enabled={canCreateNSC} />} title="Home">
       {projectsLoading ? (
         <Section>
           <Spinner center />

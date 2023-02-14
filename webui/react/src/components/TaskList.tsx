@@ -635,7 +635,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
           <JupyterLabButton
-            hasPermissions={workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC}
+            enabled={workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC}
           />
         </Space>
       }
