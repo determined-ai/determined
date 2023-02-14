@@ -56,19 +56,30 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
+  const { metrics, data } = useTrialMetrics(trial);
+
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
-    return checkpoint && xAxis === XAxisDomain.Batches
-      ? {
-          [checkpoint?.totalBatches]: checkpoint,
+    const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
+    if (data && xAxis === XAxisDomain.Time && checkpoint?.totalBatches) {
+      Object.values(data).forEach((metric) => {
+        const matchIndex = metric.data[XAxisDomain.Batches]?.findIndex(
+          (pt) => pt[0] === checkpoint.totalBatches,
+        );
+        if (matchIndex !== undefined && matchIndex >= 0) {
+          const timeVals = metric.data[XAxisDomain.Time];
+          if (timeVals && timeVals.length > matchIndex) {
+            timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
+          }
         }
-      : checkpoint?.endTime && xAxis === XAxisDomain.Time
+      });
+    }
+    return checkpoint?.totalBatches
       ? {
-          [Math.floor(Date.parse(checkpoint?.endTime))]: checkpoint,
+          [checkpoint.totalBatches]: checkpoint,
+          ...timeHelpers,
         }
       : {};
-  }, [checkpoint, xAxis]);
-
-  const { metrics, data } = useTrialMetrics(trial);
+  }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
     const val = metrics.filter((m) => m.type === MetricType.Validation).sort(metricSorter);
@@ -138,7 +149,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         series,
         title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
         xAxis,
-        xLabel: 'Batches',
+        xLabel: String(xAxis),
       });
     });
     return out;

@@ -43,12 +43,14 @@ export const drawPointsPlugin = (checkpointsDict: CheckpointsDict): Plugin => {
     ctx.save();
 
     let j = idx0;
+    let foundCheckpoint = false;
 
     while (j <= idx1) {
       const xVal = u.data[0][j];
       const yVal = u.data[seriesIdx][j];
 
       if (scale && isNumber(yVal) && checkpointsDict[Math.floor(xVal)]) {
+        foundCheckpoint = true;
         const cx = Math.round(u.valToPos(xVal, 'x', true));
         const cy = Math.round(u.valToPos(yVal, scale, true));
         drawCheckpoint(ctx, cx, cy);
@@ -62,6 +64,9 @@ export const drawPointsPlugin = (checkpointsDict: CheckpointsDict): Plugin => {
     }
 
     ctx.restore();
+    if (!foundCheckpoint && u.data[seriesIdx].length === 1) {
+      return true;
+    }
   }
 
   return {
