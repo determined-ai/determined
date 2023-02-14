@@ -1301,6 +1301,16 @@ service Determined {
       tags: "Models"
     };
   }
+  // Move a model into a workspace
+  rpc MoveModel(MoveModelRequest) returns (MoveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_name}/move",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
   // Delete a model
   rpc DeleteModel(DeleteModelRequest) returns (DeleteModelResponse) {
     option (google.api.http) = {
