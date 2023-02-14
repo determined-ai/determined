@@ -105,17 +105,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       // naming just makes it easier to read
       const trainingMetricKey = metricToKey(trainingMetric);
       const trainingMetricSeries = data?.[trainingMetricKey];
-      const dataForAxis = trainingMetricSeries?.data[xAxis];
       if (!trainingMetricSeries) return;
-
-      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
-        const xVal = dataForAxis?.[point.idx]?.[0];
-        const selectedCheckpoint =
-          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
-        if (selectedCheckpoint) {
-          openCheckpoint();
-        }
-      };
 
       const series: Serie[] = [trainingMetricSeries];
 
@@ -124,6 +114,23 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         const valMetricSeries = data?.[valMetricKey];
         if (valMetricSeries) series.push(valMetricSeries);
       }
+
+      const xValSet = new Set<number>();
+      series.forEach((serie) => {
+        serie.data[xAxis]?.forEach((pt) => {
+          xValSet.add(pt[0]);
+        });
+      });
+      const xVals = Array.from(xValSet).sort();
+
+      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
+        const xVal = xVals[point.idx];
+        const selectedCheckpoint =
+          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
+        if (selectedCheckpoint) {
+          openCheckpoint();
+        }
+      };
 
       out.push({
         onPointClick,
@@ -136,7 +143,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           drawPointsPlugin(checkpointsDict),
           tooltipsPlugin({
             getXTooltipHeader(xIndex) {
-              const xVal = dataForAxis?.[xIndex]?.[0];
+              const xVal = xVals[xIndex];
               if (xVal === undefined) return '';
               const checkpoint = checkpointsDict?.[Math.floor(xVal)];
               if (!checkpoint) return '';
