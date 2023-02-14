@@ -33,7 +33,6 @@ from determined.pytorch._pytorch_trial import (
     _TrainStepType,
     Batch,
     Epoch,
-    Record,
 )
 from determined.pytorch._load import load_trial_from_checkpoint_path
 from determined.pytorch._trainer import init, Trainer

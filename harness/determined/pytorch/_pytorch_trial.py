@@ -34,11 +34,14 @@ class TrainUnit:
         self.value = value
 
     @staticmethod
-    def _from_searcher_unit(length: int, unit: Optional[core.Unit]) -> "TrainUnit":
+    def _from_searcher_unit(
+        length: int, unit: Optional[core.Unit], global_batch_size: Optional[int] = None
+    ) -> "TrainUnit":
         if unit == core.Unit.EPOCHS:
             return Epoch(length)
         elif unit == core.Unit.RECORDS:
-            return Record(length)
+            assert global_batch_size, "global_batch_size required for searcher unit Records"
+            return Batch._from_records(length, global_batch_size)
         elif unit == core.Unit.BATCHES:
             return Batch(length)
         else:
@@ -46,7 +49,10 @@ class TrainUnit:
 
     @staticmethod
     def _from_values(
-        batches: Optional[int] = None, records: Optional[int] = None, epochs: Optional[int] = None
+        batches: Optional[int] = None,
+        records: Optional[int] = None,
+        epochs: Optional[int] = None,
+        global_batch_size: Optional[int] = None,
     ) -> "TrainUnit":
         if sum((batches is not None, records is not None, epochs is not None)) != 1:
             raise ValueError(f"invalid length: batches={batches} records={records} epochs={epochs}")
@@ -55,9 +61,10 @@ class TrainUnit:
                 batches = sys.maxsize
             return Batch(batches)
         if records is not None:
+            assert global_batch_size, "global_batch_size is required for RECORD units"
             if records < 1:
                 records = sys.maxsize
-            return Record(records)
+            return Batch._from_records(records, global_batch_size)
         if epochs is not None:
             if epochs < 1:
                 epochs = sys.maxsize
@@ -80,12 +87,18 @@ class Epoch(TrainUnit):
 
 
 class Batch(TrainUnit):
-    pass
+    @staticmethod
+    def _from_records(records: int, global_batch_size: int) -> "Batch":
+        return Batch(max(records // global_batch_size, 1))
 
 
-class Record(TrainUnit):
-    def _to_batches(self, global_batch_size: int) -> Batch:
-        return Batch(max(self.value // global_batch_size, 1))
+# class _Record(TrainUnit):
+#     """
+#     Records is to support backwards-compatibility of searcher units.
+#     Future support is limited ot Batch and Epoch.
+#     """
+#     def _to_batches(self, global_batch_size: int) -> Batch:
+#         return Batch(max(self.value // global_batch_size, 1))
 
 
 class _TrainStepType(enum.Enum):
@@ -143,6 +156,7 @@ class _PyTorchTrialController:
         latest_checkpoint: Optional[str],
         local_training: bool,
         test_mode: bool,
+        searcher_unit: core.Unit,
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
@@ -189,9 +203,12 @@ class _PyTorchTrialController:
         self.searcher_metric_name = searcher_metric_name
         self.ckpt_policy = checkpoint_policy
         self.smaller_is_better = smaller_is_better
-        self.global_batch_size = self.context.get_global_batch_size()
+        # self.global_batch_size = self.context.get_global_batch_size()
 
-        self.searcher_unit = self.core_context.searcher.get_configured_units()
+        self.searcher_unit = searcher_unit
+        if searcher_unit == core.Unit.RECORDS:
+            # XXX: throw up early here or callers
+            assert self.context.get_global_batch_size()
 
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
@@ -490,8 +507,9 @@ class _PyTorchTrialController:
             return train_unit.value - self.state.batches_trained
         elif isinstance(train_unit, Epoch):
             return train_unit.value - self.state.epochs_trained
-        elif isinstance(train_unit, Record):
-            return train_unit.value - (self.state.batches_trained * self.global_batch_size)
+        # elif isinstance(train_unit, _Record):
+        #     # XXX: this is ugly
+        #     return train_unit.value - (self.state.batches_trained * self.context.get_global_batch_size())
         else:
             raise ValueError(f"Unrecognized train unit {train_unit}")
 
@@ -618,7 +636,9 @@ class _PyTorchTrialController:
                     train_steps=[
                         _TrainStep(
                             step_type=_TrainStepType.TRAIN,
-                            unit=TrainUnit._from_searcher_unit(op.length, self.searcher_unit),
+                            unit=TrainUnit._from_searcher_unit(
+                                op.length, self.searcher_unit, self.context.get_global_batch_size()
+                            ),
                         ),
                         _TrainStep(step_type=_TrainStepType.VALIDATE, unit=self.validation_period),
                         _TrainStep(
@@ -675,10 +695,10 @@ class _PyTorchTrialController:
                         step.limit_reached = True
 
                 # Convert records to batches
-                if isinstance(step.unit, Record):
-                    batch_unit = step.unit._to_batches(self.global_batch_size)
-                    if batch_unit._divides(batch_idx + 1):
-                        step.limit_reached = True
+                # if isinstance(step.unit, _Record):
+                #     batch_unit = step.unit._to_batches(self.context.get_global_batch_size())
+                #     if batch_unit._divides(batch_idx + 1):
+                #         step.limit_reached = True
 
                 # True epoch based training not supported, detect last batch of epoch to calculate
                 # fully-trained epochs
@@ -1078,8 +1098,11 @@ class _PyTorchTrialController:
         should_checkpoint = False
 
         if searcher_op and self.is_chief:
-            searcher_length = TrainUnit._from_searcher_unit(searcher_op.length, self.searcher_unit)
+            searcher_length = TrainUnit._from_searcher_unit(
+                searcher_op.length, self.searcher_unit, self.context.get_global_batch_size()
+            )
             searcher_metric = self._validate_searcher_metric(metrics)
+
             if self._steps_until_complete(searcher_length) < 1 and not searcher_op._completed:
                 searcher_op.report_completed(searcher_metric)
 
@@ -1340,11 +1363,19 @@ class _PyTorchTrialController:
 
         trial_cls = type(self.trial)
         with open(path.joinpath("load_data.json"), "w") as f2:
+            # XXX: figure out a better way to do this.
+            try:
+                exp_conf = self.context.get_experiment_config()
+                hparams = self.context.get_hparams()
+            except ValueError as e:
+                exp_conf = None
+                hparams = None
+
             json.dump(
                 {
                     "trial_type": "PyTorchTrial",
-                    "experiment_config": self.context.get_experiment_config(),
-                    "hparams": self.context.get_hparams(),
+                    "experiment_config": exp_conf,
+                    "hparams": hparams,
                     "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
                 },
                 f2,
