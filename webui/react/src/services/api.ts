@@ -460,6 +460,10 @@ export const unarchiveModel = generateDetApi<
   void
 >(Config.unarchiveModel);
 
+export const moveModel = generateDetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void>(
+  Config.moveModel,
+);
+
 export const deleteModel = generateDetApi<
   Service.DeleteModelParams,
   Api.V1DeleteModelResponse,
