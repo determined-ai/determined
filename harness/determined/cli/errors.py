@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 
 class FeatureFlagDisabled(Exception):
@@ -27,3 +27,13 @@ class CliError(Exception):
         self.exit_code = exit_code
         self.e_stack = e_stack
         self.message = message
+
+
+class CliArgError(CliError):
+    """
+    Exception indicating that there was a problem with the arguments
+    passed to the CLI.
+    """
+
+    def __init__(self, message: str, *args: Any, **kwargs: Any) -> None:
+        super().__init__(message, *args, **kwargs)

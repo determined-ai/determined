@@ -19,6 +19,7 @@ import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
+from determined.cli.errors import CliArgError, CliError
 from determined.common import api, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings, logs
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -65,8 +66,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     try:
         from git import Repo
     except ImportError as e:  # pragma: no cover
-        print(f"Error: Please verify that git is installed correctly: {e}")
-        sys.exit(1)
+        raise CliError(f"Error: Please verify that git is installed correctly: {e}")
 
     if model_def_path.is_dir():
         repo_path = model_def_path.resolve()
@@ -74,27 +74,24 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
         repo_path = model_def_path.parent.resolve()
 
     if not repo_path.joinpath(".git").is_dir():
-        print(
+        raise CliError(
             f"Error: No git directory found at {repo_path}. Please "
             "initialize a git repository or refrain from "
             "using the --git feature."
         )
-        sys.exit(1)
 
     try:
         repo = Repo(str(repo_path))
     except Exception as e:
-        print(f"Failed to initialize git repository at {repo_path}: {e}")
-        sys.exit(1)
+        raise CliError(f"Failed to initialize git repository at {repo_path}: {e}")
 
     if repo.is_dirty():
-        print(
+        raise CliError(
             "Git working directory is dirty. Please commit the "
             "following changes before creating an experiment "
             "with the --git feature:\n"
+            f"\n{repo.git.status()}"
         )
-        print(repo.git.status())
-        sys.exit(1)
 
     commit = repo.commit()
     commit_hash = commit.hexsha
@@ -113,8 +110,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
         remote_url = repo.git.config(f"remote.{remote_name}.url", get=True)
         print(f"Using remote URL '{remote_url}' from upstream branch '{upstream_branch}'")
     except Exception as e:
-        print("Failed to find the upstream branch: ", e)
-        sys.exit(1)
+        raise CliError("Failed to find the upstream branch: ", e)
 
     return (remote_url, commit_hash, committer, commit_date)
 
@@ -125,8 +121,7 @@ def _parse_config_text_or_exit(
     experiment_config = util.safe_load_yaml_with_exceptions(config_text)
 
     if not experiment_config or not isinstance(experiment_config, dict):
-        print(f"Error: invalid experiment config file {path}", path)
-        sys.exit(1)
+        raise CliArgError(f"Error: invalid experiment config file {path}")
 
     parse_config_overrides(experiment_config, config_overrides)
 

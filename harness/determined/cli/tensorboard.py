@@ -8,6 +8,7 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import command, task
+from determined.cli.errors import CliArgError
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
@@ -17,8 +18,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 @authentication.required
 def start_tensorboard(args: Namespace) -> None:
     if not (args.trial_ids or args.experiment_ids):
-        print("Either experiment_ids or trial_ids must be specified.")
-        sys.exit(1)
+        raise CliArgError("Either experiment_ids or trial_ids must be specified.")
 
     config = command.parse_config(args.config_file, None, args.config, [])
 

@@ -9,7 +9,7 @@ from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
 from determined.experimental import client
 
-from .errors import FeatureFlagDisabled
+from .errors import CliError, FeatureFlagDisabled
 
 output_format_args: Dict[str, declarative_argparse.Arg] = {
     "json": declarative_argparse.Arg(
@@ -116,8 +116,7 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
 
 
 def report_cli_error(msg: Union[str, Exception]) -> None:
-    print(termcolor.colored(f"Error: {msg}", "red"), file=sys.stderr)
-    sys.exit(1)
+    raise CliError(f"Error: {msg}")
 
 
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
