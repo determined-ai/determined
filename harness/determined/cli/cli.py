@@ -283,7 +283,7 @@ def main(
         except CliError as e:
             if e.e_stack:
                 print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
-            die(f"Error: {e.message}", exit_code=e.exit_code)
+            die(f"{e.name}: {e.message}", exit_code=e.exit_code)
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:

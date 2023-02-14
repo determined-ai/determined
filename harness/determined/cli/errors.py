@@ -15,6 +15,8 @@ class CliError(Exception):
     Base class for all CLI errors.
     """
 
+    name: str
+
     def __init__(
         self, message: str, e_stack: Optional[Exception] = None, exit_code: int = 1
     ) -> None:
@@ -24,6 +26,7 @@ class CliError(Exception):
         - exit_code: The exit code to use when exiting the CLI.
         """
         super().__init__(message)
+        self.name = "Error"
         self.exit_code = exit_code
         self.e_stack = e_stack
         self.message = message
@@ -37,3 +40,4 @@ class CliArgError(CliError):
 
     def __init__(self, message: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(message, *args, **kwargs)
+        self.name = "Input Error"
