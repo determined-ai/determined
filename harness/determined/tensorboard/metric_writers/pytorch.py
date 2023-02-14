@@ -1,55 +1,9 @@
-# mypy: ignore-errors
-# This is to silence mypy. All SummaryWriter methods are untyped, but are inherited here.
-import pathlib
-from typing import Union
+import warnings
 
-from determined import tensorboard
+from determined.pytorch.tensorboard_writer import TorchWriter
 
-# As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools 59.6.0.  The
-# bug is that it attempts to import distutils then access distutils.version without actually
-# importing distutils.version.  We can workaround this by prepopulating the distutils.version
-# submodule in the distutils module.
-import distutils.version  # isort:skip  # noqa: F401
-from torch.utils.tensorboard import SummaryWriter  # isort:skip
-
-
-class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
-    """
-    TorchWriter uses PyTorch file writers and summary operations to write
-    out tfevent files containing scalar batch metrics. It creates
-    an instance of ``torch.utils.tensorboard.SummaryWriter`` which can be
-    accessed via the ``writer`` field and configures the SummaryWriter
-    to write to the correct directory inside the trial container.
-
-    Usage example:
-
-     .. code-block:: python
-
-        from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-        class MyModel(PyTorchTrial):
-            def __init__(self, context):
-                ...
-                self.logger = TorchWriter()
-
-            def train_batch(self, batch, epoch_idx, batch_idx):
-                self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
-    """
-
-    def __init__(self, log_dir: Union[pathlib.Path, None] = None) -> None:
-
-        if log_dir is None:
-            log_dir = tensorboard.get_base_path({})
-
-        super().__init__(log_dir=log_dir)
-
-        # Point to self for compatability with old functionality
-        # Since there are still references to logger.writer.add_scalar() in callback methods
-        self.writer = self
-
-    def add_scalar(self, *args) -> None:
-        SummaryWriter.add_scalar(self, *args)
-
-    def reset(self) -> None:
-        # flush AND close the writer so that the next attempt to write will create a new file
-        self.close()
+warnings.warn(
+    "'tensorboard.pytorch' is deprecated in favor of 'determined.pytorch.tensorboard_writer'",
+    DeprecationWarning,
+    stacklevel=2,
+)
