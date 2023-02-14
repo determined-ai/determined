@@ -4,9 +4,10 @@ import path from 'path';
 
 import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
+// import { splitVendorChunkPlugin } from 'vite'; TODO: maybe remove this if we're using the manualChunk strategy
 import { defineConfig, Plugin, UserConfig } from 'vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import checker from 'vite-plugin-checker';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { cspHtml } from './src/shared/configs/vite-plugin-csp';
 
@@ -68,6 +69,15 @@ export default defineConfig(({ mode }) => ({
       include: [/node_modules/, /notebook/],
     },
     outDir: 'build',
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
     sourcemap: mode === 'production',
   },
   css: {
