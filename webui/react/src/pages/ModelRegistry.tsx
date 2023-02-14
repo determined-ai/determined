@@ -34,7 +34,6 @@ import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -82,7 +81,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canViewModelRegistry } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate();
