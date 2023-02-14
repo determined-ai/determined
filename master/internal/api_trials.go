@@ -635,7 +635,7 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 
 func (a *apiServer) formatMetricsBatch(
 	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) *apiv1.SummarizedMetric {
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPoint{
 			Batches: int32(in.X),
@@ -643,7 +643,6 @@ func (a *apiServer) formatMetricsBatch(
 		}
 		m.Data = append(m.Data, &out)
 	}
-	return m
 }
 
 func timeFromFloat64(ts float64) time.Time {
@@ -654,7 +653,7 @@ func timeFromFloat64(ts float64) time.Time {
 
 func (a *apiServer) formatMetricsTime(
 	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) *apiv1.SummarizedMetric {
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPointTime{
 			Time:  timestamppb.New(timeFromFloat64(in.X)),
@@ -662,7 +661,6 @@ func (a *apiServer) formatMetricsTime(
 		}
 		m.Time = append(m.Time, &out)
 	}
-	return m
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
@@ -690,11 +688,11 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
-			m := a.formatMetricsTime(&metric, metricSeriesTime)
+			a.formatMetricsTime(&metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
-			m = a.formatMetricsBatch(&metric, metricSeriesBatch)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
 			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
-				metrics = append(metrics, m)
+				metrics = append(metrics, &metric)
 			}
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
@@ -708,11 +706,11 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
-			m := a.formatMetricsTime(&metric, metricSeriesTime)
+			a.formatMetricsTime(&metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
-			m = a.formatMetricsBatch(&metric, metricSeriesBatch)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
 			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
-				metrics = append(metrics, m)
+				metrics = append(metrics, &metric)
 			}
 		}
 	}
