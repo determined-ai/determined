@@ -9,9 +9,9 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
+from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
-from harness.determined.cli.errors import CliError
 
 from . import aws, constants
 from .deployment_types import base, govcloud, secure, simple, vpc
