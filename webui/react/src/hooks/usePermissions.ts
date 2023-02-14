@@ -64,6 +64,7 @@ interface PermissionsHook {
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
+  canModifyModel: (arg0: ModelPermissionsArgs) => boolean;
   canModifyModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -160,6 +161,7 @@ const usePermissions = (): PermissionsHook => {
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
+      canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
         canModifyModelVersion(rbacOpts, args.modelVersion),
       canModifyPermissions: canModifyPermissions(rbacOpts),
@@ -376,10 +378,30 @@ const canViewExperimentArtifacts = (
 };
 
 // Model and ModelVersion actions
-// No permissions defined in PermissionType yet
-const canDeleteModel = ({ rbacAllPermission, user }: RbacOptsProps, model: ModelItem): boolean => {
-  // const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (!!user && (user.isAdmin || user.id === model.userId));
+const canDeleteModel = (
+  { rbacAllPermission, rbacEnabled, rbacModel, user, userAssignments, userRoles }: RbacOptsProps,
+  model: ModelItem,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
+  return (
+    rbacAllPermission ||
+    (rbacEnabled && rbacModel
+      ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
+      : !!user && (user.isAdmin || user.id === model?.userId))
+  );
+};
+
+const canModifyModel = (
+  { rbacAllPermission, rbacEnabled, rbacModel, userAssignments, userRoles }: RbacOptsProps,
+  model: ModelItem,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
+  return (
+    rbacAllPermission ||
+    !rbacEnabled ||
+    !rbacModel ||
+    permitted.has(V1PermissionType.EDITMODELREGISTRY)
+  );
 };
 
 const canDeleteModelVersion = (
