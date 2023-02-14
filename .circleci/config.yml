@@ -207,7 +207,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl https://dl.google.com/go/go1.18.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.18.10.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
 
   install-protoc:
