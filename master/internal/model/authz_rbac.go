@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/uptrace/bun"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -105,6 +108,58 @@ func (a *ModelAuthZRBAC) CanCreateModel(ctx context.Context,
 
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
+}
+
+// FilterReadableModelsQuery returns query in relevant workspaces and a nil error.
+func (a *ModelAuthZRBAC) FilterReadableModelsQuery(
+	ctx context.Context, curUser model.User, query *bun.SelectQuery,
+) (*bun.SelectQuery, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY,
+			},
+			SubjectType: "models",
+		},
+	}
+
+	var err error
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
+	if err != nil {
+		return query, err
+	}
+
+	var workspaces []int32
+
+	for role, roleAssignments := range assignmentsMap {
+		for _, permission := range role.Permissions {
+			if permission.ID == int(
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY) {
+				for _, assignment := range roleAssignments {
+					if assignment.Scope.WorkspaceID.Valid {
+						workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
+					} else {
+						// if permission is global, return without filtering
+						return query, nil
+					}
+				}
+			}
+		}
+	}
+
+	if len(workspaces) == 0 {
+		return query.Where("false"), nil
+	}
+
+	query = query.Where("workspace_id IN (?)", bun.In(workspaces))
+
+	return query, nil
 }
 
 func init() {
