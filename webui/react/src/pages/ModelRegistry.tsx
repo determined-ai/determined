@@ -36,7 +36,6 @@ import Toggle from 'components/Toggle';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -85,7 +84,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canViewModelRegistry } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -672,7 +670,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     <Page
       containerRef={pageRef}
       id="models"
-      notFound={!canViewModelRegistry}
       options={
         <Space>
           <Toggle

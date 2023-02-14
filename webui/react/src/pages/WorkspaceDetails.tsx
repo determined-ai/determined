@@ -195,7 +195,7 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
-    if (canViewModelRegistry) {
+    if (canViewModelRegistry({ workspace })) {
       items.push({
         children: <ModelRegistry workspace={workspace} />,
         key: WorkspaceDetailsTab.ModelRegistry,
