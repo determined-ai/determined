@@ -71,7 +71,7 @@ class DistributedContext:
         if self.local_size != self.size:
             if chief_ip is None:
                 raise AssertionError(
-                    f"rank_info has cross_size ({self.cross_size}) but chief_ip was not "
+                    f"rank_info has self.local_size != self.size ({self.local_size} != {self.size}) but chief_ip was none"
                     "provided.  When cross_size > 1, the chief_ip parameter is required."
                 )
             self._chief_ip = chief_ip
