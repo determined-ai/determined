@@ -44,15 +44,8 @@ def report_cli_errors(func: CliHandler) -> CliHandler:
         try:
             return func(args)
         except CliError as e:
-            """
-            DISCUSS: is this a reasonable pattern in Python? if so we could do this at argparse.Cmd
-            level there are some expected exceptions that we rather not individually handle
-            and early break in cli commands. and for there we assume that we don't want to
-            show the call stack to the end user. maybe the callstack can be controlled w/
-            a flag. (dev, prod)
-            """
             if e.e_stack:
-                print(colored(f"Error: {e}", "red"), file=sys.stderr)
+                print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
             print(colored(f"Error: {e.message}", "red"), file=sys.stderr)
             sys.exit(e.exit_code)
         except (APIHttpError, RequestException, ConnectionError) as e:
