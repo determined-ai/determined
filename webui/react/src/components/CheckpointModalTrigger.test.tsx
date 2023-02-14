@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
+import { UsersProvider } from 'stores/users';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
@@ -37,7 +38,9 @@ const ModalTrigger: React.FC = () => {
 const setup = async () => {
   render(
     <UIProvider>
-      <ModalTrigger />
+      <UsersProvider>
+        <ModalTrigger />
+      </UsersProvider>
     </UIProvider>,
   );
 
