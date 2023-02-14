@@ -160,8 +160,7 @@ fulfilled and configured, install and configure the Determined master:
 
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
    cluster. If logged in with a Determined administrator account, the following example creates a
-   Determined user account that is linked to the current user's Linux account. For more details see
-   :ref:`run-as-user`.
+   Determined user account that is linked to the current user's Linux account.
 
    .. code:: bash
 
@@ -172,7 +171,7 @@ fulfilled and configured, install and configure the Determined master:
    .. note::
 
       If an agent user has not been configured for a Determined username, jobs will run as user
-      `root`. For more details see :ref:`run-as-user`.
+      root. For more details see :ref:`run-as-user`.
 
 #. Verify the configuration by sanity-checking your Determined configuration:
 
