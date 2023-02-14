@@ -2,7 +2,6 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, ModalFuncProps, Tooltip } from 'antd';
 import { SelectInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import DynamicIcon from 'components/DynamicIcon';
 import Form from 'components/kit/Form';
@@ -10,7 +9,6 @@ import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
@@ -30,6 +28,7 @@ const FORM_ID = 'create-model-form';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
+  workspaceId?: string;
 }
 
 interface FormInputs {
@@ -67,16 +66,10 @@ const DEFAULT_MODAL_STATE = {
   workspace: '1',
 };
 
-const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
+const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHooks => {
   const { canCreateModelWorkspace } = usePermissions();
-  const isRbacEnabled = useFeature().isOn('model_rbac');
   const loadableWorkspaces = useWorkspaces();
-  const location = useLocation().pathname;
-  const isWorkspace = location.includes('/workspaces');
-  const workspaceId = useMemo(
-    () => (isWorkspace ? location.split('/')[2] : ''),
-    [isWorkspace, location],
-  );
+  const isWorkspace = !!workspaceId;
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace(id)),
     NotLoaded: () => [],
@@ -189,6 +182,8 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   }, []);
 
   const workspaceName = useMemo(() => {
+    // we know that both the modalState.workspaces are there, and we're looking into `workspaces` which we know that has said value
+    // so, the || '' is only for type-check coverage...
     const name = workspaces.find((ws) => String(ws.id) === modalState.workspace)?.name || '';
 
     return name;
@@ -227,41 +222,39 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               requiredMessage="Model name is required ">
               <Input onChange={handleNameChange} />
             </Form.Item>
-            {isRbacEnabled && (
-              <Tooltip placement="bottom">
-                <Form.Item label="Workspaces" name="workspace">
-                  <Dropdown
-                    arrow
-                    className={css.workspacDropdown}
-                    disabled={!workspaces.length || isWorkspace}
-                    dropdownRender={(menu) =>
-                      React.cloneElement(menu as React.ReactElement, {
-                        style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
-                      })
-                    }
-                    getPopupContainer={(triggerNode) => triggerNode}
-                    menu={{
-                      defaultSelectedKeys: [modalState.workspace],
-                      items: workspaceItems,
-                      onSelect,
-                      selectable: true,
-                    }}
-                    trigger={['click']}>
-                    <Button>
-                      <span
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          minWidth: '175px',
-                        }}>
-                        {workspaceName}
-                        <DownOutlined style={{ marginLeft: '10px' }} />
-                      </span>
-                    </Button>
-                  </Dropdown>
-                </Form.Item>
-              </Tooltip>
-            )}
+            <Tooltip placement="bottom">
+              <Form.Item label="Workspaces" name="workspace">
+                <Dropdown
+                  arrow
+                  className={css.workspacDropdown}
+                  disabled={!workspaces.length || isWorkspace}
+                  dropdownRender={(menu) =>
+                    React.cloneElement(menu as React.ReactElement, {
+                      style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
+                    })
+                  }
+                  getPopupContainer={(triggerNode) => triggerNode}
+                  menu={{
+                    defaultSelectedKeys: [modalState.workspace],
+                    items: workspaceItems,
+                    onSelect,
+                    selectable: true,
+                  }}
+                  trigger={['click']}>
+                  <Button>
+                    <span
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        minWidth: '175px',
+                      }}>
+                      {workspaceName}
+                      <DownOutlined style={{ marginLeft: '10px' }} />
+                    </span>
+                  </Button>
+                </Dropdown>
+              </Form.Item>
+            </Tooltip>
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />
             </Form.Item>

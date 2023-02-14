@@ -89,7 +89,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate();
+    useModalModelCreate({ workspaceId: workspace?.id ? String(workspace.id) : undefined });
 
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
