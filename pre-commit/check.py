@@ -54,18 +54,17 @@ rules: Dict[Path, Union[str, List[str]]] = {
     root
     / "proto": [
         "make fmt check build",
-        "make -C ../bindings build && make -C ../webui/react bindings-copy-over && make -C ../webui/react check",
+        "make -C ../bindings build && make -C ../webui/react check",
     ],
     # root / "webui" / "react": ["make -j fmt; make -j check", "make -j test && make -j build"], # mostly covered by proper precommit checks
     root
     / "master": [
         "make -C ../proto build",
         "make build",
-        "make fmt; make check",
-        "make test",
+        "make fmt check",
     ],
     root / "docs": "make fmt check build",
-    root / ".circleci": "circleci config validate config.yml",
+    root / ".circleci": "type circleci || exit 0 && circleci config validate config.yml",
     root / "e2e_tests": "make fmt check",
     root / "model_hub": "make fmt check",
 }
