@@ -71,8 +71,9 @@ class DistributedContext:
         if self.local_size != self.size:
             if chief_ip is None:
                 raise AssertionError(
-                    f"rank_info has self.local_size != self.size ({self.local_size} != {self.size}) but chief_ip was none"
-                    "provided.  When cross_size > 1, the chief_ip parameter is required."
+                    f"This is a distributed job (local_size {self.local_size} != size {self.size}) "
+                    "but chief_ip was none provided.  When cross_size > 1, the chief_ip parameter "
+                    "is required."
                 )
             self._chief_ip = chief_ip
         else:
@@ -117,8 +118,8 @@ class DistributedContext:
         # Local broadcast server.
         self.tempdir = None
         if self.local_size < 2:
-            # If local size is less than 2, we don't need a local chief but still need to participate
-            # in the global all gather, otherwise the other participants block forever.
+            # If local size is less than 2, we don't need a local chief but still need to
+            # participate in the global all gather, otherwise the other participants block forever.
             _ = self.allgather(None)
         elif self._is_local_chief:
             pub_url = None
