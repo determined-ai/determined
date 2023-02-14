@@ -2248,6 +2248,7 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
 
       - test-e2e:
           name: test-e2e-managed-devcluster
