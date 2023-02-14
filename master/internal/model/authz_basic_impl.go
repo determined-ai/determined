@@ -39,6 +39,16 @@ func (a *ModelAuthZBasic) CanCreateModel(ctx context.Context,
 	return nil
 }
 
+// CanMoveModel always returns true and a nil error.
+func (a *ModelAuthZBasic) CanMoveModel(
+	ctx context.Context,
+	curUser model.User,
+	modelRegister *modelv1.Model,
+	fromWorkspaceId, toWorkspaceId int32,
+) error {
+	return nil
+}
+
 // FilterReadableModelsQuery returns the query unmodified and a nil error.
 func (a *ModelAuthZBasic) FilterReadableModelsQuery(
 	ctx context.Context, curUser model.User, query *bun.SelectQuery,

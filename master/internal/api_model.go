@@ -475,6 +475,38 @@ func (a *apiServer) UnarchiveModel(
 		errors.Wrapf(err, "error unarchiving model %q", req.ModelName)
 }
 
+func (a *apiServer) MoveModel(
+	ctx context.Context, req *apiv1.MoveModelRequest,
+) (*apiv1.MoveModelResponse, error) {
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = modelauth.AuthZProvider.
+		Get().
+		CanMoveModel(ctx, *curUser, currModel, currModel.WorkspaceId, req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &modelv1.Model{}
+	err = a.m.db.QueryProto("move_model", holder, req.ModelName, req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error moving a model (%d)", req.ModelName)
+	}
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "Model (%d) does not exist or not moveable by this user",
+			req.ModelName)
+	}
+
+	return &apiv1.MoveModelResponse{}, nil
+}
+
 func (a *apiServer) DeleteModel(
 	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
 	error,
