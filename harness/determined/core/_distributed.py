@@ -117,7 +117,7 @@ class DistributedContext:
         # Local broadcast server.
         self.tempdir = None
         if self.local_size < 2:
-            # If local size is less than 2, we don't need a local chief but still need to parcipate
+            # If local size is less than 2, we don't need a local chief but still need to participate
             # in the global all gather, otherwise the other participants block forever.
             _ = self.allgather(None)
         elif self._is_local_chief:
