@@ -98,6 +98,15 @@ def find_rules(paths: List[Path]):
     return resolved_paths
 
 
+def report_result(rule_path: Path, return_code: int, msg: str):
+    """report the results of running a rule/check."""
+    if return_code != 0:
+        print_colored(f"{rule_path.relative_to(root)}: failed", file=sys.stderr)
+        print(msg, file=sys.stderr)
+    else:
+        print(f"{rule_path.relative_to(root)}: passed")
+
+
 def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
     failed_rules: Set[Tuple[Path, str]] = set()
     with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
@@ -109,12 +118,9 @@ def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
             rule_path = future_to_rule[future]
             try:
                 return_code, msg = future.result()
+                report_result(rule_path, return_code, msg)
                 if return_code != 0:
                     failed_rules.add((rule_path, msg))
-                    print_colored(f"{rule_path} failed", file=sys.stderr)
-                    print(msg, file=sys.stderr)
-                else:
-                    print(f"{rule_path} passed")
             except Exception as exc:
                 print(f"{rule_path} generated an exception: {exc}", file=sys.stderr)
     return failed_rules
