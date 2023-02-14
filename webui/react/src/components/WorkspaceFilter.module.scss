@@ -2,9 +2,15 @@
   align-items: center;
   display: flex;
   justify-content: flex-start;
+  overflow-x: hidden;
   width: 100%;
 
   .name {
+    flex-basis: 80%;
     margin-left: 5px;
+    max-width: 80%;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
