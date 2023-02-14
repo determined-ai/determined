@@ -14,7 +14,6 @@ import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -584,10 +583,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     ),
     [ModelActionMenu],
   );
-
-  if (!canViewModelRegistry) {
-    return <PageNotFound />;
-  }
 
   return (
     <Page
