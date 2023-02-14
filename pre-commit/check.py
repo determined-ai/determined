@@ -109,7 +109,9 @@ def report_result(rule_path: Path, return_code: int, msg: str):
 
 def process_rules(module_paths: Iterable[Path]) -> Set[Tuple[Path, str]]:
     failed_rules: Set[Tuple[Path, str]] = set()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+    # there are some rule dependencies that we need to run sequentially. eg proto and master
+    max_workers = 1  # multiprocessing.cpu_count()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # collect the future to args mapping so we can print module path.
         future_to_rule = {
             executor.submit(run_rule, rule_path): rule_path for rule_path in module_paths
