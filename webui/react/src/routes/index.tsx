@@ -60,7 +60,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   workspaceList: <WorkspaceList />,
 };
 
-const defaultRouteId = 'uncategorized';
+const defaultRouteId = 'default';
 const rbacDefaultRouteId = 'workspaceList';
 const dashboardDefaultRouteId = 'dashboard';
 
