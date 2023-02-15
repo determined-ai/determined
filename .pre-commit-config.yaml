@@ -1,4 +1,5 @@
 ---
+# docs: https://pre-commit.com/#creating-new-hooks
 repos:
   - repo: local
     hooks:
