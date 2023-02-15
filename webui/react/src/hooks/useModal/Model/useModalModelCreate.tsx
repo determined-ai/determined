@@ -33,7 +33,7 @@ interface Props {
 interface FormInputs {
   description?: string;
   modelName: string;
-  workspace: number;
+  workspaceId: number;
 }
 
 interface OpenProps {
@@ -203,7 +203,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
             <p className={css.directions}>
               Create a registered model to organize important checkpoints.
             </p>
-            <Form.Item initialValue={state.workspaceId} label="Workspace" name="workspace">
+            <Form.Item initialValue={state.workspaceId} label="Workspace" name="workspaceId">
               <SelectFilter
                 disabled={!workspaces.length || isWorkspace}
                 options={workspaceItems}

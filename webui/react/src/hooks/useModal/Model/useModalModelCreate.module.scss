@@ -8,19 +8,6 @@
     cursor: pointer;
     margin: 0;
   }
-  .workspaceDropdown {
-    position: relative;
-  }
-  .workspaceFilterItem {
-    align-items: center;
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-
-    .workspaceFilterName {
-      margin-left: 5px;
-    }
-  }
   h2 {
     color: var(--theme-colors-monochrome-5);
     font-size: 14px;

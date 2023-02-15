@@ -87,10 +87,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const { canViewModelRegistry } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
-  const workspaceId = useMemo(() => (workspace?.id ? workspace.id : undefined), [workspace?.id]);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate({ workspaceId });
+    useModalModelCreate({ workspaceId: workspace?.id });
 
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
