@@ -73,7 +73,15 @@ class TrainUnit:
         # Make mypy happy
         raise ValueError("invalid values")
 
+    # XXX: better name, matches?
+    def should_stop(self, step_num: int) -> bool:
+        if isinstance(self.value, int):
+            return self._divides(step_num)
+        if isinstance(self.value, collections.Container):
+            return step_num in self.value
+
     def _divides(self, steps: int) -> bool:
+        assert isinstance(steps, int), "_divides can only be called on int types"
         # Treat <= 0 values as always step
         if self.value < 1:
             return True
@@ -689,9 +697,7 @@ class _PyTorchTrialController:
             # Batch complete: check if any training periods have been reached and exit if any
             for step in train_steps:
                 if isinstance(step.unit, Batch):
-                    if isinstance(step.unit.value, int) and step.unit._divides(batch_idx + 1):
-                        step.limit_reached = True
-                    if isinstance(step.unit.value, list) and batch_idx + 1 in step.unit.value:
+                    if step.unit.should_stop(batch_idx + 1):
                         step.limit_reached = True
 
                 # Convert records to batches
@@ -702,9 +708,10 @@ class _PyTorchTrialController:
 
                 # True epoch based training not supported, detect last batch of epoch to calculate
                 # fully-trained epochs
-                if isinstance(step.unit, Epoch) and step.unit._divides(epoch_idx + 1):
-                    if batch_in_epoch_idx == epoch_len - 1:
-                        step.limit_reached = True
+                if isinstance(step.unit, Epoch):
+                    if step.unit.should_stop(epoch_idx + 1):
+                        if batch_in_epoch_idx == epoch_len - 1:
+                            step.limit_reached = True
 
                 # Break early after one batch for test mode
                 if step.step_type == _TrainStepType.TRAIN and self.test_mode:
