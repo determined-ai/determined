@@ -2532,10 +2532,10 @@ export interface V1Experiment {
     checkpointCount?: number;
     /**
      * The metrics and hyperparameters associated with the best trial by searcher metric.
-     * @type {V1ExperimentTrial}
+     * @type {number}
      * @memberof V1Experiment
      */
-    bestTrial?: V1ExperimentTrial;
+    bestTrialSearcherMetric?: number;
 }
 
 /**
@@ -2576,20 +2576,6 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
-}
-
-/**
- * ExperimentTrial is trial-level data that is surfaced to the experiment level.
- * @export
- * @interface V1ExperimentTrial
- */
-export interface V1ExperimentTrial {
-    /**
-     * the searcher metric value associated with the best_validation_id for the trial.
-     * @type {number}
-     * @memberof V1ExperimentTrial
-     */
-    searcherMetricValue?: number;
 }
 
 /**
@@ -6797,6 +6783,12 @@ export interface V1RendezvousInfo {
      * @memberof V1RendezvousInfo
      */
     rank: number;
+    /**
+     * The slots for each address, respectively.
+     * @type {Array<number>}
+     * @memberof V1RendezvousInfo
+     */
+    slots: Array<number>;
 }
 
 /**
