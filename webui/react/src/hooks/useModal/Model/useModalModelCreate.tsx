@@ -49,7 +49,7 @@ interface ModalState {
   modelName: string;
   tags: string[];
   visible: boolean;
-  workspace: string;
+  workspaceId: string;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -63,7 +63,7 @@ const DEFAULT_MODAL_STATE = {
   modelName: '',
   tags: [],
   visible: false,
-  workspace: '1',
+  workspaceId: '1',
 };
 
 const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHooks => {
@@ -87,7 +87,7 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
   );
 
   useEffect(() => {
-    if (workspaceId) setModalState({ ...modalState, workspace: workspaceId });
+    if (modalState.workspaceId !== workspaceId) setModalState({ ...modalState, workspaceId });
   }, [workspaceId, modalState]);
 
   const {
@@ -182,12 +182,12 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
   }, []);
 
   const workspaceName = useMemo(() => {
-    // we know that both the modalState.workspaces are there, and we're looking into `workspaces` which we know that has said value
+    // we know that both the modalState.workspaceId are there, and we're looking into `workspaces` which we know that has said value
     // so, the || '' is only for type-check coverage...
-    const name = workspaces.find((ws) => String(ws.id) === modalState.workspace)?.name || '';
+    const name = workspaces.find((ws) => String(ws.id) === modalState.workspaceId)?.name || '';
 
     return name;
-  }, [workspaces, modalState.workspace]);
+  }, [workspaces, modalState.workspaceId]);
 
   const workspaceItems: MenuProps['items'] = useMemo(
     () =>
@@ -223,7 +223,7 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
               <Input onChange={handleNameChange} />
             </Form.Item>
             <Tooltip placement="bottom">
-              <Form.Item label="Workspaces" name="workspace">
+              <Form.Item label="Workspace" name="workspace">
                 <Dropdown
                   arrow
                   className={css.workspacDropdown}
@@ -235,7 +235,7 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
                   }
                   getPopupContainer={(triggerNode) => triggerNode}
                   menu={{
-                    defaultSelectedKeys: [modalState.workspace],
+                    defaultSelectedKeys: [modalState.workspaceId],
                     items: workspaceItems,
                     onSelect,
                     selectable: true,
@@ -293,7 +293,7 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
       workspaceItems,
       workspaces,
       workspaceName,
-      modalState.workspace,
+      modalState.workspaceId,
       onSelect,
       handleDescriptionChange,
       handleMetadataChange,
