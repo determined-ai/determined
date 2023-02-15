@@ -37,6 +37,7 @@ import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -85,6 +86,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const { canMoveModel } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -426,16 +428,26 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       const menuItems: MenuProps['items'] = [
         { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
-        { key: MenuKey.MoveModel, label: 'Move Model' },
       ];
 
+      if (canMoveModel({ destination: { id: workspace?.id ?? 0 } })) {
+        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+      }
       if (user?.id === record.userId || user?.isAdmin) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [moveModelToWorkspace, showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
+    [
+      canMoveModel,
+      moveModelToWorkspace,
+      showConfirmDelete,
+      switchArchived,
+      user?.id,
+      user?.isAdmin,
+      workspace?.id,
+    ],
   );
 
   const columns = useMemo(() => {
