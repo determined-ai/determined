@@ -1,13 +1,11 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, ModalFuncProps, Tooltip } from 'antd';
-import { SelectInfo } from 'rc-menu/lib/interface';
+import { ModalFuncProps, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import DynamicIcon from 'components/DynamicIcon';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
+import SelectFilter from 'components/SelectFilter';
 import EditableTagList from 'components/TagList';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -28,13 +26,13 @@ const FORM_ID = 'create-model-form';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
-  workspaceId?: string;
+  workspaceId?: number;
 }
 
 interface FormInputs {
   description?: string;
   modelName: string;
-  workspace: string;
+  workspace: number;
 }
 
 interface OpenProps {
@@ -49,7 +47,7 @@ interface ModalState {
   modelName: string;
   tags: string[];
   visible: boolean;
-  workspaceId: string;
+  workspaceId: number;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -63,10 +61,10 @@ const DEFAULT_MODAL_STATE = {
   modelName: '',
   tags: [],
   visible: false,
-  workspaceId: '1',
+  workspaceId: 1,
 };
 
-const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHooks => {
+const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks => {
   const { canCreateModelWorkspace } = usePermissions();
   const loadableWorkspaces = useWorkspaces();
   const isWorkspace = !!workspaceId;
@@ -87,7 +85,7 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
   );
 
   useEffect(() => {
-    if (modalState.workspaceId !== workspaceId) setModalState({ ...modalState, workspaceId });
+    if (workspaceId && modalState.workspaceId !== workspaceId) setModalState({ ...modalState, workspaceId });
   }, [workspaceId, modalState]);
 
   const {
@@ -177,28 +175,24 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
-  const onSelect = useCallback((info: SelectInfo) => {
-    setModalState((prev) => ({ ...prev, workspace: info.key }));
+  const onSelect = useCallback((value: number) => {
+    setModalState((prev) => ({ ...prev, workspace: value }));
+
+    return value;
   }, []);
 
   const workspaceName = useMemo(() => {
     // we know that both the modalState.workspaceId are there, and we're looking into `workspaces` which we know that has said value
     // so, the || '' is only for type-check coverage...
-    const name = workspaces.find((ws) => String(ws.id) === modalState.workspaceId)?.name || '';
+    const name = workspaces.find((ws) => ws.id === modalState.workspaceId)?.name || '';
 
     return name;
   }, [workspaces, modalState.workspaceId]);
 
-  const workspaceItems: MenuProps['items'] = useMemo(
+  const workspaceItems = useMemo(
     () =>
       workspaces.map((ws) => ({
-        key: ws.id,
-        label: (
-          <div className={css.workspaceFilterItem}>
-            <DynamicIcon name={ws.name} size={24} />
-            <span className={css.workspaceFilterName}>{ws.name}</span>
-          </div>
-        ),
+        label: ws.name,
         value: ws.id,
       })),
     [workspaces],
@@ -224,35 +218,14 @@ const useModalModelCreate = ({ onClose, workspaceId = '' }: Props = {}): ModalHo
             </Form.Item>
             <Tooltip placement="bottom">
               <Form.Item label="Workspace" name="workspace">
-                <Dropdown
-                  arrow
-                  className={css.workspacDropdown}
+                <SelectFilter
+                  defaultValue={modalState.workspaceId}
                   disabled={!workspaces.length || isWorkspace}
-                  dropdownRender={(menu) =>
-                    React.cloneElement(menu as React.ReactElement, {
-                      style: { maxHeight: '200px', maxWidth: 'fit-content', overflowY: 'scroll' },
-                    })
-                  }
                   getPopupContainer={(triggerNode) => triggerNode}
-                  menu={{
-                    defaultSelectedKeys: [modalState.workspaceId],
-                    items: workspaceItems,
-                    onSelect,
-                    selectable: true,
-                  }}
-                  trigger={['click']}>
-                  <Button>
-                    <span
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        minWidth: '175px',
-                      }}>
-                      {workspaceName}
-                      <DownOutlined style={{ marginLeft: '10px' }} />
-                    </span>
-                  </Button>
-                </Dropdown>
+                  options={workspaceItems}
+                  showSearch={false}
+                  onSelect={(value) => onSelect(value as number)}
+                />
               </Form.Item>
             </Tooltip>
             <Form.Item label="Description (optional)" name="description">

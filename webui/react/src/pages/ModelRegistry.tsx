@@ -88,7 +88,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const { canViewModelRegistry } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const workspaceId = useMemo(
-    () => (workspace?.id ? String(workspace.id) : undefined),
+    () => (workspace?.id ? workspace.id : undefined),
     [workspace?.id],
   );
 
