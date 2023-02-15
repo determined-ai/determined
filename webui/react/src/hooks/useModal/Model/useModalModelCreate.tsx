@@ -1,8 +1,9 @@
-import { ModalFuncProps, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ModalFuncProps } from 'antd';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import SelectFilter from 'components/SelectFilter';
@@ -67,7 +68,7 @@ const DEFAULT_MODAL_STATE = {
 const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks => {
   const { canCreateModelWorkspace } = usePermissions();
   const loadableWorkspaces = useWorkspaces();
-  const isWorkspace = !!workspaceId;
+  const isWorkspace = workspaceId !== undefined;
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace(id)),
     NotLoaded: () => [],
@@ -84,8 +85,8 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     [modalState, onClose],
   );
 
-  useEffect(() => {
-    if (workspaceId && modalState.workspaceId !== workspaceId)
+  useLayoutEffect(() => {
+    if (workspaceId !== undefined && modalState.workspaceId !== workspaceId)
       setModalState({ ...modalState, workspaceId });
   }, [workspaceId, modalState]);
 
@@ -182,14 +183,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     return value;
   }, []);
 
-  const workspaceName = useMemo(() => {
-    // we know that both the modalState.workspaceId are there, and we're looking into `workspaces` which we know that has said value
-    // so, the || '' is only for type-check coverage...
-    const name = workspaces.find((ws) => ws.id === modalState.workspaceId)?.name || '';
-
-    return name;
-  }, [workspaces, modalState.workspaceId]);
-
   const workspaceItems = useMemo(
     () =>
       workspaces.map((ws) => ({
@@ -210,6 +203,14 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
             <p className={css.directions}>
               Create a registered model to organize important checkpoints.
             </p>
+            <Form.Item initialValue={state.workspaceId} label="Workspace" name="workspace">
+              <SelectFilter
+                disabled={!workspaces.length || isWorkspace}
+                options={workspaceItems}
+                showSearch={false}
+                onChange={(value) => onSelect(value as number)}
+              />
+            </Form.Item>
             <Form.Item
               label="Model name"
               name="modelName"
@@ -217,18 +218,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
               requiredMessage="Model name is required ">
               <Input onChange={handleNameChange} />
             </Form.Item>
-            <Tooltip placement="bottom">
-              <Form.Item label="Workspace" name="workspace">
-                <SelectFilter
-                  defaultValue={modalState.workspaceId}
-                  disabled={!workspaces.length || isWorkspace}
-                  getPopupContainer={(triggerNode) => triggerNode}
-                  options={workspaceItems}
-                  showSearch={false}
-                  onSelect={(value) => onSelect(value as number)}
-                />
-              </Form.Item>
-            </Tooltip>
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />
             </Form.Item>
@@ -266,8 +255,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
       isWorkspace,
       workspaceItems,
       workspaces,
-      workspaceName,
-      modalState.workspaceId,
       onSelect,
       handleDescriptionChange,
       handleMetadataChange,
@@ -279,6 +266,9 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
 
   const getModalProps = useCallback(
     (state: ModalState): Partial<ModalFuncProps> => {
+      const disableWorkspaceModelCreation = isWorkspace
+        ? !canCreateModelWorkspace(workspaceId)
+        : false;
       return {
         className: css.base,
         closable: true,
@@ -286,16 +276,22 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
         icon: null,
         maskClosable: true,
         okButtonProps: {
-          disabled: !modelName,
+          disabled: !modelName || (isWorkspace && disableWorkspaceModelCreation),
           form: FORM_ID,
           htmlType: 'submit',
         },
-        okText: 'Create Model',
+        okText: (
+          <Tooltip
+            placement="bottom"
+            title={disableWorkspaceModelCreation ? 'Insufficient permission!' : undefined}>
+            Create Model
+          </Tooltip>
+        ),
         onOk: () => handleOk(state),
-        title: 'Create Model',
+        title: '',
       };
     },
-    [getModalContent, handleOk, modelName],
+    [getModalContent, handleOk, modelName, isWorkspace, workspaceId, canCreateModelWorkspace],
   );
 
   /**
