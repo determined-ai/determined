@@ -17,6 +17,11 @@ Version 0.19.10
 
 **Breaking Changes**
 
+-  Kubernetes: Add the ``kubernetes_namespace`` config field for resource pools, specifying a
+   Kubernetes `namespace
+   <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__ that tasks
+   will be launched into.
+
 -  The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to ``"default"``.
    Forked experiments will need to have their configurations manually modified to update the
    resource pool name.

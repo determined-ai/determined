@@ -398,6 +398,10 @@ The master supports the following configuration settings:
       ``task_container_defaults`` is set, tasks launched in that pool will completely ignore the
       top-level setting.
 
+   -  ``kubernetes_namespace``: When the Kubernetes resource manager is in use, this specifies a
+      `namespace <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__
+      that tasks in this resource pool will be launched into.
+
    -  ``scheduler``: Specifies how Determined schedules tasks to agents. The scheduler configuration
       on each resource pool will override the global one. For more on scheduling behavior in
       Determined, see :ref:`scheduling`.
