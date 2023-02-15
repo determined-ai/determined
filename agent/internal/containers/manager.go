@@ -9,7 +9,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"golang.org/x/sys/unix"
@@ -63,7 +62,7 @@ func New(
 		opts:        opts,
 		mopts:       mopts,
 		devices:     devices,
-		log:         logrus.WithField("component", "container-manager"),
+		log:         log.WithField("component", "container-manager"),
 		docker:      cl,
 		pub:         pub,
 		containers:  make(map[cproto.ID]*container.Container),

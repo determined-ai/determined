@@ -361,7 +361,6 @@ func TestManagerReattach(t *testing.T) {
 		case cproto.Terminated:
 			require.Truef(t, false, "container exited unexpectedly %s", spew.Sdump(ev))
 		case cproto.Running:
-			break
 		default:
 			continue
 		}

@@ -140,15 +140,17 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	return checkpointsWithMetric, nil
 }
 
-// @Summary	Get individual file from modal definitions for download.
-// @Tags		Experiments
-// @ID			get-experiment-model-file
-// @Accept		json
-// @Produce	text/plain; charset=utf-8
-// @Param		experiment_id	path	int		true	"Experiment ID"
-// @Param		path			query	string	true	"Path to the target file"
-// @Success	200				{}		string	""
-// @Router		/experiments/{experiment_id}/file/download [get]
+//	@Summary	Get individual file from modal definitions for download.
+//	@Tags		Experiments
+//	@ID			get-experiment-model-file
+//	@Accept		json
+//	@Produce	text/plain; charset=utf-8
+//	@Param		experiment_id	path	int		true	"Experiment ID"
+//	@Param		path			query	string	true	"Path to the target file"
+//	@Success	200				{}		string	""
+//	@Router		/experiments/{experiment_id}/file/download [get]
+//
+// nolint: gofmt
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`

@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev17
+    default: v1dev19nickcachebusttryingda
   gke-version:
     type: string
     default: "1.21.14"
@@ -209,11 +209,13 @@ commands:
       - run: sudo rm -rf /usr/local/go # Remove system go.
       - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
+      - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
+
 
   install-protoc:
     steps:
       - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
-      - run: unzip /tmp/protoc.zip -d $HOME/.local
+      - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   setup-go-intg-deps:
     steps:
@@ -1035,7 +1037,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1043,6 +1045,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go      
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1066,7 +1069,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1074,6 +1077,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1104,7 +1108,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1112,6 +1116,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1133,7 +1138,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1141,6 +1146,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1177,13 +1183,14 @@ jobs:
 
   publish-helm-gh:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - run: make -C helm release-gh
 
   publish-python-package:
@@ -1325,7 +1332,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: large
@@ -1333,6 +1340,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1342,13 +1350,14 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1361,11 +1370,12 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - persist_to_workspace:
@@ -1375,13 +1385,14 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.20
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test

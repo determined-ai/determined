@@ -66,7 +66,6 @@ func TestWebsocket(t *testing.T) {
 		t.Errorf("failed to dial websocket: %v", err)
 		return
 	}
-
 	ws, err := ws.Wrap[int, int]("client", c)
 	if err != nil {
 		t.Errorf("failed to wrap websocket: %v", err)

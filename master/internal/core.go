@@ -195,6 +195,8 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 //	@Router		/allocation/raw [get]
 //	@Deprecated
 //
+//nolint:gofmt
+//nolint:goimports
 //nolint:lll
 //nolint:lll
 //nolint:lll
@@ -326,6 +328,8 @@ func (m *Master) fetchAggregatedResourceAllocation(
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
 //	@Router		/allocation/aggregated [get]
 //
+//nolint:gofmt
+//nolint:goimports
 //nolint:lll
 //nolint:lll
 //nolint:lll
