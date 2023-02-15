@@ -251,12 +251,15 @@ func (e *ExperimentConfigV0) SetSecurity(val *SecurityConfigV0) {
 	e.RawSecurity = val
 }
 
-func (e ExperimentConfigV0) TensorboardLogging() *bool {
-	return e.RawTensorboardLogging
+func (e ExperimentConfigV0) TensorboardLogging() bool {
+	if e.RawTensorboardLogging == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .TensorboardLogging")
+	}
+	return *e.RawTensorboardLogging
 }
 
-func (e *ExperimentConfigV0) SetTensorboardLogging(val *bool) {
-	e.RawTensorboardLogging = val
+func (e *ExperimentConfigV0) SetTensorboardLogging(val bool) {
+	e.RawTensorboardLogging = &val
 }
 
 func (e ExperimentConfigV0) TensorboardStorage() *TensorboardStorageConfigV0 {

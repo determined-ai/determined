@@ -501,6 +501,9 @@ def maybe_write_output(lines: List[str], output: Optional[str]) -> None:
 def python_main(package: str, output: Optional[str]) -> None:
     assert package is not None, "--package must be provided"
     files = list_files(package)
+    for f in files:
+        print("swy")
+        print(files)
     schemas = read_schemas(files)
 
     lines = gen_python(schemas)

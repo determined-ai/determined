@@ -982,6 +982,13 @@ schemas = {
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
         },
+        "tensorboard_logging": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
         "workspace": {
             "type": [
                 "string",
