@@ -71,6 +71,7 @@ class TrialInfo:
         debug: bool,
         unique_port_offset: int,
         inter_node_network_interface: Optional[str],
+        tensorboard_logging: bool,
     ):
         """
         TrialInfo contains information about the trial that is currently running.
@@ -108,6 +109,8 @@ class TrialInfo:
         self._unique_port_offset = unique_port_offset
         # TODO: Get rid of this in favor of launch layer configs?
         self._inter_node_network_interface = inter_node_network_interface
+        # TODO: decide if the experiment config is the right place for users to set a tensorboard logging flag.
+        self._tensorboard_logging = tensorboard_logging
 
     @classmethod
     def _from_env(cls) -> "TrialInfo":
@@ -124,6 +127,7 @@ class TrialInfo:
             debug=experiment_config.get("debug", False),
             unique_port_offset=int(os.environ["DET_UNIQUE_PORT_OFFSET"]),
             inter_node_network_interface=os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE"),
+            tensorboard_logging=experiment_config.get("tensorboard_logging", True),
         )
 
     def _to_file(self, path: str = DEFAULT_TRIAL_INFO_PATH) -> None:
