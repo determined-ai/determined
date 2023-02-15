@@ -136,7 +136,7 @@ func (m *Master) getCheckpointImpl(
 //	@Success	200				{}		string	""
 //	@Router		/checkpoints/{checkpoint_uuid} [get]
 //
-// nolint: gofmt
+// Read why this line exists on the comment on getAggregatedResourceAllocation in core.go.
 func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")

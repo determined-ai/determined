@@ -195,11 +195,7 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 //	@Router		/allocation/raw [get]
 //	@Deprecated
 //
-//nolint:gofmt
-//nolint:goimports
-//nolint:lll
-//nolint:lll
-//nolint:lll
+// nolint:lll
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -328,11 +324,9 @@ func (m *Master) fetchAggregatedResourceAllocation(
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
 //	@Router		/allocation/aggregated [get]
 //
-//nolint:gofmt
-//nolint:goimports
-//nolint:lll
-//nolint:lll
-//nolint:lll
+// nolint:lll
+// To make both gofmt and swag fmt happy we need an unindented comment matched with the swagger
+// comment indented with tabs. https://github.com/swaggo/swag/pull/1386#issuecomment-1359242144
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start  string `query:"start_date"`

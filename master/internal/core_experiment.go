@@ -150,7 +150,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 //	@Success	200				{}		string	""
 //	@Router		/experiments/{experiment_id}/file/download [get]
 //
-// nolint: gofmt
+// Read why this line exists on the comment on getAggregatedResourceAllocation in core.go.
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
