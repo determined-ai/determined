@@ -497,10 +497,10 @@ func (a *apiServer) MoveModel(
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("move_model", holder, req.ModelName, req.DestinationWorkspaceId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error moving a model (%d)", req.ModelName)
+		return nil, errors.Wrapf(err, "error moving a model (%s)", req.ModelName)
 	}
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "Model (%d) does not exist or not moveable by this user",
+		return nil, errors.Wrapf(err, "Model (%s) does not exist or not moveable by this user",
 			req.ModelName)
 	}
 

@@ -35,8 +35,8 @@ type ModelAuthZ interface {
 		curUser model.User, workspaceID int32,
 	) error
 	// POST /api/v1/models/{model_name}/move
-	CanMoveModel(ctx context.Context, curUser model.User, model *modelv1.Model, fromWorkspaceId,
-		toWorkspaceId int32) error
+	CanMoveModel(ctx context.Context, curUser model.User, model *modelv1.Model, fromWorkspaceID,
+		toWorkspaceID int32) error
 
 	// GET /api/v1/models with filter to allow reading
 	FilterReadableModelsQuery(
