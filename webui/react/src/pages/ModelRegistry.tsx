@@ -430,7 +430,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
       ];
 
-      if (canMoveModel({ destination: { id: workspace?.id ?? 0 } })) {
+      if (canMoveModel({ destination: { id: workspace?.id ?? 1 } })) {
         menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
       }
       if (user?.id === record.userId || user?.isAdmin) {

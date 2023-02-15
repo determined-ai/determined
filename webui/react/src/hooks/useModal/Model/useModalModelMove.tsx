@@ -1,10 +1,11 @@
-import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
 import Link from 'components/Link';
+import SelectFilter from 'components/SelectFilter';
+import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import { moveModel } from 'services/api';
@@ -29,6 +30,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
+  const { canMoveModel } = usePermissions();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
   const workspaces = Loadable.getOrElse([], useWorkspaces());
 
@@ -75,13 +77,16 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
               label="Workspace"
               name="workspaceId"
               rules={[{ message: 'Please select a workspace', required: true }]}>
-              <Select
-                filterOption={(input, option) => (option?.label ?? '').includes(input)}
-                filterSort={(a, b) => (a.label < b.label ? 1 : -1)}
-                options={workspaces.map((ws) => ({ label: ws.name, value: ws.id }))}
+              <SelectFilter
+                filterOption={(input, option) =>
+                  (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
+                options={workspaces
+                  .filter((ws) => canMoveModel({ destination: { id: ws.id } }))
+                  .map((ws) => ({ label: ws.name, value: ws.id }))}
                 placeholder="Select a workspace"
                 showSearch
-                style={{ width: '100%' }}
               />
             </Form.Item>
           </Form>
@@ -94,7 +99,7 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
         title: `Move a Model (${model.name})`,
       };
     },
-    [form, onClose, workspaces],
+    [canMoveModel, form, onClose, workspaces],
   );
 
   const modalOpen = useCallback(
