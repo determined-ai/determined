@@ -49,7 +49,7 @@ following examples:
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
-For tips on debugging, see :doc:`/training/debug-models`.
+For tips on debugging, see :doc:`/training-guide/debug-models`.
 
 .. _pytorch-downloading-data:
 
@@ -59,7 +59,7 @@ For tips on debugging, see :doc:`/training/debug-models`.
 
 .. note::
 
-   Before continuing, read how to :doc:`/training/load-model-data` to understand how to work with
+   Before continuing, read how to :doc:`/training-guide/load-model-data` to understand how to work with
    different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:

@@ -153,7 +153,7 @@ PyTorch
 =======
 
 To add TensorBoard support for models that use the :doc:`PyTorch API
-</training/apis-howto/api-pytorch-ug>`, use the ``writer`` field in an instance of the
+</training-guide/apis-howto/api-pytorch-ug>`, use the ``writer`` field in an instance of the
 :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter` class:
 
 .. code:: python

@@ -294,7 +294,7 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
    default locations, or are added to the ``path`` and/or ``ld_library_path`` variables in the
    :ref:`slurm configuration <cluster-configuration-slurm>`. Depending upon your system
    configuration, you may need to select a different ROCm image. See
-   :doc:`/training/setup-guide/set-environment-images` for the images available.
+   :doc:`/training-guide/setup-guide/set-environment-images` for the images available.
 
 -  Launching experiments with ``slot_type: rocm``, may fail in the AMD/ROCm libraries with with the
    error ``terminate called after throwing an instance of 'boost::filesystem::filesystem_error'

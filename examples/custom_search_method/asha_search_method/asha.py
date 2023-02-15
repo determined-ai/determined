@@ -1,6 +1,6 @@
 """
 This example shows ASHA (Asynchronous Successive Halving Algorithm) implemented as a custom SearchMethod.
-For details related to ASHA see https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html
+For details related to ASHA see https://docs.determined.ai/latest/training-guide/hyperparameter/search-methods/hp-adaptive-asha.html
 
 ASHASearchMethod provides implementation for abstract methods from SearchMethod class, which
 are invoked by SearchRunner in response to the SearcherEvents received
@@ -271,7 +271,7 @@ class ASHASearchMethod(searcher.SearchMethod):
     ############################################################################
     # ASHA internal implementation details. You can skip this part.
     # If you want to learn more about ASHA, see
-    # https://docs.determined.ai/latest/training/hyperparameter/search-methods/hp-adaptive-asha.html
+    # https://docs.determined.ai/latest/training-guide/hyperparameter/search-methods/hp-adaptive-asha.html
     def _get_max_concurrent_trials(self):
         if self.asha_search_state.max_concurrent_trials > 0:
             max_concurrent_trials = min(

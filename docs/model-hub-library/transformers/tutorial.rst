@@ -26,7 +26,7 @@ the `question answering example`_ to get a better understanding of how to use **
 transformers.
 
 The `question answering example`_ includes two implementations of
-:doc:`/training/apis-howto/api-pytorch-ug`:
+:doc:`/training-guide/apis-howto/api-pytorch-ug`:
 
 -  qa_trial.py_ uses the :py:class:`model_hub.huggingface.BaseTransformerTrial` parent ``__init__``
    function to build **transformers** config, tokenizer, and model objects; and optimizer and

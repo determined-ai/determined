@@ -253,7 +253,7 @@ When a trial is ready to run, the master communicates with the agent, or :ref:`d
 training code. A set of default container images applicable to many deep learning tasks is provided,
 but you can also specify a :ref:`custom image <custom-docker-images>`. If the specified container
 images do not exist locally, the trial container fetches the images from the registry. See
-:doc:`/training/model-management/model-registry-org`.
+:doc:`/training-guide/model-management/model-registry-org`.
 
 After starting the containers, each trial runs the ``startup-hook.sh`` script in the context
 directory.

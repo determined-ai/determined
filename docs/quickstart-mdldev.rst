@@ -351,7 +351,7 @@ been converted to the Determined APIs. Each example includes a model definition 
 experiment configuration files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
-</training/hyperparameter/overview>` section.
+</training-guide/hyperparameter/overview>` section.
 
 For faster, less structured ways to run a Determined cluster without writing a model, see:
 

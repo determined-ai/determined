@@ -14,4 +14,4 @@ configuration into the constructor of a PyTorch `Dropout
    nn.Dropout(p=self.context.get_hparam("dropout_probability"))
 
 To see hyperparameter injection throughout a complete trial implementation, refer to the
-:doc:`/training/apis-howto/overview`.
+:doc:`/training-guide/apis-howto/overview`.

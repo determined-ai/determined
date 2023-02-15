@@ -25,4 +25,4 @@ If one of the images above contain your required libraries, there is no addition
 preparation needed.
 
 If you need to add additional customization to the training environment, review the
-:doc:`/training/setup-guide/custom-env` page.
+:doc:`/training-guide/setup-guide/custom-env` page.

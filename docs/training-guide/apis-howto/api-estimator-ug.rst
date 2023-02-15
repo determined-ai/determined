@@ -25,7 +25,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
+   Before loading data, read this document :doc:`/training-guide/load-model-data` to understand how to
    work with different sources of data.
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets

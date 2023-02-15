@@ -12,15 +12,15 @@
    :caption: Model Developer Guide
    :hidden:
 
-   Distributed Training <training/dtrain-introduction>
-   Prepare Container Environment <training/setup-guide/overview>
-   Prepare Data <training/load-model-data>
-   Training API Guides <training/apis-howto/overview>
-   Hyperparameter Tuning <training/hyperparameter/overview>
-   Submit Experiment <training/submit-experiment>
-   How to Debug Models <training/debug-models>
-   Model Management <training/model-management/overview>
-   Best Practices <training/best-practices/overview>
+   Distributed Training <training-guide/concepts/dtrain-introduction>
+   Prepare Container Environment <training-guide/setup-guide/overview>
+   Prepare Data <training-guide/load-model-data>
+   Training API Guides <training-guide/apis-howto/overview>
+   Hyperparameter Tuning <training-guide/hyperparameter/overview>
+   Submit Experiment <training-guide/submit-experiment>
+   How to Debug Models <training-guide/debug-models>
+   Model Management <training-guide/model-management/overview>
+   Best Practices <training-guide/best-practices/overview>
 
 .. toctree::
    :caption: Administrator Guide
@@ -128,7 +128,7 @@ so you can spend your time building models instead of managing infrastructure.
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="training/dtrain-introduction.html">
+             <a class="tile" href="training-guide/concepts/dtrain-introduction.html">
                  <h2 class="tile-title">Model Developer Guide</h2>
                  <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
              </a>

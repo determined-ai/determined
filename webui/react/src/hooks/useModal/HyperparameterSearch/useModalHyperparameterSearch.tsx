@@ -377,7 +377,7 @@ const useModalHyperparameterSearch = ({
           <p>Select hyperparameters and define the search space.</p>
           <Link
             external
-            path={paths.docs('/training/hyperparameter/configure-hp-ranges.html')}
+            path={paths.docs('/training-guide/hyperparameter/configure-hp-ranges.html')}
             popout>
             Learn more
           </Link>

@@ -38,7 +38,7 @@ environment.
 Go Further
 ==========
 
-Visit the :doc:`Training API Guides </training/apis-howto/overview>` for in-depth guides that
+Visit the :doc:`Training API Guides </training-guide/apis-howto/overview>` for in-depth guides that
 describe how to take your existing model code and train your model in Determined.
 
 Looking for Examples?

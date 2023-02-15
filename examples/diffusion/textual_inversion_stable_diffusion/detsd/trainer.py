@@ -523,7 +523,7 @@ class DetSDTextualInversionTrainer:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             with self.accelerator.local_main_process_first():
                 # Restore the state per the docs:
-                # https://docs.determined.ai/latest/training/apis-howto/api-core/checkpoints.html
+                # https://docs.determined.ai/latest/training-guide/apis-howto/api-core/checkpoints.html
                 with open(path.joinpath("metadata.json"), "r") as f:
                     checkpoint_metadata_dict = json.load(f)
                     if trial_id == checkpoint_metadata_dict["trial_id"]:

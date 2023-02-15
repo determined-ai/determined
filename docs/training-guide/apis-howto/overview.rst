@@ -15,7 +15,7 @@ With the Core API, you can plug in your existing training code. You'll then use 
 configuration </reference/reference-training/experiment-config-reference>` to tell Determined how to
 train the model - e.g., multi-GPU, hyperparameter search, etc.
 
--  :doc:`/training/apis-howto/api-core-ug`
+-  :doc:`/training-guide/apis-howto/api-core-ug`
 
 *****************
  High-Level APIs
@@ -32,10 +32,10 @@ Once you have converted your code, you can use an :doc:`experiment configuration
 </reference/reference-training/experiment-config-reference>` to tell Determined how to train the
 model - e.g., multi-GPU, hyperparameter search, etc.
 
--  :doc:`/training/apis-howto/api-pytorch-ug`
--  :doc:`/training/apis-howto/api-pytorch-lightning-ug`
--  :doc:`/training/apis-howto/api-keras-ug`
--  :doc:`/training/apis-howto/deepspeed/overview`
+-  :doc:`/training-guide/apis-howto/api-pytorch-ug`
+-  :doc:`/training-guide/apis-howto/api-pytorch-lightning-ug`
+-  :doc:`/training-guide/apis-howto/api-keras-ug`
+-  :doc:`/training-guide/apis-howto/deepspeed/overview`
 
 Looking for a Basic Tutorial?
 =============================
@@ -58,7 +58,7 @@ TensorFlow Core Models
 ======================
 
 Determined has support for TensorFlow models that use the :doc:`Keras
-</training/apis-howto/api-keras-ug>` or :doc:`Estimator </training/apis-howto/api-estimator-ug>`
+</training-guide/apis-howto/api-keras-ug>` or :doc:`Estimator </training-guide/apis-howto/api-estimator-ug>`
 APIs. For models that use the low-level TensorFlow Core APIs, we recommend wrapping your model in
 Keras, as recommended by the official `TensorFlow
 <https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
