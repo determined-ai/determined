@@ -82,6 +82,10 @@ class Trainer:
 
             assert not test_mode, "test_mode is only supported in local training mode"
             assert self._info, "Unable to detect cluster info"
+            if max_length is not None:
+                logging.warning(
+                    "max_length is ignored when training on-cluster. Please configure the searcher instead"
+                )
 
             latest_checkpoint = self._info.latest_checkpoint
             smaller_is_better = bool(self._info.trial._config["searcher"]["smaller_is_better"])
@@ -174,7 +178,7 @@ def init(
         trial_seed = _generate_local_seed()
 
         # XXX: todo: figure out if better way to handle this
-        aggregation_frequency = exp_conf and int(exp_conf["optimizations"]["aggregation_frequency"]) or 1  # type: ignore
+        aggregation_frequency = exp_conf and int(exp_conf.get("optimizations", {}).get("aggregation_frequency", 1))  # type: ignore
         fp16_compression = False
         average_aggregated_gradients = True
         steps_completed = 0

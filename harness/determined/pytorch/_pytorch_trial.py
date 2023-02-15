@@ -749,8 +749,11 @@ class _PyTorchTrialController:
 
                 if train_step.step_type == _TrainStepType.VALIDATE:
                     if self._validation_is_current():
-                        logging.debug("Validation already exists for step, skipping.")
+                        logging.debug(
+                            f"XXX: Validation already exists at {vars(self.state)}, skipping."
+                        )
                     else:
+                        logging.debug(f"XXX: Validating {vars(self.state)}.")
                         val_metrics = self._validate()
 
                         # Validation step complete.
@@ -762,19 +765,25 @@ class _PyTorchTrialController:
                                 self.state.batches_trained, val_metrics
                             )
                         if not self._checkpoint_is_current():
+                            logging.debug(f"XXX: Checkpointing after validate {vars(self.state)}.")
                             self._checkpoint(already_exiting=False)
 
                 elif train_step.step_type == _TrainStepType.CHECKPOINT:
                     if not self._checkpoint_is_current():
+                        logging.debug(f"XXX: Checkpointing {vars(self.state)}.")
                         self._checkpoint(already_exiting=False)
 
                 # Reset train step limit
                 train_step.limit_reached = False
 
             # After checkpoint/validation steps, check preemption and upload to tensorboard
+            logging.debug(
+                f"XXX: Finished checkpoint/validate steps, checking preemption {vars(self.state)}"
+            )
             self._upload_tb_files()
             self._stop_requested()
 
+        logging.debug(f"XXX: finished training {vars(self.state)}")
         # Finished training. Perform final checkpoint/validation if necessary.
         if not self._validation_is_current():
             self._validate()
@@ -814,10 +823,12 @@ class _PyTorchTrialController:
 
                 if train_step.step_type == _TrainStepType.VALIDATE:
                     if not self._validation_is_current():
+                        logging.debug(f"XXX: Validating {repr(self.state)}.")
                         self._validate(op)
 
                 elif train_step.step_type == _TrainStepType.CHECKPOINT:
                     if not self._checkpoint_is_current():
+                        logging.debug(f"XXX: Checkpointing {repr(self.state)}.")
                         self._checkpoint(already_exiting=False)
 
                 # Reset train step limit
@@ -826,6 +837,8 @@ class _PyTorchTrialController:
                 # After checkpoint/validation steps, check preemption and upload to tensorboard
                 self._upload_tb_files()
                 self._stop_requested()
+
+        logging.debug(f"XXX: finished training op {repr(self.state)}")
 
         # Finished training for op. Perform final checkpoint/validation if necessary.
         if not self._checkpoint_is_current():
