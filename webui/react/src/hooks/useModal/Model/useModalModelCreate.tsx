@@ -102,13 +102,14 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
   }, []);
 
   const createModel = useCallback(async (state: ModalState) => {
-    const { modelDescription, tags, metadata, modelName } = state;
+    const { modelDescription, tags, metadata, modelName, workspaceId } = state;
     try {
       const response = await postModel({
         description: modelDescription,
         labels: tags,
         metadata: metadata,
         name: modelName,
+        workspaceId,
       });
       if (!response?.id) return;
 
