@@ -1,6 +1,7 @@
 import argparse
 import base64
 import io
+import json
 import logging
 import os
 import socket
@@ -93,7 +94,7 @@ def do_rendezvous_slurm(
 
     num_slots_str = os.environ.get("DET_SLOT_IDS")
     assert num_slots_str, "Unable to complete rendezvous without DET_SLOT_IDS"
-    num_slots = int(num_slots_str)
+    num_slots = len(json.loads(os.environ["DET_SLOT_IDS"]))
 
     rendezvous_ip = socket.gethostbyname(socket.gethostname())
     for rendezvous_iface in rendezvous_ifaces():
