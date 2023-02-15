@@ -251,6 +251,14 @@ func (e *ExperimentConfigV0) SetSecurity(val *SecurityConfigV0) {
 	e.RawSecurity = val
 }
 
+func (e ExperimentConfigV0) TensorboardLogging() *bool {
+	return e.RawTensorboardLogging
+}
+
+func (e *ExperimentConfigV0) SetTensorboardLogging(val *bool) {
+	e.RawTensorboardLogging = val
+}
+
 func (e ExperimentConfigV0) TensorboardStorage() *TensorboardStorageConfigV0 {
 	return e.RawTensorboardStorage
 }

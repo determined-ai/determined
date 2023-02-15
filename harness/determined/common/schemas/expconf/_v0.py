@@ -879,6 +879,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
     slurm: Optional[SlurmClusterConfigV0] = None
+    tensorboard_logging: Optional[bool] = None
     # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
     workspace: Optional[str] = None
 
