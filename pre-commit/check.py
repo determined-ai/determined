@@ -136,6 +136,10 @@ def main():
     if len(changed_files) == 0:
         print("No changed files.")
         exit(0)
+    print("precommit called")
+    print(args.files)
+    print(len(args.files))
+    exit(1)
 
     failed_rules = process_rules(find_rules(changed_files))
     if len(failed_rules):
