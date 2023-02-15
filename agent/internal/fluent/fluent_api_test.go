@@ -146,6 +146,10 @@ func TestFluentLoggingElastic(t *testing.T) {
 			continue
 		}
 
+		for i := 0; i < 4; i++ {
+			t.Logf("expected[%d] \n%+v actual[%d] \n%+v", i, expected[i], i, logs[i])
+		}
+
 		expectedFound := true
 		for i, l := range logs {
 			expectedFound = expectedFound && assertLogEquals(t, *l, expected[i])

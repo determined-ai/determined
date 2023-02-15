@@ -285,7 +285,11 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.ServiceReadyEvent != nil:
 		message = fmt.Sprintf("Service of %s is available", description)
 	case ev.AssignedEvent != nil:
-		message = fmt.Sprintf("%s was assigned to an agent", description)
+		if ev.AssignedEvent.Recovered {
+			message = fmt.Sprintf("%s was recovered on an agent", description)
+		} else {
+			message = fmt.Sprintf("%s was assigned to an agent", description)
+		}
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
 		// events we'd need to notify of them about these non existing logs either by adding a new

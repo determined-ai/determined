@@ -15,7 +15,6 @@ func defaultRPConfig() ResourcePoolConfig {
 		MaxAuxContainersPerAgent: 100,
 		MaxCPUContainersPerAgent: -1,
 		AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
-		AgentReattachEnabled:     false,
 	}
 }
 

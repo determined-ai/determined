@@ -227,7 +227,7 @@ func (c *Container) run(parent context.Context) (err error) {
 			}
 		}()
 
-		c.log.Trace("starting container")
+		c.log.WithField("docker-id", dockerID).Trace("starting container")
 		dc, err := c.docker.RunContainer(ctx, parent, dockerID)
 		if err != nil {
 			return fmt.Errorf("starting container: %w", err)
@@ -288,7 +288,7 @@ func (c *Container) wait(ctx context.Context, dc *docker.Container) error {
 	for {
 		select {
 		case exit := <-dc.ContainerWaiter.Waiter:
-			c.log.Trace("container exited")
+			c.log.Tracef("container exited with %d", exit.StatusCode)
 			if exit.Error != nil {
 				return fmt.Errorf("receiving container exit: %s", exit.Error.Message)
 			}
