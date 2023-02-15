@@ -36,6 +36,7 @@ import Toggle from 'components/Toggle';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -91,6 +92,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
+
+  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
+    useModalModelMove();
 
   const settingConfig = useMemo(() => {
     return settingsConfig(workspace?.id.toString() ?? 'global');
@@ -197,6 +201,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
     },
     [fetchModels],
+  );
+
+  const moveModelToWorkspace = useCallback(
+    (model: ModelItem) => {
+      openModelMove(model);
+    },
+    [openModelMove],
   );
 
   const setModelTags = useCallback(
@@ -393,12 +404,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
+        MoveModel: 'move-archived',
         SwitchArchived: 'switch-archived',
       } as const;
 
       const funcs = {
         [MenuKey.SwitchArchived]: () => {
           switchArchived(record);
+        },
+        [MenuKey.MoveModel]: () => {
+          moveModelToWorkspace(record);
         },
         [MenuKey.DeleteModel]: () => {
           showConfirmDelete(record);
@@ -411,6 +426,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       const menuItems: MenuProps['items'] = [
         { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
+        { key: MenuKey.MoveModel, label: 'Move Model' },
       ];
 
       if (user?.id === record.userId || user?.isAdmin) {
@@ -419,7 +435,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
+    [moveModelToWorkspace, showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
   );
 
   const columns = useMemo(() => {
@@ -722,6 +738,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       )}
       {modalModelCreateContextHolder}
       {modalModelDeleteContextHolder}
+      {modalModelMoveContextHolder}
     </Page>
   );
 };
