@@ -4,7 +4,6 @@ import path from 'path';
 
 import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
-// import { splitVendorChunkPlugin } from 'vite'; TODO: maybe remove this if we're using the manualChunk strategy
 import { defineConfig, Plugin, UserConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
