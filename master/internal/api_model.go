@@ -144,7 +144,8 @@ func (a *apiServer) GetModels(
 		// get the ids of the corresponding workspaces
 		if err := db.Bun().NewRaw(`
 			SELECT DISTINCT(id) as ID FROM workspaces w
-			WHERE w.name IN (SELECT UNNEST(?))`,
+			WHERE w.name IN (SELECT string_agg(trim(jsonNames::text, '"'), ', ')
+			FROM jsonb_array_elements(?) jsonNames)`,
 			req.WorkspaceNames,
 		).Scan(ctx, &workspaceIdsGiven); err != nil {
 			return nil, fmt.Errorf("getting workspace ids from names: %w", err)

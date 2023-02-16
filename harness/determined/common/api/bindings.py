@@ -13456,9 +13456,8 @@ def get_GetModels(
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
-    workspaceId: "typing.Optional[int]" = None,
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
-    workspaceName: "typing.Optional[str]" = None,
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
@@ -13472,9 +13471,8 @@ def get_GetModels(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
-        "workspaceId": workspaceId,
         "workspaceIds": workspaceIds,
-        "workspaceName": workspaceName,
+        "workspaceNames": workspaceNames,
     }
     _resp = session._do_request(
         method="GET",

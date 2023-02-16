@@ -318,8 +318,8 @@ class Determined:
                 sortBy=sort_by._to_bindings(),
                 userIds=None,
                 users=None,
-                workspaceName=workspace_name,
-                workspaceId=workspaceId,
+                workspaceNames=[workspace_name] if workspace_name is not None else [],
+                workspaceIds=[workspaceId] if workspaceId is not None else [],
             )
 
         resps = api.read_paginated(get_with_offset)
@@ -335,7 +335,6 @@ class Determined:
     def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimClient]:
         try:
             oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimClient] = []
-            assert self._token is not None
             headers = {"Authorization": "Bearer {}".format(self._token)}
             clients = api.get(self._master, "oauth2/clients", headers=headers).json()
             for client in clients:
@@ -350,7 +349,6 @@ class Determined:
     def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimClient:
         try:
             headers = {"Authorization": "Bearer {}".format(self._token)}
-            assert self._token is not None
             client = api.post(
                 self._master,
                 "oauth2/clients",
@@ -368,7 +366,6 @@ class Determined:
     def remove_oauth_client(self, client_id: str) -> None:
         try:
             headers = {"Authorization": "Bearer {}".format(self._token)}
-            assert self._token is not None
             api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
         except api.errors.NotFoundException:
             raise det.errors.EnterpriseOnlyError("API not found: oauth2/clients")
