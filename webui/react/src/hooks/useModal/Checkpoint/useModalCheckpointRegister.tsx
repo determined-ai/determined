@@ -81,8 +81,10 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, [modalState.models, modalState.selectedModelName]);
 
   const modelOptions = useMemo(() => {
-    return modalState.models.map((model) => ({ id: model.id, name: model.name }));
-  }, [modalState.models]);
+    return modalState.models
+      .filter((model) => canCreateModelVersion({ model }))
+      .map((model) => ({ id: model.id, name: model.name }));
+  }, [modalState.models, canCreateModelVersion]);
 
   const registerModelVersion = useCallback(
     async (state: ModalState) => {
@@ -209,10 +211,9 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         },
         { signal: canceler.signal },
       );
-      const editableModels = response.models.filter((model) => canCreateModelVersion({ model }));
       setModalState((prev) => {
-        if (isEqual(prev.models, editableModels)) return prev;
-        return { ...prev, models: editableModels };
+        if (isEqual(prev.models, response.models)) return prev;
+        return { ...prev, models: response.models };
       });
     } catch (e) {
       handleError(e, {
