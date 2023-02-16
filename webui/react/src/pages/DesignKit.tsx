@@ -1,13 +1,9 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import {
-  //TODO: Move these imports to components/kit? Add sections to DesignKit page?
-  Card,
-  Space,
-} from 'antd';
+import { Card, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
+import Grid, { GridMode } from 'components/Grid';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
@@ -19,35 +15,32 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
-import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
-import LogViewer from 'components/LogViewer/LogViewer'; //TODO: Move to components/kit?
-import OverviewStats from 'components/OverviewStats'; //TODO: Rename?
-import Page from 'components/Page'; //TODO: Move to components/kit? Add section to DesignKit page?
-import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
+import Logo from 'components/Logo';
+import OverviewStats from 'components/OverviewStats';
+import Page from 'components/Page';
+import ResourcePoolCard from 'components/ResourcePoolCard';
 import SelectFilter from 'components/SelectFilter';
-import ResponsiveTable from 'components/Table/ResponsiveTable'; //TODO: Move to components/kit?
-import ThemeToggle from 'components/ThemeToggle'; //TODO: Move to components/kit? Add section to DesignKit page?
+import ResponsiveTable from 'components/Table/ResponsiveTable';
+import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
+import UserAvatar from 'components/UserAvatar';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
 import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
-import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 
 const ComponentTitles = {
-  ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Charts: 'Charts',
@@ -55,7 +48,6 @@ const ComponentTitles = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Empty: 'Empty',
-  Facepile: 'Facepile',
   Form: 'Form',
   Input: 'Input',
   InputNumber: 'InputNumber',
@@ -65,6 +57,8 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Tooltips: 'Tooltips',
+  // Facepile: 'Facepile',
+  UserAvatar: 'UserAvatar',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -713,115 +707,75 @@ const BreadcrumbsSection: React.FC = () => {
   );
 };
 
-const FacepileSection: React.FC = () => {
-  return (
-    <ComponentSection id="Facepile" title="Facepile">
-      <Card>
-        <p>
-          A face pile (<code>{'<UserAvatar>'}</code>) displays a list of personas. Each circle
-          represents a person and contains their image or initials. Often this control is used when
-          sharing who has access to a specific view or file, or when assigning someone a task within
-          a workflow.
-        </p>
-      </Card>
-      <Card title="Best practices">
-        <strong>Content considerations</strong>
-        <ul>
-          <li>
-            The face pile empty state should only include an &quot;Add&quot; button. Another variant
-            is to use an input field with placeholder text instructing people to add a person. See
-            the people picker component for the menu used to add people to the face pile list.
-          </li>
-          <li>
-            When there is only one person in the face pile, consider using their name next to the
-            face or initials.
-          </li>
-          <li>
-            When there is a need to show the face pile expanded into a vertical list, include a
-            downward chevron button. Selecting the chevron opens a standard list view of people.
-          </li>
-          <li>
-            When the face pile exceeds a max number of 5 people, show a button at the end of the
-            list indicating how many are not being shown. Clicking or tapping on the overflow would
-            open a standard list view of people.
-          </li>
-          <li>
-            The component can include an &quot;Add&quot; button which can be used for quickly adding
-            a person to the list.
-          </li>
-          <li>
-            When hovering over a person in the face pile, include a tooltip or people card that
-            offers more information about that person.
-          </li>
-        </ul>
-      </Card>
-      <Card title="Usage">
-        <strong>Facepile</strong>
-        <UserAvatar />
-        <strong>Variations</strong>
-        <ul>
-          <li>Facepile with 8 people</li>
-          <p>Not implemented</p>
-          <li>Facepile with both name initials</li>
-          <p>Not implemented</p>
-        </ul>
-      </Card>
-    </ComponentSection>
-  );
-};
+// const FacepileSection: React.FC = () => {
+//   return (
+//     <ComponentSection id="Facepile" title="Facepile">
+//       <Card>
+//         <p>
+//           A face pile (<code>{'<UserAvatar>'}</code>) displays a list of personas. Each circle
+//           represents a person and contains their image or initials. Often this control is used when
+//           sharing who has access to a specific view or file, or when assigning someone a task within
+//           a workflow.
+//         </p>
+//       </Card>
+//       <Card title="Best practices">
+//         <strong>Content considerations</strong>
+//         <ul>
+//           <li>
+//             The face pile empty state should only include an &quot;Add&quot; button. Another variant
+//             is to use an input field with placeholder text instructing people to add a person. See
+//             the people picker component for the menu used to add people to the face pile list.
+//           </li>
+//           <li>
+//             When there is only one person in the face pile, consider using their name next to the
+//             face or initials.
+//           </li>
+//           <li>
+//             When there is a need to show the face pile expanded into a vertical list, include a
+//             downward chevron button. Selecting the chevron opens a standard list view of people.
+//           </li>
+//           <li>
+//             When the face pile exceeds a max number of 5 people, show a button at the end of the
+//             list indicating how many are not being shown. Clicking or tapping on the overflow would
+//             open a standard list view of people.
+//           </li>
+//           <li>
+//             The component can include an &quot;Add&quot; button which can be used for quickly adding
+//             a person to the list.
+//           </li>
+//           <li>
+//             When hovering over a person in the face pile, include a tooltip or people card that
+//             offers more information about that person.
+//           </li>
+//         </ul>
+//       </Card>
+//       <Card title="Usage">
+//         <strong>Facepile</strong>
+//         <UserAvatar />
+//         <strong>Variations</strong>
+//         <ul>
+//           <li>Facepile with 8 people</li>
+//           <p>Not implemented</p>
+//           <li>Facepile with both name initials</li>
+//           <p>Not implemented</p>
+//         </ul>
+//       </Card>
+//     </ComponentSection>
+//   );
+// };
 
-const ActionBarSection: React.FC = () => {
-  const { experiment } = generateTestExperimentData();
+const UserAvatarSection: React.FC = () => {
   return (
-    <ComponentSection id="ActionBar" title="ActionBar">
+    <ComponentSection id="UserAvatar" title="UserAvatar">
       <Card>
         <p>
-          <code>{'<ActionBar>'}</code> is a surface that houses commands that operate on the content
-          of the window, panel, or parent region it resides above. ActionBar are one of the most
-          visible and recognizable ways to surface commands, and can be an intuitive method for
-          interacting with content on the page; however, if overloaded or poorly organized, they can
-          be difficult to use and hide valuable commands from your user. ActionBar can also display
-          a search box for finding content, hold simple commands as well as menus, or display the
-          status of ongoing actions.
+          A (<code>{'<UserAvatar>'}</code>) represents a user. It consists of a circle containing
+          the first letter of the user&apos;s display name or username. On hover, it displays a
+          tooltip with the full display name or username.
         </p>
-        <p>
-          Commands should be sorted in order of importance, from left-to-right or right-to-left
-          depending on the culture. Secondarily, organize commands in logical groupings for easier
-          recall. ActionBars work best when they display no more than 5-7 commands. This helps users
-          quickly find your most valuable features. If you need to show more commands, consider
-          using the overflow menu. If you need to render status or viewing controls, these go on the
-          right side of the ActionBar (or left side if in a left-to-right experience). Do not
-          display more than 2-3 items on the right side as it will make the overall ActionBar
-          difficult to parse.
-        </p>
-        <p>
-          All command items should have an icon and a label. Commands can render as labels only as
-          well. In smaller widths, commands can just use icon only, but only for the most
-          recognizable and frequently used commands. All other commands should go into an overflow
-          where text labels can be shown.
-        </p>
-      </Card>
-      <Card title="Best practices">
-        <strong>Content considerations</strong>
-        <ul>
-          <li>
-            Sort commands in order of importance from left to right or right to left depending on
-            the culture.
-          </li>
-          <li>Use overflow to house less frequently-used commands.</li>
-          <li>
-            In small breakpoints, only have the most recognizable commands render as icon only.
-          </li>
-        </ul>
       </Card>
       <Card title="Usage">
-        <strong>Actionbar defaults</strong>
-        <ExperimentDetailsHeader
-          experiment={experiment}
-          fetchExperimentDetails={() => {
-            return;
-          }}
-        />
+        <UserAvatar />
       </Card>
     </ComponentSection>
   );
@@ -1334,7 +1288,6 @@ const EmptySection: React.FC = () => {
 };
 
 const Components = {
-  ActionBar: <ActionBarSection />,
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Charts: <ChartsSection />,
@@ -1342,7 +1295,6 @@ const Components = {
   DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
   Empty: <EmptySection />,
-  Facepile: <FacepileSection />,
   Form: <FormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
@@ -1352,6 +1304,8 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Tooltips: <TooltipsSection />,
+  // Facepile: <FacepileSection />,
+  UserAvatar: <UserAvatarSection />,
 };
 
 const DesignKit: React.FC = () => {

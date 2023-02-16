@@ -1,6 +1,10 @@
 import React, { useCallback } from 'react';
 
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
+import LogViewer, {
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+} from 'components/kit/LogViewer/LogViewer';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'shared/utils/data';
