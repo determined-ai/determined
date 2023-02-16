@@ -913,6 +913,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         # security: Optional[SecurityConfigV0] = None,
         slurm: Optional[SlurmClusterConfigV0] = None,
         # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
+        tensorboard_logging: Optional[bool] = None,
         workspace: Optional[str] = None,
     ) -> None:
         pass

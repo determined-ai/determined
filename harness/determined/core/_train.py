@@ -99,7 +99,6 @@ class TrainContext:
 
         if self._tensorboard_mode == TensorboardMode.AUTO:
             if self._tbd_writer:
-                print("SWY on_train_step_end")
                 self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
             self._tensorboard_manager.sync()
 
@@ -185,7 +184,6 @@ class TrainContext:
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == TensorboardMode.AUTO:
             if self._tbd_writer:
-                print("SWY going to on_validation_step_end")
                 self._tbd_writer.on_validation_step_end(steps_completed, metrics)
             self._tensorboard_manager.sync()
 

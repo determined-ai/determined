@@ -987,7 +987,7 @@ schemas = {
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": true
         },
         "workspace": {
             "type": [

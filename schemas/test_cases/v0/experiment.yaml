@@ -130,6 +130,8 @@
     security:
       kerberos:
         config_file: xyz
+    tensorboard_logging:
+      true
     tensorboard_storage:
       type: shared_fs
       host_path: /tmp
@@ -225,6 +227,7 @@
       source_checkpoint_uuid: null
       source_trial_id: null
     slurm: {}
+    tensorboard_logging: true
     workspace: ''
     project: ''
 

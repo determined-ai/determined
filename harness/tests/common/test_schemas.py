@@ -152,7 +152,6 @@ class Case:
             self.defaulted and self.default_as
         ), "`default_as` and `defaulted` must both be present to run a defaulted test"
         cls = class_from_url(self.default_as)
-
         obj = cls.from_dict(self.case)
         obj.fill_defaults()
 

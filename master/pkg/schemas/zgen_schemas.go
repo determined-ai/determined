@@ -934,7 +934,7 @@ var (
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": true
         },
         "workspace": {
             "type": [
