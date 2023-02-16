@@ -27,7 +27,7 @@
     "test": "craco test --config jest.config.js",
     "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
     "eject": "react-scripts eject",
-    "analyze": "source-map-explorer 'build/static/js/*.js'"
+    "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
