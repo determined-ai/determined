@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -35,11 +35,10 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const currentUser = useCurrentUser();
   const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
-  usePolling(() => {
-    if (currentUser !== NotLoaded) {
-      fetchWorkspaces();
-    }
-  });
+  const guardedFetchWorkspaces = useCallback(() => {
+    return currentUser !== NotLoaded && fetchWorkspaces();
+  }, [currentUser, fetchWorkspaces]);
+  usePolling(guardedFetchWorkspaces);
 
   useEffect(() => {
     updateFaviconType(
