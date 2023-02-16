@@ -68,7 +68,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
   const loadableWorkspaces = useWorkspaces();
   const isWorkspace = workspaceId !== undefined;
   const workspaces = Loadable.match(loadableWorkspaces, {
-    Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace(id)),
+    Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace({ workspaceId: id })),
     NotLoaded: () => [],
   });
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -264,7 +264,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
   const getModalProps = useCallback(
     (state: ModalState): Partial<ModalFuncProps> => {
       const disableWorkspaceModelCreation = isWorkspace
-        ? !canCreateModelWorkspace(workspaceId)
+        ? !canCreateModelWorkspace({ workspaceId })
         : false;
       return {
         className: css.base,

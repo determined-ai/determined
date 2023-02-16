@@ -24,6 +24,10 @@ interface ModelPermissionsArgs {
   model: ModelItem;
 }
 
+interface ModelWorkspacePermissionsArgs {
+  workspaceId?: number;
+}
+
 interface ModelVersionPermissionsArgs {
   modelVersion: ModelVersion;
 }
@@ -51,7 +55,7 @@ interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
-  canCreateModelWorkspace: (arg0: number) => boolean;
+  canCreateModelWorkspace: (arg0: ModelWorkspacePermissionsArgs) => boolean;
   canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
@@ -140,8 +144,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
-      canCreateModelWorkspace: (workspaceId: number) =>
-        canCreateModelWorkspace(rbacOpts, workspaceId),
+      canCreateModelWorkspace: (args: ModelWorkspacePermissionsArgs) =>
+        canCreateModelWorkspace(rbacOpts, args.workspaceId),
       canCreateNSC: canCreateNSC(rbacOpts),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
@@ -266,7 +270,7 @@ const canViewModelRegistry = ({
 
 const canCreateModelWorkspace = (
   { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  workspaceId: number,
+  workspaceId?: number,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
   return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
