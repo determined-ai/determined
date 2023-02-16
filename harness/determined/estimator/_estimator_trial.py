@@ -164,11 +164,12 @@ class DeterminedControlHook(estimator.RunHook):
                 "metrics": metrics,
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
             }  # type: workload.Response
-            self.estimator_trial_controller.metric_writer.on_train_step_end(
-                self.steps_completed,
-                metrics["avg_metrics"],
-                metrics["batch_metrics"],
-            )
+            if self.estimator_trial_controller.metric_writer:
+                self.estimator_trial_controller.metric_writer.on_train_step_end(
+                    self.steps_completed,
+                    metrics["avg_metrics"],
+                    metrics["batch_metrics"],
+                )
         else:
             response = {}
 
