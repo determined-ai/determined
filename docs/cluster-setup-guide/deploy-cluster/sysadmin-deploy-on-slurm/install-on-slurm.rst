@@ -53,7 +53,7 @@ fulfilled and configured, install and configure the Determined master:
 
 #. The launcher automatically adds a prototype ``resource_manager`` section for Slurm/PBS if not
    already present upon startup of the launcher service. Edit the provided ``resource_manager``
-   configuration section for your particular deployment. For RPM-based installations, the
+   configuration section for your particular deployment. For Linux package-based installations, the
    configuration file is typically the ``/etc/determined/master.yaml`` file.
 
    In this example, with Determined and the launcher colocated on a node named ``login``, the
@@ -160,14 +160,18 @@ fulfilled and configured, install and configure the Determined master:
 
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
    cluster. If logged in with a Determined administrator account, the following example creates a
-   Determined user account that is linked to the current user's Linux account. For more details see
-   :ref:`run-as-user`.
+   Determined user account that is linked to the current user's Linux account.
 
    .. code:: bash
 
       det user create $USER
       det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group employee $USER
       det user login $USER
+
+   .. note::
+
+      If an agent user has not been configured for a Determined username, jobs will run as user
+      root. For more details see :ref:`run-as-user`.
 
 #. Verify the configuration by sanity-checking your Determined configuration:
 

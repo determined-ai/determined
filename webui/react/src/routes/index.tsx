@@ -44,7 +44,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   modelDetails: <ModelDetails />,
   models: <ModelRegistry />,
   modelVersionDetails: <ModelVersionDetails />,
-  projectDetails: <ProjectDetails />,
+  projectDetails: <ProjectDetails key="projectdetails" />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
   settings: <Settings />,
@@ -53,14 +53,14 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   taskList: <TaskList />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
-  uncategorized: <ProjectDetails />,
+  uncategorized: <ProjectDetails key="uncategorized" />,
   wait: <Wait />,
   webhooks: <Webhooks />,
   workspaceDetails: <WorkspaceDetails />,
   workspaceList: <WorkspaceList />,
 };
 
-const defaultRouteId = 'uncategorized';
+const defaultRouteId = 'default';
 const rbacDefaultRouteId = 'workspaceList';
 const dashboardDefaultRouteId = 'dashboard';
 

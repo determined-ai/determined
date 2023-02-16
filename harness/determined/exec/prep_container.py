@@ -1,6 +1,7 @@
 import argparse
 import base64
 import io
+import json
 import logging
 import os
 import socket
@@ -72,12 +73,16 @@ def do_rendezvous_rm_provided(
         sess, allocationId=allocation_id, resourcesId=resources_id
     )
     return det.RendezvousInfo(
-        container_addrs=list(resp.rendezvousInfo.addresses), container_rank=resp.rendezvousInfo.rank
+        container_addrs=list(resp.rendezvousInfo.addresses),
+        container_rank=resp.rendezvousInfo.rank,
+        container_slot_counts=list(resp.rendezvousInfo.slots),
     )
 
 
 def do_rendezvous_slurm(
-    sess: api.Session, allocation_id: str, resources_id: str
+    sess: api.Session,
+    allocation_id: str,
+    resources_id: str,
 ) -> "det.RendezvousInfo":
     rank_str = os.environ.get("SLURM_PROCID")
     assert rank_str, "Unable to complete rendezvous without SLURM_PROCID"
@@ -86,6 +91,10 @@ def do_rendezvous_slurm(
     num_peers_str = os.environ.get("SLURM_NPROCS")
     assert num_peers_str, "Unable to complete rendezvous without SLURM_NPROCS"
     num_peers = int(num_peers_str)
+
+    num_slots_str = os.environ.get("DET_SLOT_IDS")
+    assert num_slots_str, "Unable to complete rendezvous without DET_SLOT_IDS"
+    num_slots = len(json.loads(os.environ["DET_SLOT_IDS"]))
 
     rendezvous_ip = socket.gethostbyname(socket.gethostname())
     for rendezvous_iface in rendezvous_ifaces():
@@ -106,11 +115,20 @@ def do_rendezvous_slurm(
             data={
                 "rank": rank,
                 "rendezvous_ip": rendezvous_ip,
+                "slots": num_slots,
             },
         ),
     )
-    addrs = [d["rendezvous_ip"] for d in sorted(resp.data, key=lambda d: int(d["rank"]))]
-    return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
+
+    by_rank = sorted(resp.data, key=lambda d: int(d["rank"]))
+    addrs = [d["rendezvous_ip"] for d in by_rank]
+    slots = [d["slots"] for d in by_rank]
+
+    return det.RendezvousInfo(
+        container_addrs=addrs,
+        container_rank=rank,
+        container_slot_counts=slots,
+    )
 
 
 # On HPC, the "launcher" tells the Determined Master that the job is "Running"

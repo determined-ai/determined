@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 
@@ -12,7 +13,9 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -23,14 +26,25 @@ func TestRendezvous(t *testing.T) {
 		order []int
 	}
 
+	res := mocks.NewResources(t)
+	res.On("Summary").Return(sproto.ResourcesSummary{
+		AgentDevices: map[aproto.ID][]device.Device{},
+	})
+
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
 			// "task" with ranks is started.
 			t1 := model.AllocationID(uuid.New().String())
 			c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 			r := newRendezvous(nil, t1, resourcesList{
-				c1: &taskmodel.ResourcesWithState{Rank: 0},
-				c2: &taskmodel.ResourcesWithState{Rank: 1},
+				c1: &taskmodel.ResourcesWithState{
+					Resources: res,
+					Rank:      0,
+				},
+				c2: &taskmodel.ResourcesWithState{
+					Resources: res,
+					Rank:      1,
+				},
 			})
 
 			var ws []RendezvousWatcher

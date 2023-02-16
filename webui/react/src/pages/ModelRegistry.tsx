@@ -85,7 +85,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canViewModelRegistry, canCreateModelWorkspace } = usePermissions();
+  const { canCreateModelWorkspace } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -672,7 +672,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     <Page
       containerRef={pageRef}
       id="models"
-      notFound={!canViewModelRegistry}
       options={
         <Space>
           <Toggle

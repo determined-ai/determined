@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	dcontainer "github.com/docker/docker/api/types/container"
@@ -28,6 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+//nolint:maintidx // Come on, it is a test.
 func TestManager(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -64,7 +66,7 @@ func TestManager(t *testing.T) {
 	defer m.Close()
 
 	t.Log("running a few successful test containers")
-	starts := map[cproto.ID]bool{}
+	expectedSuccesses := map[cproto.ID]bool{}
 	countSuccesses := 12
 	for i := 0; i < countSuccesses; i++ {
 		cID := cproto.ID(uuid.NewString())
@@ -85,7 +87,7 @@ func TestManager(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		starts[cID] = true
+		expectedSuccesses[cID] = true
 	}
 
 	t.Log("running a few unsuccessful test containers")
@@ -110,12 +112,12 @@ func TestManager(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		starts[cID] = true
 		expectedFailures[cID] = true
 	}
 
 	t.Log("running a few longrunning test containers")
 	countLongrunning := 12
+	expectedLongrunning := map[cproto.ID]bool{}
 	for i := 0; i < countLongrunning; i++ {
 		cID := cproto.ID(uuid.NewString())
 		err = m.StartContainer(ctx, aproto.StartContainer{
@@ -135,64 +137,109 @@ func TestManager(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		starts[cID] = true
+		expectedLongrunning[cID] = true
 	}
 
-	t.Log("watching for container state changed")
-	stops := map[cproto.ID]*aproto.ContainerStopped{}
-	failures := map[cproto.ID]bool{}
-	for ev := range evs {
-		if ev.StateChange == nil || ev.StateChange.ContainerStopped == nil {
-			continue
-		}
+	t.Log("watching for container state changed for non-longrunning")
+	actualStops := map[cproto.ID]*aproto.ContainerStopped{}
+	actualSuccesses := map[cproto.ID]bool{}
+	actualFailures := map[cproto.ID]bool{}
+	deadline := time.After(30 * time.Second)
+	for {
+		select {
+		case ev := <-evs:
+			if ev.StateChange == nil || ev.StateChange.ContainerStopped == nil {
+				continue
+			}
+			sc := ev.StateChange
 
-		ev := ev.StateChange
-		stops[ev.Container.ID] = ev.ContainerStopped
-		if ev.ContainerStopped.Failure != nil {
-			failures[ev.Container.ID] = true
-		}
-		if countSuccesses+countFailures == len(stops) {
-			break
+			actualStops[sc.Container.ID] = sc.ContainerStopped
+			if sc.ContainerStopped.Failure != nil {
+				actualFailures[sc.Container.ID] = true
+			} else {
+				actualSuccesses[sc.Container.ID] = true
+			}
+
+			if len(actualSuccesses) == len(expectedSuccesses) &&
+				len(actualFailures) == len(expectedFailures) {
+				goto DONE
+			}
+		case <-deadline:
+			t.Logf("did not receive state changes for non-longrunning in time")
+			t.Logf(
+				"want %s and %s, got %s",
+				spew.Sdump(expectedSuccesses),
+				spew.Sdump(expectedFailures),
+				spew.Sdump(actualStops),
+			)
+			t.Fail()
+			return
 		}
 	}
+DONE:
 
 	t.Log("checking results")
-	require.Equal(t, countSuccesses+countFailures, len(stops))
-	require.Equalf(t, countFailures, len(failures),
-		"want: %s\ngot: %s", spew.Sdump(expectedFailures), spew.Sdump(failures))
+	require.Equalf(t, len(expectedFailures), len(actualFailures),
+		"want: %s\ngot: %s", spew.Sdump(expectedFailures), spew.Sdump(actualFailures))
 
-	t.Logf("trying to signal %d the containers", len(starts))
-	for cID := range starts {
+	t.Logf("trying to signal %d longrunning containers", len(expectedLongrunning))
+	for cID := range expectedLongrunning {
 		m.SignalContainer(ctx, aproto.SignalContainer{
 			ContainerID: cID,
 			Signal:      syscall.SIGKILL,
 		})
 	}
 
-	t.Log("watching for container state changed for longrunning, cached resends for others")
-	stops = map[cproto.ID]*aproto.ContainerStopped{}
-	failures = map[cproto.ID]bool{}
+	t.Log("watching for container state changed for longrunning")
+	actualLongrunning := map[cproto.ID]bool{}
 	for ev := range evs {
 		if ev.StateChange == nil || ev.StateChange.ContainerStopped == nil {
 			continue
 		}
-
 		ev := ev.StateChange
-		stops[ev.Container.ID] = ev.ContainerStopped
-		if ev.ContainerStopped.Failure != nil {
-			failures[ev.Container.ID] = true
+
+		f := ev.ContainerStopped.Failure
+		require.NotNil(t, f)
+		if f.ExitCode != nil {
+			require.Equal(t, aproto.ExitCode(137), *f.ExitCode)
+		} else {
+			require.Contains(t, f.Error(), "killed")
 		}
-		if len(starts) == len(stops) {
+
+		actualStops[ev.Container.ID] = ev.ContainerStopped
+		actualLongrunning[ev.Container.ID] = true
+		if len(expectedLongrunning) == len(actualLongrunning) {
 			break
 		}
 	}
 
-	t.Log("checking resend and longrunning results")
-	require.Equal(t, len(starts), len(stops))
-	require.Equal(t, countFailures+countLongrunning, len(failures))
+	// This is needed because of a sort of unfortunate race:
+	//  1. We get the container exited for a container, cool.
+	//  2. We resend another signal to see if we get a resent exit, cool.
+	//  3. Oh no! The manager hasn't actually realized the container exited. It just puts the signal
+	//     on the queue.
+	//  4. We wait forever for the resent exit, and it never comes because nothing is reading
+	//     signals off the queue anymore.
+	// Oh no... some sort of RAII thing is going on here - the container is closed, but we can
+	// still take actions on it.
+	for m.NumContainers() != 0 {
+		time.Sleep(time.Second)
+	}
 
-	t.Logf("trying to signal %d the containers, again, to check cache bust", len(starts))
-	for cID := range starts {
+	t.Logf("trying to signal all containers, again, to check cache bust")
+	for cID := range actualSuccesses {
+		m.SignalContainer(ctx, aproto.SignalContainer{
+			ContainerID: cID,
+			Signal:      syscall.SIGKILL,
+		})
+	}
+	for cID := range actualFailures {
+		m.SignalContainer(ctx, aproto.SignalContainer{
+			ContainerID: cID,
+			Signal:      syscall.SIGKILL,
+		})
+	}
+	for cID := range actualLongrunning {
 		m.SignalContainer(ctx, aproto.SignalContainer{
 			ContainerID: cID,
 			Signal:      syscall.SIGKILL,
@@ -200,31 +247,30 @@ func TestManager(t *testing.T) {
 	}
 
 	t.Log("getting cached resends for all, cache busted responses for some")
-	stops = map[cproto.ID]*aproto.ContainerStopped{}
-	failures = map[cproto.ID]bool{}
+	resentStops := map[cproto.ID]*aproto.ContainerStopped{}
 	for ev := range evs {
 		if ev.StateChange == nil && ev.StateChange.ContainerStopped == nil {
 			continue
 		}
-
 		ev := ev.StateChange
-		stops[ev.Container.ID] = ev.ContainerStopped
-		if ev.ContainerStopped.Failure != nil {
-			failures[ev.Container.ID] = true
-		}
-		if len(starts) == len(stops) {
+
+		require.Nil(t, resentStops[ev.Container.ID])
+		resentStops[ev.Container.ID] = ev.ContainerStopped
+		if len(actualSuccesses)+len(actualFailures)+len(actualLongrunning) == len(resentStops) {
 			break
 		}
 	}
 
 	t.Log("checking number of stops exceeded cache, but uncached stops were still sent")
 	uncachedStops := 0
-	for _, stop := range stops {
-		if strings.Contains(stop.String(), container.ErrMissing.ErrMsg) {
+	for _, stop := range resentStops {
+		if stop.Failure == container.ErrMissing {
 			uncachedStops++
 		}
 	}
-	require.Equal(t, countSuccesses+countFailures+countLongrunning-32, uncachedStops)
+	totalStops := len(actualSuccesses) + len(actualFailures) + len(actualLongrunning)
+	expectedUncachedStops := totalStops - containers.RecentExitsCacheSize
+	require.Equal(t, expectedUncachedStops, uncachedStops, spew.Sdump(resentStops))
 }
 
 func TestManagerReattach(t *testing.T) {

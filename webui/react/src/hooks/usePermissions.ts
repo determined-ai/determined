@@ -40,7 +40,6 @@ interface ProjectPermissionsArgs {
 interface RbacOptsProps {
   rbacAllPermission: boolean;
   rbacEnabled: boolean;
-  rbacModel: boolean;
   rbacReadPermission: boolean;
   user?: DetailedUser;
   userAssignments?: UserAssignment[];
@@ -55,6 +54,7 @@ interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateModelVersion: (arg0: ModelPermissionsArgs) => boolean;
   canCreateModelWorkspace: (arg0: ModelWorkspacePermissionsArgs) => boolean;
   canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -69,6 +69,7 @@ interface PermissionsHook {
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
+  canModifyModel: (arg0: ModelPermissionsArgs) => boolean;
   canModifyModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -84,7 +85,7 @@ interface PermissionsHook {
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
-  canViewModelRegistry: boolean;
+  canViewModelRegistry: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   loading: boolean;
@@ -93,8 +94,7 @@ interface PermissionsHook {
 const usePermissions = (): PermissionsHook => {
   const rbacEnabled = useFeature().isOn('rbac'),
     rbacAllPermission = useFeature().isOn('mock_permissions_all'),
-    rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission,
-    rbacModel = useFeature().isOn('model_rbac');
+    rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
 
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
@@ -121,21 +121,12 @@ const usePermissions = (): PermissionsHook => {
     () => ({
       rbacAllPermission,
       rbacEnabled,
-      rbacModel,
       rbacReadPermission,
       user,
       userAssignments,
       userRoles,
     }),
-    [
-      rbacAllPermission,
-      rbacEnabled,
-      rbacModel,
-      rbacReadPermission,
-      user,
-      userAssignments,
-      userRoles,
-    ],
+    [rbacAllPermission, rbacEnabled, rbacReadPermission, user, userAssignments, userRoles],
   );
 
   const permissions = useMemo(
@@ -144,6 +135,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
+      canCreateModelVersion: (args: ModelPermissionsArgs) =>
+        canCreateModelVersion(rbacOpts, args.model),
       canCreateModelWorkspace: (args: ModelWorkspacePermissionsArgs) =>
         canCreateModelWorkspace(rbacOpts, args.workspaceId),
       canCreateNSC: canCreateNSC(rbacOpts),
@@ -167,6 +160,7 @@ const usePermissions = (): PermissionsHook => {
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
+      canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
         canModifyModelVersion(rbacOpts, args.modelVersion),
       canModifyPermissions: canModifyPermissions(rbacOpts),
@@ -193,7 +187,8 @@ const usePermissions = (): PermissionsHook => {
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
-      canViewModelRegistry: canViewModelRegistry(rbacOpts),
+      canViewModelRegistry: (args: WorkspacePermissionsArgs) =>
+        canViewModelRegistry(rbacOpts, args.workspace),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -256,15 +251,13 @@ const canViewGroups = ({ rbacReadPermission, rbacEnabled, user }: RbacOptsProps)
   return rbacReadPermission || (!!user && (rbacEnabled || user.isAdmin));
 };
 
-const canViewModelRegistry = ({
-  rbacReadPermission,
-  rbacEnabled,
-  userAssignments,
-  userRoles,
-}: RbacOptsProps): boolean => {
+const canViewModelRegistry = (
+  { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
   // For OSS, everyone can view model registry
   // For RBAC, users with rbacReadPermission or VIEWMODELREGISTRY permission can view model resgistry
-  const permitted = relevantPermissions(userAssignments, userRoles);
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
 };
 
@@ -387,36 +380,54 @@ const canViewExperimentArtifacts = (
 };
 
 // Model and ModelVersion actions
-// No permissions defined in PermissionType yet
-const canDeleteModel = ({ rbacAllPermission, user }: RbacOptsProps, model: ModelItem): boolean => {
-  // const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (!!user && (user.isAdmin || user.id === model.userId));
+const canDeleteModel = (
+  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
+  model: ModelItem,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
+  return (
+    rbacAllPermission ||
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
+      : !!user && (user.isAdmin || user.id === model?.userId))
+  );
+};
+
+const canModifyModel = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  model: ModelItem,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
+  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+};
+
+const canCreateModelVersion = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  model: ModelItem,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, model.workspaceId);
+  return rbacAllPermission || !rbacEnabled || permitted.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 
 const canDeleteModelVersion = (
-  { rbacAllPermission, rbacEnabled, rbacModel, user, userAssignments, userRoles }: RbacOptsProps,
+  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return (
     rbacAllPermission ||
-    (rbacEnabled && rbacModel
+    (rbacEnabled
       ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
       : !!user && (user.isAdmin || user.id === modelVersion?.userId))
   );
 };
 
 const canModifyModelVersion = (
-  { rbacAllPermission, rbacEnabled, rbacModel, userAssignments, userRoles }: RbacOptsProps,
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
-  return (
-    !rbacEnabled ||
-    rbacAllPermission ||
-    !rbacModel ||
-    permitted.has(V1PermissionType.EDITMODELREGISTRY)
-  );
+  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.EDITMODELREGISTRY);
 };
 
 // Project actions
