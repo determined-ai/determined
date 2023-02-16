@@ -64,7 +64,8 @@ var payloadNameCompiledRegEx = regexp.MustCompile(`[^a-zA-Z0-9\-_]+`)
 
 // ToDispatcherManifest creates the manifest that will be ultimately sent to the launcher.
 // Returns:
-//	 Manifest, launchingUserName, PayloadName, err
+//
+//	Manifest, launchingUserName, PayloadName, err
 //
 // Note: Cannot pass "req *sproto.AllocateRequest" as an argument, as it requires
 // import of "github.com/determined-ai/determined/master/internal/sproto", which
@@ -150,9 +151,14 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters := launcher.NewLaunchParameters()
 	launchParameters.SetMode("batch")
 
-	mounts, userWantsDirMountedOnTmp := getDataVolumes(t.Mounts)
+	mounts, userWantsDirMountedOnTmp, varTmpExists := getDataVolumes(t.Mounts)
 
-	if containerRunType == enroot {
+	// When the container run type is enroot, we need a binding for the
+	// "/var/tmp" folder.
+	// Check if the container run type is enroot and that "/var/tmp" is not
+	// already defined.
+	// If so, addTmpFs will add the binding for the "/var/tmp" folder.
+	if containerRunType == enroot && !varTmpExists {
 		mounts = addTmpFs(mounts, "varTmp", varTmp)
 	}
 
@@ -709,9 +715,10 @@ func getPayloadName(taskSpec *TaskSpec) string {
 // Provide all task mount points as data volumes, and return true if there is a bind for /tmp
 // Launcher requires that a Data object has a name; source, target & read-only are all
 // that matter to Singularity.
-func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
+func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool, bool) {
 	volumes := []launcher.Data{}
 	userWantsDirMountedOnTmp := false
+	varTmpExists := false
 
 	for i, mount := range mounts {
 		volume := *launcher.NewData()
@@ -723,9 +730,14 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 		if mount.Target == tmp {
 			userWantsDirMountedOnTmp = true
 		}
+		// Check if the user has already provided a binding for "/var/tmp" folder in the yaml file
+		// for the experiment and set value for varTmpExists accordingly.
+		if mount.Target == varTmp {
+			varTmpExists = true
+		}
 	}
 
-	return volumes, userWantsDirMountedOnTmp
+	return volumes, userWantsDirMountedOnTmp, varTmpExists
 }
 
 // Used for creating a tmpfs mount type at the target location.

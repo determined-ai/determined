@@ -27,6 +27,11 @@ const (
 	slurmSlotsPerNode = 3
 )
 
+var varTmpLocation = "/var/tmp"
+
+// gosec falsely identifies the below variable as a password/secret. So disable gosec.
+var varTmpWithOptions = "/var/tmp:x-create=dir" // nolint: gosec
+
 var aug = &model.AgentUserGroup{
 	ID:     1,
 	UserID: 1,
@@ -492,6 +497,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		gresSupported          bool
 		Slurm                  []string
 		Pbs                    []string
+		Mounts                 []mount.Mount
 		wantCarrier            string
 		wantGpuType            string
 		wantResourcesInstances *map[string]int32
@@ -499,6 +505,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		wantSlurmArgs          []string
 		wantPbsArgs            []string
 		wantErr                bool
+		wantData               []launcher.Data
 		errorContains          string
 	}{
 		{
@@ -601,6 +608,19 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			wantErr:          true,
 			errorContains:    "is not configurable",
 		},
+		{
+			name:             "Add Tmp FS",
+			containerRunType: "enroot",
+			slotType:         device.CUDA,
+			wantData:         []launcher.Data{{Target: &varTmpWithOptions}},
+		},
+		{
+			name:             "Skip adding Tmp FS",
+			containerRunType: "enroot",
+			slotType:         device.CUDA,
+			Mounts:           []mount.Mount{{Source: varTmp, Target: varTmp}},
+			wantData:         []launcher.Data{{Target: &varTmpLocation}},
+		},
 	}
 
 	for _, tt := range tests {
@@ -641,6 +661,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				Environment:    environment,
 				PbsConfig:      pbsOpts,
 				SlurmConfig:    slurmOpts,
+				Mounts:         tt.Mounts,
 			}
 
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
@@ -690,6 +711,15 @@ func Test_ToDispatcherManifest(t *testing.T) {
 					assert.Assert(t, customs["ports"] != nil)
 				} else {
 					assert.Assert(t, customs["ports"] == nil)
+				}
+
+				data := launchParameters.GetData()
+				if tt.wantData != nil {
+					assert.Assert(t, data != nil)
+					assert.Assert(t, len(data) == len(tt.wantData))
+					for i, item := range data {
+						assert.Assert(t, item.GetTarget() == tt.wantData[i].GetTarget())
+					}
 				}
 
 				resourceRequirements := payload.ResourceRequirements
@@ -794,11 +824,11 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 
 	// test DET_CONTAINER_LOCAL_TMP is not in ENVs, and DET_LOCALTMP set properly
 	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "enroot", "/var/tmp", 0)
+		"masterHost", 8888, "certName", false, device.CUDA, "enroot", varTmp, 0)
 	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
 	assert.Equal(t, ok, false)
 	val = envVarsEnroot["DET_LOCALTMP"]
-	assert.Equal(t, val, "/var/tmp")
+	assert.Equal(t, val, varTmp)
 	val = envVarsEnroot["ENROOT_MOUNT_HOME"]
 	assert.Equal(t, val, "y")
 }
@@ -898,7 +928,7 @@ func Test_getDataVolumns(t *testing.T) {
 		"yyy", "bbb", "/tmp",
 	}
 
-	volumns, mountOnTmp := getDataVolumes(arg)
+	volumns, mountOnTmp, _ := getDataVolumes(arg)
 
 	assert.Equal(t, mountOnTmp, true)
 	for i, v := range volumns {
@@ -910,9 +940,9 @@ func Test_getDataVolumns(t *testing.T) {
 
 func Test_addTmpFs(t *testing.T) {
 	arg := []mount.Mount{}
-	volumes, _ := getDataVolumes(arg)
+	volumes, _, _ := getDataVolumes(arg)
 	name := "varTmp"
-	target := "/var/tmp"
+	target := varTmp
 	volumes = addTmpFs(volumes, name, target)
 	v := volumes[0]
 	assert.Equal(t, *v.Name, "varTmp")
