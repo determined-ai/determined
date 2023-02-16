@@ -179,7 +179,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
   }, []);
 
   const onSelect = useCallback((value: number) => {
-    setModalState((prev) => ({ ...prev, workspace: value }));
+    setModalState((prev) => ({ ...prev, workspaceId: value }));
 
     return value;
   }, []);
