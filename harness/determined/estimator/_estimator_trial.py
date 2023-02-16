@@ -712,7 +712,7 @@ class EstimatorTrialController(det.TrialController):
         return config
 
     def _write_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        if self.is_chief:
+        if self.is_chief and self.metric_writer:
             self.metric_writer.on_validation_step_end(
                 steps_completed,
                 metrics,

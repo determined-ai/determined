@@ -188,7 +188,8 @@ def init(
             container_path=constants.SHARED_FS_CONTAINER_PATH,
             async_upload=True,
         )
-        if tensorboard_mode == core.TensorboardMode.AUTO:
+        tensorboard_logging = info._trial_info._tensorboard_logging
+        if tensorboard_mode == core.TensorboardMode.AUTO and tensorboard_logging:
             tbd_writer = tensorboard.get_metric_writer()
 
         train = core.TrainContext(

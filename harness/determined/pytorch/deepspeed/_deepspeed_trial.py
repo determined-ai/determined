@@ -526,11 +526,12 @@ class DeepSpeedTrialController(det.TrialController):
         logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
         self.prof.set_training(False)
 
-        self.metric_writer.on_train_step_end(
-            self.steps_completed,
-            metrics["avg_metrics"],
-            metrics["batch_metrics"],
-        )
+        if self.metric_writer:
+            self.metric_writer.on_train_step_end(
+                self.steps_completed,
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
+            )
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -642,7 +643,8 @@ class DeepSpeedTrialController(det.TrialController):
             )
         )
 
-        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
+        if self.metric_writer:
+            self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:

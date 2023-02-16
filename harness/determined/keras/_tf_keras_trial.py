@@ -896,11 +896,12 @@ class TFKerasTrialController(det.TrialController):
                 },
                 "stop_requested": self.context.get_stop_requested(),
             }  # type: workload.Response
-            self.metric_writer.on_train_step_end(
-                steps_completed=self.steps_completed,
-                metrics=final_metrics,
-                batch_metrics=self.train_workload_metrics,
-            )
+            if self.metric_writer:
+                self.metric_writer.on_train_step_end(
+                    steps_completed=self.steps_completed,
+                    metrics=final_metrics,
+                    batch_metrics=self.train_workload_metrics,
+                )
         else:
             response = {}
 

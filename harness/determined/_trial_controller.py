@@ -64,7 +64,10 @@ class TrialController(metaclass=abc.ABCMeta):
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
             logging.getLogger().setLevel(log_level)
-        self.metric_writer = self.create_metric_writer()
+
+        self.metric_writer = None
+        if self.env.experiment_config.tensorboard_logging_enabled():
+            self.metric_writer = self.create_metric_writer()
 
     @classmethod
     @abc.abstractmethod

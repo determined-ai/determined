@@ -5,6 +5,9 @@ class ExperimentConfig(dict):
     def debug_enabled(self) -> bool:
         return bool(self.get("debug", False))
 
+    def tensorboard_logging_enabled(self) -> bool:
+        return bool(self.get("tensorboard_logging", True))
+
     def scheduling_unit(self) -> int:
         return int(self.get("scheduling_unit", 100))
 
