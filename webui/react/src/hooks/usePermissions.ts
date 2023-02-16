@@ -245,18 +245,13 @@ const canViewGroups = ({ rbacReadPermission, rbacEnabled, user }: RbacOptsProps)
 };
 
 const canViewModelRegistry = (
-  { rbacReadPermission, rbacEnabled, rbacModel, userAssignments, userRoles }: RbacOptsProps,
+  { rbacReadPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {
   // For OSS, everyone can view model registry
   // For RBAC, users with rbacReadPermission or VIEWMODELREGISTRY permission can view model resgistry
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return (
-    !rbacEnabled ||
-    rbacReadPermission ||
-    !rbacModel ||
-    permitted.has(V1PermissionType.VIEWMODELREGISTRY)
-  );
+  return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
 };
 
 const canModifyGroups = ({
