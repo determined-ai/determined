@@ -35,7 +35,11 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const currentUser = useCurrentUser();
   const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
-  usePolling(fetchWorkspaces);
+  usePolling(() => {
+    if (currentUser !== NotLoaded) {
+      fetchWorkspaces();
+    }
+  });
 
   useEffect(() => {
     updateFaviconType(

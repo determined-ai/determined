@@ -11,10 +11,11 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { getAgents, getResourcePools } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
+import { selectIsAuthenticated } from 'stores/auth';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { Observable, observable, WritableObservable } from 'utils/observable';
+import { Observable, observable, useObservable, WritableObservable } from 'utils/observable';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 // TODO: dont export
@@ -117,13 +118,14 @@ const ClusterContext = createContext<ClusterService | null>(null);
 
 export const ClusterProvider = ({ children }: { children: ReactNode }): ReactElement => {
   const [store] = useState(() => new ClusterService());
-
-  store.startPolling();
+  const isAuthenticated = useObservable(selectIsAuthenticated);
 
   useEffect(() => {
-    store.startPolling();
+    if (isAuthenticated) {
+      store.startPolling();
+    }
     return () => store.cancelPolling();
-  }, [store]);
+  }, [store, isAuthenticated]);
 
   return <ClusterContext.Provider value={store}>{children}</ClusterContext.Provider>;
 };
