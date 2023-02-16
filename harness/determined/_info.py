@@ -109,7 +109,8 @@ class TrialInfo:
         self._unique_port_offset = unique_port_offset
         # TODO: Get rid of this in favor of launch layer configs?
         self._inter_node_network_interface = inter_node_network_interface
-        # TODO: decide if the experiment config is the right place for users to set a tensorboard logging flag.
+        # TODO: decide if the experiment config is the right place for users to set a tensorboard
+        #  logging flag.
         self._tensorboard_logging = tensorboard_logging
 
     @classmethod
