@@ -284,7 +284,11 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
         okText: (
           <Tooltip
             placement="bottom"
-            title={disableWorkspaceModelCreation ? 'Insufficient permission!' : undefined}>
+            title={
+              disableWorkspaceModelCreation
+                ? 'You do not have permission to create a model in this workspace!'
+                : undefined
+            }>
             Create Model
           </Tooltip>
         ),
