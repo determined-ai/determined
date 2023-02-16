@@ -168,11 +168,11 @@ def _run_pytorch_trial(
             trainer.fit(
                 checkpoint_period=pytorch.TrainUnit._from_values(
                     **info.trial._config["min_checkpoint_period"],
-                    **info.trial._config["hyperparameters"]["global_batch_size"],
+                    global_batch_size=int(info.trial.hparams["global_batch_size"]),
                 ),
                 validation_period=pytorch.TrainUnit._from_values(
                     **info.trial._config["min_validation_period"],
-                    **info.trial._config["hyperparameters"]["global_batch_size"],
+                    global_batch_size=int(info.trial.hparams["global_batch_size"]),
                 ),
                 reporting_period=pytorch.Batch(info.trial._config["scheduling_unit"]),
                 checkpoint_policy=info.trial._config["checkpoint_policy"],

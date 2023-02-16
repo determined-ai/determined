@@ -254,6 +254,7 @@ def create_trial_and_trial_controller(
             checkpoint_policy=exp_config["checkpoint_policy"],
             step_zero_validation=bool(exp_config["perform_initial_validation"]),
             det_profiler=None,
+            global_batch_size=None,
         )
 
         trial_controller._set_data_loaders()

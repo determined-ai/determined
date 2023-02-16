@@ -73,11 +73,11 @@ class Trainer:
 
             latest_checkpoint = None
             smaller_is_better = True
-            searcher_unit = None
             searcher_metric_name = None
             steps_completed = 0
             reporting_period = reporting_period or pytorch.Batch(sys.maxsize)
             step_zero_validation = False
+            global_batch_size = None
         else:
 
             assert not test_mode, "test_mode is only supported in local training mode"
@@ -89,7 +89,6 @@ class Trainer:
 
             latest_checkpoint = self._info.latest_checkpoint
             smaller_is_better = bool(self._info.trial._config["searcher"]["smaller_is_better"])
-            searcher_unit = self._core.searcher.get_configured_units()
 
             searcher_metric_name = self._info.trial._config["searcher"]["metric"]
             steps_completed = int(self._info.trial._steps_completed)
@@ -97,6 +96,7 @@ class Trainer:
                 int(self._info.trial._config["scheduling_unit"])
             )
             step_zero_validation = bool(self._info.trial._config["perform_initial_validation"])
+            global_batch_size = int(self._info.trial.hparams["global_batch_size"])
 
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,
@@ -109,12 +109,12 @@ class Trainer:
             local_training=self._local_training,
             test_mode=test_mode,
             reporting_period=reporting_period,
-            searcher_unit=searcher_unit,
             searcher_metric_name=searcher_metric_name,
             checkpoint_policy=checkpoint_policy,
             step_zero_validation=step_zero_validation,
             max_length=max_length,
             det_profiler=self._det_profiler,
+            global_batch_size=global_batch_size,
         )
 
         trial_controller.run()

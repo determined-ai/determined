@@ -164,12 +164,12 @@ class _PyTorchTrialController:
         latest_checkpoint: Optional[str],
         local_training: bool,
         test_mode: bool,
-        searcher_unit: core.Unit,
         searcher_metric_name: Optional[str],
         checkpoint_policy: str,
         step_zero_validation: bool,
         max_length: Optional[TrainUnit],
         det_profiler: Optional[profiler.ProfilerAgent],
+        global_batch_size: Optional[int],
     ) -> None:
 
         if not isinstance(trial_inst, PyTorchTrial):
@@ -211,12 +211,12 @@ class _PyTorchTrialController:
         self.searcher_metric_name = searcher_metric_name
         self.ckpt_policy = checkpoint_policy
         self.smaller_is_better = smaller_is_better
-        # self.global_batch_size = self.context.get_global_batch_size()
+        self.global_batch_size = global_batch_size
 
-        self.searcher_unit = searcher_unit
-        if searcher_unit == core.Unit.RECORDS:
+        self.searcher_unit = self.core_context.searcher.get_configured_units()
+        if self.searcher_unit == core.Unit.RECORDS:
             # XXX: throw up early here or callers
-            assert self.context.get_global_batch_size()
+            assert self.global_batch_size, "global_batch_size required for searcher unit RECORDS"
 
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
@@ -498,7 +498,7 @@ class _PyTorchTrialController:
         if unit == core.Unit.BATCHES:
             op.report_progress(self.state.batches_trained)
         elif unit == core.Unit.RECORDS:
-            op.report_progress(self.context.get_global_batch_size() * self.state.batches_trained)
+            op.report_progress(self.global_batch_size * self.state.batches_trained)
         elif unit == core.Unit.EPOCHS:
             op.report_progress(self.state.epochs_trained)
 
@@ -515,9 +515,6 @@ class _PyTorchTrialController:
             return train_unit.value - self.state.batches_trained
         elif isinstance(train_unit, Epoch):
             return train_unit.value - self.state.epochs_trained
-        # elif isinstance(train_unit, _Record):
-        #     # XXX: this is ugly
-        #     return train_unit.value - (self.state.batches_trained * self.context.get_global_batch_size())
         else:
             raise ValueError(f"Unrecognized train unit {train_unit}")
 
@@ -645,7 +642,7 @@ class _PyTorchTrialController:
                         _TrainStep(
                             step_type=_TrainStepType.TRAIN,
                             unit=TrainUnit._from_searcher_unit(
-                                op.length, self.searcher_unit, self.context.get_global_batch_size()
+                                op.length, self.searcher_unit, self.global_batch_size
                             ),
                         ),
                         _TrainStep(step_type=_TrainStepType.VALIDATE, unit=self.validation_period),
@@ -699,12 +696,6 @@ class _PyTorchTrialController:
                 if isinstance(step.unit, Batch):
                     if step.unit.should_stop(batch_idx + 1):
                         step.limit_reached = True
-
-                # Convert records to batches
-                # if isinstance(step.unit, _Record):
-                #     batch_unit = step.unit._to_batches(self.context.get_global_batch_size())
-                #     if batch_unit._divides(batch_idx + 1):
-                #         step.limit_reached = True
 
                 # True epoch based training not supported, detect last batch of epoch to calculate
                 # fully-trained epochs
@@ -1119,7 +1110,7 @@ class _PyTorchTrialController:
 
         if searcher_op and self.is_chief:
             searcher_length = TrainUnit._from_searcher_unit(
-                searcher_op.length, self.searcher_unit, self.context.get_global_batch_size()
+                searcher_op.length, self.searcher_unit, self.global_batch_size
             )
             searcher_metric = self._validate_searcher_metric(metrics)
 
