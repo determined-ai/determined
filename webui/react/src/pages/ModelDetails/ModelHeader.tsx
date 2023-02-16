@@ -46,8 +46,10 @@ const ModelHeader: React.FC<Props> = ({
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const { canDeleteModel, canModifyModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
+  const { canDeleteModel, canModifyModel } = usePermissions();
+  const canDelete = canDeleteModel({ model });
+  const canModify = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
     const user = users.find((user) => user.id === model.userId);
@@ -110,18 +112,18 @@ const ModelHeader: React.FC<Props> = ({
     };
 
     const menuItems: MenuProps['items'] = [];
-    if (canModifyModel({ model })) {
+    if (canModify) {
       menuItems.push({
         key: MenuKey.SwitchArchived,
         label: model.archived ? 'Unarchive' : 'Archive',
       });
     }
-    if (canDeleteModel({ model })) {
+    if (canDelete) {
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [canDeleteModel, canModifyModel, handleDelete, model, onSwitchArchive]);
+  }, [canDelete, canModify, handleDelete, model, onSwitchArchive]);
 
   return (
     <header className={css.base}>
