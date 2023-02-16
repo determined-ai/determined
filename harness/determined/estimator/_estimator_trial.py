@@ -70,6 +70,7 @@ class DeterminedControlHook(estimator.RunHook):
         self._session = None  # type: Optional[tf.Session]
         self._current_global_step = None  # type: Optional[int]
         self._saver = None  # type: Optional[tf.train.Saver]
+
         self._writer = tf.compat.v1.summary.FileWriter(tensorboard.get_base_path({}))
 
         # Store the response_func for train_for_step workloads while we do the training.
@@ -191,6 +192,7 @@ class DeterminedControlHook(estimator.RunHook):
     def after_create_session(
         self, session: tf.compat.v1.Session, coord: tf.train.Coordinator
     ) -> None:
+
         graph = tf.compat.v1.get_default_graph().as_graph_def(add_shapes=True)
         tf.io.write_graph(graph, str(self.estimator_trial_controller.estimator_dir), "graph.pbtxt")
 
