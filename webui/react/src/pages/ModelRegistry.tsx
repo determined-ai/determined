@@ -85,7 +85,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canCreateModelWorkspace } = usePermissions();
+  const { canCreateModels } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -682,7 +682,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          {canCreateModelWorkspace({ workspaceId: workspace?.id }) ? (
+          {canCreateModels ? (
             <Button onClick={showCreateModelModal}>New Model</Button>
           ) : (
             <Tooltip placement="leftBottom" title="User lacks permission to create models">
