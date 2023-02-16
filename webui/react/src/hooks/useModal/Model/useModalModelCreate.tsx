@@ -1,5 +1,5 @@
 import { ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -48,7 +48,6 @@ interface ModalState {
   modelName: string;
   tags: string[];
   visible: boolean;
-  workspaceId: number;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -62,7 +61,6 @@ const DEFAULT_MODAL_STATE = {
   modelName: '',
   tags: [],
   visible: false,
-  workspaceId: 1,
 };
 
 const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks => {
@@ -85,11 +83,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     [modalState, onClose],
   );
 
-  useLayoutEffect(() => {
-    if (workspaceId !== undefined && modalState.workspaceId !== workspaceId)
-      setModalState({ ...modalState, workspaceId });
-  }, [workspaceId, modalState]);
-
   const {
     modalClose,
     modalOpen: openOrUpdate,
@@ -101,8 +94,8 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     setModalState({ ...newState, checkpoints, visible: true });
   }, []);
 
-  const createModel = useCallback(async (state: ModalState) => {
-    const { modelDescription, tags, metadata, modelName, workspaceId } = state;
+  const createModel = useCallback(async (state: ModalState, workspaceId: number) => {
+    const { modelDescription, tags, metadata, modelName } = state;
     try {
       const response = await postModel({
         description: modelDescription,
@@ -147,11 +140,14 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     async (state: ModalState) => {
       const values = await form.validateFields();
       if (values) {
-        await createModel({
-          ...state,
-          modelDescription: values.description ?? '',
-          modelName: values.modelName,
-        });
+        await createModel(
+          {
+            ...state,
+            modelDescription: values.description ?? '',
+            modelName: values.modelName,
+          },
+          values.workspaceId,
+        );
         form.resetFields();
       }
     },
@@ -178,12 +174,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
-  const onSelect = useCallback((value: number) => {
-    setModalState((prev) => ({ ...prev, workspaceId: value }));
-
-    return value;
-  }, []);
-
   const workspaceItems = useMemo(
     () =>
       workspaces.map((ws) => ({
@@ -204,19 +194,25 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
             <p className={css.directions}>
               Create a registered model to organize important checkpoints.
             </p>
-            <Form.Item initialValue={state.workspaceId} label="Workspace" name="workspaceId">
+            <Form.Item
+              initialValue={workspaceId}
+              label="Workspace"
+              name="workspaceId"
+              rules={[{ message: 'Please select a workspace', required: true }]}>
               <SelectFilter
                 disabled={!workspaces.length || isWorkspace}
+                filterOption={(input, option) =>
+                  (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                }
                 options={workspaceItems}
-                showSearch={false}
-                onChange={(value) => onSelect(value as number)}
+                placeholder="Select a workspace"
+                showSearch={true}
               />
             </Form.Item>
             <Form.Item
               label="Model name"
               name="modelName"
-              required
-              requiredMessage="Model name is required ">
+              rules={[{ message: 'Please input Model name', required: true }]}>
               <Input onChange={handleNameChange} />
             </Form.Item>
             <Form.Item label="Description (optional)" name="description">
@@ -253,10 +249,10 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
     },
     [
       form,
+      workspaceId,
+      workspaces.length,
       isWorkspace,
       workspaceItems,
-      workspaces,
-      onSelect,
       handleDescriptionChange,
       handleMetadataChange,
       handleNameChange,
