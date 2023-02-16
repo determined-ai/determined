@@ -83,7 +83,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
         <div
           style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
           onClick={editMetadata}>
-          Add Metadata...
+          {disabled ? 'No metadata present.' : 'Add Metadata...'}
         </div>
       ) : (
         <Spinner spinning={isLoading}>

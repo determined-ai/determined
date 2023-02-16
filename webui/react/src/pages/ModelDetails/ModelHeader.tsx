@@ -46,7 +46,7 @@ const ModelHeader: React.FC<Props> = ({
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const { canDeleteModel } = usePermissions();
+  const { canDeleteModel, canModifyModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
@@ -66,7 +66,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <InlineEditor
-            disabled={model.archived}
+            disabled={model.archived || !canModifyModel({ model })}
             placeholder={model.archived ? 'Archived' : 'Add description...'}
             value={model.description ?? ''}
             onSave={onSaveDescription}
@@ -77,7 +77,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <TagList
-            disabled={model.archived}
+            disabled={model.archived || !canModifyModel({ model })}
             ghost={false}
             tags={model.labels ?? []}
             onChange={onUpdateTags}
@@ -86,7 +86,7 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onSaveDescription, onUpdateTags, users]);
+  }, [model, onSaveDescription, onUpdateTags, users, canModifyModel]);
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
@@ -109,16 +109,19 @@ const ModelHeader: React.FC<Props> = ({
       funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
-    const menuItems: MenuProps['items'] = [
-      { key: MenuKey.SwitchArchived, label: model.archived ? 'Unarchive' : 'Archive' },
-    ];
-
+    const menuItems: MenuProps['items'] = [];
+    if (canModifyModel({ model })) {
+      menuItems.push({
+        key: MenuKey.SwitchArchived,
+        label: model.archived ? 'Unarchive' : 'Archive',
+      });
+    }
     if (canDeleteModel({ model })) {
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [canDeleteModel, handleDelete, model, onSwitchArchive]);
+  }, [canDeleteModel, canModifyModel, handleDelete, model, onSwitchArchive]);
 
   return (
     <header className={css.base}>
@@ -164,7 +167,7 @@ const ModelHeader: React.FC<Props> = ({
             <h1 className={css.name}>
               <InlineEditor
                 allowClear={false}
-                disabled={model.archived}
+                disabled={model.archived || !canModifyModel({ model })}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}

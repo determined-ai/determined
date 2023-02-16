@@ -683,7 +683,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     }) => {
       const canDelete = canDeleteModel({ model: record });
       const canModify = canModifyModel({ model: record });
-      return canModify || canDelete ? (
+      return canDelete || canModify ? (
         <Dropdown
           menu={ModelActionMenu(record, canDelete, canModify)}
           trigger={['contextMenu']}

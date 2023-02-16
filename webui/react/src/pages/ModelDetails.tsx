@@ -73,7 +73,7 @@ const ModelDetails: React.FC = () => {
   const workspaces = Loadable.getOrElse([], useWorkspaces());
   const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
 
-  const { canModifyModelVersion } = usePermissions();
+  const { canModifyModel, canModifyModelVersion } = usePermissions();
 
   const {
     settings,
@@ -496,12 +496,12 @@ const ModelDetails: React.FC = () => {
           />
         )}
         <NotesCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           notes={model.model.notes ?? ''}
           onSave={saveNotes}
         />
         <MetadataCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />
