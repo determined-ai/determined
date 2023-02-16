@@ -94,22 +94,16 @@ func (a *apiServer) GetModels(
 	nameFilter := "%" + req.Name + "%"
 	descFilterExpr := "%" + req.Description + "%"
 	archFilterExpr := ""
-	workspaceIDFilterExpr := 0
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0, len(req.UserIds))
-	workspaceIds := make([]string, 0, len(req.WorkspaceIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
-	for _, workspaceID := range req.WorkspaceIds {
-		workspaceIds = append(workspaceIds, strconv.Itoa(int(workspaceID)))
-	}
 	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
-	workspaceIDsFilterExpr := strings.Join(workspaceIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
@@ -142,27 +136,42 @@ func (a *apiServer) GetModels(
 	if err != nil {
 		return nil, err
 	}
-	if req.WorkspaceId != nil { // default is to use workspace ID
-		workspaceIDFilterExpr = int(*req.WorkspaceId)
-	} else if req.WorkspaceName != nil {
-		w := workspacev1.Workspace{}
-		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
-		}
-		workspaceIDFilterExpr = int(w.Id)
-	}
-	if workspaceIDFilterExpr != 0 {
-		// if workspace id isn't provided then no auth is required here. All models will be returned.
-		if ok, err := modelauth.AuthZProvider.Get().CanGetModels(ctx, *curUser,
-			int32(workspaceIDFilterExpr)); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, errors.Errorf(
-				"current user %q doesn't have view permissions in the given workspace with id: %v.",
-				curUser.Username, workspaceIDFilterExpr)
+	var workspaceIdsGiven []int32
+	if req.WorkspaceIds != nil {
+		// default is to use workspace ids.
+		workspaceIdsGiven = req.WorkspaceIds
+	} else if req.WorkspaceIds == nil && req.WorkspaceNames != nil {
+		// get the ids of the corresponding workspaces
+		if err := db.Bun().NewRaw(`
+			SELECT DISTINCT(id) as ID FROM workspaces w
+			WHERE w.name IN (SELECT UNNEST(?))`,
+			req.WorkspaceNames,
+		).Scan(ctx, &workspaceIdsGiven); err != nil {
+			return nil, fmt.Errorf("getting workspace ids from names: %w", err)
 		}
 	}
+	// function below returns a list of workspaces that have permissions
+	// filtered according to user given workspaces.
+	// if global permissions and no filter list given by user then it's an empty list.
+	workspaceIdsWithPermsAndFilterList, ok, err := modelauth.AuthZProvider.Get().
+		CanGetModels(ctx, *curUser, workspaceIdsGiven)
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf(
+			"current user doesn't have view permissions in related workspaces.")
+	}
+	var workspaceIds []string
+	var workspaceIdsWithPermsAndFilter string
+	if workspaceIdsWithPermsAndFilterList == nil {
+		workspaceIdsWithPermsAndFilter = ""
+	} else {
+		for _, wID := range workspaceIdsWithPermsAndFilterList {
+			workspaceIds = append(workspaceIds, strconv.Itoa(int(wID)))
+		}
+		workspaceIdsWithPermsAndFilter = strings.Join(workspaceIds, ",")
+	}
+
 	err = a.m.db.QueryProtof(
 		"get_models",
 		[]interface{}{orderExpr},
@@ -174,8 +183,7 @@ func (a *apiServer) GetModels(
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
-		workspaceIDFilterExpr,
-		workspaceIDsFilterExpr,
+		workspaceIdsWithPermsAndFilter,
 	)
 	if err != nil {
 		return nil, err
@@ -238,7 +246,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", 0, "")
+		&getResp.Models, 0, "", "", "", "", modelName, "", "")
 	if err != nil {
 		return err
 	}
