@@ -4,9 +4,7 @@ import pathlib
 import shutil
 
 import determined as det
-import torch
-from determined.experimental.client import create_experiment
-from dsat import constants, utils
+from dsat import constants
 
 
 def main(core_context: det.core.Context) -> None:
@@ -19,6 +17,8 @@ def main(core_context: det.core.Context) -> None:
     is_chief = core_context.distributed.get_rank() == 0
     if is_chief:
         # Save the profile results as a checkpoint of the calling Trial (Ryan wouldn't approve).
+        # This wrapper also doesn't know the actual steps_completed, so it's just using zero, which
+        # is bad.
         checkpoint_metadata_dict = {"steps_completed": 0}  # TODO: use the actual steps completed
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
             path,

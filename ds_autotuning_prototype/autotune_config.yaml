@@ -22,7 +22,7 @@ hyperparameters:
         lr: 1e-3
   autotuning_config: # Currently where search related configs are set. TODO: move to searcher field.
     tuner_type: random
-    tuner_num_trials: 5
+    tuner_num_trials: 9
     num_tuning_micro_batch_sizes: 3
     # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?)
 entrypoint: python3 -m determined.launch.torch_distributed python3 minimal_script.py

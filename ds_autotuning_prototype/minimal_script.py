@@ -65,8 +65,12 @@ def main(
     steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
-            for batch in train_loader:
-                with utils.dsat_reporting_context(core_context, op, steps_completed):
+            steps_completed += 1
+            # There is a gotcha here: important to pass the same steps_completed value to both
+            # the context manager below and the explicit report_validation_metrics call.
+            # Updating steps_completed in between can lead to reporting conflicts.
+            with utils.dsat_reporting_context(core_context, op, steps_completed):
+                for batch in train_loader:
                     if fp16:
                         batch = batch.half()
                     batch = batch.to(device)
@@ -81,7 +85,6 @@ def main(
                     if model_engine.is_gradient_accumulation_boundary():
                         break
 
-            steps_completed += 1
             if is_chief:
                 metrics_dict = {"loss": loss.item()}
                 metrics_dict = utils.dsat_metrics_converter(metrics_dict)
@@ -98,7 +101,6 @@ def main(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
     info = det.get_cluster_info()
-    latest_checkpoint = info.latest_checkpoint
     hparams = info.trial.hparams
     distributed = det.core.DistributedContext.from_torch_distributed()
     with det.core.init(distributed=distributed) as core_context:

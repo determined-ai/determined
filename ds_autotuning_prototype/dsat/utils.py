@@ -90,7 +90,8 @@ def dsat_reporting_context(
         else:
             raise se
     finally:
-        print("CALLING finallly block")
+        # TODO: also catch and report ds profiling here?
+        pass
 
 
 def report_oom_and_exit(
@@ -151,7 +152,7 @@ def report_ds_profiling_info_and_exit(
     exit()
 
 
-def file_exists(path: Union[str, pathlib.Path], check_limit: int = 3, sleep_time: int = 1):
+def file_exists(path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0):
     # TODO: Clean up, verify needed.
     for _ in range(check_limit):
         if os.path.isfile(path):

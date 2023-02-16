@@ -3,14 +3,11 @@ import logging
 import random
 import uuid
 from abc import abstractmethod
-from hashlib import new
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import determined as det
 from determined import searcher
 from dsat import constants, utils
-from timm.models.registry import is_model
-from torch import optim
 
 
 class DSATTrial:
@@ -104,6 +101,9 @@ class DSATTrial:
             trials_set.add(random_child)
             children |= random_child._children
         return trials_set
+
+    def set_search_data(self, search_data: Any) -> None:
+        self._search_data = search_data
 
 
 class DSATSearchMethodBase(searcher.SearchMethod):
@@ -323,7 +323,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> DSATTrial:
         trial = DSATTrial(hparams=hparams, is_model_profiling_info_run=is_model_profiling_info_run)
         if search_data is not None:
-            trial._search_data = search_data
+            trial.set_search_data(search_data)
         if parent_trial is not None:
             parent_trial.add_child(trial)
         self._all_trials_dict[trial.request_id] = trial

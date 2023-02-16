@@ -1,12 +1,9 @@
 import argparse
-import collections
-import copy
 import os
 from typing import Any, Dict
 
-from dsat import constants, utils
-
 from determined.experimental import client
+from dsat import constants, utils
 
 
 def parse_args():
