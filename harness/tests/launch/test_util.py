@@ -23,6 +23,7 @@ def make_mock_cluster_info(
         debug=False,
         unique_port_offset=0,
         inter_node_network_interface=None,
+        tensorboard_logging=True,
     )
     rendezvous_info_mock = det.RendezvousInfo(
         container_addrs=container_addrs,
