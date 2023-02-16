@@ -291,6 +291,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                   width={width}>
                   {({ columnIndex, rowIndex, style }) => {
                     const cellIndex = rowIndex * columnCount + columnIndex;
+                    if (cellIndex >= chartsProps.length) return null;
                     return (
                       <div className={css.chartgridCell} key={cellIndex} style={style}>
                         <div className={css.chartgridCellCard}>
