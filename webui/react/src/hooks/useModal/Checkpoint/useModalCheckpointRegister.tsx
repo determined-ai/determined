@@ -61,7 +61,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
 
-  const { canModifyModel } = usePermissions();
+  const { canCreateModelVersion } = usePermissions();
 
   const handleClose = useCallback(
     (reason?: ModalCloseReason) => {
@@ -209,7 +209,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         },
         { signal: canceler.signal },
       );
-      const editableModels = response.models.filter((model) => canModifyModel({ model }));
+      const editableModels = response.models.filter((model) => canCreateModelVersion({ model }));
       setModalState((prev) => {
         if (isEqual(prev.models, editableModels)) return prev;
         return { ...prev, models: editableModels };
@@ -221,7 +221,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler.signal, modalState.visible, canModifyModel]);
+  }, [canceler.signal, modalState.visible]);
 
   const modalOpen = useCallback(
     async ({ checkpoints, selectedModelName }: ModalOpenProps) => {
