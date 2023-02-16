@@ -945,7 +945,8 @@ class TFKerasTrialController(det.TrialController):
         step_duration = time.time() - validation_start_time
         logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
-        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
+        if self.metric_writer:
+            self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         self.upload_tb_files()
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
