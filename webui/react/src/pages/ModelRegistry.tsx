@@ -86,7 +86,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canMoveModel } = usePermissions();
+  const { canModifyModel } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -406,7 +406,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
-        MoveModel: 'move-archived',
+        MoveModel: 'move-model',
         SwitchArchived: 'switch-archived',
       } as const;
 
@@ -430,7 +430,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
       ];
 
-      if (canMoveModel({ destination: { id: workspace?.id ?? 1 } })) {
+      if (canModifyModel({ model: record })) {
         menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
       }
       if (user?.id === record.userId || user?.isAdmin) {
@@ -440,13 +440,12 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       return { items: menuItems, onClick: onItemClick };
     },
     [
-      canMoveModel,
+      canModifyModel,
       moveModelToWorkspace,
       showConfirmDelete,
       switchArchived,
       user?.id,
       user?.isAdmin,
-      workspace?.id,
     ],
   );
 

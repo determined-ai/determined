@@ -44,7 +44,8 @@ func (a *ModelAuthZBasic) CanMoveModel(
 	ctx context.Context,
 	curUser model.User,
 	modelRegister *modelv1.Model,
-	fromWorkspaceID, toWorkspaceID int32,
+	fromWorkspaceID int32,
+	toWorkspaceID int32,
 ) error {
 	return nil
 }

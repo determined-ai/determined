@@ -495,7 +495,7 @@ func (a *apiServer) MoveModel(
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("move_model", holder, req.ModelName, req.DestinationWorkspaceId)
+	err = a.m.db.QueryProto("move_model", holder, currModel.Id, req.DestinationWorkspaceId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error moving a model (%s)", req.ModelName)
 	}
