@@ -220,6 +220,7 @@ export interface PostModelParams {
   labels?: string[];
   metadata?: Metadata;
   name: string;
+  workspaceId?: number;
 }
 
 export interface PostModelVersionParams {

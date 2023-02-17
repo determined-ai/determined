@@ -1163,6 +1163,7 @@ export const postModel: DetApi<
       labels: params.labels,
       metadata: params.metadata,
       name: params.name,
+      workspaceId: params.workspaceId,
     }),
 };
 
