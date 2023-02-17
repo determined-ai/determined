@@ -189,7 +189,10 @@ const ModelHeader: React.FC<Props> = ({
             </h1>
           </Space>
           <Space size="small">
-            <Dropdown menu={menu} trigger={['click']}>
+            <Dropdown
+              disabled={!canDeleteModelFlag && !canModifyModelFlag}
+              menu={menu}
+              trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

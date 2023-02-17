@@ -468,6 +468,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       const canModifyModelFlag = canModifyModel({ model: record });
       return (
         <Dropdown
+          disabled={!canDeleteModelFlag && !canModifyModelFlag}
           menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
           trigger={['click']}>
           <Button icon={<Icon name="overflow-vertical" />} type="text" />
