@@ -68,7 +68,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <InlineEditor
-            disabled={model.archived || !canModifyModel({ model })}
+            disabled={model.archived || !canModify}
             placeholder={model.archived ? 'Archived' : 'Add description...'}
             value={model.description ?? ''}
             onSave={onSaveDescription}
@@ -79,7 +79,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <TagList
-            disabled={model.archived || !canModifyModel({ model })}
+            disabled={model.archived || !canModify}
             ghost={false}
             tags={model.labels ?? []}
             onChange={onUpdateTags}
@@ -88,7 +88,7 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onSaveDescription, onUpdateTags, users, canModifyModel]);
+  }, [model, onSaveDescription, onUpdateTags, users, canModify]);
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
@@ -169,7 +169,7 @@ const ModelHeader: React.FC<Props> = ({
             <h1 className={css.name}>
               <InlineEditor
                 allowClear={false}
-                disabled={model.archived || !canModifyModel({ model })}
+                disabled={model.archived || !canModify}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}
