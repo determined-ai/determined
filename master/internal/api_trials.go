@@ -701,9 +701,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 
-			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
 			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
 			a.formatMetricsBatch(&metric, metricSeriesBatch)
 
 			// For now "epoch" is the only custom xAxis metric label supported so we
@@ -711,7 +711,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			// be updated to support any number of xAxis metric options
 			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
 				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesBatch)
+			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
 
 			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
 				metrics = append(metrics, &metric)
@@ -728,13 +728,13 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 
-			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
 			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
 			a.formatMetricsBatch(&metric, metricSeriesBatch)
 			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
 				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesBatch)
+			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
 
 			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
 				metrics = append(metrics, &metric)

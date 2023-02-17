@@ -2552,10 +2552,10 @@ export interface V1Experiment {
     checkpointCount?: number;
     /**
      * The metrics and hyperparameters associated with the best trial by searcher metric.
-     * @type {V1ExperimentTrial}
+     * @type {number}
      * @memberof V1Experiment
      */
-    bestTrial?: V1ExperimentTrial;
+    bestTrialSearcherMetric?: number;
 }
 
 /**
@@ -2596,20 +2596,6 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
-}
-
-/**
- * ExperimentTrial is trial-level data that is surfaced to the experiment level.
- * @export
- * @interface V1ExperimentTrial
- */
-export interface V1ExperimentTrial {
-    /**
-     * the searcher metric value associated with the best_validation_id for the trial.
-     * @type {number}
-     * @memberof V1ExperimentTrial
-     */
-    searcherMetricValue?: number;
 }
 
 /**
@@ -5335,6 +5321,34 @@ export interface V1MoveExperimentResponse {
 }
 
 /**
+ * Request to move a model to a workspace.
+ * @export
+ * @interface V1MoveModelRequest
+ */
+export interface V1MoveModelRequest {
+    /**
+     * The target model name.
+     * @type {string}
+     * @memberof V1MoveModelRequest
+     */
+    modelName: string;
+    /**
+     * The workspace id that the model will be stored.
+     * @type {number}
+     * @memberof V1MoveModelRequest
+     */
+    destinationWorkspaceId: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1MoveModelResponse
+ */
+export interface V1MoveModelResponse {
+}
+
+/**
  * Request to move a project into a workspace.
  * @export
  * @interface V1MoveProjectRequest
@@ -6817,6 +6831,12 @@ export interface V1RendezvousInfo {
      * @memberof V1RendezvousInfo
      */
     rank: number;
+    /**
+     * The slots for each address, respectively.
+     * @type {Array<number>}
+     * @memberof V1RendezvousInfo
+     */
+    slots: Array<number>;
 }
 
 /**
@@ -19526,6 +19546,52 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelName' is not null or undefined
+            if (modelName === null || modelName === undefined) {
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling moveModel.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelName}/move`
+                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1MoveModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
@@ -19927,6 +19993,26 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).moveModel(modelName, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
@@ -20134,6 +20220,17 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options?: any) {
+            return ModelsApiFp(configuration).moveModel(modelName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
@@ -20309,6 +20406,19 @@ export class ModelsApi extends BaseAPI {
      */
     public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
         return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Move a model into a workspace
+     * @param {string} modelName The target model name.
+     * @param {V1MoveModelRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public moveModel(modelName: string, body: V1MoveModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).moveModel(modelName, body, options)(this.fetch, this.basePath);
     }
 
     /**
