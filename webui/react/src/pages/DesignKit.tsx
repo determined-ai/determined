@@ -40,7 +40,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
-import { BrandingType, MetricType, ResourcePool } from 'types';
+import { BrandingType, MetricType, ResourcePool, Scale } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
@@ -316,6 +316,7 @@ const ChartsSection: React.FC = () => {
     },
   };
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
+  const [scale, setScale] = useState<Scale>(Scale.Linear);
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -371,6 +372,8 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ]}
+          scale={scale}
+          setScale={setScale}
           xAxis={xAxis}
           onXAxisChange={setXAxis}
         />
