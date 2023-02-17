@@ -11,11 +11,21 @@
     flex-direction: column;
     max-width: 220px;
 
-    & > * {
+    & > *:first-child {
       margin-bottom: 24px;
     }
     & > *:last-child {
       margin-bottom: 0;
+    }
+  }
+  .form {
+    width: 100%;
+
+    & :global(p) {
+      text-align: center;
+    }
+    & :global(button) {
+      width: 100%;
     }
   }
   .ssoButton {
@@ -25,7 +35,7 @@
     padding: 0;
     width: 100%;
   }
-  .ssoButton > img {
+  .ssoLogo {
     height: 20px;
     margin: 0 6px;
     width: 20px;

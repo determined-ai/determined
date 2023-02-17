@@ -102,7 +102,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
 
   const loginForm = (
     <Form
-      className={css.form}
       initialValues={{ username: storage.getWithDefault(STORAGE_KEY_LAST_USERNAME, '') }}
       name="login"
       onFinish={onFinish}
