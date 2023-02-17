@@ -81,6 +81,7 @@ interface PermissionsHook {
   canModifyWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
+  canMoveModel: (arg0: MovePermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canMoveProjectsTo: (arg0: MovePermissionsArgs) => boolean;
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
@@ -181,6 +182,7 @@ const usePermissions = (): PermissionsHook => {
         canMoveExperiment(rbacOpts, args.experiment),
       canMoveExperimentsTo: (args: MovePermissionsArgs) =>
         canMoveExperimentsTo(rbacOpts, args.destination),
+      canMoveModel: (args: MovePermissionsArgs) => canMoveModel(rbacOpts, args.destination),
       canMoveProjects: (args: ProjectPermissionsArgs) =>
         canMoveWorkspaceProjects(rbacOpts, args.project),
       canMoveProjectsTo: (args: MovePermissionsArgs) =>
@@ -515,6 +517,14 @@ const canMoveProjectsTo = (
     rbacAllPermission ||
     (!!user && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEPROJECT)))
   );
+};
+
+const canMoveModel = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  destination?: PermissionWorkspace,
+): boolean => {
+  const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
+  return rbacAllPermission || !rbacEnabled || destPermit.has(V1PermissionType.CREATEMODELREGISTRY);
 };
 
 // Workspace actions

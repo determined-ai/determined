@@ -36,6 +36,7 @@ import Toggle from 'components/Toggle';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -85,7 +86,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canCreateModels } = usePermissions();
+  const { canCreateModels, canModifyModel } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
@@ -93,6 +94,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
+
+  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
+    useModalModelMove();
 
   const settingConfig = useMemo(() => {
     return settingsConfig(workspace?.id.toString() ?? 'global');
@@ -199,6 +203,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
     },
     [fetchModels],
+  );
+
+  const moveModelToWorkspace = useCallback(
+    (model: ModelItem) => {
+      openModelMove(model);
+    },
+    [openModelMove],
   );
 
   const setModelTags = useCallback(
@@ -395,12 +406,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
+        MoveModel: 'move-model',
         SwitchArchived: 'switch-archived',
       } as const;
 
       const funcs = {
         [MenuKey.SwitchArchived]: () => {
           switchArchived(record);
+        },
+        [MenuKey.MoveModel]: () => {
+          moveModelToWorkspace(record);
         },
         [MenuKey.DeleteModel]: () => {
           showConfirmDelete(record);
@@ -415,13 +430,23 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
       ];
 
+      if (canModifyModel({ model: record })) {
+        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+      }
       if (user?.id === record.userId || user?.isAdmin) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
+    [
+      canModifyModel,
+      moveModelToWorkspace,
+      showConfirmDelete,
+      switchArchived,
+      user?.id,
+      user?.isAdmin,
+    ],
   );
 
   const columns = useMemo(() => {
@@ -734,6 +759,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       )}
       {modalModelCreateContextHolder}
       {modalModelDeleteContextHolder}
+      {modalModelMoveContextHolder}
     </Page>
   );
 };

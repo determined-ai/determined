@@ -6289,6 +6289,32 @@ class v1MoveExperimentRequest:
         }
         return out
 
+class v1MoveModelRequest:
+
+    def __init__(
+        self,
+        *,
+        destinationWorkspaceId: int,
+        modelName: str,
+    ):
+        self.destinationWorkspaceId = destinationWorkspaceId
+        self.modelName = modelName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveModelRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": obj["destinationWorkspaceId"],
+            "modelName": obj["modelName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": self.destinationWorkspaceId,
+            "modelName": self.modelName,
+        }
+        return out
+
 class v1MoveProjectRequest:
 
     def __init__(
@@ -14682,6 +14708,27 @@ def post_MoveExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveModel(
+    session: "api.Session",
+    *,
+    body: "v1MoveModelRequest",
+    modelName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelName}/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveModel", _resp)
 
 def post_MoveProject(
     session: "api.Session",
