@@ -438,7 +438,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [showConfirmDelete, switchArchived],
+    [canModifyModel, moveModelToWorkspace, showConfirmDelete, switchArchived],
   );
 
   const columns = useMemo(() => {
