@@ -10,6 +10,60 @@
  Version 0.19
 **************
 
+Version 0.19.11
+===============
+
+**Release Date:** February 17, 2023
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where environment variables with an equals character in the value, such
+   as ``func=f(x)=x``, were processed incorrectly in Kubernetes.
+-  Agent: Fix a bug where if agent reattach was enabled and the master was down while an active
+   task's Docker container failed, the task could get stuck in an unkillable running state.
+-  ``det deploy aws``: Update CloudFormation permissions to allow checkpoint downloads through
+   master.
+-  Tasks: Fix a bug where in rare cases tasks could take an extra 30 seconds to complete.
+
+**Improvements**
+
+-  Container Images: Publish multi-arch master and agent container image manifests with AMD64,
+   ARM64, and PPC64 architectures.
+
+-  Experiments: If an experiment with no checkpoints is deleted, a checkpoint GC task will no longer
+   be launched. Launching a checkpoint GC task could prevent experiments with certain incorrect
+   configuration from being deleted.
+
+-  Cluster: Capability added for checkpoint downloads from Google Cloud Storage via a master
+   instance.
+
+-  Installation: ``.deb`` and ``.rpm`` Linux packages will now install master and agent binaries
+   into ``/usr/bin/`` instead of ``/usr/local/bin/``, to be more in line with the Filesystem
+   Hierarchy Standard.
+
+-  Kubernetes: Empty environment variables can now be specified in Kubernetes, while before they
+   would throw an error.
+
+-  Kubernetes: Zero-slot tasks on GPU clusters will not request ``nvidia.com/gpu: 0`` resources any
+   more, allowing them to be scheduled on CPU-only nodes.
+
+-  Installation: Add experimental Homebrew (macOS) package.
+
+-  Scheduler: The scheduler can be configured to find fits for distributed jobs against agents of
+   different sizes.
+
+**New Features**
+
+-  CLI: Add a ``--add-tag`` flag to AWS ``det deploy aws up``, which specifies tags to add to the
+   underlying CloudFormation stack.
+
+   -  New tags will not replace automatically added tags such as ``deployment-type`` or
+      ``managed-by``.
+
+   -  Any added tags that should persist across updates should be always be included when using
+      ``det deploy aws up`` -- if the argument is missing, any previously added tags would be
+      removed.
+
 Version 0.19.10
 ===============
 
@@ -78,6 +132,27 @@ Version 0.19.10
    guide to use the underlying `yogadl library <https://yogadl.readthedocs.io/en/latest/>`_ directly
    may be found `here <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
    Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
+
+Version 0.19.9
+==============
+
+**Release Date:** December 20, 2022
+
+**New Features**
+
+-  WebUI: Display total checkpoint size for experiments.
+
+-  WebUI: Add links from forked experiments and continued trials to their parents.
+
+-  API: Add structured fields to task log objects.
+
+-  Cluster: Add support for launcher-provided resource pools. Determined Enterprise Edition now
+   allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
+   partition on an HPC cluster with different submission options.
+
+-  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
+   <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
+   Apptainer/Singularity/PodMan.
 
 Version 0.19.8
 ==============
