@@ -12,6 +12,7 @@ import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -46,7 +47,9 @@ const ModelHeader: React.FC<Props> = ({
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const { contextHolder, modalOpen } = useModalModelDelete();
+  const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
+  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
+    useModalModelMove();
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDelete = canDeleteModel({ model });
   const canModify = canModifyModel({ model });
@@ -92,15 +95,21 @@ const ModelHeader: React.FC<Props> = ({
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
+  const handleMove = useCallback(() => openModelMove(model), [openModelMove, model]);
+
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
+      MoveModel: 'move-model',
       SwitchArchived: 'switch-archive',
     } as const;
 
     const funcs = {
       [MenuKey.SwitchArchived]: () => {
         onSwitchArchive();
+      },
+      [MenuKey.MoveModel]: () => {
+        handleMove();
       },
       [MenuKey.DeleteModel]: () => {
         handleDelete();
@@ -117,13 +126,16 @@ const ModelHeader: React.FC<Props> = ({
         key: MenuKey.SwitchArchived,
         label: model.archived ? 'Unarchive' : 'Archive',
       });
+      if (!model.archived) {
+        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+      }
     }
     if (canDelete) {
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [canDelete, canModify, handleDelete, model, onSwitchArchive]);
+  }, [canDelete, canModify, handleDelete, handleMove, model, onSwitchArchive]);
 
   return (
     <header className={css.base}>
@@ -186,7 +198,8 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {contextHolder}
+      {modalModelDeleteContextHolder}
+      {modalModelMoveContextHolder}
     </header>
   );
 };

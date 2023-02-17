@@ -81,9 +81,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canCreateModels, canModifyModel } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
-  const { canDeleteModel, canModifyModel } = usePermissions();
+  const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate({ workspaceId: workspace?.id });
@@ -428,9 +427,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           key: MenuKey.SwitchArchived,
           label: record.archived ? 'Unarchive' : 'Archive',
         });
-      }
-      if (!record.archived && canModifyModel({ model: record })) {
-        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+        if (!record.archived) {
+          menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+        }
       }
       if (canDelete) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
@@ -438,7 +437,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [canModifyModel, moveModelToWorkspace, showConfirmDelete, switchArchived],
+    [moveModelToWorkspace, showConfirmDelete, switchArchived],
   );
 
   const columns = useMemo(() => {
