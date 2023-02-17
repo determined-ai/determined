@@ -398,7 +398,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem, canDelete: boolean, canModify: boolean): DropDownProps['menu'] => {
+    (
+      record: ModelItem,
+      canDeleteModelFlag: boolean,
+      canModifyModelFlag: boolean,
+    ): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
         MoveModel: 'move-model',
@@ -422,7 +426,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       };
 
       const menuItems: MenuProps['items'] = [];
-      if (canModify) {
+      if (canModifyModelFlag) {
         menuItems.push({
           key: MenuKey.SwitchArchived,
           label: record.archived ? 'Unarchive' : 'Archive',
@@ -431,7 +435,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
         }
       }
-      if (canDelete) {
+      if (canDeleteModelFlag) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
@@ -460,13 +464,15 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => {
-      const canDelete = canDeleteModel({ model: record });
-      const canModify = canModifyModel({ model: record });
-      return canModify || canDelete ? (
-        <Dropdown menu={ModelActionMenu(record, canDelete, canModify)} trigger={['click']}>
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
+        <Dropdown
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          trigger={['click']}>
           <Button icon={<Icon name="overflow-vertical" />} type="text" />
         </Dropdown>
-      ) : null;
+      );
     };
 
     const descriptionRenderer = (value: string, record: ModelItem) => (
@@ -680,16 +686,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       onVisibleChange?: (visible: boolean) => void;
       record: ModelItem;
     }) => {
-      const canDelete = canDeleteModel({ model: record });
-      const canModify = canModifyModel({ model: record });
-      return canDelete || canModify ? (
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
         <Dropdown
-          menu={ModelActionMenu(record, canDelete, canModify)}
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
           trigger={['contextMenu']}
           onOpenChange={onVisibleChange}>
           {children}
         </Dropdown>
-      ) : null;
+      );
     },
     [ModelActionMenu, canDeleteModel, canModifyModel],
   );
