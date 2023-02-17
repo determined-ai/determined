@@ -23,7 +23,7 @@ get-deps: node_modules/done.stamp
 .PHONY: build
 build: build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js vite.config.ts
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json vite.config.ts
 	npm run build
 	touch $@
 
