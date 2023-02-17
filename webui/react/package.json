@@ -24,9 +24,8 @@
     "format-check:js": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
-    "test": "craco test --config jest.config.js",
-    "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
-    "eject": "react-scripts eject",
+    "test": "vitest",
+    "test:coverage": "vitest --run --coverage",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
@@ -104,6 +103,7 @@
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.0",
     "@vitejs/plugin-react-swc": "^3.1.0",
+    "@vitest/coverage-c8": "^0.28.5",
     "browserslist": "^4.21.4",
     "cheerio": "^1.0.0-rc.12",
     "eslint": "^7.32.0",
