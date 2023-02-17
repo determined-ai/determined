@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -142,12 +143,9 @@ func (a *apiServer) GetModels(
 		workspaceIdsGiven = req.WorkspaceIds
 	} else if req.WorkspaceIds == nil && req.WorkspaceNames != nil {
 		// get the ids of the corresponding workspaces
-		if err := db.Bun().NewRaw(`
-			SELECT DISTINCT(id) as ID FROM workspaces w
-			WHERE w.name IN (SELECT string_agg(trim(jsonNames::text, '"'), ', ')
-			FROM jsonb_array_elements(?) jsonNames)`,
-			req.WorkspaceNames,
-		).Scan(ctx, &workspaceIdsGiven); err != nil {
+		if err := db.Bun().NewSelect().Table("workspaces").Column("id").
+			Where("name in (?)", bun.In(req.WorkspaceNames)).Distinct().
+			Scan(ctx, &workspaceIdsGiven); err != nil {
 			return nil, fmt.Errorf("getting workspace ids from names: %w", err)
 		}
 	}
