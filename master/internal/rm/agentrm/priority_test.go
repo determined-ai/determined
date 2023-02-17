@@ -43,7 +43,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
 	zeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndPositionAndTimestamp(
-		taskList, mockGroups, emptyQueuePositions, taskFilter("", true))
+		taskList, mockGroups, emptyQueuePositions, taskFilter(true))
 
 	tasksInLowerPriority := zeroSlotPendingTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority := []*MockTask{}
@@ -54,7 +54,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	assertEqualToAllocateOrdered(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 
 	nonZeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndPositionAndTimestamp(
-		taskList, mockGroups, emptyQueuePositions, taskFilter("", false))
+		taskList, mockGroups, emptyQueuePositions, taskFilter(false))
 
 	tasksInLowerPriority = nonZeroSlotPendingTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority = []*MockTask{tasks[1], tasks[0]}
@@ -66,7 +66,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 
 	forceSetTaskAllocations(t, taskList, "task5", 1)
 	_, scheduledTasksByPriority := sortTasksByPriorityAndPositionAndTimestamp(
-		taskList, mockGroups, emptyQueuePositions, taskFilter("", false))
+		taskList, mockGroups, emptyQueuePositions, taskFilter(false))
 
 	tasksInLowerPriority = scheduledTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority = make([]*MockTask, 0)
@@ -173,35 +173,6 @@ func TestPrioritySchedulingPreemptionDisabledHigherPriorityBlocksLowerPriority(t
 	for _, agent := range agentMap {
 		assert.Equal(t, agent.numEmptySlots(), 4)
 	}
-}
-
-func TestPrioritySchedulingPreemptionDisabledWithLabels(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*MockAgent{
-		{ID: "agent1", Slots: 4, Label: "label1"},
-		{ID: "agent2", Slots: 4, Label: "label1"},
-	}
-	groups := []*MockGroup{
-		{ID: "group1", Priority: &lowerPriority},
-		{ID: "group2", Priority: &higherPriority},
-	}
-	tasks := []*MockTask{
-		{ID: "task1", SlotsNeeded: 4, Group: groups[0], Label: "label1"},
-		{ID: "task2", SlotsNeeded: 1, Group: groups[0], Label: "label1"},
-		{ID: "task3", SlotsNeeded: 4, Group: groups[1], Label: "label2"},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
-		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
-
-	expectedToAllocate := []*MockTask{tasks[0], tasks[1]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
 func TestPrioritySchedulingPreemptionDisabledAddTasks(t *testing.T) {

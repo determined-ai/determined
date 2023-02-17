@@ -1834,11 +1834,12 @@ schemas = {
     "required": [],
     "properties": {
         "agent_label": {
+            "$comment": "the agent_label feature was removed in 0.20.0, and the config is ignored",
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "devices": {
             "type": [

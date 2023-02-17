@@ -28,8 +28,7 @@ message GetAgentsRequest {
   int32 offset = 3;
   // Limit the number of agents. A value of 0 denotes no limit.
   int32 limit = 4;
-  // Filter agents by their label. If no label is specified or is empty, all
-  // agents are returned.
+  // This field has been deprecated and will be ignored.
   string label = 5;
 }
 // Response to GetAgentsRequest.

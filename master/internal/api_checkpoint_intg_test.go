@@ -60,7 +60,6 @@ func createVersionTwoCheckpoint(
 		AllocationID: aID,
 		TaskID:       trial.TaskID,
 		Slots:        1,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}

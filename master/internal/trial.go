@@ -288,7 +288,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
-			AgentLabel:        t.config.Resources().AgentLabel(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: false,
@@ -323,7 +322,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
-		AgentLabel:   t.config.Resources().AgentLabel(),
 		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: false,

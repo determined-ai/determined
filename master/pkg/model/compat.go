@@ -38,7 +38,6 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 		RawWeight:         ptrs.Ptr(r.Weight),
 		RawNativeParallel: ptrs.Ptr(r.NativeParallel),
 		RawShmSize:        shm,
-		RawAgentLabel:     ptrs.Ptr(r.AgentLabel),
 		RawResourcePool:   ptrs.Ptr(r.ResourcePool),
 		RawPriority:       r.Priority,
 		RawDevices:        r.Devices.ToExpconf(),

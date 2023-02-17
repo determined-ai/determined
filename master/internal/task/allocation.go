@@ -148,7 +148,6 @@ func NewAllocation(
 			AllocationID: req.AllocationID,
 			TaskID:       req.TaskID,
 			Slots:        req.SlotsNeeded,
-			AgentLabel:   req.AgentLabel,
 			ResourcePool: req.ResourcePool,
 		},
 

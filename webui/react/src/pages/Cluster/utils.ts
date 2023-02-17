@@ -8,7 +8,6 @@ import { GroupBy } from './ClusterHistoricalUsage.settings';
 
 export interface ResourceAllocationChartSeries {
   groupedBy: GroupBy;
-  hoursByAgentLabel: Record<string, number[]>;
   hoursByExperimentLabel: Record<string, number[]>;
   hoursByResourcePool: Record<string, number[]>;
   hoursByUsername: Record<string, number[]>;
@@ -23,7 +22,6 @@ export const mapResourceAllocationApiToChartSeries = (
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
-    hoursByAgentLabel: mapToChartSeries(apiRes.map((item) => item.byAgentLabel)),
     hoursByExperimentLabel: mapToChartSeries(apiRes.map((item) => item.byExperimentLabel)),
     hoursByResourcePool: mapToChartSeries(apiRes.map((item) => item.byResourcePool)),
     hoursByUsername: mapToChartSeries(

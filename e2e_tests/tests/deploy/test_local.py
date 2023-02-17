@@ -165,13 +165,10 @@ def test_agent_config_path() -> None:
 
     # Validate CLI flags overwrite config file options.
     agent_name += "-2"
-    agent_up(
-        ["--agent-name", agent_name, "--agent-config-path", etc_path, "--agent-label", "cli-flag"]
-    )
+    agent_up(["--agent-name", agent_name, "--agent-config-path", etc_path])
     agent_list = json.loads(subprocess.check_output(["det", "a", "list", "--json"]).decode())
     agent_list = [el for el in agent_list if el["id"] == agent_name]
     assert len(agent_list) == 1
-    assert agent_list[0]["label"] == "cli-flag"
     agent_down(["--agent-name", agent_name])
 
     master_down([])

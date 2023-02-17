@@ -121,7 +121,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
 			// agentReconnectWait if it never reconnects.
 			// Ensure RP is aware of the agent.
-			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: a.agentState.Label}).Get()
+			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self()}).Get()
 			a.socketDisconnected(ctx)
 		}
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
@@ -528,13 +528,12 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
 	a.agentState = newAgentState(
-		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
+		sproto.AddAgent{Agent: ctx.Self()},
 		a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(ctx, agentStarted)
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
-		Label: agentStarted.Label,
 		Slots: a.agentState.numSlots(),
 	})
 
@@ -590,7 +589,6 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 
 	if a.agentState != nil {
 		result.Slots = a.agentState.getSlotsSummary(ctx)
-		result.Label = a.agentState.Label
 		result.Enabled = a.agentState.enabled
 		result.Draining = a.agentState.draining
 		result.NumContainers = len(a.agentState.containerAllocation)

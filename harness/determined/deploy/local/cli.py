@@ -64,7 +64,6 @@ def handle_agent_up(args: argparse.Namespace) -> None:
         agent_config_path=args.agent_config_path,
         gpu=args.gpu,
         agent_name=args.agent_name,
-        agent_label=args.agent_label,
         agent_resource_pool=args.agent_resource_pool,
         image_repo_prefix=args.image_repo_prefix,
         version=args.det_version,
@@ -312,7 +311,6 @@ args_description = Cmd(
                     default=cluster_utils.AGENT_NAME_DEFAULT,
                     help="agent name",
                 ),
-                Arg("--agent-label", type=str, default=None, help="agent label"),
                 Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
                 BoolOptArg(
                     "--gpu",

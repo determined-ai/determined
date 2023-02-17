@@ -933,7 +933,7 @@ export interface V1Agent {
      */
     containers?: { [key: string]: V1Container; };
     /**
-     * An optional label applied to the agent for scheduling restrictions.
+     * This field has been deprecated and will be empty.
      * @type {string}
      * @memberof V1Agent
      */
@@ -6910,7 +6910,7 @@ export interface V1ResourceAllocationAggregatedEntry {
      */
     byResourcePool: { [key: string]: number; };
     /**
-     * The seconds in the cluster used by experiments assigned to each agent label.
+     * This field has been deprecated and will be empty.
      * @type {{ [key: string]: number; }}
      * @memberof V1ResourceAllocationAggregatedEntry
      */
@@ -10600,7 +10600,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11137,7 +11137,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11400,7 +11400,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11584,7 +11584,7 @@ export class ClusterApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-     * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+     * @param {string} [label] This field has been deprecated and will be ignored.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi

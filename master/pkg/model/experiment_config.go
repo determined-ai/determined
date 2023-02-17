@@ -88,11 +88,13 @@ type ResourcesConfig struct {
 	Weight         float64      `json:"weight"`
 	NativeParallel bool         `json:"native_parallel,omitempty"`
 	ShmSize        *StorageSize `json:"shm_size,omitempty"`
-	AgentLabel     string       `json:"agent_label"`
 	ResourcePool   string       `json:"resource_pool"`
 	Priority       *int         `json:"priority,omitempty"`
 
 	Devices DevicesConfig `json:"devices"`
+
+	// Deprecated: Use ResourcePool instead.
+	AgentLabel string `json:"agent_label,omitempty"`
 }
 
 // StorageSize is a named type for custom marshaling behavior for shm_size.

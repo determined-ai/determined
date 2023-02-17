@@ -206,7 +206,6 @@
     reproducibility:
       experiment_seed: "*"
     resources:
-      agent_label: ''
       devices: []
       native_parallel: false
       shm_size: null

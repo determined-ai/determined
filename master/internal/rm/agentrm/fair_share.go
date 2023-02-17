@@ -118,43 +118,42 @@ func fairshareSchedule(
 	// fit on any agent due to hard contraints. This may cause the scheduler to
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
-	capacity := capacityByAgentLabel(agents)
-	states := calculateGroupStates(taskList, groups, capacity)
+	capacity := totalCapacity(agents)
+	groupStates := calculateGroupStates(taskList, groups, capacity)
 
-	for label, groupStates := range states {
-		allocateSlotOffers(groupStates, capacity[label])
-		toAllocate, toRelease := assignTasks(
-			agents,
-			groupStates,
-			fittingMethod,
-			allowHeterogeneousAgentFits,
-		)
-		allToAllocate = append(allToAllocate, toAllocate...)
-		allToRelease = append(allToRelease, toRelease...)
-	}
+	allocateSlotOffers(groupStates, capacity)
+	toAllocate, toRelease := assignTasks(
+		agents,
+		groupStates,
+		fittingMethod,
+		allowHeterogeneousAgentFits,
+	)
+	allToAllocate = append(allToAllocate, toAllocate...)
+	allToRelease = append(allToRelease, toRelease...)
+
 	return allToAllocate, allToRelease
 }
 
-func capacityByAgentLabel(agents map[*actor.Ref]*agentState) map[string]int {
-	agentCap := map[string]int{}
+func totalCapacity(agents map[*actor.Ref]*agentState) int {
+	result := 0
 
 	for _, agent := range agents {
-		agentCap[agent.Label] += agent.numSlots()
+		result += agent.numSlots()
 	}
 
-	return agentCap
+	return result
 }
 
 func calculateGroupStates(
-	taskList *tasklist.TaskList, groups map[*actor.Ref]*tasklist.Group, capacities map[string]int,
-) map[string][]*groupState {
+	taskList *tasklist.TaskList, groups map[*actor.Ref]*tasklist.Group, capacity int,
+) []*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
-	states := make(map[string][]*groupState)
+	states := []*groupState{}
 	groupMapping := make(map[*tasklist.Group]*groupState)
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.AgentLabel] {
+		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacity {
 			continue
 		}
 		group := groups[req.Group]
@@ -164,37 +163,35 @@ func calculateGroupStates(
 				Group:    group,
 				disabled: false,
 			}
-			states[req.AgentLabel] = append(states[req.AgentLabel], state)
+			states = append(states, state)
 			groupMapping[group] = state
 		}
 		state.reqs = append(state.reqs, req)
 	}
-	for _, group := range states {
-		for _, state := range group {
-			check.Panic(check.True(state.Group != nil, "the group of a task must not be nil"))
-			for _, req := range state.reqs {
-				allocated := taskList.Allocation(req.AllocationRef)
-				state.slotDemand += req.SlotsNeeded
-				switch {
-				case !tasklist.AssignmentIsScheduled(allocated):
-					state.pendingReqs = append(state.pendingReqs, req)
-				default:
-					if !req.Preemptible {
-						state.presubscribedSlots += req.SlotsNeeded
-					}
-					state.allocatedReqs = append(state.allocatedReqs, req)
-					// Though it would be nice if group state slot counts were counted precisely by
-					// len(allocated.Resources.AgentDevices) after the incremental release feature,
-					// we would also need to change other slot-related variables to be similarly
-					// calculated and, unfortunately, all over the fair share code, slot demand,
-					// active slots, scheduled slots and more is have many sources of truth that
-					// make this change difficult without introducing bugs.
-					state.activeSlots += req.SlotsNeeded
+	for _, state := range states {
+		check.Panic(check.True(state.Group != nil, "the group of a task must not be nil"))
+		for _, req := range state.reqs {
+			allocated := taskList.Allocation(req.AllocationRef)
+			state.slotDemand += req.SlotsNeeded
+			switch {
+			case !tasklist.AssignmentIsScheduled(allocated):
+				state.pendingReqs = append(state.pendingReqs, req)
+			default:
+				if !req.Preemptible {
+					state.presubscribedSlots += req.SlotsNeeded
 				}
+				state.allocatedReqs = append(state.allocatedReqs, req)
+				// Though it would be nice if group state slot counts were counted precisely by
+				// len(allocated.Resources.AgentDevices) after the incremental release feature,
+				// we would also need to change other slot-related variables to be similarly
+				// calculated and, unfortunately, all over the fair share code, slot demand,
+				// active slots, scheduled slots and more is have many sources of truth that
+				// make this change difficult without introducing bugs.
+				state.activeSlots += req.SlotsNeeded
 			}
-			if state.MaxSlots != nil {
-				state.slotDemand = mathx.Min(state.slotDemand, *state.MaxSlots)
-			}
+		}
+		if state.MaxSlots != nil {
+			state.slotDemand = mathx.Min(state.slotDemand, *state.MaxSlots)
 		}
 	}
 

@@ -120,7 +120,7 @@ func findDedicatedAgentFits(
 	// 2) Multi-agent tasks will receive all the slots on every agent they are scheduled on.
 	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
-		constraints := []HardConstraint{labelSatisfied, agentSlotUnusedSatisfied}
+		constraints := []HardConstraint{agentSlotUnusedSatisfied}
 		if isViable(req, agent, constraints...) {
 			agentsByNumSlots[agent.numEmptySlots()] = append(
 				agentsByNumSlots[agent.numEmptySlots()],
@@ -224,7 +224,7 @@ func findSharedAgentFit(
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
-		if !isViable(req, agent, slotsSatisfied, maxZeroSlotContainersSatisfied, labelSatisfied) {
+		if !isViable(req, agent, slotsSatisfied, maxZeroSlotContainersSatisfied) {
 			continue
 		}
 

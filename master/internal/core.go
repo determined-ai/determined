@@ -379,9 +379,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 		if err = writeAggType("resource_pool", entry.ByResourcePool); err != nil {
 			return err
 		}
-		if err = writeAggType("agent_label", entry.ByAgentLabel); err != nil {
-			return err
-		}
 		if err = writeAggType("total", map[string]float32{"total": entry.Seconds}); err != nil {
 			return err
 		}
