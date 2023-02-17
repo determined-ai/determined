@@ -444,7 +444,7 @@ const ModelDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || !workspace) {
+  } else if (!model || !workspaces.length) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
