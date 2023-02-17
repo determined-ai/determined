@@ -196,6 +196,21 @@ message UnarchiveModelRequest {
 // Response to UnarchiveModelRequest
 message UnarchiveModelResponse {}
 
+// Request to move a model to a workspace.
+message MoveModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "destination_workspace_id" ] }
+  };
+
+  // The target model name.
+  string model_name = 1;
+  // The workspace id that the model will be stored.
+  int32 destination_workspace_id = 2;
+}
+
+// Response to MoveModelRequest
+message MoveModelResponse {}
+
 // Request for deleting a model in the registry.
 message DeleteModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

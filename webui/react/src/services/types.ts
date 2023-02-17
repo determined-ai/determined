@@ -166,6 +166,11 @@ export interface GetModelsParams extends PaginationParams {
   workspaceIds?: number[];
 }
 
+export interface MoveModelParams {
+  destinationWorkspaceId: number;
+  modelName: string;
+}
+
 export interface GetModelParams {
   modelName: string;
 }
