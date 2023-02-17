@@ -118,6 +118,7 @@ def main(argv: List[str]) -> None:
             None,
             storage_config,
             container_path=constants.SHARED_FS_CONTAINER_PATH,
+            async_upload=False,
         )
         delete_tensorboards(tb_manager, dry_run=args.dry_run)
 

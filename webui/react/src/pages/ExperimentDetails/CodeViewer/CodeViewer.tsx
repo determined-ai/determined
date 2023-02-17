@@ -417,7 +417,7 @@ const CodeViewer: React.FC<Props> = ({
   useEffect(() => {
     const hasActiveFile = activeFile?.text;
     const isSameFile = activeFile?.key === settings.filePath;
-    const isIpybnFile = settings.filePath.includes('.ipynb');
+    const isIpybnFile = /\.ipynb$/i.test(settings.filePath);
 
     if (hasActiveFile && isSameFile && isIpybnFile) {
       setEditorMode('ipynb');

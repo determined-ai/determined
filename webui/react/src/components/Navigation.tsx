@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -11,6 +11,7 @@ import { useCurrentUser } from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
+import { useInitApi } from 'utils/dialogApi';
 import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -23,6 +24,7 @@ interface Props {
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
+  useInitApi();
   const { ui } = useUI();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
@@ -33,7 +35,10 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const currentUser = useCurrentUser();
   const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
-  usePolling(fetchWorkspaces);
+  const guardedFetchWorkspaces = useCallback(() => {
+    return currentUser !== NotLoaded && fetchWorkspaces();
+  }, [currentUser, fetchWorkspaces]);
+  usePolling(guardedFetchWorkspaces);
 
   useEffect(() => {
     updateFaviconType(

@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-24586f0
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ad0591c
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c
 
   login-docker:
     parameters:
@@ -207,7 +207,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl https://dl.google.com/go/go1.18.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.18.10.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
 
   install-protoc:
@@ -1932,7 +1932,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12
         type: string
       accel-node-taints:
         type: string
@@ -2248,6 +2248,7 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -2702,7 +2703,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
@@ -2723,6 +2724,7 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
+              compute-agent-instance-type: ["g4dn.4xlarge"]
 
       # GPU tests
       - request-gpu-tests:
@@ -2739,7 +2741,7 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
@@ -2774,7 +2776,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
@@ -2862,6 +2864,7 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
+              compute-agent-instance-type: ["g4dn.4xlarge"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws

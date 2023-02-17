@@ -89,6 +89,20 @@ func (_m *ModelAuthZ) CanGetModels(ctx context.Context, curUser model.User, work
 	return r0, r1
 }
 
+// CanMoveModel provides a mock function with given fields: ctx, curUser, _a2, fromWorkspaceID, toWorkspaceID
+func (_m *ModelAuthZ) CanMoveModel(ctx context.Context, curUser model.User, _a2 *modelv1.Model, fromWorkspaceID int32, toWorkspaceID int32) error {
+	ret := _m.Called(ctx, curUser, _a2, fromWorkspaceID, toWorkspaceID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *modelv1.Model, int32, int32) error); ok {
+		r0 = rf(ctx, curUser, _a2, fromWorkspaceID, toWorkspaceID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FilterReadableModelsQuery provides a mock function with given fields: ctx, curUser, query
 func (_m *ModelAuthZ) FilterReadableModelsQuery(ctx context.Context, curUser model.User, query *bun.SelectQuery) (*bun.SelectQuery, error) {
 	ret := _m.Called(ctx, curUser, query)

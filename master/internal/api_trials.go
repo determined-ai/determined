@@ -633,9 +633,9 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) appendToMetricsBatch(metrics []*apiv1.SummarizedMetric,
+func (a *apiServer) formatMetricsBatch(
 	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) []*apiv1.SummarizedMetric {
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPoint{
 			Batches: int32(in.X),
@@ -643,10 +643,6 @@ func (a *apiServer) appendToMetricsBatch(metrics []*apiv1.SummarizedMetric,
 		}
 		m.Data = append(m.Data, &out)
 	}
-	if len(m.Data) > 0 {
-		return append(metrics, m)
-	}
-	return metrics
 }
 
 func timeFromFloat64(ts float64) time.Time {
@@ -655,9 +651,9 @@ func timeFromFloat64(ts float64) time.Time {
 	return time.Unix(secs, nsecs)
 }
 
-func (a *apiServer) appendToMetricsTime(metrics []*apiv1.SummarizedMetric,
+func (a *apiServer) formatMetricsTime(
 	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) []*apiv1.SummarizedMetric {
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPointTime{
 			Time:  timestamppb.New(timeFromFloat64(in.X)),
@@ -665,15 +661,11 @@ func (a *apiServer) appendToMetricsTime(metrics []*apiv1.SummarizedMetric,
 		}
 		m.Time = append(m.Time, &out)
 	}
-	if len(m.Time) > 0 {
-		return append(metrics, m)
-	}
-	return metrics
 }
 
-func (a *apiServer) appendToMetricsEpoch(metrics []*apiv1.SummarizedMetric,
+func (a *apiServer) formatMetricsEpoch(
 	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) []*apiv1.SummarizedMetric {
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPointEpoch{
 			Epoch: int32(in.X),
@@ -681,7 +673,6 @@ func (a *apiServer) appendToMetricsEpoch(metrics []*apiv1.SummarizedMetric,
 		}
 		m.Epochs = append(m.Epochs, &out)
 	}
-	return metrics
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
@@ -709,17 +700,22 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
+
+			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			a.formatMetricsTime(&metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
 
 			// For now "epoch" is the only custom xAxis metric label supported so we
 			// build the `MetricSeriesEpoch` array. In the future this logic should
 			// be updated to support any number of xAxis metric options
 			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
 				maxDatapoints, logScale)
-			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesEpoch)
+			a.formatMetricsEpoch(&metric, metricSeriesBatch)
+
+			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+				metrics = append(metrics, &metric)
+			}
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
@@ -731,13 +727,18 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
+
+			metricSeriesTime = lttb.Downsample(metricSeriesTime, maxDatapoints, logScale)
+			a.formatMetricsTime(&metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
 			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
 				maxDatapoints, logScale)
-			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesEpoch)
+			a.formatMetricsEpoch(&metric, metricSeriesBatch)
+
+			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+				metrics = append(metrics, &metric)
+			}
 		}
 	}
 	return metrics, nil

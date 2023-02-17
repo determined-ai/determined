@@ -1,7 +1,6 @@
 import logging
 import subprocess
 import time
-from typing import Iterator
 
 import docker
 import pytest
@@ -30,34 +29,10 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 
-def _sanity_check(managed_cluster_restarts: ManagedCluster) -> None:
-    if not managed_cluster_restarts.reattach:
-        pytest.skip()
-
-    managed_cluster_restarts.ensure_agent_ok()
-
-
-@pytest.fixture
-def restartable_managed_cluster(
-    managed_cluster_restarts: ManagedCluster,
-) -> Iterator[ManagedCluster]:
-    _sanity_check(managed_cluster_restarts)
-
-    try:
-        yield managed_cluster_restarts
-        managed_cluster_restarts.wait_for_agent_ok(20)
-    except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
-        raise
-
-
 @pytest.mark.managed_devcluster
-def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_ok(managed_cluster_restarts)
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
-    _sanity_check(managed_cluster_restarts)
+def test_master_restart_ok(restartable_managed_cluster: ManagedCluster) -> None:
+    _test_master_restart_ok(restartable_managed_cluster)
+    restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
 
 @pytest.mark.e2e_k8s
@@ -92,11 +67,10 @@ def _test_master_restart_ok(managed_cluster: Cluster) -> None:
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_master_restart_reattach_recover_experiment(
-    managed_cluster_restarts: ManagedCluster,
+    restartable_managed_cluster: ManagedCluster,
     downtime: int,
 ) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_reattach_recover_experiment(managed_cluster_restarts, downtime)
+    _test_master_restart_reattach_recover_experiment(restartable_managed_cluster, downtime)
 
 
 @pytest.mark.e2e_k8s
@@ -110,7 +84,7 @@ def test_master_restart_reattach_recover_experiment_k8s(
 
 @pytest.mark.managed_devcluster
 def _test_master_restart_reattach_recover_experiment(
-    managed_cluster_restarts: Cluster, downtime: int
+    restartable_managed_cluster: Cluster, downtime: int
 ) -> None:
     try:
         exp_id = exp.create_experiment(
@@ -123,9 +97,9 @@ def _test_master_restart_reattach_recover_experiment(
         exp.wait_for_experiment_workload_progress(exp_id)
 
         if downtime >= 0:
-            managed_cluster_restarts.kill_master()
+            restartable_managed_cluster.kill_master()
             time.sleep(downtime)
-            managed_cluster_restarts.restart_master()
+            restartable_managed_cluster.restart_master()
 
         exp.wait_for_experiment_state(
             exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=downtime + 60
@@ -136,8 +110,8 @@ def _test_master_restart_reattach_recover_experiment(
         train_wls = exp.workloads_with_training(trials[0].workloads)
         assert len(train_wls) == 5
     except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
+        restartable_managed_cluster.restart_master()
+        restartable_managed_cluster.restart_agent()
         raise
 
 
@@ -147,9 +121,6 @@ def test_master_restart_error_missing_docker_container(
     managed_cluster_restarts: ManagedCluster,
     wait_for_amnesia: bool,
 ) -> None:
-    if not managed_cluster_restarts.reattach:
-        pytest.skip()
-
     exp_id = exp.create_experiment(
         conf.fixtures_path("core_api/sleep.yaml"),
         conf.fixtures_path("core_api"),
@@ -192,10 +163,9 @@ def test_master_restart_error_missing_docker_container(
 
 @pytest.mark.managed_devcluster
 def test_master_restart_kill_works_experiment(
-    managed_cluster_restarts: ManagedCluster,
+    restartable_managed_cluster: ManagedCluster,
 ) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_kill_works(managed_cluster_restarts)
+    _test_master_restart_kill_works(restartable_managed_cluster)
 
 
 @pytest.mark.e2e_k8s

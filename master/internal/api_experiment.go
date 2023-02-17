@@ -464,11 +464,7 @@ func (a *apiServer) GetExperiments(
 	if req.ShowTrialData {
 		query.ColumnExpr(`
 		(
-			SELECT 
-			json_build_object(
-				'searcher_metric_value', 
-				searcher_metric_value
-			)
+			SELECT searcher_metric_value
 			FROM trials t
 			WHERE t.experiment_id = e.id
 			ORDER BY (CASE
@@ -477,7 +473,7 @@ func (a *apiServer) GetExperiments(
 					ELSE -1.0 * searcher_metric_value
 			END) ASC
 			LIMIT 1
-		 ) AS best_trial`)
+		 ) AS best_trial_searcher_metric`)
 	}
 
 	// Construct the ordering expression.

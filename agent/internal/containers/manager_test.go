@@ -11,7 +11,7 @@ import (
 func TestAddProxyInfo(t *testing.T) {
 	type args struct {
 		env  []string
-		opts options.AgentOptions
+		opts options.Options
 	}
 	tests := []struct {
 		name string
@@ -24,7 +24,7 @@ func TestAddProxyInfo(t *testing.T) {
 				env: []string{
 					"FIRST_VAR=1",
 				},
-				opts: options.AgentOptions{
+				opts: options.Options{
 					HTTPProxy:  "192.168.1.1",
 					HTTPSProxy: "192.168.1.2",
 					FTPProxy:   "192.168.1.3",
@@ -45,7 +45,7 @@ func TestAddProxyInfo(t *testing.T) {
 				env: []string{
 					"FIRST_VAR=1",
 				},
-				opts: options.AgentOptions{},
+				opts: options.Options{},
 			},
 			want: []string{
 				"FIRST_VAR=1",
@@ -58,7 +58,7 @@ func TestAddProxyInfo(t *testing.T) {
 					"FIRST_VAR=1",
 					"HTTP_PROXY=10.0.0.1",
 				},
-				opts: options.AgentOptions{
+				opts: options.Options{
 					HTTPProxy: "10.0.0.2",
 				},
 			},

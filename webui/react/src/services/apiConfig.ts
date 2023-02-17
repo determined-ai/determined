@@ -1111,6 +1111,16 @@ export const unarchiveModel: DetApi<
   request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params.modelName),
 };
 
+export const moveModel: DetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void> = {
+  name: 'moveModel',
+  postProcess: noOp,
+  request: (params: Service.MoveModelParams) =>
+    detApi.Models.moveModel(params.modelName, {
+      destinationWorkspaceId: params.destinationWorkspaceId,
+      modelName: params.modelName,
+    }),
+};
+
 export const deleteModel: DetApi<Service.DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,

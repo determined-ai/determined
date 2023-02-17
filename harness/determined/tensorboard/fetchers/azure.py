@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import urllib
-from typing import Any, Callable, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List
 
 from .base import Fetcher
 
@@ -34,41 +34,32 @@ class AzureFetcher(Fetcher):
         self.storage_paths = storage_paths
         self._file_records = {}  # type: Dict[str, datetime.datetime]
 
-    def _list(self, prefix: str) -> Generator[Tuple[str, datetime.datetime], None, None]:
-        logger.debug(f"Listing keys in container '{self.container_name}' with '{prefix}'")
+    def _list(self, storage_path: str) -> Generator[str, None, None]:
+        logger.debug(
+            f"Listing keys in container: '{self.container_name}'"
+            " with storage_path: '{storage_path}'"
+        )
         container = self.client.get_container_client(self.container_name)
-        prefix = urllib.parse.urlparse(prefix).path.lstrip("/")
+        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
 
         blobs = container.list_blobs(name_starts_with=prefix)
         for blob in blobs:
-            yield (blob["name"], blob["last_modified"])
+            filepath, mtime = blob["name"], blob["last_modified"]
+            prev_mtime = self._file_records.get(filepath)
 
-    def fetch_new(self, new_file_callback: Callable = lambda: None) -> int:
-        new_files = []
+            if prev_mtime is not None and prev_mtime >= mtime:
+                continue
+            self._file_records[filepath] = mtime
+            yield filepath
 
-        # Look at all files in our storage location.
-        for storage_path in self.storage_paths:
-            for filepath, mtime in self._list(storage_path):
-                prev_mtime = self._file_records.get(filepath)
+    def _fetch(self, filepath: str, new_file_callback: Callable) -> None:
+        local_path = os.path.join(self.local_dir, self.container_name, filepath)
+        dir_path = os.path.dirname(local_path)
+        os.makedirs(dir_path, exist_ok=True)
 
-                if prev_mtime is not None and prev_mtime >= mtime:
-                    continue
+        with open(local_path, "wb") as local_file:
+            stream = self.client.get_blob_client(self.container_name, filepath).download_blob()
+            stream.readinto(local_file)
 
-                new_files.append(filepath)
-                self._file_records[filepath] = mtime
-
-        # Download the new or updated files.
-        for filepath in new_files:
-            local_path = os.path.join(self.local_dir, self.container_name, filepath)
-
-            dir_path = os.path.dirname(local_path)
-            os.makedirs(dir_path, exist_ok=True)
-
-            with open(local_path, "wb") as local_file:
-                stream = self.client.get_blob_client(self.container_name, filepath).download_blob()
-                stream.readinto(local_file)
-
-            logger.debug(f"Downloaded file to local: {local_path}")
-            new_file_callback()
-
-        return len(new_files)
+        logger.debug(f"Downloaded file to local: {local_path}")
+        new_file_callback()

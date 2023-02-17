@@ -10,8 +10,6 @@ import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import useFeature from 'hooks/useFeature';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -128,11 +126,7 @@ const NavigationSideBar: React.FC = () => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
 
-  const dashboardEnabled = useFeature().isOn('dashboard');
-
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({});
   const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
     useModalWorkspaceCreate();
   const showNavigation = isAuthenticated && ui.showChrome;
@@ -150,7 +144,7 @@ const NavigationSideBar: React.FC = () => {
       : [];
     const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
     const topItems = [
-      ...(dashboardEnabled ? dashboardTopNav.concat(topNav) : topNav),
+      ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -182,7 +176,7 @@ const NavigationSideBar: React.FC = () => {
       ],
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, dashboardEnabled]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
@@ -244,24 +238,6 @@ const NavigationSideBar: React.FC = () => {
           </Dropdown>
         </header>
         <main>
-          {dashboardEnabled ? null : (
-            <section className={css.launch}>
-              <div className={css.launchBlock}>
-                <div className={css.launchButton}>
-                  <Button block ghost onClick={() => openJupyterLabModal()}>
-                    Launch JupyterLab
-                  </Button>
-                </div>
-                {settings.navbarCollapsed ? (
-                  <div className={css.launchIcon}>
-                    <Button type="text" onClick={() => openJupyterLabModal()}>
-                      <Icon name="jupyter-lab" />
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          )}
           <section className={css.top}>
             {menuConfig.top.map((config) => (
               <NavigationItem
@@ -365,7 +341,6 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {modalJupyterLabContextHolder}
         {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>

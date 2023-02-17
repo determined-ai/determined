@@ -56,19 +56,30 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
+  const { metrics, data } = useTrialMetrics(trial);
+
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
-    return checkpoint && xAxis === XAxisDomain.Batches
-      ? {
-          [checkpoint?.totalBatches]: checkpoint,
+    const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
+    if (data && xAxis === XAxisDomain.Time && checkpoint?.totalBatches) {
+      Object.values(data).forEach((metric) => {
+        const matchIndex = metric.data[XAxisDomain.Batches]?.findIndex(
+          (pt) => pt[0] === checkpoint.totalBatches,
+        );
+        if (matchIndex !== undefined && matchIndex >= 0) {
+          const timeVals = metric.data[XAxisDomain.Time];
+          if (timeVals && timeVals.length > matchIndex) {
+            timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
+          }
         }
-      : checkpoint?.endTime && xAxis === XAxisDomain.Time
+      });
+    }
+    return checkpoint?.totalBatches
       ? {
-          [Math.floor(Date.parse(checkpoint?.endTime))]: checkpoint,
+          [checkpoint.totalBatches]: checkpoint,
+          ...timeHelpers,
         }
       : {};
-  }, [checkpoint, xAxis]);
-
-  const { metrics, data } = useTrialMetrics(trial);
+  }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
     const val = metrics.filter((m) => m.type === MetricType.Validation).sort(metricSorter);
@@ -94,17 +105,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       // naming just makes it easier to read
       const trainingMetricKey = metricToKey(trainingMetric);
       const trainingMetricSeries = data?.[trainingMetricKey];
-      const dataForAxis = trainingMetricSeries?.data[xAxis];
       if (!trainingMetricSeries) return;
-
-      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
-        const xVal = dataForAxis?.[point.idx]?.[0];
-        const selectedCheckpoint =
-          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
-        if (selectedCheckpoint) {
-          openCheckpoint();
-        }
-      };
 
       const series: Serie[] = [trainingMetricSeries];
 
@@ -113,6 +114,23 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         const valMetricSeries = data?.[valMetricKey];
         if (valMetricSeries) series.push(valMetricSeries);
       }
+
+      const xValSet = new Set<number>();
+      series.forEach((serie) => {
+        serie.data[xAxis]?.forEach((pt) => {
+          xValSet.add(pt[0]);
+        });
+      });
+      const xVals = Array.from(xValSet).sort();
+
+      const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
+        const xVal = xVals[point.idx];
+        const selectedCheckpoint =
+          xVal !== undefined ? checkpointsDict[Math.floor(xVal)] : undefined;
+        if (selectedCheckpoint) {
+          openCheckpoint();
+        }
+      };
 
       out.push({
         onPointClick,
@@ -125,7 +143,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           drawPointsPlugin(checkpointsDict),
           tooltipsPlugin({
             getXTooltipHeader(xIndex) {
-              const xVal = dataForAxis?.[xIndex]?.[0];
+              const xVal = xVals[xIndex];
               if (xVal === undefined) return '';
               const checkpoint = checkpointsDict?.[Math.floor(xVal)];
               if (!checkpoint) return '';
@@ -138,7 +156,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         series,
         title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
         xAxis,
-        xLabel: 'Batches',
+        xLabel: String(xAxis),
       });
     });
     return out;

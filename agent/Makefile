@@ -64,14 +64,14 @@ fmt:
 
 .PHONY: test
 test:
-	go test -coverprofile=coverage.out -covermode count ./...
+	go test -race -coverprofile=coverage.out -covermode atomic ./...
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
-	go test -tags=integration -coverprofile=coverage.out -covermode count ./...
+	go test -race -tags=integration -coverprofile=coverage.out -covermode atomic ./...
 
 .PHONE: buildx
 buildx:

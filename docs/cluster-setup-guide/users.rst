@@ -186,7 +186,9 @@ Once set, any tasks created by the target user will be run as the specified user
 .. note::
 
    By default, if a user is not linked with a user and group on an agent, tasks created by that user
-   will run as the root user on the agent. This behavior may change in the future.
+   will run as the root user on the agent. If deploying on a Slurm/PBS cluster, running as the root
+   user is only permitted if the launcher ``user_name`` is also set to the root user, as described
+   in :ref:`using_slurm`. This behavior may change in the future.
 
    If the task does not use ``bind_mount`` option, the effect of running as root will be limited to
    the task container and not intrude on the agent itself.

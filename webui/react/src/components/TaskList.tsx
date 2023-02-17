@@ -11,8 +11,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
+import JupyterLabButton from 'components/JupyterLabButton';
 import Button from 'components/kit/Button';
-import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -42,7 +42,6 @@ import settingsConfig, {
   Settings,
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -116,8 +115,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({ workspace: workspace });
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
   const { activeSettings, resetSettings, settings, updateSettings } =
@@ -628,19 +625,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     [user, handleActionComplete],
   );
 
-  const JupyterLabButton = () => {
-    const hasNSCPermissions = workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC;
-    return hasNSCPermissions ? (
-      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
-    ) : (
-      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
-        <div>
-          <Button disabled>Launch JupyterLab</Button>
-        </div>
-      </Tooltip>
-    );
-  };
-
   return (
     <Page
       containerRef={pageRef}
@@ -650,7 +634,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          <JupyterLabButton />
+          <JupyterLabButton
+            enabled={workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC}
+            workspace={workspace}
+          />
         </Space>
       }
       title="Tasks">
@@ -708,7 +695,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           </Grid>
         </div>
       </Modal>
-      {modalJupyterLabContextHolder}
     </Page>
   );
 };
