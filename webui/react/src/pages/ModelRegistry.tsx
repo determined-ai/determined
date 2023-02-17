@@ -49,7 +49,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -75,19 +75,14 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canCreateModels, canModifyModel } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
+  const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate({ workspaceId: workspace?.id });
@@ -403,7 +398,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem): DropDownProps['menu'] => {
+    (
+      record: ModelItem,
+      canDeleteModelFlag: boolean,
+      canModifyModelFlag: boolean,
+    ): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
         MoveModel: 'move-model',
@@ -426,27 +425,23 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
-      const menuItems: MenuProps['items'] = [
-        { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
-      ];
-
-      if (canModifyModel({ model: record })) {
-        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+      const menuItems: MenuProps['items'] = [];
+      if (canModifyModelFlag) {
+        menuItems.push({
+          key: MenuKey.SwitchArchived,
+          label: record.archived ? 'Unarchive' : 'Archive',
+        });
+        if (!record.archived) {
+          menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+        }
       }
-      if (user?.id === record.userId || user?.isAdmin) {
+      if (canDeleteModelFlag) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [
-      canModifyModel,
-      moveModelToWorkspace,
-      showConfirmDelete,
-      switchArchived,
-      user?.id,
-      user?.isAdmin,
-    ],
+    [moveModelToWorkspace, showConfirmDelete, switchArchived],
   );
 
   const columns = useMemo(() => {
@@ -459,7 +454,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           <div>
             <TagList
               compact
-              disabled={record.archived}
+              disabled={record.archived || !canModifyModel({ model: record })}
               tags={record.labels ?? []}
               onChange={(tags) => setModelTags(record.name, tags)}
             />
@@ -468,17 +463,24 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       </div>
     );
 
-    const actionRenderer = (_: string, record: ModelItem) => (
-      <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
-      </Dropdown>
-    );
+    const actionRenderer = (_: string, record: ModelItem) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
+        <Dropdown
+          disabled={!canDeleteModelFlag && !canModifyModelFlag}
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          trigger={['click']}>
+          <Button icon={<Icon name="overflow-vertical" />} type="text" />
+        </Dropdown>
+      );
+    };
 
     const descriptionRenderer = (value: string, record: ModelItem) => (
       <Input
         className={css.descriptionRenderer}
         defaultValue={value}
-        disabled={record.archived}
+        disabled={record.archived || !canModifyModel({ model: record })}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         title={record.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -591,6 +593,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       },
     ] as ColumnDef<ModelItem>[];
   }, [
+    canDeleteModel,
+    canModifyModel,
     nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
@@ -682,15 +686,19 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       children: React.ReactNode;
       onVisibleChange?: (visible: boolean) => void;
       record: ModelItem;
-    }) => (
-      <Dropdown
-        menu={ModelActionMenu(record)}
-        trigger={['contextMenu']}
-        onOpenChange={onVisibleChange}>
-        {children}
-      </Dropdown>
-    ),
-    [ModelActionMenu],
+    }) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
+        <Dropdown
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          trigger={['contextMenu']}
+          onOpenChange={onVisibleChange}>
+          {children}
+        </Dropdown>
+      );
+    },
+    [ModelActionMenu, canDeleteModel, canModifyModel],
   );
 
   return (

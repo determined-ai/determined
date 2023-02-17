@@ -12,6 +12,7 @@ import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -46,8 +47,12 @@ const ModelHeader: React.FC<Props> = ({
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const { canDeleteModel } = usePermissions();
-  const { contextHolder, modalOpen } = useModalModelDelete();
+  const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
+  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
+    useModalModelMove();
+  const { canDeleteModel, canModifyModel } = usePermissions();
+  const canDeleteModelFlag = canDeleteModel({ model });
+  const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
     const user = users.find((user) => user.id === model.userId);
@@ -66,7 +71,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <InlineEditor
-            disabled={model.archived}
+            disabled={model.archived || !canModifyModelFlag}
             placeholder={model.archived ? 'Archived' : 'Add description...'}
             value={model.description ?? ''}
             onSave={onSaveDescription}
@@ -77,7 +82,7 @@ const ModelHeader: React.FC<Props> = ({
       {
         content: (
           <TagList
-            disabled={model.archived}
+            disabled={model.archived || !canModifyModelFlag}
             ghost={false}
             tags={model.labels ?? []}
             onChange={onUpdateTags}
@@ -86,19 +91,25 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onSaveDescription, onUpdateTags, users]);
+  }, [model, onSaveDescription, onUpdateTags, users, canModifyModelFlag]);
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
+
+  const handleMove = useCallback(() => openModelMove(model), [openModelMove, model]);
 
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
+      MoveModel: 'move-model',
       SwitchArchived: 'switch-archive',
     } as const;
 
     const funcs = {
       [MenuKey.SwitchArchived]: () => {
         onSwitchArchive();
+      },
+      [MenuKey.MoveModel]: () => {
+        handleMove();
       },
       [MenuKey.DeleteModel]: () => {
         handleDelete();
@@ -109,16 +120,22 @@ const ModelHeader: React.FC<Props> = ({
       funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
-    const menuItems: MenuProps['items'] = [
-      { key: MenuKey.SwitchArchived, label: model.archived ? 'Unarchive' : 'Archive' },
-    ];
-
-    if (canDeleteModel({ model })) {
+    const menuItems: MenuProps['items'] = [];
+    if (canModifyModelFlag) {
+      menuItems.push({
+        key: MenuKey.SwitchArchived,
+        label: model.archived ? 'Unarchive' : 'Archive',
+      });
+      if (!model.archived) {
+        menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+      }
+    }
+    if (canDeleteModelFlag) {
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [canDeleteModel, handleDelete, model, onSwitchArchive]);
+  }, [canDeleteModelFlag, canModifyModelFlag, handleDelete, handleMove, model, onSwitchArchive]);
 
   return (
     <header className={css.base}>
@@ -164,7 +181,7 @@ const ModelHeader: React.FC<Props> = ({
             <h1 className={css.name}>
               <InlineEditor
                 allowClear={false}
-                disabled={model.archived}
+                disabled={model.archived || !canModifyModelFlag}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}
@@ -172,7 +189,10 @@ const ModelHeader: React.FC<Props> = ({
             </h1>
           </Space>
           <Space size="small">
-            <Dropdown menu={menu} trigger={['click']}>
+            <Dropdown
+              disabled={!canDeleteModelFlag && !canModifyModelFlag}
+              menu={menu}
+              trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>
@@ -181,7 +201,8 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {contextHolder}
+      {modalModelDeleteContextHolder}
+      {modalModelMoveContextHolder}
     </header>
   );
 };
