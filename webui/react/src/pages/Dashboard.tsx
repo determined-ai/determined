@@ -199,7 +199,6 @@ const Dashboard: React.FC = () => {
             mode={GridMode.ScrollableRow}>
             {projects.map((project) => (
               <ProjectCard
-                curUser={currentUser}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
