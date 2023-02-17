@@ -104,7 +104,7 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --reporters=jest-junit
+	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --reporter=junit
 
 # shared-web helpers
 
