@@ -12,8 +12,7 @@ import usersStore from 'stores/users';
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
 
-jest.mock('services/api', () => ({
-  ...jest.requireActual('services/api'),
+vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
@@ -152,7 +151,7 @@ describe('useSettings', () => {
   };
   const newExtraSettings = { extra: 'fancy' };
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it('should have default settings', async () => {
     const { result } = await setup();

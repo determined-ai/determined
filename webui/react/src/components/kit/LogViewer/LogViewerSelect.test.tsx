@@ -18,8 +18,8 @@ const DEFAULT_FILTER_OPTIONS: Filters = {
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
-  const handleOnChange = jest.fn();
-  const handleOnReset = jest.fn();
+  const handleOnChange = vi.fn();
+  const handleOnReset = vi.fn();
   const view = render(
     <LogViewerSelect
       options={filterOptions}

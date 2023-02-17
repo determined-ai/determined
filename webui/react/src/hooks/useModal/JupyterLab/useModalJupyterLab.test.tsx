@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
@@ -16,9 +16,8 @@ const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
-const MonacoEditorMock: React.FC = () => <></>;
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
+  getCurrentUser: () => Promise.resolve({ id: 1 }),
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   getUsers: () => Promise.resolve({ users: [] }),
@@ -26,31 +25,31 @@ jest.mock('services/api', () => ({
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
-jest.mock('stores/cluster', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const loadable = require('utils/loadable');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const observable = require('utils/observable');
+vi.mock('stores/cluster', async (importOriginal) => {
+  const loadable = await import('utils/loadable');
+  const observable = await import('utils/observable');
 
   const store = { resourcePools: observable.observable(loadable.Loaded([])) };
   return {
     __esModule: true,
-    ...jest.requireActual('stores/cluster'),
+    ...(await importOriginal<typeof import('stores/cluster')>()),
     useClusterStore: () => store,
   };
 });
 
-jest.mock('utils/wait', () => ({
+vi.mock('utils/wait', () => ({
   openCommand: () => null,
   waitPageUrl: () => '',
 }));
 
-jest.mock('components/MonacoEditor', () => ({
+vi.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => MonacoEditorMock,
+  default: () => <></>,
 }));
 
 const ModalTrigger: React.FC = () => {
+  const [canceler] = useState(new AbortController());
+  const ensureCurrentUserFetched = useEnsureCurrentUserFetched(canceler);
   const { contextHolder, modalOpen } = useModalJupyterLab({
     workspace: {
       archived: false,
@@ -66,9 +65,10 @@ const ModalTrigger: React.FC = () => {
   });
 
   useEffect(() => {
+    ensureCurrentUserFetched();
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-  }, []);
+  }, [ensureCurrentUserFetched]);
 
   return (
     <SettingsProvider>
@@ -93,8 +93,8 @@ const setup = async () => {
     </BrowserRouter>,
   );
 
-  const button = await waitFor(() => screen.findByRole('button'));
-  user.click(button);
+  const button = await screen.findByRole('button');
+  await waitFor(() => user.click(button));
 
   return user;
 };
