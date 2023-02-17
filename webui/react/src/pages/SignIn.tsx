@@ -1,3 +1,4 @@
+import { Divider, Typography } from 'antd';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -6,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Button from 'components/kit/Button';
+import Form from 'components/kit/Form';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
@@ -132,18 +134,33 @@ const SignIn: React.FC = () => {
             orientation={Orientation.Vertical}
           />
           <DeterminedAuth canceler={canceler} />
-          {info.ssoProviders?.map((ssoProvider) => {
-            const key = ssoProvider.name.toLowerCase();
-            const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
-            return (
-              <Button key={key} size="large" type="primary">
-                <a className={css.ssoButton} href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
-                  Sign in with {logo}{' '}
-                  {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
-                </a>
-              </Button>
-            );
-          })}
+          {info.ssoProviders && info.ssoProviders.length > 0 && (
+            <>
+              <Divider>OR</Divider>
+              <Form className={css.form} layout="vertical">
+                <p>Alternatively, sign in with SSO</p>
+                {info.ssoProviders.map((ssoProvider) => {
+                  const key = ssoProvider.name.toLowerCase();
+                  const logo = logoConfig[key] ? (
+                    <img alt={key} className={css.ssoLogo} src={logoConfig[key]} />
+                  ) : null;
+                  return (
+                    <Form.Item key={key}>
+                      <Button type="primary">
+                        <a
+                          className={css.ssoButton}
+                          href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
+                          <Typography.Text ellipsis>
+                            {logo} {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
+                          </Typography.Text>
+                        </a>
+                      </Button>
+                    </Form.Item>
+                  );
+                })}
+              </Form>
+            </>
+          )}
         </div>
       </div>
     </Page>
