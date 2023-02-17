@@ -23,6 +23,10 @@ vi.mock('services/api', () => ({
   getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
+  previewJupyterLab: () =>
+    Promise.resolve({
+      description: 'JupyterLab (freely-distinct-mustang)',
+    }),
 }));
 
 vi.mock('stores/cluster', async (importOriginal) => {

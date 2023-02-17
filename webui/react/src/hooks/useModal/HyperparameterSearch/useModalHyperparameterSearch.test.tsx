@@ -124,8 +124,11 @@ describe('useModalHyperparameterSearch', () => {
   it('should submit experiment', async () => {
     const { view } = await setup();
 
+    console.warn('setup');
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+    console.warn('click select hyperparameters');
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
+    console.warn('click run experiment');
 
     expect(mockCreateExperiment).toHaveBeenCalled();
   });

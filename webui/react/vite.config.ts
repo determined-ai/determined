@@ -97,7 +97,7 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
-    'process.env.PUBLIC_URL': JSON.stringify(publicUrl || ''),
+    'process.env.PUBLIC_URL': JSON.stringify(mode !== 'test' && publicUrl || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     'process.env.VERSION': '"0.20.1-dev0"',
   },
@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     portableFetchFix(),
     publicUrlBaseHref(),
-    (['development', 'production'].includes(mode) && checker({
+    (mode !== 'test' && checker({
       typescript: true,
     })),
     cspHtml({
