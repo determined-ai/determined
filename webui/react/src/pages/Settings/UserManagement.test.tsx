@@ -83,7 +83,6 @@ describe('UserManagement', () => {
   it('should render table/button correct values', async () => {
     setup();
 
-    // await setTimeout(300);
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
 
