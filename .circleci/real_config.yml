@@ -3093,33 +3093,6 @@ workflows:
           target-stage: agent
           wait-for-master: false
 
-      - deploy:
-          name: deploy-latest-master-cluster
-          enable-cors: true
-          reattach-enabled: true
-          context: aws
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
-          max-dynamic-agents: 2
-
-      - deploy:
-          name: deploy-preview-cluster
-          enable-cors: true
-          context: aws
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
-          max-dynamic-agents: 1
-          cluster-id: determined-preview
-          compute-agent-instance-type: t2.medium
-
       - deploy-latest-gke:
           name: deploy-latest-gke-master
           context: gcp
