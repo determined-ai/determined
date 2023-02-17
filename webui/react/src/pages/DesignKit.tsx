@@ -4,7 +4,7 @@ import {
   Card,
   Space,
 } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
@@ -18,6 +18,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
+import { useLineChart } from 'components/kit/LineChart/useLineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -40,7 +41,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
-import { BrandingType, MetricType, ResourcePool, Scale } from 'types';
+import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
@@ -315,8 +316,7 @@ const ChartsSection: React.FC = () => {
       uuid: 'f2684332-98e1-4a78-a1f7-c8107f15db2a',
     },
   };
-  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-  const [scale, setScale] = useState<Scale>(Scale.Linear);
+  const { xAxis, setXAxis, scale, setScale } = useLineChart();
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
