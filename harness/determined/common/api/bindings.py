@@ -2027,6 +2027,32 @@ class v1DataPoint:
         }
         return out
 
+class v1DataPointEpoch:
+
+    def __init__(
+        self,
+        *,
+        epoch: int,
+        value: float,
+    ):
+        self.epoch = epoch
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointEpoch":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "epoch": obj["epoch"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "epoch": self.epoch,
+            "value": dump_float(self.value),
+        }
+        return out
+
 class v1DataPointTime:
 
     def __init__(
@@ -9942,6 +9968,7 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
+    epochs: "typing.Optional[typing.Sequence[v1DataPointEpoch]]" = None
     time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
@@ -9950,11 +9977,14 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
+        epochs: "typing.Union[typing.Sequence[v1DataPointEpoch], None, Unset]" = _unset,
         time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
+        if not isinstance(epochs, Unset):
+            self.epochs = epochs
         if not isinstance(time, Unset):
             self.time = time
 
@@ -9965,6 +9995,8 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
+        if "epochs" in obj:
+            kwargs["epochs"] = [v1DataPointEpoch.from_json(x) for x in obj["epochs"]] if obj["epochs"] is not None else None
         if "time" in obj:
             kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
@@ -9975,6 +10007,8 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
+        if not omit_unset or "epochs" in vars(self):
+            out["epochs"] = None if self.epochs is None else [x.to_json(omit_unset) for x in self.epochs]
         if not omit_unset or "time" in vars(self):
             out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
@@ -11862,6 +11896,7 @@ class v1XAxis(enum.Enum):
     X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
     X_AXIS_BATCH = "X_AXIS_BATCH"
     X_AXIS_TIME = "X_AXIS_TIME"
+    X_AXIS_EPOCH = "X_AXIS_EPOCH"
 
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",

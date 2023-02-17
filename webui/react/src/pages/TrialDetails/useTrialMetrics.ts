@@ -22,6 +22,8 @@ export interface TrialMetrics {
 const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
   const rawData: [number, number][] = [];
   const rawTime: [number, number][] = [];
+  const rawEpochs: [number, number][] = [];
+
   summ.data.forEach((dataPoint) => {
     rawData.push([dataPoint.batches, dataPoint.value]);
   });
@@ -30,9 +32,12 @@ const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
     rawTime.push([new Date(dataPoint.time).getTime() / 1000, dataPoint.value]);
   });
 
+  summ.epochs?.forEach((dataPoint) => rawEpochs.push([dataPoint.epoch, dataPoint.value]));
+
   const data: Partial<Record<XAxisDomain, [number, number][]>> = {
     [XAxisDomain.Batches]: rawData,
     [XAxisDomain.Time]: rawTime,
+    [XAxisDomain.Epochs]: rawEpochs,
   };
 
   return {

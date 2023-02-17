@@ -39,6 +39,17 @@ message DataPointTime {
   double value = 2;
 }
 
+// One DataPointEpoch in a series of metrics from a trial in epoch.
+message DataPointEpoch {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "epoch", "value" ] }
+  };
+  // Total batches processed by the epoch this measurement is taken.
+  int32 epoch = 1;
+  // Value of the requested metric at this point in the trial.
+  double value = 2;
+}
+
 // Get a single experiment.
 message GetExperimentRequest {
   // The id of the experiment.

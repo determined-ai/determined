@@ -523,8 +523,14 @@ export interface MetricDatapointTime {
   value: number;
 }
 
+export interface MetricDatapointEpoch {
+  epoch: number;
+  value: number;
+}
+
 export interface MetricContainer {
   data: MetricDatapoint[];
+  epochs?: MetricDatapointEpoch[];
   name: string;
   time?: MetricDatapointTime[];
   type: MetricType;

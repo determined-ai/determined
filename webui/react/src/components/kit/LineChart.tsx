@@ -242,7 +242,7 @@ export type ChartsProps = Props[];
  * @typedef GroupProps {object}
  * Config for a grid of LineCharts.
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
- * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time.
+ * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
  */
 interface GroupProps {
   chartsProps: ChartsProps;
@@ -260,7 +260,11 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
         chart.series.forEach((serie) => {
-          Object.keys(serie.data).forEach((opt) => xOpts.add(opt));
+          Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
+            if (dataPoints.length > 0) {
+              xOpts.add(xAxisOption);
+            }
+          });
         });
       });
       return Array.from(xOpts).sort();

@@ -2029,6 +2029,26 @@ export interface V1DataPoint {
 }
 
 /**
+ * One DataPointEpoch in a series of metrics from a trial in epoch.
+ * @export
+ * @interface V1DataPointEpoch
+ */
+export interface V1DataPointEpoch {
+    /**
+     * Total batches processed by the epoch this measurement is taken.
+     * @type {number}
+     * @memberof V1DataPointEpoch
+     */
+    epoch: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPointEpoch
+     */
+    value: number;
+}
+
+/**
  * One DataPointTime in a series of metrics from a trial in time.
  * @export
  * @interface V1DataPointTime
@@ -8233,6 +8253,12 @@ export interface V1SummarizedMetric {
      */
     time?: Array<V1DataPointTime>;
     /**
+     * A possibly down-sampled series of metric readings through the progress of the trial in epoch.
+     * @type {Array<V1DataPointEpoch>}
+     * @memberof V1SummarizedMetric
+     */
+    epochs?: Array<V1DataPointEpoch>;
+    /**
      * Type of metrics (training, validation, or unset).
      * @type {V1MetricType}
      * @memberof V1SummarizedMetric
@@ -9760,14 +9786,15 @@ export enum V1WorkspaceState {
 }
 
 /**
- * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+ * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
  * @export
  * @enum {string}
  */
 export enum V1XAxis {
     UNSPECIFIED = <any> 'X_AXIS_UNSPECIFIED',
     BATCH = <any> 'X_AXIS_BATCH',
-    TIME = <any> 'X_AXIS_TIME'
+    TIME = <any> 'X_AXIS_TIME',
+    EPOCH = <any> 'X_AXIS_EPOCH'
 }
 
 
@@ -12325,11 +12352,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -13693,11 +13720,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14290,11 +14317,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any) {
             return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(fetch, basePath);
         },
         /**
@@ -14660,12 +14687,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+     * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any) {
         return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(this.fetch, this.basePath);
     }
 
