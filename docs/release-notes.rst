@@ -17,48 +17,47 @@ Version 0.19.11
 
 **Bug Fixes**
 
--  Kubernetes: Fix an issue where environment variables with an equal character in the value such as
-   ``func=f(x)=x`` were processed incorrectly in Kubernetes.
+-  Kubernetes: Fix an issue where environment variables with an equals character in the value, such as
+   ``func=f(x)=x``, were processed incorrectly in Kubernetes.
 
--  Agent: Fix a bug where if the flag ``agent_reattach_enabled`` was enabled and master was down
-   while an active task's docker container failed, the task could get stuck in an unkillable running
+-  Agent: Fix a bug where if agent reattach was enabled and the master was down
+   while an active task's Docker container failed, the task could get stuck in an unkillable running
    state.
 
--  ``det deploy aws``: updated cloudformation permissions to allow checkpoint downloads through
+-  ``det deploy aws``: Update CloudFormation permissions to allow checkpoint downloads through
    master.
 
 -  Tasks: Fix a bug where in rare cases tasks could take an extra 30 seconds to complete.
 
 **Improvements**
 
--  Container Images: Publish multi-arch master and agent container image manifests with amd64,
-   arm64, and ppc64 architectures.
+-  Container Images: Publish multi-arch master and agent container image manifests with AMD64,
+   ARM64, and PPC64 architectures.
 
 -  Experiments: If an experiment with no checkpoints is deleted, a checkpoint GC task will no longer
    be launched. Launching a checkpoint GC task could prevent experiments with certain incorrect
    configuration from being deleted.
 
--  Cluster: Capability added for checkpoint downloads from Google Cloud
-      Storage via a master instance
+-  Cluster: Capability added for checkpoint downloads from Google Cloud Storage via a master instance.
 
 -  Installation: ``.deb`` and ``.rpm`` Linux packages will now install master and agent binaries
-   into ``/usr/bin/`` instead of ``usr/local/bin/``, to be more in-line with Filesystem Hierarchy
+   into ``/usr/bin/`` instead of ``/usr/local/bin/``, to be more in line with the Filesystem Hierarchy
    Standard.
 
--  Kubernetes: Empty environment variables can now be specified in Kubernetes while before they
+-  Kubernetes: Empty environment variables can now be specified in Kubernetes, while before they
    would throw an error.
 
--  Kubernetes: zero-slot tasks on gpu clusters will not request ``nvidia.com/gpu: 0`` resources any
-   more, allowing them to be schedule on cpu-only nodes.
+-  Kubernetes: Zero-slot tasks on GPU clusters will not request ``nvidia.com/gpu: 0`` resources any
+   more, allowing them to be scheduled on CPU-only nodes.
 
--  Installation: added experimental Homebrew (macOS) package.
+-  Installation: Add experimental Homebrew (macOS) package.
 
 -  Scheduler: The scheduler can be configured to find fits for distributed jobs against agents of
    different sizes.
 
 **New Features**
 
--  CLI: Add support for a ``--add-tag`` flag to AWS ``det deploy aws up``
+-  CLI: Add a ``--add-tag`` flag to AWS ``det deploy aws up``, which specifies tags to add to the underlying CloudFormation stack.
 
    -  A new argument is added to ``det deploy aws up`` that allows users to specify tags that should
       be added to the underlying CloudFormation stack.
