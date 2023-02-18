@@ -36,8 +36,6 @@ const { DirectoryTree } = Tree;
 
 import css from './CodeViewer.module.scss';
 
-import './index.scss';
-
 export type Props = {
   experimentId: number;
   runtimeConfig?: RawJson;

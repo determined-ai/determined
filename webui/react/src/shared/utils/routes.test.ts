@@ -311,6 +311,7 @@ describe('Routes Utilities', () => {
 
     it('should route to react URL', () => {
       const path = '/clusters';
+      process.env.PUBLIC_URL = '';
       expect(history.push).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
@@ -334,6 +335,7 @@ describe('Routes Utilities', () => {
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
       const path = '/dashboard';
+      process.env.PUBLIC_URL = '';
       expect(history.push).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
