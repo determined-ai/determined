@@ -73,7 +73,7 @@ test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
 	go test -race -tags=integration -coverprofile=coverage.out -covermode atomic ./...
 
-.PHONE: buildx
+.PHONY: buildx
 buildx:
 	docker context rm -f buildx-context || true
 	docker context create buildx-context
