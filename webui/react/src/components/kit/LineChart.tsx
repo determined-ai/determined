@@ -243,8 +243,9 @@ export type ChartsProps = Props[];
  * Config for a grid of LineCharts.
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
+ * @param {Scale} scale - Scale of chart, can be linear or log
  */
-interface GroupProps {
+export interface GroupProps {
   chartsProps: ChartsProps;
   onXAxisChange: (ax: XAxisDomain) => void;
   scale: Scale;

@@ -4,7 +4,7 @@ import {
   Card,
   Space,
 } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
@@ -17,8 +17,8 @@ import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
-import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
-import { useLineChart } from 'components/kit/LineChart/useLineChart';
+import { LineChart, Serie } from 'components/kit/LineChart';
+import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -316,7 +316,8 @@ const ChartsSection: React.FC = () => {
       uuid: 'f2684332-98e1-4a78-a1f7-c8107f15db2a',
     },
   };
-  const { xAxis, setXAxis, scale, setScale } = useLineChart();
+  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
+  const createChartGrid = useChartGrid();
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -340,8 +341,8 @@ const ChartsSection: React.FC = () => {
           x-axis range. There will be a linear/log scale switch, and if multiple X-axis options are
           provided, an X-axis switch.
         </p>
-        <ChartGrid
-          chartsProps={[
+        {createChartGrid({
+          chartsProps: [
             {
               plugins: [
                 drawPointsPlugin(checkpointsDict),
@@ -371,12 +372,10 @@ const ChartsSection: React.FC = () => {
               xAxis,
               xLabel: xAxis,
             },
-          ]}
-          scale={scale}
-          setScale={setScale}
-          xAxis={xAxis}
-          onXAxisChange={setXAxis}
-        />
+          ],
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
       </Card>
     </ComponentSection>
   );
