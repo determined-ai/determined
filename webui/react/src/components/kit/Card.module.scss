@@ -1,19 +1,23 @@
 .base {
   --transition-duration: 0.25s;
   --transition-delay: 0.05s;
+  --outside-padding: 8px;
   background-color: var(--theme-surface);
   border-radius: var(--theme-border-radius-weak);
   box-shadow: 0 1.6px 3.6px 1.6px rgba(0, 0, 0, 0.13);
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: var(--outside-padding);
+  position: relative;
   transition: var(--transition-duration) background-color;
 
   .action {
-    display: flex;
-    justify-content: flex-end;
     opacity: 0;
+    padding: 2px;
+    position: absolute;
+    right: var(--outside-padding);
+    top: var(--outside-padding);
     transition: var(--transition-duration) opacity;
   }
   .content {

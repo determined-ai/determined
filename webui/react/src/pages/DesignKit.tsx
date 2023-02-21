@@ -1393,13 +1393,13 @@ const TooltipsSection: React.FC = () => {
 const EmptySection: React.FC = () => {
   return (
     <ComponentSection id="Empty" title="Empty">
-      <Card>
+      <AntDCard>
         <p>
           An <code>{'<Empty>'}</code> component indicates that no content is available for a page.
           It may display an icon and a description explaining why this state is displayed.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <Empty
           description={
             <>
@@ -1409,7 +1409,7 @@ const EmptySection: React.FC = () => {
           icon="warning-large"
           title="Empty title"
         />
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
