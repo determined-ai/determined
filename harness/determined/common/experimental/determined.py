@@ -283,8 +283,8 @@ class Determined:
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
-        workspace_name: Optional[str] = None,
-        workspaceId: Optional[int] = None,
+        workspace_names: Optional[List[str]] = None,
+        workspace_ids: Optional[List[int]] = None,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -318,8 +318,8 @@ class Determined:
                 sortBy=sort_by._to_bindings(),
                 userIds=None,
                 users=None,
-                workspaceNames=[workspace_name] if workspace_name is not None else [],
-                workspaceIds=[workspaceId] if workspaceId is not None else [],
+                workspaceNames=workspace_names,
+                workspaceIds=workspace_ids,
             )
 
         resps = api.read_paginated(get_with_offset)
