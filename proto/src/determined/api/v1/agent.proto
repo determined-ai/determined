@@ -30,6 +30,8 @@ message GetAgentsRequest {
   int32 limit = 4;
   // This field has been deprecated and will be ignored.
   string label = 5;
+  // This field has been deprecated and will be ignored.
+  string label2 = 6;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
