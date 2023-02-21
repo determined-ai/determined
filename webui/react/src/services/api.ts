@@ -460,6 +460,10 @@ export const unarchiveModel = generateDetApi<
   void
 >(Config.unarchiveModel);
 
+export const moveModel = generateDetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void>(
+  Config.moveModel,
+);
+
 export const deleteModel = generateDetApi<
   Service.DeleteModelParams,
   Api.V1DeleteModelResponse,
@@ -484,9 +488,11 @@ export const postModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.postModelVersion);
 
-export const getModelLabels = generateDetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]>(
-  Config.getModelLabels,
-);
+export const getModelLabels = generateDetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+>(Config.getModelLabels);
 
 /* Workspaces */
 

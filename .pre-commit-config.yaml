@@ -1,4 +1,5 @@
 ---
+# docs: https://pre-commit.com/#creating-new-hooks
 repos:
   - repo: local
     hooks:
@@ -8,18 +9,24 @@ repos:
         language: system
         files: '^webui/react/src/'
         types_or: [javascript, jsx, ts, tsx]
+        stages:
+          - commit
       - id: web-css-lint-check
         name: Web CSS Lint Check
         entry: ./pre-commit/web_lint_check.py css
         language: system
         files: '^webui/react/src/'
         types_or: [css, less, scss]
+        stages:
+          - commit
       - id: web-misc-lint-check
         name: Web Misc Lint Check
         entry: ./pre-commit/web_lint_check.py misc
         language: system
         files: '^webui/react/'
         types_or: [markdown, json]
+        stages:
+          - commit
       - id: shell-fmt-docker
         name: shfmt
         description: Format shell scripts with shfmt
@@ -32,6 +39,17 @@ repos:
         exclude_types:
           - zsh
         args: [-w, -s, -l, -i, '4', -ci, -bn]
+        stages:
+          - commit
+      - id: local-checks
+        name: Run local checks
+        description: run all local checks and format based on the directories changed.
+        stages:
+          - push
+        entry: ./pre-commit/check.py
+        require_serial: true
+        language: python
+
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0

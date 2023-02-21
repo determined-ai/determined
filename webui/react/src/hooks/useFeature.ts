@@ -11,8 +11,7 @@ export type ValidFeature =
   | 'trials_comparison'
   | 'mock_permissions_all'
   | 'dashboard'
-  | 'chart'
-  | 'model_rbac';
+  | 'chart';
 
 const queryParams = queryString.parse(window.location.search);
 

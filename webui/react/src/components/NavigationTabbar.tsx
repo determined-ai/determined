@@ -5,8 +5,6 @@ import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import useFeature from 'hooks/useFeature';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
@@ -64,11 +62,8 @@ const NavigationTabbar: React.FC = () => {
 
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({});
 
   const showNavigation = isAuthenticated && ui.showChrome;
-  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const { canCreateWorkspace } = usePermissions();
   const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
@@ -90,10 +85,6 @@ const NavigationTabbar: React.FC = () => {
     setIsShowingOverflow(false);
     setIsShowingPinnedWorkspaces(false);
   }, []);
-  const handleLaunchJupyterLab = useCallback(() => {
-    setIsShowingOverflow(false);
-    openJupyterLabModal();
-  }, [openJupyterLabModal]);
 
   const handlePathUpdate = useCallback((e: AnyMouseEvent, path?: string) => {
     handlePath(e, { path });
@@ -120,14 +111,6 @@ const NavigationTabbar: React.FC = () => {
       onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
     },
   ];
-
-  if (!dashboardEnabled) {
-    overflowActionsTop.push({
-      icon: 'jupyter-lab',
-      label: 'Launch JupyterLab',
-      onClick: () => handleLaunchJupyterLab(),
-    });
-  }
 
   const overflowActionsBottom = [
     {
@@ -161,14 +144,8 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        {dashboardEnabled ? (
-          <>
-            <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
-            <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
-          </>
-        ) : (
-          <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
-        )}
+        <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
+        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />
@@ -216,7 +193,6 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {modalJupyterLabContextHolder}
       {modalWorkspaceCreateContextHolder}
     </nav>
   );

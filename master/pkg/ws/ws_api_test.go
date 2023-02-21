@@ -22,7 +22,10 @@ func TestWebsocket(t *testing.T) {
 
 	t.Log("running server")
 	s := httptest.NewServer(wrap(t, func(c *websocket.Conn) error {
-		ws := ws.Wrap[int, int]("server", c)
+		ws, err := ws.Wrap[int, int]("server", c)
+		if err != nil {
+			return err
+		}
 		defer func() {
 			if err := ws.Close(); err != nil {
 				t.Errorf("closing websocket: %v", err)
@@ -57,12 +60,17 @@ func TestWebsocket(t *testing.T) {
 	defer s.Close()
 
 	t.Log("connecting websocket to server")
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(s.URL, "http"), nil)
 	if err != nil {
 		t.Errorf("failed to dial websocket: %v", err)
 		return
 	}
-	ws := ws.Wrap[int, int]("client", c)
+	ws, err := ws.Wrap[int, int]("client", c)
+	if err != nil {
+		t.Errorf("failed to wrap websocket: %v", err)
+		return
+	}
 	defer func() {
 		if err := ws.Close(); err != nil {
 			t.Errorf("closing the websocket: %s", err)
@@ -99,7 +107,10 @@ func TestWebsocketConcurrent(t *testing.T) {
 
 	t.Log("running server")
 	s := httptest.NewServer(wrap(t, func(c *websocket.Conn) error {
-		ws := ws.Wrap[testMessage, testMessage]("server", c)
+		ws, err := ws.Wrap[testMessage, testMessage]("server", c)
+		if err != nil {
+			return err
+		}
 		defer func() {
 			if err := ws.Close(); err != nil {
 				t.Errorf("closing server websocket: %v", err)
@@ -133,12 +144,17 @@ func TestWebsocketConcurrent(t *testing.T) {
 	defer s.Close()
 
 	t.Log("connecting to websocket server")
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(s.URL, "http"), nil)
 	if err != nil {
 		t.Errorf("dialing websocket: %v", err)
 		return
 	}
-	ws := ws.Wrap[testMessage, testMessage]("client", c)
+	ws, err := ws.Wrap[testMessage, testMessage]("client", c)
+	if err != nil {
+		t.Errorf("wrapping websocket: %v", err)
+		return
+	}
 	defer func() {
 		if err := ws.Close(); err != nil {
 			t.Errorf("closing the websocket: %s", err)

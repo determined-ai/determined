@@ -5,6 +5,7 @@ import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -60,6 +61,8 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
 
+  const { canCreateModelVersion } = usePermissions();
+
   const handleClose = useCallback(
     (reason?: ModalCloseReason) => {
       setModalState(INITIAL_MODAL_STATE);
@@ -78,8 +81,10 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, [modalState.models, modalState.selectedModelName]);
 
   const modelOptions = useMemo(() => {
-    return modalState.models.map((model) => ({ id: model.id, name: model.name }));
-  }, [modalState.models]);
+    return modalState.models
+      .filter((model) => canCreateModelVersion({ model }))
+      .map((model) => ({ id: model.id, name: model.name }));
+  }, [modalState.models, canCreateModelVersion]);
 
   const registerModelVersion = useCallback(
     async (state: ModalState) => {

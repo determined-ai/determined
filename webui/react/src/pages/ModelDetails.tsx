@@ -7,7 +7,6 @@ import Input from 'components/kit/Input';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -43,7 +42,7 @@ import { useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -71,10 +70,12 @@ const ModelDetails: React.FC = () => {
     NotLoaded: () => [],
   });
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const workspaces = Loadable.getOrElse([], useWorkspaces());
-  const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
+  const lodableWorkspaces = useWorkspaces();
+  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
+    (ws) => ws.id === model?.model.workspaceId,
+  );
 
-  const { canModifyModelVersion } = usePermissions();
+  const { canModifyModel, canModifyModelVersion } = usePermissions();
 
   const {
     settings,
@@ -442,11 +443,10 @@ const ModelDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || !workspace) {
+  } else if (!model || lodableWorkspaces === NotLoaded) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
@@ -464,7 +464,8 @@ const ModelDetails: React.FC = () => {
           onUpdateTags={saveModelTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
@@ -497,12 +498,12 @@ const ModelDetails: React.FC = () => {
           />
         )}
         <NotesCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           notes={model.model.notes ?? ''}
           onSave={saveNotes}
         />
         <MetadataCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />

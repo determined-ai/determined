@@ -189,14 +189,13 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 //	@ID			get-raw-resource-allocation-csv
 //	@Accept		json
 //	@Produce	text/csv
-//nolint:lll
 //	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
-//nolint:lll
 //	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
-//nolint:lll
 //	@Success	200					{}		string	"A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
 //	@Router		/allocation/raw [get]
 //	@Deprecated
+//
+// nolint:lll
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -319,14 +318,15 @@ func (m *Master) fetchAggregatedResourceAllocation(
 //	@Tags		Cluster
 //	@ID			get-aggregated-resource-allocation-csv
 //	@Produce	text/csv
-//nolint:lll
 //	@Param		start_date	query	string	true	"Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
-//nolint:lll
 //	@Param		end_date	query	string	true	"End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
-//nolint:lll
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
 //	@Router		/allocation/aggregated [get]
+//
+// nolint:lll
+// To make both gofmt and swag fmt happy we need an unindented comment matched with the swagger
+// comment indented with tabs. https://github.com/swaggo/swag/pull/1386#issuecomment-1359242144
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start  string `query:"start_date"`
@@ -377,9 +377,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 			return err
 		}
 		if err = writeAggType("resource_pool", entry.ByResourcePool); err != nil {
-			return err
-		}
-		if err = writeAggType("agent_label", entry.ByAgentLabel); err != nil {
 			return err
 		}
 		if err = writeAggType("total", map[string]float32{"total": entry.Seconds}); err != nil {
@@ -581,16 +578,16 @@ func (m *Master) tryRestoreExperiment(sema chan struct{}, wg *sync.WaitGroup, e 
 }
 
 // Zero-downtime restore of task containers works the following way. On master startup,
-// 1. AgentRM is initialized.
-// 2. In AgentRM PreStart, agent state is fetched from database and agent actors are initialized.
-// 3. Restored experiment actors ping their restored trials to ensure they've initialized.
-// 4. The trial actors similarly ping allocations.
-// 5. Waitgroup waits for all on experiments.
-// 6. Allocation actors ask AgentRM for resources. Since AgentRM has already initialized
-//    the agent states in PreStart, it knows which containers it's supposed to have. If it does not
-//    have the required containers, allocation will receive a ResourcesFailure.
-// 7. When real agents finally connect, if the container is not on the agent, the restored
-//    allocation will get a containerStateChanged event notifying it about container termination.
+//  1. AgentRM is initialized.
+//  2. In AgentRM PreStart, agent state is fetched from database and agent actors are initialized.
+//  3. Restored experiment actors ping their restored trials to ensure they've initialized.
+//  4. The trial actors similarly ping allocations.
+//  5. Waitgroup waits for all on experiments.
+//  6. Allocation actors ask AgentRM for resources. Since AgentRM has already initialized
+//     the agent states in PreStart, it knows which containers it's supposed to have. If it does not
+//     have the required containers, allocation will receive a ResourcesFailure.
+//  7. When real agents finally connect, if the container is not on the agent, the restored
+//     allocation will get a containerStateChanged event notifying it about container termination.
 //
 // TODO(ilia): Here we wait for all experiments to restore and initialize their allocations before
 // starting any scheduling. This path is better for scheduling fairness.
@@ -686,6 +683,10 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
+
+	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
+	cluster.InitTheLastBootClusterHeartbeat()
+
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
@@ -877,7 +878,6 @@ func (m *Master) Run(ctx context.Context) error {
 	// The below function call is intentionally made after the call to CloseOpenAllocations.
 	// This ensures that in the scenario where a cluster fails all open allocations are
 	// set to the last cluster heartbeat when the cluster was running.
-	cluster.InitTheLastBootClusterHeartbeat()
 	go updateClusterHeartbeat(ctx, m.db)
 
 	// Docs and WebUI.

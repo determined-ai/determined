@@ -1019,7 +1019,6 @@ export const getModels: DetApi<
       params.archived,
       undefined,
       undefined,
-      params.workspaceId,
       getUserIds(params.users),
       undefined,
       params.workspaceIds,
@@ -1111,6 +1110,16 @@ export const unarchiveModel: DetApi<
   request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params.modelName),
 };
 
+export const moveModel: DetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void> = {
+  name: 'moveModel',
+  postProcess: noOp,
+  request: (params: Service.MoveModelParams) =>
+    detApi.Models.moveModel(params.modelName, {
+      destinationWorkspaceId: params.destinationWorkspaceId,
+      modelName: params.modelName,
+    }),
+};
+
 export const deleteModel: DetApi<Service.DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
@@ -1128,10 +1137,14 @@ export const deleteModelVersion: DetApi<
     detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
 };
 
-export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {
+export const getModelLabels: DetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+> = {
   name: 'getModelLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Models.getModelLabels(options),
+  request: (params, options) => detApi.Models.getModelLabels(params.workspaceId, options),
 };
 
 export const postModel: DetApi<
@@ -1149,6 +1162,7 @@ export const postModel: DetApi<
       labels: params.labels,
       metadata: params.metadata,
       name: params.name,
+      workspaceId: params.workspaceId,
     }),
 };
 

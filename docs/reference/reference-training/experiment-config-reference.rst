@@ -916,14 +916,6 @@ The ``resources`` section defines the resources that an experiment is allowed to
       of certain models, as described in the `PyTorch documentation
       <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
 
-.. _exp-config-agent_label:
-
-``agent_label``
-   If set, tasks launched for this experiment will *only* be scheduled on agents that have the given
-   label set. If this is not set (the default behavior), tasks launched for this experiment will
-   only be scheduled on unlabeled agents. An agent's label can be configured via the ``label`` field
-   in the agent configuration.
-
 ``max_slots``
    The maximum number of scheduler slots that this experiment is allowed to use at any one time. The
    slot limit of an active experiment can be changed using ``det experiment set max-slots <id>
@@ -965,6 +957,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is honored by resource
    managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``. See
    :ref:`master configuration <master-config-reference>` for details about resource managers.
+
+``agent_label``
+   This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
 
 .. _exp-bind-mounts:
 
@@ -1040,9 +1035,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10`` for NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10`` for CPUs.
-   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.19.12`` for CPUs.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.12`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using

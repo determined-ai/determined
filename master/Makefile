@@ -138,7 +138,7 @@ pre-package:
 	cp ../harness/dist/*.whl build/wheels/
 	cp $(shell packaging/fetch-cloud-forest.sh) build/
 
-.PHONE: buildx
+.PHONY: buildx
 buildx:
 	docker context rm -f buildx-context || true
 	docker context create buildx-context

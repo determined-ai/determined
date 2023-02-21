@@ -28,7 +28,7 @@ import { auth as authObservable, selectIsAuthenticated } from 'stores/auth';
 import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
-import { notification, useInitApi } from 'utils/dialogApi';
+import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
@@ -36,7 +36,6 @@ import css from './App.module.scss';
 import 'antd/dist/reset.css';
 
 const AppView: React.FC = () => {
-  useInitApi();
   const resize = useResize();
 
   const isAuthenticated = useObservable(selectIsAuthenticated);
@@ -129,11 +128,15 @@ const AppView: React.FC = () => {
       <div className={css.base}>
         {isServerReachable ? (
           <SettingsProvider>
-            <Navigation>
-              <main>
-                <Router routes={appRoutes} />
-              </main>
-            </Navigation>
+            <ThemeProvider>
+              <AntdApp>
+                <Navigation>
+                  <main>
+                    <Router routes={appRoutes} />
+                  </main>
+                </Navigation>
+              </AntdApp>
+            </ThemeProvider>
           </SettingsProvider>
         ) : (
           <PageMessage title="Server is Unreachable">
@@ -155,13 +158,9 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <ThemeProvider>
-          <AntdApp>
-            <DndProvider backend={HTML5Backend}>
-              <AppView />
-            </DndProvider>
-          </AntdApp>
-        </ThemeProvider>
+        <DndProvider backend={HTML5Backend}>
+          <AppView />
+        </DndProvider>
       </StoreProvider>
     </HelmetProvider>
   );

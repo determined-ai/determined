@@ -36,7 +36,7 @@ type Agent struct {
 	Slots map[string]*Slot `protobuf:"bytes,3,rep,name=slots,proto3" json:"slots,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// A map of container id to all containers assigned to this agent.
 	Containers map[string]*containerv1.Container `protobuf:"bytes,4,rep,name=containers,proto3" json:"containers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// An optional label applied to the agent for scheduling restrictions.
+	// This field has been deprecated and will be empty.
 	Label string `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
 	// The addresses of the agent.
 	Addresses []string `protobuf:"bytes,7,rep,name=addresses,proto3" json:"addresses,omitempty"`

@@ -28,9 +28,15 @@ class RendezvousInfo:
      - consumed by the launch layer
     """
 
-    def __init__(self, container_addrs: List[str], container_rank: int):
+    def __init__(
+        self,
+        container_addrs: List[str],
+        container_rank: int,
+        container_slot_counts: List[int],
+    ):
         self.container_addrs = container_addrs
         self.container_rank = container_rank
+        self.container_slot_counts = container_slot_counts
 
     def _to_file(self, path: str = DEFAULT_RENDEZVOUS_INFO_PATH) -> None:
         """
@@ -352,6 +358,16 @@ class ClusterInfo:
             return ["127.0.0.1"]
         assert self._rendezvous_info is not None
         return self._rendezvous_info.container_addrs
+
+    @property
+    def container_slot_counts(self) -> List[int]:
+        """A list of slots for all containers in the allocation, ordered by rank."""
+        if self.task_type != "TRIAL":
+            # Presently, only trials are allowed to use the rendezvous API.
+            # But also, only trials are scheduled across multiple nodes, so we can cheat here.
+            return [len(self.slot_ids)]
+        assert self._rendezvous_info is not None
+        return self._rendezvous_info.container_slot_counts
 
     @property
     def container_rank(self) -> int:

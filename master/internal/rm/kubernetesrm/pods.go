@@ -50,13 +50,13 @@ type podMetadata struct {
 
 // High lever overview of the actors within the kubernetes package:
 //
-//   pods
-//     +- pod(s): manages pod lifecycle. One per container in a task.
-//        +- podLogStreamer: stream logs for a specific pod.
-//     +- informer: sends updates about pod states
-//     +- events: sends updates about kubernetes events.
-//     +- requestQueue: queues requests to create / delete kubernetes resources.
-//        +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
+//	pods
+//	  +- pod(s): manages pod lifecycle. One per container in a task.
+//	     +- podLogStreamer: stream logs for a specific pod.
+//	  +- informer: sends updates about pod states
+//	  +- events: sends updates about kubernetes events.
+//	  +- requestQueue: queues requests to create / delete kubernetes resources.
+//	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
 	cluster                  *actor.Ref
 	namespace                string

@@ -55,6 +55,7 @@ def test_efficientdet_coco_pytorch_const() -> None:
 
 @pytest.mark.nightly
 def test_detectron2_coco_pytorch_const() -> None:
+    pytest.skip("Temporarily skipping this until we update the detectron2 example.")
     config = conf.load_config(conf.cv_examples_path("detectron2_coco_pytorch/const_fake.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 

@@ -2027,6 +2027,32 @@ class v1DataPoint:
         }
         return out
 
+class v1DataPointEpoch:
+
+    def __init__(
+        self,
+        *,
+        epoch: int,
+        value: float,
+    ):
+        self.epoch = epoch
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointEpoch":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "epoch": obj["epoch"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "epoch": self.epoch,
+            "value": dump_float(self.value),
+        }
+        return out
+
 class v1DataPointTime:
 
     def __init__(
@@ -2426,7 +2452,7 @@ class v1ExpCompareTrialsSampleResponse:
         return out
 
 class v1Experiment:
-    bestTrial: "typing.Optional[v1ExperimentTrial]" = None
+    bestTrialSearcherMetric: "typing.Optional[float]" = None
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
@@ -2460,7 +2486,7 @@ class v1Experiment:
         startTime: str,
         state: "experimentv1State",
         username: str,
-        bestTrial: "typing.Union[v1ExperimentTrial, None, Unset]" = _unset,
+        bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
@@ -2491,8 +2517,8 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
-        if not isinstance(bestTrial, Unset):
-            self.bestTrial = bestTrial
+        if not isinstance(bestTrialSearcherMetric, Unset):
+            self.bestTrialSearcherMetric = bestTrialSearcherMetric
         if not isinstance(checkpointCount, Unset):
             self.checkpointCount = checkpointCount
         if not isinstance(checkpointSize, Unset):
@@ -2543,8 +2569,8 @@ class v1Experiment:
             "state": experimentv1State(obj["state"]),
             "username": obj["username"],
         }
-        if "bestTrial" in obj:
-            kwargs["bestTrial"] = v1ExperimentTrial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
+        if "bestTrialSearcherMetric" in obj:
+            kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
         if "checkpointCount" in obj:
             kwargs["checkpointCount"] = obj["checkpointCount"]
         if "checkpointSize" in obj:
@@ -2595,8 +2621,8 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
-        if not omit_unset or "bestTrial" in vars(self):
-            out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
+        if not omit_unset or "bestTrialSearcherMetric" in vars(self):
+            out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
         if not omit_unset or "checkpointCount" in vars(self):
             out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "checkpointSize" in vars(self):
@@ -2693,32 +2719,6 @@ class v1ExperimentSimulation:
             out["seed"] = self.seed
         if not omit_unset or "trials" in vars(self):
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
-        return out
-
-class v1ExperimentTrial:
-    searcherMetricValue: "typing.Optional[float]" = None
-
-    def __init__(
-        self,
-        *,
-        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
-    ):
-        if not isinstance(searcherMetricValue, Unset):
-            self.searcherMetricValue = searcherMetricValue
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentTrial":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "searcherMetricValue" in obj:
-            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "searcherMetricValue" in vars(self):
-            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         return out
 
 class v1File:
@@ -6315,6 +6315,32 @@ class v1MoveExperimentRequest:
         }
         return out
 
+class v1MoveModelRequest:
+
+    def __init__(
+        self,
+        *,
+        destinationWorkspaceId: int,
+        modelName: str,
+    ):
+        self.destinationWorkspaceId = destinationWorkspaceId
+        self.modelName = modelName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveModelRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": obj["destinationWorkspaceId"],
+            "modelName": obj["modelName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": self.destinationWorkspaceId,
+            "modelName": self.modelName,
+        }
+        return out
+
 class v1MoveProjectRequest:
 
     def __init__(
@@ -8271,15 +8297,18 @@ class v1RendezvousInfo:
         *,
         addresses: "typing.Sequence[str]",
         rank: int,
+        slots: "typing.Sequence[int]",
     ):
         self.addresses = addresses
         self.rank = rank
+        self.slots = slots
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RendezvousInfo":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "addresses": obj["addresses"],
             "rank": obj["rank"],
+            "slots": obj["slots"],
         }
         return cls(**kwargs)
 
@@ -8287,6 +8316,7 @@ class v1RendezvousInfo:
         out: "typing.Dict[str, typing.Any]" = {
             "addresses": self.addresses,
             "rank": self.rank,
+            "slots": self.slots,
         }
         return out
 
@@ -9938,6 +9968,7 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
+    epochs: "typing.Optional[typing.Sequence[v1DataPointEpoch]]" = None
     time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
@@ -9946,11 +9977,14 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
+        epochs: "typing.Union[typing.Sequence[v1DataPointEpoch], None, Unset]" = _unset,
         time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
+        if not isinstance(epochs, Unset):
+            self.epochs = epochs
         if not isinstance(time, Unset):
             self.time = time
 
@@ -9961,6 +9995,8 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
+        if "epochs" in obj:
+            kwargs["epochs"] = [v1DataPointEpoch.from_json(x) for x in obj["epochs"]] if obj["epochs"] is not None else None
         if "time" in obj:
             kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
@@ -9971,6 +10007,8 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
+        if not omit_unset or "epochs" in vars(self):
+            out["epochs"] = None if self.epochs is None else [x.to_json(omit_unset) for x in self.epochs]
         if not omit_unset or "time" in vars(self):
             out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
@@ -11858,6 +11896,7 @@ class v1XAxis(enum.Enum):
     X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
     X_AXIS_BATCH = "X_AXIS_BATCH"
     X_AXIS_TIME = "X_AXIS_TIME"
+    X_AXIS_EPOCH = "X_AXIS_EPOCH"
 
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
@@ -13333,8 +13372,12 @@ def get_GetModelDefTree(
 
 def get_GetModelLabels(
     session: "api.Session",
+    *,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetModelLabelsResponse":
-    _params = None
+    _params = {
+        "workspaceId": workspaceId,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/model/labels",
@@ -13413,9 +13456,8 @@ def get_GetModels(
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
-    workspaceId: "typing.Optional[int]" = None,
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
-    workspaceName: "typing.Optional[str]" = None,
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
@@ -13429,9 +13471,8 @@ def get_GetModels(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
-        "workspaceId": workspaceId,
         "workspaceIds": workspaceIds,
-        "workspaceName": workspaceName,
+        "workspaceNames": workspaceNames,
     }
     _resp = session._do_request(
         method="GET",
@@ -14700,6 +14741,27 @@ def post_MoveExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveModel(
+    session: "api.Session",
+    *,
+    body: "v1MoveModelRequest",
+    modelName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelName}/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveModel", _resp)
 
 def post_MoveProject(
     session: "api.Session",

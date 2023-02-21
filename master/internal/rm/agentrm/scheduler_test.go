@@ -96,15 +96,14 @@ func newFakeAgentState(
 	t *testing.T,
 	system *actor.System,
 	id string,
-	label string,
 	slots int,
 	slotsUsed int,
 	maxZeroSlotContainers int,
 	zeroSlotContainers int,
 ) *agentState {
-	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots, Label: label})
+	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots})
 	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label}, maxZeroSlotContainers)
+	state := newAgentState(sproto.AddAgent{Agent: ref}, maxZeroSlotContainers)
 	for i := 0; i < slots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -468,7 +467,6 @@ func setupSchedulerStates(
 
 		agent := newAgentState(sproto.AddAgent{
 			Agent: ref,
-			Label: mockAgent.Label,
 		}, mockAgent.MaxZeroSlotContainers)
 
 		for i := 0; i < mockAgent.Slots; i++ {

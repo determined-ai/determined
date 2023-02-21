@@ -75,7 +75,9 @@ func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
+		if status.Code(err) == codes.Unknown {
+			err = apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)

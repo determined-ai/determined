@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -11,8 +13,8 @@ import (
 // ModelAuthZ describes authz methods for experiments.
 type ModelAuthZ interface {
 	// GET /api/v1/models
-	CanGetModels(ctx context.Context, curUser model.User,
-		workspaceID int32) (canGetModel bool, serverError error)
+	CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32,
+	) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error)
 	// GET /api/v1/checkpoints/{checkpoint_uuid}
 	// GET /api/v1/models/{model_name}
 	// GET /api/v1/models/{model_name}/versions/{model_version_num}
@@ -32,6 +34,14 @@ type ModelAuthZ interface {
 	CanCreateModel(ctx context.Context,
 		curUser model.User, workspaceID int32,
 	) error
+	// POST /api/v1/models/{model_name}/move
+	CanMoveModel(ctx context.Context, curUser model.User, model *modelv1.Model,
+		fromWorkspaceID int32, toWorkspaceID int32) error
+
+	// GET /api/v1/models with filter to allow reading
+	FilterReadableModelsQuery(
+		ctx context.Context, curUser model.User, query *bun.SelectQuery,
+	) (*bun.SelectQuery, error)
 }
 
 // AuthZProvider is the authz registry for models.

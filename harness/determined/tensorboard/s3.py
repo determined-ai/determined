@@ -1,9 +1,7 @@
 import logging
 import os
-import pathlib
-from typing import Any, Callable, Optional
+from typing import Any, List, Optional
 
-from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
@@ -44,16 +42,13 @@ class S3TensorboardManager(base.TensorboardManager):
 
         self.prefix = normalize_prefix(prefix)
 
-    @util.preserve_random_state
-    def sync(
+    def _sync_impl(
         self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
+        path_info_list: List[base.PathUploadInfo],
     ) -> None:
-        for path in self.to_sync(selector):
-            relative_path = path.relative_to(self.base_path)
-            mangled_relative_path = mangler(relative_path, rank)
+        for path_info in path_info_list:
+            path = path_info.path
+            mangled_relative_path = path_info.mangled_relative_path
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
             tbd_filename = str(mangled_path)
             key_name = os.path.join(self.prefix, tbd_filename)

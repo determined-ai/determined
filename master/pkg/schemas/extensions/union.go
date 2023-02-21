@@ -87,6 +87,7 @@ func unionValidate(
 	}
 
 	if len(valid) > 1 {
+		//nolint: asasalint // We do mean to pass the slice and not do "valid...".
 		return ctx.Error("union", "bug in validation! Multiple schemas matched: %v", valid)
 	}
 

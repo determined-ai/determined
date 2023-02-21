@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -94,22 +95,16 @@ func (a *apiServer) GetModels(
 	nameFilter := "%" + req.Name + "%"
 	descFilterExpr := "%" + req.Description + "%"
 	archFilterExpr := ""
-	workspaceIDFilterExpr := 0
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0, len(req.UserIds))
-	workspaceIds := make([]string, 0, len(req.WorkspaceIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
-	for _, workspaceID := range req.WorkspaceIds {
-		workspaceIds = append(workspaceIds, strconv.Itoa(int(workspaceID)))
-	}
 	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
-	workspaceIDsFilterExpr := strings.Join(workspaceIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
@@ -142,27 +137,40 @@ func (a *apiServer) GetModels(
 	if err != nil {
 		return nil, err
 	}
-	if req.WorkspaceId != nil { // default is to use workspace ID
-		workspaceIDFilterExpr = int(*req.WorkspaceId)
-	} else if req.WorkspaceName != nil {
-		w := workspacev1.Workspace{}
-		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
-		}
-		workspaceIDFilterExpr = int(w.Id)
-	}
-	if workspaceIDFilterExpr != 0 {
-		// if workspace id isn't provided then no auth is required here. All models will be returned.
-		if ok, err := modelauth.AuthZProvider.Get().CanGetModels(ctx, *curUser,
-			int32(workspaceIDFilterExpr)); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, errors.Errorf(
-				"current user %q doesn't have view permissions in the given workspace with id: %v.",
-				curUser.Username, workspaceIDFilterExpr)
+	var workspaceIdsGiven []int32
+	if req.WorkspaceIds != nil {
+		// default is to use workspace ids.
+		workspaceIdsGiven = req.WorkspaceIds
+	} else if req.WorkspaceIds == nil && req.WorkspaceNames != nil {
+		// get the ids of the corresponding workspaces
+		if err := db.Bun().NewSelect().Table("workspaces").Column("id").
+			Where("name in (?)", bun.In(req.WorkspaceNames)).Distinct().
+			Scan(ctx, &workspaceIdsGiven); err != nil {
+			return nil, fmt.Errorf("getting workspace ids from names: %w", err)
 		}
 	}
+	// function below returns a list of workspaces that have permissions
+	// filtered according to user given workspaces.
+	// if global permissions and no filter list given by user then it's an empty list.
+	workspaceIdsWithPermsAndFilterList, ok, err := modelauth.AuthZProvider.Get().
+		CanGetModels(ctx, *curUser, workspaceIdsGiven)
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf(
+			"current user doesn't have view permissions in related workspaces.")
+	}
+	var workspaceIds []string
+	var workspaceIdsWithPermsAndFilter string
+	if workspaceIdsWithPermsAndFilterList == nil {
+		workspaceIdsWithPermsAndFilter = ""
+	} else {
+		for _, wID := range workspaceIdsWithPermsAndFilterList {
+			workspaceIds = append(workspaceIds, strconv.Itoa(int(wID)))
+		}
+		workspaceIdsWithPermsAndFilter = strings.Join(workspaceIds, ",")
+	}
+
 	err = a.m.db.QueryProtof(
 		"get_models",
 		[]interface{}{orderExpr},
@@ -174,8 +182,7 @@ func (a *apiServer) GetModels(
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
-		workspaceIDFilterExpr,
-		workspaceIDsFilterExpr,
+		workspaceIdsWithPermsAndFilter,
 	)
 	if err != nil {
 		return nil, err
@@ -184,15 +191,41 @@ func (a *apiServer) GetModels(
 }
 
 func (a *apiServer) GetModelLabels(
-	_ context.Context, req *apiv1.GetModelLabelsRequest,
+	ctx context.Context, req *apiv1.GetModelLabelsRequest,
 ) (*apiv1.GetModelLabelsResponse, error) {
-	resp := &apiv1.GetModelLabelsResponse{}
-	err := a.m.db.QueryProto("get_model_labels", resp)
+	resp := apiv1.GetModelLabelsResponse{}
+
+	modelQuery := db.Bun().NewSelect().
+		ModelTableExpr("models as m").
+		Column("m.id").
+		ColumnExpr("UNNEST(m.labels) AS label")
+
+	if req.WorkspaceId != nil && int(*req.WorkspaceId) > 0 {
+		modelQuery = modelQuery.Where("workspace_id = ?", req.WorkspaceId)
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if modelQuery, err = modelauth.AuthZProvider.Get().
+		FilterReadableModelsQuery(ctx, *curUser, modelQuery); err != nil {
+		return nil, err
+	}
 
-	return resp, errors.Wrapf(err, "error getting model labels")
+	labelQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS all_labels", modelQuery).
+		Column("all_labels.label").
+		GroupExpr("all_labels.label").
+		OrderExpr("COUNT(DISTINCT(all_labels.id)) DESC, all_labels.label ASC")
+
+	opQuery := db.Bun().NewSelect().
+		ModelTableExpr("(?) AS sorted_labels", labelQuery).
+		Model(&resp.Labels).
+		ColumnExpr("sorted_labels.label")
+	err = opQuery.Scan(ctx)
+
+	return &resp, errors.Wrapf(err, "error getting model labels")
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
@@ -212,7 +245,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", 0, "")
+		&getResp.Models, 0, "", "", "", "", modelName, "", "")
 	if err != nil {
 		return err
 	}
@@ -447,6 +480,38 @@ func (a *apiServer) UnarchiveModel(
 
 	return &apiv1.UnarchiveModelResponse{},
 		errors.Wrapf(err, "error unarchiving model %q", req.ModelName)
+}
+
+func (a *apiServer) MoveModel(
+	ctx context.Context, req *apiv1.MoveModelRequest,
+) (*apiv1.MoveModelResponse, error) {
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = modelauth.AuthZProvider.
+		Get().
+		CanMoveModel(ctx, *curUser, currModel, currModel.WorkspaceId, req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &modelv1.Model{}
+	err = a.m.db.QueryProto("move_model", holder, currModel.Id, req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error moving a model (%s)", req.ModelName)
+	}
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "Model (%s) does not exist or not moveable by this user",
+			req.ModelName)
+	}
+
+	return &apiv1.MoveModelResponse{}, nil
 }
 
 func (a *apiServer) DeleteModel(

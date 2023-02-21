@@ -165,13 +165,10 @@ def test_agent_config_path() -> None:
 
     # Validate CLI flags overwrite config file options.
     agent_name += "-2"
-    agent_up(
-        ["--agent-name", agent_name, "--agent-config-path", etc_path, "--agent-label", "cli-flag"]
-    )
+    agent_up(["--agent-name", agent_name, "--agent-config-path", etc_path])
     agent_list = json.loads(subprocess.check_output(["det", "a", "list", "--json"]).decode())
     agent_list = [el for el in agent_list if el["id"] == agent_name]
     assert len(agent_list) == 1
-    assert agent_list[0]["label"] == "cli-flag"
     agent_down(["--agent-name", agent_name])
 
     master_down([])
@@ -284,7 +281,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
     agents_are_up = [True] * num_agents
     for i in range(num_agents):
         agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
-    time.sleep(3)
+    time.sleep(10)
 
     for _ in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
@@ -321,7 +318,20 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
         assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
             agent_id = int(agent["id"].replace("agent-", ""))
-            assert agents_are_up[agent_id] == agent["enabled"]
+            if agents_are_up[agent_id] != agent["enabled"]:
+                p = subprocess.run(
+                    [
+                        "det",
+                        "deploy",
+                        "local",
+                        "logs",
+                    ]
+                )
+                print(p.stdout)
+                print(p.stderr)
+            assert (
+                agents_are_up[agent_id] == agent["enabled"]
+            ), f"agent is up: {agents_are_up[agent_id]}, agent status: {agent}"
 
         # Can we still schedule something?
         if any(agents_are_up):

@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -196,7 +195,7 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
-    if (canViewModelRegistry) {
+    if (canViewModelRegistry({ workspace })) {
       items.push({
         children: <ModelRegistry workspace={workspace} />,
         key: WorkspaceDetailsTab.ModelRegistry,
@@ -261,10 +260,7 @@ const WorkspaceDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
-  } else if (!canViewWorkspaceFlag) {
-    return <PageNotFound />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!workspace) {
@@ -284,7 +280,8 @@ const WorkspaceDetails: React.FC = () => {
         />
       }
       id="workspaceDetails"
-      key={workspaceId}>
+      key={workspaceId}
+      notFound={(pageError && isNotFound(pageError)) || !canViewWorkspaceFlag}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane

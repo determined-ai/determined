@@ -1,12 +1,11 @@
 import logging
 import os
 import pathlib
-from typing import Any, Callable, Optional, no_type_check
+from typing import Any, List, Optional, no_type_check
 
 import requests.exceptions
 import urllib3.exceptions
 
-from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
@@ -36,16 +35,10 @@ class GCSTensorboardManager(base.TensorboardManager):
         return os.path.join(self.prefix, storage_id)
 
     @no_type_check
-    @util.preserve_random_state
-    def sync(
-        self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
-    ) -> None:
-        for path in self.to_sync(selector):
-            relative_path = path.relative_to(self.base_path)
-            mangled_relative_path = mangler(relative_path, rank)
+    def _sync_impl(self, path_info_list: List[base.PathUploadInfo]) -> None:
+        for path_info in path_info_list:
+            path = path_info.path
+            mangled_relative_path = path_info.mangled_relative_path
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
             to_path = self.get_storage_prefix(mangled_path)
 

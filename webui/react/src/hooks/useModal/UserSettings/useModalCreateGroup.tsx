@@ -17,7 +17,7 @@ import {
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
+import { RolesStore } from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -50,10 +50,9 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
 
-  const knowRolesLoadable = useKnownRoles();
-  const knownRoles = Loadable.getOrElse(initKnowRoles, knowRolesLoadable);
-
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+
+  const roles = RolesStore.useRoles();
 
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
@@ -129,9 +128,9 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {Loadable.match(knowRolesLoadable, {
-                Loaded: () =>
-                  knownRoles.map((r) => (
+              {Loadable.match(roles, {
+                Loaded: (roles) =>
+                  roles.map((r) => (
                     <Select.Option
                       disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
                       key={r.id}

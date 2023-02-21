@@ -243,7 +243,7 @@ func (r *ResourceManager) NotifyContainerRunning(
 
 // IsReattachEnabled is a default implementation (not Reattachable).
 func (r *ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
-	return false
+	return true
 }
 
 // IsReattachableOnlyAfterStarted is a default implementation (true).
@@ -253,7 +253,7 @@ func (r *ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bo
 
 // IsReattachEnabledForRP is a default implementation for an RP being reattachable (false).
 func (r *ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool {
-	return false
+	return true
 }
 
 // Tell tells the underlying actor-based RM the req.

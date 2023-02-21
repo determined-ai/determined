@@ -29,7 +29,6 @@ import (
 
 	"github.com/determined-ai/determined/master/test/testutils"
 
-	"github.com/golang/protobuf/ptypes"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -359,7 +358,7 @@ func randFloatSlice(n int) []float32 {
 func pbTimestampSlice(n int) []*timestamppb.Timestamp {
 	ts := make([]*timestamppb.Timestamp, n)
 	for i := 0; i < n; i++ {
-		ts[i] = ptypes.TimestampNow()
+		ts[i] = timestamppb.Now()
 		// Round off to millis.
 		ts[i].Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
 			float64(time.Millisecond))

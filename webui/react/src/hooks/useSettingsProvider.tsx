@@ -47,7 +47,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const [settingsState, setSettingsState] = useState(() => Map<string, Settings>());
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !checked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
@@ -81,7 +81,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, settingsState]);
+  }, [canceler, user?.id, checked, settingsState]);
 
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
@@ -95,17 +95,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading && !(checked && !user)) return <Spinner center spinning />;
-
   return (
-    <UserSettings.Provider
-      value={{
-        isLoading: isLoading,
-        querySettings: querySettings.current,
-        state: settingsState,
-        update,
-      }}>
-      {children}
-    </UserSettings.Provider>
+    <Spinner spinning={isLoading && !(checked && !user)} tip="Loading Page">
+      <UserSettings.Provider
+        value={{
+          isLoading: isLoading,
+          querySettings: querySettings.current,
+          state: settingsState,
+          update,
+        }}>
+        {children}
+      </UserSettings.Provider>
+    </Spinner>
   );
 };

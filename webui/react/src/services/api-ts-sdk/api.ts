@@ -933,7 +933,7 @@ export interface V1Agent {
      */
     containers?: { [key: string]: V1Container; };
     /**
-     * An optional label applied to the agent for scheduling restrictions.
+     * This field has been deprecated and will be empty.
      * @type {string}
      * @memberof V1Agent
      */
@@ -2029,6 +2029,26 @@ export interface V1DataPoint {
 }
 
 /**
+ * One DataPointEpoch in a series of metrics from a trial in epoch.
+ * @export
+ * @interface V1DataPointEpoch
+ */
+export interface V1DataPointEpoch {
+    /**
+     * Total batches processed by the epoch this measurement is taken.
+     * @type {number}
+     * @memberof V1DataPointEpoch
+     */
+    epoch: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPointEpoch
+     */
+    value: number;
+}
+
+/**
  * One DataPointTime in a series of metrics from a trial in time.
  * @export
  * @interface V1DataPointTime
@@ -2532,10 +2552,10 @@ export interface V1Experiment {
     checkpointCount?: number;
     /**
      * The metrics and hyperparameters associated with the best trial by searcher metric.
-     * @type {V1ExperimentTrial}
+     * @type {number}
      * @memberof V1Experiment
      */
-    bestTrial?: V1ExperimentTrial;
+    bestTrialSearcherMetric?: number;
 }
 
 /**
@@ -2576,20 +2596,6 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
-}
-
-/**
- * ExperimentTrial is trial-level data that is surfaced to the experiment level.
- * @export
- * @interface V1ExperimentTrial
- */
-export interface V1ExperimentTrial {
-    /**
-     * the searcher metric value associated with the best_validation_id for the trial.
-     * @type {number}
-     * @memberof V1ExperimentTrial
-     */
-    searcherMetricValue?: number;
 }
 
 /**
@@ -5315,6 +5321,34 @@ export interface V1MoveExperimentResponse {
 }
 
 /**
+ * Request to move a model to a workspace.
+ * @export
+ * @interface V1MoveModelRequest
+ */
+export interface V1MoveModelRequest {
+    /**
+     * The target model name.
+     * @type {string}
+     * @memberof V1MoveModelRequest
+     */
+    modelName: string;
+    /**
+     * The workspace id that the model will be stored.
+     * @type {number}
+     * @memberof V1MoveModelRequest
+     */
+    destinationWorkspaceId: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1MoveModelResponse
+ */
+export interface V1MoveModelResponse {
+}
+
+/**
  * Request to move a project into a workspace.
  * @export
  * @interface V1MoveProjectRequest
@@ -6797,6 +6831,12 @@ export interface V1RendezvousInfo {
      * @memberof V1RendezvousInfo
      */
     rank: number;
+    /**
+     * The slots for each address, respectively.
+     * @type {Array<number>}
+     * @memberof V1RendezvousInfo
+     */
+    slots: Array<number>;
 }
 
 /**
@@ -6890,7 +6930,7 @@ export interface V1ResourceAllocationAggregatedEntry {
      */
     byResourcePool: { [key: string]: number; };
     /**
-     * The seconds in the cluster used by experiments assigned to each agent label.
+     * This field has been deprecated and will be empty.
      * @type {{ [key: string]: number; }}
      * @memberof V1ResourceAllocationAggregatedEntry
      */
@@ -8212,6 +8252,12 @@ export interface V1SummarizedMetric {
      * @memberof V1SummarizedMetric
      */
     time?: Array<V1DataPointTime>;
+    /**
+     * A possibly down-sampled series of metric readings through the progress of the trial in epoch.
+     * @type {Array<V1DataPointEpoch>}
+     * @memberof V1SummarizedMetric
+     */
+    epochs?: Array<V1DataPointEpoch>;
     /**
      * Type of metrics (training, validation, or unset).
      * @type {V1MetricType}
@@ -9740,14 +9786,15 @@ export enum V1WorkspaceState {
 }
 
 /**
- * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+ * XAxis options available in metrics charts.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
  * @export
  * @enum {string}
  */
 export enum V1XAxis {
     UNSPECIFIED = <any> 'X_AXIS_UNSPECIFIED',
     BATCH = <any> 'X_AXIS_BATCH',
-    TIME = <any> 'X_AXIS_TIME'
+    TIME = <any> 'X_AXIS_TIME',
+    EPOCH = <any> 'X_AXIS_EPOCH'
 }
 
 
@@ -10580,7 +10627,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11117,7 +11164,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11380,7 +11427,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11564,7 +11611,7 @@ export class ClusterApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-     * @param {string} [label] Filter agents by their label. If no label is specified or is empty, all agents are returned.
+     * @param {string} [label] This field has been deprecated and will be ignored.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
@@ -12305,11 +12352,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -13673,11 +13720,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14270,11 +14317,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+         * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any) {
             return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(fetch, basePath);
         },
         /**
@@ -14640,12 +14687,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.
+     * @param {'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH'} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME' | 'X_AXIS_EPOCH', options?: any) {
         return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(this.fetch, this.basePath);
     }
 
@@ -19263,10 +19310,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options: any = {}): FetchArgs {
+        getModelLabels(workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19279,6 +19327,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -19403,15 +19455,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19462,12 +19513,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['users'] = users;
             }
 
-            if (workspaceName !== undefined) {
-                localVarQueryParameter['workspaceName'] = workspaceName;
-            }
-
-            if (workspaceId !== undefined) {
-                localVarQueryParameter['workspaceId'] = workspaceId;
+            if (workspaceNames) {
+                localVarQueryParameter['workspaceNames'] = workspaceNames;
             }
 
             if (userIds) {
@@ -19486,6 +19533,52 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelName' is not null or undefined
+            if (modelName === null || modelName === undefined) {
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling moveModel.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelName}/move`
+                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1MoveModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -19802,11 +19895,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(options);
+        getModelLabels(workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19872,16 +19966,35 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).moveModel(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20044,11 +20157,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any) {
-            return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
+        getModelLabels(workspaceId?: number, options?: any) {
+            return ModelsApiFp(configuration).getModelLabels(workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20087,16 +20201,26 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
-            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options)(fetch, basePath);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
+            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Move a model into a workspace
+         * @param {string} modelName The target model name.
+         * @param {V1MoveModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveModel(modelName: string, body: V1MoveModelRequest, options?: any) {
+            return ModelsApiFp(configuration).moveModel(modelName, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20214,12 +20338,13 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of unique model labels (sorted by popularity).
+     * @param {number} [workspaceId] Optional workspace ID to limit query for model tags.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelLabels(options?: any) {
-        return ModelsApiFp(this.configuration).getModelLabels(options)(this.fetch, this.basePath);
+    public getModelLabels(workspaceId?: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModelLabels(workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20263,8 +20388,7 @@ export class ModelsApi extends BaseAPI {
      * @param {Array<string>} [labels] Limit the models to those with the following labels.
      * @param {boolean} [archived] Limit to unarchived models only.
      * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-     * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-     * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+     * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
      * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
      * @param {number} [id] Limit the models to this model id.
      * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
@@ -20272,8 +20396,21 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
-        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options)(this.fetch, this.basePath);
+    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
+        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Move a model into a workspace
+     * @param {string} modelName The target model name.
+     * @param {V1MoveModelRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public moveModel(modelName: string, body: V1MoveModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).moveModel(modelName, body, options)(this.fetch, this.basePath);
     }
 
     /**

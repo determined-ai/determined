@@ -72,7 +72,7 @@ func TestShipper(t *testing.T) {
 	}))
 	go func() {
 		defer cancel()
-		if err := http.ListenAndServe(testURL, mux); err != nil {
+		if err := http.ListenAndServe(testURL, mux); err != nil { //nolint: gosec // This is a test.
 			t.Logf("http receiver failed: %v", err)
 		}
 	}()

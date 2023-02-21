@@ -26,7 +26,7 @@ func (f ExperimentModelOptionFunc) apply(experiment *Experiment) {
 }
 
 // ExperimentModel returns a new experiment with the specified options.
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.ExperimentConfig) {
 	maxLength := expconf.NewLengthInBatches(100)
 	activeConfig := expconf.ExperimentConfig{

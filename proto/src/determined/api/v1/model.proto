@@ -74,11 +74,8 @@ message GetModelsRequest {
   // Limit the models to those made by the users with the following usernames.
   repeated string users = 9;
 
-  // Limit models to those that belong to the following worksapce.
-  optional string workspace_name = 12;
-
-  // Limit models to those that belong to the following workspace id.
-  optional int32 workspace_id = 13;
+  // Limit models to those that belong to the following workspace names.
+  repeated string workspace_names = 12;
 
   // Limit the models to those made by the users with the following userIds.
   repeated int32 user_ids = 11;
@@ -87,7 +84,7 @@ message GetModelsRequest {
   int32 id = 10;
 
   // Limit models to those that belong to the following workspace ids.
-  repeated int32 workspace_ids = 14;
+  repeated int32 workspace_ids = 13;
 }
 
 // Response to GetModelsRequest.
@@ -102,7 +99,10 @@ message GetModelsResponse {
 }
 
 // Get a list of model labels.
-message GetModelLabelsRequest {}
+message GetModelLabelsRequest {
+  // Optional workspace ID to limit query for model tags.
+  optional int32 workspace_id = 1;
+}
 
 // Response to GetModelLabelsRequest.
 message GetModelLabelsResponse {
@@ -192,6 +192,21 @@ message UnarchiveModelRequest {
 
 // Response to UnarchiveModelRequest
 message UnarchiveModelResponse {}
+
+// Request to move a model to a workspace.
+message MoveModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "destination_workspace_id" ] }
+  };
+
+  // The target model name.
+  string model_name = 1;
+  // The workspace id that the model will be stored.
+  int32 destination_workspace_id = 2;
+}
+
+// Response to MoveModelRequest
+message MoveModelResponse {}
 
 // Request for deleting a model in the registry.
 message DeleteModelRequest {

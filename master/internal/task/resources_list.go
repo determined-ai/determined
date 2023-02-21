@@ -1,6 +1,8 @@
 package task
 
 import (
+	"sort"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -10,9 +12,19 @@ import (
 type resourcesList map[sproto.ResourcesID]*taskmodel.ResourcesWithState
 
 func (rs resourcesList) append(ars map[sproto.ResourcesID]sproto.Resources) error {
+	// Determined supports heterogeneous agent fits, so we order the resources by size,
+	// since it is nicest for the chief to be on the largest node.
+	var bySize []sproto.Resources
+	for _, r := range ars {
+		bySize = append(bySize, r)
+	}
+	sort.SliceStable(bySize, func(i, j int) bool {
+		return bySize[i].Summary().Slots() < bySize[j].Summary().Slots()
+	})
+
 	start := len(rs)
 	rank := 0
-	for _, r := range ars {
+	for _, r := range bySize {
 		summary := r.Summary()
 		state := taskmodel.NewResourcesState(r, start+rank)
 		if err := state.Persist(); err != nil {

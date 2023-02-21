@@ -22,6 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/determined-ai/determined/master/internal"
@@ -109,7 +110,8 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 	var clConn *grpc.ClientConn
 	var err error
 	for i := 0; i < 15; i++ {
-		clConn, err = grpc.Dial(fmt.Sprintf("localhost:%d", c.Port), grpc.WithInsecure())
+		clConn, err = grpc.Dial(fmt.Sprintf("localhost:%d", c.Port),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = fmt.Errorf("failed to dial master: %w", err)
 			continue

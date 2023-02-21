@@ -149,6 +149,8 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 //	@Param		path			query	string	true	"Path to the target file"
 //	@Success	200				{}		string	""
 //	@Router		/experiments/{experiment_id}/file/download [get]
+//
+// Read why this line exists on the comment on getAggregatedResourceAllocation in core.go.
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`
@@ -401,7 +403,7 @@ func (p ErrProjectNotFound) Error() string {
 func getCreateExperimentsProject(
 	m *Master, params *CreateExperimentParams, user *model.User, config expconf.ExperimentConfig,
 ) (*projectv1.Project, error) {
-	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams.
 	// CreateExperimentParams has highest priority.
 	var err error
 	projectID := 1

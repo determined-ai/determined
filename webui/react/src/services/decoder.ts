@@ -488,7 +488,7 @@ export const mapV1Experiment = (
     projectId: data.projectId,
     projectName: data.projectName,
     resourcePool: data.resourcePool || '',
-    searcherMetricValue: data.bestTrial?.searcherMetricValue,
+    searcherMetricValue: data.bestTrialSearcherMetric,
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
@@ -618,21 +618,28 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
 };
 
 const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
-  return data.map((m) => ({
-    data: m.data.map((pt) => ({
-      batches: pt.batches,
-      value: pt.value,
-    })),
-    name: m.name,
-    time: m.time?.map((pt) => ({
-      time: pt.time,
-      value: pt.value,
-    })),
-    type:
-      m.type === Sdk.V1MetricType.TRAINING
-        ? types.MetricType.Training
-        : types.MetricType.Validation,
-  }));
+  return data.map((m) => {
+    const metrics: types.MetricContainer = {
+      data: m.data.map((pt) => ({
+        batches: pt.batches,
+        value: pt.value,
+      })),
+      epochs: m.epochs?.map((pt) => ({
+        epoch: pt.epoch,
+        value: pt.value,
+      })),
+      name: m.name,
+      time: m.time?.map((pt) => ({
+        time: pt.time,
+        value: pt.value,
+      })),
+      type:
+        m.type === Sdk.V1MetricType.TRAINING
+          ? types.MetricType.Training
+          : types.MetricType.Validation,
+    };
+    return metrics;
+  });
 };
 
 export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {

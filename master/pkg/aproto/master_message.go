@@ -68,7 +68,6 @@ type ID string
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
 	Version              string
-	Label                string
 	Devices              []device.Device
 	ContainersReattached []ContainerReattachAck
 }

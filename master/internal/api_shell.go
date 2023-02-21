@@ -46,7 +46,9 @@ func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
 	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
+		if status.Code(err) == codes.Unknown {
+			err = apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}()
 
 	curUser, _, err := grpcutil.GetUser(ctx)

@@ -259,12 +259,26 @@ def run_tensorboard_fetcher_test(
                 f"There were {missing_files} missing files: {expected_files.keys()}"
             )
 
+    def fetch_all_serial(fetcher: base.Fetcher) -> int:
+        """Fetches all changed files found in storage paths in serial
+
+        Returns: count of new files fetched.
+        """
+        new_files = []
+        # Look at all files in our storage location.
+        for filepath in fetcher.list_all_generator():
+            new_files.append(filepath)
+        # Download the new or updated files.
+        for filepath in new_files:
+            fetcher._fetch(filepath, lambda: None)
+        return len(new_files)
+
     def timed_backoff_sync_check(expected_files: Dict[str, bytes]) -> None:
         # Prevent failures due storage propagation delay.
         num_retries = 5
         for retry_num in range(num_retries + 1):
             try:
-                fetcher.fetch_new()
+                fetch_all_serial(fetcher)
                 verify_files(expected_files)
                 break
             except AssertionError as e:
@@ -278,7 +292,7 @@ def run_tensorboard_fetcher_test(
 
     try:
         # (Empty Sync) Ensure empty sync is ok
-        fetcher.fetch_new()
+        fetch_all_serial(fetcher)
         local_file_list = list_files(local_sync_dir)
         assert len(local_file_list) == 0
 

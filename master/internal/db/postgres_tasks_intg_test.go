@@ -83,7 +83,6 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        8,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
@@ -206,6 +205,7 @@ func TestExhaustiveEnums(t *testing.T) {
 		q := fmt.Sprintf("SELECT unnest(enum_range(NULL::%s))::text", c.postgresType)
 		rows, err := db.sql.Queryx(q)
 		require.NoError(t, err, "querying postgres enum members")
+		defer rows.Close()
 		for rows.Next() {
 			var text string
 			require.NoError(t, rows.Scan(&text), "scanning enum value")

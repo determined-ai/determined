@@ -16,7 +16,6 @@ import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -37,6 +36,7 @@ import Toggle from 'components/Toggle';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -49,7 +49,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -75,25 +75,23 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const { canViewModelRegistry } = usePermissions();
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
+  const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate();
+    useModalModelCreate({ workspaceId: workspace?.id });
 
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
+
+  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
+    useModalModelMove();
 
   const settingConfig = useMemo(() => {
     return settingsConfig(workspace?.id.toString() ?? 'global');
@@ -148,13 +146,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const fetchTags = useCallback(async () => {
     try {
-      const tags = await getModelLabels({ signal: canceler.signal });
+      const tags = await getModelLabels(
+        { workspaceId: workspace?.id },
+        { signal: canceler.signal },
+      );
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal]);
+  }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);
@@ -197,6 +198,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
     },
     [fetchModels],
+  );
+
+  const moveModelToWorkspace = useCallback(
+    (model: ModelItem) => {
+      openModelMove(model);
+    },
+    [openModelMove],
   );
 
   const setModelTags = useCallback(
@@ -330,6 +338,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const workspaceRenderer = useCallback(
     (record: ModelItem): React.ReactNode => {
       const workspace = workspaces.find((u) => u.id === record.workspaceId);
+      if (!workspace) {
+        return (
+          <Link disabled>
+            <DynamicIcon name="-" size={24} />
+          </Link>
+        );
+      }
       const workspaceId = record.workspaceId;
       return (
         <Tooltip placement="top" title={workspace?.name}>
@@ -390,15 +405,23 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem): DropDownProps['menu'] => {
+    (
+      record: ModelItem,
+      canDeleteModelFlag: boolean,
+      canModifyModelFlag: boolean,
+    ): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
+        MoveModel: 'move-model',
         SwitchArchived: 'switch-archived',
       } as const;
 
       const funcs = {
         [MenuKey.SwitchArchived]: () => {
           switchArchived(record);
+        },
+        [MenuKey.MoveModel]: () => {
+          moveModelToWorkspace(record);
         },
         [MenuKey.DeleteModel]: () => {
           showConfirmDelete(record);
@@ -409,17 +432,23 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         funcs[e.key as ValueOf<typeof MenuKey>]();
       };
 
-      const menuItems: MenuProps['items'] = [
-        { key: MenuKey.SwitchArchived, label: record.archived ? 'Unarchive' : 'Archive' },
-      ];
-
-      if (user?.id === record.userId || user?.isAdmin) {
+      const menuItems: MenuProps['items'] = [];
+      if (canModifyModelFlag) {
+        menuItems.push({
+          key: MenuKey.SwitchArchived,
+          label: record.archived ? 'Unarchive' : 'Archive',
+        });
+        if (!record.archived) {
+          menuItems.push({ key: MenuKey.MoveModel, label: 'Move' });
+        }
+      }
+      if (canDeleteModelFlag) {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
+    [moveModelToWorkspace, showConfirmDelete, switchArchived],
   );
 
   const columns = useMemo(() => {
@@ -432,7 +461,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           <div>
             <TagList
               compact
-              disabled={record.archived}
+              disabled={record.archived || !canModifyModel({ model: record })}
               tags={record.labels ?? []}
               onChange={(tags) => setModelTags(record.name, tags)}
             />
@@ -441,17 +470,24 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       </div>
     );
 
-    const actionRenderer = (_: string, record: ModelItem) => (
-      <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
-        <Button icon={<Icon name="overflow-vertical" />} type="text" />
-      </Dropdown>
-    );
+    const actionRenderer = (_: string, record: ModelItem) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
+        <Dropdown
+          disabled={!canDeleteModelFlag && !canModifyModelFlag}
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          trigger={['click']}>
+          <Button icon={<Icon name="overflow-vertical" />} type="text" />
+        </Dropdown>
+      );
+    };
 
     const descriptionRenderer = (value: string, record: ModelItem) => (
       <Input
         className={css.descriptionRenderer}
         defaultValue={value}
-        disabled={record.archived}
+        disabled={record.archived || !canModifyModel({ model: record })}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         title={record.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -564,6 +600,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       },
     ] as ColumnDef<ModelItem>[];
   }, [
+    canDeleteModel,
+    canModifyModel,
     nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
@@ -655,20 +693,20 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       children: React.ReactNode;
       onVisibleChange?: (visible: boolean) => void;
       record: ModelItem;
-    }) => (
-      <Dropdown
-        menu={ModelActionMenu(record)}
-        trigger={['contextMenu']}
-        onOpenChange={onVisibleChange}>
-        {children}
-      </Dropdown>
-    ),
-    [ModelActionMenu],
+    }) => {
+      const canDeleteModelFlag = canDeleteModel({ model: record });
+      const canModifyModelFlag = canModifyModel({ model: record });
+      return (
+        <Dropdown
+          menu={ModelActionMenu(record, canDeleteModelFlag, canModifyModelFlag)}
+          trigger={['contextMenu']}
+          onOpenChange={onVisibleChange}>
+          {children}
+        </Dropdown>
+      );
+    },
+    [ModelActionMenu, canDeleteModel, canModifyModel],
   );
-
-  if (!canViewModelRegistry) {
-    return <PageNotFound />;
-  }
 
   return (
     <Page
@@ -684,7 +722,17 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          <Button onClick={showCreateModelModal}>New Model</Button>
+          {canCreateModels ? (
+            <Button onClick={showCreateModelModal}>New Model</Button>
+          ) : (
+            <Tooltip placement="leftBottom" title="User lacks permission to create models">
+              <div>
+                <Button disabled onClick={showCreateModelModal}>
+                  New Model
+                </Button>
+              </div>
+            </Tooltip>
+          )}
         </Space>
       }
       title="Model Registry">
@@ -726,6 +774,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       )}
       {modalModelCreateContextHolder}
       {modalModelDeleteContextHolder}
+      {modalModelMoveContextHolder}
     </Page>
   );
 };

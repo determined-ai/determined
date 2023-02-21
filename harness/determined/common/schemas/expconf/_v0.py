@@ -38,7 +38,6 @@ class DeviceV0(schemas.SchemaBase):
 
 class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"
-    agent_label: Optional[str] = None
     devices: Optional[List[DeviceV0]] = None
     max_slots: Optional[int] = None
     native_parallel: Optional[bool] = None
@@ -51,7 +50,6 @@ class ResourcesConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        agent_label: Optional[str] = None,
         devices: Optional[List[DeviceV0]] = None,
         max_slots: Optional[int] = None,
         native_parallel: Optional[bool] = None,
@@ -225,12 +223,12 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0"
+            self.cpu = "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c"
         if self.rocm is None:
-            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0"
+            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c"
 
         if self.cuda is None:
-            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0"
+            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):

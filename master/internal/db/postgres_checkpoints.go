@@ -117,6 +117,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	if err != nil {
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var eIDcUUIDs ExperimentCheckpointGrouping

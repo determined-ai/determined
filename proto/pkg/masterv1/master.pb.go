@@ -275,8 +275,7 @@ type ResourceAllocationAggregatedEntry struct {
 	// The seconds in the cluster used by experiments assigned to each resource
 	// pool.
 	ByResourcePool map[string]float32 `protobuf:"bytes,6,rep,name=by_resource_pool,json=byResourcePool,proto3" json:"by_resource_pool,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed32,2,opt,name=value,proto3"`
-	// The seconds in the cluster used by experiments assigned to each agent
-	// label.
+	// This field has been deprecated and will be empty.
 	ByAgentLabel map[string]float32 `protobuf:"bytes,7,rep,name=by_agent_label,json=byAgentLabel,proto3" json:"by_agent_label,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed32,2,opt,name=value,proto3"`
 }
 

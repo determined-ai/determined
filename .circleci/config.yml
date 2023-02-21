@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.11-dev0
+    default: 0.19.12-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev16
+    default: v1dev20
   gke-version:
     type: string
     default: "1.21.14"
@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-24586f0
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ad0591c
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c
 
   login-docker:
     parameters:
@@ -207,13 +207,15 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl https://dl.google.com/go/go1.18.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
+      - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
+
 
   install-protoc:
     steps:
       - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
-      - run: unzip /tmp/protoc.zip -d $HOME/.local
+      - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   setup-go-intg-deps:
     steps:
@@ -722,6 +724,9 @@ commands:
         type: env_var_name
       environment-image:
         type: string
+      storage-bucket:
+        type: string
+        default: "det-ci-373"
       accel-node-taints:
         type: string
         default: ""
@@ -749,11 +754,11 @@ commands:
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=det-ci"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
@@ -1032,7 +1037,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1040,6 +1045,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go      
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1063,7 +1069,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: xlarge
@@ -1071,6 +1077,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1101,7 +1108,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1109,6 +1116,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1130,7 +1138,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
@@ -1138,6 +1146,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup_remote_docker:
           version: 20.10.18
       - login-docker:
@@ -1174,13 +1183,14 @@ jobs:
 
   publish-helm-gh:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - run: make -C helm release-gh
 
   publish-python-package:
@@ -1322,7 +1332,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     resource_class: large
@@ -1330,6 +1340,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1339,13 +1350,14 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1358,11 +1370,12 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - persist_to_workspace:
@@ -1372,13 +1385,14 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.18
+      - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - reinstall-go
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1929,7 +1943,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12
         type: string
       accel-node-taints:
         type: string
@@ -2245,6 +2259,7 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
 
       - test-e2e:
           name: test-e2e-managed-devcluster
@@ -2372,7 +2387,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2387,7 +2402,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2406,7 +2421,7 @@ workflows:
       # Legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2423,7 +2438,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2443,7 +2458,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2463,7 +2478,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters:
             branches:
               only: master
@@ -2574,7 +2589,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2588,7 +2603,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2606,7 +2621,7 @@ workflows:
       # Requestable legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2622,7 +2637,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -2646,7 +2661,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -2665,7 +2680,7 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp
+          context: gcp-ci
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -2699,7 +2714,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
@@ -2720,6 +2735,7 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
+              compute-agent-instance-type: ["g4dn.4xlarge"]
 
       # GPU tests
       - request-gpu-tests:
@@ -2736,7 +2752,7 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
@@ -2771,7 +2787,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
@@ -2859,6 +2875,7 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
+              compute-agent-instance-type: ["g4dn.4xlarge"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws

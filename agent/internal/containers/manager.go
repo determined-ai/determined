@@ -9,7 +9,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"golang.org/x/sys/unix"
@@ -25,16 +24,17 @@ import (
 )
 
 const (
-	httpInsecureScheme   = "http"
-	httpSecureScheme     = "https"
-	recentExitsCacheSize = 32
+	httpInsecureScheme = "http"
+	httpSecureScheme   = "https"
+	// RecentExitsCacheSize is the number of cached stops we keep, before forgetting about them.
+	RecentExitsCacheSize = 32
 )
 
 // Manager manages containers. It is able to start and signal them and tracks some updates to their
 // state.
 type Manager struct {
 	// Configuration details. Set in initialization and never modified after.
-	opts    options.AgentOptions
+	opts    options.Options
 	mopts   aproto.MasterSetAgentOptions
 	devices []device.Device
 
@@ -52,7 +52,7 @@ type Manager struct {
 
 // New returns a new container manager.
 func New(
-	opts options.AgentOptions,
+	opts options.Options,
 	mopts aproto.MasterSetAgentOptions,
 	devices []device.Device,
 	cl *docker.Client,
@@ -62,11 +62,11 @@ func New(
 		opts:        opts,
 		mopts:       mopts,
 		devices:     devices,
-		log:         logrus.WithField("component", "container-manager"),
+		log:         log.WithField("component", "container-manager"),
 		docker:      cl,
 		pub:         pub,
 		containers:  make(map[cproto.ID]*container.Container),
-		recentExits: ring.New(recentExitsCacheSize),
+		recentExits: ring.New(RecentExitsCacheSize),
 		wg:          waitgroupx.WithContext(context.Background()), // Manager-scoped group.
 	}, nil
 }
@@ -76,7 +76,7 @@ func New(
 func (m *Manager) ReattachContainers(
 	ctx context.Context, expectedSurvivors []aproto.ContainerReattach,
 ) ([]aproto.ContainerReattachAck, error) {
-	m.log.Trace("reattaching containers")
+	m.log.Debugf("reattachContainers: expected survivors: %v", expectedSurvivors)
 	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
 
 	agentFilter := docker.LabelFilter(docker.AgentLabel, m.opts.AgentID)
@@ -84,7 +84,7 @@ func (m *Manager) ReattachContainers(
 	if err != nil {
 		return nil, err
 	}
-	m.log.Debug("reattachContainers: running containers: ", maps.Keys(runningContainers))
+	m.log.Debugf("reattachContainers: running containers: %v", maps.Keys(runningContainers))
 
 	m.log.Trace("iterating expected survivors and seeing if they were found")
 	for _, expectedSurvivor := range expectedSurvivors {
@@ -138,9 +138,63 @@ func (m *Manager) ReattachContainers(
 	return result, nil
 }
 
+// RevalidateContainers rectifies a list of containers the mananger is expected to know about with
+// what the manager does know about, and returns updates about the expected containers.
+func (m *Manager) RevalidateContainers(
+	ctx context.Context, expectedSurvivors []aproto.ContainerReattach,
+) ([]aproto.ContainerReattachAck, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
+	for _, expectedSurvivor := range expectedSurvivors {
+		cid := expectedSurvivor.Container.ID
+
+		// If the child is still there, assuming nothing has changed.
+		c, ok := m.containers[cid]
+		if ok {
+			result = append(result, aproto.ContainerReattachAck{Container: c.Summary()})
+			continue
+		}
+
+		// If there is a termination message for it, for any reason, go ahead and ack that.
+		var ack *aproto.ContainerReattachAck
+		m.recentExits.Do(func(v any) {
+			if v == nil {
+				return
+			}
+
+			savedStop := v.(*aproto.ContainerStateChanged)
+			if cid != savedStop.Container.ID {
+				return
+			}
+
+			ack = &aproto.ContainerReattachAck{
+				Container: savedStop.Container,
+				Failure:   savedStop.ContainerStopped.Failure,
+			}
+		})
+		if ack != nil {
+			result = append(result, *ack)
+			continue
+		}
+
+		// Else fallback to a missing message.
+		result = append(result, aproto.ContainerReattachAck{
+			Container: cproto.Container{ID: cid},
+			Failure: &aproto.ContainerFailure{
+				FailureType: aproto.RestoreError,
+				ErrMsg:      "failed to restore container on master blip",
+			},
+		})
+	}
+	return result, nil
+}
+
 // StartContainer starts a container according to the provided spec, relaying its state changes via
 // events.
 func (m *Manager) StartContainer(ctx context.Context, req aproto.StartContainer) error {
+	m.log.Tracef("starting container %s", req.Container.ID)
 	if !validateDevices(m.devices, req.Container.Devices) {
 		return fmt.Errorf("devices specified in container spec not found on agent")
 	}
@@ -214,6 +268,13 @@ func (m *Manager) Close() {
 	}
 	m.mu.RUnlock()
 	m.wg.Wait()
+}
+
+// NumContainers returns the number of containers being managed.
+func (m *Manager) NumContainers() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.containers)
 }
 
 func (m *Manager) reattachContainer(
