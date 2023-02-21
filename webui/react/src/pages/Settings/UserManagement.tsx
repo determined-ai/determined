@@ -184,7 +184,7 @@ const UserManagement: React.FC = () => {
     if (rbacEnabled) {
       RolesStore.fetchRoles(canceler);
     }
-  }, [rbacEnabled]);
+  }, [canceler, rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers });
 
