@@ -165,7 +165,7 @@ fulfilled and configured, install and configure the Determined master:
    .. code:: bash
 
       det user create $USER
-      det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group employee $USER
+      det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group $(id -gn) $USER
       det user login $USER
 
    .. note::
