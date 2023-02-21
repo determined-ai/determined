@@ -148,6 +148,18 @@ test_data = [
             "aa1f87508336_37#1.pt.trace.json.gz"
         ),
     ),
+    # Pytorch profiler file (only file name) with timestamp and ends with pt.trace.json.gz
+    (
+        "aa1f87508336_37.1674696139174.pt.trace.json.gz",
+        1,
+        "aa1f87508336_37#1.1674696139174.pt.trace.json.gz",
+    ),
+    # Pytorch profiler file (only file name) without timestamp and ends with pt.trace.json.gz
+    (
+        "aa1f87508336_37.pt.trace.json.gz",
+        1,
+        "aa1f87508336_37#1.pt.trace.json.gz",
+    ),
 ]
 
 

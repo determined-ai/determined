@@ -82,7 +82,7 @@ def _get_rank_aware_path_pytorch_profiler(
     path_parts = path.parts
     file_name = path_parts[-1]
     match = pytorch_profiler_file_pattern.match(file_name)
-
+    print(f"SWY: in _get_rank_aware_path_pytorch_profiler input is {path}")
     if match:
         match_groups = match.groups()
 
@@ -96,13 +96,16 @@ def _get_rank_aware_path_pytorch_profiler(
         else:
             file_name = f"{worker}{pytorch_profiler_extension}"
 
-        path = pathlib.Path(path_parts[0])
-
-        for i in range(1, len(path_parts) - 1):
-            path = path.joinpath(path_parts[i])
-
-        path = path.joinpath(file_name)
-        return path
+        if len(path_parts) == 1:
+            # only file name is passed in
+            return pathlib.Path(file_name)
+        else:
+            # path with directory is passed in
+            output_path = pathlib.Path(path_parts[0])
+            for i in range(1, len(path_parts) - 1):
+                output_path = output_path.joinpath(path_parts[i])
+            output_path = output_path.joinpath(file_name)
+            return output_path
     else:
         raise Exception(
             (
