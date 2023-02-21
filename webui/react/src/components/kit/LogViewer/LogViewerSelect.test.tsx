@@ -73,8 +73,8 @@ describe('LogViewerFilter', () => {
 
     const agentOption1 = screen.getByText('All Ranks');
     await user.click(agentOption1);
-    await waitFor(async () => {
-      expect(await screen.findAllByText('0')).toHaveLength(2);
+    await waitFor(() => {
+      expect(screen.getAllByText('0')).toHaveLength(2);
     });
   });
 
