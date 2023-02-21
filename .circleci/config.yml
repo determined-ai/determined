@@ -531,7 +531,7 @@ commands:
         default: "m5.large"
       compute-agent-instance-type:
         type: string
-        default: "p2.xlarge"
+        default: "g4dn.xlarge"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -629,7 +629,7 @@ commands:
         type: string
       compute-agent-instance-type:
         type: string
-        default: "p2.xlarge"
+        default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
         default: "m5.large"
@@ -1775,7 +1775,7 @@ jobs:
     parameters:
       compute-agent-instance-type:
         type: string
-        default: "p2.xlarge"
+        default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
         default: "m5.large"
@@ -1826,7 +1826,7 @@ jobs:
         type: string
       compute-agent-instance-type:
         type: string
-        default: p2.xlarge
+        default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
         default: m5.large
@@ -2076,7 +2076,7 @@ jobs:
         type: string
       compute-agent-instance-type:
         type: string
-        default: p2.xlarge
+        default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
         default: m5.large
@@ -2363,7 +2363,7 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
@@ -2735,7 +2735,6 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
-              compute-agent-instance-type: ["g4dn.4xlarge"]
 
       # GPU tests
       - request-gpu-tests:
@@ -2808,7 +2807,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["transformers"]
               mark: ["model_hub_transformers"]
@@ -2824,7 +2823,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["transformers-amp"]
               mark: ["model_hub_transformers_amp"]
@@ -2875,7 +2874,6 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
-              compute-agent-instance-type: ["g4dn.4xlarge"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
@@ -2883,7 +2881,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
@@ -2893,7 +2891,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["transformers"]
               mark: ["model_hub_transformers"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
@@ -2903,7 +2901,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["transformers-amp"]
               mark: ["model_hub_transformers_amp"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
@@ -2913,7 +2911,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
