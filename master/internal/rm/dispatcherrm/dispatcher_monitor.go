@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -70,17 +69,18 @@ type launcherJob struct {
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
 type launcherMonitor struct {
-	monitoredJobs     map[string]launcherJob
-	jobsToRemove      map[string]bool
-	apiClient         *launcher.APIClient
-	newLauncherJob    chan launcherJob
-	removeLauncherJob chan launcherJob
-	checkLauncherJob  chan launcherJob
-	schedulerTick     *time.Ticker
-	authToken         string
-	authFile          string
-	authMu            sync.RWMutex
-	mu                sync.RWMutex
+	monitoredJobs              map[string]launcherJob
+	jobsToRemove               map[string]bool
+	apiClient                  *launcher.APIClient
+	newLauncherJob             chan launcherJob
+	removeLauncherJob          chan launcherJob
+	checkLauncherJob           chan launcherJob
+	schedulerTick              *time.Ticker
+	authToken                  string
+	authFile                   string
+	authMu                     sync.RWMutex
+	mu                         sync.RWMutex
+	processingWatchedJobsMutex sync.RWMutex
 }
 
 // newDispatchWatcher initiates the process of monitoring the progress of launched jobs.
@@ -143,9 +143,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 	// Indicates whether the "processWatchedJobs()" goroutine is already running,
 	// so we don't run a second goroutine while the previous goroutine is still
 	// running.
-	var processingWatchedJobs atomic.Bool
-
-	processingWatchedJobs.Store(false)
+	processingWatchedJobs := false
 
 	for {
 		select {
@@ -188,13 +186,13 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 			// the launcher for job status when the next "schedulerTick" message
 			// arrives 10 seconds later.
 			//
-			// We really don't need an atomic boolean here for testing and
-			// setting the "processingWatchedJobs" boolean, because the
-			// "watch()" method is single threaded, but the GO race detector, if
-			// enabled, might complain if it thinks the "watch()" and the
+			// We really don't need a mutex for testing and setting the
+			// "processingWatchedJobs" boolean, because the "watch()" method
+			// is single threaded, but the GO race detector, if enabled, might
+			// complain if it thinks the "watch()" and the
 			// "processWatchedJobs()" goroutine are trying to access the
 			// "processingWatchedJobs" boolean variable concurrently.
-			if processingWatchedJobs.CompareAndSwap(false, true) {
+			if !testAndSetBoolean(&processingWatchedJobs, &m.processingWatchedJobsMutex) {
 				// Run the "processWatchedJobs()" method as a goroutine to
 				// prevent the "for-loop" in the "watch()" from hanging while
 				// we're polling the job status of the monitored jobs.
@@ -376,8 +374,8 @@ func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
 // jobs are them removed from further consideration.
 func (m *launcherMonitor) processWatchedJobs(
 	ctx *actor.Context,
-	processingWatchedJobs *atomic.Bool) {
-	defer (*processingWatchedJobs).Store(false)
+	processingWatchedJobs *bool) {
+	defer setBoolean(processingWatchedJobs, false, &m.processingWatchedJobsMutex)
 
 	var job launcherJob
 	var ok bool
@@ -420,6 +418,29 @@ func (m *launcherMonitor) processWatchedJobs(
 	// There are chances that jobsToRemove might still have some elements remaining.
 	// These values are stale and can be removed safely.
 	m.clearJobsToRemoveMap()
+}
+
+// Sets the boolean value to true and returns the original value.
+func testAndSetBoolean(varRef *bool, mutex *sync.RWMutex) bool {
+	(*mutex).Lock()
+	defer (*mutex).Unlock()
+
+	// Store the original value.
+	origValue := *varRef
+
+	// If false, then set it to true.
+	if !*varRef {
+		*varRef = true
+	}
+
+	// Return the original value.
+	return origValue
+}
+
+func setBoolean(varRef *bool, value bool, mutex *sync.RWMutex) {
+	(*mutex).Lock()
+	defer (*mutex).Unlock()
+	*varRef = value
 }
 
 func (m *launcherMonitor) addJobToMonitoredJobs(job launcherJob) {
