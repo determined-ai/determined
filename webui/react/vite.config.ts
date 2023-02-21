@@ -144,8 +144,6 @@ export default defineConfig(({ mode }) => ({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
-    maxThreads: 4,
-    minThreads: 1,
     css: {
       modules: {
         classNameStrategy: 'non-scoped'

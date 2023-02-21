@@ -104,7 +104,7 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+	npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml --maxThreads=7 --minThreads=1
 
 # shared-web helpers
 
