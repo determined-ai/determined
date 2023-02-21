@@ -13,8 +13,8 @@ import (
 // ModelAuthZ describes authz methods for experiments.
 type ModelAuthZ interface {
 	// GET /api/v1/models
-	CanGetModels(ctx context.Context, curUser model.User,
-		workspaceID int32) (canGetModel bool, serverError error)
+	CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32,
+	) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error)
 	// GET /api/v1/checkpoints/{checkpoint_uuid}
 	// GET /api/v1/models/{model_name}
 	// GET /api/v1/models/{model_name}/versions/{model_version_num}

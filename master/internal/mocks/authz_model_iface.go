@@ -68,25 +68,34 @@ func (_m *ModelAuthZ) CanGetModel(ctx context.Context, curUser model.User, m *mo
 	return r0, r1
 }
 
-// CanGetModels provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *ModelAuthZ) CanGetModels(ctx context.Context, curUser model.User, workspaceID int32) (bool, error) {
-	ret := _m.Called(ctx, curUser, workspaceID)
+// CanGetModels provides a mock function with given fields: ctx, curUser, workspaceIDs
+func (_m *ModelAuthZ) CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32) ([]int32, bool, error) {
+	ret := _m.Called(ctx, curUser, workspaceIDs)
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, int32) bool); ok {
-		r0 = rf(ctx, curUser, workspaceID)
+	var r0 []int32
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []int32) []int32); ok {
+		r0 = rf(ctx, curUser, workspaceIDs)
 	} else {
-		r0 = ret.Get(0).(bool)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int32)
+		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, int32) error); ok {
-		r1 = rf(ctx, curUser, workspaceID)
+	var r1 bool
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, []int32) bool); ok {
+		r1 = rf(ctx, curUser, workspaceIDs)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, model.User, []int32) error); ok {
+		r2 = rf(ctx, curUser, workspaceIDs)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // CanMoveModel provides a mock function with given fields: ctx, curUser, _a2, fromWorkspaceID, toWorkspaceID

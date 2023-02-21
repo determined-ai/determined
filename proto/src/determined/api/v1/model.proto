@@ -74,11 +74,8 @@ message GetModelsRequest {
   // Limit the models to those made by the users with the following usernames.
   repeated string users = 9;
 
-  // Limit models to those that belong to the following worksapce.
-  optional string workspace_name = 12;
-
-  // Limit models to those that belong to the following workspace id.
-  optional int32 workspace_id = 13;
+  // Limit models to those that belong to the following workspace names.
+  repeated string workspace_names = 12;
 
   // Limit the models to those made by the users with the following userIds.
   repeated int32 user_ids = 11;
@@ -87,7 +84,7 @@ message GetModelsRequest {
   int32 id = 10;
 
   // Limit models to those that belong to the following workspace ids.
-  repeated int32 workspace_ids = 14;
+  repeated int32 workspace_ids = 13;
 }
 
 // Response to GetModelsRequest.

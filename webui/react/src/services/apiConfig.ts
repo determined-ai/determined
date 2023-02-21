@@ -1019,7 +1019,6 @@ export const getModels: DetApi<
       params.archived,
       undefined,
       undefined,
-      params.workspaceId,
       getUserIds(params.users),
       undefined,
       params.workspaceIds,

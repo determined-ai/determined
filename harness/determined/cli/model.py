@@ -63,10 +63,13 @@ def render_model_version(model_version: ModelVersion) -> None:
 
 
 def list_models(args: Namespace) -> None:
+    workspace_names = None
+    if args.workspace_names is not None:
+        workspace_names = args.workspace_names.split(",")
     models = Determined(args.master, None).get_models(
         sort_by=ModelSortBy[args.sort_by.upper()],
         order_by=ModelOrderBy[args.order_by.upper()],
-        workspace_name=args.workspace_name,
+        workspace_names=workspace_names,
     )
     if args.json:
         print(json.dumps([m.to_json() for m in models], indent=2))
@@ -195,7 +198,12 @@ args_description = [
                 list_models,
                 "list all models in the registry",
                 [
-                    Arg("-w", "--workspace-name", type=str, help="list models in given workspace"),
+                    Arg(
+                        "-w",
+                        "--workspace-names",
+                        type=str,
+                        help="list models in given list of comma-separated workspaces",
+                    ),
                     Arg(
                         "--sort-by",
                         type=str,

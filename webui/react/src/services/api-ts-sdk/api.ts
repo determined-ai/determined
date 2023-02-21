@@ -19455,15 +19455,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19514,12 +19513,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['users'] = users;
             }
 
-            if (workspaceName !== undefined) {
-                localVarQueryParameter['workspaceName'] = workspaceName;
-            }
-
-            if (workspaceId !== undefined) {
-                localVarQueryParameter['workspaceId'] = workspaceId;
+            if (workspaceNames) {
+                localVarQueryParameter['workspaceNames'] = workspaceNames;
             }
 
             if (userIds) {
@@ -19971,16 +19966,15 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20207,16 +20201,15 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+         * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
-            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options)(fetch, basePath);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
+            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -20395,8 +20388,7 @@ export class ModelsApi extends BaseAPI {
      * @param {Array<string>} [labels] Limit the models to those with the following labels.
      * @param {boolean} [archived] Limit to unarchived models only.
      * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
-     * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
-     * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
+     * @param {Array<string>} [workspaceNames] Limit models to those that belong to the following workspace names.
      * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
      * @param {number} [id] Limit the models to this model id.
      * @param {Array<number>} [workspaceIds] Limit models to those that belong to the following workspace ids.
@@ -20404,8 +20396,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
-        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, workspaceIds, options)(this.fetch, this.basePath);
+    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS' | 'SORT_BY_WORKSPACE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceNames?: Array<string>, userIds?: Array<number>, id?: number, workspaceIds?: Array<number>, options?: any) {
+        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceNames, userIds, id, workspaceIds, options)(this.fetch, this.basePath);
     }
 
     /**

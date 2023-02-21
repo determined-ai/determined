@@ -9,7 +9,6 @@ AND ($4 = '' OR m.user_id IN (SELECT unnest(string_to_array($4, ',')::int [])))
 AND ($5 = '' OR (m.labels && string_to_array($5, ',')))
 AND ($6 = '' OR m.name ILIKE $6)
 AND ($7 = '' OR m.description ILIKE $7)
-AND ($8 = 0 or m.workspace_id = $8::int)
-AND ($9 = '' OR m.workspace_id IN (SELECT unnest(string_to_array($9, ',')::int [])))
+AND ($8 = '' OR m.workspace_id IN (SELECT unnest(string_to_array($8, ',')::int [])))
 GROUP BY m.id, u.id, w.id
 ORDER BY %s;

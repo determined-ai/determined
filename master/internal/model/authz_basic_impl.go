@@ -13,9 +13,10 @@ import (
 type ModelAuthZBasic struct{}
 
 // CanGetModels always returns true and a nil error.
-func (a *ModelAuthZBasic) CanGetModels(ctx context.Context, curUser model.User, workspaceID int32,
-) (canGetModel bool, serverError error) {
-	return true, nil
+func (a *ModelAuthZBasic) CanGetModels(ctx context.Context,
+	curUser model.User, workspaceIDs []int32,
+) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
+	return workspaceIDs, true, nil
 }
 
 // CanGetModel always returns true and a nil error.
