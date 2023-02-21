@@ -276,7 +276,6 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 					RawWeight:         new(float64),
 					RawNativeParallel: new(bool),
 					RawShmSize:        new(int),
-					RawAgentLabel:     new(string),
 					RawResourcePool:   new(string),
 					RawPriority:       new(int),
 					RawDevices:        devices,

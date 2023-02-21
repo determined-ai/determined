@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,11 +25,11 @@ import (
 )
 
 const (
-	pollLoopIntervalSecs       = 10
-	minItemPollingIntervalSecs = pollLoopIntervalSecs
-	ignoredReporter            = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
-	errorLinesToRetrieve       = 200
-	errorLinesToDisplay        = 15
+	pollLoopInterval                 = time.Duration(10) * time.Second
+	minJobStatusCheckPollingInterval = pollLoopInterval
+	ignoredReporter                  = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
+	errorLinesToRetrieve             = 200
+	errorLinesToDisplay              = 15
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -56,12 +58,14 @@ type containerInfo struct {
 
 // launcherJob describes a new launcher job, the progress of which we need to track.
 type launcherJob struct {
-	user              string
-	dispatcherID      string
-	payloadName       string
-	timestamp         time.Time
-	totalContainers   int
-	runningContainers map[int]containerInfo
+	user                   string
+	dispatcherID           string
+	payloadName            string
+	lastJobStatusCheckTime time.Time
+	totalContainers        int
+	runningContainers      map[int]containerInfo
+	numTimesGot404Error    int
+	jobWasTerminated       bool
 }
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
@@ -91,7 +95,7 @@ func newDispatchWatcher(
 		removeLauncherJob: make(chan launcherJob),
 		checkLauncherJob:  make(chan launcherJob),
 		// Poll job status this often
-		schedulerTick: time.NewTicker(time.Second * pollLoopIntervalSecs),
+		schedulerTick: time.NewTicker(pollLoopInterval),
 		authToken:     authToken,
 		authFile:      authFile,
 	}
@@ -101,12 +105,14 @@ func newDispatchWatcher(
 // payload name may be empty (when reconnecting), monitor will retrieve if necessary.
 func (m *launcherMonitor) monitorJob(user string, dispatchID string, payloadName string) {
 	m.newLauncherJob <- launcherJob{
-		user:              user,
-		dispatcherID:      dispatchID,
-		payloadName:       payloadName,
-		timestamp:         time.Now(),
-		totalContainers:   0,
-		runningContainers: make(map[int]containerInfo),
+		user:                   user,
+		dispatcherID:           dispatchID,
+		payloadName:            payloadName,
+		lastJobStatusCheckTime: time.Now(),
+		totalContainers:        0,
+		runningContainers:      make(map[int]containerInfo),
+		numTimesGot404Error:    0,
+		jobWasTerminated:       false,
 	}
 }
 
@@ -134,24 +140,71 @@ func (m *launcherMonitor) authContext(ctx *actor.Context) context.Context {
 // watch runs asynchronously as a go routine. It receives instructions as
 // to what jobs to monitor, and when to monitor them, via channels.
 func (m *launcherMonitor) watch(ctx *actor.Context) {
+	// Indicates whether the "processWatchedJobs()" goroutine is already running,
+	// so we don't run a second goroutine while the previous goroutine is still
+	// running.
+	var processingWatchedJobs atomic.Bool
+
+	processingWatchedJobs.Store(false)
+
 	for {
 		select {
 		case msg := <-m.newLauncherJob:
 			ctx.Log().Infof("Starting monitoring of %s", msg.dispatcherID)
 			// Add job to collection of those being monitored.
-			m.monitoredJobs[msg.dispatcherID] = msg
+			m.addJobToMonitoredJobs(msg)
 
 		case msg := <-m.removeLauncherJob:
-			// Save the job to be removed in map. This job will deleted later when processing watched jobs.
-			_ = m.updateJobStatus(ctx, m.monitoredJobs[msg.dispatcherID])
-			m.jobsToRemove[msg.dispatcherID] = true
+			// Don't think the "removeLauncherJob" message is ever sent, but
+			// leaving code here in case we had plans to use it at some point.
+			ctx.Log().Infof("Received removeLauncherJob message for dispatchID %s", msg.dispatcherID)
+
+			job, ok := m.getJobByDispatchID(msg.dispatcherID)
+
+			if ok {
+				_ = m.updateJobStatus(ctx, job)
+
+				// Save the job to be removed in map. This job will deleted
+				// later when processing watched jobs.
+				m.markJobForRemoval(msg.dispatcherID)
+			}
 
 		case msg := <-m.checkLauncherJob:
-			// Check the status of the given job.
-			_ = m.updateJobStatus(ctx, m.monitoredJobs[msg.dispatcherID])
+			// Don't think the "checkLauncherJob" message is ever sent, but
+			// leaving code here in case we had plans to use it at some point.
+			job, ok := m.getJobByDispatchID(msg.dispatcherID)
+
+			if ok {
+				// Check the status of the given job.
+				_ = m.updateJobStatus(ctx, job)
+			}
 
 		case <-m.schedulerTick.C:
-			m.processWatchedJobs(ctx)
+			// Protect against running another "processWatchedJobs()" goroutine
+			// while the previous one is still running. The "schedulerTick"
+			// message is received every 10 seconds, as per the value we set
+			// "pollLoopIntervalSecs". If we have a lot of jobs to monitor, it
+			// is possible that "processWatchedJobs()" will still be querying
+			// the launcher for job status when the next "schedulerTick" message
+			// arrives 10 seconds later.
+			//
+			// We really don't need an atomic boolean here for testing and
+			// setting the "processingWatchedJobs" boolean, because the
+			// "watch()" method is single threaded, but the GO race detector, if
+			// enabled, might complain if it thinks the "watch()" and the
+			// "processWatchedJobs()" goroutine are trying to access the
+			// "processingWatchedJobs" boolean variable concurrently.
+			if processingWatchedJobs.CompareAndSwap(false, true) {
+				// Run the "processWatchedJobs()" method as a goroutine to
+				// prevent the "for-loop" in the "watch()" from hanging while
+				// we're polling the job status of the monitored jobs.
+				// The "processingWatchedJobs" boolean variable will be set
+				// back to false by "processWatchedJobs()" when it is finished.
+				go m.processWatchedJobs(ctx, &processingWatchedJobs)
+			} else {
+				//nolint:lll
+				ctx.Log().Debugf("Skipping calling the processWatchedJobs() goroutine, as the previous goroutine is still running")
+			}
 		}
 	}
 }
@@ -321,41 +374,163 @@ func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
 // processWatchedJobs is called periodically to poll for the completion status
 // of launched jobs. The exit status of any completed job is reported to Determined; such
 // jobs are them removed from further consideration.
-func (m *launcherMonitor) processWatchedJobs(ctx *actor.Context) {
-	// Obtain a RW lock, so that "isJobBeingMonitored()" doesn't try to iterate
-	// through the "monitoredJobs" list while we're manipulating it.
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (m *launcherMonitor) processWatchedJobs(
+	ctx *actor.Context,
+	processingWatchedJobs *atomic.Bool) {
+	defer (*processingWatchedJobs).Store(false)
+
+	var job launcherJob
+	var ok bool
+
+	sortedDispatchIDs := m.getDispatchIDsSortedByLastJobStatusCheckTime(m.monitoredJobs, ctx)
 
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
-	for _, job := range m.monitoredJobs {
-		// Check if the current job is in the jobsToRemove map. If it is, then delete the
-		// job from both monitoredJobs map and jobsToRemove map and continue to process
-		// the next job.
-		if _, ok := m.jobsToRemove[job.dispatcherID]; ok {
-			ctx.Log().Infof("Stopping monitoring of %s", job.dispatcherID)
-			delete(m.monitoredJobs, job.dispatcherID)
-			delete(m.jobsToRemove, job.dispatcherID)
+	for _, dispatchID := range sortedDispatchIDs {
+		if m.isJobBeingRemoved(dispatchID) {
+			m.removeJobFromMonitoredList(dispatchID, ctx)
+			continue
+		}
+
+		if job, ok = m.getJobByDispatchID(dispatchID); !ok {
+			ctx.Log().Warnf("dispatcher_monitor did not find job for dispatchID %s", dispatchID)
 			continue
 		}
 
 		if m.shouldSkip(job) {
-			continue
+			//nolint:lll
+			ctx.Log().Debugf("Skipping job status check for dispatchID %s as not enough time has elapsed since last check",
+				dispatchID)
+
+			// Jobs are sorted by the time that the job status was last checked.
+			// Once we determine that the status check can be skipped for a job
+			// because not enough time has elapsed since its last status check,
+			// then all the other jobs behind it can be skipped too, as they
+			// will have newer timestamp.
+			break
 		}
 
 		if removeJob := m.updateJobStatus(ctx, job); removeJob {
-			ctx.Log().Infof("Stopping monitoring of %s", job.dispatcherID)
-			delete(m.monitoredJobs, job.dispatcherID)
+			m.removeJobFromMonitoredList(dispatchID, ctx)
 			continue
 		}
 
-		job.timestamp = time.Now()
+		m.updateLastJobStatusCheckTime(dispatchID)
 	}
+
 	// There are chances that jobsToRemove might still have some elements remaining.
 	// These values are stale and can be removed safely.
+	m.clearJobsToRemoveMap()
+}
+
+func (m *launcherMonitor) addJobToMonitoredJobs(job launcherJob) {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.monitoredJobs[job.dispatcherID] = job
+}
+
+func (m *launcherMonitor) markJobForRemoval(dispatchID string) {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.jobsToRemove[dispatchID] = true
+}
+
+func (m *launcherMonitor) getJobByDispatchID(dispatchID string) (launcherJob, bool) {
+	// Obtain a read lock.
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	job, ok := m.monitoredJobs[dispatchID]
+
+	return job, ok
+}
+
+func (m *launcherMonitor) isJobBeingRemoved(dispatchID string) bool {
+	// Obtain a read lock.
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	_, ok := m.jobsToRemove[dispatchID]
+
+	return ok
+}
+
+func (m *launcherMonitor) markJobAsTerminated(ctx *actor.Context, dispatchID string) {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	job, ok := m.monitoredJobs[dispatchID]
+
+	if ok {
+		job.jobWasTerminated = true
+		m.monitoredJobs[dispatchID] = job
+	} else {
+		ctx.Log().Tracef("Cannot mark job with dispatchID %s for termination, "+
+			"because it is not found in the monitored jobs",
+			dispatchID)
+	}
+}
+
+func (m *launcherMonitor) removeJobFromMonitoredList(dispatchID string, ctx *actor.Context) {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	ctx.Log().Infof("Stopping monitoring of %s", dispatchID)
+	delete(m.monitoredJobs, dispatchID)
+	delete(m.jobsToRemove, dispatchID)
+}
+
+func (m *launcherMonitor) updateLastJobStatusCheckTime(dispatchID string) {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if job, ok := m.monitoredJobs[dispatchID]; ok {
+		job.lastJobStatusCheckTime = time.Now()
+		m.monitoredJobs[dispatchID] = job
+	}
+}
+
+func (m *launcherMonitor) clearJobsToRemoveMap() {
+	// Obtain a read/write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if len(m.jobsToRemove) > 0 {
 		m.jobsToRemove = map[string]bool{}
 	}
+}
+
+// Returns an array of dispatch IDs sorted by the time that the last
+// status check was made to the launcher.
+func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime(
+	monitoredJobs map[string]launcherJob,
+	ctx *actor.Context) []string {
+	// Obtain a read lock.
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	dispatchIDs := make([]string, 0, len(monitoredJobs))
+
+	// Get the keys to the monitored jobs map. The key is the dispatch IDs.
+	for key := range monitoredJobs {
+		dispatchIDs = append(dispatchIDs, key)
+	}
+
+	// Sort by the time we last asked the launcher for job status.
+	sort.SliceStable(dispatchIDs, func(i, j int) bool {
+		a := monitoredJobs[dispatchIDs[i]].lastJobStatusCheckTime
+		b := monitoredJobs[dispatchIDs[j]].lastJobStatusCheckTime
+
+		return a.Before(b)
+	})
+
+	return dispatchIDs
 }
 
 func (m *launcherMonitor) ReloadAuthToken() {
@@ -385,10 +560,10 @@ func getJobID(additionalProperties map[string]interface{}) string {
 }
 
 /*
-  Error logs may have large python stack traces, if we have a
-  misconfiguration error, prune messages before that to make the error
-  clearer for the user.  Limit the number of lines to errorLinesToDisplay.
-  In debug/trace show increased number of lines.
+Error logs may have large python stack traces, if we have a
+misconfiguration error, prune messages before that to make the error
+clearer for the user.  Limit the number of lines to errorLinesToDisplay.
+In debug/trace show increased number of lines.
 */
 func minimizeErrorLog(messages []string) []string {
 	// By default we show limited lines, on debug/trace levels show more
@@ -411,9 +586,9 @@ func minimizeErrorLog(messages []string) []string {
 }
 
 /*
- Processes the job state and sends DispatchStateChange on each call.
- updateJobStatus returns true when the job has finished or no longer exists,
- and monitoring should stop.
+Processes the job state and sends DispatchStateChange on each call.
+updateJobStatus returns true when the job has finished or no longer exists,
+and monitoring should stop.
 */
 func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) bool {
 	removeJob := false
@@ -423,7 +598,38 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 
 	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID)
 	if doesNotExist {
-		return true
+		// The user canceled the job.
+		if job.jobWasTerminated {
+			ctx.Log().Infof("For dispatchID %s, the job was canceled",
+				dispatchID)
+
+			ctx.Tell(ctx.Self(), DispatchExited{
+				DispatchID: dispatchID,
+				ExitCode:   1,
+				Message:    "Job was canceled",
+			})
+
+			return true
+		}
+
+		job.numTimesGot404Error++
+
+		// After 4 attempts to get the job status from the launcher, the
+		// launcher still reports that it cannot find the status for this
+		// job, so give up.
+		if job.numTimesGot404Error > 4 {
+			return true
+		}
+
+		ctx.Log().Debugf("For dispatchID %s, "+
+			"the job status could not be updated because launcher environment does not exist. "+
+			"Waiting at least another %d seconds to allow launcher to complete any state transition.",
+			dispatchID, int64(minJobStatusCheckPollingInterval.Seconds()))
+
+		// In this case, it's an update, not an actual add.
+		m.addJobToMonitoredJobs(job)
+
+		return false
 	}
 	if _, gotResponse := resp.GetStateOk(); !gotResponse {
 		return false
@@ -450,7 +656,12 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 			exitMessages = minimizeErrorLog(exitMessages)
 		}
 
-		ctx.Log().Debugf("Send status to DAI: %d, messages %s", exitStatus, exitMessages)
+		//nolint:lll
+		ctx.Log().Debugf("For dispatchID %s, sending job termination status to DAI: exitCode=%d, messages=%s",
+			dispatchID,
+			exitStatus,
+			exitMessages)
+
 		ctx.Tell(ctx.Self(), DispatchExited{
 			DispatchID: dispatchID,
 			ExitCode:   exitStatus,
@@ -479,6 +690,11 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		// will report a state of "Running".
 		isPullingImage := *resp.State == launcher.RUNNING && !m.allContainersRunning(job)
 
+		ctx.Log().Debugf("For dispatchID %s, sending DAI a job state of %s (pulling=%t)",
+			dispatchID,
+			*resp.State,
+			isPullingImage)
+
 		ctx.Tell(ctx.Self(), DispatchStateChange{
 			DispatchID:     dispatchID,
 			State:          *resp.State,
@@ -490,9 +706,9 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 }
 
 /*
- Return the DispatchInfo (possibly invalid/empty), caller must check fields for
- existence (e.g. GetStateOk()) before use.   A second value indicates if the dispatch
- is reported as no longer  existing at all (i.e. 404).
+Return the DispatchInfo (possibly invalid/empty), caller must check fields for
+existence (e.g. GetStateOk()) before use.   A second value indicates if the dispatch
+is reported as no longer  existing at all (i.e. 404).
 */
 func (m *launcherMonitor) getDispatchStatus(
 	ctx *actor.Context, owner string,
@@ -503,21 +719,29 @@ func (m *launcherMonitor) getDispatchStatus(
 		Refresh(true).
 		Execute()
 	if err != nil {
+		// This may happen if the job is canceled before the launcher creates
+		// the environment files containing status. Wouldn't expect this to
+		// happen now that we're starting the job using "Launch()" API, instead
+		// of "LaunchAsync()", but we're still seeing it.
 		if r != nil && r.StatusCode == 404 {
-			ctx.Log().Infof("DispatchID %s is either COMPLETE or TERMINATED", dispatchID)
+			//nolint:lll
+			ctx.Log().Infof("For dispatchID %s, the job status could not be determined because the launcher returned HTTP code 404",
+				dispatchID)
 			// No details, but we know dispatch does not exist
 			return launcher.DispatchInfo{}, true
 		}
 
 		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
 			r.StatusCode == http.StatusForbidden) {
-			ctx.Log().WithError(err).Infof("Failed to `GetEnvironmentStatus` for %s due to error {%v}. "+
+			//nolint:lll
+			ctx.Log().WithError(err).Infof("For dispatchID %s, failed to `GetEnvironmentStatus` due to error {%v}. "+
 				"Reloaded the auth token file {%s}. If this error persists, restart "+
 				"the launcher service followed by a restart of the determined-master service.",
 				dispatchID, err, m.authFile)
 			m.ReloadAuthToken()
 		} else {
-			ctx.Log().WithError(err).Infof("error when calling `GetEnvironmentStatus` for %s:\n%v",
+			ctx.Log().WithError(err).Infof(
+				"For dispatchID %s, an error occurred when calling `GetEnvironmentStatus`:\n%v",
 				dispatchID, r)
 		}
 		// No details, but job may still exist
@@ -540,8 +764,8 @@ func (m *launcherMonitor) getDispatchStatus(
 // soon thereafter, resulting in the overhead of unnecessarily rapid polling.
 // Avoid the latter by applying a rate limit to each job.
 func (*launcherMonitor) shouldSkip(job launcherJob) bool {
-	durationSinceJobAddedOrLastStatusCollection := time.Now().Sub(job.timestamp).Seconds()
-	return durationSinceJobAddedOrLastStatusCollection < minItemPollingIntervalSecs
+	durationSinceJobAddedOrLastStatusCollection := time.Since(job.lastJobStatusCheckTime)
+	return durationSinceJobAddedOrLastStatusCollection < minJobStatusCheckPollingInterval
 }
 
 type exitCode int
@@ -609,7 +833,7 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 			m.authContext(ctx), job.user, dispatchID).Execute()
 		if err != nil {
 			ctx.Log().WithError(err).Warnf(
-				"Unable to access environment details for dispatch %s, response {%v}",
+				"For dispatchID %s, unable to access environment details, response {%v}",
 				dispatchID, resp)
 			return []string{}, err
 		}
@@ -625,8 +849,8 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 		m.authContext(ctx), job.user, dispatchID, logFileName,
 	).Range_(logRange).Execute()
 	if err != nil {
-		ctx.Log().WithError(err).Warnf("unable to access %s for dispatch %s, response {%v}",
-			logFileName, dispatchID, httpResponse)
+		ctx.Log().WithError(err).Warnf("For dispatchID %s, unable to access %s, response {%v}",
+			dispatchID, logFileName, httpResponse)
 		return []string{}, err
 	}
 
@@ -638,18 +862,18 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 		var fileStat fs.FileInfo
 		fileStat, err = logFile.Stat()
 		if err != nil {
-			ctx.Log().Errorf("logFile.Stat() failed: %s", err.Error())
+			ctx.Log().Errorf("For dispatchID %s, logFile.Stat() failed: %s", dispatchID, err.Error())
 			return []string{}, nil
 		}
 		contentLength = int(fileStat.Size())
 	} else {
 		contentLength, err = strconv.Atoi(contentLengthStr)
 		if err != nil {
-			ctx.Log().Errorf("atoi(Content-Length) failed: %s", err.Error())
+			ctx.Log().Errorf("For dispatchID %s, atoi(Content-Length) failed: %s", dispatchID, err.Error())
 			return []string{}, err
 		}
 		if contentLength == 0 {
-			ctx.Log().Debugf("No content yet for %s", logFileName)
+			ctx.Log().Debugf("For dispatchID %s, no content yet for %s", dispatchID, logFileName)
 			return []string{}, nil
 		}
 	}
@@ -658,8 +882,8 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	bytesRead, err := logFile.Read(buffer)
 	if err != nil || bytesRead != contentLength {
 		ctx.Log().WithError(err).Errorf(
-			"Failed to read full http response: read %d != contentLength %d",
-			bytesRead, contentLength)
+			"For dispatcID %s, failed to read full http response: read %d != contentLength %d",
+			dispatchID, bytesRead, contentLength)
 		return nil, err
 	}
 	return strings.Split(string(buffer), "\n"), nil

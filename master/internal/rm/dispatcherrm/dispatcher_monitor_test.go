@@ -210,12 +210,12 @@ func getJob() launcherJob {
 	payloadName := "myPayload"
 
 	job := launcherJob{
-		user:              user,
-		dispatcherID:      dispatchID,
-		payloadName:       payloadName,
-		timestamp:         time.Now(),
-		totalContainers:   0,
-		runningContainers: make(map[int]containerInfo),
+		user:                   user,
+		dispatcherID:           dispatchID,
+		payloadName:            payloadName,
+		lastJobStatusCheckTime: time.Now(),
+		totalContainers:        0,
+		runningContainers:      make(map[int]containerInfo),
 	}
 
 	return job

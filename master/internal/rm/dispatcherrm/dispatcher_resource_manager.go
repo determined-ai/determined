@@ -254,23 +254,25 @@ func New(
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
 type dispatcherResourceManager struct {
-	rmConfig                 *config.DispatcherResourceManagerConfig
-	poolConfig               []config.ResourcePoolConfig
-	apiClient                *launcher.APIClient
-	hpcResourcesManifest     *launcher.Manifest
-	reqList                  *tasklist.TaskList
-	groups                   map[*actor.Ref]*tasklist.Group
-	dispatchIDToAllocationID map[string]model.AllocationID
-	slotsUsedPerGroup        map[*tasklist.Group]int
-	masterTLSConfig          model.TLSClientConfig
-	loggingConfig            model.LoggingConfig
-	jobWatcher               *launcherMonitor
-	authToken                string
-	resourceDetails          hpcResourceDetailsCache
-	wlmType                  string
-	launcherVersionIsOK      bool
-	poolProviderMap          map[string][]string
-	dispatchIDToHPCJobID     map[string]string
+	rmConfig                      *config.DispatcherResourceManagerConfig
+	poolConfig                    []config.ResourcePoolConfig
+	apiClient                     *launcher.APIClient
+	hpcResourcesManifest          *launcher.Manifest
+	reqList                       *tasklist.TaskList
+	groups                        map[*actor.Ref]*tasklist.Group
+	dispatchIDToAllocationID      map[string]model.AllocationID
+	slotsUsedPerGroup             map[*tasklist.Group]int
+	masterTLSConfig               model.TLSClientConfig
+	loggingConfig                 model.LoggingConfig
+	jobWatcher                    *launcherMonitor
+	authToken                     string
+	resourceDetails               hpcResourceDetailsCache
+	wlmType                       string
+	launcherVersionIsOK           bool
+	poolProviderMap               map[string][]string
+	dispatchIDToHPCJobID          map[string]string
+	dispatchIDToAllocationIDMutex sync.RWMutex
+	dispatchIDToHPCJobIDMutex     sync.RWMutex
 }
 
 func newDispatcherResourceManager(
@@ -632,80 +634,14 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		m.addTask(ctx, msg)
 
 	case StartDispatcherResources:
-		req, ok := m.reqList.TaskByHandler(msg.TaskActor)
-		if !ok {
-			sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
-				"task not found in the task list")
-		}
-
-		slotType, err := m.resolveSlotType(ctx, req.ResourcePool)
-		if err != nil {
-			sendResourceStateChangedErrorResponse(ctx, err, msg,
-				"unable to access resource pool configuration")
-			return nil
-		}
-
-		// Make sure we explicitly choose a partition.  Use default if unspecified.
-		partition := req.ResourcePool
-		if partition == "" {
-			partition = m.selectDefaultPartition(slotType)
-		}
-
-		tresSupported := m.rmConfig.TresSupported
-		gresSupported := m.rmConfig.GresSupported
-		if m.rmConfig.TresSupported && !m.rmConfig.GresSupported {
-			ctx.Log().Warnf("tres_supported: true cannot be used when " +
-				"gres_supported: false is specified. Use tres_supported: false instead.")
-			tresSupported = false
-		}
-
-		// Create the manifest that will be ultimately sent to the launcher.
-		manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
-			m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
-			req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
-			m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
-			m.rmConfig.JobProjectSource,
-		)
-		if err != nil {
-			sendResourceStateChangedErrorResponse(ctx, err, msg,
-				"unable to create the launcher manifest")
-			return nil
-		}
-
-		if impersonatedUser == root && m.rmConfig.UserName != root {
-			sendResourceStateChangedErrorResponse(ctx,
-				fmt.Errorf(
-					"You are logged in as Determined user '%s', however the user ID on the "+
-						"target HPC cluster for this user has either not been configured, or has "+
-						"been set to the "+
-						"disallowed value of 'root'. In either case, as a determined administrator, "+
-						"use the command 'det user link-with-agent-user' to specify how jobs for "+
-						"Determined user '%s' are to be launched on your HPC cluster.",
-					msg.Spec.Owner.Username, msg.Spec.Owner.Username),
-				msg, "")
-			return nil
-		}
-
-		dispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
-		if err != nil {
-			sendResourceStateChangedErrorResponse(ctx, err, msg,
-				"unable to create the launcher job")
-			return nil
-		}
-
-		ctx.Log().WithField("allocation-id", msg.AllocationID).Infof("DispatchID is %s", dispatchID)
-		m.dispatchIDToAllocationID[dispatchID] = req.AllocationID
-		if err := db.InsertDispatch(context.TODO(), &db.Dispatch{
-			DispatchID:       dispatchID,
-			ResourceID:       msg.ResourcesID,
-			AllocationID:     req.AllocationID,
-			ImpersonatedUser: impersonatedUser,
-		}); err != nil {
-			ctx.Log().WithError(err).WithField("allocation-id", msg.AllocationID).
-				Errorf("failed to persist dispatch: %v", dispatchID)
-		}
-		m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName)
-		return nil
+		// Start each launcher job in a goroutine to prevent incoming messages
+		// from backing up, due to the main thread being busy handling one
+		// message at a time. Adaptive searches may create many launcher jobs
+		// for a single experiment, so we must allow the main thread to continue
+		// handling incoming messages while the previous messages are still
+		// being processed. The UI will become unresponsive if the messages
+		// start backing up.
+		go m.startLauncherJob(ctx, msg)
 
 	case sproto.PendingPreemption:
 		ctx.Log().Infof("PendingPreemption of %s.  Terminating.", msg.AllocationID)
@@ -734,7 +670,6 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		}
 
 	case KillDispatcherResources:
-
 		ctx.Log().Debugf("Received request to terminate jobs associated with AllocationID %s",
 			msg.AllocationID)
 
@@ -789,7 +724,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case DispatchStateChange:
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
-		allocationID, ok := m.dispatchIDToAllocationID[msg.DispatchID]
+		allocationID, ok := m.getAllocationIDFromDispatchID(msg.DispatchID)
 		if !ok {
 			log.Warnf("received DispatchStateChange for unknown dispatch %s", msg.DispatchID)
 			return nil
@@ -807,13 +742,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		_, exist := m.dispatchIDToHPCJobID[msg.DispatchID]
+		_, exist := m.getHpcJobIDFromDispatchID(msg.DispatchID)
 		if !exist && msg.HPCJobID != "" {
 			hpcJobIDMsg := "HPC Job ID: " + msg.HPCJobID
 			ctx.Tell(task.AllocationRef, sproto.ContainerLog{
 				AuxMessage: &hpcJobIDMsg,
 			})
-			m.dispatchIDToHPCJobID[msg.DispatchID] = msg.HPCJobID
+			m.addDispatchIDToHpcJobIDMap(msg.DispatchID, msg.HPCJobID)
 		}
 
 		r := maps.Values(alloc.Resources)[0]
@@ -828,7 +763,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case DispatchExited:
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
-		allocationID, ok := m.dispatchIDToAllocationID[msg.DispatchID]
+		allocationID, ok := m.getAllocationIDFromDispatchID(msg.DispatchID)
 		if !ok {
 			log.Warnf("received DispatchExited for unknown dispatch %s", msg.DispatchID)
 			return nil
@@ -907,8 +842,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		}
 
 		// Remove the dispatch from mapping tables.
-		delete(m.dispatchIDToAllocationID, msg.DispatchID)
-		delete(m.dispatchIDToHPCJobID, msg.DispatchID)
+		m.removeDispatchIDFromAllocationIDMap(msg.DispatchID)
+		m.removeDispatchIDFromHpcJobIDMap(msg.DispatchID)
 
 	case sproto.SetGroupMaxSlots:
 		m.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
@@ -943,6 +878,153 @@ func (m *dispatcherResourceManager) waitForDispatchTerminalState(ctx *actor.Cont
 		}
 	}
 	ctx.Log().Warnf("Dispatch %s still active, but wait time exceeded.  Continuing...", dispatchID)
+}
+
+func (m *dispatcherResourceManager) startLauncherJob(
+	ctx *actor.Context,
+	msg StartDispatcherResources) {
+	req, ok := m.reqList.TaskByHandler(msg.TaskActor)
+	if !ok {
+		sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
+			"task not found in the task list")
+	}
+
+	slotType, err := m.resolveSlotType(ctx, req.ResourcePool)
+	if err != nil {
+		sendResourceStateChangedErrorResponse(ctx, err, msg,
+			"unable to access resource pool configuration")
+		return
+	}
+
+	// Make sure we explicitly choose a partition.  Use default if unspecified.
+	partition := req.ResourcePool
+	if partition == "" {
+		partition = m.selectDefaultPartition(slotType)
+	}
+
+	tresSupported := m.rmConfig.TresSupported
+	gresSupported := m.rmConfig.GresSupported
+	if m.rmConfig.TresSupported && !m.rmConfig.GresSupported {
+		ctx.Log().Warnf("tres_supported: true cannot be used when " +
+			"gres_supported: false is specified. Use tres_supported: false instead.")
+		tresSupported = false
+	}
+
+	// Create the manifest that will be ultimately sent to the launcher.
+	manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
+		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
+		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
+		m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
+		m.rmConfig.JobProjectSource,
+	)
+	if err != nil {
+		sendResourceStateChangedErrorResponse(ctx, err, msg,
+			"unable to create the launcher manifest")
+		return
+	}
+
+	if impersonatedUser == root && m.rmConfig.UserName != root {
+		sendResourceStateChangedErrorResponse(ctx,
+			fmt.Errorf(
+				"You are logged in as Determined user '%s', however the user ID on the "+
+					"target HPC cluster for this user has either not been configured, or has "+
+					"been set to the "+
+					"disallowed value of 'root'. In either case, as a determined administrator, "+
+					"use the command 'det user link-with-agent-user' to specify how jobs for "+
+					"Determined user '%s' are to be launched on your HPC cluster.",
+				msg.Spec.Owner.Username, msg.Spec.Owner.Username),
+			msg, "")
+		return
+	}
+
+	dispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
+	if err != nil {
+		sendResourceStateChangedErrorResponse(ctx, err, msg,
+			"unable to create the launcher job")
+		return
+	}
+
+	//nolint:lll
+	ctx.Log().WithField("allocation-id", msg.AllocationID).WithField("description", msg.Spec.Description).Infof("DispatchID is %s",
+		dispatchID)
+
+	m.addDispatchIDToAllocationMap(dispatchID, req.AllocationID)
+
+	if err := db.InsertDispatch(context.TODO(), &db.Dispatch{
+		DispatchID:       dispatchID,
+		ResourceID:       msg.ResourcesID,
+		AllocationID:     req.AllocationID,
+		ImpersonatedUser: impersonatedUser,
+	}); err != nil {
+		ctx.Log().WithError(err).Errorf("failed to persist dispatch: %v", dispatchID)
+	}
+	m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName)
+}
+
+// Adds the mapping of dispatch ID to allocation ID.
+func (m *dispatcherResourceManager) addDispatchIDToAllocationMap(
+	dispatchID string,
+	allocationID model.AllocationID) {
+	// Read/Write lock blocks other readers and writers.
+	m.dispatchIDToAllocationIDMutex.Lock()
+	defer m.dispatchIDToAllocationIDMutex.Unlock()
+
+	m.dispatchIDToAllocationID[dispatchID] = allocationID
+}
+
+// Removes the mapping from dispatch ID to allocation ID.
+func (m *dispatcherResourceManager) removeDispatchIDFromAllocationIDMap(
+	dispatchID string) {
+	// Read/Write lock blocks other readers and writers.
+	m.dispatchIDToAllocationIDMutex.Lock()
+	defer m.dispatchIDToAllocationIDMutex.Unlock()
+
+	delete(m.dispatchIDToAllocationID, dispatchID)
+}
+
+// Gets the allocation ID for the specified dispatch ID.
+func (m *dispatcherResourceManager) getAllocationIDFromDispatchID(
+	dispatchID string) (model.AllocationID, bool) {
+	// Read lock allows multiple readers, but block writers.
+	m.dispatchIDToAllocationIDMutex.RLock()
+	defer m.dispatchIDToAllocationIDMutex.RUnlock()
+
+	allocationID, ok := m.dispatchIDToAllocationID[dispatchID]
+
+	return allocationID, ok
+}
+
+// Adds the mapping of dispatch ID to HPC job ID.
+func (m *dispatcherResourceManager) addDispatchIDToHpcJobIDMap(
+	dispatchID string,
+	hpcJobID string) {
+	// Read/Write lock blocks other readers and writers.
+	m.dispatchIDToHPCJobIDMutex.Lock()
+	defer m.dispatchIDToHPCJobIDMutex.Unlock()
+
+	m.dispatchIDToHPCJobID[dispatchID] = hpcJobID
+}
+
+// Removes the mapping from dispatch ID to allocaiton ID.
+func (m *dispatcherResourceManager) removeDispatchIDFromHpcJobIDMap(
+	dispatchID string) {
+	// Read/Write lock blocks other readers and writers.
+	m.dispatchIDToHPCJobIDMutex.Lock()
+	defer m.dispatchIDToHPCJobIDMutex.Unlock()
+
+	delete(m.dispatchIDToHPCJobID, dispatchID)
+}
+
+// Gets the HPC job ID for the specified dispatch ID.
+func (m *dispatcherResourceManager) getHpcJobIDFromDispatchID(
+	dispatchID string) (string, bool) {
+	// Read lock allows multiple readers, but block writers.
+	m.dispatchIDToHPCJobIDMutex.RLock()
+	defer m.dispatchIDToHPCJobIDMutex.RUnlock()
+
+	hpcJobID, ok := m.dispatchIDToHPCJobID[dispatchID]
+
+	return hpcJobID, ok
 }
 
 // Log the failure, and send a ResourcesStateChanged describing the failure.
@@ -1486,6 +1568,12 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 		ctx.Log().Warn("Missing dispatchID, so no environment clean-up")
 		return false
 	}
+
+	// Let the job monitor know that the job was terminated, otherwise it
+	// might get a 404 (Not Found) error from the launcher and not send
+	// Determined notification that the job was terminated.
+	m.jobWatcher.markJobAsTerminated(ctx, dispatchID)
+
 	var err error
 	var response *http.Response
 	if _, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
@@ -1497,7 +1585,7 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 			return false
 		}
 	}
-	ctx.Log().Debugf("Terminated manifest with DispatchID %s", dispatchID)
+	ctx.Log().Infof("Terminated job with DispatchID %s", dispatchID)
 	return true
 }
 
@@ -1513,6 +1601,8 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 func (m *dispatcherResourceManager) removeDispatchEnvironment(
 	ctx *actor.Context, owner string, dispatchID string,
 ) {
+	ctx.Log().Debugf("Deleting environment with DispatchID %s", dispatchID)
+
 	if response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
 		owner, dispatchID).Execute(); err != nil {
 		if response == nil || response.StatusCode != 404 {
@@ -1539,10 +1629,10 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	impersonatedUser string,
 ) (string, error) {
 	/*
-	 * "LaunchAsync()" does not wait for the "launcher" to move the job to the "RUNNING"
-	 * state and returns right away while the job is still in the "PENDING" state. If it
-	 * becomes necessary to wait for the job to be in the "RUNNING" state, we can switch
-	 * to using "Launch()".
+	 * Ask the launcher to run the job. We switched from using "LaunchAsync()"
+	 * to using "Launch()" to deal with an issue where the dispatcher monitor
+	 * asks for job status before the launcher sets up the job status record
+	 * keeping, which causes the job status request to get a 404 Not Found.
 	 *
 	 * The "manifest" describes the job to be launched and includes any environment
 	 * variables, mount points, etc., that are needed by the job.
@@ -1552,7 +1642,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	 * (e.g. "/etc/passwd"), LDAP, or some other authentication mechanism.
 	 */
 	dispatchInfo, response, err := m.apiClient.LaunchApi.
-		LaunchAsync(m.authContext(ctx)).
+		Launch(m.authContext(ctx)).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
 		Execute()
@@ -1562,7 +1652,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 			// So we can show the HTTP status code, if available.
 			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
 		}
-		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
+		return "", errors.Wrapf(err, "LaunchApi.Launch() returned an error %s, response: {%v}. "+
 			"Verify that the launcher service is up and reachable. Try a restart the "+
 			"launcher service followed by a restart of the determined-master service.", httpStatus, response)
 	}
@@ -1676,7 +1766,8 @@ func (m *dispatcherResourceManager) assignResources(
 			ctx.Log().Infof("Reconnecting ResourceID %s, DispatchID %s, ImpersontatedUser: %s",
 				rID, dispatchID, impersonatedUser)
 
-			m.dispatchIDToAllocationID[dispatchID] = req.AllocationID
+			m.addDispatchIDToAllocationMap(dispatchID, req.AllocationID)
+
 			m.jobWatcher.monitorJob(impersonatedUser, dispatchID, "")
 		}
 	} else {
