@@ -70,8 +70,8 @@ const ModelDetails: React.FC = () => {
     NotLoaded: () => [],
   });
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const workspaces = useWorkspaces();
-  const workspace = Loadable.getOrElse([], workspaces).find(
+  const lodableWorkspaces = useWorkspaces();
+  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
     (ws) => ws.id === model?.model.workspaceId,
   );
 
@@ -446,7 +446,7 @@ const ModelDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || workspaces === NotLoaded) {
+  } else if (!model || lodableWorkspaces === NotLoaded) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
