@@ -19,7 +19,7 @@ const hashedFileMock =
 vi.mock('routes/utils', () => ({
   __esModule: true,
   handlePath: () => Promise.resolve(),
-  paths: { experimentFileFromTree: () => '/fakePath' },
+  paths: { experimentFileFromTree: vi.fn().mockReturnValue('/fakePath') },
   serverAddress: () => '',
 }));
 
@@ -135,7 +135,6 @@ describe('CodeViewer', () => {
   });
 
   it('should handle clicking in the download icon when opening a file from the tree', async () => {
-    const pathBuilderSpy = vi.spyOn(paths, 'experimentFileFromTree').mockReturnValueOnce('');
     setup();
 
     const { treeNodes } = await getElements();
@@ -146,6 +145,8 @@ describe('CodeViewer', () => {
 
     await user.click(button);
 
-    waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
+    await waitFor(() =>
+      expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(123, 'model_def.py'),
+    );
   });
 });
