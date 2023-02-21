@@ -24,13 +24,13 @@ type ModelAuthZRBAC struct{}
 func addExpInfo(
 	curUser model.User,
 	logFields log.Fields, subjectID string,
-	permission rbacv1.PermissionType,
+	permissions []rbacv1.PermissionType,
 ) {
 	logFields["userID"] = curUser.ID
 	logFields["username"] = curUser.Username
 	logFields["permissionsRequired"] = []audit.PermissionWithSubject{
 		{
-			PermissionTypes: []rbacv1.PermissionType{permission},
+			PermissionTypes: permissions,
 			SubjectType:     "model",
 			SubjectIDs:      []string{subjectID},
 		},
@@ -42,7 +42,7 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 ) (canGetModel bool, serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, fmt.Sprintf("all models in %d", workspaceID),
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY)
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
 		fields["permissionGranted"] = canGetModel
 		audit.Log(fields)
@@ -64,7 +64,7 @@ func (a *ModelAuthZRBAC) CanGetModel(ctx context.Context, curUser model.User,
 ) (canGetModel bool, serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, string(m.Id),
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY)
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
 		fields["permissionGranted"] = canGetModel
 		audit.Log(fields)
@@ -86,7 +86,7 @@ func (a *ModelAuthZRBAC) CanEditModel(ctx context.Context, curUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, string(m.Id),
-		rbacv1.PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY)
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY})
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
@@ -101,12 +101,37 @@ func (a *ModelAuthZRBAC) CanCreateModel(ctx context.Context,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, fields, fmt.Sprintf("creating a model in %d", workspaceID),
-		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY})
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
+}
+
+// CanMoveModel checks for edit permission in origin and create permission in destination.
+func (a *ModelAuthZRBAC) CanMoveModel(ctx context.Context,
+	curUser model.User, _ *modelv1.Model, origin int32, destination int32,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, fields, fmt.Sprintf("moving model from workspace %d to %d", origin,
+		destination),
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY,
+			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY,
+		})
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	origErr := db.DoesPermissionMatch(ctx, curUser.ID, &origin,
+		rbacv1.PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY)
+	if origErr != nil {
+		return origErr
+	}
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, &destination,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
 }
 
