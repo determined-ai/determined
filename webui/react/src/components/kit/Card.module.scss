@@ -10,17 +10,17 @@
   flex-direction: column;
   padding: var(--outside-padding);
   position: relative;
-  transition: var(--transition-duration) background-color;
+  transition: background-color var(--transition-duration);
   transition-delay: var(--transition-delay);
 
   .action {
-    background-color: var(--theme-surface-weak);
+    background-color: inherit;
     opacity: 0;
     padding: 2px;
     position: absolute;
     right: var(--outside-padding);
     top: var(--outside-padding);
-    transition: var(--transition-duration) opacity;
+    transition: all var(--transition-duration);
     transition-delay: var(--transition-delay);
   }
   .content {
@@ -37,8 +37,9 @@
   }
   &:hover,
   &:focus-within {
-    background-color: var(--theme-surface-weak);
-
+    &.clickable {
+      background-color: var(--theme-surface-weak);
+    }
     .action {
       opacity: 1;
     }
