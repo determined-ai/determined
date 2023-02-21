@@ -113,7 +113,7 @@ describe('useModalJupyterLab', () => {
     const user = await setup();
 
     const button = await screen.findByRole('button', { name: /Launch/i });
-    user.click(button);
+    await user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
