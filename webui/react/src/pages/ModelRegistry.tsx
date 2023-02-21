@@ -338,6 +338,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const workspaceRenderer = useCallback(
     (record: ModelItem): React.ReactNode => {
       const workspace = workspaces.find((u) => u.id === record.workspaceId);
+      if (!workspace) {
+        return (
+          <Link disabled>
+            <DynamicIcon name="-" size={24} />
+          </Link>
+        );
+      }
       const workspaceId = record.workspaceId;
       return (
         <Tooltip placement="top" title={workspace?.name}>
