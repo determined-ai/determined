@@ -276,27 +276,31 @@ describe('LogViewer', () => {
       setup({ decoder, onFetch });
 
       const lastLog = logsReference[logsReference.length - 1];
-      const lastMessage = await screen.findByText(lastLog.message);
-      expect(lastMessage).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
+      });
     });
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
 
       const lastLog = logsReference[logsReference.length - 1];
-      const lastMessage = await screen.findByText(lastLog.message);
-      expect(lastMessage).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
+      });
 
       const lastExistingLog = existingLogs[existingLogs.length - 1];
-      const lastExistingMessage = await screen.findByText(lastExistingLog.message);
-      expect(lastExistingMessage).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByText(lastExistingLog.message)).toBeInTheDocument();
+      });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
       await user.click(scrollToOldestButton);
 
       const firstLog = existingLogs[0];
-      const firstMessage = await screen.findByText(firstLog.message);
-      expect(firstMessage).toBeInTheDocument();
+      await waitFor(async () => {
+        expect(await screen.findByText(firstLog.message)).toBeInTheDocument();
+      });
     });
 
     it('should show newest logs when enabling tailing', async () => {
