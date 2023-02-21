@@ -121,9 +121,11 @@ const UPlotChart: React.FC<Props> = ({
       const activeBounds = syncService.activeBounds.get();
       if (activeBounds) {
         const { min, max } = activeBounds;
-        extended.series = extended.series?.map((ser) => {
-          return { ...ser, max, min };
-        });
+        const xScale = extended.scales?.x;
+        if (xScale) {
+          xScale.max = max;
+          xScale.min = min;
+        }
       }
     }
 

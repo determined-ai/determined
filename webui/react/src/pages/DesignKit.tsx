@@ -1,6 +1,6 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -237,20 +237,44 @@ const DropdownsSection: React.FC = () => {
   );
 };
 
+const line1BatchesDataRaw: [number, number][] = [
+  [0, -2],
+  [2, Math.random() * 12],
+  [4, 15],
+  [6, Math.random() * 60],
+  [9, Math.random() * 40],
+  [10, Math.random() * 76],
+  [18, Math.random() * 80],
+  [19, 89],
+];
+const line2BatchesDataRaw: [number, number][] = [
+  [1, 15],
+  [2, 10.123456789],
+  [2.5, Math.random() * 22],
+  [3, 10.3909],
+  [3.25, 19],
+  [3.75, 4],
+  [4, 12],
+];
+
 const ChartsSection: React.FC = () => {
+  const timerRef = useRef<NodeJS.Timer | null>(null);
+  const [timer, setTimer] = useState(1);
+  useEffect(() => {
+    timerRef.current = setInterval(() => setTimer((t) => t + 1), 2000);
+
+    return () => {
+      if (timerRef.current !== null) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const line1BatchesDataStreamed = useMemo(() => line1BatchesDataRaw.slice(0, timer), [timer]);
+  const line2BatchesDataStreamed = useMemo(() => line2BatchesDataRaw.slice(0, timer), [timer]);
+
   const line1: Serie = {
     color: '#009BDE',
     data: {
-      [XAxisDomain.Batches]: [
-        [0, -2],
-        [2, Math.random() * 12],
-        [4, 15],
-        [6, Math.random() * 60],
-        [9, Math.random() * 40],
-        [10, Math.random() * 76],
-        [18, Math.random() * 80],
-        [19, 89],
-      ],
+      [XAxisDomain.Batches]: line1BatchesDataStreamed,
       [XAxisDomain.Time]: [],
     },
     metricType: MetricType.Training,
@@ -261,15 +285,7 @@ const ChartsSection: React.FC = () => {
 
   const line2: Serie = {
     data: {
-      [XAxisDomain.Batches]: [
-        [1, 15],
-        [2, 10.123456789],
-        [2.5, Math.random() * 22],
-        [3, 10.3909],
-        [3.25, 19],
-        [3.75, 4],
-        [4, 12],
-      ],
+      [XAxisDomain.Batches]: line2BatchesDataStreamed,
       [XAxisDomain.Time]: [
         [stampToNum('2023-01-05T01:00:00Z'), 15],
         [stampToNum('2023-01-05T02:12:34.56789Z'), 10.123456789],

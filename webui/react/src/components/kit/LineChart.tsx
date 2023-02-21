@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeGrid } from 'react-window';
+import React, { useMemo, useRef } from 'react';
+import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
@@ -10,6 +9,7 @@ import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import useResize from 'hooks/useResize';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
 
@@ -253,8 +253,35 @@ export interface GroupProps {
   xAxis: XAxisDomain;
 }
 
+/**
+ * VirtualChartRenderer is used by FixedSizeGrid to virtually render individual charts.
+ * `data` comes from the itemData prop that is passed to FixedSizeGrid.
+ */
+const VirtualChartRenderer: React.FC<
+  GridChildComponentProps<{ chartsProps: ChartsProps; columnCount: number }>
+> = ({ columnIndex, rowIndex, style, data }) => {
+  const { chartsProps, columnCount } = data;
+
+  const cellIndex = rowIndex * columnCount + columnIndex;
+
+  if (chartsProps === undefined || cellIndex >= chartsProps.length) return null;
+  const chartProps = chartsProps[cellIndex];
+
+  return (
+    <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
+      <div className={css.chartgridCellCard}>
+        <LineChart {...chartProps} scale={Scale.Linear} xAxis={XAxisDomain.Batches} />
+      </div>
+    </div>
+  );
+};
+
 export const ChartGrid: React.FC<GroupProps> = React.memo(
   ({ chartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
+    const chartGridRef = useRef<HTMLDivElement | null>(null);
+    const { width, height } = useResize(chartGridRef);
+    const columnCount = Math.max(1, Math.floor(width / 540));
+
     // X-Axis control
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();
@@ -271,7 +298,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     }, [chartsProps]);
 
     return (
-      <div className={css.chartgridContainer}>
+      <div className={css.chartgridContainer} ref={chartGridRef}>
         <div className={css.filterContainer}>
           <ScaleSelectFilter value={scale} onChange={setScale} />
           {xAxisOptions && xAxisOptions.length > 1 && (
@@ -279,35 +306,16 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
           )}
         </div>
         <SyncProvider>
-          <AutoSizer>
-            {({ height, width }) => {
-              const columnCount = Math.max(1, Math.floor(width / 540));
-              return (
-                <FixedSizeGrid
-                  columnCount={columnCount}
-                  columnWidth={Math.floor(width / columnCount)}
-                  height={Math.min(
-                    height - 40,
-                    (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
-                  )}
-                  rowCount={Math.ceil(chartsProps.length / columnCount)}
-                  rowHeight={480}
-                  width={width}>
-                  {({ columnIndex, rowIndex, style }) => {
-                    const cellIndex = rowIndex * columnCount + columnIndex;
-                    if (cellIndex >= chartsProps.length) return null;
-                    return (
-                      <div className={css.chartgridCell} key={cellIndex} style={style}>
-                        <div className={css.chartgridCellCard}>
-                          <LineChart {...chartsProps[cellIndex]} scale={scale} xAxis={xAxis} />
-                        </div>
-                      </div>
-                    );
-                  }}
-                </FixedSizeGrid>
-              );
-            }}
-          </AutoSizer>
+          <FixedSizeGrid
+            columnCount={columnCount}
+            columnWidth={Math.floor(width / columnCount)}
+            height={Math.min(height - 40, (chartsProps.length > columnCount ? 2.1 : 1.05) * 480)}
+            itemData={{ chartsProps, columnCount }}
+            rowCount={Math.ceil(chartsProps.length / columnCount)}
+            rowHeight={480}
+            width={width}>
+            {VirtualChartRenderer}
+          </FixedSizeGrid>
         </SyncProvider>
       </div>
     );
