@@ -128,13 +128,6 @@ def whoami(parsed_args: Namespace) -> None:
     print("You are logged in as user '{}'".format(user.username))
 
 
-@authentication.required
-def token(parsed_args: Namespace) -> None:
-    assert authentication.cli_auth is not None
-    token = authentication.cli_auth.get_session_token()
-    print(token)
-
-
 AGENT_USER_GROUP_ARGS = [
     Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
     Arg("--agent-user", help="user on the agent to run tasks as"),
@@ -172,8 +165,7 @@ args_description = [
             Arg("det_username", help="name of Determined user to link"),
             *AGENT_USER_GROUP_ARGS,
         ]),
-        Cmd("whoami", whoami, "print the active user", []),
-        Cmd("token", token, "print the active user's auth token", [])
+        Cmd("whoami", whoami, "print the active user", [])
     ])
 ]  # type: List[Any]
 
