@@ -42,7 +42,7 @@ import { useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -70,8 +70,10 @@ const ModelDetails: React.FC = () => {
     NotLoaded: () => [],
   });
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const workspaces = Loadable.getOrElse([], useWorkspaces());
-  const workspace = workspaces.find((ws) => ws.id === model?.model.workspaceId);
+  const workspaces = useWorkspaces();
+  const workspace = Loadable.getOrElse([], workspaces).find(
+    (ws) => ws.id === model?.model.workspaceId,
+  );
 
   const { canModifyModel, canModifyModelVersion } = usePermissions();
 
@@ -444,7 +446,7 @@ const ModelDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || !workspaces.length) {
+  } else if (!model || workspaces === NotLoaded) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 

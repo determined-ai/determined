@@ -162,7 +162,7 @@ const ModelHeader: React.FC<Props> = ({
           <Breadcrumb.Item>
             <Link
               path={
-                workspace
+                workspace?.id
                   ? paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)
                   : paths.modelList()
               }>
