@@ -87,7 +87,7 @@ def _get_rank_aware_path_pytorch_profiler(
         match_groups = match.groups()
 
         worker = match_groups[0]
-        worker = worker + f"#{rank}"
+        worker = f"{worker}#{rank}"
 
         span = match_groups[1]
 
