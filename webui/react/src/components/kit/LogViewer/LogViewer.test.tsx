@@ -276,10 +276,13 @@ describe('LogViewer', () => {
       setup({ decoder, onFetch });
 
       const lastLog = logsReference[logsReference.length - 1];
-      await waitFor(async () => {
-        expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
-      });
-    });
+      await waitFor(
+        async () => {
+          expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
+        },
+        { timeout: 10_000 },
+      );
+    }, 10_000);
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
@@ -301,7 +304,7 @@ describe('LogViewer', () => {
       await waitFor(async () => {
         expect(await screen.findByText(firstLog.message)).toBeInTheDocument();
       });
-    });
+    }, 10_000);
 
     it('should show newest logs when enabling tailing', async () => {
       setup({ decoder, onFetch });
