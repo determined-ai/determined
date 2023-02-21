@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import Button from 'components/kit/Button';
-import Avatar from 'components/UserAvatar';
+import Avatar from 'components/kit/UserAvatar';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
