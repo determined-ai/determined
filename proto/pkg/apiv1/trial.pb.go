@@ -5,9 +5,6 @@
 package apiv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
 	checkpointv1 "github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	commonv1 "github.com/determined-ai/determined/proto/pkg/commonv1"
 	experimentv1 "github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -18,6 +15,8 @@ import (
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -500,6 +499,7 @@ type WorkloadContainer struct {
 	// checkpoint.
 	//
 	// Types that are assignable to Workload:
+	//
 	//	*WorkloadContainer_Training
 	//	*WorkloadContainer_Validation
 	//	*WorkloadContainer_Checkpoint
@@ -1381,6 +1381,7 @@ type UpdateTrialTagsRequest struct {
 	// the possible patch targets.
 	//
 	// Types that are assignable to Target:
+	//
 	//	*UpdateTrialTagsRequest_Filters
 	//	*UpdateTrialTagsRequest_Trial
 	Target isUpdateTrialTagsRequest_Target `protobuf_oneof:"target"`
@@ -6394,123 +6395,120 @@ func file_determined_api_v1_trial_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_trial_proto_rawDescData
 }
 
-var (
-	file_determined_api_v1_trial_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-	file_determined_api_v1_trial_proto_msgTypes  = make([]protoimpl.MessageInfo, 78)
-	file_determined_api_v1_trial_proto_goTypes   = []interface{}{
-		(Scale)(0),                                          // 0: determined.api.v1.Scale
-		(XAxis)(0),                                          // 1: determined.api.v1.XAxis
-		(TrialSorter_Namespace)(0),                          // 2: determined.api.v1.TrialSorter.Namespace
-		(GetTrialCheckpointsRequest_SortBy)(0),              // 3: determined.api.v1.GetTrialCheckpointsRequest.SortBy
-		(GetExperimentTrialsRequest_SortBy)(0),              // 4: determined.api.v1.GetExperimentTrialsRequest.SortBy
-		(GetTrialWorkloadsRequest_FilterOption)(0),          // 5: determined.api.v1.GetTrialWorkloadsRequest.FilterOption
-		(*SummarizedMetric)(nil),                            // 6: determined.api.v1.SummarizedMetric
-		(*WorkloadContainer)(nil),                           // 7: determined.api.v1.WorkloadContainer
-		(*ColumnFilter)(nil),                                // 8: determined.api.v1.ColumnFilter
-		(*TrialTag)(nil),                                    // 9: determined.api.v1.TrialTag
-		(*TrialSorter)(nil),                                 // 10: determined.api.v1.TrialSorter
-		(*TrialFilters)(nil),                                // 11: determined.api.v1.TrialFilters
-		(*QueryTrialsRequest)(nil),                          // 12: determined.api.v1.QueryTrialsRequest
-		(*AugmentedTrial)(nil),                              // 13: determined.api.v1.AugmentedTrial
-		(*QueryTrialsResponse)(nil),                         // 14: determined.api.v1.QueryTrialsResponse
-		(*TrialPatch)(nil),                                  // 15: determined.api.v1.TrialPatch
-		(*UpdateTrialTagsRequest)(nil),                      // 16: determined.api.v1.UpdateTrialTagsRequest
-		(*UpdateTrialTagsResponse)(nil),                     // 17: determined.api.v1.UpdateTrialTagsResponse
-		(*TrialsCollection)(nil),                            // 18: determined.api.v1.TrialsCollection
-		(*GetTrialsCollectionsRequest)(nil),                 // 19: determined.api.v1.GetTrialsCollectionsRequest
-		(*GetTrialsCollectionsResponse)(nil),                // 20: determined.api.v1.GetTrialsCollectionsResponse
-		(*CreateTrialsCollectionRequest)(nil),               // 21: determined.api.v1.CreateTrialsCollectionRequest
-		(*CreateTrialsCollectionResponse)(nil),              // 22: determined.api.v1.CreateTrialsCollectionResponse
-		(*PatchTrialsCollectionRequest)(nil),                // 23: determined.api.v1.PatchTrialsCollectionRequest
-		(*PatchTrialsCollectionResponse)(nil),               // 24: determined.api.v1.PatchTrialsCollectionResponse
-		(*DeleteTrialsCollectionRequest)(nil),               // 25: determined.api.v1.DeleteTrialsCollectionRequest
-		(*DeleteTrialsCollectionResponse)(nil),              // 26: determined.api.v1.DeleteTrialsCollectionResponse
-		(*TrialLogsRequest)(nil),                            // 27: determined.api.v1.TrialLogsRequest
-		(*TrialLogsResponse)(nil),                           // 28: determined.api.v1.TrialLogsResponse
-		(*TrialLogsFieldsRequest)(nil),                      // 29: determined.api.v1.TrialLogsFieldsRequest
-		(*TrialLogsFieldsResponse)(nil),                     // 30: determined.api.v1.TrialLogsFieldsResponse
-		(*GetTrialCheckpointsRequest)(nil),                  // 31: determined.api.v1.GetTrialCheckpointsRequest
-		(*GetTrialCheckpointsResponse)(nil),                 // 32: determined.api.v1.GetTrialCheckpointsResponse
-		(*KillTrialRequest)(nil),                            // 33: determined.api.v1.KillTrialRequest
-		(*KillTrialResponse)(nil),                           // 34: determined.api.v1.KillTrialResponse
-		(*GetExperimentTrialsRequest)(nil),                  // 35: determined.api.v1.GetExperimentTrialsRequest
-		(*GetExperimentTrialsResponse)(nil),                 // 36: determined.api.v1.GetExperimentTrialsResponse
-		(*GetTrialRequest)(nil),                             // 37: determined.api.v1.GetTrialRequest
-		(*GetTrialResponse)(nil),                            // 38: determined.api.v1.GetTrialResponse
-		(*GetTrialWorkloadsRequest)(nil),                    // 39: determined.api.v1.GetTrialWorkloadsRequest
-		(*GetTrialWorkloadsResponse)(nil),                   // 40: determined.api.v1.GetTrialWorkloadsResponse
-		(*GetTrialProfilerMetricsRequest)(nil),              // 41: determined.api.v1.GetTrialProfilerMetricsRequest
-		(*GetTrialProfilerMetricsResponse)(nil),             // 42: determined.api.v1.GetTrialProfilerMetricsResponse
-		(*GetTrialProfilerAvailableSeriesRequest)(nil),      // 43: determined.api.v1.GetTrialProfilerAvailableSeriesRequest
-		(*GetTrialProfilerAvailableSeriesResponse)(nil),     // 44: determined.api.v1.GetTrialProfilerAvailableSeriesResponse
-		(*PostTrialProfilerMetricsBatchRequest)(nil),        // 45: determined.api.v1.PostTrialProfilerMetricsBatchRequest
-		(*PostTrialProfilerMetricsBatchResponse)(nil),       // 46: determined.api.v1.PostTrialProfilerMetricsBatchResponse
-		(*SummarizeTrialRequest)(nil),                       // 47: determined.api.v1.SummarizeTrialRequest
-		(*SummarizeTrialResponse)(nil),                      // 48: determined.api.v1.SummarizeTrialResponse
-		(*ComparableTrial)(nil),                             // 49: determined.api.v1.ComparableTrial
-		(*CompareTrialsRequest)(nil),                        // 50: determined.api.v1.CompareTrialsRequest
-		(*CompareTrialsResponse)(nil),                       // 51: determined.api.v1.CompareTrialsResponse
-		(*AllocationPreemptionSignalRequest)(nil),           // 52: determined.api.v1.AllocationPreemptionSignalRequest
-		(*AllocationPreemptionSignalResponse)(nil),          // 53: determined.api.v1.AllocationPreemptionSignalResponse
-		(*AckAllocationPreemptionSignalRequest)(nil),        // 54: determined.api.v1.AckAllocationPreemptionSignalRequest
-		(*AllocationPendingPreemptionSignalRequest)(nil),    // 55: determined.api.v1.AllocationPendingPreemptionSignalRequest
-		(*AllocationPendingPreemptionSignalResponse)(nil),   // 56: determined.api.v1.AllocationPendingPreemptionSignalResponse
-		(*AckAllocationPreemptionSignalResponse)(nil),       // 57: determined.api.v1.AckAllocationPreemptionSignalResponse
-		(*MarkAllocationResourcesDaemonRequest)(nil),        // 58: determined.api.v1.MarkAllocationResourcesDaemonRequest
-		(*MarkAllocationResourcesDaemonResponse)(nil),       // 59: determined.api.v1.MarkAllocationResourcesDaemonResponse
-		(*AllocationRendezvousInfoRequest)(nil),             // 60: determined.api.v1.AllocationRendezvousInfoRequest
-		(*AllocationRendezvousInfoResponse)(nil),            // 61: determined.api.v1.AllocationRendezvousInfoResponse
-		(*PostAllocationProxyAddressRequest)(nil),           // 62: determined.api.v1.PostAllocationProxyAddressRequest
-		(*PostAllocationProxyAddressResponse)(nil),          // 63: determined.api.v1.PostAllocationProxyAddressResponse
-		(*AllocationAllGatherRequest)(nil),                  // 64: determined.api.v1.AllocationAllGatherRequest
-		(*AllocationAllGatherResponse)(nil),                 // 65: determined.api.v1.AllocationAllGatherResponse
-		(*NotifyContainerRunningRequest)(nil),               // 66: determined.api.v1.NotifyContainerRunningRequest
-		(*NotifyContainerRunningResponse)(nil),              // 67: determined.api.v1.NotifyContainerRunningResponse
-		(*GetCurrentTrialSearcherOperationRequest)(nil),     // 68: determined.api.v1.GetCurrentTrialSearcherOperationRequest
-		(*GetCurrentTrialSearcherOperationResponse)(nil),    // 69: determined.api.v1.GetCurrentTrialSearcherOperationResponse
-		(*CompleteTrialSearcherValidationRequest)(nil),      // 70: determined.api.v1.CompleteTrialSearcherValidationRequest
-		(*CompleteTrialSearcherValidationResponse)(nil),     // 71: determined.api.v1.CompleteTrialSearcherValidationResponse
-		(*ReportTrialSearcherEarlyExitRequest)(nil),         // 72: determined.api.v1.ReportTrialSearcherEarlyExitRequest
-		(*ReportTrialSearcherEarlyExitResponse)(nil),        // 73: determined.api.v1.ReportTrialSearcherEarlyExitResponse
-		(*ReportTrialProgressRequest)(nil),                  // 74: determined.api.v1.ReportTrialProgressRequest
-		(*ReportTrialProgressResponse)(nil),                 // 75: determined.api.v1.ReportTrialProgressResponse
-		(*ReportTrialTrainingMetricsRequest)(nil),           // 76: determined.api.v1.ReportTrialTrainingMetricsRequest
-		(*ReportTrialTrainingMetricsResponse)(nil),          // 77: determined.api.v1.ReportTrialTrainingMetricsResponse
-		(*ReportTrialValidationMetricsRequest)(nil),         // 78: determined.api.v1.ReportTrialValidationMetricsRequest
-		(*ReportTrialValidationMetricsResponse)(nil),        // 79: determined.api.v1.ReportTrialValidationMetricsResponse
-		(*PostTrialRunnerMetadataRequest)(nil),              // 80: determined.api.v1.PostTrialRunnerMetadataRequest
-		(*PostTrialRunnerMetadataResponse)(nil),             // 81: determined.api.v1.PostTrialRunnerMetadataResponse
-		(*TrialFilters_RankWithinExp)(nil),                  // 82: determined.api.v1.TrialFilters.RankWithinExp
-		(*UpdateTrialTagsRequest_Ids)(nil),                  // 83: determined.api.v1.UpdateTrialTagsRequest.Ids
-		(*DataPoint)(nil),                                   // 84: determined.api.v1.DataPoint
-		(*DataPointTime)(nil),                               // 85: determined.api.v1.DataPointTime
-		(*DataPointEpoch)(nil),                              // 86: determined.api.v1.DataPointEpoch
-		(MetricType)(0),                                     // 87: determined.api.v1.MetricType
-		(*trialv1.MetricsWorkload)(nil),                     // 88: determined.trial.v1.MetricsWorkload
-		(*trialv1.CheckpointWorkload)(nil),                  // 89: determined.trial.v1.CheckpointWorkload
-		(*commonv1.DoubleFieldFilter)(nil),                  // 90: determined.common.v1.DoubleFieldFilter
-		(OrderBy)(0),                                        // 91: determined.api.v1.OrderBy
-		(*commonv1.TimestampFieldFilter)(nil),               // 92: determined.common.v1.TimestampFieldFilter
-		(trialv1.State)(0),                                  // 93: determined.trial.v1.State
-		(*_struct.Struct)(nil),                              // 94: google.protobuf.Struct
-		(*timestamp.Timestamp)(nil),                         // 95: google.protobuf.Timestamp
-		(logv1.LogLevel)(0),                                 // 96: determined.log.v1.LogLevel
-		(checkpointv1.State)(0),                             // 97: determined.checkpoint.v1.State
-		(*checkpointv1.Checkpoint)(nil),                     // 98: determined.checkpoint.v1.Checkpoint
-		(*Pagination)(nil),                                  // 99: determined.api.v1.Pagination
-		(experimentv1.State)(0),                             // 100: determined.experiment.v1.State
-		(*trialv1.Trial)(nil),                               // 101: determined.trial.v1.Trial
-		(*trialv1.TrialProfilerMetricLabels)(nil),           // 102: determined.trial.v1.TrialProfilerMetricLabels
-		(*trialv1.TrialProfilerMetricsBatch)(nil),           // 103: determined.trial.v1.TrialProfilerMetricsBatch
-		(*trialv1.RendezvousInfo)(nil),                      // 104: determined.trial.v1.RendezvousInfo
-		(*experimentv1.TrialOperation)(nil),                 // 105: determined.experiment.v1.TrialOperation
-		(*experimentv1.CompleteValidateAfterOperation)(nil), // 106: determined.experiment.v1.CompleteValidateAfterOperation
-		(*trialv1.TrialEarlyExit)(nil),                      // 107: determined.trial.v1.TrialEarlyExit
-		(*trialv1.TrialMetrics)(nil),                        // 108: determined.trial.v1.TrialMetrics
-		(*trialv1.TrialRunnerMetadata)(nil),                 // 109: determined.trial.v1.TrialRunnerMetadata
-	}
-)
-
+var file_determined_api_v1_trial_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_determined_api_v1_trial_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
+var file_determined_api_v1_trial_proto_goTypes = []interface{}{
+	(Scale)(0),                                          // 0: determined.api.v1.Scale
+	(XAxis)(0),                                          // 1: determined.api.v1.XAxis
+	(TrialSorter_Namespace)(0),                          // 2: determined.api.v1.TrialSorter.Namespace
+	(GetTrialCheckpointsRequest_SortBy)(0),              // 3: determined.api.v1.GetTrialCheckpointsRequest.SortBy
+	(GetExperimentTrialsRequest_SortBy)(0),              // 4: determined.api.v1.GetExperimentTrialsRequest.SortBy
+	(GetTrialWorkloadsRequest_FilterOption)(0),          // 5: determined.api.v1.GetTrialWorkloadsRequest.FilterOption
+	(*SummarizedMetric)(nil),                            // 6: determined.api.v1.SummarizedMetric
+	(*WorkloadContainer)(nil),                           // 7: determined.api.v1.WorkloadContainer
+	(*ColumnFilter)(nil),                                // 8: determined.api.v1.ColumnFilter
+	(*TrialTag)(nil),                                    // 9: determined.api.v1.TrialTag
+	(*TrialSorter)(nil),                                 // 10: determined.api.v1.TrialSorter
+	(*TrialFilters)(nil),                                // 11: determined.api.v1.TrialFilters
+	(*QueryTrialsRequest)(nil),                          // 12: determined.api.v1.QueryTrialsRequest
+	(*AugmentedTrial)(nil),                              // 13: determined.api.v1.AugmentedTrial
+	(*QueryTrialsResponse)(nil),                         // 14: determined.api.v1.QueryTrialsResponse
+	(*TrialPatch)(nil),                                  // 15: determined.api.v1.TrialPatch
+	(*UpdateTrialTagsRequest)(nil),                      // 16: determined.api.v1.UpdateTrialTagsRequest
+	(*UpdateTrialTagsResponse)(nil),                     // 17: determined.api.v1.UpdateTrialTagsResponse
+	(*TrialsCollection)(nil),                            // 18: determined.api.v1.TrialsCollection
+	(*GetTrialsCollectionsRequest)(nil),                 // 19: determined.api.v1.GetTrialsCollectionsRequest
+	(*GetTrialsCollectionsResponse)(nil),                // 20: determined.api.v1.GetTrialsCollectionsResponse
+	(*CreateTrialsCollectionRequest)(nil),               // 21: determined.api.v1.CreateTrialsCollectionRequest
+	(*CreateTrialsCollectionResponse)(nil),              // 22: determined.api.v1.CreateTrialsCollectionResponse
+	(*PatchTrialsCollectionRequest)(nil),                // 23: determined.api.v1.PatchTrialsCollectionRequest
+	(*PatchTrialsCollectionResponse)(nil),               // 24: determined.api.v1.PatchTrialsCollectionResponse
+	(*DeleteTrialsCollectionRequest)(nil),               // 25: determined.api.v1.DeleteTrialsCollectionRequest
+	(*DeleteTrialsCollectionResponse)(nil),              // 26: determined.api.v1.DeleteTrialsCollectionResponse
+	(*TrialLogsRequest)(nil),                            // 27: determined.api.v1.TrialLogsRequest
+	(*TrialLogsResponse)(nil),                           // 28: determined.api.v1.TrialLogsResponse
+	(*TrialLogsFieldsRequest)(nil),                      // 29: determined.api.v1.TrialLogsFieldsRequest
+	(*TrialLogsFieldsResponse)(nil),                     // 30: determined.api.v1.TrialLogsFieldsResponse
+	(*GetTrialCheckpointsRequest)(nil),                  // 31: determined.api.v1.GetTrialCheckpointsRequest
+	(*GetTrialCheckpointsResponse)(nil),                 // 32: determined.api.v1.GetTrialCheckpointsResponse
+	(*KillTrialRequest)(nil),                            // 33: determined.api.v1.KillTrialRequest
+	(*KillTrialResponse)(nil),                           // 34: determined.api.v1.KillTrialResponse
+	(*GetExperimentTrialsRequest)(nil),                  // 35: determined.api.v1.GetExperimentTrialsRequest
+	(*GetExperimentTrialsResponse)(nil),                 // 36: determined.api.v1.GetExperimentTrialsResponse
+	(*GetTrialRequest)(nil),                             // 37: determined.api.v1.GetTrialRequest
+	(*GetTrialResponse)(nil),                            // 38: determined.api.v1.GetTrialResponse
+	(*GetTrialWorkloadsRequest)(nil),                    // 39: determined.api.v1.GetTrialWorkloadsRequest
+	(*GetTrialWorkloadsResponse)(nil),                   // 40: determined.api.v1.GetTrialWorkloadsResponse
+	(*GetTrialProfilerMetricsRequest)(nil),              // 41: determined.api.v1.GetTrialProfilerMetricsRequest
+	(*GetTrialProfilerMetricsResponse)(nil),             // 42: determined.api.v1.GetTrialProfilerMetricsResponse
+	(*GetTrialProfilerAvailableSeriesRequest)(nil),      // 43: determined.api.v1.GetTrialProfilerAvailableSeriesRequest
+	(*GetTrialProfilerAvailableSeriesResponse)(nil),     // 44: determined.api.v1.GetTrialProfilerAvailableSeriesResponse
+	(*PostTrialProfilerMetricsBatchRequest)(nil),        // 45: determined.api.v1.PostTrialProfilerMetricsBatchRequest
+	(*PostTrialProfilerMetricsBatchResponse)(nil),       // 46: determined.api.v1.PostTrialProfilerMetricsBatchResponse
+	(*SummarizeTrialRequest)(nil),                       // 47: determined.api.v1.SummarizeTrialRequest
+	(*SummarizeTrialResponse)(nil),                      // 48: determined.api.v1.SummarizeTrialResponse
+	(*ComparableTrial)(nil),                             // 49: determined.api.v1.ComparableTrial
+	(*CompareTrialsRequest)(nil),                        // 50: determined.api.v1.CompareTrialsRequest
+	(*CompareTrialsResponse)(nil),                       // 51: determined.api.v1.CompareTrialsResponse
+	(*AllocationPreemptionSignalRequest)(nil),           // 52: determined.api.v1.AllocationPreemptionSignalRequest
+	(*AllocationPreemptionSignalResponse)(nil),          // 53: determined.api.v1.AllocationPreemptionSignalResponse
+	(*AckAllocationPreemptionSignalRequest)(nil),        // 54: determined.api.v1.AckAllocationPreemptionSignalRequest
+	(*AllocationPendingPreemptionSignalRequest)(nil),    // 55: determined.api.v1.AllocationPendingPreemptionSignalRequest
+	(*AllocationPendingPreemptionSignalResponse)(nil),   // 56: determined.api.v1.AllocationPendingPreemptionSignalResponse
+	(*AckAllocationPreemptionSignalResponse)(nil),       // 57: determined.api.v1.AckAllocationPreemptionSignalResponse
+	(*MarkAllocationResourcesDaemonRequest)(nil),        // 58: determined.api.v1.MarkAllocationResourcesDaemonRequest
+	(*MarkAllocationResourcesDaemonResponse)(nil),       // 59: determined.api.v1.MarkAllocationResourcesDaemonResponse
+	(*AllocationRendezvousInfoRequest)(nil),             // 60: determined.api.v1.AllocationRendezvousInfoRequest
+	(*AllocationRendezvousInfoResponse)(nil),            // 61: determined.api.v1.AllocationRendezvousInfoResponse
+	(*PostAllocationProxyAddressRequest)(nil),           // 62: determined.api.v1.PostAllocationProxyAddressRequest
+	(*PostAllocationProxyAddressResponse)(nil),          // 63: determined.api.v1.PostAllocationProxyAddressResponse
+	(*AllocationAllGatherRequest)(nil),                  // 64: determined.api.v1.AllocationAllGatherRequest
+	(*AllocationAllGatherResponse)(nil),                 // 65: determined.api.v1.AllocationAllGatherResponse
+	(*NotifyContainerRunningRequest)(nil),               // 66: determined.api.v1.NotifyContainerRunningRequest
+	(*NotifyContainerRunningResponse)(nil),              // 67: determined.api.v1.NotifyContainerRunningResponse
+	(*GetCurrentTrialSearcherOperationRequest)(nil),     // 68: determined.api.v1.GetCurrentTrialSearcherOperationRequest
+	(*GetCurrentTrialSearcherOperationResponse)(nil),    // 69: determined.api.v1.GetCurrentTrialSearcherOperationResponse
+	(*CompleteTrialSearcherValidationRequest)(nil),      // 70: determined.api.v1.CompleteTrialSearcherValidationRequest
+	(*CompleteTrialSearcherValidationResponse)(nil),     // 71: determined.api.v1.CompleteTrialSearcherValidationResponse
+	(*ReportTrialSearcherEarlyExitRequest)(nil),         // 72: determined.api.v1.ReportTrialSearcherEarlyExitRequest
+	(*ReportTrialSearcherEarlyExitResponse)(nil),        // 73: determined.api.v1.ReportTrialSearcherEarlyExitResponse
+	(*ReportTrialProgressRequest)(nil),                  // 74: determined.api.v1.ReportTrialProgressRequest
+	(*ReportTrialProgressResponse)(nil),                 // 75: determined.api.v1.ReportTrialProgressResponse
+	(*ReportTrialTrainingMetricsRequest)(nil),           // 76: determined.api.v1.ReportTrialTrainingMetricsRequest
+	(*ReportTrialTrainingMetricsResponse)(nil),          // 77: determined.api.v1.ReportTrialTrainingMetricsResponse
+	(*ReportTrialValidationMetricsRequest)(nil),         // 78: determined.api.v1.ReportTrialValidationMetricsRequest
+	(*ReportTrialValidationMetricsResponse)(nil),        // 79: determined.api.v1.ReportTrialValidationMetricsResponse
+	(*PostTrialRunnerMetadataRequest)(nil),              // 80: determined.api.v1.PostTrialRunnerMetadataRequest
+	(*PostTrialRunnerMetadataResponse)(nil),             // 81: determined.api.v1.PostTrialRunnerMetadataResponse
+	(*TrialFilters_RankWithinExp)(nil),                  // 82: determined.api.v1.TrialFilters.RankWithinExp
+	(*UpdateTrialTagsRequest_Ids)(nil),                  // 83: determined.api.v1.UpdateTrialTagsRequest.Ids
+	(*DataPoint)(nil),                                   // 84: determined.api.v1.DataPoint
+	(*DataPointTime)(nil),                               // 85: determined.api.v1.DataPointTime
+	(*DataPointEpoch)(nil),                              // 86: determined.api.v1.DataPointEpoch
+	(MetricType)(0),                                     // 87: determined.api.v1.MetricType
+	(*trialv1.MetricsWorkload)(nil),                     // 88: determined.trial.v1.MetricsWorkload
+	(*trialv1.CheckpointWorkload)(nil),                  // 89: determined.trial.v1.CheckpointWorkload
+	(*commonv1.DoubleFieldFilter)(nil),                  // 90: determined.common.v1.DoubleFieldFilter
+	(OrderBy)(0),                                        // 91: determined.api.v1.OrderBy
+	(*commonv1.TimestampFieldFilter)(nil),               // 92: determined.common.v1.TimestampFieldFilter
+	(trialv1.State)(0),                                  // 93: determined.trial.v1.State
+	(*_struct.Struct)(nil),                              // 94: google.protobuf.Struct
+	(*timestamp.Timestamp)(nil),                         // 95: google.protobuf.Timestamp
+	(logv1.LogLevel)(0),                                 // 96: determined.log.v1.LogLevel
+	(checkpointv1.State)(0),                             // 97: determined.checkpoint.v1.State
+	(*checkpointv1.Checkpoint)(nil),                     // 98: determined.checkpoint.v1.Checkpoint
+	(*Pagination)(nil),                                  // 99: determined.api.v1.Pagination
+	(experimentv1.State)(0),                             // 100: determined.experiment.v1.State
+	(*trialv1.Trial)(nil),                               // 101: determined.trial.v1.Trial
+	(*trialv1.TrialProfilerMetricLabels)(nil),           // 102: determined.trial.v1.TrialProfilerMetricLabels
+	(*trialv1.TrialProfilerMetricsBatch)(nil),           // 103: determined.trial.v1.TrialProfilerMetricsBatch
+	(*trialv1.RendezvousInfo)(nil),                      // 104: determined.trial.v1.RendezvousInfo
+	(*experimentv1.TrialOperation)(nil),                 // 105: determined.experiment.v1.TrialOperation
+	(*experimentv1.CompleteValidateAfterOperation)(nil), // 106: determined.experiment.v1.CompleteValidateAfterOperation
+	(*trialv1.TrialEarlyExit)(nil),                      // 107: determined.trial.v1.TrialEarlyExit
+	(*trialv1.TrialMetrics)(nil),                        // 108: determined.trial.v1.TrialMetrics
+	(*trialv1.TrialRunnerMetadata)(nil),                 // 109: determined.trial.v1.TrialRunnerMetadata
+}
 var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	84,  // 0: determined.api.v1.SummarizedMetric.data:type_name -> determined.api.v1.DataPoint
 	85,  // 1: determined.api.v1.SummarizedMetric.time:type_name -> determined.api.v1.DataPointTime
