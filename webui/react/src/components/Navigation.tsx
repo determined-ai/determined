@@ -50,14 +50,16 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const rbacEnabled = useFeature().isOn('rbac'),
     mockAllPermission = useFeature().isOn('mock_permissions_all'),
     mockReadPermission = useFeature().isOn('mock_permissions_read');
-  usePolling(
-    () => {
-      if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
-        fetchMyRoles();
-      }
-    },
-    { interval: 120000 },
-  );
+  const syncRoles = useCallback(() => {
+    if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
+      fetchMyRoles();
+    }
+  }, [currentUser, fetchMyRoles, rbacEnabled, mockAllPermission, mockReadPermission]);
+
+  useEffect(() => {
+    syncRoles();
+  }, [syncRoles]);
+  usePolling(syncRoles, { interval: 120000 });
 
   return (
     <Spinner spinning={ui.showSpinner}>
