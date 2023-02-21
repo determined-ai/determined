@@ -84,7 +84,7 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
   return {
     __esModule: true,
     ...(await importOriginal<typeof import('hooks/useSettings')>()),
-    default: useSettings,
+    useSettings,
   };
 });
 
@@ -146,7 +146,10 @@ describe('CodeViewer', () => {
     await user.click(button);
 
     await waitFor(() =>
-      expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(123, 'model_def.py'),
+      expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(
+        123,
+        'single-in-records.yaml',
+      ),
     );
   });
 });
