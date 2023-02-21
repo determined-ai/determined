@@ -44,6 +44,14 @@ func (a *ModelAuthZPermissive) CanCreateModel(ctx context.Context,
 	return (&ModelAuthZBasic{}).CanCreateModel(ctx, curUser, workspaceID)
 }
 
+// CanMoveModel always returns true.
+func (a *ModelAuthZPermissive) CanMoveModel(ctx context.Context,
+	curUser model.User, m *modelv1.Model, origin int32, destination int32,
+) error {
+	_ = (&ModelAuthZRBAC{}).CanMoveModel(ctx, curUser, m, origin, destination)
+	return (&ModelAuthZBasic{}).CanMoveModel(ctx, curUser, m, origin, destination)
+}
+
 // FilterReadableModelsQuery returns query and a nil error.
 func (a *ModelAuthZPermissive) FilterReadableModelsQuery(
 	ctx context.Context, curUser model.User, query *bun.SelectQuery,
