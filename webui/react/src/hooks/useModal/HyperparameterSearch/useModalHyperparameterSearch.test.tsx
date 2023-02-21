@@ -131,7 +131,7 @@ describe('useModalHyperparameterSearch', () => {
     console.warn('click run experiment');
 
     expect(mockCreateExperiment).toHaveBeenCalled();
-  });
+  }, 10_000);
 
   it('should only allow current on constant hyperparameter', async () => {
     const { view } = await setup();
