@@ -1,13 +1,17 @@
 import getpass
 from argparse import Namespace
+import shutil
+import sys
 from collections import namedtuple
 from typing import Any, List
+import subprocess
 
 from termcolor import colored
 
 from determined.cli import login_sdk_client
 from determined.common import api
 from determined.common.api import authentication, certs
+from determined.common.api.request import make_url
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
@@ -135,6 +139,28 @@ def token(parsed_args: Namespace) -> None:
     print(token)
 
 
+@authentication.required
+def curl(args: Namespace) -> None:
+    assert authentication.cli_auth is not None
+    if shutil.which("curl") is None:
+        print(colored("curl is not installed on this machine", "red"))
+        sys.exit(1)
+    cmd = [
+        "curl",
+        make_url(args.master, args.path),
+        "-H",
+        f"'Authorization: Bearer {authentication.cli_auth.get_session_token()}'",
+        "-s",
+        args.curl_args or "",
+    ]
+
+    if shutil.which("jq") is not None:
+        cmd.append("| jq .")
+
+    output = subprocess.run(" ".join(cmd), shell=True)
+    sys.exit(output.returncode)
+
+
 AGENT_USER_GROUP_ARGS = [
     Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
     Arg("--agent-user", help="user on the agent to run tasks as"),
@@ -173,7 +199,11 @@ args_description = [
             *AGENT_USER_GROUP_ARGS,
         ]),
         Cmd("whoami", whoami, "print the active user", []),
-        Cmd("token", token, "print the active user's auth token", [])
+        Cmd("token", token, "print the active user's auth token", []),
+        Cmd("curl", curl, "invoke curl", [
+            Arg("path", help="path to curl (e.g. /api/v1/experiments)"),
+            Arg("curl_args", nargs="?"),
+        ])
     ])
 ]  # type: List[Any]
 
