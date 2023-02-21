@@ -58,7 +58,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     syncRoles();
-  }, [currentUser, syncRoles]);
+  }, [syncRoles]);
   usePolling(syncRoles, { interval: 120000 });
 
   return (
