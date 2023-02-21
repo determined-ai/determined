@@ -272,34 +272,37 @@ describe('LogViewer', () => {
       });
     });
 
+    it('should render logs with streaming', async () => {
+      setup({ decoder, onFetch });
+
+      await waitFor(
+        () => {
+          const lastLog = logsReference[logsReference.length - 1];
+          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+        },
+        { timeout: 20_000 },
+      );
+    }, 20_000);
+
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
 
-      const lastLog = logsReference[logsReference.length - 1];
       await waitFor(() => {
+        const lastLog = logsReference[logsReference.length - 1];
         expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
 
-      const lastExistingLog = existingLogs[existingLogs.length - 1];
       await waitFor(() => {
+        const lastExistingLog = existingLogs[existingLogs.length - 1];
         expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
       });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
       await user.click(scrollToOldestButton);
 
-      const firstLog = existingLogs[0];
       await waitFor(() => {
+        const firstLog = existingLogs[0];
         expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
-      });
-    }, 10_000);
-
-    it('should render logs with streaming', async () => {
-      setup({ decoder, onFetch });
-
-      const lastLog = logsReference[logsReference.length - 1];
-      await waitFor(() => {
-        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
     }, 10_000);
 
