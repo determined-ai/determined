@@ -8,7 +8,7 @@ import { compareTrials } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { Metric, MetricContainer, MetricType, RunState, TrialDetails } from 'types';
+import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
@@ -50,7 +50,12 @@ const summarizedMetricToSeries = (summ: MetricContainer): Serie => {
 
 export const useTrialMetrics = (
   trial: TrialDetails | undefined,
-): { data: Record<string, Serie> | undefined; metrics: Metric[] } => {
+): {
+  data: Record<string, Serie> | undefined;
+  metrics: Metric[];
+  scale: Scale;
+  setScale: React.Dispatch<React.SetStateAction<Scale>>;
+} => {
   const trialTerminated = terminalRunStates.has(trial?.state ?? RunState.Active);
 
   const handleMetricNamesError = useCallback(
@@ -66,13 +71,14 @@ export const useTrialMetrics = (
 
   const metrics = useMetricNames(trial?.experimentId, handleMetricNamesError);
   const [data, setData] = useState<Record<MetricName, Serie>>();
+  const [scale, setScale] = useState<Scale>(Scale.Linear);
 
   const fetchTrialSummary = useCallback(async () => {
     if (trial?.id) {
       const response = await compareTrials({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metrics,
-        // scale: scale,
+        scale: scale,
         startBatches: 0,
         trialIds: [trial?.id],
       });
@@ -88,7 +94,7 @@ export const useTrialMetrics = (
         return trialData;
       });
     }
-  }, [metrics, trial?.id]);
+  }, [metrics, trial?.id, scale]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchTrialSummary()]);
@@ -106,5 +112,5 @@ export const useTrialMetrics = (
     stopPolling();
   }
 
-  return { data, metrics };
+  return { data, metrics, scale, setScale };
 };

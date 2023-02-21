@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
@@ -243,18 +243,18 @@ export type ChartsProps = Props[];
  * Config for a grid of LineCharts.
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
  * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
+ * @param {Scale} scale - Scale of chart, can be linear or log
  */
-interface GroupProps {
+export interface GroupProps {
   chartsProps: ChartsProps;
   onXAxisChange: (ax: XAxisDomain) => void;
+  scale: Scale;
+  setScale: React.Dispatch<React.SetStateAction<Scale>>;
   xAxis: XAxisDomain;
 }
 
 export const ChartGrid: React.FC<GroupProps> = React.memo(
-  ({ chartsProps, xAxis, onXAxisChange }: GroupProps) => {
-    // Scale control
-    const [scale, setScale] = useState<Scale>(Scale.Linear);
-
+  ({ chartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
     // X-Axis control
     const xAxisOptions = useMemo(() => {
       const xOpts = new Set<string>();

@@ -56,7 +56,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
-  const { metrics, data } = useTrialMetrics(trial);
+  const { metrics, data, scale, setScale } = useTrialMetrics(trial);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
     const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
@@ -166,7 +166,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
-        <ChartGrid chartsProps={chartsProps} xAxis={xAxis} onXAxisChange={setXAxis} />
+        <ChartGrid
+          chartsProps={chartsProps}
+          scale={scale}
+          setScale={setScale}
+          xAxis={xAxis}
+          onXAxisChange={setXAxis}
+        />
       ) : null}
       {contextHolder}
     </>
