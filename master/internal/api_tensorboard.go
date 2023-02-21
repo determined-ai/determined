@@ -13,9 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/api/apiutils"
-	"github.com/determined-ai/determined/master/internal/authz"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -26,6 +23,8 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
@@ -203,14 +202,6 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
-	if err != nil {
-		return nil, err
-	}
-	if len(exps) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "no experiments found")
-	}
-
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -226,8 +217,19 @@ func (a *apiServer) LaunchTensorboard(
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
 	spec.TaskType = model.TaskTypeTensorboard
+	spec.Metadata.ExperimentIDs = req.ExperimentIds
+	spec.Metadata.TrialIDs = req.TrialIds
+
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
+	}
+
+	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(exps) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "no experiments found")
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -251,9 +253,6 @@ func (a *apiServer) LaunchTensorboard(
 		RawProxyPort:        port,
 		RawDefaultServiceID: ptrs.Ptr(true),
 	})
-
-	spec.Metadata.ExperimentIDs = req.ExperimentIds
-	spec.Metadata.TrialIDs = req.TrialIds
 
 	logDirs := make([]string, 0)
 	uniqMounts := map[string]model.BindMount{}

@@ -997,6 +997,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
+	authZNSC := setupNSCAuthZ()
 	exp := createTestExp(t, api, curUser)
 
 	caseIndividualCalls := []struct {
@@ -1120,6 +1121,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
+			authZNSC.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+				mock.Anything).Return(true, nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				ExperimentIds: []int32{int32(id)},
 			})

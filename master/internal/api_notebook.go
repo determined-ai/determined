@@ -16,6 +16,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -31,6 +32,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -198,10 +200,17 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		if err := command.AuthZProvider.Get().CanGetTensorboard(
+		ok, err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
-		); err != nil {
+		)
+		if err != nil {
 			return err
+		} else if !ok {
+			return apiutils.MapAndFilterErrors(authz.PermissionDeniedError{
+				RequiredPermissions: []rbacv1.PermissionType{
+					rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS,
+				},
+			}, nil, nil)
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(
