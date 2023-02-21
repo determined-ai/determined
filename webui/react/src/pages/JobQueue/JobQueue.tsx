@@ -215,7 +215,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
       if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
     }
-  }, [settings.columns, settingsColumns, updateSettings]);
+  }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
     return defaultColumns
