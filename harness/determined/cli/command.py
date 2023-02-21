@@ -1,7 +1,7 @@
 import base64
 import json
 import re
-from argparse import Namespace
+from argparse import ArgumentError, Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -10,7 +10,6 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import render
-from determined.cli.errors import CliArgError
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
 
@@ -200,7 +199,7 @@ def list_tasks(args: Namespace) -> None:
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            raise CliArgError(f'Workspace "{args.workspace_name}" not found.')
+            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found.')
 
         params["workspaceId"] = workspace.id
 

@@ -1,10 +1,9 @@
 import json
-from argparse import Namespace
+from argparse import ArgumentError, Namespace
 from time import sleep
 from typing import Any, Dict, List, Optional, Sequence
 
 from determined import cli
-from determined.cli.errors import CliArgError
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
@@ -33,9 +32,9 @@ def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            raise CliArgError(f'Workspace "{args.workspace_name}" not found')
+            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found')
         if workspace.archived:
-            raise CliArgError(f'Workspace "{args.workspace_name}" is archived')
+            raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived')
         workspace_id = workspace.id
     return workspace_id
 

@@ -5,7 +5,7 @@ import numbers
 import pathlib
 import sys
 import time
-from argparse import FileType, Namespace
+from argparse import ArgumentError, FileType, Namespace
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
@@ -19,7 +19,7 @@ import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.cli.errors import CliArgError, CliError
+from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings, logs
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -121,7 +121,7 @@ def _parse_config_text_or_exit(
     experiment_config = util.safe_load_yaml_with_exceptions(config_text)
 
     if not experiment_config or not isinstance(experiment_config, dict):
-        raise CliArgError(f"Error: invalid experiment config file {path}")
+        raise ArgumentError(None, f"Error: invalid experiment config file {path}")
 
     parse_config_overrides(experiment_config, config_overrides)
 

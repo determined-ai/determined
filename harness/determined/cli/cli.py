@@ -3,7 +3,13 @@ import os
 import socket
 import ssl
 import sys
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType, Namespace
+from argparse import (
+    ArgumentDefaultsHelpFormatter,
+    ArgumentError,
+    ArgumentParser,
+    FileType,
+    Namespace,
+)
 from typing import List, Sequence, Union, cast
 
 import argcomplete
@@ -284,6 +290,8 @@ def main(
             if e.e_stack:
                 print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
             die(f"{e.name}: {e.message}", exit_code=e.exit_code)
+        except ArgumentError as e:
+            die(f"Argument Error: {e.message}")
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
