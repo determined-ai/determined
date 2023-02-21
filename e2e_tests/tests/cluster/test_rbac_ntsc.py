@@ -375,11 +375,10 @@ def test_ntsc_iface_access() -> None:
                     session, typ, created_id, 1
                 )  # user 2 should not be able to set priority or know it exists.
             assert e.value.status_code == 404, f"user 2 should not be able to set priority {typ}"
-            if typ != "tensorboard":
-                with pytest.raises(errors.ForbiddenException):
-                    launch_ntsc(session, workspaces[0].id, typ, experiment_id)
-                with pytest.raises(errors.ForbiddenException):
-                    launch_ntsc(session, workspaces[1].id, typ, experiment_id)
+            with pytest.raises(errors.ForbiddenException):
+                launch_ntsc(session, workspaces[0].id, typ, experiment_id)
+            with pytest.raises(errors.ForbiddenException):
+                launch_ntsc(session, workspaces[1].id, typ, experiment_id)
 
             # test visibility
             created_id2 = launch_ntsc(
