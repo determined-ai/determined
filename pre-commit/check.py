@@ -54,11 +54,12 @@ rules: Dict[Path, Union[str, List[str]]] = {
     root
     / "proto": [
         "make fmt check build",
-        "make -C ../bindings build check",
+        "make -C ../bindings build && make -C ../webui/react check",
     ],
     # root / "webui" / "react": ["make -j fmt; make -j check", "make -j test && make -j build"], # mostly covered by proper precommit checks
     root
     / "master": [
+        "make -C ../proto build",
         "make build",
         "make fmt check",
     ],
