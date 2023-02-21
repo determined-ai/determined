@@ -1,9 +1,16 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
-import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
-import { Settings, settingsConfigForTrial } from 'components/LogViewer/LogViewerFilters.settings';
+import LogViewer, {
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+} from 'components/kit/LogViewer/LogViewer';
+import LogViewerFilters, { Filters } from 'components/kit/LogViewer/LogViewerFilters';
+import {
+  Settings,
+  settingsConfigForTrial,
+} from 'components/kit/LogViewer/LogViewerFilters.settings';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';

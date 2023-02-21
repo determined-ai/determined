@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import Tooltip from 'components/kit/Tooltip';
 import LogViewerEntry, {
   DATETIME_FORMAT,
   LogEntry,
   MAX_DATETIME_LENGTH,
-} from 'components/LogViewer/LogViewerEntry';
+} from 'components/kit/LogViewer/LogViewerEntry';
+import Tooltip from 'components/kit/Tooltip';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
