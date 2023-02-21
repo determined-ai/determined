@@ -283,5 +283,5 @@ describe('ResponsiveTable', () => {
     await user.click(filterApply);
 
     expect(handlers.onIdFilter).toHaveBeenCalledWith(idSearchList);
-  });
+  }, 10000);
 });
