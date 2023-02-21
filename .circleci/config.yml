@@ -1344,7 +1344,7 @@ jobs:
       - store_test_results:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
-          path: webui/react/coverage/lcov-report
+          path: webui/react/coverage
 
   test-intg-downstream:
     docker:
