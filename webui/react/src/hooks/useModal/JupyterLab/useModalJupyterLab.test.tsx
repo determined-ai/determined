@@ -97,8 +97,7 @@ const setup = async () => {
     </BrowserRouter>,
   );
 
-  const button = await screen.findByRole('button');
-  await waitFor(() => user.click(button));
+  await user.click(await screen.findByRole('button'));
 
   return user;
 };
