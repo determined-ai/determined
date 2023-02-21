@@ -9,18 +9,18 @@ import (
 //
 // The Copyable psuedointerface is defined as:
 //
-//     "x.Copy() returns another object with the same type as x".
+//	"x.Copy() returns another object with the same type as x".
 //
 // It is a "psuedointerface", not a real interface, because it can't actually be expressed in go
 // generics.  If you wanted to approximate it, you would end up with something like:
 //
-//     // CopyReturnsT has a Copy() that returns a T.
-//     type CopyReturnsT[T any] interface {
-//         Copy() T
-//     }
+//	// CopyReturnsT has a Copy() that returns a T.
+//	type CopyReturnsT[T any] interface {
+//	    Copy() T
+//	}
 //
-//     // Operates on any type T which has have a .Copy() that returns a T.
-//     func Copy[T CopyReturnsT[T]](src T) T { ... }
+//	// Operates on any type T which has have a .Copy() that returns a T.
+//	func Copy[T CopyReturnsT[T]](src T) T { ... }
 //
 // But since the resulting constraint [T CopyReturns[T]] isn't a concrete interface, we can't check
 // for it in reflect code, and instead we just manually check if an object meets our definition of

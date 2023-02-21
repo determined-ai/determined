@@ -139,7 +139,7 @@ func (d *Client) ReattachContainer(
 		if !containerInfo.State.Running {
 			return nil, ptrs.Ptr(aproto.ExitCode(containerInfo.State.ExitCode)), nil
 		}
-		return &Container{
+		return &Container{ //nolint: staticcheck // We mean to terminate this loop.
 			ContainerInfo: containerInfo,
 			ContainerWaiter: ContainerWaiter{
 				Waiter: waiter,

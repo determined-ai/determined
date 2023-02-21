@@ -261,7 +261,7 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 		}
 	}
 
-	// Terminate instances to keep the number of instances less than than the desired size.
+	// Terminate instances to keep the number of instances less than the desired size.
 	// We start by terminating unfulfilled spot requests, then idle instances, then
 	// disconnected instances, then the most recently provisioned instances
 	for id := range s.pending {

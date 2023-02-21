@@ -11,7 +11,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"gopkg.in/guregu/null.v3"
@@ -74,7 +73,7 @@ func AddUserExec(user *model.User) error {
 	defer func() {
 		txErr := tx.Rollback()
 		if txErr != nil && txErr != sql.ErrTxDone {
-			logrus.WithError(txErr).Error("error rolling back transaction in AddUserExec")
+			log.WithError(txErr).Error("error rolling back transaction in AddUserExec")
 		}
 	}()
 

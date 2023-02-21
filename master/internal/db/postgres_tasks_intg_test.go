@@ -205,6 +205,7 @@ func TestExhaustiveEnums(t *testing.T) {
 		q := fmt.Sprintf("SELECT unnest(enum_range(NULL::%s))::text", c.postgresType)
 		rows, err := db.sql.Queryx(q)
 		require.NoError(t, err, "querying postgres enum members")
+		defer rows.Close()
 		for rows.Next() {
 			var text string
 			require.NoError(t, rows.Scan(&text), "scanning enum value")

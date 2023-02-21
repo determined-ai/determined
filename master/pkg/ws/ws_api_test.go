@@ -60,6 +60,7 @@ func TestWebsocket(t *testing.T) {
 	defer s.Close()
 
 	t.Log("connecting websocket to server")
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(s.URL, "http"), nil)
 	if err != nil {
 		t.Errorf("failed to dial websocket: %v", err)
@@ -143,6 +144,7 @@ func TestWebsocketConcurrent(t *testing.T) {
 	defer s.Close()
 
 	t.Log("connecting to websocket server")
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(s.URL, "http"), nil)
 	if err != nil {
 		t.Errorf("dialing websocket: %v", err)

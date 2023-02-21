@@ -86,7 +86,7 @@ func minExpConfToYaml(t *testing.T) string {
 	return string(bytes)
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 var minExpConfig = expconf.ExperimentConfig{
 	RawResources: &expconf.ResourcesConfig{
 		RawResourcePool: ptrs.Ptr("kubernetes"),
@@ -172,7 +172,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
@@ -271,7 +271,7 @@ checkpoint_storage:
 	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
 	api, _, ctx := setupAPITest(t, nil)
@@ -602,7 +602,7 @@ func TestLegacyExperiments(t *testing.T) {
 
 var res *apiv1.GetExperimentsResponse // Avoid compiler optimizing res out.
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func benchmarkGetExperiments(b *testing.B, n int) {
 	// This should be fine as long as no error happens. For some
 	// reason passing nil gives an error. In addition this
@@ -681,7 +681,7 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func createTestExpWithProjectID(
 	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
 ) *model.Experiment {

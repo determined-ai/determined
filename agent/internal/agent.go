@@ -5,7 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -268,7 +269,7 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 			return nil, errors.Wrap(err, "error dialing master")
 		}
 
-		b, rErr := ioutil.ReadAll(resp.Body)
+		b, rErr := io.ReadAll(resp.Body)
 		if rErr == nil && strings.Contains(string(b), aproto.ErrAgentMustReconnect.Error()) {
 			return nil, aproto.ErrAgentMustReconnect
 		}
@@ -453,7 +454,7 @@ func (a *Agent) tlsConfig() (*tls.Config, error) {
 
 	var pool *x509.CertPool
 	if certFile := a.opts.Security.TLS.MasterCert; certFile != "" {
-		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
+		certData, err := os.ReadFile(certFile) //nolint:gosec
 		if err != nil {
 			msg := fmt.Sprintf("failed to read certificate file %q", certFile)
 			return nil, errors.Wrapf(err, msg)

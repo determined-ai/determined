@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"sort"
 	"strconv"
@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	dclient "github.com/docker/docker/client"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
@@ -287,7 +286,7 @@ func mockLogAcceptor(t *testing.T, port int) (chan model.TaskLog, func()) {
 	e.Listener = lis
 	logBuffer := make(chan model.TaskLog)
 	e.POST("/task-logs", func(ctx echo.Context) error {
-		body, err := ioutil.ReadAll(ctx.Request().Body)
+		body, err := io.ReadAll(ctx.Request().Body)
 		if err != nil {
 			return err
 		}
@@ -321,7 +320,7 @@ func mockLogAcceptor(t *testing.T, port int) (chan model.TaskLog, func()) {
 func runContainerWithLogs(
 	t *testing.T, fakeLogs string, aID string, tID model.TaskID, fluentPort int,
 ) {
-	rawCl, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
+	rawCl, err := dclient.NewClientWithOpts(dclient.FromEnv, dclient.WithVersion("1.40"))
 	require.NoError(t, err, "error connecting to Docker daemon")
 	dCli := docker.NewClient(rawCl)
 

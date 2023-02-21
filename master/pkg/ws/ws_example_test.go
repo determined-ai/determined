@@ -47,6 +47,7 @@ func Example() {
 	defer ts.Close()
 
 	// Connect a Websocket to the server with using `github.com/gorilla/websocket`.
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(ts.URL, "http"), nil)
 	if err != nil {
 		log.Println(err)

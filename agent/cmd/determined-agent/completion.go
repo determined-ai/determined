@@ -17,7 +17,7 @@ func newCompletionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:       "completion",
 		Short:     "generates shell completion scripts",
-		Args:      cobra.ExactValidArgs(1),
+		Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		ValidArgs: []string{bashCompletion, zshCompletion, powerShellCompletion},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch shell := args[0]; shell {

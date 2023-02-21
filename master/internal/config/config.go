@@ -33,8 +33,10 @@ var (
 )
 
 // KubernetesDefaultPriority is the default K8 resource manager priority.
-const KubernetesDefaultPriority = 50
-const sslModeDisable = "disable"
+const (
+	KubernetesDefaultPriority = 50
+	sslModeDisable            = "disable"
+)
 
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.

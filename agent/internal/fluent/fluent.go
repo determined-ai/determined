@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -352,7 +352,7 @@ func pullImageByName(ctx context.Context, docker *docker.Client, imageName strin
 		if pErr != nil {
 			return pErr
 		}
-		if _, pErr = ioutil.ReadAll(pullResponse); pErr != nil {
+		if _, pErr = io.ReadAll(pullResponse); pErr != nil {
 			return pErr
 		}
 		if pErr = pullResponse.Close(); pErr != nil {

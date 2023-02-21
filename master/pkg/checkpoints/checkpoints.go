@@ -20,11 +20,11 @@ type CheckpointDownloader interface {
 
 // NewDownloader returns a new CheckpointDownloader that writes to w.
 //
-// - w: the underlying Writer that CheckpointDownloader writes to
-// - id: the UUID string of the checkpoint to be downloaded
-// - storageConfig: the CheckpointStorageConfig
-// - archiveType: The ArchiveType (file format) in which the checkpoint shall
-//                be downloaded
+//   - w: the underlying Writer that CheckpointDownloader writes to
+//   - id: the UUID string of the checkpoint to be downloaded
+//   - storageConfig: the CheckpointStorageConfig
+//   - archiveType: The ArchiveType (file format) in which the checkpoint shall
+//     be downloaded
 func NewDownloader(
 	w io.Writer,
 	id string,

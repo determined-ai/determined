@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -33,7 +32,7 @@ func readConfigFile(configPath string) ([]byte, error) {
 		}
 		return nil, errors.Wrap(err, "error finding configuration file")
 	}
-	bs, err := ioutil.ReadFile(configPath) // #nosec G304
+	bs, err := os.ReadFile(configPath) // #nosec G304
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading configuration file")
 	}

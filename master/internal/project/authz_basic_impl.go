@@ -59,7 +59,7 @@ func shouldBeAdminOrOwnWorkspaceOrProject(
 	return nil
 }
 
-// CanSetProjectName returns an error if if a non admin isn't the owner of the project or workspace.
+// CanSetProjectName returns an error if a non admin isn't the owner of the project or workspace.
 func (a *ProjectAuthZBasic) CanSetProjectName(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) error {
@@ -80,7 +80,7 @@ func (a *ProjectAuthZBasic) CanSetProjectDescription(
 	return nil
 }
 
-// CanDeleteProject returns an error if if a non admin isn't the owner of the project or workspace.
+// CanDeleteProject returns an error if a non admin isn't the owner of the project or workspace.
 func (a *ProjectAuthZBasic) CanDeleteProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) error {

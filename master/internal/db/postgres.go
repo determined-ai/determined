@@ -75,7 +75,7 @@ func GetTokenKeys() *model.AuthTokenKeypair {
 }
 
 // Bun returns the singleton database connection through the bun library. bun is the database
-// library we we have decided to use for new code in the future due to its superior composability
+// library we have decided to use for new code in the future due to its superior composability
 // over bare SQL, and its superior flexibility over e.g. gorm.  New code should not use the old bare
 // SQL tooling.
 func Bun() *bun.DB {
@@ -361,7 +361,7 @@ func (db *PgDB) queryRowsWithParser(
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
 
-	if err := rows.Close(); err != nil {
+	if err := rows.Close(); err != nil { //nolint: sqlclosecheck
 		return errors.Wrapf(err, "rows.Close()")
 	}
 

@@ -1,6 +1,6 @@
 module github.com/determined-ai/determined/agent
 
-go 1.18
+go 1.20
 
 require (
 	github.com/determined-ai/determined/master v0.0.0
