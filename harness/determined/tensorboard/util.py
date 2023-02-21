@@ -82,7 +82,7 @@ def _get_rank_aware_path_pytorch_profiler(
     path_parts = path.parts
     file_name = path_parts[-1]
     match = pytorch_profiler_file_pattern.match(file_name)
-    print(f"SWY: in _get_rank_aware_path_pytorch_profiler input is {path}")
+
     if match:
         match_groups = match.groups()
 
