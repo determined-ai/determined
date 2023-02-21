@@ -261,7 +261,6 @@ type dispatcherResourceManager struct {
 	reqList                       *tasklist.TaskList
 	groups                        map[*actor.Ref]*tasklist.Group
 	dispatchIDToAllocationID      map[string]model.AllocationID
-	slotsUsedPerGroup             map[*tasklist.Group]int
 	masterTLSConfig               model.TLSClientConfig
 	loggingConfig                 model.LoggingConfig
 	jobWatcher                    *launcherMonitor
@@ -316,7 +315,6 @@ func newDispatcherResourceManager(
 		reqList:                  tasklist.New(),
 		groups:                   make(map[*actor.Ref]*tasklist.Group),
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
-		slotsUsedPerGroup:        make(map[*tasklist.Group]int),
 
 		masterTLSConfig:      masterTLSConfig,
 		loggingConfig:        loggingConfig,
@@ -849,7 +847,6 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		m.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
 
 	case tasklist.GroupActorStopped:
-		delete(m.slotsUsedPerGroup, m.groups[msg.Ref])
 		delete(m.groups, msg.Ref)
 
 	case sproto.SetAllocationName:
@@ -1729,8 +1726,6 @@ func (m *dispatcherResourceManager) assignResources(
 		}
 	}
 
-	m.slotsUsedPerGroup[m.groups[req.Group]] += req.SlotsNeeded
-
 	if len(rID) == 0 {
 		rID = sproto.ResourcesID(uuid.NewString())
 	}
@@ -1781,12 +1776,6 @@ func (m *dispatcherResourceManager) assignResources(
 func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	m.reqList.RemoveTaskByHandler(handler)
-
-	if req, ok := m.reqList.TaskByHandler(handler); ok {
-		if group := m.groups[handler]; group != nil {
-			m.slotsUsedPerGroup[group] -= req.SlotsNeeded
-		}
-	}
 }
 
 // Used on DEBUG startup, to queue a terminate and delete all dispatches in the DB
@@ -1834,7 +1823,6 @@ func (m *dispatcherResourceManager) getOrCreateGroup(
 	priority := config.KubernetesDefaultPriority
 	g := &tasklist.Group{Handler: handler, Weight: 1, Priority: &priority}
 	m.groups[handler] = g
-	m.slotsUsedPerGroup[g] = 0
 
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
 		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{})
@@ -1845,14 +1833,8 @@ func (m *dispatcherResourceManager) getOrCreateGroup(
 func (m *dispatcherResourceManager) schedulePendingTasks(ctx *actor.Context) {
 	for it := m.reqList.Iterator(); it.Next(); {
 		req := it.Value()
-		group := m.groups[req.Group]
 		assigned := m.reqList.Allocation(req.AllocationRef)
 		if !tasklist.AssignmentIsScheduled(assigned) {
-			if maxSlots := group.MaxSlots; maxSlots != nil {
-				if m.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
-					continue
-				}
-			}
 			m.assignResources(ctx, req)
 		}
 	}

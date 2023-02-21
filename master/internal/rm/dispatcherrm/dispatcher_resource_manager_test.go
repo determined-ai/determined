@@ -464,7 +464,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 		hpcResourcesManifest     *launcher.Manifest
 		reqList                  *tasklist.TaskList
 		groups                   map[*actor.Ref]*tasklist.Group
-		slotsUsedPerGroup        map[*tasklist.Group]int
 		dispatchIDToAllocationID map[string]model.AllocationID
 		masterTLSConfig          model.TLSClientConfig
 		loggingConfig            model.LoggingConfig
@@ -574,7 +573,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 				hpcResourcesManifest:     tt.fields.hpcResourcesManifest,
 				reqList:                  tt.fields.reqList,
 				groups:                   tt.fields.groups,
-				slotsUsedPerGroup:        tt.fields.slotsUsedPerGroup,
 				dispatchIDToAllocationID: tt.fields.dispatchIDToAllocationID,
 				masterTLSConfig:          tt.fields.masterTLSConfig,
 				loggingConfig:            tt.fields.loggingConfig,
