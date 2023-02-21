@@ -253,7 +253,7 @@ describe('LogViewer', () => {
 
   describe('streaming logs', () => {
     const streamingRounds = 5;
-    const existingLogCount = 6;
+    const existingLogCount = 5000;
     let canceler: AbortController;
     let existingLogs: TestLog[];
     let logsReference: TestLog[];
