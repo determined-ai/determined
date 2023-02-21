@@ -32,7 +32,8 @@ const Card: Card = ({
   href,
 }: CardProps) => {
   const classnames = [css.base];
-  if (onClick || clickable) classnames.push(css.clickable);
+  const clicky = onClick || clickable || href;
+  if (clicky) classnames.push(css.clickable);
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
   return (
@@ -46,7 +47,7 @@ const Card: Card = ({
       <div
         className={classnames.join(' ')}
         style={{ minHeight: `${height}px`, width: `${width}px` }}
-        tabIndex={onClick ? 0 : -1}
+        tabIndex={clicky ? 0 : -1}
         onClick={onClick}>
         {children && <section className={css.content}>{children}</section>}
         {actionMenu && (

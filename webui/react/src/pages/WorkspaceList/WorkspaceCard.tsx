@@ -1,19 +1,17 @@
 import { PushpinOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Tooltip from 'components/kit/Tooltip';
+import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
-import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import { routeToReactUrl } from 'shared/utils/routes';
+import { pluralizer } from 'shared/utils/string';
 import { useUsers } from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 
-import WorkspaceActionDropdown from './WorkspaceActionDropdown';
+import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
 
 interface Props {
@@ -22,9 +20,10 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
-  const handleCardClick = useCallback(() => {
-    routeToReactUrl(paths.workspaceDetails(workspace.id));
-  }, [workspace.id]);
+  const { menuProps, contextHolders } = useWorkspaceActionMenu({
+    onComplete: fetchWorkspaces,
+    workspace,
+  });
 
   const users = Loadable.match(useUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
@@ -32,43 +31,39 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   });
   const user = users.find((user) => user.id === workspace.userId);
 
+  const classnames = [css.base];
+  if (workspace.archived) classnames.push(css.archived);
+
   return (
-    <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspaces}>
-      <div className={css.base} onClick={handleCardClick}>
-        <DynamicIcon name={workspace.name} size={70} />
+    <Card
+      actionMenu={!workspace.immutable ? menuProps : undefined}
+      height={110}
+      href={paths.workspaceDetails(workspace.id)}
+      width={335}>
+      <div className={classnames.join(' ')}>
+        <div className={css.icon}>
+          <DynamicIcon name={workspace.name} size={78} />
+        </div>
         <div className={css.info}>
           <div className={css.nameRow}>
-            <h6 className={css.name}>
-              <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                <Typography.Paragraph ellipsis={true}>{workspace.name}</Typography.Paragraph>
-              </Link>
-            </h6>
-            {workspace.archived && (
-              <Tooltip title="Archived">
-                <div>
-                  <Icon name="archive" size="small" />
-                </div>
-              </Tooltip>
-            )}
+            <Typography.Title className={css.name} ellipsis={{ rows: 1, tooltip: true }} level={5}>
+              {workspace.name}
+            </Typography.Title>
+            {workspace.pinned && <PushpinOutlined className={css.pinned} />}
           </div>
           <p className={css.projects}>
-            {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
+            {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
           </p>
-          <div className={css.avatar}>
-            <Avatar user={user} />
+          <div className={css.avatarRow}>
+            <div className={css.avatar}>
+              <Avatar user={user} />
+            </div>
+            {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
           </div>
         </div>
-        {workspace.pinned && <PushpinOutlined className={css.pinned} />}
-        {!workspace.immutable && (
-          <WorkspaceActionDropdown
-            className={css.action}
-            direction="horizontal"
-            workspace={workspace}
-            onComplete={fetchWorkspaces}
-          />
-        )}
       </div>
-    </WorkspaceActionDropdown>
+      {contextHolders}
+    </Card>
   );
 };
 

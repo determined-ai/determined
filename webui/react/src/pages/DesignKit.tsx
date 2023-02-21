@@ -41,11 +41,13 @@ import { ValueOf } from 'shared/types';
 import {
   generateTestExperimentData,
   generateTestProjectData,
+  generateTestWorkspaceData,
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
+import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
@@ -994,6 +996,7 @@ const PaginationSection: React.FC = () => {
 const CardsSection: React.FC = () => {
   const rps = resourcePools as unknown as ResourcePool[];
   const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
+  const workspace = generateTestWorkspaceData();
 
   return (
     <ComponentSection id="Cards" title="Cards">
@@ -1063,6 +1066,13 @@ const CardsSection: React.FC = () => {
                 name: 'Project with a very long name that spans many lines and eventually gets cut off at some point when there is a lot of text',
               }}
             />
+          </Card.Group>
+          <li>
+            Workspace card (<code>{'<WorkspaceCard>'}</code>)
+          </li>
+          <Card.Group>
+            <WorkspaceCard workspace={workspace} />
+            <WorkspaceCard workspace={{ ...workspace, archived: true }} />
           </Card.Group>
           <li>
             Stats overview (<code>{'<OverviewStats>'}</code>)

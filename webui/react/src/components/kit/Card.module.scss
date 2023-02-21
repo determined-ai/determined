@@ -11,15 +11,17 @@
   padding: var(--outside-padding);
   position: relative;
   transition: var(--transition-duration) background-color;
+  transition-delay: var(--transition-delay);
 
   .action {
-    background-color: inherit;
+    background-color: var(--theme-surface-weak);
     opacity: 0;
     padding: 2px;
     position: absolute;
     right: var(--outside-padding);
     top: var(--outside-padding);
     transition: var(--transition-duration) opacity;
+    transition-delay: var(--transition-delay);
   }
   .content {
     display: flex;
@@ -34,13 +36,11 @@
     cursor: pointer;
   }
   &:hover,
-  &:focus {
+  &:focus-within {
     background-color: var(--theme-surface-weak);
-    transition-delay: var(--transition-delay);
 
     .action {
       opacity: 1;
-      transition-delay: var(--transition-delay);
     }
   }
   &:focus {
