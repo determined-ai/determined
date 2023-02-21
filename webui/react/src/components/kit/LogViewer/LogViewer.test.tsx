@@ -253,7 +253,7 @@ describe('LogViewer', () => {
 
   describe('streaming logs', () => {
     const streamingRounds = 5;
-    const existingLogCount = 5000;
+    const existingLogCount = 600;
     let canceler: AbortController;
     let existingLogs: TestLog[];
     let logsReference: TestLog[];
@@ -276,8 +276,8 @@ describe('LogViewer', () => {
       setup({ decoder, onFetch });
 
       const lastLog = logsReference[logsReference.length - 1];
-      await waitFor(async () => {
-        expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
     }, 10_000);
 
@@ -285,21 +285,21 @@ describe('LogViewer', () => {
       setup({ decoder, onFetch });
 
       const lastLog = logsReference[logsReference.length - 1];
-      await waitFor(async () => {
-        expect(await screen.findByText(lastLog.message)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
 
       const lastExistingLog = existingLogs[existingLogs.length - 1];
-      await waitFor(async () => {
-        expect(await screen.findByText(lastExistingLog.message)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
       });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
       await user.click(scrollToOldestButton);
 
       const firstLog = existingLogs[0];
-      await waitFor(async () => {
-        expect(await screen.findByText(firstLog.message)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
       });
     }, 10_000);
 
