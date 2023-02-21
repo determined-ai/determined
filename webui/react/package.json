@@ -25,7 +25,7 @@
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
-    "test:coverage": "vitest --run --coverage",
+    "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
