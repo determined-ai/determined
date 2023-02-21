@@ -17,7 +17,6 @@ export interface Settings extends Omit<InteractiveTableSettings, 'tableLimit' | 
 }
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/hyperparameters',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
