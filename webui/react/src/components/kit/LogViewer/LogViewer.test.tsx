@@ -272,15 +272,6 @@ describe('LogViewer', () => {
       });
     });
 
-    it('should render logs with streaming', async () => {
-      setup({ decoder, onFetch });
-
-      const lastLog = logsReference[logsReference.length - 1];
-      await waitFor(() => {
-        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-      });
-    }, 10_000);
-
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
 
@@ -300,6 +291,15 @@ describe('LogViewer', () => {
       const firstLog = existingLogs[0];
       await waitFor(() => {
         expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
+      });
+    }, 10_000);
+
+    it('should render logs with streaming', async () => {
+      setup({ decoder, onFetch });
+
+      const lastLog = logsReference[logsReference.length - 1];
+      await waitFor(() => {
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
     }, 10_000);
 
