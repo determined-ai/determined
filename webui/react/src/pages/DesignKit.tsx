@@ -39,7 +39,6 @@ import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import {
-  generateTestExperimentData,
   generateTestProjectData,
   generateTestWorkspaceData,
 } from 'storybook/shared/generateTestData';
@@ -846,16 +845,16 @@ const FacepileSection: React.FC = () => {
 const UserAvatarSection: React.FC = () => {
   return (
     <ComponentSection id="UserAvatar" title="UserAvatar">
-      <Card>
+      <AntDCard>
         <p>
           A (<code>{'<UserAvatar>'}</code>) represents a user. It consists of a circle containing
           the first letter of the user&apos;s display name or username. On hover, it displays a
           tooltip with the full display name or username.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <UserAvatar />
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
