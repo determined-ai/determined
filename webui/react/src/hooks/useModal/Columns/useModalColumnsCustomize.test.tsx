@@ -231,7 +231,7 @@ describe('useModalCustomizeColumns', () => {
     });
 
     expect(resetButton).not.toBeInTheDocument();
-  }, 10_000);
+  });
 
   it('should add all', async () => {
     const { user, view } = await setup();
