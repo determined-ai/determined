@@ -1022,15 +1022,22 @@ const CardsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Card default</strong>
+        <div>
+          <p>Card with actions</p>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
+        </div>
+        <div>
+          <p>Card without actions</p>
+          <Card />
+        </div>
+        <strong>Card groups</strong>
+        <p>
+          A card group (<code>{'<Card.Group>'}</code>) can be used to display a list or grid of
+          cards.
+        </p>
         <Card.Group>
-          <div>
-            <p>Card with actions</p>
-            <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
-          </div>
-          <div>
-            <p>Card without actions</p>
-            <Card />
-          </div>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
+          <Card />
         </Card.Group>
         <strong>Considerations</strong>
         <ul>

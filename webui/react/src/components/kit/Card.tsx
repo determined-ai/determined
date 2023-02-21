@@ -38,12 +38,17 @@ const Card: Card = ({
   return (
     <ConditionalWrapper
       condition={!!href}
-      wrapper={(children) => <Link path={href}>{children}</Link>}>
+      wrapper={(children) => (
+        <Link path={href} rawLink>
+          {children}
+        </Link>
+      )}>
       <div
         className={classnames.join(' ')}
         style={{ minHeight: `${height}px`, width: `${width}px` }}
         tabIndex={onClick ? 0 : -1}
         onClick={onClick}>
+        {children && <section className={css.content}>{children}</section>}
         {actionMenu && (
           <div className={css.action}>
             <Dropdown
@@ -57,7 +62,6 @@ const Card: Card = ({
             </Dropdown>
           </div>
         )}
-        {children && <section className={css.content}>{children}</section>}
       </div>
     </ConditionalWrapper>
   );

@@ -60,8 +60,8 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
             )
           )}
         </div>
-        {contextHolders}
       </div>
+      {contextHolders}
     </Card>
   );
 };

@@ -13,6 +13,7 @@
   transition: var(--transition-duration) background-color;
 
   .action {
+    background-color: inherit;
     opacity: 0;
     padding: 2px;
     position: absolute;
