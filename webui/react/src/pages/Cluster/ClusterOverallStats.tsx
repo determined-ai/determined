@@ -77,7 +77,7 @@ export const ClusterOverallStats: React.FC = () => {
               maxTotalSlots[resType] > 0 ? (
                 <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
                   {overview[resType].total - overview[resType].available}
-                  <small>/ {maxTotalSlots[resType]}</small>
+                  <small> / {maxTotalSlots[resType]}</small>
                 </OverviewStats>
               ) : null,
             NotLoaded: () => undefined,
@@ -85,7 +85,7 @@ export const ClusterOverallStats: React.FC = () => {
         )}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
-            {auxContainers.running} <small>/ {auxContainers.total}</small>
+            {auxContainers.running} <small> / {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
         {usePermissions().canAdministrateUsers || !rbacEnabled ? (

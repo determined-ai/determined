@@ -50,10 +50,10 @@ const Card: Card = ({
         tabIndex={clicky ? 0 : -1}
         onClick={onClick}>
         {children && <section className={css.content}>{children}</section>}
-        {actionMenu && (
+        {actionsAvailable && (
           <div className={css.action}>
             <Dropdown
-              disabled={disabled || !actionsAvailable}
+              disabled={disabled}
               menu={actionMenu}
               placement="bottomRight"
               trigger={['click']}>
