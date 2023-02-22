@@ -2363,8 +2363,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5a.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               slack-mentions: ["${SLACK_USER_ID}"]
