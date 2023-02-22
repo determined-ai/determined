@@ -9,7 +9,7 @@
 
    -  JupyterLab Notebooks, Tensorboards, Shells, and Commands are now housed under workspaces and
       can have access to them restricted by role.
-   -  Determined models are now associated with workspaces. Models can now be moved between
+   -  Model Registry: models are now associated with workspaces. Models can be moved between
       workspaces and access to them can be restricted by role.
 
    These changes allows for more granular control over who can access what resources. See
