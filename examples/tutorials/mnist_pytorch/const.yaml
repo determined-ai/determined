@@ -3,7 +3,7 @@ data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
   learning_rate: 1.0
-  global_batch_size: 64
+  global_batch_size: 128
   n_filters1: 32
   n_filters2: 64
   dropout1: 0.25
