@@ -744,7 +744,14 @@ commands:
           google-project-id: <<parameters.google-project-id>>
       - run:
           command: |
-            gcloud components install gke-gcloud-auth-plugin --quiet
+            tries=5
+            until gcloud components install gke-gcloud-auth-plugin --quiet; do
+              if [[ $((--tries)) -eq 0 ]]; then
+                exit 1
+              fi
+              sleep 15
+            done
+
             echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
           name: Install GKE auth plugin
       - run:
