@@ -921,6 +921,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    slot limit of an active experiment can be changed using ``det experiment set max-slots <id>
    <slots>``. By default, there is no limit on the number of slots an experiment can use.
 
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
+
    .. warning::
 
       ``max_slots`` is only considered when scheduling jobs; it is not currently used when
@@ -933,6 +936,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    weight. The weight of an active experiment can be changed using ``det experiment set weight <id>
    <weight>``. The default weight is ``1``.
 
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
+
 ``shm_size``
    The size of ``/dev/shm`` for task containers. The value can be a number in bytes or a number with
    a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to ``4294967296`` (4GiB).
@@ -944,6 +950,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    Experiments with smaller priority values are scheduled before experiments with higher priority
    values. If using Kubernetes, the opposite is true; experiments with higher priorities are
    scheduled before those with lower priorities. Refer to :ref:`scheduling` for more information.
+
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
 
 ``resource_pool``
    The resource pool where this experiment will be scheduled. If no resource pool is specified,

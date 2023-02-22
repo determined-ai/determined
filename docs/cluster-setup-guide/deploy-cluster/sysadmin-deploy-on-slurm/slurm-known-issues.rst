@@ -4,6 +4,19 @@
  Known Issues
 ##############
 
+***********************************************
+ Agent-specific Scheduling Options are Ignored
+***********************************************
+
+When using the HPC Launcher, Determined delegates all job scheduling and prioritization to the HPC
+workload manager (either Slurm or PBS) and the following experiment configuration options are
+ignored.
+
+-  ``resources.agent_label``
+-  ``resources.max_slots``
+-  ``resources.priority``
+-  ``resources.weight``
+
 .. _slurm-and-docker-differences:
 
 ************************************
@@ -63,23 +76,16 @@ Some constraints are due to differences in behavior between Docker and Singulari
       :ref:`slurm-image-config` or configure ``SINGULARITY_CACHEDIR`` to point to a shared
       directory.
 
--  Some Docker features do not have an exact replacement in Singularity.
+-  Some Docker features do not have an exact replacement in Singularity, and therefore the
+   associated Determined features are not supported.
 
    +--------------------------------------+------------------------------------------------------+
    | Feature                              | Description                                          |
    +======================================+======================================================+
-   | ``resources.agent_label``            | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
    | ``resources.devices``                | By default ``/dev`` is mounted from the compute      |
    |                                      | host, so all devices are available. This can be      |
    |                                      | overridden by the ``singularity.conf`` ``mount dev`` |
    |                                      | option.                                              |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.max_slots``              | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.priority``               | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.weight``                 | Scheduling is managed by the Slurm workload manager. |
    +--------------------------------------+------------------------------------------------------+
    | ``resources.shm_size``               | By default ``/dev/shm`` is mounted from the compute  |
    |                                      | host. This can be overridden by the                  |
@@ -237,6 +243,21 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 -  Enroot does not provide a mechanism for sharing containers. Each user must create any containers
    needed by their Determined experiments prior to creating the experiment.
+
+-  Some Docker features do not have an exact replacement in Enroot, and therefore the associated
+   Determined features are not supported.
+
+   +--------------------------------------+------------------------------------------------------+
+   | Feature                              | Description                                          |
+   +======================================+======================================================+
+   | ``resources.devices``                | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``resources.shm_size``               | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.server`` | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.email``  | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
 
 .. _slurm-known-issues:
 
