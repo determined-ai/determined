@@ -1,7 +1,7 @@
 .base {
   --transition-duration: 0.25s;
   --transition-delay: 0.05s;
-  --outside-padding: 8px;
+  --outside-padding: 16px;
   background-color: var(--theme-surface);
   border-radius: var(--theme-border-radius-weak);
   box-shadow: 0 1.6px 3.6px 1.6px rgba(0, 0, 0, 0.13);
