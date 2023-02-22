@@ -283,7 +283,8 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
         agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
     time.sleep(10)
 
-    for _ in range(steps):
+    for step in range(steps):
+        print("================ step", step)
         for agent_id, agent_is_up in enumerate(agents_are_up):
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
@@ -302,6 +303,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 else:
                     agent_enable([f"agent-{agent_id}"])
                     agents_are_up[agent_id] = True
+        print("agents_are_up:", agents_are_up)
         time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
@@ -315,8 +317,10 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 ]
             ).decode()
         )
+        print("agent_list:", agent_list)
         assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
+            print("agent:", agent)
             agent_id = int(agent["id"].replace("agent-", ""))
             if agents_are_up[agent_id] != agent["enabled"]:
                 p = subprocess.run(
