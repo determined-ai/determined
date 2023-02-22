@@ -373,6 +373,8 @@ The master supports the following configuration settings:
             of the workload manager reporting tools that summarize usage by each WCKey/Project
             value.
 
+.. _cluster-resource-pools:
+
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
    the job is submitted. Refer to the documentation on :ref:`resource-pools` for more information.
