@@ -1,7 +1,10 @@
+import json
+import shlex
 import shutil
 import subprocess
 import sys
 from argparse import Namespace
+from typing import List
 
 from termcolor import colored
 
@@ -23,19 +26,33 @@ def curl(args: Namespace) -> None:
     if shutil.which("curl") is None:
         print(colored("curl is not installed on this machine", "red"))
         sys.exit(1)
-    cmd = [
+
+    cmd: List[str] = [
         "curl",
         make_url(args.master, args.path),
         "-H",
-        f"'Authorization: Bearer {authentication.cli_auth.get_session_token()}'",
+        f"Authorization: Bearer {authentication.cli_auth.get_session_token()}",
         "-s",
-        args.curl_args or "",
     ]
+    if args.curl_args:
+        cmd.append(args.curl_args)
 
-    if shutil.which("jq") is not None:
-        cmd.append("| jq .")
+    print(shlex.join(cmd))
+    output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    output = subprocess.run(" ".join(cmd), shell=True)
+    if output.stderr:
+        print(output.stderr.decode("utf8"), file=sys.stderr)
+
+    out = output.stdout.decode("utf8")
+    try:
+        json_resp = json.loads(out)
+        if shutil.which("jq") is not None:
+            subprocess.run(["jq", "."], input=out, text=True)
+        else:
+            print(json.dumps(json_resp, indent=4))
+    except json.decoder.JSONDecodeError:
+        print(out)
+
     sys.exit(output.returncode)
 
 
