@@ -287,9 +287,9 @@ def main(
         except FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
         except CliError as e:
-            die(f"{e.name}: {e.message}", exit_code=e.exit_code)
+            die(e.message, exit_code=e.exit_code)
         except ArgumentError as e:
-            die(f"Argument Error: {e.message}")
+            die(e.message, exit_code=2)
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
