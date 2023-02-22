@@ -60,7 +60,7 @@ export const useCheckpointFlow = ({
 
   const openCheckpoint = useCallback(() => {
     openModalCheckpoint();
-  }, [checkpoint]);
+  }, [openModalCheckpoint]);
 
   const contextHolder = useMemo(
     () => [
