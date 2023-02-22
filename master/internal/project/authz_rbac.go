@@ -47,7 +47,7 @@ func permCheck(
 }
 
 // CanGetProject returns true if user has "VIEW_PROJECT" globally
-// or on a given workspace scope scope and false if not along
+// or on a given workspace scope and false if not along
 // with a serverError in case of a database failure.
 func (a *ProjectAuthZRBAC) CanGetProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,

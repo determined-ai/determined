@@ -49,7 +49,7 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 }
 
 // containerInfo stores the data sent by the container in the
-// "NotifyContainerRunning" message, so that we can keep keep track of which
+// "NotifyContainerRunning" message, so that we can keep track of which
 // containers are running.
 type containerInfo struct {
 	nodeName string
@@ -374,7 +374,8 @@ func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
 // jobs are them removed from further consideration.
 func (m *launcherMonitor) processWatchedJobs(
 	ctx *actor.Context,
-	processingWatchedJobs *bool) {
+	processingWatchedJobs *bool,
+) {
 	defer setBoolean(processingWatchedJobs, false, &m.processingWatchedJobsMutex)
 
 	var job launcherJob
@@ -531,7 +532,8 @@ func (m *launcherMonitor) clearJobsToRemoveMap() {
 // status check was made to the launcher.
 func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime(
 	monitoredJobs map[string]launcherJob,
-	ctx *actor.Context) []string {
+	ctx *actor.Context,
+) []string {
 	// Obtain a read lock.
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -738,7 +740,7 @@ func (m *launcherMonitor) getDispatchStatus(
 	resp, r, err := m.apiClient.MonitoringApi.
 		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
 		Refresh(true).
-		Execute()
+		Execute() //nolint:bodyclose
 	if err != nil {
 		// This may happen if the job is canceled before the launcher creates
 		// the environment files containing status. Wouldn't expect this to
@@ -819,7 +821,7 @@ func calculateJobExitStatus(
 func getJobExitMessages(resp launcher.DispatchInfo) []string {
 	var result []string
 	for _, event := range resp.GetEvents() {
-		if "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher" == *event.Reporter {
+		if *event.Reporter == "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher" {
 			// Ignore general dispatcher messages, only want carrier messages
 			continue
 		}
@@ -851,7 +853,7 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// the log file content, read the payload name from the launcher.
 	if len(job.payloadName) == 0 {
 		manifest, resp, err := m.apiClient.MonitoringApi.GetEnvironmentDetails(
-			m.authContext(ctx), job.user, dispatchID).Execute()
+			m.authContext(ctx), job.user, dispatchID).Execute() //nolint:bodyclose
 		if err != nil {
 			ctx.Log().WithError(err).Warnf(
 				"For dispatchID %s, unable to access environment details, response {%v}",
@@ -868,7 +870,7 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 
 	logFile, httpResponse, err := m.apiClient.MonitoringApi.LoadEnvironmentLog(
 		m.authContext(ctx), job.user, dispatchID, logFileName,
-	).Range_(logRange).Execute()
+	).Range_(logRange).Execute() //nolint:bodyclose
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("For dispatchID %s, unable to access %s, response {%v}",
 			dispatchID, logFileName, httpResponse)

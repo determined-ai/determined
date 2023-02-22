@@ -59,7 +59,7 @@ type schedulerTick struct{}
 const actionCoolDown = 500 * time.Millisecond
 
 // hpcResources is a data type describing the HPC resources available
-// to Slurm on on the Launcher node.
+// to Slurm on the Launcher node.
 // Example output of the HPC resource details from the Launcher.
 // ---
 // partitions:
@@ -72,8 +72,8 @@ const actionCoolDown = 500 * time.Millisecond
 // - totalAvailableNodes: 293
 // ...more partitions.
 type hpcResources struct {
-	Partitions                  []hpcPartitionDetails `json:"partitions,flow"`
-	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`
+	Partitions                  []hpcPartitionDetails `json:"partitions,flow"` //nolint:staticcheck
+	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`      //nolint:staticcheck
 	DefaultComputePoolPartition string                `json:"defaultComputePoolPartition"`
 	DefaultAuxPoolPartition     string                `json:"defaultAuxPoolPartition"`
 }
@@ -879,7 +879,8 @@ func (m *dispatcherResourceManager) waitForDispatchTerminalState(ctx *actor.Cont
 
 func (m *dispatcherResourceManager) startLauncherJob(
 	ctx *actor.Context,
-	msg StartDispatcherResources) {
+	msg StartDispatcherResources,
+) {
 	req, ok := m.reqList.TaskByHandler(msg.TaskActor)
 	if !ok {
 		sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
@@ -922,6 +923,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 
 	if impersonatedUser == root && m.rmConfig.UserName != root {
 		sendResourceStateChangedErrorResponse(ctx,
+			//nolint:stylecheck
 			fmt.Errorf(
 				"You are logged in as Determined user '%s', however the user ID on the "+
 					"target HPC cluster for this user has either not been configured, or has "+
@@ -961,7 +963,8 @@ func (m *dispatcherResourceManager) startLauncherJob(
 // Adds the mapping of dispatch ID to allocation ID.
 func (m *dispatcherResourceManager) addDispatchIDToAllocationMap(
 	dispatchID string,
-	allocationID model.AllocationID) {
+	allocationID model.AllocationID,
+) {
 	// Read/Write lock blocks other readers and writers.
 	m.dispatchIDToAllocationIDMutex.Lock()
 	defer m.dispatchIDToAllocationIDMutex.Unlock()
@@ -971,7 +974,8 @@ func (m *dispatcherResourceManager) addDispatchIDToAllocationMap(
 
 // Removes the mapping from dispatch ID to allocation ID.
 func (m *dispatcherResourceManager) removeDispatchIDFromAllocationIDMap(
-	dispatchID string) {
+	dispatchID string,
+) {
 	// Read/Write lock blocks other readers and writers.
 	m.dispatchIDToAllocationIDMutex.Lock()
 	defer m.dispatchIDToAllocationIDMutex.Unlock()
@@ -981,7 +985,8 @@ func (m *dispatcherResourceManager) removeDispatchIDFromAllocationIDMap(
 
 // Gets the allocation ID for the specified dispatch ID.
 func (m *dispatcherResourceManager) getAllocationIDFromDispatchID(
-	dispatchID string) (model.AllocationID, bool) {
+	dispatchID string,
+) (model.AllocationID, bool) {
 	// Read lock allows multiple readers, but block writers.
 	m.dispatchIDToAllocationIDMutex.RLock()
 	defer m.dispatchIDToAllocationIDMutex.RUnlock()
@@ -994,7 +999,8 @@ func (m *dispatcherResourceManager) getAllocationIDFromDispatchID(
 // Adds the mapping of dispatch ID to HPC job ID.
 func (m *dispatcherResourceManager) addDispatchIDToHpcJobIDMap(
 	dispatchID string,
-	hpcJobID string) {
+	hpcJobID string,
+) {
 	// Read/Write lock blocks other readers and writers.
 	m.dispatchIDToHPCJobIDMutex.Lock()
 	defer m.dispatchIDToHPCJobIDMutex.Unlock()
@@ -1004,7 +1010,8 @@ func (m *dispatcherResourceManager) addDispatchIDToHpcJobIDMap(
 
 // Removes the mapping from dispatch ID to allocaiton ID.
 func (m *dispatcherResourceManager) removeDispatchIDFromHpcJobIDMap(
-	dispatchID string) {
+	dispatchID string,
+) {
 	// Read/Write lock blocks other readers and writers.
 	m.dispatchIDToHPCJobIDMutex.Lock()
 	defer m.dispatchIDToHPCJobIDMutex.Unlock()
@@ -1014,7 +1021,8 @@ func (m *dispatcherResourceManager) removeDispatchIDFromHpcJobIDMap(
 
 // Gets the HPC job ID for the specified dispatch ID.
 func (m *dispatcherResourceManager) getHpcJobIDFromDispatchID(
-	dispatchID string) (string, bool) {
+	dispatchID string,
+) (string, bool) {
 	// Read lock allows multiple readers, but block writers.
 	m.dispatchIDToHPCJobIDMutex.RLock()
 	defer m.dispatchIDToHPCJobIDMutex.RUnlock()
@@ -1343,7 +1351,8 @@ func (m *dispatcherResourceManager) resolveSlotType(
 
 // retrieves the launcher version and log error if not meeting minimum required version.
 func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Context) {
-	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).Execute()
+	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).
+		Execute() //nolint:bodyclose
 	if err == nil {
 		if checkMinimumLauncherVersion(resp) {
 			if !m.launcherVersionIsOK {
@@ -1398,7 +1407,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 		Launch(m.authContext(ctx)).
 		Manifest(*m.hpcResourcesManifest).
 		Impersonate(impersonatedUser).
-		Execute()
+		Execute() //nolint:bodyclose
 	if err != nil {
 		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
 			r.StatusCode == http.StatusForbidden) {
@@ -1445,7 +1454,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	// long of a delay for us to deal with.
 	resp, _, err := m.apiClient.MonitoringApi.
 		LoadEnvironmentLog(m.authContext(ctx), owner, dispatchID, logFileName).
-		Execute()
+		Execute() //nolint:bodyclose
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details. response: {%v}", resp)
 		return
@@ -1574,7 +1583,7 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 	var err error
 	var response *http.Response
 	if _, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
-		owner, dispatchID).Force(true).Execute(); err != nil {
+		owner, dispatchID).Force(true).Execute(); err != nil { //nolint:bodyclose
 		if response == nil || response.StatusCode != 404 {
 			ctx.Log().WithError(err).Errorf("Failed to terminate job with Dispatch ID %s, response: {%v}",
 				dispatchID, response)
@@ -1601,7 +1610,7 @@ func (m *dispatcherResourceManager) removeDispatchEnvironment(
 	ctx.Log().Debugf("Deleting environment with DispatchID %s", dispatchID)
 
 	if response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
-		owner, dispatchID).Execute(); err != nil {
+		owner, dispatchID).Execute(); err != nil { //nolint:bodyclose
 		if response == nil || response.StatusCode != 404 {
 			ctx.Log().WithError(err).Errorf("Failed to remove environment for Dispatch ID %s, response:{%v}",
 				dispatchID, response)
@@ -1642,7 +1651,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 		Launch(m.authContext(ctx)).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
-		Execute()
+		Execute() //nolint:bodyclose
 	if err != nil {
 		httpStatus := ""
 		if response != nil {

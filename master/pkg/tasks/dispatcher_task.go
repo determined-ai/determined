@@ -182,6 +182,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// So use /var/tmp here to eliminate spurious error logs.  We avoid using /tmp
 	// here because dispatcher-wrapper.sh by default relinks /tmp to
 	// a container-private directory and if it is in use we faile with EBUSY.
+	// nolint:dupword
 	workDir := t.WorkDir
 	if workDir == DefaultWorkDir {
 		workDir = varTmp
@@ -233,7 +234,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	customParams["pbsArgs"] = pbsArgs
 
 	if containerRunType == podman {
-		var portMappings []string = *getPortMappings(t)
+		portMappings := *getPortMappings(t)
 		if len(portMappings) != 0 {
 			customParams["ports"] = portMappings
 		}
