@@ -4,7 +4,6 @@ import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig } from 'hooks/useSettings';
 
 export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings> = {
-  applicableRoutespace: '/trials',
   settings: {
     columns: {
       defaultValue: [],

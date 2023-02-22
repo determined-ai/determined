@@ -62,7 +62,6 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/trials',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

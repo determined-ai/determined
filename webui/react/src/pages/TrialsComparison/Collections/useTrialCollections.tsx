@@ -36,7 +36,6 @@ export interface TrialsCollectionInterface {
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
 const configForProject = (projectId: string): SettingsConfig<{ collection: string }> => ({
-  applicableRoutespace: '/trials',
   settings: {
     collection: {
       defaultValue: '',

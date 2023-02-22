@@ -52,7 +52,6 @@ type ExtraHookReturn = {
 };
 
 const config: hook.SettingsConfig<Settings> = {
-  applicableRoutespace: 'settings/normal',
   settings: {
     boolean: {
       defaultValue: true,
@@ -89,7 +88,6 @@ const config: hook.SettingsConfig<Settings> = {
 };
 
 const extraConfig: hook.SettingsConfig<ExtraSettings> = {
-  applicableRoutespace: 'settings/extra',
   settings: {
     extra: {
       defaultValue: 'what',
