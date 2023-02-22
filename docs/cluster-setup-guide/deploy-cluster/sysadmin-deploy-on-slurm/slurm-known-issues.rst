@@ -102,9 +102,18 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Singularity Known Issues
 **************************
 
-Launching a PBS jobs with an experiment configuration which includes an embedded double quote
-character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
-Singularity 3.10 or greater or Apptainer 1.1 or greater.
+Launching a PBS job with an experiment configuration that includes an embedded double quote
+character (") may cause the job to fail unless you have Singularity 3.10 or greater or Apptainer 1.1
+or greater. For example, the error might be the json.decoder.JSONDecodeError or the experiment log
+may contain ``source: /.inject-singularity-env.sh:224:1563: "export" must be followed by names or
+assignments`` and ``RuntimeError: missing environment keys [DET_MASTER, DET_CLUSTER_ID,
+DET_AGENT_ID, DET_SLOT_IDS, DET_TASK_ID, DET_ALLOCATION_ID, DET_SESSION_TOKEN, DET_TASK_TYPE], is
+this running on-cluster?``
+
+The version of Singularity is detected by the HPC Launcher invoking the singularity command and
+checking for the ``--no-eval`` option. If the singularity command is not on the path for the HPC
+launcher or is of an inconsistent version with the compute nodes, embedded double quote characters
+may still not work.
 
 ************************
  Apptainer Known Issues
