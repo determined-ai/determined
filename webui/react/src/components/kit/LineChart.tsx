@@ -82,11 +82,6 @@ export const LineChart: React.FC<Props> = ({
   xTickValues,
   yTickValues,
 }: Props) => {
-  const xTicksAdjusted: uPlot.Axis.Values | undefined = useMemo(
-    () => xTickValues ?? (xAxis === XAxisDomain.Time ? getTimeTickValues : undefined),
-    [xAxis, xTickValues],
-  );
-
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
@@ -129,6 +124,18 @@ export const LineChart: React.FC<Props> = ({
 
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
+
+  const xTicksAdjusted: uPlot.Axis.Values | undefined = useMemo(
+    () =>
+      xTickValues ??
+      (xAxis === XAxisDomain.Time &&
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200) // 12 hours
+        ? getTimeTickValues
+        : undefined,
+    [chartData, xAxis, xTickValues],
+  );
 
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
