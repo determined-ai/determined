@@ -5,12 +5,13 @@ import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { getTimeTickValues } from 'utils/chart';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
-import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricName } from '../utils';
+import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
