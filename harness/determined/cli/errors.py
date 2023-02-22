@@ -22,7 +22,7 @@ class CliError(Exception):
     ) -> None:
         """
         Args:
-        - e_stack: The exception that caused this error.
+        - e_stack: The exception that triggered this error.
         - exit_code: The exit code to use when exiting the CLI.
         """
         super().__init__(message)

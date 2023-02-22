@@ -287,8 +287,6 @@ def main(
         except FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
         except CliError as e:
-            if e.e_stack:
-                print(colored(f"Error: {e}", "yellow"), file=sys.stderr)
             die(f"{e.name}: {e.message}", exit_code=e.exit_code)
         except ArgumentError as e:
             die(f"Argument Error: {e.message}")
