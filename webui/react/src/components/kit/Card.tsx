@@ -1,4 +1,4 @@
-import { Dropdown, MenuProps, Space } from 'antd';
+import { Dropdown, MenuProps } from 'antd';
 import React from 'react';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
@@ -79,9 +79,9 @@ interface CardGroupProps {
 
 const CardGroup: React.FC<CardGroupProps> = ({ children, wrap = true }: CardGroupProps) => {
   return (
-    <Space className={css.group} size="middle" wrap={wrap}>
+    <div className={css.group} style={{ flexWrap: wrap ? 'wrap' : 'nowrap' }}>
       {children}
-    </Space>
+    </div>
   );
 };
 

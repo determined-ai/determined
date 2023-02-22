@@ -8,6 +8,7 @@
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
+  height: 100%;
   padding: var(--outside-padding);
   position: relative;
   transition: background-color var(--transition-duration);
@@ -49,7 +50,10 @@
   }
 }
 .group {
-  align-items: flex-start;
+  align-items: stretch;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
   // This padding stops the box-shadows from being cut off.
   padding: 3px;
 }
