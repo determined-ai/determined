@@ -44,7 +44,7 @@
       opacity: 1;
     }
   }
-  &:focus {
+  &:focus-visible {
     outline: var(--theme-stroke-width-strong) solid var(--theme-ix-border-active);
   }
 }
