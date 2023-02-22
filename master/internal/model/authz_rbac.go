@@ -37,28 +37,62 @@ func addExpInfo(
 	}
 }
 
-// CanGetModels always returns true and a nil error.
-func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, workspaceID int32,
-) (canGetModel bool, serverError error) {
+// CanGetModels checks if a user has permissions to view models.
+func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, workspaceIDs []int32,
+) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
 	fields := audit.ExtractLogFields(ctx)
-	addExpInfo(curUser, fields, fmt.Sprintf("all models in %d", workspaceID),
+	addExpInfo(curUser, fields, fmt.Sprintf("all models in workspaces %v", workspaceIDs),
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY})
 	defer func() {
-		fields["permissionGranted"] = canGetModel
+		fields["permissionGranted"] = canGetModels
 		audit.Log(fields)
 	}()
 
-	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
+	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
+	if err != nil {
+		return workspaceIDs, false, err
 	}
-	return true, nil
+
+	workspacesIDsWithPermsSet := make(map[int32]bool)
+	var workspacesIDsWithPerms []int32
+
+	for role, roleAssignments := range assignmentsMap {
+		for _, permission := range role.Permissions {
+			if permission.ID == int(
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY) {
+				for _, assignment := range roleAssignments {
+					if assignment.Scope.WorkspaceID.Valid {
+						workspacesIDsWithPermsSet[assignment.Scope.WorkspaceID.Int32] = true
+						workspacesIDsWithPerms = append(workspacesIDsWithPerms, assignment.Scope.WorkspaceID.Int32)
+					} else {
+						// if permission is global, return true and the list provided by user.
+						return workspaceIDs, true, nil
+					}
+				}
+			}
+		}
+	}
+
+	if workspacesIDsWithPerms == nil {
+		return nil, false, nil // user doesn't have permissions to see models in any workspace.
+	}
+
+	for _, givenWID := range workspaceIDs {
+		if _, ok := workspacesIDsWithPermsSet[givenWID]; !ok {
+			return nil, false, nil
+			// user doesn't have permissions to see models in the user given list of workspaces.
+		}
+	}
+
+	if workspaceIDs != nil {
+		return workspaceIDs, true, nil // at this point the user given workspaceIDs
+		// could be smaller than the workspaces with permissions.
+	}
+
+	return workspacesIDsWithPerms, true, nil
 }
 
-// CanGetModel always returns true and a nil error.
+// CanGetModel checks if a user has permissions to view model.
 func (a *ModelAuthZRBAC) CanGetModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) (canGetModel bool, serverError error) {
@@ -80,7 +114,7 @@ func (a *ModelAuthZRBAC) CanGetModel(ctx context.Context, curUser model.User,
 	return true, nil
 }
 
-// CanEditModel always returns true and a nil error.
+// CanEditModel checks is user has permissions to edit models.
 func (a *ModelAuthZRBAC) CanEditModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) (err error) {
@@ -95,7 +129,7 @@ func (a *ModelAuthZRBAC) CanEditModel(ctx context.Context, curUser model.User,
 		rbacv1.PermissionType_PERMISSION_TYPE_EDIT_MODEL_REGISTRY)
 }
 
-// CanCreateModel always returns true and a nil error.
+// CanCreateModel checks is user has permissions to create models.
 func (a *ModelAuthZRBAC) CanCreateModel(ctx context.Context,
 	curUser model.User, workspaceID int32,
 ) (err error) {

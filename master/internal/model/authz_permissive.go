@@ -12,15 +12,15 @@ import (
 // ModelAuthZPermissive is the permission implementation.
 type ModelAuthZPermissive struct{}
 
-// CanGetModels always returns true and a nil error.
-func (a *ModelAuthZPermissive) CanGetModels(ctx context.Context, curUser model.User,
-	workspaceID int32,
-) (canGetModel bool, serverError error) {
-	_, _ = (&ModelAuthZRBAC{}).CanGetModels(ctx, curUser, workspaceID)
-	return (&ModelAuthZBasic{}).CanGetModels(ctx, curUser, workspaceID)
+// CanGetModels calls RBAC authz but enforces basic authz..
+func (a *ModelAuthZPermissive) CanGetModels(ctx context.Context,
+	curUser model.User, workspaceIDs []int32,
+) (workspaceIDsWithPermsFilter []int32, canGetModels bool, serverError error) {
+	_, _, _ = (&ModelAuthZRBAC{}).CanGetModels(ctx, curUser, workspaceIDs) //nolint:dogsled
+	return (&ModelAuthZBasic{}).CanGetModels(ctx, curUser, workspaceIDs)
 }
 
-// CanGetModel always returns true and a nil error.
+// CanGetModel calls RBAC authz but enforces basic authz..
 func (a *ModelAuthZPermissive) CanGetModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) (canGetModel bool, serverError error) {
@@ -28,7 +28,7 @@ func (a *ModelAuthZPermissive) CanGetModel(ctx context.Context, curUser model.Us
 	return (&ModelAuthZBasic{}).CanGetModel(ctx, curUser, m, workspaceID)
 }
 
-// CanEditModel always returns true and a nil error.
+// CanEditModel calls RBAC authz but enforces basic authz..
 func (a *ModelAuthZPermissive) CanEditModel(ctx context.Context, curUser model.User,
 	m *modelv1.Model, workspaceID int32,
 ) error {
@@ -36,7 +36,7 @@ func (a *ModelAuthZPermissive) CanEditModel(ctx context.Context, curUser model.U
 	return (&ModelAuthZBasic{}).CanEditModel(ctx, curUser, m, workspaceID)
 }
 
-// CanCreateModel always returns true and a nil error.
+// CanCreateModel calls RBAC authz but enforces basic authz..
 func (a *ModelAuthZPermissive) CanCreateModel(ctx context.Context,
 	curUser model.User, workspaceID int32,
 ) error {
