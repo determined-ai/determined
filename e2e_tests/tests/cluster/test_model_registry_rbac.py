@@ -53,7 +53,7 @@ def all_operations(
     assert db_version.name == "Test 2021"
 
     model_obj.move_to_workspace(workspace_name="Uncategorized")
-    models = determined_obj.get_models(workspace_name="Uncategorized")
+    models = determined_obj.get_models(workspace_names=["Uncategorized"])
     assert model_obj.name in [m.name for m in models]
     return model_obj, "Uncategorized"
 
@@ -61,7 +61,7 @@ def all_operations(
 def view_operations(determined_obj: Determined, model: model.Model, workspace_name: str) -> None:
     db_model = determined_obj.get_model(model.name)
     assert db_model.name == model.name
-    models = determined_obj.get_models(workspace_name=workspace_name)
+    models = determined_obj.get_models(workspace_names=[workspace_name])
     assert db_model.name in [m.name for m in models]
 
 
@@ -87,6 +87,7 @@ def test_model_registry_rbac() -> None:
     test_user_editor_creds = api_utils.create_test_user()
     test_user_workspace_admin_creds = api_utils.create_test_user()
     test_user_viewer_creds = api_utils.create_test_user()
+    test_user_with_no_perms_creds = api_utils.create_test_user()
     test_user_model_registry_viewer_creds = api_utils.create_test_user()
     admin_session = api_utils.determined_test_session(admin=True)
     with setup_workspaces(admin_session) as [test_workspace]:
@@ -212,7 +213,7 @@ def test_model_registry_rbac() -> None:
             model_1, current_model_workspace = all_operations(
                 determined_obj=d, test_workspace=test_workspace, checkpoint=checkpoint
             )
-        print(test_user_model_registry_viewer_creds.username)
+
         with logged_in_user(test_user_model_registry_viewer_creds):
             d = Determined(master_url)
             user_with_view_perms_test(
@@ -224,6 +225,32 @@ def test_model_registry_rbac() -> None:
             user_with_view_perms_test(
                 determined_obj=d, workspace_name=current_model_workspace, model=model_1
             )
+
+        with logged_in_user(test_user_with_no_perms_creds):
+            d = Determined(master_url)
+            with pytest.raises(Exception) as e:
+                d.get_models()
+            assert "doesn't have view permissions" in str(e.value)
+
+        # Unassign view permissions to a certain workspace.
+        # List should return models only in workspaces with permissions.
+        with logged_in_user(ADMIN_CREDENTIALS):
+            det_cmd(
+                [
+                    "rbac",
+                    "unassign-role",
+                    "ModelRegistryViewer",
+                    "--username-to-assign",
+                    test_user_model_registry_viewer_creds.username,
+                    "--workspace-name",
+                    test_workspace.name,
+                ],
+                check=True,
+            )
+        with logged_in_user(test_user_model_registry_viewer_creds):
+            d = Determined(master_url)
+            models = d.get_models()
+            assert test_workspace.id not in [m.workspace_id for m in models]
 
         with logged_in_user(test_user_editor_creds):
             d = Determined(master_url)
