@@ -30,7 +30,7 @@ container.
 
 .. code:: bash
 
-   det -m determined.cli.tunnel --listener 8265 $DET_MASTER $TASK_ID:8265
+   det -m determined.cli.tunnel --listener 8265 --auth $DET_MASTER $TASK_ID:8265
 
 where $DET_MASTER is your Determined master address, and $TASK_ID is the task id of the launched
 task or experiment. You can look up the task id using CLI command ``det task list``.
@@ -41,3 +41,25 @@ the tunnel all at once:
 .. code:: bash
 
    det e create config_file.yaml model_def -f -p 8265
+
+Unauthenticated mode
+====================
+
+Optionally, you can run a tunnel with determined authentication turned off. This mode may be useful
+when the proxied app is handling security by itself, such as a web app protected by username and
+password. To use it,
+
+#. Add ``unauthenticated: true`` option in the task config.
+#. Omit ``--auth`` option from the tunnel CLI.
+
+.. code:: yaml
+
+   environment:
+     proxy_ports:
+       - proxy_port: 8265
+         proxy_tcp: true
+         unauthenticated: true
+
+.. code:: bash
+
+   det -m determined.cli.tunnel --listener 8265 $DET_MASTER $TASK_ID:8265
