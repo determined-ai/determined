@@ -183,7 +183,7 @@ def init(
     if local_training:
         trial_seed = _generate_local_seed()
 
-        # XXX: todo: figure out if better way to handle this
+        # XXX: figure out if better way to handle this
         aggregation_frequency = exp_conf and int(exp_conf.get("optimizations", {}).get("aggregation_frequency", 1))  # type: ignore
         fp16_compression = False
         average_aggregated_gradients = True
@@ -194,7 +194,6 @@ def init(
     else:
         assert cluster_info, "Unable to detect cluster info"
 
-        # XXX: pass in from harness
         trial_seed = cluster_info.trial.trial_seed
         exp_conf = cluster_info.trial._config
         aggregation_frequency = int(exp_conf["optimizations"]["aggregation_frequency"])
