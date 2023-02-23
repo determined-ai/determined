@@ -5,7 +5,6 @@ import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import { getTimeTickValues } from 'utils/chart';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
@@ -94,7 +93,6 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         series={systemMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
-        xTickValues={getTimeTickValues}
         yLabel={yLabel}
         yTickValues={getScientificNotationTickValues}
       />

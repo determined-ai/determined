@@ -3,7 +3,6 @@ import React from 'react';
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
-import { getTimeTickValues } from 'utils/chart';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
@@ -21,7 +20,6 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
         series={timingMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
-        xTickValues={getTimeTickValues}
         yLabel={yLabel}
         yTickValues={getScientificNotationTickValues}
       />

@@ -61,7 +61,6 @@ interface Props {
   title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
-  xTickValues?: uPlot.Axis.Values;
   yLabel?: string;
   yTickValues?: uPlot.Axis.Values;
 }
@@ -79,7 +78,6 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
-  xTickValues,
   yTickValues,
 }: Props) => {
   const hasPopulatedSeries: boolean = useMemo(
@@ -125,16 +123,15 @@ export const LineChart: React.FC<Props> = ({
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
 
-  const xTicksAdjusted: uPlot.Axis.Values | undefined = useMemo(
+  const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
-      xTickValues ??
-      (xAxis === XAxisDomain.Time &&
-        chartData.length > 0 &&
-        chartData[0].length > 0 &&
-        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200) // 12 hours
+      xAxis === XAxisDomain.Time &&
+      chartData.length > 0 &&
+      chartData[0].length > 0 &&
+      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
-    [chartData, xAxis, xTickValues],
+    [chartData, xAxis],
   );
 
   const chartOptions: Options = useMemo(() => {
@@ -161,7 +158,7 @@ export const LineChart: React.FC<Props> = ({
           side: 2,
           space: 120,
           ticks: { show: false },
-          values: xTicksAdjusted,
+          values: xTickValues,
         },
         {
           font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
@@ -208,7 +205,7 @@ export const LineChart: React.FC<Props> = ({
     onPointClick,
     onPointFocus,
     xLabel,
-    xTicksAdjusted,
+    xTickValues,
     yLabel,
     yTickValues,
     height,
