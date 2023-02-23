@@ -212,11 +212,10 @@ def http_tunnel_listener(
             t.start()
         # TODO(ilia): should we inform the user when we are up?
         yield
-    except Exception:
+    finally:
         for s in servers:
             s.shutdown()
             s.server_close()
-    finally:
         for t in threads:
             t.join()
 
