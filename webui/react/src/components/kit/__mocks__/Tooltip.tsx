@@ -5,7 +5,7 @@ const { default: OriginalTooltip } = await vi.importActual<typeof import('compon
   'components/kit/Tooltip',
 );
 
-const Tooltip = (props: TooltipProps) => {
+const Tooltip: React.FC<TooltipProps> = (props: TooltipProps) => {
   return <OriginalTooltip {...props} mouseEnterDelay={0} />;
 };
 export default Tooltip;
