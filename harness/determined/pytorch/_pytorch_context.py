@@ -69,7 +69,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 slots_per_trial=slots_per_trial,
                 trialname="PyTorchTrial",
             )
-            if hparams
+            if hparams and hparams.get("global_batch_size", None)
             else (None, None)
         )
         self._hparams = hparams
