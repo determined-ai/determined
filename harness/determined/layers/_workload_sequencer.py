@@ -165,7 +165,9 @@ class WorkloadSequencer(workload.Source):
             return max(records // self.global_batch_size, 1)
         if epochs is not None:
             check.is_instance(self.records_per_epoch, int, "length must be an integer")
-            assert self.records_per_epoch is not None
+            assert (
+                self.records_per_epoch is not None
+            ), "records_per_epoch must be specified for epoch units"
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
             return max((epochs * self.records_per_epoch) // self.global_batch_size, 1)
         # Make mypy happy.
