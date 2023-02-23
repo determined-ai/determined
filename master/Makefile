@@ -117,7 +117,8 @@ fmt:
 
 .PHONY: test
 test:
-	go test -short -coverprofile=coverage.out -covermode count -cover ./...
+	# go test -short -coverprofile=coverage.out -covermode count -cover ./...
+	pytest
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
