@@ -6,7 +6,6 @@ import css from './OverviewStats.module.scss';
 
 interface Props {
   children: React.ReactNode;
-  clickable?: boolean;
   focused?: boolean;
   onClick?: () => void;
   title: string;
@@ -14,10 +13,10 @@ interface Props {
 
 const OverviewStats: React.FC<Props> = (props: Props) => {
   const childClasses = [css.info];
-  if (props.onClick || props.clickable) childClasses.push(css.clickable);
+  if (props.onClick) childClasses.push(css.clickable);
 
   return (
-    <Card clickable={props.clickable} height={64} width={166} onClick={props.onClick}>
+    <Card height={64} width={166} onClick={props.onClick}>
       <div className={css.base}>
         <Typography.Title className={css.title} ellipsis={{ rows: 1, tooltip: true }} level={5}>
           {props.title}

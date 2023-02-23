@@ -38,6 +38,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
+import { noOp } from 'shared/utils/service';
 import {
   generateTestProjectData,
   generateTestWorkspaceData,
@@ -1078,7 +1079,7 @@ const CardsSection: React.FC = () => {
           </li>
           <Card.Group>
             <OverviewStats title="Active Experiments">0</OverviewStats>
-            <OverviewStats clickable title="Clickable card">
+            <OverviewStats title="Clickable card" onClick={noOp}>
               Example
             </OverviewStats>
           </Card.Group>
