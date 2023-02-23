@@ -68,6 +68,10 @@ class Trainer:
                 )
                 checkpoint_policy = "all"
             assert max_length, "max_length must be defined in local training mode"
+            assert isinstance(
+                max_length.value, int
+            ), "max_length must be configured in TrainUnit(int)"
+
             if self._det_profiler:
                 logging.warning("Determined profiler will be ignored in local training mode")
 
@@ -96,7 +100,9 @@ class Trainer:
                 int(self._info.trial._config["scheduling_unit"])
             )
             step_zero_validation = bool(self._info.trial._config["perform_initial_validation"])
-            global_batch_size = int(self._info.trial.hparams["global_batch_size"])
+            global_batch_size = self._info.trial.hparams.get("global_batch_size", None)
+            if global_batch_size:
+                global_batch_size = int(global_batch_size)
 
         trial_controller = pytorch._PyTorchTrialController(
             trial_inst=self._trial,
@@ -163,7 +169,7 @@ def init(
     hparams: Optional[Dict] = None,
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None
-) -> Iterator[pytorch.PyTorchTrialContext]:
+) -> pytorch.PyTorchTrialContext:
     cluster_info = det.get_cluster_info()
     local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
 
