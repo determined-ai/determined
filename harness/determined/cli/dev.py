@@ -15,8 +15,7 @@ from determined.common.declarative_argparse import Arg, Cmd
 
 @authentication.required
 def token(_: Namespace) -> None:
-    assert authentication.cli_auth is not None
-    token = authentication.cli_auth.get_session_token()
+    token = authentication.must_cli_auth().get_session_token()
     print(token)
 
 
