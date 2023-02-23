@@ -13,7 +13,7 @@ const PageNotFound: React.FC = () => (
     <div className={css.content}>
       {'Make sure you have the right url or that you have access to view.'}
     </div>
-    <Link path={paths.uncategorized()}>
+    <Link path={paths.dashboard()}>
       <Button>Back to Home</Button>
     </Link>
   </div>
