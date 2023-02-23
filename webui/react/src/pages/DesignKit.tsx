@@ -40,7 +40,7 @@ import { ShirtSize } from 'themes';
 import { BrandingType, MetricType, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
