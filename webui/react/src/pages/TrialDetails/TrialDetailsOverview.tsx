@@ -5,7 +5,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';

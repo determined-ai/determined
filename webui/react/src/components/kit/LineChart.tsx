@@ -8,7 +8,7 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'hooks/useResize';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
