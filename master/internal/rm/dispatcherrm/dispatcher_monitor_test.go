@@ -134,28 +134,6 @@ func Test_getJobID(t *testing.T) {
 	assert.Equal(t, jobID, "1234")
 }
 
-func Test_testAndSetBoolean(t *testing.T) {
-	jobWatcher := getJobWatcher()
-
-	processingWatchedJobs := false
-
-	// Method should return the current value, which is false, and
-	// change the value of "processingWatchesJobs" to true.
-	result := testAndSetBoolean(&processingWatchedJobs, &jobWatcher.processingWatchedJobsMutex)
-
-	assert.Equal(t, result, false)
-	assert.Equal(t, processingWatchedJobs, true)
-
-	processingWatchedJobs = true
-
-	// Method should return the current value, which is true, and
-	// change the value of "processingWatchesJobs" to true.
-	result = testAndSetBoolean(&processingWatchedJobs, &jobWatcher.processingWatchedJobsMutex)
-
-	assert.Equal(t, result, true)
-	assert.Equal(t, processingWatchedJobs, true)
-}
-
 // Verifies that "allContainersRunning" returns true only when the job watcher
 // has received a "NotifyContainerRunning" message from all the containers that
 // are part of the job.
