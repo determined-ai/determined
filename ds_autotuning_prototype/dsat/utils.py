@@ -7,7 +7,7 @@ import re
 import time
 from contextlib import contextmanager
 from random import choice
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import determined as det
 import torch
@@ -71,17 +71,18 @@ def get_decimal_number_in_line(line: str) -> float:
 
 @contextmanager
 def dsat_reporting_context(
-    core_context,
-    op,
-    steps_completed,
+    core_context: det.core._context.Context,
+    op: det.core._searcher.SearcherOperation,
+    steps_completed: int,
     model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
     ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
-):
+) -> None:
     try:
         yield
     except RuntimeError as rte:
-        if "out of memory" in str(rte):
-            report_oom_and_exit(core_context, op, steps_completed)
+        oom_error_string = str(rte)
+        if "out of memory" in oom_error_string:
+            report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
     except SystemExit as se:
         if file_exists(model_info_profiling_path):
             report_model_profiling_info_and_exit(
@@ -95,16 +96,19 @@ def dsat_reporting_context(
 
 
 def report_oom_and_exit(
-    core_context,
-    op,
-    steps_completed,
-):
+    core_context: det.core._context.Context,
+    op: det.core._searcher.SearcherOperation,
+    steps_completed: int,
+    oom_error_string: str,
+) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
         logging.info(
             "******************* GPU Out of Memory: Shutting down Trial ******************"
         )
-        report_oom_dict = {constants.OOM_KEY: True}
+        logging.info(oom_error_string)
+        # TODO: use the information in the error string somehow?
+        report_oom_dict = {constants.OOM_KEY: True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
@@ -113,11 +117,11 @@ def report_oom_and_exit(
 
 
 def report_model_profiling_info_and_exit(
-    core_context,
-    op,
-    steps_completed,
+    core_context: det.core._context.Context,
+    op: det.core._searcher.SearcherOperation,
+    steps_completed: int,
     model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
-):
+) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
         model_info_profiling_results_dict = get_model_profiling_info_results_dict(
@@ -137,7 +141,7 @@ def report_ds_profiling_info_and_exit(
     op,
     steps_completed,
     ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
-):
+) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
         model_info_profiling_results_dict = get_model_profiling_info_results_dict(
@@ -152,7 +156,7 @@ def report_ds_profiling_info_and_exit(
     exit()
 
 
-def file_exists(path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0):
+def file_exists(path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0) -> bool:
     # TODO: Clean up, verify needed.
     for _ in range(check_limit):
         if os.path.isfile(path):
@@ -164,7 +168,7 @@ def file_exists(path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time
 
 def get_model_profiling_info_results_dict(
     path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH
-):
+) -> Dict[str, Any]:
     with open(path, "r") as output:
         results_dict = json.load(output)
         return results_dict
@@ -172,7 +176,7 @@ def get_model_profiling_info_results_dict(
 
 def get_ds_profiler_results_dict(
     path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH
-):
+) -> Dict[str, Any]:
 
     metrics_with_units = {"iter latency", "FLOPS per GPU", "params per gpu"}
     metrics_without_units = {
@@ -231,8 +235,7 @@ def get_flattened_dict(d: dict, concat_str: str = "_") -> Dict[str, Any]:
 def dsat_metrics_converter(
     result: Union[float, Dict[str, Any]],
     profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
-):
-
+) -> Any:
     info = det.get_cluster_info()
     assert info is not None, "Must be run on cluster"
     searcher_config = info._trial_info._config["searcher"]
@@ -262,3 +265,26 @@ def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Unio
     zero_optim_dict = {key: choice(defaults) for key, defaults in keys_and_defaults.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
+
+
+def get_tbs_mps_gas(ds_config: Dict[str, Any]) -> Tuple[int, int, int]:
+    """
+    Verifies that the batch size configuration is valid and returns the Tuple
+    `(train_batch_size, train_micro_batch_size_per_gpu, gradient_accumulation_steps)`.
+    """
+    tbs, mbs, gas = (
+        ds_config.get("train_batch_size", None),
+        ds_config.get("train_micro_batch_size_per_gpu", None),
+        ds_config.get("gradient_accumulation_steps", 1),  # Uses the DS default.
+    )
+    # TODO: assert messages.
+    if tbs is not None:
+        if mbs is not None:
+            assert tbs == mbs * gas
+        else:
+            mbs, remainder = divmod(tbs, gas)
+            assert not remainder
+    elif mbs is not None:
+        tbs = mbs * gas
+
+    return tbs, mbs, gas

@@ -31,19 +31,9 @@ Pros:
 Cons:
 
 - Currently, the user must configure DS through a `ds_config` sub-dictionary within the `hyperparameters` dict.
-- The `FlopsProfiler` does not estimate the activation memory per GPU, which is used in native DS AT, and the lack of
-  this info may put our searcher at a disadvantage. However, the subsequent computations native DS AT uses with this info
-  are sometimes sketchy, so I'm not sure this is a big loss.
 - Dependent on precise format of the `FlopsProfiler` output format.
-- Currently, the Custom Searcher launches wrapper Trials (which are collected into a single experiment) which in turn
-  launch Trials (which are not collected into a single experiment). This is messy and pollutes the Web UI.
-  This general phenomenon seems hard to avoid in a clean way.
 
 TODOs:
 
 - Support workflows which initialize DS Engine through CLI args.
-- Clean up the many unorganized trials which are generated.
 - Error handling largely ignored throughout.
-- The custom searcher currently runs dummy trials w/ the original config. Logic for non-trivial
-  searchers not yet implemented.
-- No hardware information passed to Custom Searcher, yet.

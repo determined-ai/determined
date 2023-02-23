@@ -66,15 +66,14 @@ def main(
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             steps_completed += 1
-            # There is a gotcha here: important to pass the same steps_completed value to both
-            # the context manager below and the explicit report_validation_metrics call.
-            # Updating steps_completed in between can lead to reporting conflicts.
+            # A potential gotcha: steps_completed must not be altered within the below context.
+            # Probably obvious from the usage, but should be noted in docs.
             with utils.dsat_reporting_context(core_context, op, steps_completed):
                 for batch in train_loader:
                     if fp16:
                         batch = batch.half()
                     batch = batch.to(device)
-                    logging.info(f"BATCH SIZE: {batch.shape[0]}")
+                    logging.info(f"BATCH SIZE: {batch.shape[0]}")  # Sanity checking.
                     # outputs = utils.dsat_forward(
                     #     core_context, op, model_engine, steps_completed, batch
                     # )
