@@ -750,6 +750,9 @@ commands:
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
               --deployment-type <<parameters.deployment-type>> \
+              --enterprise-edition \
+              --docker-user $DOCKER_USER \
+              --docker-pass $DOCKER_PASS \
               --retain-log-group \
               --yes
 
@@ -3517,7 +3520,9 @@ workflows:
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-deepspeed
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-deepspeed-tests
@@ -3644,6 +3649,7 @@ workflows:
           context:
             - aws
             - hugging-face
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
@@ -3684,7 +3690,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-nightly
@@ -3702,7 +3710,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -3719,7 +3729,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -3740,7 +3752,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-mmdetection
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-mmdetection-tests
@@ -3780,7 +3794,9 @@ workflows:
 
       - test-aws-fs:
           name: test-aws-fs-fsx
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -3792,7 +3808,9 @@ workflows:
 
       - test-aws-fs:
           name: test-aws-fs-efs
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -3807,7 +3825,9 @@ workflows:
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
-          context: aws
+          context:
+            - aws
+            - determined-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -3817,6 +3837,7 @@ workflows:
           name: test-e2e-gpu-distributed
           context:
             - aws
+            - determined-ee
             - hugging-face
           matrix:
             parameters:
@@ -3827,7 +3848,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
-          context: aws
+          context:
+            - aws
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["mmdet"]
@@ -3837,7 +3860,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
-          context: aws
+          context:
+            - aws
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["deepspeed"]
@@ -3847,7 +3872,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
-          context: aws
+          context:
+            - aws
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
