@@ -11,7 +11,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';

@@ -5,10 +5,10 @@ import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import SelectFilter from 'components/kit/SelectFilter';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,

@@ -9,7 +9,7 @@ import { ALL_VALUE, HpImportance } from 'types';
 import { hpImportanceSorter } from '../utils/experiment';
 
 import css from './HpSelectFilter.module.scss';
-import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
+import SelectFilter, { Props as SelectFilterProps } from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 

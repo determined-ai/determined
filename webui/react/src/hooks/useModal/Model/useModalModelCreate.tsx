@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import SelectFilter from 'components/kit/SelectFilter';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import SelectFilter from 'components/SelectFilter';
 import EditableTagList from 'components/TagList';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';

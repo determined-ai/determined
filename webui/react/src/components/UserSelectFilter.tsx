@@ -7,7 +7,7 @@ import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
-import SelectFilter from './SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 

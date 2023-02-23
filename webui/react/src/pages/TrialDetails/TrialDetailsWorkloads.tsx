@@ -8,7 +8,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import { getTrialWorkloads } from 'services/api';

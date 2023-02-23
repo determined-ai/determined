@@ -7,7 +7,7 @@ import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
-import SelectFilter from './SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 
 const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';

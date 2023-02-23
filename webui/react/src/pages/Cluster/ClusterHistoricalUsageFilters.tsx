@@ -5,7 +5,7 @@ import React from 'react';
 
 import DatePickerFilter from 'components/DatePickerFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import {
   DEFAULT_RANGE_DAY,
   DEFAULT_RANGE_MONTH,

@@ -4,7 +4,7 @@ import { Dayjs } from 'dayjs';
 import React from 'react';
 
 import Label from './Label';
-import css from './SelectFilter.module.scss';
+import css from './DatePickerFilter.module.scss';
 
 type Props = PickerProps<Dayjs> & {
   label: string;

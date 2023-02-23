@@ -5,9 +5,9 @@ import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import SelectFilter from 'components/kit/SelectFilter';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,

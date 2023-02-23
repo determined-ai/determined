@@ -4,7 +4,8 @@ import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
 
-import Label, { LabelTypes } from './Label';
+import Label, { LabelTypes } from 'components/Label';
+
 import css from './SelectFilter.module.scss';
 
 const { OptGroup, Option } = Select;
@@ -40,7 +41,6 @@ const countOptions = (children: React.ReactNode): number => {
 
 const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
   {
-    className = '',
     disableTags = false,
     /*
      * Disabling `dropdownMatchSelectWidth` will disable virtual scroll within the dropdown options.
@@ -56,7 +56,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
   ref?: React.Ref<RefSelectProps>,
 ) {
   const [isOpen, setIsOpen] = useState(false);
-  const classes = [className, css.base];
+  const classes = [css.base];
 
   if (disableTags) classes.push(css.disableTags);
   if (verticalLayout) classes.push(css.vertical);

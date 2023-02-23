@@ -6,7 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';

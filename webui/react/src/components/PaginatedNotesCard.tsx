@@ -12,7 +12,7 @@ import { Note } from 'types';
 
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
-import SelectFilter from './SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 

@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import { ValueOf } from 'shared/types';
 
 const { Option } = Select;

@@ -7,7 +7,7 @@ import Button from 'components/kit/Button';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';

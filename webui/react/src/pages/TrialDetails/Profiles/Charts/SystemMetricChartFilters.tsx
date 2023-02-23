@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 const { Option } = Select;
 import { UpdateSettings } from 'hooks/useSettings';
 
