@@ -54,53 +54,53 @@ archives:
       - src: "build/**/*"
         dst: "share"
 
-brews:
-  - name: determined-master
-    tap:
-      owner: determined-ai
-      name: homebrew-determined
-    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    caveats: |
-      Determined master config is located at #{etc}/determined/master.yaml
-
-      Make sure to setup the determined database:
-        brew services start postgresql@14
-        createuser postgres
-        createdb determined
-
-      Checkpoints are stored in #{var}/determined/data by default.
-      Make sure to configure it as a shared path for Docker for Mac in
-      Docker -> Preferences... -> Resources -> File Sharing.
-    homepage: "https://github.com/determined-ai/determined"
-    license: "Apache-2.0"
-    folder: Formula
-    dependencies:
-      - "postgresql@14"
-    install: |
-      bin.install "determined-master"
-
-      doc.install "LICENSE"
-      pkgshare.install Dir["share/*"]
-
-      (var/"cache/determined").mkpath
-      (var/"determined/data").mkpath
-      (var/"log/determined").mkpath
-
-      (etc/"determined").mkpath
-      inreplace "etc/determined/master.yaml" do |s|
-        s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
-      end
-      Pathname("etc/determined/master.yaml").append_lines <<~EOS
-        root: #{opt_pkgshare}
-        cache:
-          cache_dir: #{var}/cache/determined
-      EOS
-      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
-    service: |
-      run [opt_bin/"determined-master", "--config-file", etc/"determined/master.yaml"]
-      keep_alive false
-      error_log_path var/"log/determined/master-stderr.log"
-      log_path var/"log/determined/master-stdout.log"
+#brews:
+#  - name: determined-master
+#    tap:
+#      owner: determined-ai
+#      name: homebrew-determined
+#    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#    caveats: |
+#      Determined master config is located at #{etc}/determined/master.yaml
+#
+#      Make sure to setup the determined database:
+#        brew services start postgresql@14
+#        createuser postgres
+#        createdb determined
+#
+#      Checkpoints are stored in #{var}/determined/data by default.
+#      Make sure to configure it as a shared path for Docker for Mac in
+#      Docker -> Preferences... -> Resources -> File Sharing.
+#    homepage: "https://github.com/determined-ai/determined"
+#    license: "Apache-2.0"
+#    folder: Formula
+#    dependencies:
+#      - "postgresql@14"
+#    install: |
+#      bin.install "determined-master"
+#
+#      doc.install "LICENSE"
+#      pkgshare.install Dir["share/*"]
+#
+#      (var/"cache/determined").mkpath
+#      (var/"determined/data").mkpath
+#      (var/"log/determined").mkpath
+#
+#      (etc/"determined").mkpath
+#      inreplace "etc/determined/master.yaml" do |s|
+#        s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
+#      end
+#      Pathname("etc/determined/master.yaml").append_lines <<~EOS
+#        root: #{opt_pkgshare}
+#        cache:
+#          cache_dir: #{var}/cache/determined
+#      EOS
+#      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
+#    service: |
+#      run [opt_bin/"determined-master", "--config-file", etc/"determined/master.yaml"]
+#      keep_alive false
+#      error_log_path var/"log/determined/master-stderr.log"
+#      log_path var/"log/determined/master-stdout.log"
 
 nfpms:
   - maintainer: "Determined AI <hello@determined.ai>"
