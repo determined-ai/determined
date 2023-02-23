@@ -660,11 +660,17 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
+		foundMonitoredDispatch := false
 		for _, dispatch := range dispatches {
 			dispatchID := dispatch.DispatchID
 			if m.jobWatcher.isJobBeingMonitored(dispatchID) {
+				foundMonitoredDispatch = true
 				m.jobWatcher.notifyContainerRunning(ctx, dispatchID, msg.Rank, msg.NumPeers, msg.NodeName)
 			}
+		}
+		if !foundMonitoredDispatch {
+			ctx.Log().WithField("allocation-id", msg.AllocationID).Warnf(
+				"NotifyContainerRunning did not find an active, monitored dispatch")
 		}
 
 	case KillDispatcherResources:
@@ -1635,10 +1641,10 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	impersonatedUser string,
 ) (string, error) {
 	/*
-	 * Ask the launcher to run the job. We switched from using "LaunchAsync()"
-	 * to using "Launch()" to deal with an issue where the dispatcher monitor
-	 * asks for job status before the launcher sets up the job status record
-	 * keeping, which causes the job status request to get a 404 Not Found.
+	 * "LaunchAsync()" does not wait for the "launcher" to move the job to the "RUNNING"
+	 * state and returns right away while the job is still in the "PENDING" state. If it
+	 * becomes necessary to wait for the job to be in the "RUNNING" state, we can switch
+	 * to using "Launch()".
 	 *
 	 * The "manifest" describes the job to be launched and includes any environment
 	 * variables, mount points, etc., that are needed by the job.
@@ -1648,7 +1654,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	 * (e.g. "/etc/passwd"), LDAP, or some other authentication mechanism.
 	 */
 	dispatchInfo, response, err := m.apiClient.LaunchApi.
-		Launch(m.authContext(ctx)).
+		LaunchAsync(m.authContext(ctx)).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
@@ -1658,7 +1664,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 			// So we can show the HTTP status code, if available.
 			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
 		}
-		return "", errors.Wrapf(err, "LaunchApi.Launch() returned an error %s, response: {%v}. "+
+		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
 			"Verify that the launcher service is up and reachable. Try a restart the "+
 			"launcher service followed by a restart of the determined-master service.", httpStatus, response)
 	}
