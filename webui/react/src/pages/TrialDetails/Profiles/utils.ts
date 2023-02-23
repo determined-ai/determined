@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import uPlot from 'uplot';
 
 // key should be lowercase to match the metric name
@@ -19,10 +18,6 @@ export const getUnitForMetricName = (metricName: string): string => {
   return metricName in MetricNameUnit
     ? MetricNameUnit[metricName as keyof typeof MetricNameUnit]
     : metricName;
-};
-
-export const getTimeTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
-  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
 };
 
 export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
