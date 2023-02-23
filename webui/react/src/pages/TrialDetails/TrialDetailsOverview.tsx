@@ -60,25 +60,27 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
     const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
-    if (data && xAxis === XAxisDomain.Time && checkpoint?.totalBatches) {
+    if (data && checkpoint?.totalBatches) {
       Object.values(data).forEach((metric) => {
-        const matchIndex = metric.data[XAxisDomain.Batches]?.findIndex(
-          (pt) => pt[0] === checkpoint.totalBatches,
-        );
+        const matchIndex =
+          metric.data[XAxisDomain.Batches]?.findIndex((pt) => pt[0] >= checkpoint.totalBatches) ||
+          (metric.data[XAxisDomain.Batches]?.length || 0) - 1;
         if (matchIndex !== undefined && matchIndex >= 0) {
-          const timeVals = metric.data[XAxisDomain.Time];
-          if (timeVals && timeVals.length > matchIndex) {
-            timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
+          if (xAxis === XAxisDomain.Time) {
+            const timeVals = metric.data[XAxisDomain.Time];
+            if (timeVals && timeVals.length > matchIndex) {
+              timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
+            }
+          } else if (xAxis === XAxisDomain.Batches) {
+            const batchX = metric.data[XAxisDomain.Batches]?.[matchIndex][0];
+            if (batchX) {
+              timeHelpers[batchX] = checkpoint;
+            }
           }
         }
       });
     }
-    return checkpoint?.totalBatches
-      ? {
-          [checkpoint.totalBatches]: checkpoint,
-          ...timeHelpers,
-        }
-      : {};
+    return checkpoint?.totalBatches ? timeHelpers : {};
   }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
@@ -121,7 +123,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           xValSet.add(pt[0]);
         });
       });
-      const xVals = Array.from(xValSet).sort();
+      const xVals = Array.from(xValSet).sort((a, b) => a - b);
 
       const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
         const xVal = xVals[point.idx];
