@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
-from typing import List
+from typing import Any, List
 
 from termcolor import colored
 
@@ -36,7 +36,11 @@ def curl(args: Namespace) -> None:
     if args.curl_args:
         cmd.append(args.curl_args)
 
-    print(shlex.join(cmd))
+    if args.x:
+        if hasattr(shlex, "join"):  # added in py 3.8
+            print(shlex.join(cmd))  # type: ignore
+        else:
+            print(" ".join(shlex.quote(arg) for arg in cmd))
     output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if output.stderr:
@@ -67,10 +71,13 @@ args_description = [
                 curl,
                 "invoke curl",
                 [
+                    Arg(
+                        "-x", help="display the curl command that will be run", action="store_true"
+                    ),
                     Arg("path", help="path to curl (e.g. /api/v1/experiments?x=z)"),
                     Arg("curl_args", nargs="?"),
                 ],
             ),
         ],
     ),
-]
+]  # type: List[Any]
