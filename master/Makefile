@@ -117,7 +117,7 @@ fmt:
 
 .PHONY: test
 test:
-	# go test -short -coverprofile=coverage.out -covermode count -cover ./...
+	go test -short -coverprofile=coverage.out -covermode count -cover ./...
 	pytest
 
 .PHONY: test-intg
