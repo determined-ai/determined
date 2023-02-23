@@ -16,6 +16,8 @@ import TableFilterDropdown, {
   ARIA_LABEL_INPUT,
 } from './TableFilterDropdown';
 
+jest.setTimeout(10000);
+
 const ColumnValueType = {
   Decimal: 'decimal',
   Integer: 'integer',

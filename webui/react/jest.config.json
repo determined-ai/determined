@@ -10,7 +10,7 @@
   "testEnvironment": "jsdom",
   "transform": {
     "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "ts-jest",
-    "^.+\\.svg$": "jest-svg-transformer"
+    "^.+\\.svg$": "jest-transformer-svg"
   },
   "modulePaths": ["<rootDir>/src"],
   "moduleNameMapper": {

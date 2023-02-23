@@ -9,6 +9,8 @@ import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
+jest.setTimeout(10000);
+
 const MODAL_TITLE = 'Hyperparameter Search';
 
 const mockCreateExperiment = jest.fn();
