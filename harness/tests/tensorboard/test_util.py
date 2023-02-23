@@ -100,6 +100,7 @@ test_data = [
         2,
         "/home/bob/tensorboard/the-host-name.some-extension.gz",
     ),
+    # Pytorch profiler file with timestamp and ends with pt.trace.json
     (
         (
             "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
@@ -108,8 +109,56 @@ test_data = [
         1,
         (
             "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
-            "aa1f87508336_37.1674696139174#1.pt.trace.json"
+            "aa1f87508336_37#1.1674696139174.pt.trace.json"
         ),
+    ),
+    # Pytorch profiler file without timestamp and ends with pt.trace.json
+    (
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37.pt.trace.json"
+        ),
+        1,
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37#1.pt.trace.json"
+        ),
+    ),
+    # Pytorch profiler file with timestamp and ends with pt.trace.json.gz
+    (
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37.1674696139174.pt.trace.json.gz"
+        ),
+        1,
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37#1.1674696139174.pt.trace.json.gz"
+        ),
+    ),
+    # Pytorch profiler file without timestamp and ends with pt.trace.json.gz
+    (
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37.pt.trace.json.gz"
+        ),
+        1,
+        (
+            "/tmp/tensorboard-39.ff54aea9-0a94-4ce7-bf38-e8b3e69cc944.1-0/"
+            "aa1f87508336_37#1.pt.trace.json.gz"
+        ),
+    ),
+    # Pytorch profiler file (only file name) with timestamp and ends with pt.trace.json.gz
+    (
+        "aa1f87508336_37.1674696139174.pt.trace.json.gz",
+        1,
+        "aa1f87508336_37#1.1674696139174.pt.trace.json.gz",
+    ),
+    # Pytorch profiler file (only file name) without timestamp and ends with pt.trace.json.gz
+    (
+        "aa1f87508336_37.pt.trace.json.gz",
+        1,
+        "aa1f87508336_37#1.pt.trace.json.gz",
     ),
 ]
 
