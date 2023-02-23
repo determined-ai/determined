@@ -13,8 +13,7 @@ interface CardProps {
   children?: React.ReactNode;
   disabled?: boolean;
   height?: number;
-  href?: string;
-  onClick?: () => void;
+  onClick?: string | (() => void);
   width?: number;
 }
 
@@ -27,26 +26,29 @@ const Card: Card = ({
   onClick,
   height = 184,
   width = 184,
-  href,
 }: CardProps) => {
   const classnames = [css.base];
-  const clickable = onClick || href;
-  if (clickable) classnames.push(css.clickable);
+  const isLink = typeof onClick === 'string' && onClick.length > 0;
+  if (onClick) classnames.push(css.clickable);
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
   return (
     <ConditionalWrapper
-      condition={!!href}
-      wrapper={(children) => (
-        <Link path={href} rawLink>
-          {children}
-        </Link>
-      )}>
+      condition={isLink}
+      wrapper={(children) =>
+        isLink ? (
+          <Link path={onClick} rawLink>
+            {children}
+          </Link>
+        ) : (
+          children // This branch should never be reached but the ternary satisfies Typescript
+        )
+      }>
       <div
         className={classnames.join(' ')}
         style={{ minHeight: `${height}px`, width: `${width}px` }}
-        tabIndex={clickable ? 0 : -1}
-        onClick={onClick}>
+        tabIndex={onClick ? 0 : -1}
+        onClick={typeof onClick === 'function' ? onClick : undefined}>
         {children && <section className={css.content}>{children}</section>}
         {actionsAvailable && (
           <div className={css.action}>

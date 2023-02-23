@@ -32,7 +32,7 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
   return (
     <Card
       actionMenu={!project.immutable ? menuProps : undefined}
-      href={paths.projectDetails(project.id)}>
+      onClick={paths.projectDetails(project.id)}>
       <div className={classnames.join(' ')}>
         <Typography.Title className={css.name} ellipsis={{ rows: 5, tooltip: true }} level={5}>
           {project.name}
