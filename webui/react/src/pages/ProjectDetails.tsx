@@ -55,7 +55,6 @@ const ProjectDetails: React.FC = () => {
   const [workspace, setWorkspace] = useState<Workspace>();
 
   const id = Number(projectId ?? '1');
-  const canViewWorkspaceFlag = permissions.canViewWorkspace({ workspace: { id } });
 
   const postActivity = useCallback(() => {
     postUserActivity({
@@ -155,7 +154,9 @@ const ProjectDetails: React.FC = () => {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (
-    (!permissions.loading && !canViewWorkspaceFlag) ||
+    (!permissions.loading &&
+      project &&
+      !permissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) ||
     (pageError && isNotFound(pageError))
   ) {
     return <PageNotFound />;
