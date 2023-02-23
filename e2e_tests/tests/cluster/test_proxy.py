@@ -87,6 +87,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
                 "determined.cli.tunnel",
                 "--listener",
                 "8265",
+                "--auth",
                 conf.make_master_url(),
                 f"{task_id}:8265",
             ],
