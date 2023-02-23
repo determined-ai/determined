@@ -25,40 +25,40 @@ archives:
       - src: "packaging/LICENSE"
         strip_parent: true
 
-brews:
-  - name: determined-agent
-    tap:
-      owner: determined-ai
-      name: homebrew-determined
-    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    caveats: |
-      Determined agent config is located at #{etc}/determined/agent.yaml
-    homepage: "https://github.com/determined-ai/determined"
-    license: "Apache-2.0"
-    folder: Formula
-    install: |
-      bin.install "determined-agent"
-
-      doc.install "LICENSE"
-
-      (var/"log/determined").mkpath
-
-      (etc/"determined").mkpath
-      inreplace "etc/determined/agent.yaml" do |s|
-        s.gsub! "# master_host: 0.0.0.0", "master_host: 127.0.0.1"
-        s.gsub! "# master_port: 80", "master_port: 8080"
-      end
-
-      Pathname("etc/determined/agent.yaml").append_lines <<~EOS
-        container_master_host: host.docker.internal
-      EOS
-
-      etc.install "etc/determined/agent.yaml" => "determined/agent.yaml"
-    service: |
-      run [opt_bin/"determined-agent", "--config-file", etc/"determined/agent.yaml"]
-      keep_alive false
-      error_log_path var/"log/determined/agent-stderr.log"
-      log_path var/"log/determined/agent-stdout.log"
+#brews:
+#  - name: determined-agent
+#    tap:
+#      owner: determined-ai
+#      name: homebrew-determined
+#    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#    caveats: |
+#      Determined agent config is located at #{etc}/determined/agent.yaml
+#    homepage: "https://github.com/determined-ai/determined"
+#    license: "Apache-2.0"
+#    folder: Formula
+#    install: |
+#      bin.install "determined-agent"
+#
+#      doc.install "LICENSE"
+#
+#      (var/"log/determined").mkpath
+#
+#      (etc/"determined").mkpath
+#      inreplace "etc/determined/agent.yaml" do |s|
+#        s.gsub! "# master_host: 0.0.0.0", "master_host: 127.0.0.1"
+#        s.gsub! "# master_port: 80", "master_port: 8080"
+#      end
+#
+#      Pathname("etc/determined/agent.yaml").append_lines <<~EOS
+#        container_master_host: host.docker.internal
+#      EOS
+#
+#      etc.install "etc/determined/agent.yaml" => "determined/agent.yaml"
+#    service: |
+#      run [opt_bin/"determined-agent", "--config-file", etc/"determined/agent.yaml"]
+#      keep_alive false
+#      error_log_path var/"log/determined/agent-stderr.log"
+#      log_path var/"log/determined/agent-stdout.log"
 
 nfpms:
   - maintainer: "Determined AI <hello@determined.ai>"
