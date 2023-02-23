@@ -123,8 +123,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
-          workspaceId: workspace?.id,
-          workspaceIds: settings.workspace,
+          workspaceIds: workspace?.id ? [workspace.id] : settings.workspace,
         },
         { signal: canceler.signal },
       );
