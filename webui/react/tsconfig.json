@@ -4,5 +4,5 @@
     "baseUrl": "./src",
     "module": "esnext"
   },
-  "include": ["src/**/*", "typings/**/*.ts", "jest.setup.ts"]
+  "include": ["src/**/*", "typings/**/*.ts"]
 }
