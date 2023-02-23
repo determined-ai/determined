@@ -10839,6 +10839,55 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
+            // verify required parameter 'timestampAfter' is not null or undefined
+            if (timestampAfter === null || timestampAfter === undefined) {
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getRawResourceTaskAllocationCsv.');
+            }
+            // verify required parameter 'timestampBefore' is not null or undefined
+            if (timestampBefore === null || timestampBefore === undefined) {
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling getRawResourceTaskAllocationCsv.');
+            }
+            const localVarPath = `/allocations/tasks-raw`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (timestampAfter !== undefined) {
+                localVarQueryParameter['timestamp_after'] = timestampAfter;
+            }
+
+            if (timestampBefore !== undefined) {
+                localVarQueryParameter['timestamp_before'] = timestampBefore;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -11259,6 +11308,26 @@ export const ClusterApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -11477,6 +11546,17 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         },
         /**
          * 
+         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+            return ClusterApiFp(configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -11667,6 +11747,19 @@ export class ClusterApi extends BaseAPI {
      */
     public getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
         return ClusterApiFp(this.configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+     * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+        return ClusterApiFp(this.configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
     }
 
     /**
