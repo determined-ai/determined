@@ -1,4 +1,4 @@
-.base {
+.cardBase {
   --transition-duration: 0.25s;
   --transition-delay: 0.05s;
   --outside-padding: 16px;
@@ -49,11 +49,23 @@
     outline: var(--theme-stroke-width-strong) solid var(--theme-ix-border-active);
   }
 }
-.group {
+.groupBase {
   align-items: stretch;
   display: flex;
   flex-direction: row;
   gap: 16px;
+  overflow: auto;
   // This padding stops the box-shadows from being cut off.
-  padding: 3px;
+  padding: 5px;
+
+  &.wrap {
+    flex-wrap: wrap;
+  }
+  &.noWrap {
+    flex-wrap: nowrap;
+
+    & > .cardBase {
+      flex-shrink: 0;
+    }
+  }
 }

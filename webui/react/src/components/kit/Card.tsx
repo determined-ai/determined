@@ -43,7 +43,7 @@ const Card: Card = ({
   height = 184,
   width = 184,
 }: CardProps) => {
-  const classnames = [css.base];
+  const classnames = [css.cardBase];
   if (href || onClick) classnames.push(css.clickable);
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
@@ -85,11 +85,10 @@ interface CardGroupProps {
 }
 
 const CardGroup: React.FC<CardGroupProps> = ({ children, wrap = true }: CardGroupProps) => {
-  return (
-    <div className={css.group} style={{ flexWrap: wrap ? 'wrap' : 'nowrap' }}>
-      {children}
-    </div>
-  );
+  const classnames = [css.groupBase];
+  classnames.push(wrap ? css.wrap : css.noWrap);
+
+  return <div className={classnames.join(' ')}>{children}</div>;
 };
 
 Card.Group = CardGroup;

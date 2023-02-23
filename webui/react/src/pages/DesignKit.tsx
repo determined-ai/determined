@@ -1025,21 +1025,14 @@ const CardsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Card default</strong>
-        <div>
-          <p>Card with actions</p>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
-        </div>
-        <div>
-          <p>Card without actions</p>
-          <Card />
-        </div>
-        <strong>Card groups</strong>
+        <Card />
+        <strong>Card group default</strong>
         <p>
           A card group (<code>{'<Card.Group>'}</code>) can be used to display a list or grid of
           cards.
         </p>
         <Card.Group>
-          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
+          <Card />
           <Card />
         </Card.Group>
         <strong>Considerations</strong>
@@ -1053,6 +1046,45 @@ const CardsSection: React.FC = () => {
           </li>
         </ul>
         <strong>Card variations</strong>
+        <Card.Group>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+            Disabled card
+          </Card>
+          <Card onClick={noOp}>Clickable card</Card>
+        </Card.Group>
+        <strong>Card group variations</strong>
+        <p>Wrapping card (default)</p>
+        <Card.Group>
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+        </Card.Group>
+        <p>Non-wrapping card</p>
+        <Card.Group wrap={false}>
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+          <Card />
+        </Card.Group>
+        <strong>Card examples</strong>
         <ul>
           <li>
             Project card (<code>{'<ProjectCard>'}</code>)
