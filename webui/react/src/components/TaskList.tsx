@@ -44,6 +44,7 @@ import settingsConfig, {
 import { commandTypeToLabel } from 'constants/states';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import { UserSettingsService } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -118,7 +119,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
   const { activeSettings, resetSettings, settings, updateSettings } =
-    useSettings<Settings>(stgsConfig);
+    UserSettingsService.useSettings<Settings>(stgsConfig);
+    console.log(settings);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);

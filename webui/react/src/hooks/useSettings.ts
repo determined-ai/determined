@@ -42,7 +42,7 @@ export type UseSettingsReturn<T> = {
   updateSettings: UpdateSettings;
 };
 
-const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
+export const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
   const fullSettings = (Object.values(config.settings) as SettingsConfigProp<T>[]).reduce<Settings>(
     (acc, setting) => {
       // Save settings into query if there is value defined and is not the default value.
@@ -74,7 +74,7 @@ const queryParamToType = <T>(
   return undefined;
 };
 
-const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
+export const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
   const params = queryString.parse(query);
 
   return (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).reduce<Settings>(
@@ -140,6 +140,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     NotLoaded: () => undefined,
   });
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
+  // (state.forEach((s, o) => console.log(s, o)))
   const navigate = useNavigate();
 
   // parse navigation url to state
