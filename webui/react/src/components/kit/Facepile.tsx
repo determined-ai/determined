@@ -33,7 +33,10 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
       })),
     [loadedUsers],
   );
-  const visibleAvatars = useMemo(() => showAllAvatars ? avatars : avatars.slice(0, 5), [avatars, showAllAvatars]);
+  const visibleAvatars = useMemo(
+    () => (showAllAvatars ? avatars : avatars.slice(0, 5)),
+    [avatars, showAllAvatars],
+  );
   const showButton = useMemo(() => editable || amountOfAvatars > 5, [editable, amountOfAvatars]);
   const buttonLabel = useMemo(() => {
     if (amountOfAvatars > 5 && !showAllAvatars) return `+ ${amountOfAvatars - 5}`;
@@ -43,9 +46,9 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
 
   return (
     <div className={css.container}>
-      {
-        visibleAvatars.map((avatar) => <UserAvatar className={css.spacing} key={avatar.id} user={avatar} />)
-      }
+      {visibleAvatars.map((avatar) => (
+        <UserAvatar className={css.spacing} key={avatar.id} user={avatar} />
+      ))}
       {showDropdown && (
         <SelectFilter
           className={css.spacing}
@@ -81,7 +84,7 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
                 if (showAllAvatars && editable) {
                   setShowDropdown(true);
                   return;
-                };
+                }
 
                 setShowAllAvatars((prev) => !prev);
                 return;
@@ -91,7 +94,7 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
             }}>
             {buttonLabel}
           </Button>
-          {(showAllAvatars && editable) && (
+          {showAllAvatars && editable && (
             <Button
               type="primary"
               onClick={() => {

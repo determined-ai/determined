@@ -782,11 +782,10 @@ const FacepileSection: React.FC = () => {
         <ul>
           <li>
             Facepile with 8 people
-
             <Facepile users={users.slice(0, 8)} />
           </li>
           <li>Facepile with both name initials</li>
-          <p>Not implemented</p>
+          <p>Check the Facepile above and select a user that would fit that case</p>
         </ul>
       </Card>
     </ComponentSection>
