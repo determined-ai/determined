@@ -1513,7 +1513,7 @@ jobs:
       - run: make -C tools check
       - run: make -C schemas check
 
-  test-unit-master-py:
+  test-unit-master-python:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -2198,7 +2198,7 @@ workflows:
           context: storage-unit-tests
           filters: *any-upstream
       - test-examples
-      - test-unit-master-py
+      - test-unit-master-python
       - python-coverage:
           requires:
             - test-unit-harness-cpu
