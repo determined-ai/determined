@@ -1812,8 +1812,8 @@ jobs:
                   go tool covdata textfmt -i=/tmp/gocover/ -o=/tmp/gocover/coverage.out
                   go tool cover -html /tmp/gocover/coverage.out -o /tmp/gocover/coverage.html
             - store_artifacts:
-                path: /tmp/go-coverage
-                destination: go-coverage
+                path: /tmp/gocover
+                destination: gocover
 
   deploy:
     parameters:
