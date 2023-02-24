@@ -24,7 +24,10 @@ def main(core_context: det.core.Context) -> None:
             path,
             _,
         ):
-            for src_str in {constants.DS_PROFILER_OUTPUT_PATH}:  # Previously wrote more to ckpt.
+            for src_str in {
+                constants.AUTOTUNING_RESULTS_DIR_PATH,
+                constants.MODEL_INFO_PROFILING_PATH,
+            }:  # Previously wrote more to ckpt.
                 src = pathlib.Path(src_str)
                 dst = pathlib.Path(path).joinpath(src.name)
                 try:

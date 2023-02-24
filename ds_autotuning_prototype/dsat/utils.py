@@ -74,8 +74,6 @@ def dsat_reporting_context(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
-    model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
-    ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
 ) -> None:
     try:
         yield
@@ -84,9 +82,22 @@ def dsat_reporting_context(
         if "out of memory" in oom_error_string:
             report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
     except SystemExit as se:
-        if file_exists(model_info_profiling_path):
-            report_model_profiling_info_and_exit(
-                core_context, op, steps_completed, model_info_profiling_path
+        print([x[0] for x in os.walk(".")])
+        if file_or_dir_exists(constants.MODEL_INFO_PROFILING_PATH):
+            report_json_results_and_exit(
+                core_context=core_context,
+                op=op,
+                steps_completed=steps_completed,
+                add_gpu_info=True,
+                path=constants.MODEL_INFO_PROFILING_PATH,
+            )
+        elif file_or_dir_exists(constants.AUTOTUNING_RESULTS_PATH):
+            report_json_results_and_exit(
+                core_context=core_context,
+                op=op,
+                steps_completed=steps_completed,
+                add_gpu_info=False,
+                path=constants.AUTOTUNING_RESULTS_PATH,
             )
         else:
             raise se
@@ -116,137 +127,37 @@ def report_oom_and_exit(
     exit()
 
 
-def report_model_profiling_info_and_exit(
+def report_json_results_and_exit(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
-    model_info_profiling_path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH,
+    add_gpu_info: bool,
+    path: Union[str, pathlib.Path],
 ) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
-        model_info_profiling_results_dict = get_model_profiling_info_results_dict(
-            path=model_info_profiling_path
-        )
-        gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
-        model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
+        with open(path, "r") as f:
+            results_dict = json.load(f)
+        if add_gpu_info:
+            gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
+            results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
         core_context.train.report_validation_metrics(
-            steps_completed=steps_completed, metrics=model_info_profiling_results_dict
+            steps_completed=steps_completed, metrics=results_dict
         )
-        op.report_completed(model_info_profiling_results_dict)
+        op.report_completed(results_dict)
     exit()
 
 
-def report_ds_profiling_info_and_exit(
-    core_context,
-    op,
-    steps_completed,
-    ds_profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
-) -> None:
-    is_chief = core_context.distributed.rank == 0
-    if is_chief:
-        model_info_profiling_results_dict = get_model_profiling_info_results_dict(
-            path=ds_profiler_output_path
-        )
-        gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
-        model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
-        core_context.train.report_validation_metrics(
-            steps_completed=steps_completed, metrics=model_info_profiling_results_dict
-        )
-        op.report_completed(model_info_profiling_results_dict)
-    exit()
-
-
-def file_exists(path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0) -> bool:
+def file_or_dir_exists(
+    path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0
+) -> bool:
     # TODO: Clean up, verify needed.
     for _ in range(check_limit):
-        if os.path.isfile(path):
+        if os.path.isfile(path) or os.path.isdir(path):
             return True
         else:
             time.sleep(sleep_time)
     return False
-
-
-def get_model_profiling_info_results_dict(
-    path: Union[str, pathlib.Path] = constants.MODEL_INFO_PROFILING_PATH
-) -> Dict[str, Any]:
-    with open(path, "r") as output:
-        results_dict = json.load(output)
-        return results_dict
-
-
-def get_ds_profiler_results_dict(
-    path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH
-) -> Dict[str, Any]:
-
-    metrics_with_units = {"iter latency", "FLOPS per GPU", "params per gpu"}
-    metrics_without_units = {
-        "samples/second",
-        "world size",
-        "data parallel size",
-        "model parallel size",
-        "batch size per GPU",
-    }
-    # The FLOPS and latency computations are reported with units.  We convert everything to
-    # FLOPS and seconds.
-    units_map = {
-        "TFLOPS": 1e12,
-        "GFLOPS": 1e9,
-        "MFLOPS": 1e6,
-        "KFLOPS": 1e3,
-        "M": 1e6,
-        "K": 1e3,
-        "k": 1e3,
-        "s": 1,
-        "ms": 1e-3,
-        "us": 1e-6,
-    }
-    results_dict = {}
-    with open(path, "r") as output:
-        for line in output:
-            line = line.strip()
-            for metric in metrics_with_units:
-                if line.startswith(metric + ":") or line.startswith(metric + " ="):
-                    units_factor = units_map[line.split()[-1]]
-                    results_dict[metric] = get_decimal_number_in_line(line) * units_factor
-            for metric in metrics_without_units:
-                if line.startswith(metric + ":"):
-                    results_dict[metric] = get_non_decimal_number_in_line(line)
-    return results_dict
-
-
-def get_flattened_dict(d: dict, concat_str: str = "_") -> Dict[str, Any]:
-    """Flattens a nested dict into a single level dict with concatenated keys."""
-    flat_dict = {}
-
-    def flatten(d: dict, parent_key: str = "") -> None:
-        for key, val in d.items():
-            if parent_key:
-                key = parent_key + concat_str + key
-            if not isinstance(val, dict):
-                assert key not in flat_dict, f'Key "{key}" already exists in dict!!!'
-                flat_dict[key] = val
-            else:
-                flatten(val, key)
-
-    flatten(d)
-    return flat_dict
-
-
-def dsat_metrics_converter(
-    result: Union[float, Dict[str, Any]],
-    profiler_output_path: Union[str, pathlib.Path] = constants.DS_PROFILER_OUTPUT_PATH,
-) -> Any:
-    info = det.get_cluster_info()
-    assert info is not None, "Must be run on cluster"
-    searcher_config = info._trial_info._config["searcher"]
-    # TODO: Prevent clashes w/ other non-DSAT custom searchers.
-    is_autotuning = searcher_config["name"] == "custom"
-    if not is_autotuning or not file_exists(profiler_output_path):
-        return result
-    else:
-        # TODO: Need some sleep checks/retries to ensure the file was written? Timing issues?
-        profiler_results_dict = get_ds_profiler_results_dict()
-        return profiler_results_dict
 
 
 def get_zero_optim_keys_and_defaults_per_stage(

@@ -26,7 +26,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
 
     config_dict["name"] += " (DS AT Searcher)"
     config_dict["searcher"]["name"] = "single"
-    config_dict["searcher"]["max_length"] = constants.DSAT_MAX_LENGTH_STEPS
+    config_dict["searcher"]["max_length"] = constants.END_PROFILE_STEP
     config_dict["resources"] = {"slots_per_trial": 0}  # Will need to get original resources later.
     config_dict[
         "entrypoint"

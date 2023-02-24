@@ -86,7 +86,6 @@ def main(
 
             if is_chief:
                 metrics_dict = {"loss": loss.item()}
-                metrics_dict = utils.dsat_metrics_converter(metrics_dict)
                 core_context.train.report_validation_metrics(
                     steps_completed=steps_completed, metrics=metrics_dict
                 )

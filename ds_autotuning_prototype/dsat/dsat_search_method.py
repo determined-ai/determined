@@ -127,7 +127,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self._submitted_hps = self._submitted_config_dict["hyperparameters"]
         self._ds_config = self._submitted_hps["ds_config"]
         self._tbs, self._mbs, self._gas = utils.get_tbs_mps_gas(self._ds_config)
-        self._autotuning_config = self._submitted_hps["autotuning_config"]
+        self._autotuning_config = self._ds_config["autotuning"]
         self._tuner_num_trials = self._autotuning_config["tuner_num_trials"]
         self._num_tuning_micro_batch_sizes = self._autotuning_config["num_tuning_micro_batch_sizes"]
         self._tuner_early_stopping = self._autotuning_config["num_tuning_micro_batch_sizes"]
@@ -136,10 +136,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self._all_trials_dict = dict()
 
         self._base_hparams_with_profiling = copy.deepcopy(self._submitted_hps)
-        utils.replace_dict_in_place(
-            self._base_hparams_with_profiling["ds_config"],
-            {"flops_profiler": constants.FLOPS_PROFILER_CONFIG},  # TODO: don't hardcode profiler.
-        )
 
         # Non-trivial values instantiated after model profiling run
         self._model_profile_info_trial_id = None
@@ -155,7 +151,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         # Altered after running flops profiler trials.
         self._best_flops_profiler_trial_id = None
         self._best_flops_profiler_metric_val = None
-        self._num_trials_since_best_flops_profiler_result = None
+        self._num_trials_since_best_result = None
         self._should_early_stop = False
 
     @abstractmethod
@@ -214,7 +210,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         # Abandon the search if the early stopping criteria is met, othewise continues
         self._should_early_stop = (
             self._should_early_stop
-            or self._num_trials_since_best_flops_profiler_result == self._tuner_early_stopping
+            or self._num_trials_since_best_result == self._tuner_early_stopping
         )
         if self._should_early_stop:
             new_ops_list = []
@@ -267,9 +263,9 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         if last_trial_is_best:
             self._best_flops_profiler_metric_val = searcher_metric_value
             self._best_flops_profiler_trial_id = last_trial.request_id
-            self._num_trials_since_best_flops_profiler_result = 0
+            self._num_trials_since_best_result = 0
         else:
-            self._num_trials_since_best_flops_profiler_result += 1
+            self._num_trials_since_best_result += 1
 
     def _get_closed_trials_dict(
         self, searcher_state: searcher.SearcherState, zero_stage: Optional[int] = None
@@ -435,8 +431,10 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             new_trial = self._get_and_register_trial(
                 hparams=hparams, search_data=search_data, parent_trial=None
             )
+            # A +1 is required to align DS step/DET max_length conventions.
+            length = self._autotuning_config.get("end_profile_step", constants.END_PROFILE_STEP) + 1
             new_ops = self._get_trial_ops_list_from_id(
-                request_id=new_trial.request_id, length=constants.DSAT_MAX_LENGTH_STEPS
+                request_id=new_trial.request_id, length=length
             )
             new_ops_list.extend(new_ops)
         return new_ops_list
@@ -461,7 +459,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 hparams=hparams, search_data=search_data, parent_trial=parent_trial
             )
             new_ops_list = self._get_trial_ops_list_from_id(
-                request_id=new_trial.request_id, length=constants.DSAT_MAX_LENGTH_STEPS
+                request_id=new_trial.request_id, length=constants.END_PROFILE_STEP
             )
         return new_ops_list
 
@@ -508,5 +506,4 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         }
         mid = (initial_search_data["lo"] + initial_search_data["hi"]) // 2
         new_hparams["ds_config"]["train_micro_batch_size_per_gpu"] = mid
-        del new_hparams["autotuning_config"]  # Cleanup for better Web UI visuals.
         return (new_hparams, initial_search_data)

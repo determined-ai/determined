@@ -1,17 +1,11 @@
-DSAT_MAX_LENGTH_STEPS = 5
 WORKDIR_PATH = "/run/determined/workdir/"
 DS_PROFILER_OUTPUT_PATH = WORKDIR_PATH + "flops_profiler_output.txt"
 MODEL_INFO_PROFILING_PATH = WORKDIR_PATH + "model_info_profiling_results.json"
+AUTOTUNING_RESULTS_DIR_PATH = WORKDIR_PATH + "autotuning_results"
+AUTOTUNING_EXP_DIR_PATH = WORKDIR_PATH + "autotuning_exps"
+AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
-FLOPS_PROFILER_CONFIG = {
-    "enabled": True,
-    "profile_step": DSAT_MAX_LENGTH_STEPS - 1,
-    "module_depth": -1,
-    "top_modules": 10,  # TODO: Verify that this is a reasonable value. Also let user config this whole section.
-    "detailed": True,
-    "output_file": DS_PROFILER_OUTPUT_PATH,
-}
-
+END_PROFILE_STEP = 5
 
 MODEL_INFO_PROFILING_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
@@ -26,13 +20,6 @@ MODEL_INFO_PROFILING_DS_CONFIG = {
     },
 }
 
-# TODO: Should remove all references to SINGLE_SEARCHER_CONFIG and make max_length
-# available for user to define.
-SINGLE_SEARCHER_CONFIG = {
-    "name": "single",
-    "max_length": DSAT_MAX_LENGTH_STEPS,
-    "metric": "placeholder",
-}
 
 # Using same defaults as DS. Written as a diff between successive stages for brevity.
 NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
@@ -47,5 +34,6 @@ NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
         "allgather_partitions": [True, False],
     },
 }
+
 
 OOM_KEY = "OOM"

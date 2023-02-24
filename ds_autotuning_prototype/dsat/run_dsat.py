@@ -25,11 +25,11 @@ def main(core_context: det.core.Context) -> None:
     # Save profiling results w/ wrapper; probably remove eventually, but useful for sanity checking.
     submitted_config_dict["entrypoint"] += (
         "; python3 -m determined.launch.torch_distributed"
-        " python3 -m dsat.checkpoint_profiling_results_wrapper --prev_exit_code $?"
+        " python3 -m dsat.checkpoint_results_wrapper --prev_exit_code $?"
     )
 
     all_search_method_classes = {"random": dsat_search_method.DSATRandomSearchMethod}
-    tuner_type = submitted_config_dict["hyperparameters"]["autotuning_config"]["tuner_type"]
+    tuner_type = submitted_config_dict["hyperparameters"]["ds_config"]["autotuning"]["tuner_type"]
     assert (
         tuner_type in all_search_method_classes
     ), f"search_method must be one of {list(all_search_method_classes)}"
