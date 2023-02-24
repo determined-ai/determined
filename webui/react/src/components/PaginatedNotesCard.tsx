@@ -6,13 +6,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import SelectFilter from 'components/kit/SelectFilter';
 import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
-import SelectFilter from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 
