@@ -5,7 +5,7 @@ import pathlib
 import shutil
 import tempfile
 import uuid
-from typing import List, Any
+from typing import Any, List
 
 import determined as det
 from determined import searcher
