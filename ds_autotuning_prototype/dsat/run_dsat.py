@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 import determined as det
 from determined import searcher
@@ -8,10 +9,14 @@ from dsat import dsat_search_method, utils
 
 def get_parsed_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config_path", type=str, default="")
-    parsed_args = parser.parse_args()
+    parser.add_argument("-c", "--config_path", type=str)
+    parser.add_argument("-md", "--model_dir", type=str)
+    args = parser.parse_args()
+    # Only need the base names.
+    args.config_path = os.path.basename(args.config_path)
+    args.model_dir = os.path.basename(args.model_dir)
 
-    return parsed_args
+    return args
 
 
 def main(core_context: det.core.Context) -> None:
@@ -32,7 +37,7 @@ def main(core_context: det.core.Context) -> None:
     search_method = all_search_method_classes[tuner_type](submitted_config_dict)
     search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
-    search_runner.run(submitted_config_dict, model_dir=".")
+    search_runner.run(submitted_config_dict, model_dir=args.model_dir)
 
 
 if __name__ == "__main__":

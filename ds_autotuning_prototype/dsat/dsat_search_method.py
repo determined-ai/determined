@@ -417,19 +417,17 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
     ) -> List[searcher.Operation]:
         last_trial = self._all_trials_dict[request_id]
         if last_trial.is_model_profiling_info_run:
-            new_ops_list = self._get_ops_list_after_model_profling_info_run(metric)
+            new_ops_list = self._get_ops_list_after_model_profiling_info_run(metric)
         elif len(searcher_state.trials_created) < self._tuner_num_trials:
             new_ops_list = self._get_ops_list_after_flops_profiler_run(metric, last_trial)
         else:
             new_ops_list = []
         return new_ops_list
 
-    def _get_ops_list_after_model_profling_info_run(
+    def _get_ops_list_after_model_profiling_info_run(
         self,
         metric: Union[float, Dict[str, Any]],
     ) -> List[searcher.Operation]:
-        if not metric:
-            raise ValueError("No metric reported for info profiling run; failed?")
         approx_num_lineages = self._tuner_num_trials // self._num_tuning_micro_batch_sizes
         new_ops_list = []
         for _ in range(approx_num_lineages):
@@ -505,7 +503,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         )
         initial_search_data = {
             "lo": 1,
-            "hi": self._max_mbs_per_stage[random_zero_stage],
+            "hi": 2 * self._max_mbs_per_stage[random_zero_stage] - 1,
             "oom_in_lineage": False,
         }
         mid = (initial_search_data["lo"] + initial_search_data["hi"]) // 2
