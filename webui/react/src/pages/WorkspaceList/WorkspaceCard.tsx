@@ -37,9 +37,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   return (
     <Card
       actionMenu={!workspace.immutable ? menuProps : undefined}
-      height={110}
       href={paths.workspaceDetails(workspace.id)}
-      width={335}>
+      size="medium">
       <div className={classnames.join(' ')}>
         <div className={css.icon}>
           <DynamicIcon name={workspace.name} size={78} />

@@ -34,7 +34,7 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
       actionMenu={!project.immutable ? menuProps : undefined}
       href={paths.projectDetails(project.id)}>
       <div className={classnames.join(' ')}>
-        <Typography.Title className={css.name} ellipsis={{ rows: 5, tooltip: true }} level={5}>
+        <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
           {project.name}
         </Typography.Title>
         <div className={css.footer}>

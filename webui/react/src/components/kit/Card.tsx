@@ -12,8 +12,7 @@ type CardPropsBase = {
   actionMenu?: MenuProps;
   children?: React.ReactNode;
   disabled?: boolean;
-  height?: number;
-  width?: number;
+  size?: 'small' | 'medium';
 };
 
 type CardProps = (
@@ -38,28 +37,34 @@ const Card: Card = ({
   actionMenu,
   children,
   disabled = false,
-  onClick,
   href,
-  height = 184,
-  width = 184,
+  onClick,
+  size = 'small',
 }: CardProps) => {
   const classnames = [css.cardBase];
   if (href || onClick) classnames.push(css.clickable);
+  switch (size) {
+    case 'small':
+      classnames.push(css.small);
+      break;
+    case 'medium':
+      classnames.push(css.medium);
+      break;
+  }
+
   const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
 
   return (
     <ConditionalWrapper
       condition={!!href}
+      // This falseWrapper is so styles work consistently whether or not the card has a link.
+      falseWrapper={(children) => <div>{children}</div>}
       wrapper={(children) => (
         <Link path={href} rawLink>
           {children}
         </Link>
       )}>
-      <div
-        className={classnames.join(' ')}
-        style={{ minHeight: `${height}px`, width: `${width}px` }}
-        tabIndex={onClick ? 0 : -1}
-        onClick={onClick}>
+      <div className={classnames.join(' ')} tabIndex={onClick ? 0 : -1} onClick={onClick}>
         {children && <section className={css.content}>{children}</section>}
         {actionsAvailable && (
           <div className={css.action}>

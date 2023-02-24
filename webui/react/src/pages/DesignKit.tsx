@@ -1046,6 +1046,7 @@ const CardsSection: React.FC = () => {
           </li>
         </ul>
         <strong>Card variations</strong>
+        <p>Small cards (default)</p>
         <Card.Group>
           <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
           <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
@@ -1053,36 +1054,38 @@ const CardsSection: React.FC = () => {
           </Card>
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
-        <strong>Card group variations</strong>
-        <p>Wrapping card (default)</p>
+        <p>Medium cards</p>
         <Card.Group>
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+            Card with actions
+          </Card>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+            Disabled card
+          </Card>
+          <Card size="medium" onClick={noOp}>
+            Clickable card
+          </Card>
         </Card.Group>
-        <p>Non-wrapping card</p>
+        <strong>Card group variations</strong>
+        <p>Wrapping group (default)</p>
+        <Card.Group>
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+        </Card.Group>
+        <p>Non-wrapping group</p>
         <Card.Group wrap={false}>
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
-          <Card />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
         </Card.Group>
         <strong>Card examples</strong>
         <ul>
@@ -1095,7 +1098,7 @@ const CardsSection: React.FC = () => {
             <ProjectCard
               project={{
                 ...project,
-                name: 'Project with a very long name that spans many lines and eventually gets cut off at some point when there is a lot of text',
+                name: 'Project with a very long name that spans many lines and eventually gets cut off',
               }}
             />
           </Card.Group>
@@ -1118,7 +1121,9 @@ const CardsSection: React.FC = () => {
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>
-          <ResourcePoolCard resourcePool={rps[0]} />
+          <Card.Group>
+            <ResourcePoolCard resourcePool={rps[0]} />
+          </Card.Group>
         </ul>
       </AntDCard>
     </ComponentSection>

@@ -118,7 +118,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   }, [processedPool, isAux, pool]);
 
   return (
-    <Card height={282} width={356}>
+    <Card size="medium">
       <div className={css.base}>
         <div className={css.header}>
           <div className={css.info}>
