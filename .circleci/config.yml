@@ -1522,6 +1522,7 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
+          determined: true
           extra-requirements-file: "master/static/srv/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C master test-python
