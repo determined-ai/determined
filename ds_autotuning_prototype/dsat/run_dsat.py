@@ -22,11 +22,6 @@ def get_parsed_args():
 def main(core_context: det.core.Context) -> None:
     args = get_parsed_args()
     submitted_config_dict = utils.get_config_dict_from_yaml_path(args.config_path)
-    # Save profiling results w/ wrapper; probably remove eventually, but useful for sanity checking.
-    submitted_config_dict["entrypoint"] += (
-        "; python3 -m determined.launch.torch_distributed"
-        " python3 -m dsat.checkpoint_results_wrapper --prev_exit_code $?"
-    )
 
     all_search_method_classes = {"random": dsat_search_method.DSATRandomSearchMethod}
     tuner_type = submitted_config_dict["hyperparameters"]["ds_config"]["autotuning"]["tuner_type"]
