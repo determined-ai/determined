@@ -16,7 +16,6 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   label?: string;
   maxTagPlaceholderValue?: string;
   ref?: React.Ref<RefSelectProps>;
-  style?: React.CSSProperties;
   value?: T;
   verticalLayout?: boolean;
 }
