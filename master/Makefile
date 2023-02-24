@@ -118,7 +118,6 @@ fmt:
 .PHONY: test
 test:
 	go test -short -coverprofile=coverage.out -covermode count -cover ./...
-	pytest
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
@@ -199,3 +198,7 @@ publish-nvcr:
 		docker tag $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-amd64 $$image; \
 		docker push $$image; \
 	done
+
+.PHONY: test-python
+test-python:
+	pytest

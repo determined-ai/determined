@@ -211,7 +211,6 @@ commands:
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
-
   install-protoc:
     steps:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
@@ -559,8 +558,7 @@ commands:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition:
-            << parameters.extra-tags >>
+          condition: << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -959,7 +957,6 @@ commands:
           no_output_timeout: 30m
           command: make package
 
-
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1052,7 +1049,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
-      - reinstall-go      
+      - reinstall-go
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1515,6 +1512,20 @@ jobs:
       - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
+
+  test-unit-master-py:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extra-requirements-file: "master/static/srv/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - run: make -C master test-python
 
   test-unit-harness-cpu:
     docker:
@@ -2192,6 +2203,7 @@ workflows:
           context: storage-unit-tests
           filters: *any-upstream
       - test-examples
+      - test-unit-master-py
       - python-coverage:
           requires:
             - test-unit-harness-cpu
