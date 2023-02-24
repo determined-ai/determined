@@ -34,6 +34,7 @@ def web_lint_check():
         run_command += ["check-package-lock"]
 
     returncode: int = subprocess.call(run_command)
+    subprocess.call(["git", "add"] + args.file_paths)
     exit(returncode)
 
 
