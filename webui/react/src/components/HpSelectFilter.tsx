@@ -68,7 +68,6 @@ const HpSelectFilter: React.FC<Props> = ({
 
   return (
     <SelectFilter
-      className={css.base}
       disableTags
       dropdownMatchSelectWidth={300}
       mode="multiple"

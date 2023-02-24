@@ -18,6 +18,8 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   ref?: React.Ref<RefSelectProps>;
   style?: React.CSSProperties;
   verticalLayout?: boolean;
+  value?: T;
+
 }
 
 export const ALL_VALUE = 'all';
@@ -39,7 +41,7 @@ const countOptions = (children: React.ReactNode): number => {
   return count;
 };
 
-const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
+const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(function SelectFilter(
   {
     disableTags = false,
     /*
@@ -49,8 +51,11 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
     dropdownMatchSelectWidth = true,
     enableSearchFilter = true,
     itemName,
+    label,
     showSearch = true,
     verticalLayout = false,
+    value,
+    children,
     ...props
   }: Props,
   ref?: React.Ref<RefSelectProps>,
@@ -61,17 +66,17 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
   if (disableTags) classes.push(css.disableTags);
   if (verticalLayout) classes.push(css.vertical);
 
-  const optionsCount = useMemo(() => countOptions(props.children), [props.children]);
+  const optionsCount = useMemo(() => countOptions(children), [children]);
 
   const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
     if (!disableTags) return [undefined, props.maxTagPlaceholder];
 
-    const count = Array.isArray(props.value) ? props.value.length : props.value ? 1 : 0;
+    const count = Array.isArray(value) ? value.length : value ? 1 : 0;
     const isPlural = count > 1;
     const itemLabel = itemName ? `${itemName}${isPlural ? 's' : ''}` : 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
     return isOpen ? [0, ''] : [0, placeholder];
-  }, [disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, props.value]);
+  }, [disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, value]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
@@ -94,7 +99,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
 
   return (
     <div className={classes.join(' ')}>
-      {props.label && <Label type={LabelTypes.TextOnly}>{props.label}</Label>}
+      {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}
@@ -104,8 +109,8 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
         showSearch={showSearch}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         onDropdownVisibleChange={handleDropdownVisibleChange}
-        {...props}>
-        {props.children}
+        value={value}>
+        {children}
       </Select>
     </div>
   );
