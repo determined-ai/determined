@@ -996,7 +996,7 @@ commands:
           command: |
             mkdir /tmp/gocover
             echo 'export GOCOVERDIR="/tmp/gocover"' >> "$BASH_ENV"
-            devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
+            GOCOVERDIR="/tmp/gocover" devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
           background: true
 
 jobs:
@@ -1806,8 +1806,8 @@ jobs:
             - run:
                 name: "Shutting down master and agent for test coverage"
                 command: |
-                  ps aux | grep -ie "[d]etermined-master" | awk '{print $2}' | xargs kill -10
-                  ps aux | grep -ie "[d]etermined-agent" | awk '{print $2}' | xargs kill -10
+                  (ps aux | grep -ie "[d]etermined-agent" | awk '{print $2}' | xargs kill -10) || true
+                  (ps aux | grep -ie "[d]etermined-master" | awk '{print $2}' | xargs kill -10) || true
                   cd agent
                   go tool covdata textfmt -i=/tmp/gocover/ -o=/tmp/gocover/coverage.out
                   go tool cover -html /tmp/gocover/coverage.out -o /tmp/gocover/coverage.html
