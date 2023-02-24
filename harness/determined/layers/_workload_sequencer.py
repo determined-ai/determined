@@ -3,7 +3,7 @@ import sys
 from typing import Any, Generator, Optional, Tuple
 
 import determined as det
-from determined import core, tensorboard, workload
+from determined import core, workload
 from determined.common import check
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]

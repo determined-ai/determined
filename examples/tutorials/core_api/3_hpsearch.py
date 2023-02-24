@@ -60,10 +60,12 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             batch += 1
         # NEW: After training for each op, you typically validate and report the
         # searcher metric to the master.
+        metrics = {"x": x}
         core_context.train.report_validation_metrics(
-            steps_completed=steps_completed, metrics={"x": x}
+            steps_completed=steps_completed,
+            metrics=metrics,
         )
-        op.report_completed(x)
+        op.report_completed(metrics)
 
     # NEW: after searching, save a checkpoint if our last one is not up-to-date.
     if last_checkpoint_batch != steps_completed:
