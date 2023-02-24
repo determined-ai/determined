@@ -184,7 +184,7 @@ def init(
         trial_seed = _generate_local_seed()
 
         # XXX: figure out if better way to handle this
-        aggregation_frequency = exp_conf and int(exp_conf.get("optimizations", {}).get("aggregation_frequency", 1))  # type: ignore
+        aggregation_frequency = exp_conf and int(exp_conf.get("optimizations", {}).get("aggregation_frequency", 1)) or 1  # type: ignore
         fp16_compression = False
         average_aggregated_gradients = True
         steps_completed = 0
