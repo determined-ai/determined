@@ -133,19 +133,23 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 		return err
 	}
 
-	// In integration tests, multiple processes can be running this code at once, which can lead to
-	// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
-	_, err = tx.Exec("LOCK TABLE pg_type")
-	if err != nil {
-		return err
-	}
-
 	defer func() {
 		// Rollback unless it has already been committed.
 		if errd := tx.Close(); errd != nil {
 			log.Errorf("failed to rollback pg transaction while migrating: %s", errd)
 		}
 	}()
+
+	// In integration tests, multiple processes can be running this code at once, which can lead to
+	// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
+
+	// Arbitrarily chosen unique consistent ID for the lock.
+	const MigrationLockID = 0x33ad0708c9bed25b
+
+	_, err = tx.Exec("SELECT pg_advisory_xact_lock(?)", MigrationLockID)
+	if err != nil {
+		return err
+	}
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
 		return errors.Wrap(err, "error upgrading migration metadata")
