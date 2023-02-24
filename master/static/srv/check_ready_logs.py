@@ -32,6 +32,7 @@ BACKOFF_SECONDS = 5
     RequestException,
     giveup=lambda e: e.response is not None and e.response.status_code < 500,
     interval=BACKOFF_SECONDS,
+    max_tries=3,
 )
 def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str):
     api.post(
