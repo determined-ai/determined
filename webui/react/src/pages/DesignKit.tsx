@@ -36,10 +36,8 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { BrandingType, MetricType, ResourcePool } from 'types';
-import { Loadable } from 'utils/loadable';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -729,11 +727,56 @@ const BreadcrumbsSection: React.FC = () => {
 };
 
 const FacepileSection: React.FC = () => {
-  const loadableUsers = useUsers();
-  const users = Loadable.match(loadableUsers, {
-    Loaded: (u) => u.users,
-    NotLoaded: () => [],
-  });
+  const users = [
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake Admin',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Admin',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'User',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Foo',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Baar',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Gandalf',
+    },
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Leroy Jenkins',
+    },
+  ];
   return (
     <ComponentSection id="Facepile" title="Facepile">
       <Card>
