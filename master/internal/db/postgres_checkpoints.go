@@ -146,43 +146,38 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	return groupeIDcUUIDS, nil
 }
 
-// UpdateCheckpointSizeTx updates checkpoint size and count to experiment and trial.
-func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
-	if idb == nil {
-		idb = Bun()
-	}
+// UpdateCheckpointSize updates checkpoint size and count to experiment and trial.
+func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
+	trialID := Bun().NewSelect().Table("checkpoints_view").
+		Column("trial_id").
+		Where("uuid IN (?)", bun.In(checkpoints)).
+		Distinct()
 
-	var experimentIDs []int
-	err := idb.NewRaw(`
-UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
-	SELECT trial_id,
-	COALESCE(SUM(size) FILTER (WHERE state != 'DELETED'), 0) AS size,
-	COUNT(*) FILTER (WHERE state != 'DELETED') AS count
-	FROM checkpoints_view
-	WHERE trial_id IN (
-		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
-	)
-	GROUP BY trial_id
-) sub
-WHERE trials.id = sub.trial_id
-RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
-	if err != nil {
-		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
-	}
-	if len(experimentIDs) == 0 { // Checkpoint potentially to non experiment.
-		return nil
-	}
+	sizeTuple := Bun().NewSelect().TableExpr("checkpoints_view AS c").
+		ColumnExpr("jsonb_each(c.resources) AS size_tuple").
+		Column("experiment_id").
+		Column("uuid").
+		Column("trial_id").
+		Where("state != ?", "DELETED").
+		Where("c.resources != 'null'::jsonb").
+		// https://dba.stackexchange.com/questions/114337/postgresql-query-very-slow-when-subquery-added
+		Where("trial_id = ANY((SELECT ARRAY(SELECT DISTINCT trial_id FROM checkpoints_view WHERE (UUID IN (?))))::bigint[])", bun.In(checkpoints))
 
-	uniqueExpIDs := maps.Keys(set.FromSlice(experimentIDs))
-	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
-	err = idb.NewRaw(`
-UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
-	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
-	WHERE experiment_id IN (?)
-	GROUP BY experiment_id
-) sub
-WHERE experiments.id = sub.experiment_id
-RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
+	sizeAndCount := Bun().NewSelect().With("cp_size_tuple", sizeTuple).With("trial_ids", trialID).
+		Table("cp_size_tuple").
+		ColumnExpr("coalesce(sum((size_tuple).value::text::bigint), 0) AS size").
+		ColumnExpr("count(distinct(uuid)) AS count").
+		ColumnExpr("trial_ids.trial_id").
+		GroupExpr("trial_ids.trial_id").
+		Join("RIGHT JOIN trial_ids ON trial_ids.trial_id = cp_size_tuple.trial_id")
+
+	_, err := Bun().NewUpdate().With("size_and_count", sizeAndCount).
+		Table("trials", "size_and_count").
+		Set("checkpoint_size = size").
+		Set("checkpoint_count = count").
+		Where("id IN (?)", trialID).
+		Where("trials.id = size_and_count.trial_id").
+		Exec(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
 	}
