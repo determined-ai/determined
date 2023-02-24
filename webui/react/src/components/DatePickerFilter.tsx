@@ -3,7 +3,8 @@ import { PickerProps } from 'antd/es/date-picker/generatePicker';
 import { Dayjs } from 'dayjs';
 import React from 'react';
 
-import Label from './Label';
+import Label from 'components/Label';
+
 import css from './DatePickerFilter.module.scss';
 
 type Props = PickerProps<Dayjs> & {

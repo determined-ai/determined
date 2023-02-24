@@ -4,8 +4,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
 import DatePickerFilter from 'components/DatePickerFilter';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import SelectFilter from 'components/kit/SelectFilter';
+import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
   DEFAULT_RANGE_DAY,
   DEFAULT_RANGE_MONTH,

@@ -3,8 +3,8 @@ import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
-import Link from 'components/Link';
 import SelectFilter from 'components/kit/SelectFilter';
+import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';

@@ -3,13 +3,13 @@ import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import SelectFilter, { Props as SelectFilterProps } from 'components/kit/SelectFilter';
 import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
 
 import { hpImportanceSorter } from '../utils/experiment';
 
 import css from './HpSelectFilter.module.scss';
-import SelectFilter, { Props as SelectFilterProps } from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 

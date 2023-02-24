@@ -2,12 +2,12 @@ import { Select } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import SelectFilter from 'components/kit/SelectFilter';
 import { Metric, MetricType } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
-import SelectFilter from 'components/kit/SelectFilter';
 
 const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';

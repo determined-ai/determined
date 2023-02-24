@@ -2,12 +2,11 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
+import SelectFilter from 'components/kit/SelectFilter';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-
-import SelectFilter from 'components/kit/SelectFilter';
 
 const { Option } = Select;
 
