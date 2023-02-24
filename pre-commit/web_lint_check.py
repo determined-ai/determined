@@ -27,9 +27,9 @@ def web_lint_check():
 
     # TODO: replace it with `match` if we support python v3.10
     if target == "js":
-        run_command += ["eslint", f"ES_ARGS=--fix {file_paths}"]
+        run_command += ["eslint", f"ES_ARGS=-- --fix {file_paths}"]
     elif target == "css":
-        run_command += ["stylelint", f"ST_ARGS=--fix {file_paths}"]
+        run_command += ["stylelint", f"ST_ARGS=-- --fix {file_paths}"]
     elif target == "misc":
         run_command += ["check-package-lock"]
 
