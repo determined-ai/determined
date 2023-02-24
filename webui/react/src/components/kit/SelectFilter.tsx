@@ -1,10 +1,9 @@
 import { Select } from 'antd';
-import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue, } from 'antd/es/select';
+import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
-import Icon from 'shared/components/Icon/Icon';
-
 import Label, { LabelTypes } from 'components/Label';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './SelectFilter.module.scss';
 
@@ -15,11 +14,11 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   enableSearchFilter?: boolean;
   itemName?: string;
   label?: string;
+  maxTagPlaceholderValue?: string;
   ref?: React.Ref<RefSelectProps>;
   style?: React.CSSProperties;
-  verticalLayout?: boolean;
   value?: T;
-  maxTagPlaceholderValue?: string;
+  verticalLayout?: boolean;
 }
 
 export const ALL_VALUE = 'all';
@@ -107,8 +106,8 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         ref={ref}
         showSearch={showSearch}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
-        onDropdownVisibleChange={handleDropdownVisibleChange}
-        value={value}>
+        value={value}
+        onDropdownVisibleChange={handleDropdownVisibleChange}>
         {children}
       </Select>
     </div>
