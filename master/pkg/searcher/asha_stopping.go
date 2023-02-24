@@ -23,10 +23,11 @@ type asyncHalvingStoppingSearch struct {
 	expconf.AsyncHalvingConfig
 	SmallerIsBetter bool
 	asyncHalvingSearchState
+	metricName string
 }
 
 func newAsyncHalvingStoppingSearch(
-	config expconf.AsyncHalvingConfig, smallerIsBetter bool,
+	config expconf.AsyncHalvingConfig, smallerIsBetter bool, metricName string,
 ) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs())
 	var unitsNeeded uint64
@@ -52,6 +53,7 @@ func newAsyncHalvingStoppingSearch(
 			ClosedTrials:     make(map[model.RequestID]bool),
 			SearchMethodType: ASHASearch,
 		},
+		metricName: metricName,
 	}
 }
 
@@ -139,7 +141,15 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 func (s *asyncHalvingStoppingSearch) validationCompleted(
 	ctx context, requestID model.RequestID, metric interface{}, op ValidateAfter,
 ) ([]Operation, error) {
-	value, ok := metric.(float64)
+	metricMap, ok := metric.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected a map of metrics %v", metric)
+	}
+	searchMetric, ok := metricMap[s.metricName]
+	if !ok {
+		return nil, fmt.Errorf("metric %s absent from metrics %v", s.metricName, metricMap)
+	}
+	value, ok := searchMetric.(float64)
 	if !ok {
 		return nil, fmt.Errorf("unexpected metric type for ASHA built-in search method %v", value)
 	}

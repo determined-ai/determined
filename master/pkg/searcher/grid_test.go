@@ -296,6 +296,7 @@ func TestGridSearchMethod(t *testing.T) {
 					RawMaxLength:           ptrs.Ptr(expconf.NewLengthInBatches(300)),
 					RawMaxConcurrentTrials: ptrs.Ptr(2),
 				},
+				RawMetric: ptrs.Ptr("loss"),
 			},
 			hparams: generateHyperparameters([]int{2, 1, 3}),
 		},

@@ -42,6 +42,7 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 							Units: 937,
 						},
 					},
+					RawMetric: ptrs.Ptr("accuracy"),
 				}
 				sm := searcher.NewSearchMethod(single)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})
@@ -67,6 +68,7 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 						RawDivisor: ptrs.Ptr[float64](4),
 					},
 					RawSmallerIsBetter: ptrs.Ptr(true),
+					RawMetric:          ptrs.Ptr("mse"),
 				}
 				sm := searcher.NewSearchMethod(asha)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})

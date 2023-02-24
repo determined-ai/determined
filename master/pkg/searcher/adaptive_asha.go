@@ -22,7 +22,10 @@ func getBracketMaxTrials(
 	bracketWeight := make([]float64, 0., len(brackets))
 	var totalWeight float64
 	for i, numRungs := range brackets {
-		bracketWeight = append(bracketWeight, math.Pow(divisor, float64(numRungs-1))/float64(numRungs))
+		bracketWeight = append(
+			bracketWeight,
+			math.Pow(divisor, float64(numRungs-1))/float64(numRungs),
+		)
 		totalWeight += bracketWeight[i]
 	}
 	bracketTrials := make([]int, 0, len(brackets))
@@ -68,7 +71,11 @@ func getBracketMaxConcurrentTrials(
 	return bracketMaxConcurrentTrials
 }
 
-func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bool) SearchMethod {
+func newAdaptiveASHASearch(
+	config expconf.AdaptiveASHAConfig,
+	smallerIsBetter bool,
+	metricName string,
+) SearchMethod {
 	modeFunc := parseAdaptiveMode(config.Mode())
 
 	brackets := config.BracketRungs()
@@ -98,9 +105,9 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 			RawStopOnce:            ptrs.Ptr(config.StopOnce()),
 		}
 		if config.StopOnce() {
-			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter))
+			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter, metricName))
 		} else {
-			methods = append(methods, newAsyncHalvingSearch(c, smallerIsBetter))
+			methods = append(methods, newAsyncHalvingSearch(c, smallerIsBetter, metricName))
 		}
 	}
 

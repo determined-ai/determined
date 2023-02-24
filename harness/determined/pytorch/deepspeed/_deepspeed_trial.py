@@ -1,5 +1,6 @@
 import abc
 import contextlib
+import dataclasses
 import json
 import logging
 import os
@@ -321,7 +322,7 @@ class DeepSpeedTrialController(det.TrialController):
                             path = pathlib.Path("profile_model_info/model_info.json")
                             with path.open("r") as f:
                                 model_info_dict = json.load(f)
-                                self.context.model_info = det_ds.ModelInfo(
+                                self.context._model_info = det_ds.ModelInfo(
                                     num_params=model_info_dict["num_params"],
                                     trainable_num_params=model_info_dict["trainable_num_params"],
                                     activation_mem_per_gpu=model_info_dict[
@@ -557,11 +558,12 @@ class DeepSpeedTrialController(det.TrialController):
             logging.info("Computing validation metrics for model info trial")
             if self.is_chief:
                 searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
+                metrics = dataclasses.asdict(self.context._model_info)
+                metrics[searcher_metric_name] = 0.0  # searcher metric must be present
+                logging.info(f"metrics: {metrics}")
                 return {
                     "num_inputs": 0,
-                    "validation_metrics": {
-                        searcher_metric_name: self.context.model_info.activation_mem_per_gpu,
-                    },
+                    "validation_metrics": metrics,
                 }
             return {}
 

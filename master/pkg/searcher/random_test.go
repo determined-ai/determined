@@ -64,6 +64,7 @@ func TestRandomSearchMethod(t *testing.T) {
 					RawMaxTrials:           ptrs.Ptr(4),
 					RawMaxConcurrentTrials: ptrs.Ptr(2),
 				},
+				RawMetric: ptrs.Ptr("loss"),
 			},
 		},
 		{
@@ -79,6 +80,7 @@ func TestRandomSearchMethod(t *testing.T) {
 					RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(32017)),
 					RawMaxTrials: ptrs.Ptr(4),
 				},
+				RawMetric: ptrs.Ptr("loss"),
 			},
 		},
 	}
@@ -97,6 +99,7 @@ func TestSingleSearchMethod(t *testing.T) {
 				RawSingleConfig: &expconf.SingleConfig{
 					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(500)),
 				},
+				RawMetric: ptrs.Ptr("loss"),
 			},
 		},
 	}

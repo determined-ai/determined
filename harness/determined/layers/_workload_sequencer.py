@@ -267,11 +267,6 @@ class WorkloadSequencer(workload.Source):
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = metrics[searcher_metric_name]
-        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
-            raise RuntimeError(
-                f"Searcher validation metric '{searcher_metric_name}' returned "
-                f"a non-scalar value: {searcher_metric}"
-            )
 
         # Report to the searcher API first, so we don't end up in a situation where we die between
         # reporting to the metrics API and when we come back we refuse to repeat a validation, but
@@ -286,7 +281,7 @@ class WorkloadSequencer(workload.Source):
         #
         # But we can't do that without breaking behavior.
         if op is not None and self.batches_until_op_complete(op) < 1:
-            op.report_completed(searcher_metric)
+            op.report_completed(metrics)
 
         if self.ckpt_policy == "best" and not self.checkpoint_is_current():
             # Before reporting our own validation metric, check what the best known validation is

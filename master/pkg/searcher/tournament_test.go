@@ -12,6 +12,7 @@ import (
 )
 
 const RandomTournamentSearch SearchMethodType = "random_tournament"
+const MetricName string = "tournamentMetric"
 
 func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
@@ -68,6 +69,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			RawMaxTrials: ptrs.Ptr(3),
 			RawDivisor:   ptrs.Ptr[float64](3),
 		},
+		RawMetric: ptrs.Ptr(MetricName),
 	}
 	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1)
 	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
@@ -79,6 +81,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			RawMaxTrials: ptrs.Ptr(3),
 			RawDivisor:   ptrs.Ptr[float64](3),
 		},
+		RawMetric: ptrs.Ptr(MetricName),
 	}
 	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2)
 	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)
@@ -87,6 +90,6 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	method := newTournamentSearch(AdaptiveSearch, adaptiveMethod1, adaptiveMethod2)
 
-	err := checkValueSimulation(t, method, params, expectedTrials)
+	err := checkValueSimulation(t, method, params, expectedTrials, MetricName)
 	assert.NilError(t, err)
 }

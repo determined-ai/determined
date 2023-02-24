@@ -35,7 +35,7 @@ func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 		RawMaxTrials: ptrs.Ptr(128),
 	}
 	conf = schemas.WithDefaults(conf)
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, true) }
+	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, true, defaultMetric) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
@@ -59,6 +59,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					RawMaxRungs:  ptrs.Ptr(2),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -79,6 +80,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					RawMaxRungs:  ptrs.Ptr(2),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -99,6 +101,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					RawMaxRungs:  ptrs.Ptr(2),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -119,6 +122,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					RawMaxRungs:  ptrs.Ptr(2),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 	}
@@ -147,6 +151,7 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -168,6 +173,7 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -189,6 +195,7 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -210,6 +217,7 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 	}

@@ -26,7 +26,13 @@ func TestASHASearcherRecords(t *testing.T) {
 		toOps("64000R 192000R"),
 		toOps("64000R 192000R 576000R"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual, true), nil, ConstantValidation, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingSearch(actual, true, defaultMetric),
+		nil,
+		ConstantValidation,
+		expected,
+	)
 }
 
 func TestASHASearcherBatches(t *testing.T) {
@@ -46,7 +52,13 @@ func TestASHASearcherBatches(t *testing.T) {
 		toOps("1000B 3000B"),
 		toOps("1000B 3000B 9000B"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual, true), nil, ConstantValidation, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingSearch(actual, true, defaultMetric),
+		nil,
+		ConstantValidation,
+		expected,
+	)
 }
 
 func TestASHASearcherEpochs(t *testing.T) {
@@ -66,7 +78,13 @@ func TestASHASearcherEpochs(t *testing.T) {
 		toOps("1E 4E"),
 		toOps("1E 4E 12E"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual, true), nil, ConstantValidation, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingSearch(actual, true, defaultMetric),
+		nil,
+		ConstantValidation,
+		expected,
+	)
 }
 
 func TestASHASearchMethod(t *testing.T) {
@@ -95,6 +113,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(12),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -121,6 +140,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(12),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -147,6 +167,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(12),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -173,6 +194,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(12),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -202,6 +224,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(12),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -223,6 +246,7 @@ func TestASHASearchMethod(t *testing.T) {
 					RawMaxTrials: ptrs.Ptr(4),
 					RawDivisor:   ptrs.Ptr[float64](3),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 	}

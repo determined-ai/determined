@@ -62,7 +62,10 @@ func checkSimulation(
 // them, and checks that they produce the same trials and the same sequence of workloads for each
 // trial.
 func checkReproducibility(
-	t assert.TestingT, methodGen func() SearchMethod, hparams expconf.Hyperparameters, metric string,
+	t assert.TestingT,
+	methodGen func() SearchMethod,
+	hparams expconf.Hyperparameters,
+	metric string,
 ) {
 	hparams = schemas.WithDefaults(hparams)
 	seed := int64(17)
@@ -80,7 +83,12 @@ func checkReproducibility(
 		w1 := results1.Results[requestID]
 		w2 := results2.Results[requestID]
 
-		assert.Equal(t, len(w1), len(w2), "trial had different numbers of workloads between searchers")
+		assert.Equal(
+			t,
+			len(w1),
+			len(w2),
+			"trial had different numbers of workloads between searchers",
+		)
 		for i := range w1 {
 			// We want to ignore the start and end time fields, so check the rest individually.
 			assert.Equal(t, w1[i], w2[i], "workload differed between searchers")
@@ -158,6 +166,7 @@ func checkValueSimulation(
 	method SearchMethod,
 	params expconf.Hyperparameters,
 	expectedTrials []predefinedTrial,
+	metricName string,
 ) error {
 	// Create requests are assigned a predefinedTrial in order.
 	var nextTrialID int
@@ -210,7 +219,14 @@ func checkValueSimulation(
 			if trial.EarlyExit != nil && trialOpIdx[requestID] == *trial.EarlyExit {
 				trialEarlyExits[requestID] = true
 			}
-			ops, err = simulateOperationComplete(ctx, method, trial, operation, trialOpIdx[requestID])
+			ops, err = simulateOperationComplete(
+				ctx,
+				method,
+				trial,
+				operation,
+				trialOpIdx[requestID],
+				metricName,
+			)
 			if err != nil {
 				return errors.Wrapf(err, "simulateOperationComplete for trial %v", trialID+1)
 			}
@@ -257,7 +273,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 			config := schemas.WithDefaults(tc.config)
 			hparams := schemas.WithDefaults(tc.hparams)
 			method := NewSearchMethod(config)
-			err := checkValueSimulation(t, method, hparams, tc.expectedTrials)
+			err := checkValueSimulation(t, method, hparams, tc.expectedTrials, config.Metric())
 			assert.NilError(t, err)
 		})
 	}
@@ -276,6 +292,7 @@ func simulateOperationComplete(
 	trial predefinedTrial,
 	operation ValidateAfter,
 	opIndex int,
+	metricName string,
 ) ([]Operation, error) {
 	if err := trial.Train(operation.Length, opIndex); err != nil {
 		return nil, errors.Wrap(err, "error checking ValidateAfter with predefinedTrial")
@@ -289,8 +306,9 @@ func simulateOperationComplete(
 		return ops, nil
 	}
 
+	metric := map[string]interface{}{metricName: trial.ValMetrics[opIndex]}
 	ops, err := method.validationCompleted(
-		ctx, operation.RequestID, trial.ValMetrics[opIndex], operation,
+		ctx, operation.RequestID, metric, operation,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "validationCompleted")

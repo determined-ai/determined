@@ -30,7 +30,13 @@ func TestASHAStoppingSearcherRecords(t *testing.T) {
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
 		toOps("64000R"), toOps("64000R"),
 	}
-	checkSimulation(t, newAsyncHalvingStoppingSearch(actual, true), nil, TrialIDMetric, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingStoppingSearch(actual, true, defaultMetric),
+		nil,
+		TrialIDMetric,
+		expected,
+	)
 }
 
 func TestASHAStoppingSearcherBatches(t *testing.T) {
@@ -50,7 +56,13 @@ func TestASHAStoppingSearcherBatches(t *testing.T) {
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
 		toOps("1000B"), toOps("1000B"),
 	}
-	checkSimulation(t, newAsyncHalvingStoppingSearch(actual, true), nil, TrialIDMetric, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingStoppingSearch(actual, true, defaultMetric),
+		nil,
+		TrialIDMetric,
+		expected,
+	)
 }
 
 func TestASHAStoppingSearcherEpochs(t *testing.T) {
@@ -70,7 +82,13 @@ func TestASHAStoppingSearcherEpochs(t *testing.T) {
 		toOps("1E"), toOps("1E"), toOps("1E"),
 		toOps("1E"), toOps("1E"),
 	}
-	checkSimulation(t, newAsyncHalvingStoppingSearch(actual, true), nil, TrialIDMetric, expected)
+	checkSimulation(
+		t,
+		newAsyncHalvingStoppingSearch(actual, true, defaultMetric),
+		nil,
+		TrialIDMetric,
+		expected,
+	)
 }
 
 func TestASHAStoppingSearchMethod(t *testing.T) {
@@ -100,6 +118,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -127,6 +146,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -154,6 +174,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -181,6 +202,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -208,6 +230,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 		{
@@ -235,6 +258,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("accuracy"),
 			},
 		},
 		{
@@ -257,6 +281,7 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 					RawDivisor:   ptrs.Ptr[float64](3),
 					RawStopOnce:  ptrs.Ptr(true),
 				},
+				RawMetric: ptrs.Ptr("mse"),
 			},
 		},
 	}

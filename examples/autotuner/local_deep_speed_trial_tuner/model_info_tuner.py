@@ -5,7 +5,7 @@ import pathlib
 import shutil
 import tempfile
 import uuid
-from typing import List
+from typing import List, Any
 
 import determined as det
 from determined import searcher
@@ -55,9 +55,8 @@ class ModelInfoTuner(searcher.SearchMethod):
         self,
         _: searcher.SearcherState,
         request_id: uuid.UUID,
-        metric: float,
+        metric: Any,
         train_length: int,
-        #            other_metrics: dict[str, Any]
     ) -> List[searcher.Operation]:
         logging.info(f"validation completed; metric={metric}, train_length={train_length}")
         return []

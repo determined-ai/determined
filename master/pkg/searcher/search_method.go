@@ -80,11 +80,11 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newGridSearch(*c.RawGridConfig)
 	case c.RawAsyncHalvingConfig != nil:
 		if c.RawAsyncHalvingConfig.StopOnce() {
-			return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
+			return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter(), c.Metric())
 		}
-		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
+		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter(), c.Metric())
 	case c.RawAdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
+		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter(), c.Metric())
 	case c.RawCustomConfig != nil:
 		return newCustomSearch(*c.RawCustomConfig)
 	default:
