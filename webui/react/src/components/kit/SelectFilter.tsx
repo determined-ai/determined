@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
+import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue, } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
@@ -19,7 +19,7 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   style?: React.CSSProperties;
   verticalLayout?: boolean;
   value?: T;
-
+  maxTagPlaceholderValue?: string;
 }
 
 export const ALL_VALUE = 'all';
@@ -55,8 +55,8 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     showSearch = true,
     verticalLayout = false,
     value,
+    maxTagPlaceholderValue,
     children,
-    ...props
   }: Props,
   ref?: React.Ref<RefSelectProps>,
 ) {
@@ -69,19 +69,18 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
   const optionsCount = useMemo(() => countOptions(children), [children]);
 
   const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
-    if (!disableTags) return [undefined, props.maxTagPlaceholder];
+    if (!disableTags) return [undefined, maxTagPlaceholderValue];
 
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
     const isPlural = count > 1;
     const itemLabel = itemName ? `${itemName}${isPlural ? 's' : ''}` : 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
     return isOpen ? [0, ''] : [0, placeholder];
-  }, [disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, value]);
+  }, [disableTags, isOpen, itemName, optionsCount, maxTagPlaceholderValue, value]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
   }, []);
-
   const handleFilter = useCallback((search: string, option?: DefaultOptionType): boolean => {
     let label: string | null = null;
     if (option?.children) {

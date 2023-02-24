@@ -173,7 +173,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       filterOption={handleFiltering}
       label={label}
       maxTagCount={maxTagCount}
-      maxTagPlaceholder={selectorPlaceholder}
+      maxTagPlaceholderValue={selectorPlaceholder}
       mode={multiple ? 'multiple' : undefined}
       ref={selectRef}
       showArrow
