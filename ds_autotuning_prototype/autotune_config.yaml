@@ -1,0 +1,30 @@
+name: minimal_testing
+workspace: DS_AT_PROTOTYPING
+project: minimal_testing
+max_restarts: 3
+resources:
+  slots_per_trial: 2
+  # max_slots: 8
+searcher:
+  name: custom
+  metric: samples/second
+  smaller_is_better: False
+hyperparameters:
+  dim: 1024
+  layers: 100
+  # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  ds_config:
+    train_micro_batch_size_per_gpu: 128
+    gradient_accumulation_steps: 1
+    optimizer:
+      TYPE: Adam
+      params:
+        lr: 1e-3
+  autotuning_config: # Currently where search related configs are set. TODO: move to searcher field.
+    tuner_type: random
+    tuner_num_trials: 50
+    num_tuning_micro_batch_sizes: 3
+    tuner_early_stopping: 5
+    max_train_batch_size: 8192
+    # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?)
+entrypoint: python3 -m determined.launch.torch_distributed python3 minimal_script.py
