@@ -27,11 +27,13 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
   const amountOfAvatars = useMemo(() => avatars.length, [avatars.length]);
   const usersItems = useMemo(
     () =>
-      loadedUsers.map((user) => ({
-        label: user.username,
-        value: user.id,
-      })),
-    [loadedUsers],
+      loadedUsers
+        .filter((user) => !avatars.find((av) => av.id === user.id))
+        .map((user) => ({
+          label: user.username,
+          value: user.id,
+        })),
+    [loadedUsers, avatars],
   );
   const visibleAvatars = useMemo(
     () => (showAllAvatars ? avatars : avatars.slice(0, 5)),
