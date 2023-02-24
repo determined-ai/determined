@@ -43,6 +43,14 @@ build:
 		-o build/determined-agent \
 		./cmd/determined-agent
 
+.PHONY: build-cover
+build-cover:
+	go build \
+		-ldflags "-X main.version=$(VERSION)" \
+		-o build/determined-agent \
+		-cover \
+		./cmd/determined-agent
+
 .PHONY: build-race
 build-race:
 	go build \

@@ -91,6 +91,18 @@ build: gen
 		-o build/determined-master \
 		./cmd/determined-master
 
+.PHONY: build-cover
+build-cover: export DET_SEGMENT_MASTER_KEY ?=
+build-cover: export DET_SEGMENT_WEBUI_KEY ?=
+build-cover: gen
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
+		-o build/determined-master \
+		-cover \
+		./cmd/determined-master
+
 .PHONY: build-race
 build-race: export DET_SEGMENT_MASTER_KEY ?=
 build-race: export DET_SEGMENT_WEBUI_KEY ?=
