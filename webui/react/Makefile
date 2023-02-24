@@ -104,7 +104,7 @@ test:
 
 .PHONY: test-ci
 test-ci:
-	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=6 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
 
 # shared-web helpers
 
