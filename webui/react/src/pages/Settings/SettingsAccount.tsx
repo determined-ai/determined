@@ -1,8 +1,8 @@
 import { Divider } from 'antd';
 import React, { useCallback } from 'react';
 
-import InlineEditor from 'components/InlineEditor';
 import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
 import Avatar from 'components/kit/UserAvatar';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
@@ -78,23 +78,33 @@ const SettingsAccount: React.FC = () => {
       <Divider />
       <div className={css.row}>
         <label>Username</label>
-        <InlineEditor
+        <Input
+          defaultValue={currentUser?.username ?? ''}
           maxLength={32}
-          pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
           placeholder="Add username"
-          value={currentUser?.username || ''}
-          onSave={handleSaveUsername}
+          onBlur={(e) => {
+            const newValue = e.currentTarget.value;
+            handleSaveUsername(newValue);
+          }}
+          onPressEnter={(e) => {
+            e.currentTarget.blur();
+          }}
         />
       </div>
       <Divider />
       <div className={css.row}>
         <label>Display Name</label>
-        <InlineEditor
+        <Input
+          defaultValue={currentUser?.displayName ?? ''}
           maxLength={32}
-          pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
-          value={currentUser?.displayName || ''}
-          onSave={handleSaveDisplayName}
+          onBlur={(e) => {
+            const newValue = e.currentTarget.value;
+            handleSaveDisplayName(newValue);
+          }}
+          onPressEnter={(e) => {
+            e.currentTarget.blur();
+          }}
         />
       </div>
       <Divider />

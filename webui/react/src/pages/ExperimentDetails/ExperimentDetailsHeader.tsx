@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
-import InlineEditor from 'components/InlineEditor';
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
@@ -448,14 +448,19 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
-              <InlineEditor
-                allowNewline
+              <Input
+                defaultValue={experiment.description ?? ''}
                 disabled={disabled}
                 maxLength={500}
                 placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
-                value={experiment.description || ''}
-                onSave={handleDescriptionUpdate}
+                onBlur={(e) => {
+                  const newValue = e.currentTarget.value;
+                  handleDescriptionUpdate(newValue);
+                }}
+                onPressEnter={(e) => {
+                  e.currentTarget.blur();
+                }}
               />
             </div>
             {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
@@ -559,12 +564,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>
             <div className={css.name}>
-              <InlineEditor
+              <Input
+                defaultValue={experiment.name}
                 disabled={disabled}
                 maxLength={128}
-                placeholder="experiment name"
-                value={experiment.name}
-                onSave={handleNameUpdate}
+                placeholder="Experiment name"
+                onBlur={(e) => {
+                  const newValue = e.currentTarget.value;
+                  handleNameUpdate(newValue);
+                }}
+                onPressEnter={(e) => {
+                  e.currentTarget.blur();
+                }}
               />
             </div>
             {trial ? (
