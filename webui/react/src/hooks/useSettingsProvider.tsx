@@ -1,5 +1,5 @@
 import { Map } from 'immutable';
-import { useObservable } from 'micro-observables';
+import { observable, useObservable, WritableObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
@@ -21,17 +21,17 @@ type UserSettingsState = Map<string, Settings>;
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
 
 type UserSettingsContext = {
-  isLoading: boolean;
+  isLoading: WritableObservable<boolean>;
   querySettings: string;
-  state: UserSettingsState;
-  update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
+  state: WritableObservable<UserSettingsState>;
+  // update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
-  isLoading: false,
+  isLoading: observable(false),
   querySettings: '',
-  state: Map<string, Settings>(),
-  update: () => undefined,
+  state: observable(Map<string, Settings>()),
+  // update: () => undefined,
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -42,17 +42,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   });
   const checked = useObservable(authChecked);
   const [canceler] = useState(new AbortController());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(() => observable(true));
   const querySettings = useRef('');
-  const [settingsState, setSettingsState] = useState(() => Map<string, Settings>());
+  const [settingsState] = useState(() => observable(Map<string, Settings>()));
 
   useEffect(() => {
     if (!user?.id || !checked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
-        setIsLoading(false);
-        setSettingsState((currentState) => {
+        isLoading.set(false);
+        settingsState.update((currentState) => {
           return currentState.withMutations((state) => {
             response.settings.forEach((setting) => {
               const value = setting.value ? JSON.parse(setting.value) : undefined;
@@ -72,7 +72,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
         });
       });
     } catch (error) {
-      setIsLoading(false);
+      isLoading.set(false);
       handleError(error, {
         isUserTriggered: false,
         publicMessage: 'Unable to fetch user settings.',
@@ -89,23 +89,58 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const update = (key: string, value: Settings, clearQuerySettings = false) => {
-    setSettingsState((currentState) => currentState.set(key, value));
+  // const update = (key: string, value: Settings, clearQuerySettings = false) => {
+  //   settingsState.update((currentState) => currentState.set(key, value));
 
-    if (clearQuerySettings) querySettings.current = '';
-  };
+  //   if (clearQuerySettings) querySettings.current = '';
+  // };
+
+  // useEffect(() => {
+  //   return settingsState.subscribe(async (cur, prev) => {
+  //     // check the difference 
+  //     const diff = Map<string, Settings>()
+  //     cur.forEach()
+
+  //     await updateDB(cur);
+
+  //     if (
+  //       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
+  //         (setting) => !!setting.skipUrlEncoding,
+  //       )
+  //     ) {
+  //       return;
+  //     }
+
+  //     const mappedSettings = settingsToQuery(config, newSettings);
+  //     const url = `?${mappedSettings}`;
+
+  //     shouldPush ? navigate(url) : navigate(url, { replace: true });
+  //   })
+    
+  // }, )
 
   return (
-    <Spinner spinning={isLoading && !(checked && !user)} tip="Loading Page">
+    <Spinner spinning={useObservable(isLoading) && !(checked && !user)} tip="Loading Page">
       <UserSettings.Provider
         value={{
           isLoading: isLoading,
           querySettings: querySettings.current,
           state: settingsState,
-          update,
         }}>
         {children}
       </UserSettings.Provider>
     </Spinner>
   );
 };
+function updateDB(newSettings: any) {
+  throw new Error('Function not implemented.');
+}
+
+function settingsToQuery(config: any, newSettings: any) {
+  throw new Error('Function not implemented.');
+}
+
+function navigate(url: string) {
+  throw new Error('Function not implemented.');
+}
+

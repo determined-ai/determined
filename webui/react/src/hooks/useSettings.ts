@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -139,7 +140,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const { isLoading, querySettings, state, update } = useContext(UserSettings);
+  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
+  const isLoading = useObservable(isLoadingOb)
+  const state = useObservable(stateOb)
   const navigate = useNavigate();
 
   // parse navigation url to state
@@ -154,9 +157,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     Object.keys(settings).forEach((setting) => {
       stateSettings[setting] = settings[setting];
     });
-
-    update(config.storagePath, stateSettings, true);
-  }, [config, querySettings, state, update]);
+    stateOb.update(s => s.set(config.storagePath, stateSettings))
+    // clear query setting
+    // update(config.storagePath, stateSettings, true);
+  }, [config, querySettings, state]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -271,14 +275,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
-
-      update(config.storagePath, newSettings);
+      stateOb.update(s => s.set(config.storagePath, newSettings))
+      // update(config.storagePath, newSettings);
 
       await updateDB(newSettings);
 
       navigate('', { replace: true });
     },
-    [config, update, updateDB, navigate, settings],
+    [config, updateDB, navigate, settings],
   );
 
   const updateSettings = useCallback(
@@ -288,8 +292,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const newSettings = { ...settings, ...updates };
 
       if (isEqual(newSettings, settings)) return;
-
-      update(config.storagePath, newSettings);
+      stateOb.update(s => s.set(config.storagePath, newSettings))
+      // update(config.storagePath, newSettings);
 
       await updateDB(newSettings);
 
@@ -306,7 +310,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       shouldPush ? navigate(url) : navigate(url, { replace: true });
     },
-    [config, settings, navigate, update, updateDB],
+    [config, settings, navigate, updateDB],
   );
 
   return {
