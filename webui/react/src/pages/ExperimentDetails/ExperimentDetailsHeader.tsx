@@ -15,6 +15,7 @@ import useModalExperimentCreate, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
+import useModalExperimentEdit from 'hooks/useModal/Experiment/useModalExperimentEdit';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -114,6 +115,7 @@ const headerActions = [
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
   Action.DownloadCode,
+  Action.Edit,
   Action.Archive,
   Action.Unarchive,
   Action.Delete,
@@ -165,6 +167,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const { contextHolder: modalExperimentCreateContextHolder, modalOpen: openModalCreate } =
     useModalExperimentCreate();
+
+  const { contextHolder: modalExperimentEditContextHolder, modalOpen: openModalEdit } =
+    useModalExperimentEdit({
+      experimentId: experiment.id,
+      experimentName: experiment.name,
+      fetchExperimentDetails,
+    });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -277,25 +286,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
-  const handleNameUpdate = useCallback(
-    async (newValue: string) => {
-      try {
-        await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
-        await fetchExperimentDetails();
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment name.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-        return e as Error;
-      }
-    },
-    [experiment.id, fetchExperimentDetails],
-  );
-
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
       [Action.Unarchive]: {
@@ -341,6 +331,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         key: 'fork',
         label: 'Fork',
         onClick: handleForkClick,
+      },
+      [Action.Edit]: {
+        key: 'edit',
+        label: 'Edit',
+        onClick: openModalEdit,
       },
       [Action.Move]: {
         key: 'move',
@@ -392,6 +387,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     handleDeleteClick,
     handleHyperparameterSearch,
     handleForkClick,
+    openModalEdit,
     handleMoveClick,
     isRunningTensorBoard,
     isRunningUnarchive,
@@ -563,21 +559,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name}>
-              <Input
-                defaultValue={experiment.name}
-                disabled={disabled}
-                maxLength={128}
-                placeholder="Experiment name"
-                onBlur={(e) => {
-                  const newValue = e.currentTarget.value;
-                  handleNameUpdate(newValue);
-                }}
-                onPressEnter={(e) => {
-                  e.currentTarget.blur();
-                }}
-              />
-            </div>
+            <div className={css.name}>{experiment.name}</div>
             {trial ? (
               <>
                 <Icon name="arrow-right" size="tiny" />
@@ -593,6 +575,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
+      {modalExperimentEditContextHolder}
       {modalHyperparameterSearchContextHolder}
     </>
   );
