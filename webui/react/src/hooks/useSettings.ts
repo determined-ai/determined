@@ -307,14 +307,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useEffect(() => {
     return derivedOb.subscribe(async (cur, prev) => {
-      if (
-        !cur ||
-        !prev ||
-        !user ||
-        cur === prev ||
-        Object.keys(cur).length !== Object.keys(prev).length
-      )
-        return;
+      if (!cur || !user || cur === prev) return;
+
       await updateDB(cur, user);
 
       if (
