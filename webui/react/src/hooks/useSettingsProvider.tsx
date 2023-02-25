@@ -21,17 +21,17 @@ type UserSettingsState = Map<string, Settings>;
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
 
 type UserSettingsContext = {
+  clearQuerySettings: () => void;
   isLoading: WritableObservable<boolean>;
   querySettings: string;
   state: WritableObservable<UserSettingsState>;
-  // update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
+  clearQuerySettings: () => undefined,
   isLoading: observable(false),
   querySettings: '',
   state: observable(Map<string, Settings>()),
-  // update: () => undefined,
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -61,11 +61,10 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
               if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
 
               const entry = state.get(key);
-
               if (!entry) {
                 state.set(key, { [setting.key]: value });
               } else {
-                state.set(key, Object.assign(entry, { [setting.key]: value }));
+                state.set(key, Object.assign({}, entry, { [setting.key]: value }));
               }
             });
           });
@@ -81,7 +80,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, checked, settingsState]);
+  }, [canceler, user?.id, checked, settingsState, isLoading]);
 
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
@@ -89,40 +88,15 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  // const update = (key: string, value: Settings, clearQuerySettings = false) => {
-  //   settingsState.update((currentState) => currentState.set(key, value));
-
-  //   if (clearQuerySettings) querySettings.current = '';
-  // };
-
-  // useEffect(() => {
-  //   return settingsState.subscribe(async (cur, prev) => {
-  //     // check the difference 
-  //     const diff = Map<string, Settings>()
-  //     cur.forEach()
-
-  //     await updateDB(cur);
-
-  //     if (
-  //       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
-  //         (setting) => !!setting.skipUrlEncoding,
-  //       )
-  //     ) {
-  //       return;
-  //     }
-
-  //     const mappedSettings = settingsToQuery(config, newSettings);
-  //     const url = `?${mappedSettings}`;
-
-  //     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  //   })
-    
-  // }, )
+  const clearQuerySettings = () => {
+    querySettings.current = '';
+  };
 
   return (
     <Spinner spinning={useObservable(isLoading) && !(checked && !user)} tip="Loading Page">
       <UserSettings.Provider
         value={{
+          clearQuerySettings,
           isLoading: isLoading,
           querySettings: querySettings.current,
           state: settingsState,
@@ -132,15 +106,3 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     </Spinner>
   );
 };
-function updateDB(newSettings: any) {
-  throw new Error('Function not implemented.');
-}
-
-function settingsToQuery(config: any, newSettings: any) {
-  throw new Error('Function not implemented.');
-}
-
-function navigate(url: string) {
-  throw new Error('Function not implemented.');
-}
-

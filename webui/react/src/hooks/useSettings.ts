@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -10,6 +10,7 @@ import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { useCurrentUser } from 'stores/users';
+import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -31,7 +32,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
+export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -140,9 +141,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const { isLoading: isLoadingOb, querySettings, state: stateOb } = useContext(UserSettings);
-  const isLoading = useObservable(isLoadingOb)
-  const state = useObservable(stateOb)
+  const {
+    isLoading: isLoadingOb,
+    querySettings,
+    state: stateOb,
+    clearQuerySettings,
+  } = useContext(UserSettings);
+  const isLoading = useObservable(isLoadingOb);
+  const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
+  const state = useObservable(derivedOb);
   const navigate = useNavigate();
 
   // parse navigation url to state
@@ -150,24 +157,24 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storagePath) ?? {};
+    const stateSettings = state ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
     Object.keys(settings).forEach((setting) => {
       stateSettings[setting] = settings[setting];
     });
-    stateOb.update(s => s.set(config.storagePath, stateSettings))
-    // clear query setting
-    // update(config.storagePath, stateSettings, true);
-  }, [config, querySettings, state]);
+    stateOb.update((s) => s.set(config.storagePath, stateSettings));
+
+    clearQuerySettings();
+  }, [config, querySettings, state, clearQuerySettings, stateOb]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
-        ...(state.get(config.storagePath) ?? {}),
+        ...(state ?? {}),
       } as SettingsRecord<T>),
-    [config, state],
+    [state],
   );
 
   for (const key in config.settings) {
@@ -208,13 +215,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateDB = useCallback(
-    async (newSettings: Settings) => {
+    async (newSettings: Settings, user: DetailedUser) => {
       if (!settings) return;
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
         const stateSetting = settings[setting as keyof T];
-
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
             setting: {
@@ -249,12 +255,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [user?.id, config.storagePath, settings],
+    [config.storagePath, settings],
   );
 
   const resetSettings = useCallback(
     async (settingsArray?: string[]) => {
-      if (!settings) return;
+      if (!settings || !user) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
       const newSettings = { ...settings };
@@ -275,27 +281,41 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
-      stateOb.update(s => s.set(config.storagePath, newSettings))
-      // update(config.storagePath, newSettings);
+      stateOb.update((s) => s.set(config.storagePath, newSettings));
 
-      await updateDB(newSettings);
+      await updateDB(newSettings, user);
 
       navigate('', { replace: true });
     },
-    [config, updateDB, navigate, settings],
+    [config, updateDB, navigate, settings, user, stateOb],
   );
 
   const updateSettings = useCallback(
-    async (updates: Settings, shouldPush = false) => {
-      if (!settings) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (updates: Settings, shouldPush = false) => {
+      stateOb.update((s) =>
+        s.set(
+          config.storagePath,
+          s.get(config.storagePath) === updates
+            ? s.get(config.storagePath) ?? {}
+            : { ...s.get(config.storagePath), ...updates },
+        ),
+      );
+    },
+    [config, stateOb],
+  );
 
-      const newSettings = { ...settings, ...updates };
-
-      if (isEqual(newSettings, settings)) return;
-      stateOb.update(s => s.set(config.storagePath, newSettings))
-      // update(config.storagePath, newSettings);
-
-      await updateDB(newSettings);
+  useEffect(() => {
+    return derivedOb.subscribe(async (cur, prev) => {
+      if (
+        !cur ||
+        !prev ||
+        !user ||
+        cur === prev ||
+        Object.keys(cur).length !== Object.keys(prev).length
+      )
+        return;
+      await updateDB(cur, user);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
@@ -304,14 +324,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       ) {
         return;
       }
-
-      const mappedSettings = settingsToQuery(config, newSettings);
+      const mappedSettings = settingsToQuery(config, cur);
       const url = `?${mappedSettings}`;
-
-      shouldPush ? navigate(url) : navigate(url, { replace: true });
-    },
-    [config, settings, navigate, updateDB],
-  );
+      navigate(url, { replace: true });
+    });
+  }, [derivedOb, user, navigate, config, updateDB]);
 
   return {
     activeSettings,
