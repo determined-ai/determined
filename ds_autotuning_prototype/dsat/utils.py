@@ -82,7 +82,6 @@ def dsat_reporting_context(
         if "out of memory" in oom_error_string:
             report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
     except SystemExit as se:
-        print([x[0] for x in os.walk(".")])
         if file_or_dir_exists(constants.MODEL_INFO_PROFILING_PATH):
             report_json_results_and_exit(
                 core_context=core_context,
