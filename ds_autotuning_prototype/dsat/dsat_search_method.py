@@ -56,8 +56,33 @@ class DSATTrial:
 
     def add_child(self, trial: "DSATTrial") -> None:
         """Register child-parent relationship in lineage tree."""
-        self.children.add(trial.request_id)
+        self.children.add(trial)
         trial.parent = self
+
+    @property
+    def lineage_root(self) -> "DSATTrial":
+        if self.parent is None:
+            return self
+        else:
+            return self.parent.lineage_root
+
+    @property
+    def lineage_set(self) -> Set["DSATTrial"]:
+        """Computes set of trials in lineage tree."""
+        root = self.lineage_root
+        trials_set = {root}
+        children = root.children
+        while children:
+            random_child = children.pop()
+            trials_set.add(random_child)
+            children |= random_child.children
+        return trials_set
+
+    @property
+    def num_trials_in_lineage(self) -> int:
+        """Computes total number of trials in lineage tree."""
+        num_trials = len(self.lineage_set)
+        return num_trials
 
     def get_state_dict(self) -> Dict[str, Any]:
         state_dict = {
@@ -88,7 +113,7 @@ class DSATTrialTracker:
         self.num_trials_since_best_result = None
         self.should_early_stop = False
 
-    def get_trial_by_id(self, request_id: uuid.UUID) -> DSATTrial:
+    def __getitem__(self, request_id: uuid.UUID) -> DSATTrial:
         return self._all_trials_dict[request_id]
 
     def create_trial(
@@ -156,40 +181,6 @@ class DSATTrialTracker:
         validate_after_op = searcher.ValidateAfter(request_id=trial.request_id, length=length)
         ops = [create_op, validate_after_op]
         return ops
-
-    def get_trial_children(self, trial: DSATTrial) -> Set[DSATTrial]:
-        trial_children = {self._all_trials_dict[r_id] for r_id in trial.children}
-        return trial_children
-
-    def get_trial_parent(self, trial: DSATTrial) -> DSATTrial:
-        trial_parent = self._all_trials_dict[trial.parent]
-        return trial_parent
-
-    def is_trial_lineage_root(self, trial: DSATTrial) -> bool:
-        return trial.parent is None
-
-    def get_trial_lineage_root(self, trial: DSATTrial) -> DSATTrial:
-        """Returns the root Trial object in the present lineage."""
-        if self.is_trial_lineage_root(trial):
-            return trial
-        else:
-            return self.get_trial_lineage_root(self.get_trial_parent(trial))
-
-    def get_trial_lineage_set(self, trial: DSATTrial) -> Set[DSATTrial]:
-        """Computes set of trials in lineage tree."""
-        root = self.get_trial_lineage_root(trial)
-        trials_set = {root}
-        children = self.get_trial_children(root)
-        while children:
-            random_child = children.pop()
-            trials_set.add(random_child)
-            children |= self.get_trial_children(random_child)
-        return trials_set
-
-    def get_num_trials_in_lineage(self, trial: DSATTrial) -> int:
-        """Computes total number of trials in lineage tree."""
-        num_trials = len(self.get_trial_lineage_set(trial))
-        return num_trials
 
     def update_best_trial_info(
         self,
@@ -389,7 +380,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         metric: Union[float, Dict[str, Any]],
         train_length: int,
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker.get_trial_by_id(request_id)
+        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             slots = self._submitted_config_dict["resources"]["slots_per_trial"]
             if "fp16" in self._ds_config:
@@ -448,7 +439,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         request_id: uuid.UUID,
         exited_reason: searcher.ExitedReason,
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker.get_trial_by_id(request_id)
+        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             return [searcher.Shutdown()]
         return []
@@ -491,7 +482,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         metric: Union[float, Dict[str, Any]],
         last_trial: DSATTrial,
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker.get_trial_by_id(request_id)
+        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             new_ops_list = self._get_ops_list_after_model_profiling_info_run(metric)
         elif len(searcher_state.trials_created) < self._tuner_num_trials:
@@ -522,10 +513,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         metric: Union[float, Dict[str, Any]],
         last_trial: DSATTrial,
     ) -> List[searcher.Operation]:
-        if (
-            self.trial_tracker.get_num_trials_in_lineage(last_trial)
-            < self._num_tuning_micro_batch_sizes
-        ):
+        if last_trial.num_trials_in_lineage < self._num_tuning_micro_batch_sizes:
             hparams, search_data = self._get_hparams_and_search_data_from_results(
                 last_trial=last_trial, metric=metric
             )
