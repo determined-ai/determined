@@ -1,9 +1,11 @@
 import { Dropdown, MenuProps } from 'antd';
-import React from 'react';
+import React, { Children, CSSProperties } from 'react';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
 import Icon from 'shared/components/Icon';
+import { isNumber } from 'shared/utils/data';
 
 import Button from './Button';
 import css from './Card.module.scss';
@@ -12,8 +14,13 @@ type CardPropsBase = {
   actionMenu?: MenuProps;
   children?: React.ReactNode;
   disabled?: boolean;
-  size?: 'small' | 'medium';
+  size?: keyof typeof CardSize;
 };
+
+const CardSize: Record<string, CSSProperties> = {
+  medium: { minHeight: '110px', minWidth: '302px' },
+  small: { minHeight: '64px', minWidth: '143px' },
+} as const;
 
 type CardProps = (
   | {
@@ -43,12 +50,13 @@ const Card: Card = ({
 }: CardProps) => {
   const classnames = [css.cardBase];
   if (href || onClick) classnames.push(css.clickable);
+  const sizeStyle = CardSize[size];
   switch (size) {
     case 'small':
-      classnames.push(css.small);
+      classnames.push(css.smallCard);
       break;
     case 'medium':
-      classnames.push(css.medium);
+      classnames.push(css.mediumCard);
       break;
   }
 
@@ -58,13 +66,21 @@ const Card: Card = ({
     <ConditionalWrapper
       condition={!!href}
       // This falseWrapper is so styles work consistently whether or not the card has a link.
-      falseWrapper={(children) => <div>{children}</div>}
+      falseWrapper={(children) => (
+        <div
+          className={classnames.join(' ')}
+          style={sizeStyle}
+          tabIndex={onClick ? 0 : -1}
+          onClick={onClick}>
+          {children}
+        </div>
+      )}
       wrapper={(children) => (
-        <Link path={href} rawLink>
+        <Link className={classnames.join(' ')} path={href} rawLink style={sizeStyle}>
           {children}
         </Link>
       )}>
-      <div className={classnames.join(' ')} tabIndex={onClick ? 0 : -1} onClick={onClick}>
+      <>
         {children && <section className={css.content}>{children}</section>}
         {actionsAvailable && (
           <div className={css.action}>
@@ -79,21 +95,39 @@ const Card: Card = ({
             </Dropdown>
           </div>
         )}
-      </div>
+      </>
     </ConditionalWrapper>
   );
 };
 
 interface CardGroupProps {
   children?: React.ReactNode;
+  size?: keyof typeof CardSize; // This should match the size of cards in group.
   wrap?: boolean;
 }
 
-const CardGroup: React.FC<CardGroupProps> = ({ children, wrap = true }: CardGroupProps) => {
+const CardGroup: React.FC<CardGroupProps> = ({
+  children,
+  wrap = true,
+  size = 'small',
+}: CardGroupProps) => {
   const classnames = [css.groupBase];
   classnames.push(wrap ? css.wrap : css.noWrap);
 
-  return <div className={classnames.join(' ')}>{children}</div>;
+  const cardSize = CardSize[size].minWidth;
+  const minCardWidth = cardSize ? (isNumber(cardSize) ? cardSize : parseInt(cardSize)) : undefined;
+
+  //return <div className={classnames.join(' ')}>{children}</div>;
+  return (
+    <Grid
+      className={classnames.join(' ')}
+      count={Children.toArray(children).length}
+      gap={16}
+      minItemWidth={minCardWidth}
+      mode={wrap ? GridMode.AutoFill : GridMode.ScrollableRow}>
+      {children}
+    </Grid>
+  );
 };
 
 Card.Group = CardGroup;

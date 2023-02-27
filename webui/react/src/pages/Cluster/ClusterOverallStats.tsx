@@ -64,7 +64,7 @@ export const ClusterOverallStats: React.FC = () => {
 
   return (
     <Section hideTitle title="Overview Stats">
-      <Card.Group>
+      <Card.Group size="small">
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {
             Loaded: (agents) => (agents ? agents.length : '?'),

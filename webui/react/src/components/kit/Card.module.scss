@@ -8,7 +8,7 @@
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  max-width: fit-content;
   padding: var(--outside-padding);
   position: relative;
   transition: background-color var(--transition-duration);
@@ -39,6 +39,8 @@
   }
   &:hover,
   &:focus-within {
+    color: var(--theme-surface-on);
+
     &.clickable {
       background-color: var(--theme-surface-weak);
     }
@@ -49,34 +51,18 @@
   &:focus-visible {
     outline: var(--theme-stroke-width-strong) solid var(--theme-ix-border-active);
   }
-  &.small {
+  &.smallCard {
     --outside-padding: 8px;
-    min-height: 64px;
-    width: 143px;
   }
-  &.medium {
-    min-height: 110px;
-    width: 302px;
+  &.mediumCard {
+    --outside-padding: 16px;
   }
 }
 .groupBase {
-  align-items: stretch;
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  overflow: auto;
-  // This padding stops the box-shadows from being cut off.
   padding: 4px;
 
-  &.wrap {
-    flex-wrap: wrap;
-  }
-  &.noWrap {
-    flex-wrap: nowrap;
-    padding-bottom: 6px;
-
-    & > .cardBase {
-      flex-shrink: 0;
-    }
+  & > .cardBase {
+    max-width: none;
+    min-width: 100%;
   }
 }

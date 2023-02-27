@@ -275,7 +275,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Card.Group>
+          <Card.Group size="medium">
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}

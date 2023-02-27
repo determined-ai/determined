@@ -77,7 +77,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   return (
     <Section>
-      <Card.Group>
+      <Card.Group size="small">
         {trial?.runnerState && (
           <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}
@@ -113,7 +113,7 @@ export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) =
   }, [experiment]);
   return (
     <Section>
-      <Card.Group>
+      <Card.Group size="small">
         {searcher?.metric && <OverviewStats title="Metric">{searcher.metric}</OverviewStats>}
         {searcher?.name && <OverviewStats title="Searcher">{searcher.name}</OverviewStats>}
         {experiment.numTrials > 0 && (

@@ -3,6 +3,7 @@ import React, { Suspense, useMemo } from 'react';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
+import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
@@ -118,7 +119,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   }, [processedPool, isAux, pool]);
 
   return (
-    <Card size="medium">
+    <Card href={paths.resourcePool(pool.name)} size="medium">
       <div className={css.base}>
         <div className={css.header}>
           <div className={css.info}>

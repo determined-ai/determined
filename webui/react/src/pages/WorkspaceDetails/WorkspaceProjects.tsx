@@ -336,7 +336,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Card.Group>
+          <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
                 fetchProjects={fetchProjects}

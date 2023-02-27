@@ -190,7 +190,7 @@ const Dashboard: React.FC = () => {
       ) : projects.length > 0 ? (
         // hide Projects header when empty:
         <Section title="Recently Viewed Projects">
-          <Card.Group wrap={false}>
+          <Card.Group size="small" wrap={false}>
             {projects.map((project) => (
               <ProjectCard
                 fetchProjects={fetchProjects}

@@ -1055,7 +1055,7 @@ const CardsSection: React.FC = () => {
           <Card onClick={noOp}>Clickable card</Card>
         </Card.Group>
         <p>Medium cards</p>
-        <Card.Group>
+        <Card.Group size="medium">
           <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
             Card with actions
           </Card>
@@ -1068,7 +1068,7 @@ const CardsSection: React.FC = () => {
         </Card.Group>
         <strong>Card group variations</strong>
         <p>Wrapping group (default)</p>
-        <Card.Group>
+        <Card.Group size="medium">
           <Card size="medium" />
           <Card size="medium" />
           <Card size="medium" />
@@ -1078,7 +1078,7 @@ const CardsSection: React.FC = () => {
           <Card size="medium" />
         </Card.Group>
         <p>Non-wrapping group</p>
-        <Card.Group wrap={false}>
+        <Card.Group size="medium" wrap={false}>
           <Card size="medium" />
           <Card size="medium" />
           <Card size="medium" />
@@ -1105,7 +1105,7 @@ const CardsSection: React.FC = () => {
           <li>
             Workspace card (<code>{'<WorkspaceCard>'}</code>)
           </li>
-          <Card.Group>
+          <Card.Group size="medium">
             <WorkspaceCard workspace={workspace} />
             <WorkspaceCard workspace={{ ...workspace, archived: true }} />
           </Card.Group>
@@ -1121,7 +1121,7 @@ const CardsSection: React.FC = () => {
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>
-          <Card.Group>
+          <Card.Group size="medium">
             <ResourcePoolCard resourcePool={rps[0]} />
           </Card.Group>
         </ul>

@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
 import Card from 'components/kit/Card';
-import Link from 'components/Link';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
-import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { percent } from 'shared/utils/number';
 import { useClusterStore } from 'stores/cluster';
@@ -94,11 +92,9 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallStats />
       <ClusterOverallBar />
       <Section title="Resource Pools">
-        <Card.Group>
+        <Card.Group size="medium">
           {resourcePools.map((rp, idx) => (
-            <Link key={idx} path={paths.resourcePool(rp.name)}>
-              <ResourcePoolCard resourcePool={rp} />
-            </Link>
+            <ResourcePoolCard key={idx} resourcePool={rp} />
           ))}
         </Card.Group>
       </Section>
