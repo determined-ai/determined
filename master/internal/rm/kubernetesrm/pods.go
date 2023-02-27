@@ -954,6 +954,10 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		namespaceToQuota[namespace] = quotaList.Items[0]
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"numQuotas": len(namespaceToQuota),
+	}).Debug("done looking up quotas")
+
 	// If there's only one resource pool configured and it doesn't have a quota, summarize using the
 	// whole cluster.
 	if len(p.namespaceToPoolName) == 1 {
