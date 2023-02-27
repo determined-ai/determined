@@ -935,8 +935,18 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
 		if err != nil && !k8serrors.IsNotFound(err) {
+			logrus.WithFields(logrus.Fields{
+				"err":           err,
+				"namespace":     namespace,
+				"errIsNotFound": k8serrors.IsNotFound(err),
+			}).Debug("error looking up namespace quota")
 			return nil, err
 		} else if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
+			logrus.WithFields(logrus.Fields{
+				"err":           err,
+				"namespace":     namespace,
+				"errIsNotFound": k8serrors.IsNotFound(err),
+			}).Debug("skipping quota for namespace")
 			// TODO: figure out how we want to handle multiple quotas per namespace?
 			continue
 		}
