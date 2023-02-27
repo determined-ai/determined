@@ -11,8 +11,8 @@
   }
   .row {
     align-items: center;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 3fr 2fr;
   }
   label {
     color: var(--theme-surface-on-weak);

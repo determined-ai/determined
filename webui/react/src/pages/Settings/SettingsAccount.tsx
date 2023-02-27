@@ -7,6 +7,7 @@ import Avatar from 'components/kit/UserAvatar';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
+import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { useCurrentUser, useUpdateUser } from 'stores/users';
 import { message } from 'utils/dialogApi';
@@ -70,6 +71,10 @@ const SettingsAccount: React.FC = () => {
     [currentUser, updateUser],
   );
 
+  if (!currentUser?.username) {
+    return <Spinner spinning />;
+  }
+
   return (
     <div className={css.base}>
       <div className={css.avatar}>
@@ -79,7 +84,7 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Username</label>
         <Input
-          defaultValue={currentUser?.username ?? ''}
+          defaultValue={currentUser.username}
           maxLength={32}
           placeholder="Add username"
           onBlur={(e) => {
