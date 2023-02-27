@@ -787,15 +787,15 @@ const FacepileSection: React.FC = () => {
   ];
   return (
     <ComponentSection id="Facepile" title="Facepile">
-      <Card>
+      <AntDCard>
         <p>
           A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle
           represents a person and contains their image or initials. Often this control is used when
           sharing who has access to a specific view or file, or when assigning someone a task within
           a workflow.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content considerations</strong>
         <ul>
           <li>
@@ -825,8 +825,8 @@ const FacepileSection: React.FC = () => {
             offers more information about that person.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Facepile with initial state</strong>
         <Facepile editable selectableUsers={users} />
         <strong>Variations</strong>
@@ -838,7 +838,7 @@ const FacepileSection: React.FC = () => {
           <li>Facepile with both name initials</li>
           <p>Check the Facepile above and select a user that would fit that case</p>
         </ul>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -865,22 +865,22 @@ const UserBadgeSection: React.FC = () => {
 
   return (
     <ComponentSection id="UserBadge" title="UserBadge">
-      <Card>
+      <AntDCard>
         <p>
           A (<code>{'<UserBadge>'}</code>) fully represents a user with a UserAvatar circle icon,
           and the user&apos;s display name and username. If there is a display name, it appears
           first, otherwise only the username is visible. A &apos;compact&apos; option reduces the
           size of the name for use in a smaller form or modal.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <li>User with Display Name</li>
         <UserBadge user={testUser as User} />
         <li>Compact format</li>
         <UserBadge compact user={testUser as User} />
         <li>User without Display Name</li>
         <UserBadge user={{ ...testUser, displayName: undefined } as User} />
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
