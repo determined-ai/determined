@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../proto"
+		},
+		{
+			"path": "../tools"
 		}
 	]
 }
