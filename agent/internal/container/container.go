@@ -210,7 +210,6 @@ func (c *Container) run(parent context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("creating container: %w", err)
 		}
-
 		remove := c.spec.RunSpec.HostConfig.AutoRemove
 		c.spec = nil // Evict the spec from memory due to their potential memory consumption.
 		defer func() {
