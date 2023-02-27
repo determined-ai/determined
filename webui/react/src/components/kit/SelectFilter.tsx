@@ -46,7 +46,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
      * Disabling `dropdownMatchSelectWidth` will disable virtual scroll within the dropdown options.
      * This should only be done if the option count is fairly low.
      */
-    dropdownMatchSelectWidth = true,
     enableSearchFilter = true,
     itemName,
     label,
@@ -98,7 +97,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <Select
-        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}

@@ -399,7 +399,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     <div className={css.base}>
       <div className={css.controls}>
         <SelectFilter
-          dropdownMatchSelectWidth={140}
           showSearch={false}
           value={settings.whose}
           onSelect={handleViewSelect}>
@@ -416,7 +415,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             />
           )}
           <SelectFilter
-            dropdownMatchSelectWidth={150}
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>

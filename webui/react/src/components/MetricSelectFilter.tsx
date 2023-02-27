@@ -18,7 +18,6 @@ type MultipleHandler = (value: Metric[]) => void;
 
 interface Props {
   defaultMetrics: Metric[];
-  dropdownMatchSelectWidth?: number | boolean;
   label?: string;
   metrics: Metric[];
   multiple?: boolean;
@@ -34,7 +33,6 @@ const filterFn = (search: string, metricName: string) => {
 
 const MetricSelectFilter: React.FC<Props> = ({
   defaultMetrics,
-  dropdownMatchSelectWidth = 400,
   label = 'Metrics',
   metrics,
   multiple,
@@ -169,7 +167,6 @@ const MetricSelectFilter: React.FC<Props> = ({
     <SelectFilter
       autoClearSearchValue={false}
       disableTags
-      dropdownMatchSelectWidth={dropdownMatchSelectWidth}
       filterOption={handleFiltering}
       label={label}
       maxTagCount={maxTagCount}

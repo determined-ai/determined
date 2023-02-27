@@ -289,7 +289,6 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
               Hyperparameters
               <SelectFilter
                 disableTags
-                dropdownMatchSelectWidth={200}
                 label=""
                 mode="multiple"
                 showArrow

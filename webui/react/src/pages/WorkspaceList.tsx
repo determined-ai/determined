@@ -346,7 +346,6 @@ const WorkspaceList: React.FC = () => {
       title="Workspaces">
       <div className={css.controls}>
         <SelectFilter
-          dropdownMatchSelectWidth={160}
           showSearch={false}
           value={settings.whose}
           onSelect={handleViewSelect}>
@@ -361,7 +360,6 @@ const WorkspaceList: React.FC = () => {
             onChange={switchShowArchived}
           />
           <SelectFilter
-            dropdownMatchSelectWidth={150}
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
