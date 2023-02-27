@@ -51,7 +51,7 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
+if [ "$DET_RESOURCES_TYPE" == "slurm-job" ] || [ -z "$DET_NO_FLUENT" ]; then
     export PATH="/run/determined/pythonuserbase/bin:$PATH"
     if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
         export DET_PYTHON_EXECUTABLE="python3"

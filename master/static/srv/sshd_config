@@ -92,3 +92,5 @@ PermitUserEnvironment yes
 # We already allow interactive sessions, so just make user customizations easy.
 AcceptEnv *
 PermitUserRC yes
+
+# PidFile /run/determined/ssh/sshd.pid

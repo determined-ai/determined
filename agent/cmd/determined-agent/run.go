@@ -161,5 +161,8 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
 		int(aproto.AgentReconnectBackoff/time.Second), "Time between agent reconnect attempts")
 
+	cmd.Flags().StringVar(&opts.ContainerRuntime, "container-runtime",
+		options.DockerContainerRuntime, "The container runtime to use")
+
 	return cmd
 }
