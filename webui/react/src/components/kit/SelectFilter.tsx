@@ -24,7 +24,7 @@ export interface Props<T = SelectValue> {
   label?: string;
   maxTagCount?: number;
   maxTagPlaceholderValue?: string;
-  mode?: 'multiple';
+  mode?: 'multiple' | 'tags';
   onBlur?: () => void;
   onChange?: (value: T, option: Options) => void;
   onDeselect?: (selected: SelectValue, option: Options) => void;
@@ -83,6 +83,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     onSelect,
     options,
     placeholder,
+    showArrow,
     verticalLayout = false,
     value,
     maxTagPlaceholderValue,
@@ -95,7 +96,9 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
 
   if (disableTags) classes.push(css.disableTags);
   if (verticalLayout) classes.push(css.vertical);
-
+  if (mode === 'multiple') {
+    classes.push(css.multiple);
+  }
   const optionsCount = useMemo(() => countOptions(children), [children]);
 
   const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
@@ -125,7 +128,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
 
     return !!label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
-
   return (
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
@@ -144,6 +146,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         options={options ? options : undefined}
         placeholder={placeholder}
         ref={ref}
+        showArrow={showArrow}
         showSearch={onSearch ? true : false}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}

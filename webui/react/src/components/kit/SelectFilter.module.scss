@@ -1,3 +1,8 @@
+.multiple {
+  :global(.ant-select-selector) {
+    min-width: 250px;
+  }
+}
 .base {
   align-items: center;
   display: flex;
