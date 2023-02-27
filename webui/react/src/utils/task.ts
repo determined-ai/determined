@@ -60,47 +60,6 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   };
 }
 
-export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
-  const experimentTask = generateExperimentTask(id);
-  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
-  const config = {
-    name: experimentTask.name,
-    resources: {},
-    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-  };
-  const { projectId, ...exp } = generateExperiments(1)[0];
-  return {
-    ...exp,
-    ...experimentTask,
-    config: {
-      checkpointPolicy: 'best',
-      checkpointStorage: {
-        hostPath: '/tmp',
-        saveExperimentBest: 0,
-        saveTrialBest: 1,
-        saveTrialLatest: 1,
-        storagePath: 'determined-integration-checkpoints',
-        type: 'shared_fs',
-      },
-      dataLayer: { type: 'shared_fs' },
-      hyperparameters: {},
-      maxRestarts: 5,
-      name: experimentTask.name,
-      resources: {},
-      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-    },
-    configRaw: config,
-    hyperparameters: {},
-    id: id,
-    name: experimentTask.name,
-    userId: user.id,
-  } as Type.ExperimentOld;
-};
-
-export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
-  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateOldExperiment(idx));
-};
-
 export const generateExperiment = (id = 1): Type.ExperimentItem => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers.random();
