@@ -26,8 +26,10 @@ def det_deploy(subcommand: List) -> None:
     subprocess.run(command)
 
 
-def cluster_up(arguments: List) -> None:
+def cluster_up(arguments: List, delete_db: bool = True) -> None:
     command = ["cluster-up", "--no-gpu"]
+    if delete_db:
+        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
@@ -41,8 +43,10 @@ def cluster_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def master_up(arguments: List) -> None:
+def master_up(arguments: List, delete_db: bool = True) -> None:
     command = ["master-up"]
+    if delete_db:
+        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
