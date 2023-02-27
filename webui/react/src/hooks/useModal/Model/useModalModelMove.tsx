@@ -83,7 +83,10 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
                 }
                 filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
                 options={workspaces
-                  .filter((ws) => canMoveModel({ destination: { id: ws.id } }))
+                  .filter(
+                    (ws) =>
+                      ws.id !== model.workspaceId && canMoveModel({ destination: { id: ws.id } }),
+                  )
                   .map((ws) => ({ label: ws.name, value: ws.id }))}
                 placeholder="Select a workspace"
                 showSearch
