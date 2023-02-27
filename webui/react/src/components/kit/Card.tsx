@@ -111,16 +111,12 @@ const CardGroup: React.FC<CardGroupProps> = ({
   wrap = true,
   size = 'small',
 }: CardGroupProps) => {
-  const classnames = [css.groupBase];
-  classnames.push(wrap ? css.wrap : css.noWrap);
-
   const cardSize = CardSize[size].minWidth;
   const minCardWidth = cardSize ? (isNumber(cardSize) ? cardSize : parseInt(cardSize)) : undefined;
 
-  //return <div className={classnames.join(' ')}>{children}</div>;
   return (
     <Grid
-      className={classnames.join(' ')}
+      className={css.groupBase}
       count={Children.toArray(children).length}
       gap={16}
       minItemWidth={minCardWidth}
