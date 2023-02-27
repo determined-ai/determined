@@ -995,7 +995,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 				switch resourceName {
 				case k8sV1.ResourceCPU:
 					deviceType = device.CPU
-				case ResourceTypeNvidia:
+				case ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
 					deviceType = device.CUDA
 				default:
 					logrus.WithFields(logrus.Fields{
