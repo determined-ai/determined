@@ -349,7 +349,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-7aa5364
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh
