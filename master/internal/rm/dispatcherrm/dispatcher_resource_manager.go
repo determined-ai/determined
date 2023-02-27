@@ -698,7 +698,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 				"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
 
 			// Terminate and cleanup, on failure leave Dispatch in DB for later retry
-			if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser) {
+			if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser, false) {
 				// Do not remove the dispatch environment if the job is being
 				// monitored by the job watcher, as it is needed in order for
 				// the launcher to report the job status. If we remove the
@@ -1486,7 +1486,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition = m.selectDefaultPools(
 		ctx, m.resourceDetails.lastSample.Partitions)
-	ctx.Log().Infof("default resource pools are '%s', '%s'",
+	ctx.Log().Debugf("default resource pools are '%s', '%s'",
 		m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
 
@@ -1566,7 +1566,7 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
 	dispatchID string, owner string,
 ) {
-	if m.terminateDispatcherJob(ctx, dispatchID, owner) {
+	if m.terminateDispatcherJob(ctx, dispatchID, owner, true) {
 		m.removeDispatchEnvironment(ctx, owner, dispatchID)
 	}
 }
@@ -1574,7 +1574,7 @@ func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
 // terminateDispatcherJob terminates the dispatcher job with the given ID.
 // Return true to indicate if the DB dispatch should additionally be deleted.
 func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
-	dispatchID string, owner string,
+	dispatchID string, owner string, slurmResourcesPolling bool,
 ) bool {
 	if dispatchID == "" {
 		ctx.Log().Warn("Missing dispatchID, so no environment clean-up")
@@ -1597,7 +1597,11 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 			return false
 		}
 	}
-	ctx.Log().Infof("Terminated job with DispatchID %s", dispatchID)
+	if slurmResourcesPolling {
+		ctx.Log().Debugf("Terminated job with DispatchID %s", dispatchID)
+	} else {
+		ctx.Log().Infof("Terminated job with DispatchID %s", dispatchID)
+	}
 	return true
 }
 
