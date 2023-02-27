@@ -259,35 +259,34 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const resetSettings = useCallback(
-    async (settingsArray?: string[]) => {
+    (settingsArray?: string[]) => {
       if (!settings || !user) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
-      const newSettings = { ...settings };
 
-      array.forEach((setting) => {
-        let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined = undefined;
+      stateOb.update((s) => {
+        const news = s.get(config.storagePath);
+        array.forEach((setting) => {
+          let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+            undefined;
 
-        for (const key in config.settings) {
-          const conf = config.settings[key];
+          for (const key in config.settings) {
+            const conf = config.settings[key];
 
-          if (conf.storageKey === setting) {
-            defaultSetting = conf;
-            break;
+            if (conf.storageKey === setting) {
+              defaultSetting = conf;
+              break;
+            }
           }
-        }
 
-        if (!defaultSetting) return;
+          if (!defaultSetting || !news) return;
 
-        newSettings[setting as keyof T] = defaultSetting.defaultValue;
+          news[setting] = defaultSetting.defaultValue;
+        });
+        return s.set(config.storagePath, news ?? {});
       });
-      stateOb.update((s) => s.set(config.storagePath, newSettings));
-
-      await updateDB(newSettings, user);
-
-      navigate('', { replace: true });
     },
-    [config, updateDB, navigate, settings, user, stateOb],
+    [config, settings, user, stateOb],
   );
 
   const updateSettings = useCallback(
@@ -319,7 +318,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return;
       }
       const mappedSettings = settingsToQuery(config, cur);
-      const url = `?${mappedSettings}`;
+      const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
   }, [derivedOb, user, navigate, config, updateDB]);
