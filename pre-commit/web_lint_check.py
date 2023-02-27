@@ -9,8 +9,10 @@ from typing import List
 
 def web_lint_check():
     parser = argparse.ArgumentParser(description="Lint Check for Web")
-    parser.add_argument("target", help="Either js, css, or misc", choices=["js", "css", "misc"])
-    parser.add_argument("file_paths", help="1 or more file paths", nargs="+", type=List[str])
+    parser.add_argument(
+        "target", help="Either js, css, or misc", type=str, choices=["js", "css", "misc"]
+    )
+    parser.add_argument("file_paths", help="1 or more file paths", nargs="+", default=[])
     args = parser.parse_args()
     DIR = "webui/react/"
 
@@ -18,7 +20,7 @@ def web_lint_check():
     file_paths: List[str] = args.file_paths
     rel_file_paths: str = " ".join([os.path.relpath(file_path, DIR) for file_path in file_paths])
     nproc: int = multiprocessing.cpu_count()
-    run_command: list[str] = [
+    run_command: List[str] = [
         "make",
         f"-j{nproc}",
         "-C",
@@ -36,7 +38,8 @@ def web_lint_check():
         run_command += ["check-package-lock"]
 
     returncode: int = subprocess.call(run_command)
-    subprocess.call(["git", "add"] + file_paths)
+    if returncode == 0:
+        returncode = subprocess.call(["git", "add"] + file_paths)
     exit(returncode)
 
 
