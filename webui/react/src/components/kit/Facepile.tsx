@@ -10,11 +10,17 @@ import UserAvatar from './UserAvatar';
 
 export interface Props {
   editable?: boolean;
+  onAddUser?: (user: DetailedUser) => void;
   selectableUsers?: DetailedUser[]; // This prop should be used to pass as options to the dropdown.
   users?: DetailedUser[];
 }
 
-const Facepile: React.FC<Props> = ({ editable = false, selectableUsers = [], users = [] }) => {
+const Facepile: React.FC<Props> = ({
+  editable = false,
+  selectableUsers = [],
+  users = [],
+  onAddUser,
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAllAvatars, setShowAllAvatars] = useState(false);
   const [avatars, setAvatars] = useState(users);
@@ -36,9 +42,11 @@ const Facepile: React.FC<Props> = ({ editable = false, selectableUsers = [], use
   const showButton = useMemo(() => editable || amountOfAvatars > 5, [editable, amountOfAvatars]);
   const buttonLabel = useMemo(() => {
     if (amountOfAvatars > 5 && !showAllAvatars) return `+ ${amountOfAvatars - 5}`;
-
-    return editable ? 'Add' : 'Hide';
-  }, [amountOfAvatars, showAllAvatars, editable]);
+  }, [amountOfAvatars, showAllAvatars]);
+  const buttonIcon = useMemo(() => {
+    if (showAllAvatars || showDropdown) return <MinusOutlined />;
+    if (editable) return <PlusOutlined />;
+  }, [showAllAvatars, showDropdown, editable]);
 
   return (
     <div className={css.container}>
@@ -68,13 +76,14 @@ const Facepile: React.FC<Props> = ({ editable = false, selectableUsers = [], use
               return newAvatars;
             });
             setShowDropdown(false);
+            onAddUser?.(user);
           }}
         />
       )}
       {showButton && (
         <span className={css.addButton}>
           <Button
-            icon={!buttonLabel.includes('+') && <PlusOutlined />}
+            icon={buttonIcon}
             type="text"
             onClick={() => {
               if (amountOfAvatars > 5) {
