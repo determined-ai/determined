@@ -19,7 +19,6 @@ const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     <SelectFilter
       enableSearchFilter={false}
       label="Scale"
-      showSearch={false}
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as Scale)}>
       {Object.values(Scale).map((scale) => (

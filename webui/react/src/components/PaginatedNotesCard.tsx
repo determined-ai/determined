@@ -210,11 +210,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
         </div>
       )}
       <div className={css.pageSelectRow}>
-        <SelectFilter
-          className={css.pageSelect}
-          size="large"
-          value={currentPage}
-          onSelect={handleSwitchPage}>
+        <SelectFilter size="large" value={currentPage} onSelect={handleSwitchPage}>
           {notes.map((note, idx) => {
             return (
               <Option className={css.selectOption} key={idx} value={idx}>

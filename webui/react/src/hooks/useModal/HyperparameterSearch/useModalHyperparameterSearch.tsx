@@ -464,7 +464,7 @@ const useModalHyperparameterSearch = ({
             label="Resource pool"
             name="pool"
             rules={[{ required: true }]}>
-            <SelectFilter showSearch={false} onChange={handleSelectPool}>
+            <SelectFilter onChange={handleSelectPool}>
               {resourcePools.map((pool) => (
                 <Select.Option key={pool.name} value={pool.name}>
                   {pool.name}
@@ -488,7 +488,7 @@ const useModalHyperparameterSearch = ({
             label="Units"
             name="length_units"
             rules={[{ required: true }]}>
-            <SelectFilter showSearch={false}>
+            <SelectFilter>
               <Select.Option value="records">records</Select.Option>
               <Select.Option value="batches">batches</Select.Option>
               {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
@@ -522,7 +522,7 @@ const useModalHyperparameterSearch = ({
             }
             name="mode"
             rules={[{ required: true }]}>
-            <SelectFilter showSearch={false}>
+            <SelectFilter>
               <Select.Option value="aggressive">Aggressive</Select.Option>
               <Select.Option value="standard">Standard</Select.Option>
               <Select.Option value="conservative">Conservative</Select.Option>

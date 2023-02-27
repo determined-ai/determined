@@ -26,7 +26,6 @@ export const XAxisFilter: React.FC<Props> = ({ options, onChange, value }: Props
     <SelectFilter
       enableSearchFilter={false}
       label="X-Axis"
-      showSearch={false}
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as XAxisDomain)}>
       {Object.values(XAxisDomain)

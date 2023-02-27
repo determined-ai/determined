@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import type { DefaultOptionType, RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
+import type { DefaultOptionType, LabeledValue, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
@@ -9,13 +9,33 @@ import css from './SelectFilter.module.scss';
 
 const { OptGroup, Option } = Select;
 
-export interface Props<T = SelectValue> extends SelectProps<T> {
+type Options = DefaultOptionType | DefaultOptionType[];
+export interface Props<T = SelectValue> {
+  allowClear?: boolean;
+  autoClearSearchValue?: boolean;
+  defaultValue?: T;
   disableTags?: boolean;
+  disabled?: boolean;
   enableSearchFilter?: boolean;
+  filterOption?: (input: string, option: LabeledValue) => void;
+  filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
+  id?: string;
   itemName?: string;
   label?: string;
+  maxTagCount?: number;
   maxTagPlaceholderValue?: string;
+  mode?: 'multiple';
+  onBlur?: () => void;
+  onChange?: (value: T, option: Options) => void;
+  onDeselect?: (selected: SelectValue, option: Options) => void;
+  onDropdownVisibleChange?: () => void;
+  onSearch?: (searchInput: string) => void;
+  onSelect?: (selected: SelectValue, option: Options) => void;
+  options?: LabeledValue[];
+  placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
+  showArrow?: boolean;
+  size?: 'large';
   value?: T;
   verticalLayout?: boolean;
 }
@@ -41,20 +61,33 @@ const countOptions = (children: React.ReactNode): number => {
 
 const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(function SelectFilter(
   {
+    allowClear,
+    autoClearSearchValue,
+    defaultValue,
+    disabled,
     disableTags = false,
     /*
      * Disabling `dropdownMatchSelectWidth` will disable virtual scroll within the dropdown options.
      * This should only be done if the option count is fairly low.
      */
     enableSearchFilter = true,
+    filterSort,
+    id,
     itemName,
     label,
-    showSearch = true,
+    mode,
+    onChange,
+    onBlur,
+    onDeselect,
+    onSearch,
+    onSelect,
+    options,
+    placeholder,
     verticalLayout = false,
     value,
     maxTagPlaceholderValue,
     children,
-  }: Props,
+  }: React.PropsWithChildren<Props>,
   ref?: React.Ref<RefSelectProps>,
 ) {
   const [isOpen, setIsOpen] = useState(false);
@@ -97,14 +130,29 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <Select
+        allowClear={allowClear}
+        autoClearSearchValue={autoClearSearchValue}
+        defaultValue={defaultValue}
+        disabled={disabled}
+        dropdownMatchSelectWidth={250}
         filterOption={enableSearchFilter ? handleFilter : true}
+        filterSort={filterSort}
+        id={id}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
+        mode={mode}
+        options={options ? options : undefined}
+        placeholder={placeholder}
         ref={ref}
-        showSearch={showSearch}
+        showSearch={onSearch ? true : false}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}
-        onDropdownVisibleChange={handleDropdownVisibleChange}>
+        onBlur={onBlur}
+        onChange={onChange}
+        onDeselect={onDeselect}
+        onDropdownVisibleChange={handleDropdownVisibleChange}
+        onSearch={onSearch}
+        onSelect={onSelect}>
         {children}
       </Select>
     </div>

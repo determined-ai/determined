@@ -204,8 +204,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <SelectFilter
           enableSearchFilter={false}
           label="Top Trials"
-          showSearch={false}
-          style={{ width: 70 }}
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
           {TOP_TRIALS_OPTIONS.map((option) => (
@@ -220,7 +218,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           <SelectFilter
             enableSearchFilter={false}
             label="Batches Processed"
-            showSearch={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
             {batches.map((batch) => (
@@ -232,7 +229,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           <SelectFilter
             enableSearchFilter={false}
             label="Batch Margin"
-            showSearch={false}
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
             {BATCH_MARGIN_OPTIONS.map((option) => (
@@ -259,7 +255,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           metrics={metrics}
           multiple={false}
           value={localFilters.metric}
-          width={'100%'}
           onChange={handleMetricChange}
         />
       )}

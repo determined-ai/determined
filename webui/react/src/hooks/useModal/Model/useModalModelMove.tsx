@@ -1,4 +1,5 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
+import { LabeledValue } from 'antd/es/select';
 import React from 'react';
 import { useCallback } from 'react';
 
@@ -69,6 +70,9 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
         onClose?.();
       };
 
+      const handleFilter = (a: LabeledValue, b: LabeledValue) =>
+        (a?.label ?? '') < (b?.label ?? '') ? 1 : -1;
+
       return {
         closable: true,
         content: (
@@ -81,12 +85,11 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
+                filterSort={handleFilter}
                 options={workspaces
                   .filter((ws) => canMoveModel({ destination: { id: ws.id } }))
                   .map((ws) => ({ label: ws.name, value: ws.id }))}
                 placeholder="Select a workspace"
-                showSearch
               />
             </Form.Item>
           </Form>

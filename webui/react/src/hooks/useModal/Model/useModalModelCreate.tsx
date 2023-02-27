@@ -206,7 +206,6 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
                 }
                 options={workspaceItems}
                 placeholder="Select a workspace"
-                showSearch={true}
               />
             </Form.Item>
             <Form.Item

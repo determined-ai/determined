@@ -74,7 +74,6 @@ export const MetricViewSelect: React.FC<MetricViewSelectProps> = ({ view, metric
         metrics={metrics}
         multiple={false}
         value={localView.metric}
-        width={'100%'}
         onChange={handleMetricChange}
       />
       <ScaleSelectFilter value={localView.scale} onChange={handleScaleChange} />

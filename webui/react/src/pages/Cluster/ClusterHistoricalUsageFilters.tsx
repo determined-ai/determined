@@ -147,8 +147,6 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
       <SelectFilter
         enableSearchFilter={false}
         label="Group by"
-        showSearch={false}
-        style={{ width: 130 }}
         value={value.groupBy}
         onSelect={handleGroupBySelect}>
         {Object.values(GroupBy).map((value) => (

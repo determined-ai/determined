@@ -68,10 +68,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   }, [authUser, users]);
 
   return (
-    <SelectFilter
-      label="Users"
-      value={value || ALL_VALUE}
-      onSelect={handleSelect}>
+    <SelectFilter label="Users" value={value || ALL_VALUE} onSelect={handleSelect}>
       {options}
     </SelectFilter>
   );
