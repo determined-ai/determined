@@ -5,7 +5,7 @@ import pickle
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
 from determined.common.api import bindings
@@ -247,6 +247,7 @@ class LocalSearchRunner(SearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         model_dir: Optional[str] = None,
+        includes: Optional[Iterable[Union[str, Path]]] = None,
     ) -> int:
         """
         Run custom search.
@@ -254,6 +255,8 @@ class LocalSearchRunner(SearchRunner):
         Args:
             exp_config (dictionary, string): experiment config filename (.yaml) or a dict.
             model_dir (string): directory containing model definition.
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files
+                or directories to include in the model definition.  (default: ``None``)
         """
         logger.info("LocalSearchRunner.run")
 
@@ -268,7 +271,7 @@ class LocalSearchRunner(SearchRunner):
             # load searcher state and search method state
             _, operations = self.load_state(experiment_id)
         else:
-            exp = client.create_experiment(exp_config, model_dir)
+            exp = client.create_experiment(exp_config, model_dir, includes)
             with experiment_id_file.open("w") as f:
                 f.write(str(exp.id))
             state_path = self._get_state_path(exp.id)

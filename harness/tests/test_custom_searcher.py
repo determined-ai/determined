@@ -1,7 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 from unittest.mock import Mock
 
 from determined import searcher
@@ -19,7 +19,7 @@ def test_run_random_searcher_exp_mock_master() -> None:
         search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length)
         mock_master_obj = SimulateMaster(metric=1.0)
         search_runner = MockMasterSearchRunner(search_method, mock_master_obj, Path(searcher_dir))
-        search_runner.run(exp_config={}, context_dir="")
+        search_runner.run(exp_config={}, context_dir="", includes=None)
 
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -37,7 +37,7 @@ def test_run_asha_batches_exp_mock_master(tmp_path: Path) -> None:
     search_method = ASHASearchMethod(max_length, max_trials, num_rungs, divisor)
     mock_master_obj = SimulateMaster(metric=1.0)
     search_runner = MockMasterSearchRunner(search_method, mock_master_obj, tmp_path)
-    search_runner.run(exp_config={}, context_dir="")
+    search_runner.run(exp_config={}, context_dir="", includes=None)
 
     assert search_method.asha_search_state.pending_trials == 0
     assert search_method.asha_search_state.completed_trials == 16
@@ -148,7 +148,12 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         logging.info("MockMasterSearchRunner.get_events")
         return self.mock_master_obj.handle_get_events()
 
-    def run(self, exp_config: Union[Dict[str, Any], str], context_dir: Optional[str] = None) -> int:
+    def run(
+        self,
+        exp_config: Union[Dict[str, Any], str],
+        context_dir: Optional[str] = None,
+        includes: Optional[Iterable[Union[str, Path]]] = None,
+    ) -> int:
         logging.info("MockMasterSearchRunner.run")
         experiment_id_file = self.searcher_dir.joinpath("experiment_id")
         exp_id = 4  # dummy exp
