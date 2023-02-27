@@ -998,9 +998,17 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 				case ResourceTypeNvidia:
 					deviceType = device.CUDA
 				default:
+					logrus.WithFields(logrus.Fields{
+						"resourceName": resourceName,
+					}).Debug("skipping resource")
 					// We only care about CPU and GPU quotas for the slots summary
 					continue
 				}
+
+				logrus.WithFields(logrus.Fields{
+					"resourceName": resourceName,
+					"qty":          qty.String(),
+				}).Debug("found quota for device type")
 
 				// Each CPU and GPU in the quota will be counted as a slot here
 				one, decQty := inf.NewDec(1, 0), qty.AsDec()
@@ -1026,6 +1034,8 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 					}
 				}
 			}
+		} else {
+			logrus.WithField("namespace", namespace).Debug("quota does not exist for namespace")
 		}
 
 		summaries[poolName] = model.AgentSummary{
