@@ -59,28 +59,29 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const { metrics, data, scale, setScale } = useTrialMetrics(trial);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
-    const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
+    const checkpointXHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
     if (data && checkpoint?.totalBatches) {
       Object.values(data).forEach((metric) => {
-        const matchIndex =
-          metric.data[XAxisDomain.Batches]?.findIndex((pt) => pt[0] >= checkpoint.totalBatches) ||
-          (metric.data[XAxisDomain.Batches]?.length || 0) - 1;
+        const matchIndex = metric.data[XAxisDomain.Batches]?.findIndex(
+          (pt) => pt[0] >= checkpoint.totalBatches,
+        );
+
         if (matchIndex !== undefined && matchIndex >= 0) {
           if (xAxis === XAxisDomain.Time) {
             const timeVals = metric.data[XAxisDomain.Time];
             if (timeVals && timeVals.length > matchIndex) {
-              timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
+              checkpointXHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
             }
           } else if (xAxis === XAxisDomain.Batches) {
             const batchX = metric.data[XAxisDomain.Batches]?.[matchIndex][0];
             if (batchX) {
-              timeHelpers[batchX] = checkpoint;
+              checkpointXHelpers[batchX] = checkpoint;
             }
           }
         }
       });
     }
-    return checkpoint?.totalBatches ? timeHelpers : {};
+    return checkpoint?.totalBatches ? checkpointXHelpers : {};
   }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
