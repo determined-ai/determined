@@ -21,6 +21,7 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -36,7 +37,7 @@ import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { ShirtSize } from 'themes';
-import { BrandingType, MetricType, ResourcePool } from 'types';
+import { BrandingType, MetricType, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -60,6 +61,7 @@ const ComponentTitles = {
   Tooltips: 'Tooltips',
   // Facepile: 'Facepile',
   UserAvatar: 'UserAvatar',
+  UserBadge: 'UserBadge',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -799,6 +801,31 @@ const UserAvatarSection: React.FC = () => {
   );
 };
 
+const UserBadgeSection: React.FC = () => {
+  const testUser = { displayName: 'Abc', id: 1, username: 'alpha123' };
+
+  return (
+    <ComponentSection id="UserBadge" title="UserBadge">
+      <Card>
+        <p>
+          A (<code>{'<UserBadge>'}</code>) fully represents a user with a UserAvatar circle icon,
+          and the user&apos;s display name and username. If there is a display name, it appears
+          first, otherwise only the username is visible. A &apos;compact&apos; option reduces the
+          size of the name for use in a smaller form or modal.
+        </p>
+      </Card>
+      <Card title="Usage">
+        <li>User with Display Name</li>
+        <UserBadge user={testUser as User} />
+        <li>Compact format</li>
+        <UserBadge compact user={testUser as User} />
+        <li>User without Display Name</li>
+        <UserBadge user={{ ...testUser, displayName: undefined } as User} />
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const PivotSection: React.FC = () => {
   return (
     <ComponentSection id="Pivot" title="Pivot">
@@ -1324,6 +1351,7 @@ const Components = {
   Tooltips: <TooltipsSection />,
   // Facepile: <FacepileSection />,
   UserAvatar: <UserAvatarSection />,
+  UserBadge: <UserBadgeSection />,
 };
 
 const DesignKit: React.FC = () => {
