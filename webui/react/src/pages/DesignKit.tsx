@@ -8,6 +8,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Empty from 'components/kit/Empty';
+import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
@@ -50,6 +51,7 @@ const ComponentTitles = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Empty: 'Empty',
+  Facepile: 'Facepile',
   Form: 'Form',
   Input: 'Input',
   InputNumber: 'InputNumber',
@@ -59,7 +61,6 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Tooltips: 'Tooltips',
-  // Facepile: 'Facepile',
   UserAvatar: 'UserAvatar',
   UserBadge: 'UserBadge',
 } as const;
@@ -727,62 +728,114 @@ const BreadcrumbsSection: React.FC = () => {
   );
 };
 
-// const FacepileSection: React.FC = () => {
-//   return (
-//     <ComponentSection id="Facepile" title="Facepile">
-//       <Card>
-//         <p>
-//           A face pile (<code>{'<UserAvatar>'}</code>) displays a list of personas. Each circle
-//           represents a person and contains their image or initials. Often this control is used when
-//           sharing who has access to a specific view or file, or when assigning someone a task within
-//           a workflow.
-//         </p>
-//       </Card>
-//       <Card title="Best practices">
-//         <strong>Content considerations</strong>
-//         <ul>
-//           <li>
-//             The face pile empty state should only include an &quot;Add&quot; button. Another variant
-//             is to use an input field with placeholder text instructing people to add a person. See
-//             the people picker component for the menu used to add people to the face pile list.
-//           </li>
-//           <li>
-//             When there is only one person in the face pile, consider using their name next to the
-//             face or initials.
-//           </li>
-//           <li>
-//             When there is a need to show the face pile expanded into a vertical list, include a
-//             downward chevron button. Selecting the chevron opens a standard list view of people.
-//           </li>
-//           <li>
-//             When the face pile exceeds a max number of 5 people, show a button at the end of the
-//             list indicating how many are not being shown. Clicking or tapping on the overflow would
-//             open a standard list view of people.
-//           </li>
-//           <li>
-//             The component can include an &quot;Add&quot; button which can be used for quickly adding
-//             a person to the list.
-//           </li>
-//           <li>
-//             When hovering over a person in the face pile, include a tooltip or people card that
-//             offers more information about that person.
-//           </li>
-//         </ul>
-//       </Card>
-//       <Card title="Usage">
-//         <strong>Facepile</strong>
-//         <UserAvatar />
-//         <strong>Variations</strong>
-//         <ul>
-//           <li>Facepile with 8 people</li>
-//           <p>Not implemented</p>
-//           <li>Facepile with both name initials</li>
-//           <p>Not implemented</p>
-//         </ul>
-//       </Card>
-//     </ComponentSection>
-//   );
-// };
+const FacepileSection: React.FC = () => {
+  const users = [
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake Admin',
+    },
+    {
+      id: 3,
+      isActive: true,
+      isAdmin: true,
+      username: 'Admin',
+    },
+    {
+      id: 13,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake',
+    },
+    {
+      id: 23,
+      isActive: true,
+      isAdmin: true,
+      username: 'User',
+    },
+    {
+      id: 12,
+      isActive: true,
+      isAdmin: true,
+      username: 'Foo',
+    },
+    {
+      id: 2,
+      isActive: true,
+      isAdmin: true,
+      username: 'Baar',
+    },
+    {
+      id: 12,
+      isActive: true,
+      isAdmin: true,
+      username: 'Gandalf',
+    },
+    {
+      id: 1,
+      isActive: true,
+      isAdmin: true,
+      username: 'Leroy Jenkins',
+    },
+  ];
+  return (
+    <ComponentSection id="Facepile" title="Facepile">
+      <Card>
+        <p>
+          A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle
+          represents a person and contains their image or initials. Often this control is used when
+          sharing who has access to a specific view or file, or when assigning someone a task within
+          a workflow.
+        </p>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            The face pile empty state should only include an &quot;Add&quot; button. Another variant
+            is to use an input field with placeholder text instructing people to add a person. See
+            the people picker component for the menu used to add people to the face pile list.
+          </li>
+          <li>
+            When there is only one person in the face pile, consider using their name next to the
+            face or initials.
+          </li>
+          <li>
+            When there is a need to show the face pile expanded into a vertical list, include a
+            downward chevron button. Selecting the chevron opens a standard list view of people.
+          </li>
+          <li>
+            When the face pile exceeds a max number of 5 people, show a button at the end of the
+            list indicating how many are not being shown. Clicking or tapping on the overflow would
+            open a standard list view of people.
+          </li>
+          <li>
+            The component can include an &quot;Add&quot; button which can be used for quickly adding
+            a person to the list.
+          </li>
+          <li>
+            When hovering over a person in the face pile, include a tooltip or people card that
+            offers more information about that person.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Facepile with initial state</strong>
+        <Facepile editable selectableUsers={users} />
+        <strong>Variations</strong>
+        <ul>
+          <li>
+            Facepile with 8 people
+            <Facepile users={users.slice(0, 8)} />
+          </li>
+          <li>Facepile with both name initials</li>
+          <p>Check the Facepile above and select a user that would fit that case</p>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
 
 const UserAvatarSection: React.FC = () => {
   return (
@@ -1340,6 +1393,7 @@ const Components = {
   DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
   Empty: <EmptySection />,
+  Facepile: <FacepileSection />,
   Form: <FormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
@@ -1349,7 +1403,6 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Tooltips: <TooltipsSection />,
-  // Facepile: <FacepileSection />,
   UserAvatar: <UserAvatarSection />,
   UserBadge: <UserBadgeSection />,
 };
