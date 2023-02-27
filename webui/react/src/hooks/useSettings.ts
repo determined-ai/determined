@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -9,7 +9,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUser } from 'stores/users';
+import { currentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -136,11 +136,8 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  // const loadableCurrentUser = currentUser();
+  // const user = currentUser();
   const {
     isLoading: isLoadingOb,
     querySettings,
@@ -215,7 +212,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateDB = useCallback(
-    async (newSettings: Settings, user: DetailedUser) => {
+    async (newSettings: Settings) => {
+      const user = Loadable.match(currentUser.get(), {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
       if (!settings) return;
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
@@ -304,10 +305,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     [config, stateOb],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     return derivedOb.subscribe(async (cur, prev) => {
       if (!cur || !user || cur === prev) return;
-
+      // check default value, check isLoading
       await updateDB(cur, user);
 
       if (
@@ -321,7 +322,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [derivedOb, user, navigate, config, updateDB]);
+  }, [derivedOb, navigate, config, updateDB]);
 
   return {
     activeSettings,
