@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3.0.0
         with:
           fetch-depth: 1  # full repo for tag comparisons, etc
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
       # this action is not getting new features, but isn't deprecated yet
       # switch to just running pre-commit locally when/if that happens that's
       # why this one specifies a full version; presumably there will be a
