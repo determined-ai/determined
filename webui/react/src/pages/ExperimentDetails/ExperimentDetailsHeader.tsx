@@ -559,7 +559,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name}>{experiment.name}</div>
+            <div className={css.name} role="experimentName">
+              {experiment.name}
+            </div>
             {trial ? (
               <>
                 <Icon name="arrow-right" size="tiny" />

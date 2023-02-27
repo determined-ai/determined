@@ -90,18 +90,15 @@ describe('SettingsAccount', () => {
   });
 
   it('should render with correct values', async () => {
-    const { container } = await setup();
-    await waitFor(() => expect(screen.getByDisplayValue(USERNAME)).toBeInTheDocument());
+    setup();
+    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
-
-    // Fetching element by specific attribute is not natively supported.
-    const editor = container.querySelector(`[data-value="${DISPLAY_NAME}"]`);
-    expect(editor).toBeInTheDocument();
   });
   it('should be able to change display name', async () => {
     act(() => {
       setup();
     });
+    await user.click(screen.getByTestId('edit-displayname'));
     await user.type(screen.getByPlaceholderText('Add display name'), 'a');
     await user.keyboard('{enter}');
     expect(mockPatchUser).toHaveBeenCalledWith({
