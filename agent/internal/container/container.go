@@ -237,8 +237,7 @@ func (c *Container) run(parent context.Context) (err error) {
 	})
 
 	c.log.Trace("waiting for launch to complete")
-	err = launchgroup.Wait()
-	switch {
+	switch err := launchgroup.Wait(); {
 	case err != nil && dockerContainer != nil:
 		// There is a chance the launchgroup handled a signal, but that it happened after we
 		// successfully ran the container. In this case, just pretend we didn't handle the signal,
