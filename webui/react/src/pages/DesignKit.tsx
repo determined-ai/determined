@@ -735,43 +735,43 @@ const FacepileSection: React.FC = () => {
       username: 'Fake Admin',
     },
     {
-      id: 123,
+      id: 3,
       isActive: true,
       isAdmin: true,
       username: 'Admin',
     },
     {
-      id: 123,
+      id: 13,
       isActive: true,
       isAdmin: true,
       username: 'Fake',
     },
     {
-      id: 123,
+      id: 23,
       isActive: true,
       isAdmin: true,
       username: 'User',
     },
     {
-      id: 123,
+      id: 12,
       isActive: true,
       isAdmin: true,
       username: 'Foo',
     },
     {
-      id: 123,
+      id: 2,
       isActive: true,
       isAdmin: true,
       username: 'Baar',
     },
     {
-      id: 123,
+      id: 12,
       isActive: true,
       isAdmin: true,
       username: 'Gandalf',
     },
     {
-      id: 123,
+      id: 1,
       isActive: true,
       isAdmin: true,
       username: 'Leroy Jenkins',
@@ -820,7 +820,7 @@ const FacepileSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Facepile with initial state</strong>
-        <Facepile editable />
+        <Facepile editable selectableUsers={users} />
         <strong>Variations</strong>
         <ul>
           <li>

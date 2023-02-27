@@ -1,9 +1,8 @@
+import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import React, { useMemo, useState } from 'react';
 
 import SelectFilter from 'components/SelectFilter';
-import { useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
-import { Loadable } from 'utils/loadable';
 
 import Button from './Button';
 import css from './Facepile.module.scss';
@@ -11,29 +10,24 @@ import UserAvatar from './UserAvatar';
 
 export interface Props {
   editable?: boolean;
+  selectableUsers?: DetailedUser[]; // This prop should be used to pass as options to the dropdown.
   users?: DetailedUser[];
-  // TODO: add vertical orientation
 }
 
-const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
+const Facepile: React.FC<Props> = ({ editable = false, selectableUsers = [], users = [] }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAllAvatars, setShowAllAvatars] = useState(false);
   const [avatars, setAvatars] = useState(users);
-  const loadableUsers = useUsers();
-  const loadedUsers = Loadable.match(loadableUsers, {
-    Loaded: (u) => u.users,
-    NotLoaded: () => [],
-  });
   const amountOfAvatars = useMemo(() => avatars.length, [avatars.length]);
   const usersItems = useMemo(
     () =>
-      loadedUsers
+      selectableUsers
         .filter((user) => !avatars.find((av) => av.id === user.id))
         .map((user) => ({
           label: user.username,
           value: user.id,
         })),
-    [loadedUsers, avatars],
+    [selectableUsers, avatars],
   );
   const visibleAvatars = useMemo(
     () => (showAllAvatars ? avatars : avatars.slice(0, 5)),
@@ -64,7 +58,7 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
           onChange={(value) => {
             // we know that it will find a user since the options are based on that variable
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const user = loadedUsers.find((u) => u.id === value)!;
+            const user = selectableUsers.find((u) => u.id === value)!;
 
             setAvatars((prev) => {
               const newAvatars = [...prev];
@@ -80,7 +74,8 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
       {showButton && (
         <span className={css.addButton}>
           <Button
-            type={!buttonLabel.includes('+') ? 'primary' : 'text'}
+            icon={!buttonLabel.includes('+') && <PlusOutlined />}
+            type="text"
             onClick={() => {
               if (amountOfAvatars > 5) {
                 if (showAllAvatars && editable) {
@@ -98,7 +93,8 @@ const Facepile: React.FC<Props> = ({ editable = false, users = [] }) => {
           </Button>
           {showAllAvatars && editable && (
             <Button
-              type="primary"
+              icon={<MinusOutlined />}
+              type="text"
               onClick={() => {
                 setShowAllAvatars(false);
                 setShowDropdown(false);
