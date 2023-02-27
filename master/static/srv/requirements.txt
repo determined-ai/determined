@@ -1,2 +1,5 @@
+requests
 pytest>=6.0.1
-backoff==1.10.0
+backoff>=2.2.1
+determined
+model-hub
