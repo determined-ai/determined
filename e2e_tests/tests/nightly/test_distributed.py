@@ -20,7 +20,7 @@ def test_mnist_pytorch_distributed(image_type: str) -> None:
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
 
@@ -58,7 +58,7 @@ def test_cifar10_pytorch_distributed(image_type: str) -> None:
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_pytorch"), 1)
 
@@ -178,7 +178,7 @@ def test_word_language_transformer_distributed(image_type: str) -> None:
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
 

@@ -26,7 +26,7 @@ def test_pytorch_11_const(
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     if using_k8s:
         pod_spec = {
@@ -144,7 +144,7 @@ def test_pytorch_cifar10_parallel(
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch"), 1
@@ -175,7 +175,7 @@ def test_pytorch_gan_parallel(
     elif image_type == "TF2":
         config = conf.set_tf2_image(config)
     else:
-        warnings.warn("Using default images")
+        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("gan_mnist_pytorch"), 1
