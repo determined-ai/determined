@@ -12,7 +12,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/inf.v0"
 	k8sV1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -935,28 +934,14 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
 		if err != nil && !k8serrors.IsNotFound(err) {
-			logrus.WithFields(logrus.Fields{
-				"err":           err,
-				"namespace":     namespace,
-				"errIsNotFound": k8serrors.IsNotFound(err),
-			}).Debug("error looking up namespace quota")
 			return nil, err
 		} else if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
-			logrus.WithFields(logrus.Fields{
-				"err":           err,
-				"namespace":     namespace,
-				"errIsNotFound": k8serrors.IsNotFound(err),
-			}).Debug("skipping quota for namespace")
 			// TODO: figure out how we want to handle multiple quotas per namespace?
 			continue
 		}
 
 		namespaceToQuota[namespace] = quotaList.Items[0]
 	}
-
-	logrus.WithFields(logrus.Fields{
-		"numQuotas": len(namespaceToQuota),
-	}).Debug("done looking up quotas")
 
 	// If there's only one resource pool configured and it doesn't have a quota, summarize using the
 	// whole cluster.
@@ -970,14 +955,6 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
 			return p.summarizeClusterByNodes(ctx), nil
 		}
-	}
-
-	if len(namespaceToQuota) == 0 {
-		namespaces := make([]string, 0, len(p.namespaceToPoolName))
-		for n := range p.namespaceToPoolName {
-			namespaces = append(namespaces, n)
-		}
-		logrus.WithField("namespaces", namespaces).Debug("no quotas found for checked namespaces")
 	}
 
 	containers := p.containersPerResourcePool()
@@ -998,17 +975,9 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 				case ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
 					deviceType = device.CUDA
 				default:
-					logrus.WithFields(logrus.Fields{
-						"resourceName": resourceName,
-					}).Debug("skipping resource")
 					// We only care about CPU and GPU quotas for the slots summary
 					continue
 				}
-
-				logrus.WithFields(logrus.Fields{
-					"resourceName": resourceName,
-					"qty":          qty.String(),
-				}).Debug("found quota for device type")
 
 				// Each CPU and GPU in the quota will be counted as a slot here
 				one, decQty := inf.NewDec(1, 0), qty.AsDec()
@@ -1034,8 +1003,6 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 					}
 				}
 			}
-		} else {
-			logrus.WithField("namespace", namespace).Debug("quota does not exist for namespace")
 		}
 
 		summaries[poolName] = model.AgentSummary{
