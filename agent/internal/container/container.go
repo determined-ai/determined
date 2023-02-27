@@ -190,8 +190,6 @@ func (c *Container) run(parent context.Context) (err error) {
 	c.log.Trace("kicking off goroutine to launch the container")
 	var dockerContainer *docker.Container
 	launchgroup.Go(func(ctx context.Context) (err error) {
-		defer launchgroup.Cancel()
-
 		c.log.Trace("pulling image")
 		if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
 			return err
@@ -240,9 +238,6 @@ func (c *Container) run(parent context.Context) (err error) {
 
 	c.log.Trace("waiting for launch to complete")
 	err = launchgroup.Wait()
-	// Cancel here instead of inside the SIGKILL shim, to avoid a race between canceling
-	// the context and ErrKilledBeforeRun being the first error this errgroupx gets.
-	launchgroup.Cancel()
 	switch {
 	case err != nil && dockerContainer != nil:
 		// There is a chance the launchgroup handled a signal, but that it happened after we
