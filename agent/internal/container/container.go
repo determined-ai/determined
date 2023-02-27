@@ -176,7 +176,6 @@ func (c *Container) run(parent context.Context) (err error) {
 				switch signal {
 				case syscall.SIGKILL:
 					c.log.Tracef("signal %s, canceling run-scoped context", signal)
-					launchgroup.Cancel()
 					return ErrKilledBeforeRun
 				default:
 					c.log.Warnf("ignoring signal other than SIGKILL %s before running", signal)
@@ -213,13 +212,16 @@ func (c *Container) run(parent context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("creating container: %w", err)
 		}
+
 		remove := c.spec.RunSpec.HostConfig.AutoRemove
 		c.spec = nil // Evict the spec from memory due to their potential memory consumption.
 		defer func() {
 			if err != nil {
 				c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
 				if remove {
-					if rErr := c.docker.RemoveContainer(ctx, dockerID, true); rErr != nil {
+					// Using parent context instead of just ctx since we could have canceled
+					// ctx right after creating the container via SIGKILL shim returning an error.
+					if rErr := c.docker.RemoveContainer(parent, dockerID, true); rErr != nil {
 						c.log.WithError(rErr).Debug("couldn't cleanup container")
 					}
 				}
@@ -237,7 +239,11 @@ func (c *Container) run(parent context.Context) (err error) {
 	})
 
 	c.log.Trace("waiting for launch to complete")
-	switch err := launchgroup.Wait(); {
+	err := launchgroup.Wait()
+	// Cancel here instead of inside the SIGKILL shim, to avoid a race between canceling
+	// the context and ErrKilledBeforeRun being the first error this errgroupx gets.
+	launchgroup.Cancel()
+	switch err {
 	case err != nil && dockerContainer != nil:
 		// There is a chance the launchgroup handled a signal, but that it happened after we
 		// successfully ran the container. In this case, just pretend we didn't handle the signal,
