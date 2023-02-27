@@ -12,7 +12,6 @@ const { OptGroup, Option } = Select;
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface Props<T = SelectValue> {
   allowClear?: boolean;
-  autoClearSearchValue?: boolean;
   defaultValue?: T;
   disableTags?: boolean;
   disabled?: boolean;
@@ -20,24 +19,20 @@ export interface Props<T = SelectValue> {
   filterOption?: (input: string, option: LabeledValue) => void;
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
-  itemName?: string;
   label?: string;
-  maxTagCount?: number;
+  maxTagCount?: number | 'responsive';
   maxTagPlaceholderValue?: string;
   mode?: 'multiple' | 'tags';
   onBlur?: () => void;
   onChange?: (value: T, option: Options) => void;
   onDeselect?: (selected: SelectValue, option: Options) => void;
-  onDropdownVisibleChange?: () => void;
   onSearch?: (searchInput: string) => void;
   onSelect?: (selected: SelectValue, option: Options) => void;
   options?: LabeledValue[];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
-  showArrow?: boolean;
   size?: 'large';
   value?: T;
-  verticalLayout?: boolean;
 }
 
 export const ALL_VALUE = 'all';
@@ -62,7 +57,6 @@ const countOptions = (children: React.ReactNode): number => {
 const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(function SelectFilter(
   {
     allowClear,
-    autoClearSearchValue,
     defaultValue,
     disabled,
     disableTags = false,
@@ -73,7 +67,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     enableSearchFilter = true,
     filterSort,
     id,
-    itemName,
     label,
     mode,
     onChange,
@@ -83,8 +76,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     onSelect,
     options,
     placeholder,
-    showArrow,
-    verticalLayout = false,
     value,
     maxTagPlaceholderValue,
     children,
@@ -95,7 +86,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
   const classes = [css.base];
 
   if (disableTags) classes.push(css.disableTags);
-  if (verticalLayout) classes.push(css.vertical);
   if (mode === 'multiple') {
     classes.push(css.multiple);
   }
@@ -105,11 +95,10 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     if (!disableTags) return [undefined, maxTagPlaceholderValue];
 
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
-    const isPlural = count > 1;
-    const itemLabel = itemName ? `${itemName}${isPlural ? 's' : ''}` : 'selected';
+    const itemLabel = 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
     return isOpen ? [0, ''] : [0, placeholder];
-  }, [disableTags, isOpen, itemName, optionsCount, maxTagPlaceholderValue, value]);
+  }, [disableTags, isOpen, optionsCount, maxTagPlaceholderValue, value]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
@@ -133,7 +122,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
       <Select
         allowClear={allowClear}
-        autoClearSearchValue={autoClearSearchValue}
         defaultValue={defaultValue}
         disabled={disabled}
         dropdownMatchSelectWidth={250}
@@ -146,7 +134,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         options={options ? options : undefined}
         placeholder={placeholder}
         ref={ref}
-        showArrow={showArrow}
         showSearch={onSearch ? true : false}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}

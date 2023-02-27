@@ -23,7 +23,6 @@ interface Props {
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
   value?: Metric | Metric[];
-  verticalLayout?: boolean;
 }
 
 const filterFn = (search: string, metricName: string) => {
@@ -36,7 +35,6 @@ const MetricSelectFilter: React.FC<Props> = ({
   metrics,
   multiple,
   value,
-  verticalLayout = false,
   onChange,
 }: Props) => {
   const [filterString, setFilterString] = useState('');
@@ -163,7 +161,6 @@ const MetricSelectFilter: React.FC<Props> = ({
 
   return (
     <SelectFilter
-      autoClearSearchValue={false}
       disableTags
       filterOption={handleFiltering}
       label={label}
@@ -171,9 +168,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       maxTagPlaceholderValue={selectorPlaceholder}
       mode={multiple ? 'multiple' : undefined}
       ref={selectRef}
-      showArrow
       value={metricValues}
-      verticalLayout={verticalLayout}
       onBlur={handleBlur}
       onDeselect={handleMetricDeselect}
       onSearch={handleSearchInputChange}

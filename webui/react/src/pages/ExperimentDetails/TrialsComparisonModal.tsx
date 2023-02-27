@@ -291,7 +291,6 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
                 disableTags
                 label=""
                 mode="multiple"
-                showArrow
                 value={selectedHyperparameters}
                 onChange={onHyperparameterSelect}>
                 {hyperparameterNames.map((hp) => (

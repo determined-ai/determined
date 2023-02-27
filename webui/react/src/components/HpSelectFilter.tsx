@@ -71,7 +71,6 @@ const HpSelectFilter: React.FC<Props> = ({
       disableTags
       mode="multiple"
       placeholder={ALL_VALUE}
-      showArrow
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
