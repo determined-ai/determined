@@ -190,6 +190,7 @@ func (c *Container) run(parent context.Context) (err error) {
 	c.log.Trace("kicking off goroutine to launch the container")
 	var dockerContainer *docker.Container
 	launchgroup.Go(func(ctx context.Context) (err error) {
+		defer launchgroup.Cancel()
 		c.log.Trace("pulling image")
 		if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
 			return err
