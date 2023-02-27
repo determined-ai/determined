@@ -12,6 +12,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/inf.v0"
 	k8sV1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -933,11 +934,11 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	// Look up quotas for our resource pools' namespaces.
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
-		if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return nil, err
+		} else if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
 			// TODO: figure out how we want to handle multiple quotas per namespace?
 			continue
-		} else if err != nil {
-			return nil, err
 		}
 
 		namespaceToQuota[namespace] = quotaList.Items[0]
@@ -955,6 +956,14 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
 			return p.summarizeClusterByNodes(ctx), nil
 		}
+	}
+
+	if len(namespaceToQuota) == 0 {
+		namespaces := make([]string, 0, len(p.namespaceToPoolName))
+		for n := range p.namespaceToPoolName {
+			namespaces = append(namespaces, n)
+		}
+		logrus.WithField("namespaces", namespaces).Debug("no quotas found for checked namespaces")
 	}
 
 	containers := p.containersPerResourcePool()
