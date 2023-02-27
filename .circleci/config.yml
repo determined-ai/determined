@@ -1970,6 +1970,11 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
+      - queue/until_front_of_line:
+          only-on-branch: master
+          # Basically wait forever -- we would prefer not to fail tests, and
+          # we'll likely never be this backed up.
+          time: "10000"
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           labels: test-mark=<<parameters.mark>>
