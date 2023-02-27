@@ -30,7 +30,7 @@ import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -40,7 +40,7 @@ import { ShirtSize } from 'themes';
 import { BrandingType, MetricType, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
