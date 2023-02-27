@@ -1,7 +1,7 @@
+import warnings
 from typing import Callable, List
 
 import pytest
-import warnings
 
 from determined.experimental import Determined
 from tests import config as conf
@@ -12,12 +12,15 @@ from tests import experiment as exp
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
 def test_pytorch_11_const(
-    aggregation_frequency: int, using_k8s: bool, collect_trial_profiles: Callable[[int], None]
+    aggregation_frequency: int,
+    image_type: str,
+    using_k8s: bool,
+    collect_trial_profiles: Callable[[int], None],
 ) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_profiling_enabled(config)
-    
+
     if image_type == "PT":
         config = conf.set_pt_image(config)
     elif image_type == "TF2":
@@ -128,12 +131,14 @@ def test_pytorch_const_with_amp(
 
 @pytest.mark.parallel
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_pytorch_cifar10_parallel(
+    image_type: str, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_profiling_enabled(config)
-    
+
     if image_type == "PT":
         config = conf.set_pt_image(config)
     elif image_type == "TF2":
@@ -157,12 +162,14 @@ def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None])
 
 @pytest.mark.parallel
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_pytorch_gan_parallel(
+    image_type: str, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_profiling_enabled(config)
-    
+
     if image_type == "PT":
         config = conf.set_pt_image(config)
     elif image_type == "TF2":

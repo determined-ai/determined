@@ -165,8 +165,8 @@ def set_tf1_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
 
 def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return set_image(config, TF2_CPU_IMAGE, TF2_GPU_IMAGE)
-    
-    
+
+
 def set_pt_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return set_image(config, PT_CPU_IMAGE, PT_GPU_IMAGE)
 
