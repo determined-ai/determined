@@ -36,8 +36,6 @@ export interface Props<T = SelectValue> {
   value?: T;
 }
 
-export const ALL_VALUE = 'all';
-
 const countOptions = (children: React.ReactNode): number => {
   if (!children) return 0;
 
