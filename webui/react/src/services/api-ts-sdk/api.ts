@@ -2055,7 +2055,7 @@ export interface V1DataPointEpoch {
  */
 export interface V1DataPointTime {
     /**
-     * Total batches processed by the time this measurement is taken.
+     * The time the measurement is taken.
      * @type {Date}
      * @memberof V1DataPointTime
      */

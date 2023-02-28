@@ -719,7 +719,7 @@ type ResourcePoolAwsDetail struct {
 
 	// The region the resource pool exists in
 	Region string `protobuf:"bytes,1,opt,name=region,proto3" json:"region,omitempty"`
-	// Size of the root volume of the Determined agent in GB
+	//  Size of the root volume of the Determined agent in GB
 	RootVolumeSize int32 `protobuf:"varint,2,opt,name=root_volume_size,json=rootVolumeSize,proto3" json:"root_volume_size,omitempty"`
 	// The AMI ID of the Determined agent
 	ImageId string `protobuf:"bytes,3,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
@@ -749,7 +749,7 @@ type ResourcePoolAwsDetail struct {
 	LogStream string `protobuf:"bytes,14,opt,name=log_stream,json=logStream,proto3" json:"log_stream,omitempty"`
 	// Whether to use spot instances
 	SpotEnabled bool `protobuf:"varint,15,opt,name=spot_enabled,json=spotEnabled,proto3" json:"spot_enabled,omitempty"`
-	// The maximum price per hour to pay for a spot instance
+	//  The maximum price per hour to pay for a spot instance
 	SpotMaxPrice string `protobuf:"bytes,16,opt,name=spot_max_price,json=spotMaxPrice,proto3" json:"spot_max_price,omitempty"`
 	// List of arbitrary user-defined tags that are added to the Determined agent
 	// instances
@@ -923,9 +923,9 @@ type ResourcePoolGcpDetail struct {
 	BootDiskSourceImage string `protobuf:"bytes,4,opt,name=boot_disk_source_image,json=bootDiskSourceImage,proto3" json:"boot_disk_source_image,omitempty"`
 	// Key for labeling the Determined agent instances.
 	LabelKey string `protobuf:"bytes,5,opt,name=label_key,json=labelKey,proto3" json:"label_key,omitempty"`
-	// Value for labeling the Determined agent instances
+	//  Value for labeling the Determined agent instances
 	LabelValue string `protobuf:"bytes,6,opt,name=label_value,json=labelValue,proto3" json:"label_value,omitempty"`
-	// Name prefix to set for the Determined agent instances
+	//  Name prefix to set for the Determined agent instances
 	NamePrefix string `protobuf:"bytes,7,opt,name=name_prefix,json=namePrefix,proto3" json:"name_prefix,omitempty"`
 	// Network resource for the Determined agent instances
 	Network string `protobuf:"bytes,8,opt,name=network,proto3" json:"network,omitempty"`
@@ -935,9 +935,9 @@ type ResourcePoolGcpDetail struct {
 	ExternalIp bool `protobuf:"varint,10,opt,name=external_ip,json=externalIp,proto3" json:"external_ip,omitempty"`
 	// The network tags to set firewalls for the Determined agent instances
 	NetworkTags []string `protobuf:"bytes,11,rep,name=network_tags,json=networkTags,proto3" json:"network_tags,omitempty"`
-	// Email of the service account for the Determined agent instances.
+	//  Email of the service account for the Determined agent instances.
 	ServiceAccountEmail string `protobuf:"bytes,12,opt,name=service_account_email,json=serviceAccountEmail,proto3" json:"service_account_email,omitempty"`
-	// List of scopes authorized for the Determined agent instances
+	//  List of scopes authorized for the Determined agent instances
 	ServiceAccountScopes []string `protobuf:"bytes,13,rep,name=service_account_scopes,json=serviceAccountScopes,proto3" json:"service_account_scopes,omitempty"`
 	// Type of machine for the Determined agents
 	MachineType string `protobuf:"bytes,14,opt,name=machine_type,json=machineType,proto3" json:"machine_type,omitempty"`

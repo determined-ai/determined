@@ -391,7 +391,6 @@ type QueueControl struct {
 	// The action to perform.
 	//
 	// Types that are assignable to Action:
-	//
 	//	*QueueControl_AheadOf
 	//	*QueueControl_BehindOf
 	//	*QueueControl_ResourcePool
