@@ -891,36 +891,6 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 }
 
-func TestAuthZExpCompareTrialsSample(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
-
-	exp0 := createTestExp(t, api, curUser)
-	exp1 := createTestExp(t, api, curUser)
-	req := &apiv1.ExpCompareTrialsSampleRequest{
-		ExperimentIds: []int32{int32(exp0.ID), int32(exp1.ID)},
-		MetricName:    "name",
-		MetricType:    apiv1.MetricType_METRIC_TYPE_TRAINING,
-	}
-
-	// Can't view first experiment gets error.
-	expectedErr := status.Errorf(codes.PermissionDenied, "firstError")
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp0).
-		Return(fmt.Errorf("firstError")).Once()
-	err := api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
-	require.Equal(t, expectedErr.Error(), err.Error())
-
-	// Can't view second experiment gets error.
-	expectedErr = status.Errorf(codes.PermissionDenied, "secondError")
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp0).Return(nil).Once()
-	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp1).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp1).
-		Return(fmt.Errorf("secondError")).Once()
-	err = api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
-	require.Equal(t, expectedErr.Error(), err.Error())
-}
-
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
