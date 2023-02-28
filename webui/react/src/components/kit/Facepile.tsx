@@ -60,6 +60,7 @@ const Facepile: React.FC<Props> = ({
           }
           options={usersItems}
           placeholder="Select a user"
+          placement="bottomRight"
           onChange={(value) => {
             // we know that it will find a user since the options are based on that variable
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

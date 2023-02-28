@@ -30,6 +30,7 @@ export interface Props<T = SelectValue> {
   onSelect?: (selected: SelectValue, option: Options) => void;
   options?: LabeledValue[];
   placeholder?: string;
+  placement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
   ref?: React.Ref<RefSelectProps>;
   value?: T;
 }
@@ -72,6 +73,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     onSelect,
     options,
     placeholder,
+    placement,
     value,
     maxTagPlaceholderValue,
     children,
@@ -130,6 +132,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         mode={mode}
         options={options ? options : undefined}
         placeholder={placeholder}
+        placement={placement}
         ref={ref}
         showSearch={!!onSearch || !!filterOption}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
