@@ -273,6 +273,17 @@ const DropdownsSection: React.FC = () => {
           placeholder="Search"
         />
         <hr />
+        <strong>MultiSelect Dropdown with Tags and Search</strong>
+        <SelectFilter
+          filterOption={handleFilter}
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Search"
+        />
         <span>
           Also see{' '}
           <Link reloadDocument to={`#${ComponentTitles.Form}`}>
