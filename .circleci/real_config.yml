@@ -3310,7 +3310,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters:
             branches:
               only: main
@@ -3328,7 +3330,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters:
             branches:
               only: main
@@ -3513,7 +3517,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
-          context: aws
+          context:
+            - aws
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-e2e-cpu-distributed
@@ -3910,7 +3916,9 @@ workflows:
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
-          context: aws
+          context:
+            - aws
+            - determined-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-mentions: "${SLACK_USER_ID}"
@@ -3920,7 +3928,9 @@ workflows:
           
       - test-aws-fs:
           name: test-aws-fs-efs
-          context: aws
+          context:
+            - aws
+            - determined-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
