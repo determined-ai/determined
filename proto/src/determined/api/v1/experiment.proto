@@ -443,7 +443,7 @@ message MetricBatchesResponse {
   repeated int32 batches = 1;
 }
 
-// Request metrics from all trials at a progress point of progress.
+// Request metrics from all trials at a point of progress.
 message TrialsSnapshotRequest {
   // The id of the experiment.
   int32 experiment_id = 1
