@@ -1,7 +1,7 @@
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import React, { useMemo, useState } from 'react';
 
-import SelectFilter from 'components/SelectFilter';
+import SelectFilter from 'components/kit/SelectFilter';
 import { DetailedUser } from 'types';
 
 import Button from './Button';
