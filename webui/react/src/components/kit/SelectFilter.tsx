@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import type { DefaultOptionType, LabeledValue, OptionProps, RefSelectProps, SelectValue} from 'antd/es/select';
+import type { DefaultOptionType, LabeledValue, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
@@ -16,7 +16,7 @@ export interface Props<T = SelectValue> {
   disableTags?: boolean;
   disabled?: boolean;
   enableSearchFilter?: boolean;
-  filterOption?: boolean | ((inputValue: any, option: LabeledValue | undefined) => boolean);
+  filterOption?: boolean | ((inputValue: string, option: LabeledValue | undefined) => boolean);
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
@@ -93,7 +93,6 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
     const itemLabel = 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
-    console.log(placeholder, count, isOpen, value)
     return isOpen ? [0, ''] : [0, placeholder];
   }, [disableTags, isOpen, optionsCount, maxTagPlaceholderValue, value]);
 

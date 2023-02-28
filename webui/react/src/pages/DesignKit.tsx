@@ -40,7 +40,7 @@ import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-import { LabeledValue } from 'antd/es/select';
+import { LabeledValue, SelectValue } from 'antd/es/select';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
@@ -172,6 +172,7 @@ const ButtonsSection: React.FC = () => {
 const DropdownsSection: React.FC = () => {
   
   const handleFilter = (input: string, option: LabeledValue | undefined) => !!(option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true);
+  const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
 
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
@@ -233,6 +234,8 @@ const DropdownsSection: React.FC = () => {
           <SelectFilter
           disableTags
           mode="multiple"
+          onChange={(value) => setMultiSelectValues(value)}
+          value={multiSelectValues}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
