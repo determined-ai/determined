@@ -14,6 +14,14 @@ from determined.horovod import hvd
 
 
 class Trainer:
+    """
+    ``pytorch.Trainer`` is an abstraction on top of a vanilla PyTorch training loop that handles
+    many training details under-the-hood, and exposes APIs for configuring training-related features
+    such as automatic checkpointing, validation, profiling, metrics reporting, etc.
+
+    ``Trainer`` must be initialized and called from within a ``pytorch.PyTorchTrialContext``.
+    """
+
     def __init__(self, trial: pytorch.PyTorchTrial, context: pytorch.PyTorchTrialContext):
         self._trial = trial
         self._context = context
