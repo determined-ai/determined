@@ -252,12 +252,12 @@ func New(
 	if config.ResourceManager.DispatcherRM != nil {
 		// slurm type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.DispatcherRM, config.ResourcePools, tlsConfig, opts.LoggingOptions,
+			config.ResourceManager.DispatcherRM, config.ResourcePools, tlsConfig, opts.LoggingOptions, db,
 		)
 	} else {
 		// pbs type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig, opts.LoggingOptions,
+			config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig, opts.LoggingOptions, db,
 		)
 	}
 	ref, _ := system.ActorOf(
@@ -270,6 +270,7 @@ func New(
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
 type dispatcherResourceManager struct {
+	db                                         *db.PgDB
 	rmConfig                                   *config.DispatcherResourceManagerConfig
 	poolConfig                                 []config.ResourcePoolConfig
 	apiClient                                  *launcher.APIClient
@@ -296,6 +297,7 @@ func newDispatcherResourceManager(
 	poolConfig []config.ResourcePoolConfig,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
+	db *db.PgDB,
 ) *dispatcherResourceManager {
 	// Set up the host address and IP address of the "launcher".
 	clientConfiguration := launcher.NewConfiguration()
@@ -325,6 +327,7 @@ func newDispatcherResourceManager(
 	authToken := loadAuthToken(rmConfig)
 
 	return &dispatcherResourceManager{
+		db:       db,
 		rmConfig: rmConfig,
 
 		apiClient:                apiClient,
@@ -368,8 +371,9 @@ func (m *dispatcherResourceManager) authContext(ctx *actor.Context) context.Cont
 func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		m.debugKillAllInactiveDispatches(ctx, ctx.Self())
+		go m.debugKillAllInactiveDispatches(ctx, ctx.Self())
 		go m.jobWatcher.watch(ctx)
+
 		// SLURM Resource Manager always fulfills requests for resource pool details using the
 		// value from the cache. This call will ensure there is an initial value in the cache at
 		// the start of the resource manager.
@@ -951,6 +955,40 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+// Common method for sending a terminate request, and appropriately clean up a dispatch.
+func (m *dispatcherResourceManager) terminateAndDeleteDispatch(
+	ctx *actor.Context, dispatchID string, impersonatedUser string) {
+	ctx.Log().Infof(
+		"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
+
+	if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser, false) {
+		// Do not remove the dispatch environment if the job is being
+		// monitored by the job watcher, as it is needed in order for
+		// the launcher to report the job status. If we remove the
+		// dispatch environment, then the launcher will no longer be
+		// able to provide job information and will return an HTTP 404
+		// status when the job watcher asks it for status. As a result,
+		// the Detemined AI job status will never get updated from
+		// "Running" to "Canceled", for example.  When the job watcher
+		// gets a terminatal state from the launcher, it will take care
+		// of removing the dispatch environment at that time.
+		if m.jobWatcher.isJobBeingMonitored(dispatchID) {
+			ctx.Log().Debugf(
+				"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
+				dispatchID)
+		} else {
+			// If we are here, then we are likely being called from
+			// startup, as opposed to a user explicitly canceling
+			// a job. It's OK to remove the environment in this case
+			// because we aren't actively monitoring any jobs, but we need to wait
+			// for the terminate request above to complete, before we can actually
+			// do the delete of the environment to avoid a 500 error response.
+			m.waitForDispatchTerminalState(ctx, impersonatedUser, dispatchID)
+			m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
+		}
+	}
 }
 
 // Wait up to 2mins for the dispatch to be in a terminal state.
@@ -1892,13 +1930,12 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 	m.reqList.RemoveTaskByHandler(handler)
 }
 
-// Used on DEBUG startup, to queue a terminate and delete all dispatches in the DB
+// Used on DEBUG startup, to perform a terminate and delete all dispatches in the DB
 // that are no-longer associated with an active experiment/task.
 // All active tasks, will get reconnected via AllocationRequest{Restore:true}
 // events.   This path is currently used only for debug mode where we defer
 // cleanup of dispatches until the restart to enable debugging of job
-// logs -- TODO:  Currently it terminates all dispatches as we do
-// not yet know how to identify active allocations during startup.
+// logs.
 func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
 	ctx *actor.Context, handler *actor.Ref,
 ) {
@@ -1906,24 +1943,28 @@ func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
 		return
 	}
 
-	ctx.Log().Infof("Releasing all resources due to master restart in DEBUG mode. " +
-		"Jobs will not be restored, but may restart.")
+	ctx.Log().Infof("Releasing all dispatches for terminated allocations.")
 
-	// Find the Dispatch IDs associated with the allocation ID. We'll need the
-	// Dispatch ID to cancel the job on the launcher side.
+	// Find the Dispatch IDs
 	dispatches, err := db.ListAllDispatches(context.TODO())
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("Failed to retrieve all Dispatches")
 		return
 	}
-	ctx.Log().Debugf("Found %d Dispatches to release", len(dispatches))
+	ctx.Log().Debugf("Found %d Dispatches to check", len(dispatches))
 	for _, dispatch := range dispatches {
-		ctx.Log().Debugf("Queuing cleanup of AllocationID %s, DispatchID %s",
-			dispatch.AllocationID, dispatch.DispatchID)
-		ctx.Tell(handler, KillDispatcherResources{
-			ResourcesID:  dispatch.ResourceID,
-			AllocationID: dispatch.AllocationID,
-		})
+		dispatchID := dispatch.DispatchID
+		impersonatedUser := dispatch.ImpersonatedUser
+		allocation, err := m.db.AllocationByID(dispatch.AllocationID)
+		if err != nil || (allocation != nil &&
+			allocation.State != nil) && *allocation.State != model.AllocationStateTerminated {
+			ctx.Log().Debugf(
+				"Not removing dispatch environment for dispatchID %s because allocationID %s is still active.",
+				dispatchID, dispatch.AllocationID)
+			continue
+		}
+
+		m.terminateAndDeleteDispatch(ctx, dispatchID, impersonatedUser)
 	}
 }
 
