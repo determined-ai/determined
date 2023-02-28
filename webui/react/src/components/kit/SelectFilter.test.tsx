@@ -19,7 +19,7 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = () => {
   const handleOpen = jest.fn();
   const view = render(
-    <SelectFilter label={LABEL} placeholder={PLACEHOLDER}>
+    <SelectFilter label={LABEL} placeholder={PLACEHOLDER} showSearch>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (
         <Option key={index} title={OPTION_TITLE} value={String.fromCharCode(65 + index)}>
           {'Option ' + String.fromCharCode(65 + index)}
