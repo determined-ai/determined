@@ -74,7 +74,7 @@ class DetectronTrial(PyTorchTrial):
         return data_loader
 
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-        with EventStorage() as storage:
+        with EventStorage():
             loss_dict = self.model(batch)
         losses = sum(loss_dict.values())
         losses_reduced = sum(loss for loss in loss_dict.values())
