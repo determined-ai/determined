@@ -33,7 +33,7 @@ message DataPointTime {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "time", "value" ] }
   };
-  // Total batches processed by the time this measurement is taken.
+  // The time the measurement is taken.
   google.protobuf.Timestamp time = 1;
   // Value of the requested metric at this point in the trial.
   double value = 2;
