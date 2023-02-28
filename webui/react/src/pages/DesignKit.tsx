@@ -1,5 +1,6 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
+import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -40,7 +41,6 @@ import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-import { LabeledValue, SelectValue } from 'antd/es/select';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
@@ -170,8 +170,10 @@ const ButtonsSection: React.FC = () => {
 };
 
 const DropdownsSection: React.FC = () => {
-  
-  const handleFilter = (input: string, option: LabeledValue | undefined) => !!(option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true);
+  const handleFilter = (input: string, option: LabeledValue | undefined) =>
+    !!(
+      option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true
+    );
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
 
   return (
@@ -230,20 +232,20 @@ const DropdownsSection: React.FC = () => {
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <strong>Variations</strong>
-          <strong>Multiselect Dropdown</strong>
-          <SelectFilter
+        <strong>Multiselect Dropdown</strong>
+        <SelectFilter
           disableTags
           mode="multiple"
-          onChange={(value) => setMultiSelectValues(value)}
-          value={multiSelectValues}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          value={multiSelectValues}
+          onChange={(value) => setMultiSelectValues(value)}
         />
         <strong>Multiselect Dropdown with Tags</strong>
-          <SelectFilter
+        <SelectFilter
           mode="multiple"
           options={[
             { label: 'Option 1', value: 1 },
@@ -252,12 +254,14 @@ const DropdownsSection: React.FC = () => {
           ]}
         />
         <strong>Dropdown with Search</strong>
-          <SelectFilter
+        <SelectFilter
           filterOption={handleFilter}
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
           placeholder="Search"
-          options={[    { label: 'Option 1', value: 1 },
-          { label: 'Option 2', value: 2 },
-          { label: 'Option 3', value: 3 }]}
         />
         <hr />
         <span>

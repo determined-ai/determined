@@ -121,7 +121,9 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         defaultValue={defaultValue}
         disabled={disabled}
         dropdownMatchSelectWidth={250}
-        filterOption={(enableSearchFilter || filterOption) ? (filterOption ? filterOption : handleFilter) : true}
+        filterOption={
+          enableSearchFilter || filterOption ? (filterOption ? filterOption : handleFilter) : true
+        }
         filterSort={filterSort}
         id={id}
         maxTagCount={maxTagCount}
