@@ -183,9 +183,9 @@ class Determined:
             activate=True,
             config=config_text,
             modelDefinition=model_context,
+            projectId=project_id,
             # TODO: add these as params to create_experiment()
             parentId=None,
-            projectId=None,
         )
 
         resp = bindings.post_CreateExperiment(self._session, body=req)
