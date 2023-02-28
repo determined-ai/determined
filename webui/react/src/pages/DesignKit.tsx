@@ -1,14 +1,15 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Card, Space } from 'antd';
+import { Card as AntDCard, Space } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Grid, { GridMode } from 'components/Grid';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import Empty from 'components/kit/Empty';
+import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
@@ -22,34 +23,42 @@ import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import SelectFilter from 'components/kit/SelectFilter';
 import Tooltip from 'components/kit/Tooltip';
+import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
+import ProjectCard from 'components/ProjectCard';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import UserAvatar from 'components/UserAvatar';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { ShirtSize } from 'themes';
-import { BrandingType, MetricType, ResourcePool } from 'types';
+import { noOp } from 'shared/utils/service';
+import {
+  generateTestProjectData,
+  generateTestWorkspaceData,
+} from 'storybook/shared/generateTestData';
+import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
+import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
+import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
+  Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
-  DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Empty: 'Empty',
+  Facepile: 'Facepile',
   Form: 'Form',
   Input: 'Input',
   InputNumber: 'InputNumber',
@@ -59,8 +68,8 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Tooltips: 'Tooltips',
-  // Facepile: 'Facepile',
   UserAvatar: 'UserAvatar',
+  UserBadge: 'UserBadge',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -88,14 +97,14 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
 const ButtonsSection: React.FC = () => {
   return (
     <ComponentSection id="Buttons" title="Buttons">
-      <Card>
+      <AntDCard>
         <p>
           <code>{'<Button>'}</code>s give people a way to trigger an action. They&apos;re typically
           found in forms, dialog panels, and dialogs. Some buttons are specialized for particular
           tasks, such as navigation, repeated actions, or presenting menus.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -137,8 +146,8 @@ const ButtonsSection: React.FC = () => {
           <li>Buttons need to have accessible naming.</li>
           <li>Aria- and roles need to have consistent (non-generic) attributes.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default Button</strong>
         <Space>
           <Button type="primary">Primary</Button>
@@ -164,7 +173,7 @@ const ButtonsSection: React.FC = () => {
           <IconicButton iconName="searcher-grid" text="Iconic button" />
           <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
         </Space>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -178,13 +187,13 @@ const DropdownsSection: React.FC = () => {
 
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
-      <Card>
+      <AntDCard>
         <p>
           A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a
           dropdown giving people a way to select an option from a list or enter their own choice.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -214,8 +223,8 @@ const DropdownsSection: React.FC = () => {
             the option text.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default dropdown</strong>
         <SelectFilter
           defaultValue={1}
@@ -271,7 +280,7 @@ const DropdownsSection: React.FC = () => {
           </Link>{' '}
           for form-specific variations
         </span>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -369,21 +378,21 @@ const ChartsSection: React.FC = () => {
   const createChartGrid = useChartGrid();
   return (
     <ComponentSection id="Charts" title="Charts">
-      <Card>
+      <AntDCard>
         <p>
           Line Charts (<code>{'<LineChart>'}</code>) are a universal component to create charts for
           learning curve, metrics, cluster history, etc. We currently use the uPlot library.
         </p>
-      </Card>
-      <Card title="Label options">
+      </AntDCard>
+      <AntDCard title="Label options">
         <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
         <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
-      </Card>
-      <Card title="Focus series">
+      </AntDCard>
+      <AntDCard title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
-      </Card>
-      <Card title="Chart Grid">
+      </AntDCard>
+      <AntDCard title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
           responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
@@ -425,7 +434,7 @@ const ChartsSection: React.FC = () => {
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -433,14 +442,14 @@ const ChartsSection: React.FC = () => {
 const CheckboxesSection: React.FC = () => {
   return (
     <ComponentSection id="Checkboxes" title="Checkboxes">
-      <Card>
+      <AntDCard>
         <p>
           Checkboxes (<code>{'<Checkbox>'}</code>) give people a way to select one or more items
           from a group, or switch between two mutually exclusive options (checked or unchecked, on
           or off).
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -470,8 +479,8 @@ const CheckboxesSection: React.FC = () => {
             box.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Basic checkboxes</strong>
         <Checkbox>This is a basic checkbox.</Checkbox>
         <strong>Variations</strong>
@@ -483,7 +492,7 @@ const CheckboxesSection: React.FC = () => {
         <p>Mandatory checkbox - not implemented.</p>
         <p>Mandatory checkbox with info sign - not implemented.</p>
         <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -491,13 +500,13 @@ const CheckboxesSection: React.FC = () => {
 const InputSearchSection: React.FC = () => {
   return (
     <ComponentSection id="InputSearch" title="InputSearch">
-      <Card>
+      <AntDCard>
         <p>
           A search box (<code>{'<InputSearch>'}</code>) provides an input field for searching
           content within a site or app to find specific items.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -525,8 +534,8 @@ const InputSearchSection: React.FC = () => {
             search entry point should be placed near the content being searched.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default Searchbox</strong>
         <InputSearch placeholder="input search text" />
         <strong>Variations</strong>
@@ -538,7 +547,7 @@ const InputSearchSection: React.FC = () => {
         <hr />
         <strong>Search box with scopes</strong>
         <p>Not implemented</p>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -546,14 +555,14 @@ const InputSearchSection: React.FC = () => {
 const InputNumberSection: React.FC = () => {
   return (
     <ComponentSection id="InputNumber" title="InputNumber">
-      <Card>
+      <AntDCard>
         <p>
           A spin button (<code>{'<InputNumber>'}</code>) allows someone to incrementally adjust a
           value in small steps. It&apos;s mainly used for numeric values, but other values are
           supported too.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -569,8 +578,8 @@ const InputNumberSection: React.FC = () => {
           <li>Don&apos;t use a spin button for binary settings.</li>
           <li>Don&apos;t use a spin button for a range of three values or less.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default InputNumber</strong>
         <InputNumber />
         <strong>Disabled InputNumber</strong>
@@ -583,7 +592,7 @@ const InputNumberSection: React.FC = () => {
           </Link>{' '}
           for form-specific variations
         </span>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -591,14 +600,14 @@ const InputNumberSection: React.FC = () => {
 const InputSection: React.FC = () => {
   return (
     <ComponentSection id="Input" title="Input">
-      <Card>
+      <AntDCard>
         <p>
           Text fields (<code>{'<Input>'}</code>) give people a way to enter and edit text.
           They&apos;re used in forms, modal dialogs, tables, and other surfaces where text input is
           required.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>Use a multiline text field when long entries are expected.</li>
@@ -610,8 +619,8 @@ const InputSection: React.FC = () => {
           </li>
           <li>Format the text field for the expected entry.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>
           Input <code>{'<Input>'}</code>
         </strong>
@@ -643,7 +652,7 @@ const InputSection: React.FC = () => {
           </Link>{' '}
           for form-specific variations
         </span>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -671,14 +680,14 @@ const ListsSection: React.FC = () => {
 
   return (
     <ComponentSection id="Lists" title="Lists (tables)">
-      <Card>
+      <AntDCard>
         <p>
           A list (<code>{'<ResponsiveTable>'}</code>) is a robust way to display an information-rich
           collection of items, and allow people to sort, group, and filter the content. Use a
           details list when information density is critical.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
@@ -718,11 +727,11 @@ const ListsSection: React.FC = () => {
             the current selection mode.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default list</strong>
         <ResponsiveTable columns={mockColumns} dataSource={mockRows} rowKey="id" />
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -730,7 +739,7 @@ const ListsSection: React.FC = () => {
 const BreadcrumbsSection: React.FC = () => {
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
-      <Card>
+      <AntDCard>
         <p>
           <code>{'<Breadcrumb>'}</code>s should be used as a navigational aid in your app or site.
           They indicate the current page&apos;s location within a hierarchy and help the user
@@ -741,8 +750,8 @@ const BreadcrumbsSection: React.FC = () => {
           Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of
           an experience, above the primary content area.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Accessibility</strong>
         <ul>
           <li>By default, Breadcrumb uses arrow keys to cycle through each item. </li>
@@ -751,89 +760,166 @@ const BreadcrumbsSection: React.FC = () => {
             of a page.{' '}
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Breadcrumb</strong>
         <Breadcrumb>
           <Breadcrumb.Item>Level 0</Breadcrumb.Item>
           <Breadcrumb.Item>Level 1</Breadcrumb.Item>
           <Breadcrumb.Item>Level 2</Breadcrumb.Item>
         </Breadcrumb>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
 
-// const FacepileSection: React.FC = () => {
-//   return (
-//     <ComponentSection id="Facepile" title="Facepile">
-//       <Card>
-//         <p>
-//           A face pile (<code>{'<UserAvatar>'}</code>) displays a list of personas. Each circle
-//           represents a person and contains their image or initials. Often this control is used when
-//           sharing who has access to a specific view or file, or when assigning someone a task within
-//           a workflow.
-//         </p>
-//       </Card>
-//       <Card title="Best practices">
-//         <strong>Content considerations</strong>
-//         <ul>
-//           <li>
-//             The face pile empty state should only include an &quot;Add&quot; button. Another variant
-//             is to use an input field with placeholder text instructing people to add a person. See
-//             the people picker component for the menu used to add people to the face pile list.
-//           </li>
-//           <li>
-//             When there is only one person in the face pile, consider using their name next to the
-//             face or initials.
-//           </li>
-//           <li>
-//             When there is a need to show the face pile expanded into a vertical list, include a
-//             downward chevron button. Selecting the chevron opens a standard list view of people.
-//           </li>
-//           <li>
-//             When the face pile exceeds a max number of 5 people, show a button at the end of the
-//             list indicating how many are not being shown. Clicking or tapping on the overflow would
-//             open a standard list view of people.
-//           </li>
-//           <li>
-//             The component can include an &quot;Add&quot; button which can be used for quickly adding
-//             a person to the list.
-//           </li>
-//           <li>
-//             When hovering over a person in the face pile, include a tooltip or people card that
-//             offers more information about that person.
-//           </li>
-//         </ul>
-//       </Card>
-//       <Card title="Usage">
-//         <strong>Facepile</strong>
-//         <UserAvatar />
-//         <strong>Variations</strong>
-//         <ul>
-//           <li>Facepile with 8 people</li>
-//           <p>Not implemented</p>
-//           <li>Facepile with both name initials</li>
-//           <p>Not implemented</p>
-//         </ul>
-//       </Card>
-//     </ComponentSection>
-//   );
-// };
+const FacepileSection: React.FC = () => {
+  const users = [
+    {
+      id: 123,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake Admin',
+    },
+    {
+      id: 3,
+      isActive: true,
+      isAdmin: true,
+      username: 'Admin',
+    },
+    {
+      id: 13,
+      isActive: true,
+      isAdmin: true,
+      username: 'Fake',
+    },
+    {
+      id: 23,
+      isActive: true,
+      isAdmin: true,
+      username: 'User',
+    },
+    {
+      id: 12,
+      isActive: true,
+      isAdmin: true,
+      username: 'Foo',
+    },
+    {
+      id: 2,
+      isActive: true,
+      isAdmin: true,
+      username: 'Baar',
+    },
+    {
+      id: 12,
+      isActive: true,
+      isAdmin: true,
+      username: 'Gandalf',
+    },
+    {
+      id: 1,
+      isActive: true,
+      isAdmin: true,
+      username: 'Leroy Jenkins',
+    },
+  ];
+  return (
+    <ComponentSection id="Facepile" title="Facepile">
+      <AntDCard>
+        <p>
+          A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle
+          represents a person and contains their image or initials. Often this control is used when
+          sharing who has access to a specific view or file, or when assigning someone a task within
+          a workflow.
+        </p>
+      </AntDCard>
+      <AntDCard title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            The face pile empty state should only include an &quot;Add&quot; button. Another variant
+            is to use an input field with placeholder text instructing people to add a person. See
+            the people picker component for the menu used to add people to the face pile list.
+          </li>
+          <li>
+            When there is only one person in the face pile, consider using their name next to the
+            face or initials.
+          </li>
+          <li>
+            When there is a need to show the face pile expanded into a vertical list, include a
+            downward chevron button. Selecting the chevron opens a standard list view of people.
+          </li>
+          <li>
+            When the face pile exceeds a max number of 5 people, show a button at the end of the
+            list indicating how many are not being shown. Clicking or tapping on the overflow would
+            open a standard list view of people.
+          </li>
+          <li>
+            The component can include an &quot;Add&quot; button which can be used for quickly adding
+            a person to the list.
+          </li>
+          <li>
+            When hovering over a person in the face pile, include a tooltip or people card that
+            offers more information about that person.
+          </li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Facepile with initial state</strong>
+        <Facepile editable selectableUsers={users} />
+        <strong>Variations</strong>
+        <ul>
+          <li>
+            Facepile with 8 people
+            <Facepile users={users.slice(0, 8)} />
+          </li>
+          <li>Facepile with both name initials</li>
+          <p>Check the Facepile above and select a user that would fit that case</p>
+        </ul>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
 
 const UserAvatarSection: React.FC = () => {
   return (
     <ComponentSection id="UserAvatar" title="UserAvatar">
-      <Card>
+      <AntDCard>
         <p>
           A (<code>{'<UserAvatar>'}</code>) represents a user. It consists of a circle containing
           the first letter of the user&apos;s display name or username. On hover, it displays a
           tooltip with the full display name or username.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <UserAvatar />
-      </Card>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const UserBadgeSection: React.FC = () => {
+  const testUser = { displayName: 'Abc', id: 1, username: 'alpha123' };
+
+  return (
+    <ComponentSection id="UserBadge" title="UserBadge">
+      <AntDCard>
+        <p>
+          A (<code>{'<UserBadge>'}</code>) fully represents a user with a UserAvatar circle icon,
+          and the user&apos;s display name and username. If there is a display name, it appears
+          first, otherwise only the username is visible. A &apos;compact&apos; option reduces the
+          size of the name for use in a smaller form or modal.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <li>User with Display Name</li>
+        <UserBadge user={testUser as User} />
+        <li>Compact format</li>
+        <UserBadge compact user={testUser as User} />
+        <li>User without Display Name</li>
+        <UserBadge user={{ ...testUser, displayName: undefined } as User} />
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -841,7 +927,7 @@ const UserAvatarSection: React.FC = () => {
 const PivotSection: React.FC = () => {
   return (
     <ComponentSection id="Pivot" title="Pivot">
-      <Card>
+      <AntDCard>
         <p>
           The Pivot control (<code>{'<Tabs>'}</code>) and related tabs pattern are used for
           navigating frequently accessed, distinct content categories. Pivots allow for navigation
@@ -853,8 +939,8 @@ const PivotSection: React.FC = () => {
           Tabs are a visual variant of Pivot that use a combination of icons and text or just icons
           to articulate section content.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content considerations</strong>
         <ul>
           <li>
@@ -865,8 +951,8 @@ const PivotSection: React.FC = () => {
             various sections.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Default Pivot</strong>
         <Space>
           <Pivot
@@ -897,7 +983,7 @@ const PivotSection: React.FC = () => {
             type="card"
           />
         </Space>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -905,15 +991,15 @@ const PivotSection: React.FC = () => {
 const PaginationSection: React.FC = () => {
   return (
     <ComponentSection id="Pagination" title="Pagination">
-      <Card>
+      <AntDCard>
         <p>
           <code>{'<Pagination>'}</code> is the process of splitting the contents of a website, or
           section of contents from a website, into discrete pages. This user interface design
           pattern is used so users are not overwhelmed by a mass of data on one page. Page breaks
           are automatically set.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content considerations</strong>
         <ul>
           <li>Use ordinal numerals or letters of the alphabet.</li>
@@ -921,8 +1007,8 @@ const PaginationSection: React.FC = () => {
             Indentify the current page in addition to the pages in immediate context/surrounding.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Pagination default</strong>
         <Pagination total={500} />
         <strong>Considerations</strong>
@@ -941,23 +1027,25 @@ const PaginationSection: React.FC = () => {
             tabs in/out accidentally.
           </li>
         </ul>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
 
-const DataCardsSection: React.FC = () => {
+const CardsSection: React.FC = () => {
   const rps = resourcePools as unknown as ResourcePool[];
+  const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
+  const workspace = generateTestWorkspaceData();
 
   return (
-    <ComponentSection id="DataCards" title="DataCards">
-      <Card>
+    <ComponentSection id="Cards" title="Cards">
+      <AntDCard>
         <p>
-          A DataCard (<code>{'<OverviewStats>'}</code>) contains additional metadata or actions.
-          This offers people a richer view into a file than the typical grid view.
+          A Card (<code>{'<Card>'}</code>) contains additional metadata or actions. This offers
+          people a richer view into a file than the typical grid view.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content considerations</strong>
         <ul>
           <li>Incorporate metadata that is relevant and useful in this particular view.</li>
@@ -973,17 +1061,19 @@ const DataCardsSection: React.FC = () => {
             interactions like “Share” buttons or view counts.
           </li>
         </ul>
-      </Card>
-      <Card title="Usage">
-        <strong>DataCard default</strong>
-        <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
-          <OverviewStats title="Last Runner State">Validating</OverviewStats>
-          <OverviewStats title="Start time">7 mo ago</OverviewStats>
-          <OverviewStats title="Total Checkpoint size">14.4 MB</OverviewStats>
-          <OverviewStats clickable title="Best Checkpoint">
-            Batch 1000
-          </OverviewStats>
-        </Grid>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Card default</strong>
+        <Card />
+        <strong>Card group default</strong>
+        <p>
+          A card group (<code>{'<Card.Group>'}</code>) can be used to display a list or grid of
+          cards.
+        </p>
+        <Card.Group>
+          <Card />
+          <Card />
+        </Card.Group>
         <strong>Considerations</strong>
         <ul>
           <li>Ensure links are tab-able.</li>
@@ -994,14 +1084,87 @@ const DataCardsSection: React.FC = () => {
             additional clicks.
           </li>
         </ul>
-        <strong>DataCard variations</strong>
+        <strong>Card variations</strong>
+        <p>Small cards (default)</p>
+        <Card.Group>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}>Card with actions</Card>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled>
+            Disabled card
+          </Card>
+          <Card onClick={noOp}>Clickable card</Card>
+        </Card.Group>
+        <p>Medium cards</p>
+        <Card.Group size="medium">
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} size="medium">
+            Card with actions
+          </Card>
+          <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} disabled size="medium">
+            Disabled card
+          </Card>
+          <Card size="medium" onClick={noOp}>
+            Clickable card
+          </Card>
+        </Card.Group>
+        <strong>Card group variations</strong>
+        <p>Wrapping group (default)</p>
+        <Card.Group size="medium">
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+        </Card.Group>
+        <p>Non-wrapping group</p>
+        <Card.Group size="medium" wrap={false}>
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+          <Card size="medium" />
+        </Card.Group>
+        <strong>Card examples</strong>
         <ul>
+          <li>
+            Project card (<code>{'<ProjectCard>'}</code>)
+          </li>
+          <Card.Group>
+            <ProjectCard project={project} />
+            <ProjectCard project={{ ...project, archived: true }} />
+            <ProjectCard
+              project={{
+                ...project,
+                name: 'Project with a very long name that spans many lines and eventually gets cut off',
+              }}
+            />
+          </Card.Group>
+          <li>
+            Workspace card (<code>{'<WorkspaceCard>'}</code>)
+          </li>
+          <Card.Group size="medium">
+            <WorkspaceCard workspace={workspace} />
+            <WorkspaceCard workspace={{ ...workspace, archived: true }} />
+          </Card.Group>
+          <li>
+            Stats overview (<code>{'<OverviewStats>'}</code>)
+          </li>
+          <Card.Group>
+            <OverviewStats title="Active Experiments">0</OverviewStats>
+            <OverviewStats title="Clickable card" onClick={noOp}>
+              Example
+            </OverviewStats>
+          </Card.Group>
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>
-          <ResourcePoolCard resourcePool={rps[0]} />
+          <Card.Group size="medium">
+            <ResourcePoolCard resourcePool={rps[0]} />
+          </Card.Group>
         </ul>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -1051,13 +1214,13 @@ const LogViewerSection: React.FC = () => {
   ];
   return (
     <ComponentSection id="LogViewer" title="LogViewer">
-      <Card>
+      <AntDCard>
         <p>
           A Logview (<code>{'<LogViewer>'}</code>) prints events that have been configured to be
           triggered and return them to the user in a running stream.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content considerations</strong>
         <ul>
           <li>
@@ -1070,8 +1233,8 @@ const LogViewerSection: React.FC = () => {
           </li>
           <li>Provide the user with ways of searching & filtering down logs.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>LogViewer default</strong>
         <div style={{ height: '300px' }}>
           <LogViewer decoder={mapV1LogsResponse} initialLogs={sampleLogs} sortKey="id" />
@@ -1084,7 +1247,7 @@ const LogViewerSection: React.FC = () => {
           </li>
           <li>Ensure the capability of searching/filtering log entries.</li>
         </ul>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -1092,7 +1255,7 @@ const LogViewerSection: React.FC = () => {
 const FormSection: React.FC = () => {
   return (
     <ComponentSection id="Form" title="Form">
-      <Card>
+      <AntDCard>
         <p>
           <code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for
           submitting user input. When these components wrap a user input field (such as{' '}
@@ -1100,8 +1263,8 @@ const FormSection: React.FC = () => {
           label, indicate that the field is required, apply input validation, or display an input
           validation error.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <Form>
           <strong>
             Form-specific{' '}
@@ -1209,7 +1372,7 @@ const FormSection: React.FC = () => {
             <SelectFilter />
           </Form.Item>
         </Form>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -1220,7 +1383,7 @@ const TooltipsSection: React.FC = () => {
 
   return (
     <ComponentSection id="Tooltips" title="Tooltips">
-      <Card>
+      <AntDCard>
         <p>
           A good tooltip (<code>{'<Tooltip>'}</code>) briefly describes unlabeled controls or
           provides a bit of additional information about labeled controls, when this is useful. It
@@ -1228,8 +1391,8 @@ const TooltipsSection: React.FC = () => {
           about control labels, icons, and links. A tooltip should always add valuable information;
           use sparingly.
         </p>
-      </Card>
-      <Card title="Best practices">
+      </AntDCard>
+      <AntDCard title="Best practices">
         <strong>Content</strong>
         <ul>
           <li>
@@ -1247,8 +1410,8 @@ const TooltipsSection: React.FC = () => {
           </li>
           <li>Only use periods for complete sentences.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Tooltips default</strong>
         <Space>
           <Tooltip title={text}>
@@ -1315,7 +1478,7 @@ const TooltipsSection: React.FC = () => {
             </Tooltip>
           </div>
         </div>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -1323,13 +1486,13 @@ const TooltipsSection: React.FC = () => {
 const EmptySection: React.FC = () => {
   return (
     <ComponentSection id="Empty" title="Empty">
-      <Card>
+      <AntDCard>
         <p>
           An <code>{'<Empty>'}</code> component indicates that no content is available for a page.
           It may display an icon and a description explaining why this state is displayed.
         </p>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <Empty
           description={
             <>
@@ -1339,7 +1502,7 @@ const EmptySection: React.FC = () => {
           icon="warning-large"
           title="Empty title"
         />
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };
@@ -1347,11 +1510,12 @@ const EmptySection: React.FC = () => {
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
+  Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
   Empty: <EmptySection />,
+  Facepile: <FacepileSection />,
   Form: <FormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
@@ -1361,8 +1525,8 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Tooltips: <TooltipsSection />,
-  // Facepile: <FacepileSection />,
   UserAvatar: <UserAvatarSection />,
+  UserBadge: <UserBadgeSection />,
 };
 
 const DesignKit: React.FC = () => {

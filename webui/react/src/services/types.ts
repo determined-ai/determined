@@ -162,7 +162,6 @@ export interface GetModelsParams extends PaginationParams {
     | 'SORT_BY_LAST_UPDATED_TIME'
     | 'SORT_BY_NUM_VERSIONS';
   users?: string[];
-  workspaceId?: number;
   workspaceIds?: number[];
 }
 

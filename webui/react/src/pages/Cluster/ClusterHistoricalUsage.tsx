@@ -16,7 +16,7 @@ import { Loadable } from 'utils/loadable';
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
 import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
-import ClusterHistoricalUsageCsvModal from './ClusterHistoricalUsageCsvModal';
+import ClusterHistoricalUsageCsvModal, { CSVGroupBy } from './ClusterHistoricalUsageCsvModal';
 import ClusterHistoricalUsageFilters, {
   ClusterHistoricalUsageFiltersInterface,
 } from './ClusterHistoricalUsageFilters';
@@ -168,6 +168,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           <ClusterHistoricalUsageCsvModal
             afterDate={csvAfterDate}
             beforeDate={csvBeforeDate}
+            groupBy={CSVGroupBy.Workloads}
             onVisibleChange={setIsCsvModalVisible}
           />
         )}

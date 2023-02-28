@@ -42,7 +42,6 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/checkpoints',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

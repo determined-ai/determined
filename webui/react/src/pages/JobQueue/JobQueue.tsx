@@ -215,6 +215,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
       if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {

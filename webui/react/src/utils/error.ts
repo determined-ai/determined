@@ -63,6 +63,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
 
   if (e.isHandled) {
     if (process.env.IS_DEV) {
+      // eslint-disable-next-line no-console
       console.warn(`Error "${e.message}" is handled twice.`);
     }
     return;

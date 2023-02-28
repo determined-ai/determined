@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import UserBadge from 'components/kit/UserBadge';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -16,7 +17,6 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
-import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
@@ -184,7 +184,7 @@ const UserManagement: React.FC = () => {
     if (rbacEnabled) {
       RolesStore.fetchRoles(canceler);
     }
-  }, [rbacEnabled]);
+  }, [canceler, rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers });
 

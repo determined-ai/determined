@@ -31,6 +31,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
+	"github.com/uptrace/bun"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -314,12 +315,272 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	}
 }
 
+// TaskMetadata captures the historic allocation information for a given task.
+type TaskMetadata struct {
+	bun.BaseModel    `bun:"table:tasks"`
+	TaskID           model.TaskID   `bun:"task_id"`
+	TaskType         model.TaskType `bun:"task_type"`
+	Username         string
+	WorkspaceName    string
+	ExperimentID     int
+	Slots            int
+	StartTime        time.Time
+	EndTime          time.Time
+	TrainingTime     float64
+	ValidationTime   float64
+	ImagepullingTime float64
+}
+
+//	@Summary	Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+//	@Tags		Cluster
+//	@ID			get-raw-resource-task-allocation-csv
+//	@Accept		json
+//	@Produce	text/csv
+//
+// nolint:lll
+//
+//	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Success	200					{}		string	"A CSV file containing the fields task_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, training_time, validation_time, checkpointing_time, imagepulling_time"
+//	@Router		/allocations/tasks-raw [get]
+func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
+	// Get start and end times from context
+	args := struct {
+		Start string `query:"timestamp_after"`
+		End   string `query:"timestamp_before"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	// Parse Start and End Times
+	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
+	if err != nil {
+		return errors.Wrap(err, "invalid start time")
+	}
+	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
+	if err != nil {
+		return errors.Wrap(err, "invalid end time")
+	}
+	if start.After(end) {
+		return errors.New("start time cannot be after end time")
+	}
+	timeRangeCTE := db.Bun().NewSelect().
+		ColumnExpr("tstzrange(? :: timestamptz, ? :: timestamptz) AS period", start, end)
+
+	// Get trial start times
+	trialStartQuery := db.Bun().NewSelect().
+		ColumnExpr("tr.task_id").
+		ColumnExpr("NULL as kind").
+		ColumnExpr("tr.start_time as end_time").
+		TableExpr("trials tr")
+
+	// Get allocation start times
+	allocationStartQuery := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("NULL as kind").
+		ColumnExpr("a.start_time as end_time").
+		TableExpr("tasks t").
+		Join("INNER JOIN allocations a ON t.task_id = a.task_id")
+
+	// Build Query for identifing all TaskID's associated with trainings
+	trainingQuery := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("'training' as kind").
+		ColumnExpr("rs.end_time").
+		TableExpr("tasks t").
+		Join("INNER JOIN trials tr ON t.task_id = tr.task_id").
+		Join("INNER JOIN raw_steps rs ON rs.trial_id = tr.id")
+
+	// Build Query for identifing all TaskID's associated with validations
+	validationQuery := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("'validation' as kind").
+		ColumnExpr("rv.end_time").
+		TableExpr("tasks t").
+		Join("INNER JOIN trials tr ON t.task_id = tr.task_id").
+		Join("INNER JOIN raw_validations rv ON tr.id = rv.trial_id")
+
+	// Build Query for identifing all TaskID's associated with imagepulling
+	imagePullQuery := db.Bun().NewSelect().
+		ColumnExpr("a.task_id").
+		ColumnExpr("'imagepull' as kind").
+		ColumnExpr("ts.end_time").
+		TableExpr("allocations a").
+		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
+		Where("ts.event_type = 'IMAGEPULL'")
+
+	// Union each kind query into a single query
+	metricReports := trialStartQuery.
+		UnionAll(allocationStartQuery).
+		UnionAll(trainingQuery).
+		UnionAll(validationQuery).
+		UnionAll(imagePullQuery)
+
+	// Identify start & end times for each task according to the workload kind
+	// ** Implicit assumption that one workload started when the previous ended
+	derivedWorkloadSpans := db.Bun().NewSelect().
+		ColumnExpr("metric_reports.task_id").
+		ColumnExpr("metric_reports.kind").
+		ColumnExpr("LAG(end_time, 1) OVER (PARTITION BY task_id ORDER BY end_time) AS start_time").
+		ColumnExpr("metric_reports.end_time").
+		TableExpr("(?) AS metric_reports", metricReports)
+
+	// Remove null entries and convert start & end time to a range
+	allWorkloads := db.Bun().NewSelect().
+		ColumnExpr("derived_workload_spans.task_id").
+		ColumnExpr("derived_workload_spans.kind").
+		ColumnExpr("tstzrange(derived_workload_spans.start_time, derived_workload_spans.end_time) AS range").
+		TableExpr("(?) AS derived_workload_spans", derivedWorkloadSpans).
+		Where("start_time IS NOT NULL").
+		Where("end_time IS NOT NULL").
+		Where("kind is NOT NULL")
+
+	// Get seconds spent based on time spent for each task workload
+	workloads := db.Bun().NewSelect().
+		ColumnExpr("all_workloads.task_id").
+		ColumnExpr("all_workloads.kind").
+		ColumnExpr("lower(all_workloads.range) AS start_time").
+		ColumnExpr("upper(all_workloads.range) AS end_time").
+		ColumnExpr("extract( epoch FROM upper(const.period * range) - lower(const.period * range)) AS seconds").
+		TableExpr("(?) AS all_workloads", allWorkloads).
+		Table("const").
+		Where("const.period && all_workloads.range")
+
+	// Get the owner usernames associated with each task_id
+	taskOwnersCTE := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("u.username").
+		TableExpr("tasks t").
+		Join("INNER JOIN jobs j ON t.job_id = j.job_id").
+		Join("INNER JOIN users u ON j.owner_id = u.id")
+
+	// Get the number of slots request for a given task
+	taskSlotsCTE := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("(array_agg(a.slots) FILTER (WHERE a.slots IS NOT NULL))[1] as slots").
+		TableExpr("tasks t").
+		Join("INNER JOIN allocations a ON t.task_id = a.task_id").
+		Group("t.task_id")
+
+	// Pull metadata row-by-row for all Task ID's and aggregate workload times based on workload kinds for all tasks
+	taskMetaData := TaskMetadata{}
+	rows, err := db.Bun().NewSelect().Model(&taskMetaData).
+		ColumnExpr("task_metadata.task_id AS task_id").
+		ColumnExpr("task_metadata.task_type AS task_type").
+		ColumnExpr("task_owners.username AS username").
+		ColumnExpr("workspaces.name AS workspace_name").
+		ColumnExpr("experiments.id as experiment_id").
+		ColumnExpr("task_slots.slots as slots").
+		ColumnExpr("task_metadata.start_time AS start_time").
+		ColumnExpr("task_metadata.end_time AS end_time").
+		ColumnExpr("SUM(workloads.seconds) FILTER (WHERE workloads.kind = 'training') as training_time").
+		ColumnExpr("SUM(workloads.seconds) FILTER (WHERE workloads.kind = 'validation') as validation_time").
+		ColumnExpr("SUM(workloads.seconds) FILTER (WHERE workloads.kind = 'imagepull') as imagepulling_time").
+		With("const", timeRangeCTE).
+		With("workloads", workloads).
+		With("task_slots", taskSlotsCTE).
+		With("task_owners", taskOwnersCTE).
+		Join("LEFT JOIN task_slots ON task_slots.task_id = task_metadata.task_id").
+		Join("LEFT JOIN task_owners ON task_owners.task_id = task_metadata.task_id").
+		Join("LEFT JOIN workloads ON task_metadata.task_id = workloads.task_id").
+		Join("LEFT JOIN jobs ON task_metadata.job_id = jobs.job_id").
+		Join("LEFT JOIN experiments ON jobs.job_id = experiments.job_id").
+		Join("LEFT JOIN projects ON experiments.project_id = projects.id").
+		Join("LEFT JOIN workspaces ON projects.workspace_id = workspaces.id").
+		Join("JOIN const ON 1=1").
+		Where("tstzrange(task_metadata.start_time, task_metadata.end_time) && const.period").
+		Group("task_metadata.task_id",
+			"task_metadata.task_type",
+			"task_owners.username",
+			"workspaces.name",
+			"experiments.id",
+			"task_slots.slots",
+			"task_metadata.start_time",
+			"task_metadata.end_time").
+		Order("start_time").
+		Rows(c.Request().Context())
+	if err != nil && rows.Err() != nil {
+		return err
+	}
+	defer rows.Close()
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+	header := []string{
+		"task_id",
+		"task_type",
+		"username",
+		"workspace_name",
+		"experiment_id",
+		"slots",
+		"start_time",
+		"end_time",
+		"training_time",
+		"validation_time",
+		"imagepulling_time",
+	}
+
+	formatTimestamp := func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
+		return t.Format(time.RFC3339Nano)
+	}
+
+	formatDuration := func(duration float64) string {
+		if duration == 0 {
+			return "0.0"
+		}
+		return fmt.Sprintf("%f", duration)
+	}
+
+	csvWriter := csv.NewWriter(c.Response())
+	if err = csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	// Write each entry to the output CSV
+	for rows.Next() {
+		taskMetadata := new(TaskMetadata)
+		if err := db.Bun().ScanRow(c.Request().Context(), rows, taskMetadata); err != nil {
+			return err
+		}
+		fields := []string{
+			taskMetadata.TaskID.String(),
+			string(taskMetadata.TaskType),
+			taskMetadata.Username,
+			taskMetadata.WorkspaceName,
+			strconv.Itoa(taskMetadata.ExperimentID),
+			strconv.Itoa(taskMetadata.Slots),
+			formatTimestamp(taskMetadata.StartTime),
+			formatTimestamp(taskMetadata.EndTime),
+			formatDuration(taskMetadata.TrainingTime),
+			formatDuration(taskMetadata.ValidationTime),
+			formatDuration(taskMetadata.ImagepullingTime),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
+}
+
 //	@Summary	Get an aggregated view of resource allocation during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-aggregated-resource-allocation-csv
 //	@Produce	text/csv
 //	@Param		start_date	query	string	true	"Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
 //	@Param		end_date	query	string	true	"End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
+//
+// nolint:lll
+//
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
 //	@Router		/allocation/aggregated [get]
@@ -966,6 +1227,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
+	resourcesGroup.GET("/allocation/tasks-raw", m.getRawResourceAllocationTasks)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))

@@ -51,7 +51,6 @@ interface Props {
 }
 
 export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
-  applicableRoutespace: '/trials',
   settings: {
     ids: {
       defaultValue: [],

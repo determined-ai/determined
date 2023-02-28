@@ -5,11 +5,11 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
+import UserBadge from 'components/kit/UserBadge';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';

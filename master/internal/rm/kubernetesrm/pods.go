@@ -933,11 +933,11 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	// Look up quotas for our resource pools' namespaces.
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
-		if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return nil, err
+		} else if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
 			// TODO: figure out how we want to handle multiple quotas per namespace?
 			continue
-		} else if err != nil {
-			return nil, err
 		}
 
 		namespaceToQuota[namespace] = quotaList.Items[0]
@@ -972,7 +972,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 				switch resourceName {
 				case k8sV1.ResourceCPU:
 					deviceType = device.CPU
-				case ResourceTypeNvidia:
+				case ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
 					deviceType = device.CUDA
 				default:
 					// We only care about CPU and GPU quotas for the slots summary

@@ -8,10 +8,11 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import useResize from 'hooks/useResize';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
+import { getTimeTickValues } from 'utils/chart';
 
 import css from './LineChart.module.scss';
 
@@ -60,7 +61,6 @@ interface Props {
   title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
-  xTickValues?: uPlot.Axis.Values;
   yLabel?: string;
   yTickValues?: uPlot.Axis.Values;
 }
@@ -78,7 +78,6 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
-  xTickValues,
   yTickValues,
 }: Props) => {
   const hasPopulatedSeries: boolean = useMemo(
@@ -123,6 +122,17 @@ export const LineChart: React.FC<Props> = ({
 
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
+
+  const xTickValues: uPlot.Axis.Values | undefined = useMemo(
+    () =>
+      xAxis === XAxisDomain.Time &&
+      chartData.length > 0 &&
+      chartData[0].length > 0 &&
+      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        ? getTimeTickValues
+        : undefined,
+    [chartData, xAxis],
+  );
 
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
@@ -258,9 +268,14 @@ export interface GroupProps {
  * `data` comes from the itemData prop that is passed to FixedSizeGrid.
  */
 const VirtualChartRenderer: React.FC<
-  GridChildComponentProps<{ chartsProps: ChartsProps; columnCount: number }>
+  GridChildComponentProps<{
+    chartsProps: ChartsProps;
+    columnCount: number;
+    scale: Scale;
+    xAxis: XAxisDomain;
+  }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount } = data;
+  const { chartsProps, columnCount, scale, xAxis } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -270,7 +285,7 @@ const VirtualChartRenderer: React.FC<
   return (
     <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
       <div className={css.chartgridCellCard}>
-        <LineChart {...chartProps} scale={Scale.Linear} xAxis={XAxisDomain.Batches} />
+        <LineChart {...chartProps} scale={scale} xAxis={xAxis} />
       </div>
     </div>
   );
@@ -310,7 +325,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
             columnCount={columnCount}
             columnWidth={Math.floor(width / columnCount)}
             height={Math.min(height - 40, (chartsProps.length > columnCount ? 2.1 : 1.05) * 480)}
-            itemData={{ chartsProps, columnCount }}
+            itemData={{ chartsProps, columnCount, scale, xAxis }}
             rowCount={Math.ceil(chartsProps.length / columnCount)}
             rowHeight={480}
             width={width}>

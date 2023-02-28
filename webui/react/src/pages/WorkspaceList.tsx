@@ -1,9 +1,9 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import SelectFilter from 'components/kit/SelectFilter';
 import Link from 'components/Link';
@@ -33,7 +33,6 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -276,7 +275,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
+          <Card.Group size="medium">
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}
@@ -284,7 +283,7 @@ const WorkspaceList: React.FC = () => {
                 workspace={workspace}
               />
             ))}
-          </Grid>
+          </Card.Group>
         );
       case GridListView.List:
         return (

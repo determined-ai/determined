@@ -8,6 +8,7 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -21,10 +22,8 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
-import { useCurrentUser } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
 import css from './ProjectDetails.module.scss';
@@ -36,15 +35,10 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
 
-  const [project, setProject] = useState<Project>();
+  const [project, setProject] = useState<Project | undefined>();
 
   const permissions = usePermissions();
   const [pageError, setPageError] = useState<Error>();
@@ -53,7 +47,7 @@ const ProjectDetails: React.FC = () => {
 
   const [workspace, setWorkspace] = useState<Workspace>();
 
-  const id = parseInt(projectId ?? '1');
+  const id = Number(projectId ?? '1');
 
   const postActivity = useCallback(() => {
     postUserActivity({
@@ -152,8 +146,15 @@ const ProjectDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
+  } else if (
+    (!permissions.loading &&
+      project &&
+      !permissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) ||
+    (pageError && isNotFound(pageError))
+  ) {
+    return <PageNotFound />;
   } else if (!project) {
-    return <Spinner tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
+    return <Spinner spinning tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
   return (
     <Page
@@ -161,8 +162,7 @@ const ProjectDetails: React.FC = () => {
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
-      id="projectDetails"
-      notFound={(pageError && isNotFound(pageError)) || !permissions.canViewWorkspaces}>
+      id="projectDetails">
       <BreadcrumbBar
         extra={
           <Space>
@@ -173,7 +173,6 @@ const ProjectDetails: React.FC = () => {
             )}
             {id !== 1 && (
               <ProjectActionDropdown
-                curUser={user}
                 project={project}
                 showChildrenIfEmpty={false}
                 trigger={['click']}

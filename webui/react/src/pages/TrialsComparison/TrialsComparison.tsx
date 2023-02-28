@@ -4,7 +4,6 @@ import { debounce } from 'throttle-debounce';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
 import Empty from 'components/kit/Empty';
-import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -25,6 +24,7 @@ import useLearningCurveData from './Metrics/useLearningCurveData';
 import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
+import LearningCurveChart from './TrialsComparisonChart';
 
 interface Props {
   projectId: string;
