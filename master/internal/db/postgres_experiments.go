@@ -552,9 +552,8 @@ SELECT
   total_batches AS batches,
   s.end_time as end_time,
   s.metrics->>'avg_metrics' AS metrics
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.id=$2
+FROM steps s
+WHERE s.trial_id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
   AND ($4 <= 0 OR total_batches <= $4)
@@ -581,9 +580,8 @@ SELECT
   v.total_batches AS batches,
   v.end_time as end_time,
   v.metrics->>'validation_metrics' AS metrics
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id=$2
+FROM validations v
+WHERE v.trial_id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
   AND ($4 <= 0 OR v.total_batches <= $4)
