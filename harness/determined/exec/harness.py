@@ -12,6 +12,7 @@ from determined.common.api import analytics, certs
 try:
     from determined import pytorch
 except ImportError:  # pragma: no cover
+    pytorch = None
     pass
 
 
@@ -36,6 +37,15 @@ def main(train_entrypoint: str) -> int:
 
     trial_class = load.trial_class_from_entrypoint(train_entrypoint)
 
+    if info.container_rank == 0:
+        try:
+            analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
+        except Exception as e:
+            logging.debug(f"Cannot send analytics: {e}")
+
+    if pytorch and issubclass(trial_class, pytorch.PyTorchTrial):
+        return _run_pytorch_trial(trial_class, info)
+
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
     # It was natural to create this big-blob-of-config object, but it was a mistake to pass it into
     # the lowest layers of the harness code; it's too large of an object to be easily mockable,
@@ -45,9 +55,6 @@ def main(train_entrypoint: str) -> int:
     # will use that pattern for the future high-level APIs, but it's not worth refactoring e.g. the
     # TFKerasTrialController or EstimatorTrialController to add that functionality, so for now we
     # continue with the legacy strategy.
-
-    if pytorch and issubclass(trial_class, pytorch.PyTorchTrial):
-        return _run_pytorch_trial(trial_class, info)
 
     env = det.EnvContext(
         master_url=info.master_url,
@@ -83,11 +90,6 @@ def main(train_entrypoint: str) -> int:
         # information until the distributed backend is initialized, and we can't initialize the
         # correct distributed backend until we know which Trial class the user implemented.
         controller_class = load.get_trial_controller_class(trial_class)
-        if info.container_rank == 0:
-            try:
-                analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
-            except Exception as e:
-                logging.debug(f"Cannot send analytics: {e}")
 
         # Step 2: Initialize framework-specific details (dtrain framework, random seeds, etc).
         distributed_backend = det._DistributedBackend()
@@ -143,9 +145,7 @@ def _run_pytorch_trial(
     logging.debug("Starting harness.")
 
     with maybe_periodic_stacktraces(info.trial._debug):
-        with pytorch.init(
-            hparams=info.trial.hparams
-        ) as train_context:  # type: pytorch.PyTorchTrialContext
+        with pytorch.init(hparams=info.trial.hparams) as train_context:
             trial_inst = trial_class(train_context)
 
             if train_context.distributed.size > 1 and not train_context.distributed.rank == 0:

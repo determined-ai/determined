@@ -1062,12 +1062,7 @@ class DummyProfilerAgent(ProfilerAgent):
     def __enter__(self) -> "DummyProfilerAgent":
         pass
 
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
+    def __exit__(self, *_: Any) -> None:
         pass
 
     @contextlib.contextmanager

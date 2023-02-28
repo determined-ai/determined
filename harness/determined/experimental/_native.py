@@ -36,6 +36,15 @@ def test_one_batch(
     # Override the scheduling_unit value to 1.
     config = {**(config or {}), "scheduling_unit": 1}
 
+    try:
+        from determined import pytorch
+
+        if issubclass(trial_class, pytorch.PyTorchTrial):
+            det.experimental.test_one_batch_pytorch(trial_class=trial_class, config=config)
+            return
+    except ImportError:
+        pass
+
     logging.info("Running a minimal test experiment locally")
     with tempfile.TemporaryDirectory() as checkpoint_dir:
         core_context, env = det._make_local_execution_env(
@@ -82,19 +91,12 @@ def test_one_batch_pytorch(trial_class: Any, config: Dict) -> Any:
         return
 
     with pytorch.init(
-        hparams=config["hyperparameters"]
+        hparams=config.get("hyperparameters", {})
     ) as trial_context:  # type: pytorch.PyTorchTrialContext
         trial_context._exp_conf = config
         trial_inst = trial_class(trial_context)
         trainer = pytorch.Trainer(trial_inst, trial_context)
         trainer.fit(
             max_length=pytorch.Batch(1),
-            checkpoint_period=pytorch.TrainUnit._from_values(
-                **config.get("min_checkpoint_period", {"batches": sys.maxsize})
-            ),
-            validation_period=pytorch.TrainUnit._from_values(
-                **config.get("min_validation_period", {"batches": sys.maxsize})
-            ),
-            checkpoint_policy=config.get("checkpoint_policy", "all"),
-            aggregation_frequency=config.get("optimizations", {}).get("aggregation_frequency", 1),
+            test_mode=True,
         )
