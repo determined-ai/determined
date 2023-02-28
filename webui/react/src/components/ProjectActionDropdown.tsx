@@ -1,5 +1,5 @@
 import { Dropdown } from 'antd';
-import type { DropDownProps, MenuProps } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
@@ -11,13 +11,12 @@ import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
-import { DetailedUser, Project } from 'types';
+import { Project } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
   children?: React.ReactNode;
   className?: string;
-  curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
   onDelete?: () => void;
@@ -28,26 +27,46 @@ interface Props {
   workspaceArchived?: boolean;
 }
 
-const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
+const stopPropagation = (e: React.UIEvent): void => e.stopPropagation();
 
-const ProjectActionDropdown: React.FC<Props> = ({
-  project,
-  children,
-  onVisibleChange,
-  showChildrenIfEmpty = true,
-  className,
-  direction = 'vertical',
+interface ProjectMenuPropsIn {
+  onComplete?: () => void;
+  onDelete?: () => void;
+  project: Project;
+  workspaceArchived?: boolean;
+}
+
+interface ProjectMenuPropsOut {
+  contextHolders: React.ReactElement;
+  menuProps: MenuProps;
+}
+
+export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPropsOut = ({
   onComplete,
   onDelete,
-  trigger,
+  project,
   workspaceArchived = false,
-}: Props) => {
+}: ProjectMenuPropsIn) => {
   const { contextHolder: modalProjectMoveContextHolder, modalOpen: openProjectMove } =
     useModalProjectMove({ onClose: onComplete, project });
   const { contextHolder: modalProjectDeleteContextHolder, modalOpen: openProjectDelete } =
     useModalProjectDelete({ onClose: onComplete, onDelete, project });
   const { contextHolder: modalProjectEditContextHolder, modalOpen: openProjectEdit } =
     useModalProjectEdit({ onClose: onComplete, project });
+
+  const contextHolders = useMemo(() => {
+    return (
+      <>
+        {modalProjectMoveContextHolder}
+        {modalProjectDeleteContextHolder}
+        {modalProjectEditContextHolder}
+      </>
+    );
+  }, [
+    modalProjectDeleteContextHolder,
+    modalProjectEditContextHolder,
+    modalProjectMoveContextHolder,
+  ]);
 
   const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
@@ -77,80 +96,75 @@ const ProjectActionDropdown: React.FC<Props> = ({
     openProjectDelete();
   }, [openProjectDelete]);
 
-  const menuProps: DropDownProps['menu'] = useMemo(() => {
-    const MenuKey = {
-      Delete: 'delete',
-      Edit: 'edit',
-      Move: 'move',
-      SwitchArchived: 'switchArchive',
-    } as const;
+  const MenuKey = {
+    Delete: 'delete',
+    Edit: 'edit',
+    Move: 'move',
+    SwitchArchived: 'switchArchive',
+  } as const;
 
-    const funcs = {
-      [MenuKey.Edit]: () => {
-        handleEditClick();
-      },
-      [MenuKey.Move]: () => {
-        handleMoveClick();
-      },
-      [MenuKey.SwitchArchived]: () => {
-        handleArchiveClick();
-      },
-      [MenuKey.Delete]: () => {
-        handleDeleteClick();
-      },
-    };
+  const funcs = {
+    [MenuKey.Edit]: () => {
+      handleEditClick();
+    },
+    [MenuKey.Move]: () => {
+      handleMoveClick();
+    },
+    [MenuKey.SwitchArchived]: () => {
+      handleArchiveClick();
+    },
+    [MenuKey.Delete]: () => {
+      handleDeleteClick();
+    },
+  };
 
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as ValueOf<typeof MenuKey>]();
-    };
+  const onItemClick: MenuProps['onClick'] = (e) => {
+    funcs[e.key as ValueOf<typeof MenuKey>]();
+    stopPropagation(e.domEvent);
+  };
 
-    const items: MenuProps['items'] = [];
-    if (
-      canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived
-    ) {
-      items.push({ key: MenuKey.Edit, label: 'Edit...' });
-    }
-    if (canMoveProjects({ project }) && !project.archived) {
-      items.push({ key: MenuKey.Move, label: 'Move...' });
-    }
-    if (
-      canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !workspaceArchived
-    ) {
-      const label = project.archived ? 'Unarchive' : 'Archive';
-      items.push({ key: MenuKey.SwitchArchived, label: label });
-    }
-    if (
-      canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
-      !project.archived &&
-      project.numExperiments === 0
-    ) {
-      items.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
-    }
-    return { items: items, onClick: onItemClick };
-  }, [
-    canDeleteProjects,
-    canModifyProjects,
-    canMoveProjects,
-    handleArchiveClick,
-    handleDeleteClick,
-    handleEditClick,
-    handleMoveClick,
+  const items: MenuProps['items'] = [];
+  if (canModifyProjects({ project, workspace: { id: project.workspaceId } }) && !project.archived) {
+    items.push({ key: MenuKey.Edit, label: 'Edit...' });
+  }
+  if (canMoveProjects({ project }) && !project.archived) {
+    items.push({ key: MenuKey.Move, label: 'Move...' });
+  }
+  if (
+    canModifyProjects({ project, workspace: { id: project.workspaceId } }) &&
+    !workspaceArchived
+  ) {
+    const label = project.archived ? 'Unarchive' : 'Archive';
+    items.push({ key: MenuKey.SwitchArchived, label: label });
+  }
+  if (
+    canDeleteProjects({ project, workspace: { id: project.workspaceId } }) &&
+    !project.archived &&
+    project.numExperiments === 0
+  ) {
+    items.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
+  }
+  return { contextHolders, menuProps: { items: items, onClick: onItemClick } };
+};
+
+const ProjectActionDropdown: React.FC<Props> = ({
+  project,
+  children,
+  onVisibleChange,
+  showChildrenIfEmpty = true,
+  className,
+  direction = 'vertical',
+  onComplete,
+  onDelete,
+  trigger,
+  workspaceArchived = false,
+}: Props) => {
+  const { menuProps, contextHolders } = useProjectActionMenu({
+    onComplete,
+    onDelete,
     project,
     workspaceArchived,
-  ]);
-
-  const contextHolders = useMemo(
-    () => (
-      <>
-        {modalProjectDeleteContextHolder}
-        {modalProjectEditContextHolder}
-        {modalProjectMoveContextHolder}
-      </>
-    ),
-    [modalProjectDeleteContextHolder, modalProjectEditContextHolder, modalProjectMoveContextHolder],
-  );
+  });
 
   if (menuProps.items?.length === 0 && !showChildrenIfEmpty) {
     return null;

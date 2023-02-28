@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
+import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
@@ -12,7 +12,6 @@ import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
 import { TasksStore } from 'stores/tasks';
-import { ShirtSize } from 'themes';
 import { ResourceType, TaskCounts } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -65,7 +64,7 @@ export const ClusterOverallStats: React.FC = () => {
 
   return (
     <Section hideTitle title="Overview Stats">
-      <Grid gap={ShirtSize.Medium} minItemWidth={150} mode={GridMode.AutoFill}>
+      <Card.Group size="small">
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {
             Loaded: (agents) => (agents ? agents.length : '?'),
@@ -78,7 +77,7 @@ export const ClusterOverallStats: React.FC = () => {
               maxTotalSlots[resType] > 0 ? (
                 <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
                   {overview[resType].total - overview[resType].available}
-                  <small>/ {maxTotalSlots[resType]}</small>
+                  <small> / {maxTotalSlots[resType]}</small>
                 </OverviewStats>
               ) : null,
             NotLoaded: () => undefined,
@@ -86,7 +85,7 @@ export const ClusterOverallStats: React.FC = () => {
         )}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
-            {auxContainers.running} <small>/ {auxContainers.total}</small>
+            {auxContainers.running} <small> / {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
         {usePermissions().canAdministrateUsers || !rbacEnabled ? (
@@ -123,7 +122,7 @@ export const ClusterOverallStats: React.FC = () => {
             </OverviewStats>
           </>
         ) : null}
-      </Grid>
+      </Card.Group>
     </Section>
   );
 };

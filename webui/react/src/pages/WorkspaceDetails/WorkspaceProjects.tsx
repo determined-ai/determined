@@ -1,9 +1,9 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
@@ -35,7 +35,6 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -182,7 +181,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
@@ -270,7 +268,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived, users]);
+  }, [fetchProjects, saveProjectDescription, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -320,7 +318,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       record: Project;
     }) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
@@ -330,7 +327,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       </ProjectActionDropdown>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, workspace?.archived],
+    [workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
@@ -339,17 +336,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.AutoFill}>
+          <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
-                curUser={user}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
               />
             ))}
-          </Grid>
+          </Card.Group>
         );
       case GridListView.List:
         return (
@@ -383,7 +379,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     settings,
     total,
     updateSettings,
-    user,
     workspace?.archived,
   ]);
 

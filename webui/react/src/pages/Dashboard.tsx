@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
-import Grid, { GridMode } from 'components/Grid';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -32,7 +32,6 @@ import usePolling from 'shared/hooks/usePolling';
 import { ErrorType } from 'shared/utils/error';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useCurrentUser } from 'stores/users';
-import { ShirtSize } from 'themes';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -191,22 +190,16 @@ const Dashboard: React.FC = () => {
       ) : projects.length > 0 ? (
         // hide Projects header when empty:
         <Section title="Recently Viewed Projects">
-          <Grid
-            className={css.grid}
-            count={projects.length}
-            gap={ShirtSize.Medium}
-            minItemWidth={250}
-            mode={GridMode.ScrollableRow}>
+          <Card.Group size="small" wrap={false}>
             {projects.map((project) => (
               <ProjectCard
-                curUser={currentUser}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
                 showWorkspace
               />
             ))}
-          </Grid>
+          </Card.Group>
         </Section>
       ) : null}
       {/* show Submissions header even when empty: */}

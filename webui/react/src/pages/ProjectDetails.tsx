@@ -22,10 +22,8 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
-import { useCurrentUser } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
 import css from './ProjectDetails.module.scss';
@@ -37,11 +35,6 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
 
@@ -180,7 +173,6 @@ const ProjectDetails: React.FC = () => {
             )}
             {id !== 1 && (
               <ProjectActionDropdown
-                curUser={user}
                 project={project}
                 showChildrenIfEmpty={false}
                 trigger={['click']}
