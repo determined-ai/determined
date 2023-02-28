@@ -2616,7 +2616,7 @@ func (x *MetricBatchesResponse) GetBatches() []int32 {
 	return nil
 }
 
-// Request metrics from all trials at a progress point of progress.
+// Request metrics from all trials at a point of progress.
 type TrialsSnapshotRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
