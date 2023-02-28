@@ -21,7 +21,7 @@ rules:
     resources: ["pods", "pods/status", "pods/log", "configmaps"]
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
-    resources: ["services", "resourcequotas"]
+    resources: ["services"]
     verbs: ["get", "list"]
   - apiGroups: [""]
     resources: ["pods"]
