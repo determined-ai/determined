@@ -1,7 +1,5 @@
 import contextlib
-import dataclasses
-import time
-from typing import Callable, Generator, List, Optional, Sequence, Set, Union
+from typing import Generator, List, Optional, Sequence, Set
 
 import pytest
 
@@ -9,6 +7,7 @@ import tests.config as conf
 from determined import cli
 from determined.common import api
 from determined.common.api import Session, authentication, bindings, errors
+from determined.common.api._util import AnyNTSC, NTSC_Kind, get_ntsc_details, wait_for_ntsc_state
 from tests import experiment as exp
 from tests import utils
 from tests.api_utils import configure_token_store, create_test_user, determined_test_session
@@ -102,19 +101,24 @@ def test_notebook() -> None:
                 assert len(json_out) == 1
 
 
-NTSC_TYPE = str  # Literal["notebook", "tensorboard", "shell", "command"]
-all_ntsc: Set[NTSC_TYPE] = {"notebook", "shell", "command", "tensorboard"}
-proxied_ntsc: Set[NTSC_TYPE] = {"notebook", "tensorboard"}
+all_ntsc: Set[NTSC_Kind] = {
+    NTSC_Kind.notebook,
+    NTSC_Kind.shell,
+    NTSC_Kind.command,
+    NTSC_Kind.tensorboard,
+}
+proxied_ntsc: Set[NTSC_Kind] = {NTSC_Kind.notebook, NTSC_Kind.tensorboard}
 tensorboard_wait_time = 300
 
 
-def launch_ntsc(session: Session, workspace_id: int, typ: str, exp_id: Optional[int] = None) -> str:
-    assert typ in all_ntsc
-    if typ == "notebook":
+def launch_ntsc(
+    session: Session, workspace_id: int, typ: NTSC_Kind, exp_id: Optional[int] = None
+) -> str:
+    if typ == NTSC_Kind.notebook:
         return bindings.post_LaunchNotebook(
             session, body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_id)
         ).notebook.id
-    elif typ == "tensorboard":
+    elif typ == NTSC_Kind.tensorboard:
         experiment_ids = [exp_id] if exp_id else []
         return bindings.post_LaunchTensorboard(
             session,
@@ -122,11 +126,11 @@ def launch_ntsc(session: Session, workspace_id: int, typ: str, exp_id: Optional[
                 workspaceId=workspace_id, experimentIds=experiment_ids
             ),
         ).tensorboard.id
-    elif typ == "shell":
+    elif typ == NTSC_Kind.shell:
         return bindings.post_LaunchShell(
             session, body=bindings.v1LaunchShellRequest(workspaceId=workspace_id)
         ).shell.id
-    elif typ == "command":
+    elif typ == NTSC_Kind.command:
         return bindings.post_LaunchCommand(
             session,
             body=bindings.v1LaunchCommandRequest(
@@ -140,37 +144,35 @@ def launch_ntsc(session: Session, workspace_id: int, typ: str, exp_id: Optional[
         raise ValueError("unknown type")
 
 
-def kill_ntsc(session: Session, typ: str, ntsc_id: str) -> None:
-    assert typ in all_ntsc
-    if typ == "notebook":
+def kill_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str) -> None:
+    if typ == NTSC_Kind.notebook:
         bindings.post_KillNotebook(session, notebookId=ntsc_id)
-    elif typ == "tensorboard":
+    elif typ == NTSC_Kind.tensorboard:
         bindings.post_KillTensorboard(session, tensorboardId=ntsc_id)
-    elif typ == "shell":
+    elif typ == NTSC_Kind.shell:
         bindings.post_KillShell(session, shellId=ntsc_id)
-    elif typ == "command":
+    elif typ == NTSC_Kind.command:
         bindings.post_KillCommand(session, commandId=ntsc_id)
     else:
         raise ValueError("unknown type")
 
 
-def set_prio_ntsc(session: Session, typ: str, ntsc_id: str, prio: int) -> None:
-    assert typ in all_ntsc
-    if typ == "notebook":
+def set_prio_ntsc(session: Session, typ: NTSC_Kind, ntsc_id: str, prio: int) -> None:
+    if typ == NTSC_Kind.notebook:
         bindings.post_SetNotebookPriority(
             session, notebookId=ntsc_id, body=bindings.v1SetNotebookPriorityRequest(priority=prio)
         )
-    elif typ == "tensorboard":
+    elif typ == NTSC_Kind.tensorboard:
         bindings.post_SetTensorboardPriority(
             session,
             tensorboardId=ntsc_id,
             body=bindings.v1SetTensorboardPriorityRequest(priority=prio),
         )
-    elif typ == "shell":
+    elif typ == NTSC_Kind.shell:
         bindings.post_SetShellPriority(
             session, shellId=ntsc_id, body=bindings.v1SetShellPriorityRequest(priority=prio)
         )
-    elif typ == "command":
+    elif typ == NTSC_Kind.command:
         bindings.post_SetCommandPriority(
             session, commandId=ntsc_id, body=bindings.v1SetCommandPriorityRequest(priority=prio)
         )
@@ -178,97 +180,50 @@ def set_prio_ntsc(session: Session, typ: str, ntsc_id: str, prio: int) -> None:
         raise ValueError("unknown type")
 
 
-@dataclasses.dataclass
-class SharedNTSC:
-    id_: str
-    typ: str
-    state: bindings.taskv1State
-
-
-def get_ntsc_details(session: Session, typ: str, ntsc_id: str) -> SharedNTSC:
-    assert typ in all_ntsc
-    ntsc: Union[bindings.v1Notebook, bindings.v1Tensorboard, bindings.v1Shell, bindings.v1Command]
-    if typ == "notebook":
-        ntsc = bindings.get_GetNotebook(session, notebookId=ntsc_id).notebook
-        return SharedNTSC(id_=ntsc_id, typ=typ, state=ntsc.state)
-    elif typ == "tensorboard":
-        ntsc = bindings.get_GetTensorboard(session, tensorboardId=ntsc_id).tensorboard
-        return SharedNTSC(id_=ntsc_id, typ=typ, state=ntsc.state)
-    elif typ == "shell":
-        ntsc = bindings.get_GetShell(session, shellId=ntsc_id).shell
-        return SharedNTSC(id_=ntsc_id, typ=typ, state=ntsc.state)
-    elif typ == "command":
-        ntsc = bindings.get_GetCommand(session, commandId=ntsc_id).command
-        return SharedNTSC(id_=ntsc_id, typ=typ, state=ntsc.state)
+def list_ntsc(
+    session: Session, typ: NTSC_Kind, workspace_id: Optional[int] = None
+) -> Sequence[AnyNTSC]:
+    if typ == NTSC_Kind.notebook:
+        return bindings.get_GetNotebooks(session, workspaceId=workspace_id).notebooks
+    elif typ == NTSC_Kind.tensorboard:
+        return bindings.get_GetTensorboards(session, workspaceId=workspace_id).tensorboards
+    elif typ == NTSC_Kind.shell:
+        return bindings.get_GetShells(session, workspaceId=workspace_id).shells
+    elif typ == NTSC_Kind.command:
+        return bindings.get_GetCommands(session, workspaceId=workspace_id).commands
     else:
         raise ValueError("unknown type")
-
-
-def list_ntsc(session: Session, typ: str, workspace_id: Optional[int] = None) -> List[SharedNTSC]:
-    assert typ in all_ntsc
-    if typ == "notebook":
-        return [
-            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
-            for ntsc in bindings.get_GetNotebooks(session, workspaceId=workspace_id).notebooks
-        ]
-    elif typ == "tensorboard":
-        return [
-            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
-            for ntsc in bindings.get_GetTensorboards(session, workspaceId=workspace_id).tensorboards
-        ]
-    elif typ == "shell":
-        return [
-            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
-            for ntsc in bindings.get_GetShells(session, workspaceId=workspace_id).shells
-        ]
-    elif typ == "command":
-        return [
-            SharedNTSC(id_=ntsc.id, typ=typ, state=ntsc.state)
-            for ntsc in bindings.get_GetCommands(session, workspaceId=workspace_id).commands
-        ]
-    else:
-        raise ValueError("unknown type")
-
-
-def wait_state_ntsc(
-    session: Session,
-    typ: str,
-    ntsc_id: str,
-    predicate: Callable[[bindings.taskv1State], bool],
-    timeout: int = 10,
-) -> Optional[bindings.taskv1State]:
-    assert typ in all_ntsc
-    start = time.time()
-    last_state = None
-    while True:
-        if time.time() - start > timeout:
-            raise Exception(f"timed out waiting for state predicate to pass. reached {last_state}")
-        last_state = get_ntsc_details(session, typ, ntsc_id).state
-        if predicate(last_state):
-            return last_state
-        time.sleep(0.5)
-
-
-def wait_for_ntsc_state(
-    session: Session, typ: str, ntsc_id: str, state: bindings.taskv1State, timeout: int = 30
-) -> None:
-    assert typ in all_ntsc
-    wait_state_ntsc(session, typ, ntsc_id, lambda s: s == state, timeout)
 
 
 def only_tensorboard_can_launch(
-    session: Session, workspace: int, typ: str, exp_id: Optional[int] = None
+    session: Session, workspace: int, typ: NTSC_Kind, exp_id: Optional[int] = None
 ) -> None:
     """
     Tensorboard requires the 'view experiment' permission rather than the 'create NSC' permission
     and so can be launched in some workspaces other NSCs can't.
     """
-    if typ == "tensorboard":
+    if typ == NTSC_Kind.tensorboard:
         launch_ntsc(session, workspace, typ, exp_id)
         return
 
     with pytest.raises(errors.ForbiddenException):
         launch_ntsc(session, workspace, typ, exp_id)
+
+
+def wait_service_ready(typ: NTSC_Kind, task_id: str) -> None:
+    """wait for a determiend service to send service_ready_event"""
+    configure_token_store(ADMIN_CREDENTIALS)
+    master = conf.make_master_url()
+    # DET-2573
+    path = (
+        f"{typ.value}s/{task_id}/events"
+        if typ != NTSC_Kind.tensorboard
+        else f"{typ.value}/{task_id}/events"
+    )
+    with api.ws(master, path) as ws:
+        for msg in ws:
+            if msg["service_ready_event"]:
+                return
 
 
 @pytest.mark.e2e_cpu_rbac
@@ -303,7 +258,7 @@ def test_ntsc_iface_access() -> None:
         # launch one of each ntsc in the first workspace
         for typ in all_ntsc:
             experiment_id = None
-            if typ == "tensorboard":
+            if typ == NTSC_Kind.tensorboard:
                 pid = bindings.post_PostProject(
                     determined_test_session(creds[0]),
                     body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
@@ -389,14 +344,14 @@ def test_ntsc_iface_access() -> None:
             for cred in [creds[1], creds[2]]:
                 session = determined_test_session(cred)
                 # exception for creds[1], who can access the experiment and tensorboard
-                if typ != "tensorboard" and cred == creds[2]:
+                if typ != NTSC_Kind.tensorboard and cred == creds[2]:
                     with pytest.raises(errors.APIException) as e:
                         get_ntsc_details(session, typ, created_id2)
                 assert e.value.status_code == 404
                 results = list_ntsc(session, typ)
                 for r in results:
-                    if r.id_ == created_id2:
-                        pytest.fail(f"should not be able to see {typ} {r.id_} in the list results")
+                    if r.id == created_id2:
+                        pytest.fail(f"should not be able to see {typ} {r.id} in the list results")
                 with pytest.raises(errors.APIException) as e:
                     list_ntsc(session, typ, workspace_id=workspaces[2].id)
                 # FIXME only notebooks return the correct 404.
@@ -412,16 +367,6 @@ def test_ntsc_iface_access() -> None:
 @pytest.mark.e2e_cpu_rbac
 @pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
 def test_ntsc_proxy() -> None:
-    def wait_service_ready(typ: str, task_id: str) -> None:
-        configure_token_store(ADMIN_CREDENTIALS)
-        master = conf.make_master_url()
-        # DET-2573
-        path = f"{typ}s/{task_id}/events" if typ != "tensorboard" else f"{typ}/{task_id}/events"
-        with api.ws(master, path) as ws:
-            for msg in ws:
-                if msg["service_ready_event"]:
-                    return
-
     def get_proxy(creds: authentication.Credentials, task_id: str) -> Optional[errors.APIException]:
         session = determined_test_session(creds)
         url = conf.make_master_url(f"proxy/{task_id}/")
@@ -445,7 +390,7 @@ def test_ntsc_proxy() -> None:
         # launch one of each ntsc in the first workspace
         for typ in proxied_ntsc:
             experiment_id = None
-            if typ == "tensorboard":
+            if typ == NTSC_Kind.tensorboard:
                 pid = bindings.post_PostProject(
                     determined_test_session(creds[0]),
                     body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
@@ -467,9 +412,9 @@ def test_ntsc_proxy() -> None:
             print(f"created {typ} {created_id}")
             wait_for_ntsc_state(
                 determined_test_session(creds[0]),
-                typ,
+                NTSC_Kind(typ),
                 created_id,
-                bindings.taskv1State.STATE_RUNNING,
+                lambda s: s == bindings.taskv1State.STATE_RUNNING,
                 timeout=300,
             )
             deets = get_ntsc_details(determined_test_session(creds[0]), typ, created_id)
@@ -516,7 +461,7 @@ def test_tsb_listed() -> None:
                 ["--project_id", str(pid)],
             )
 
-            created_id = launch_ntsc(session, workspace.id, "tensorboard", experiment_id)
+            created_id = launch_ntsc(session, workspace.id, NTSC_Kind.tensorboard, experiment_id)
 
             # list tensorboards and make sure it's included in the response.
             tsbs = bindings.get_GetTensorboards(session, workspaceId=workspace.id).tensorboards
