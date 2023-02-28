@@ -14,7 +14,7 @@ func TestErrgroupxCancelByReturnError(t *testing.T) {
 
 	finished := make(chan bool, 1)
 	g.Go(func(ctx context.Context) error {
-		return fmt.Errorf("Non nil error")
+		return fmt.Errorf("non nil error")
 	})
 	g.Go(func(ctx context.Context) error {
 		<-ctx.Done()
@@ -48,5 +48,6 @@ func TestErrgroupxCancelingParentCancels(t *testing.T) {
 		}
 		require.True(t, <-finished)
 		require.NoError(t, g.Wait())
+		cancel()
 	}
 }
