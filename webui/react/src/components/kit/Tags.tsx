@@ -22,6 +22,7 @@ export interface Props {
   compact?: boolean;
   disabled?: boolean;
   ghost?: boolean;
+  // UpdatedId refers to index now, should change this to tag ID in the future.
   onAction?: (action: TagAction, tag: string, updatedId?: number) => void;
   tags: string[];
 }
