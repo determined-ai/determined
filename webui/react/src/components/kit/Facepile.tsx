@@ -55,14 +55,11 @@ const Facepile: React.FC<Props> = ({
       ))}
       {showDropdown && (
         <SelectFilter
-          className={css.spacing}
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
           }
           options={usersItems}
           placeholder="Select a user"
-          placement="bottomRight"
-          showSearch={true}
           onChange={(value) => {
             // we know that it will find a user since the options are based on that variable
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
