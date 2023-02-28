@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import type { DefaultOptionType, LabeledValue, RefSelectProps, SelectValue } from 'antd/es/select';
+import type { DefaultOptionType, LabeledValue, OptionProps, RefSelectProps, SelectValue} from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
@@ -16,7 +16,7 @@ export interface Props<T = SelectValue> {
   disableTags?: boolean;
   disabled?: boolean;
   enableSearchFilter?: boolean;
-  filterOption?: (input: string, option: LabeledValue) => void;
+  filterOption?: boolean | ((inputValue: any, option: LabeledValue | undefined) => boolean);
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
@@ -60,11 +60,8 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
     defaultValue,
     disabled,
     disableTags = false,
-    /*
-     * Disabling `dropdownMatchSelectWidth` will disable virtual scroll within the dropdown options.
-     * This should only be done if the option count is fairly low.
-     */
     enableSearchFilter = true,
+    filterOption,
     filterSort,
     id,
     label,
@@ -93,10 +90,10 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
 
   const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
     if (!disableTags) return [undefined, maxTagPlaceholderValue];
-
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
     const itemLabel = 'selected';
     const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
+    console.log(placeholder, count, isOpen, value)
     return isOpen ? [0, ''] : [0, placeholder];
   }, [disableTags, isOpen, optionsCount, maxTagPlaceholderValue, value]);
 
@@ -125,7 +122,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         defaultValue={defaultValue}
         disabled={disabled}
         dropdownMatchSelectWidth={250}
-        filterOption={enableSearchFilter ? handleFilter : true}
+        filterOption={(enableSearchFilter || filterOption) ? (filterOption ? filterOption : handleFilter) : true}
         filterSort={filterSort}
         id={id}
         maxTagCount={maxTagCount}
@@ -134,7 +131,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         options={options ? options : undefined}
         placeholder={placeholder}
         ref={ref}
-        showSearch={onSearch ? true : false}
+        showSearch={!!onSearch || !!filterOption}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}
         onBlur={onBlur}

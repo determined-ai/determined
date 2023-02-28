@@ -40,6 +40,7 @@ import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
+import { LabeledValue } from 'antd/es/select';
 
 const ComponentTitles = {
   Breadcrumbs: 'Breadcrumbs',
@@ -169,6 +170,9 @@ const ButtonsSection: React.FC = () => {
 };
 
 const DropdownsSection: React.FC = () => {
+  
+  const handleFilter = (input: string, option: LabeledValue | undefined) => !!(option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true);
+
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
@@ -223,6 +227,34 @@ const DropdownsSection: React.FC = () => {
           defaultValue="disabled"
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
+        />
+        <strong>Variations</strong>
+          <strong>Multiselect Dropdown</strong>
+          <SelectFilter
+          disableTags
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Multiselect Dropdown with Tags</strong>
+          <SelectFilter
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Dropdown with Search</strong>
+          <SelectFilter
+          filterOption={handleFilter}
+          placeholder="Search"
+          options={[    { label: 'Option 1', value: 1 },
+          { label: 'Option 2', value: 2 },
+          { label: 'Option 3', value: 3 }]}
         />
         <hr />
         <span>
