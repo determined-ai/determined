@@ -18,7 +18,7 @@ export const TagAction = {
 
 export type TagAction = ValueOf<typeof TagAction>;
 
-interface Props {
+export interface Props {
   compact?: boolean;
   disabled?: boolean;
   ghost?: boolean;
@@ -145,7 +145,7 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
           }
 
           const htmlId = toHtmlId(tag);
-          const isLongTag = tag.length > TAG_MAX_LENGTH;
+          const isLongTag: boolean = tag.length > TAG_MAX_LENGTH;
 
           const tagElement = (
             <Tag closable={!disabled} id={htmlId} key={tag} onClose={() => handleClose(tag)}>
