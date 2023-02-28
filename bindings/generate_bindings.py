@@ -1,9 +1,6 @@
-import abc
-import json
 import os
 import swagger_parsing
 import swagger_parsing.types as swagger_types
-import sys
 import typing
 from operator import itemgetter
 
