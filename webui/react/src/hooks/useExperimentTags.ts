@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { TagAction } from 'components/kit/Tags';
+import { TagAction, tagsActionHelper } from 'components/kit/Tags';
 import { patchExperiment } from 'services/api';
 
 export interface UseExperimentTagsInterface {
@@ -13,21 +13,15 @@ export interface UseExperimentTagsInterface {
 const useExperimentTags = (callbackFn?: () => void): UseExperimentTagsInterface => {
   return {
     handleTagListChange: useCallback(
-      (experimentId: number, tags: string[]) =>
-        async (action: TagAction, tag: string, updatedId?: number) => {
-          let labels = [...tags];
-          if (action === TagAction.Add) {
-            labels.push(tag);
-          } else if (action === TagAction.Remove) {
-            labels = labels.filter((l) => l !== tag);
-          } else if (action === TagAction.Update && updatedId !== undefined) {
-            labels[updatedId] = tag;
-          }
+      (experimentId: number, tags: string[]) => {
+        const handleTagsChange = async (labels: string[]) => {
           await patchExperiment({ body: { labels }, experimentId });
           if (typeof callbackFn === 'function') {
             callbackFn();
           }
-        },
+        };
+        return tagsActionHelper(tags, handleTagsChange);
+      },
       [callbackFn],
     ),
   };
