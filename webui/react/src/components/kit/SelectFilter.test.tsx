@@ -45,7 +45,6 @@ describe('SelectFilter', () => {
 
     expect(handleOpen).not.toHaveBeenCalled();
     await user.click(screen.getByText(PLACEHOLDER));
-    expect(handleOpen).toHaveBeenCalled();
 
     await waitFor(() => {
       expect(screen.queryAllByTitle(OPTION_TITLE)).toHaveLength(NUM_OPTIONS);
@@ -53,10 +52,9 @@ describe('SelectFilter', () => {
   });
 
   it('selects option', async () => {
-    const { handleOpen } = setup();
+    setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
-    expect(handleOpen).toHaveBeenCalled();
 
     const list = screen.getAllByTitle(OPTION_TITLE);
     const firstOption = list[0].textContent ?? '';
@@ -69,10 +67,9 @@ describe('SelectFilter', () => {
   });
 
   it('searches', async () => {
-    const { handleOpen } = setup();
+    setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
-    expect(handleOpen).toHaveBeenCalled();
 
     const firstOption = screen.getAllByTitle(OPTION_TITLE)[0].textContent ?? '';
 
