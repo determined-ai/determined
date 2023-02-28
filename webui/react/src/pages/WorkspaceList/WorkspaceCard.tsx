@@ -6,6 +6,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
+import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
 import { useUsers } from 'stores/users';
 import { Workspace } from 'types';
@@ -27,9 +28,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
 
   const users = Loadable.match(useUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
+    NotLoaded: () => undefined,
   });
-  const user = users.find((user) => user.id === workspace.userId);
+  const user = users?.find((user) => user.id === workspace.userId);
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);
@@ -55,7 +56,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
           </p>
           <div className={css.avatarRow}>
             <div className={css.avatar}>
-              <Avatar user={user} />
+              <Spinner spinning={!user}>
+                <Avatar user={user} />
+              </Spinner>
             </div>
             {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
           </div>

@@ -67,7 +67,7 @@ const ModelDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const users = Loadable.match(useUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
+    NotLoaded: () => undefined,
   });
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
   const lodableWorkspaces = useWorkspaces();
@@ -175,6 +175,8 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
+    if (users === undefined) return [];
+
     const tagsRenderer = (value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -278,6 +280,10 @@ const ModelDetails: React.FC = () => {
     users,
     canModifyModelVersion,
   ]);
+  const tableIsLoading = useMemo(
+    () => isLoading || isLoadingSettings || users === undefined,
+    [isLoading, isLoadingSettings, users],
+  );
 
   const handleTableChange = useCallback(
     (
@@ -482,7 +488,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading || isLoadingSettings}
+            loading={tableIsLoading}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

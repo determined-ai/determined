@@ -18,6 +18,7 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { useUsers } from 'stores/users';
@@ -46,8 +47,8 @@ const ModelHeader: React.FC<Props> = ({
 }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
@@ -58,6 +59,8 @@ const ModelHeader: React.FC<Props> = ({
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
+    if (users === undefined) return [];
+
     const user = users.find((user) => user.id === model.userId);
     return [
       {
@@ -228,7 +231,9 @@ const ModelHeader: React.FC<Props> = ({
             </Dropdown>
           </Space>
         </div>
-        <InfoBox rows={infoRows} separator={false} />
+        <Spinner spinning={users === undefined}>
+          <InfoBox rows={infoRows} separator={false} />
+        </Spinner>
       </div>
       {modalModelDeleteContextHolder}
       {modalModelMoveContextHolder}

@@ -100,8 +100,8 @@ const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'w
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -109,7 +109,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   });
   const workspaces = Loadable.match(useWorkspaces(), {
     Loaded: (ws) => ws,
-    NotLoaded: () => [],
+    NotLoaded: () => undefined,
   });
   const [canceler] = useState(new AbortController());
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
@@ -342,6 +342,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
+    if (users === undefined || workspaces === undefined) return [];
+
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
       if (record.type !== CommandType.TensorBoard || !record.misc) {
         return taskNameRenderer(_, record, index);
@@ -654,7 +656,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           defaultColumns={stgsConfig.settings.columns.defaultValue}
-          loading={tasks === undefined || !settings}
+          loading={tasks === undefined || !settings || !columns.length}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,

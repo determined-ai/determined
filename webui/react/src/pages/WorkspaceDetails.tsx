@@ -52,8 +52,8 @@ const WorkspaceDetails: React.FC = () => {
 
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -152,7 +152,10 @@ const WorkspaceDetails: React.FC = () => {
     [groups, groupsAssignedDirectlyIds],
   );
 
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
+  const addableUsers = useMemo(
+    () => users?.filter((user) => !usersAssignedDirectlyIds.has(user.id)) ?? [],
+    [users, usersAssignedDirectlyIds],
+  );
   const addableUsersAndGroups = useMemo(
     () => [...addableGroups, ...addableUsers],
     [addableGroups, addableUsers],
@@ -259,15 +262,15 @@ const WorkspaceDetails: React.FC = () => {
     return () => canceler.abort();
   }, [canceler]);
 
-  if (isNaN(id)) {
+  if (!workspace || users === undefined) {
+    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
+  } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if ((!rbacLoading && !canViewWorkspaceFlag) || (pageError && isNotFound(pageError))) {
     return <PageNotFound />;
-  } else if (!workspace) {
-    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   }
 
   return (

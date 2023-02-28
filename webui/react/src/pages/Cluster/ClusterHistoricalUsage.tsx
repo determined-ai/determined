@@ -9,7 +9,6 @@ import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import { useUsers } from 'stores/users';
-import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -33,10 +32,10 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users: Readonly<DetailedUser[]> = Loadable.match(useUsers(), {
+  const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -111,8 +110,14 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
 
   const chartSeries = useMemo(() => {
-    return mapResourceAllocationApiToChartSeries(aggRes.resourceEntries, filters.groupBy, users);
+    return mapResourceAllocationApiToChartSeries(
+      aggRes.resourceEntries,
+      filters.groupBy,
+      users ?? [],
+    );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
+
+  const isLoading = useMemo(() => !chartSeries || users === undefined, [users, chartSeries]);
 
   useEffect(() => {
     fetchResourceAllocationAggregated();
@@ -125,7 +130,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
         </Space>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
+        <Section bodyBorder loading={isLoading} title="Compute Hours Allocated">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -134,7 +139,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
+        <Section bodyBorder loading={isLoading} title="Compute Hours by User">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -144,7 +149,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
+        <Section bodyBorder loading={isLoading} title="Compute Hours by Label">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -154,7 +159,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
+        <Section bodyBorder loading={isLoading} title="Compute Hours by Resource Pool">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}

@@ -73,8 +73,8 @@ interface Props {
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,6 +105,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   } = useSettings<Settings>(settingConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
+  const isTableLoading = useMemo(
+    () => isLoading || isLoadingSettings || users === undefined,
+    [isLoading, isLoadingSettings, users],
+  );
 
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
@@ -451,6 +455,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
+    if (users === undefined) return [];
+
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -752,7 +758,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
           dataSource={models}
-          loading={isLoading || isLoadingSettings}
+          loading={isTableLoading}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,

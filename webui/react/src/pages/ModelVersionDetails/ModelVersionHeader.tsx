@@ -19,6 +19,7 @@ import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { useUsers } from 'stores/users';
@@ -53,8 +54,8 @@ const ModelVersionHeader: React.FC<Props> = ({
 }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -73,6 +74,8 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
+    if (users === undefined) return [];
+
     const user = users.find((user) => user.id === modelVersion.userId);
     return [
       {
@@ -269,7 +272,9 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Dropdown>
           </div>
         </div>
-        <InfoBox rows={infoRows} separator={false} />
+        <Spinner spinning>
+          <InfoBox rows={infoRows} separator={false} />
+        </Spinner>
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}

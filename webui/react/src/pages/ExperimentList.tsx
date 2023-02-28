@@ -117,8 +117,8 @@ interface Props {
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -402,6 +402,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
+    if (users === undefined) return [];
+
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -969,7 +971,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           containerRef={pageRef}
           ContextMenu={ContextMenu}
           dataSource={experiments}
-          loading={isLoading}
+          loading={isLoading || users === undefined}
           numOfPinned={(settings.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {

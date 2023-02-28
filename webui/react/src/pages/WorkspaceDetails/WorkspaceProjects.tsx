@@ -56,8 +56,8 @@ interface Props {
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -143,7 +143,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose || users === undefined) return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
@@ -173,6 +173,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const columns = useMemo(() => {
+    if (users === undefined) return [];
+
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
@@ -352,7 +354,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading}
+            loading={isLoading || users === undefined}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -375,6 +377,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     pageRef,
     projects,
     settings,
+    users,
     total,
     updateSettings,
     workspace?.archived,

@@ -49,8 +49,8 @@ import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 const WorkspaceList: React.FC = () => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+    NotLoaded: () => undefined,
+  });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -133,7 +133,7 @@ const WorkspaceList: React.FC = () => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose || users === undefined) return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
@@ -149,6 +149,8 @@ const WorkspaceList: React.FC = () => {
   }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
+    if (users === undefined) return [];
+
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
     );
@@ -290,7 +292,7 @@ const WorkspaceList: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={workspaces}
-            loading={isLoading}
+            loading={isLoading || users === undefined}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -311,6 +313,7 @@ const WorkspaceList: React.FC = () => {
     fetchWorkspaces,
     isLoading,
     settings,
+    users,
     total,
     updateSettings,
     workspaces,
