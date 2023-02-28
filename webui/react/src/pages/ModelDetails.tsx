@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
+import TagList, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -19,7 +20,6 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -186,7 +186,9 @@ const ModelDetails: React.FC = () => {
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                saveModelVersionTags(record.model.name, record.version, tags),
+              )}
             />
           </div>
         </Typography.Text>

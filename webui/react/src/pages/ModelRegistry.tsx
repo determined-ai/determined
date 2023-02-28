@@ -14,6 +14,7 @@ import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Toggle from 'components/kit/Toggle';
+import TagList, { tagsActionHelper } from 'components/kit/Tags';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -32,7 +33,6 @@ import {
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import TagList from 'components/TagList';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
@@ -462,7 +462,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
               compact
               disabled={record.archived || !canModifyModel({ model: record })}
               tags={record.labels ?? []}
-              onChange={(tags) => setModelTags(record.name, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                setModelTags(record.name, tags),
+              )}
             />
           </div>
         </Typography.Text>
