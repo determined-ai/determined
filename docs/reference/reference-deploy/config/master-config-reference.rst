@@ -296,7 +296,9 @@ The master supports the following configuration settings:
 
       -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
          something other than ``root``. The user must have a home directory with read permissions
-         for all users to enable access to generated ``sbatch`` scripts and job log files.
+         for all users to enable access to generated ``sbatch`` scripts and job log files. It must
+         have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
+         ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
