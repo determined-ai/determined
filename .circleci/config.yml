@@ -2623,6 +2623,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-32"]
+              gpu-type: ["nvidia-tesla-t4"]
               gpus-per-machine: [4]
               num-machines: [2]
 
