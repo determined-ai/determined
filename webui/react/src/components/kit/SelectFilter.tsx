@@ -31,7 +31,6 @@ export interface Props<T = SelectValue> {
   options?: LabeledValue[];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
-  size?: 'large';
   value?: T;
 }
 
