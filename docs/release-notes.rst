@@ -51,7 +51,7 @@ Version 0.20.0
 -  RBAC: Following on the initial RBAC support added in 0.19.7, the enterprise edition of Determined
    (`HPE Machine Learning Development Environment
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-   has added support for Role-Based Access Control over new entities:
+   has added support for role-based access control (RBAC) over new entities:
 
    -  JupyterLab Notebooks, Tensorboards, Shells, and Commands are now housed under workspaces.
       Access to these tasks can now be restricted by role.
