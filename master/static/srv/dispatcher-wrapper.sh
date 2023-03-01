@@ -97,6 +97,9 @@ convert_to_gpu_numbers() {
     fi
 }
 
+# Set DET_CONTAINER_ID as the SLURM_PROCID. Usually it would be a Docker container ID.
+export DET_CONTAINER_ID="$SLURM_PROCID"
+
 # Container-local directory to host determined directory and links (default to /)
 LOCALTMP=${DET_LOCALTMP:-/}
 # Source volume of all archives to be cloned
