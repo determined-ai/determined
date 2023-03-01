@@ -113,10 +113,10 @@ const SettingsAccount: React.FC = () => {
               <Input maxLength={32} placeholder="Add username" style={{ widows: '80%' }} />
             </Form.Item>
             <Form.Item noStyle>
-              <Button icon={<CloseOutlined />} onClick={() => setIsUsernameEditable(false)} />
+              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
             </Form.Item>
             <Form.Item noStyle>
-              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
+              <Button icon={<CloseOutlined />} onClick={() => setIsUsernameEditable(false)} />
             </Form.Item>
           </Form>
         )}
@@ -145,10 +145,10 @@ const SettingsAccount: React.FC = () => {
               <Input maxLength={32} placeholder="Add display name" style={{ widows: '80%' }} />
             </Form.Item>
             <Form.Item noStyle>
-              <Button icon={<CloseOutlined />} onClick={() => setIsDisplaynameEditable(false)} />
+              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
             </Form.Item>
             <Form.Item noStyle>
-              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
+              <Button icon={<CloseOutlined />} onClick={() => setIsDisplaynameEditable(false)} />
             </Form.Item>
           </Form>
         )}
