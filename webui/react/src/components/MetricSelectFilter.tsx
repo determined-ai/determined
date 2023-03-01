@@ -143,7 +143,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     );
   }, [totalNumMetrics, visibleMetrics]);
 
-  const [maxTagCount, selectorPlaceholder] = useMemo(() => {
+  const [maxTagCount, selectorPlaceholder] = useMemo((): [-1 | 0, string] => {
     // This should never happen, but fall back to inoffensive empty placeholder
     if (metricValues === undefined) {
       return [0, ''];

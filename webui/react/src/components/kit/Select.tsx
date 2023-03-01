@@ -20,7 +20,7 @@ export interface Props<T = SelectValue> {
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
-  maxTagCount?: number | 'responsive';
+  maxTagCount?: -1 | 0 | 'responsive';
   maxTagPlaceholder?: string;
   mode?: 'multiple' | 'tags';
   onBlur?: () => void;
@@ -94,7 +94,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
   const [maxTagCount, maxTagPlaceholderValue] = useMemo((): [
-    number | undefined | 'responsive',
+    -1 | 0 | undefined | 'responsive',
     string,
   ] => {
     if (!disableTags) return [undefined, maxTagPlaceholder ? maxTagPlaceholder : ''];
