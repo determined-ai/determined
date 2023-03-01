@@ -184,7 +184,7 @@ const DropdownsSection: React.FC = () => {
       option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true
     );
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
-
+  const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <AntDCard>
@@ -303,6 +303,8 @@ const DropdownsSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          value={clearableSelectValues}
+          onChange={(value) => setClearableSelectValues(value)}
         />
         <strong>Select with sorted search results</strong>
         <Select

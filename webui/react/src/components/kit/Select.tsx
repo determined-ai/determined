@@ -36,19 +36,23 @@ export interface Props<T = SelectValue> {
   value?: T;
 }
 
-const countOptions = (children: React.ReactNode): number => {
-  if (!children) return 0;
-
+const countOptions = (children: React.ReactNode, options?: Options): number => {
   let count = 0;
+
+  if (options) return options.length;
+  if (!children) return count;
+
   if (Array.isArray(children)) {
-    count += children.map((child) => countOptions(child)).reduce((acc, count) => acc + count, 0);
+    count += children
+      .map((child) => countOptions(child, options))
+      .reduce((acc, count) => acc + count, 0);
   }
 
   const childType = (children as React.ReactElement).type;
   const childProps = (children as React.ReactElement).props;
   const childList = (childProps as React.ReactPortal)?.children;
   if (childType === Option) count++;
-  if (childType === OptGroup && childList) count += countOptions(childList);
+  if (childType === OptGroup && childList) count += countOptions(childList, options);
 
   return count;
 };
@@ -87,7 +91,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   if (mode === 'multiple') {
     classes.push(css.multiple);
   }
-  const optionsCount = useMemo(() => countOptions(children), [children]);
+  const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
   const [maxTagCount, maxTagPlaceholder] = useMemo(() => {
     if (!disableTags) return [undefined, maxTagPlaceholderValue];
