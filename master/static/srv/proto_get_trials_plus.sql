@@ -36,10 +36,9 @@ trial_validations AS (
     ) AS signed_searcher_metric
   FROM validations v
     INNER JOIN searcher_info ON v.trial_id = searcher_info.trial_id
-  WHERE v.state = 'COMPLETED'
-    AND (
-      v.metrics->'validation_metrics'->>(searcher_info.metric_name)
-    ) IS NOT NULL
+  WHERE (
+    v.metrics->'validation_metrics'->>(searcher_info.metric_name)
+  ) IS NOT NULL
 ),
 best_validation AS (
   SELECT v.trial_id,
@@ -143,7 +142,6 @@ latest_training AS (
         ) AS rank
       FROM steps s
       INNER JOIN searcher_info ON s.trial_id = searcher_info.trial_id
-      WHERE s.state = 'COMPLETED'
     ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
   WHERE s.rank = 1
@@ -167,7 +165,6 @@ SELECT
     SELECT s.total_batches
     FROM steps s
     WHERE s.trial_id = t.id
-      AND s.state = 'COMPLETED'
     ORDER BY s.total_batches DESC
     LIMIT 1
   ) AS total_batches_processed,

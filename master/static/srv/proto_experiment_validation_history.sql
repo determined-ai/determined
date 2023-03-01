@@ -14,7 +14,7 @@ SELECT (WITH const AS (
                     (v.metrics->'validation_metrics'->>(const.metric_name))::float8
                     AS searcher_metric
             FROM validations v, trials t, const
-            WHERE v.trial_id = t.id and t.experiment_id = e.id and v.state = 'COMPLETED'
+            WHERE v.trial_id = t.id and t.experiment_id = e.id
         )
         SELECT coalesce(jsonb_agg(v), '[]'::jsonb)
         FROM (
@@ -29,7 +29,6 @@ SELECT (WITH const AS (
                     trials t,
                     const
                 WHERE v.trial_id = t.id
-                AND v.state = 'COMPLETED'
                 AND t.experiment_id = e.id
             ) n, const
             WHERE const.sign * n.searcher_metric < n.prev_min_error

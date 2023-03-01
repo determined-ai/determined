@@ -188,7 +188,6 @@ SELECT s.total_batches AS batches_processed,
   max(s.end_time) as end_time
 FROM trials t INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$1
-  AND s.state = 'COMPLETED'
   AND s.metrics->'avg_metrics' ? $2
   AND s.end_time > $3
 GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
@@ -218,7 +217,6 @@ SELECT
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 WHERE t.experiment_id=$1
-  AND v.state = 'COMPLETED'
   AND v.metrics->'validation_metrics' ? $2
   AND v.end_time > $3
 GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
@@ -359,7 +357,6 @@ SELECT t.id FROM (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id
   ORDER BY best_metric %s
   LIMIT $3
@@ -387,7 +384,6 @@ SELECT t.id FROM (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id
   ORDER BY progress DESC, best_metric %s
   LIMIT $3
@@ -475,7 +471,6 @@ SELECT
   s.metrics->>'avg_metrics' AS metrics
 FROM steps s
 WHERE s.trial_id=$2
-  AND s.state = 'COMPLETED'
   AND total_batches >= $3
   AND ($4 <= 0 OR total_batches <= $4)
   AND s.end_time > $5
@@ -503,7 +498,6 @@ SELECT
   v.metrics->>'validation_metrics' AS metrics
 FROM validations v
 WHERE v.trial_id=$2
-  AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
   AND ($4 <= 0 OR v.total_batches <= $4)
   AND v.end_time > $5
@@ -560,7 +554,6 @@ FROM trials t
     FROM trials t
   	INNER JOIN steps s ON t.id=s.trial_id
     WHERE t.experiment_id=$2
-	  AND s.state = 'COMPLETED'
     GROUP BY t.id, s.total_batches
   ) filter
 	ON s.total_batches = filter.total_batches
@@ -602,7 +595,6 @@ JOIN (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id, v.total_batches
 ) filter
 ON v.total_batches = filter.total_batches
@@ -728,7 +720,6 @@ SELECT (v.metrics->'validation_metrics'->>$2)::float8
 FROM validations v, trials t
 WHERE v.trial_id = t.id
   AND t.experiment_id = $1
-  AND v.state = 'COMPLETED'
 ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
 LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
 	case errors.Is(err, sql.ErrNoRows):
@@ -1336,12 +1327,12 @@ WITH const AS (
                    c.report_time as end_time, c.uuid, c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
-                        SELECT s.end_time, s.id, s.state, s.trial_id,
+                        SELECT s.end_time, s.id, s.trial_id,
                             s.total_batches,
                             (SELECT row_to_json(v)
                             FROM (
                                 SELECT v.end_time, v.id, v.metrics,
-                                    v.state, v.total_batches, v.trial_id
+                                    v.total_batches, v.trial_id
                                     FROM validations v
                                     WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                 ) v
