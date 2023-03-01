@@ -484,7 +484,7 @@ if [ $SKIP_DEVCLUSTER_STAGE -eq 0 ]; then
 fi
 if [[ -n $INTUNNEL || -n $TUNNEL ]]; then
     # Terminate any tunnels (non-interactive sshd proceses for the user)
-    ssh $OPT_MASTERHOST pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
+    ssh ${OPT_REMOTEUSER}$SLURMCLUSTER pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
 fi
 if [[ -n $INTUNNEL ]]; then
     mkintunnel $OPT_LAUNCHERACTUALHOST $OPT_LAUNCHERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
