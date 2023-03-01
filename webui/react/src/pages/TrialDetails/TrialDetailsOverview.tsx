@@ -177,7 +177,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           onXAxisChange={setXAxis}
         />
       ) : null}
-      {...contextHolders}
+      {contextHolders.map((context, i) => (
+        <React.Fragment key={i}>{context}</React.Fragment>
+      ))}
     </>
   );
 };
