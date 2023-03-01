@@ -112,14 +112,14 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   }, []);
   const handleFilter = useCallback((search: string, option?: DefaultOptionType): boolean => {
     let label: string | null = null;
-    if (option?.children) {
-      if (Array.isArray(option.children)) {
-        label = option.children.join(' ');
-      } else if (option.label) {
-        label = option.label.toString();
-      } else if (typeof option.children === 'string') {
-        label = option.children;
-      }
+    if (!option?.children) return false;
+
+    if (Array.isArray(option.children)) {
+      label = option.children.join(' ');
+    } else if (option.label) {
+      label = option.label.toString();
+    } else if (typeof option.children === 'string') {
+      label = option.children;
     }
 
     return !!label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
