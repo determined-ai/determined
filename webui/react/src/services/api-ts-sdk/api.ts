@@ -1983,7 +1983,7 @@ export interface V1DataPointEpoch {
  */
 export interface V1DataPointTime {
     /**
-     * The time the measurement is taken.
+     * Total batches processed by the time this measurement is taken.
      * @type {Date}
      * @memberof V1DataPointTime
      */
@@ -4976,12 +4976,6 @@ export interface V1MetricsWorkload {
      * @memberof V1MetricsWorkload
      */
     endTime?: Date;
-    /**
-     * The current validation state.
-     * @type {Experimentv1State}
-     * @memberof V1MetricsWorkload
-     */
-    state: Experimentv1State;
     /**
      * Metrics.
      * @type {V1Metrics}
