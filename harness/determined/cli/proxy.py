@@ -27,15 +27,14 @@ def _tunnel_task(sess: Session, task_id: str, port_map: dict[int, int]) -> Itera
 
     token = authentication.must_cli_auth().get_session_token()
 
-    # TODO(ilia): perhaps the tunnel should be able to probe master for service status,
-    # instead of us explicitly polling for task/trial status.
-
     with http_tunnel_listener(master_addr, listeners, cert_file, cert_name, token):
         yield
 
 
 @contextlib.contextmanager
 def _tunnel_trial(sess: Session, trial_id: int, port_map: dict[int, int]) -> Iterator[None]:
+    # TODO(DET-9000): perhaps the tunnel should be able to probe master for service status,
+    # instead of us explicitly polling for task/trial status.
     while True:
         resp = bindings.get_GetTrial(sess, trialId=trial_id)
         trial = resp.trial
