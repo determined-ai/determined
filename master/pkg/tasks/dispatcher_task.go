@@ -619,7 +619,6 @@ func getEnvVarsForLauncherManifest(
 	m["DET_MASTER_HOST"] = masterHost
 	m["DET_MASTER_IP"] = masterHost
 	m["DET_MASTER_PORT"] = fmt.Sprintf("%d", masterPort)
-	m["DET_CONTAINER_ID"] = taskSpec.ContainerID
 	m["DET_CLUSTER_ID"] = taskSpec.ClusterID
 	// On non-zero exit of any component/step of the sbatch job, terminate with an error
 	m["SLURM_KILL_BAD_EXIT"] = "1"
