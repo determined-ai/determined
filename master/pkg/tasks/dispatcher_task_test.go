@@ -885,6 +885,9 @@ func Test_generateRunDeterminedLinkNames(t *testing.T) {
 				archive.Item{
 					Path: "/run/determined/xyz/abc.txt",
 				},
+				archive.Item{
+					Path: "/run/determined/xyz/subdir/abc.txt",
+				},
 			},
 		},
 	}
