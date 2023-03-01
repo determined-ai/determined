@@ -29,7 +29,7 @@ Version 0.20.0
 -  Model Registry: Fix an issue where a model with versions from multiple workspaces could have its
    versions modified by a user with edit access to only a single one of those workspaces.
 -  WebUI: Patch an issue where logging out would not properly redirect to the login page.
--  Fix a bug where in certain cases could cause the cluster's job queue page to crash.
+-  WebUI: Fix a bug where the cluster's job queue page could crash in certain cases.
 
 **Improvements**
 
