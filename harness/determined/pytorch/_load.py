@@ -9,6 +9,61 @@ import determined as det
 from determined import core, errors, load, pytorch, util
 
 
+class CheckpointLoadContext(pytorch.PyTorchTrialContext):
+    """
+    CheckpointLoadContext is a special PyTorchTrialContext that can be used to load Trial classes
+    outside of normal training loops.
+
+    It does not support actually reporting merics to a real master or uploading checkpoints or any
+    of the normal behaviors associated with model training.  :func:`determined.pytorch.init()`
+    should still be used for normal training.
+
+    CheckpointLoadContext is meant to be used by users using the PyTorchTrial Trainer directly.
+    Users using the Trainer might prefer CheckpointLoadContext because it allows them to create a
+    Trial class with extra parameters they may have added.
+
+    Users who are relying on the legacy `entrypoint: my_model:MyTrainer` way of launching their code
+    should continue to use :func:`~determined.pytorch.load_trial_from_checkpoint_path()`.
+
+    Example usage:
+
+    .. code:: python
+
+       import determined as det
+       from determined import pytorch
+       from determined.experimental import client
+
+       # Download checkpoint and load training code from checkpoint.
+       path = client.get_checkpoint(MY_UUID)
+       with det.import_from_path(path):
+           import my_model_def
+
+       # Create CheckpointLoadContext for instantiating trial.
+       context = pytorch.CheckpointLoadContext()
+
+       # Instantiate trial with context and any other args.
+       my_trial = my_model_def.MyTrial(context, ...)
+    """
+
+    def __init__(self,
+        self,
+        hparams: Optional[Dict] = None,
+        exp_conf: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            core_context=core._dummy_init(),
+            trial_seed=0,
+            hparams=hparams,
+            slots_per_trial=config.slots_per_trial(),
+            num_gpus=len(container_gpus),
+            exp_conf=exp_conf,
+            aggregation_frequency=1,
+            steps_completed=0,
+            managed_training=False,
+            debug_enabled=False,
+        )
+
+
 def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorchTrial:
     """
     Loads a checkpoint written by a PyTorchTrial.
@@ -41,6 +96,16 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
         experiment_config = load_data["experiment_config"]
         hparams = load_data["hparams"]
         trial_cls_spec = load_data["trial_cls_spec"]
+        # Starting in 0.20.1, users using the Trainer API directly (not via the harness.py
+        # compatibility layer) may not have passed experiment config or hparams into the trainer.
+        if experiment_config is None or hparams is None:
+            raise AssertionError(
+                "Checkpoint appears to have been saved by the newer det.pytorch.Trainer.  This "
+                "checkpoint cannot be loaded with load_trial_from_checkpoint_path(); you must "
+                "instead create a det.pytorch.CheckpointLoadContext() and instantiate your model "
+                "directly.  Hint: if you need help importing your Trial class from code saved "
+                "within a checkpoint, consider using det.import_from_path()."
+            )
     elif metadata_path.exists():
         # PyTorchTrial.build_model() was an old api that was disallowed after 0.14.0.  There's a
         # small chance that this model is that old.
@@ -80,6 +145,19 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
         config=experiment_config,
         hparams=hparams,
     )
+
+    # Starting in 0.20.1, users using the Trainer API directly (not via the harness.py compatibility
+    # layer) were allowed to pass additional args to their Trial class.  We don't support that here,
+    # and we detect it by looking for more than 2 required parameters (self and context).
+    sig = inspect.signature(trial_cls.__init__)
+    if any(p.default is inspect.Parameter.empty for p in list(sig.parameters)[2:]):
+        raise AssertionError(
+            "Checkpoint appears to have been saved by the newer det.pytorch.Trainer.  This "
+            "checkpoint cannot be loaded with load_trial_from_checkpoint_path(); you must "
+            "instead create a det.pytorch.CheckpointLoadContext() and instantiate your model "
+            "directly.  Hint: if you need help importing your Trial class from code saved "
+            "within a checkpoint, consider using det.import_from_path()."
+        )
 
     checkpoint = torch.load(str(ckpt_dir.joinpath("state_dict.pth")), **kwargs)  # type: ignore
 
