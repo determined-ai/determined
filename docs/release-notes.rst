@@ -33,8 +33,8 @@ Version 0.20.0
 
 **Improvements**
 
--  Agents: The master configuration ``agent_reattach_enabled`` is always enabled and agents now will
-   always reattach containers on restarts.
+-  Agents: The master configuration ``agent_reattach_enabled`` is always enabled and agents will now
+   always reattach containers on restart.
 
 -  Kubernetes: The cluster information page now takes resource quotas into account if there are any
    on relevant namespaces.
