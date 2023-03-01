@@ -914,7 +914,7 @@ const PivotSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default Pivot</strong>
+        <strong>Primary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -929,7 +929,7 @@ const PivotSection: React.FC = () => {
           />
         </Space>
         <hr />
-        <strong>Card Pivot</strong>
+        <strong>Secondary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -941,7 +941,7 @@ const PivotSection: React.FC = () => {
               { children: 'Profiler', key: 'profiler', label: 'Profiler' },
               { children: 'Logs', key: 'logs', label: 'Logs' },
             ]}
-            type="card"
+            type="secondary"
           />
         </Space>
       </AntDCard>
