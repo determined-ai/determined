@@ -55,7 +55,7 @@ Version 0.20.0
 
    -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces.
       Access to these tasks can now be restricted by role.
-   -  Model Registry: models are now associated with workspaces. Models can be moved between
+   -  Model Registry: Models are now associated with workspaces. Models can be moved between
       workspaces and access to them can be restricted by role.
 
    These changes allow for more granular control over who can access what resources. See :ref:`rbac`
