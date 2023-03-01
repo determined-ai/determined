@@ -786,12 +786,16 @@ func generateRunDeterminedLinkNames(
 				// Not the toplevel runDir, but is under it
 				if strings.HasPrefix(filePath, RunDir) && filePath != RunDir {
 					contained := strings.TrimPrefix(strings.TrimPrefix(filePath, RunDir), "/")
-					// If not a file, then extract the directory name
+					// If not a file, then extract the top-level directory name
 					if filepath.Base(contained) != contained {
 						dir, _ := filepath.Split(contained)
 						contained = filepath.Dir(dir)
 					}
-					linksSet[contained] = true
+					// links are only created for top-level directories under /run/determined
+					// If this is a file in a subdir, it will use the parent dir link
+					if !strings.Contains(contained, "/") {
+						linksSet[contained] = true
+					}
 				}
 			}
 		}
