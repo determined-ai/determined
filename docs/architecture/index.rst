@@ -1,25 +1,17 @@
-#####################
- System Architecture
-#####################
+######################
+ How Determined Works
+######################
 
-Determined consists of a single **master** and one or more **agents**. There is typically one agent
-per compute server; a single machine can serve as both a master and an agent.
+-  :doc:`Intro to Determined <introduction>`: Conceptual information about Determined including its
+   features and benefits.
+-  :doc:`System Architecture </architecture/system-architecture>`: Learn about the main components
+   of the Determined system architecture.
+-  :doc:`Distributed Training </training/dtrain-introduction>`: A conceptual overview of distributed
+   training with Determined.
 
-The **master** is the central component of the Determined system. It is responsible for
+.. toctree::
+   :caption: How Determined Works
+   :hidden:
 
--  Storing experiment, trial, and workload metadata.
--  Scheduling and dispatching work to agents.
--  Managing provisioning and deprovisioning of agents in clouds.
--  Advancing the experiment, trial, and workload state machines over time.
--  Hosting the WebUI and the REST API.
-
-An **agent** manages a number of **slots**, which are computing devices (typically a GPU or CPU). An
-agent has no state and only communicates with the master. Each agent is responsible for
-
--  Discovering local computing devices (slots) and sending metadata about them to the master.
--  Running the workloads that are requested by the master.
--  Monitoring containers and sending information about them to the master.
-
-The **trial runner** runs a trial in a containerized environment. So the trial runners are expected
-to have access to the data that will be used in training. The **agents** are responsible for
-reporting the states of **trial runner** to the master.
+   introduction
+   system-architecture

@@ -1,12 +1,11 @@
-####################
- Cluster Deployment
-####################
+###################
+ Set Up Determined
+###################
 
-The Cluster Deployment user guides provide instructions on deploying Determined on premise, on
-cloud, and in kubernetes environments:
+To set up Determined, start by following the cluster deployment guide for your environment.
 
 +------------------------------------------+-----------------------------------------------------+
-| Title                                    | Description                                         |
+| Environment                              | Description                                         |
 +==========================================+=====================================================+
 | :doc:`sysadmin-deploy-on-prem/overview`  | How to deploy Determined on-premises.               |
 +------------------------------------------+-----------------------------------------------------+
@@ -19,6 +18,31 @@ cloud, and in kubernetes environments:
 | :doc:`sysadmin-deploy-on-slurm/overview` | How to run Determined on an HPC cluster             |
 |                                          | (Slurm/PBS).                                        |
 +------------------------------------------+-----------------------------------------------------+
+
+*************
+ Basic Setup
+*************
+
+Your training environment can be a local development machine, an on-premise GPU cluster, or cloud
+resources. To set up your training environment, follow the :doc:`Basic Setup
+</cluster-setup-guide/basic>` guide.
+
+*******************************
+ Installing the Determined CLI
+*******************************
+
+The Determined CLI is a command line tool that lets you launch new experiments and interact with a
+Determined cluster. The CLI can be installed on any machine you want to use to access Determined. To
+install the CLI, follow the :ref:`install-cli` instructions.
+
+************************************
+ Configuring the Determined Cluster
+************************************
+
+-  :doc:`Common configuration options </reference/reference-deploy/config/common-config-options>`
+-  :doc:`Master configuration reference
+   </reference/reference-deploy/config/master-config-reference>`
+-  :doc:`Agent configuration reference </reference/reference-deploy/config/agent-config-reference>`
 
 .. toctree::
    :hidden:

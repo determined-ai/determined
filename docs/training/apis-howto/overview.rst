@@ -1,5 +1,5 @@
 #####################
- Training API Guides
+ Training APIs
 #####################
 
 You can train almost any deep learning model using the Determined Training APIs. The Training API
