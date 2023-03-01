@@ -18,8 +18,8 @@ import 'shared/prototypes';
 import 'dev';
 
 // redirect to basename if needed
-if (process.env.PUBLIC_URL && history.location.pathname === '/') {
-  history.replace(process.env.PUBLIC_URL);
+if (process.env.PUBLIC_URL && window.location.pathname === '/') {
+  window.location.href = process.env.PUBLIC_URL;
 }
 
 const container = document.getElementById('root');

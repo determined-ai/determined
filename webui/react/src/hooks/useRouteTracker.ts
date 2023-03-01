@@ -8,12 +8,8 @@ const useRouteTracker = (): void => {
   const { trackPage } = useTelemetry();
 
   useEffect(() => {
-    // Listen for route changes.
-    const unlisten = history.listen(() => trackPage());
-
-    // Clean up listener during unmount.
-    return () => unlisten();
-  }, [location.pathname, location.search, trackPage]);
+    trackPage(location);
+  }, [location, trackPage]);
 };
 
 export default useRouteTracker;
