@@ -17,10 +17,10 @@ Version 0.20.0
 
 **Breaking Changes**
 
--  Cluster: The ``resources.agent_label`` task option and ``label`` agent config option are no longer
-   supported and will be ignored. If you are not explicitly using these options, or only use a single
-   empty or non-empty label value per resource pool, no changes are necessary. Otherwise, cluster
-   admins should create a resource pool for each existing ``resource_pool``/``agent_label``
+-  Cluster: The ``resources.agent_label`` task option and ``label`` agent config option are no
+   longer supported and will be ignored. If you are not explicitly using these options, or only use
+   a single empty or non-empty label value per resource pool, no changes are necessary. Otherwise,
+   cluster admins should create a resource pool for each existing ``resource_pool``/``agent_label``
    combination and reconfigure agents to use these new pools. Cluster users should update their
    tasks to use the new resource pool names.
 
@@ -53,8 +53,8 @@ Version 0.20.0
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
    has added support for role-based access control (RBAC) over new entities:
 
-   -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces.
-      Access to these tasks can now be restricted by role.
+   -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces. Access to these
+      tasks can now be restricted by role.
    -  Model Registry: Models are now associated with workspaces. Models can be moved between
       workspaces and access to them can be restricted by role.
 
