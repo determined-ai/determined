@@ -1,6 +1,6 @@
 import React from 'react';
 
-import history from '../routes/history';
+import { router } from '../../index';
 
 import { clone } from './data';
 import rootLogger from './Logger';
@@ -71,7 +71,5 @@ export const routeToExternalUrl = (path: string): void => {
 };
 export const routeToReactUrl = (path: string): void => {
   logger.trace('routing to react url', path);
-  history.push(`${process.env.PUBLIC_URL}${stripUrl(path)}`, {
-    loginRedirect: filterOutLoginLocation(window.location),
-  });
+  router.navigate(`${process.env.PUBLIC_URL}${stripUrl(path)}`);
 };

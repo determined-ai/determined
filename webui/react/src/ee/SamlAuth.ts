@@ -1,7 +1,8 @@
 import queryString from 'query-string';
 
-import history from 'shared/routes/history';
 import { clone } from 'shared/utils/data';
+
+import { router } from '../index';
 
 export const samlUrl = (basePath: string, queries?: string): string => {
   if (!queries) return basePath;
@@ -19,7 +20,7 @@ export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
     ...queryString.parse(queries.relayState),
   };
   delete newQueries.relayState;
-  history.push(`${history.location.pathname}?${queryString.stringify(newQueries)}`);
+  router.navigate(`${window.location.pathname}?${queryString.stringify(newQueries)}`);
 
   return newQueries;
 };

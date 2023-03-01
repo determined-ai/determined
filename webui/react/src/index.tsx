@@ -8,8 +8,6 @@ import { createRoot } from 'react-dom/client';
  */
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import history from 'shared/routes/history';
-
 /* Import the styles first to allow components to override styles. */
 import 'shared/styles/index.scss';
 import 'uplot/dist/uPlot.min.css';
@@ -28,7 +26,7 @@ const container = document.getElementById('root');
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(container!);
 
-const router = createBrowserRouter(
+export const router = createBrowserRouter(
   [
     // match everything with "*"
     { element: <App />, path: '*' },

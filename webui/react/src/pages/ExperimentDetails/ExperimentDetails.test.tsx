@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
+import { BrowserRouter, useParams } from 'react-router-dom';
 
 import {
   getExperimentDetails,
@@ -11,7 +12,6 @@ import {
   getWorkspace,
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
 import { WorkspacesProvider } from 'stores/workspaces';
@@ -61,9 +61,9 @@ const setup = () => {
         <WorkspacesProvider>
           <ClusterProvider>
             <ProjectsProvider>
-              <HistoryRouter history={history}>
+              <BrowserRouter>
                 <ExperimentDetails />
-              </HistoryRouter>
+              </BrowserRouter>
             </ProjectsProvider>
           </ClusterProvider>
         </WorkspacesProvider>

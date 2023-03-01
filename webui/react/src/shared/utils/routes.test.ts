@@ -1,6 +1,6 @@
 import React from 'react';
 
-import history from 'shared/routes/history';
+import { router } from '../../index';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
@@ -306,15 +306,15 @@ describe('Routes Utilities', () => {
 
   describe('routeToReactUrl', () => {
     beforeEach(() => {
-      history.push = vi.fn();
+      router.navigate = vi.fn();
     });
 
     it('should route to react URL', () => {
       const path = '/clusters';
-      expect(history.push).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
+      expect(router.navigate).toHaveBeenCalledTimes(1);
+      expect(router.navigate).toHaveBeenCalledWith(path, {
         loginRedirect: {
           hash: '',
           host: 'www.example.com',
@@ -334,10 +334,10 @@ describe('Routes Utilities', () => {
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
       const path = '/dashboard';
-      expect(history.push).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
+      expect(router.navigate).toHaveBeenCalledTimes(1);
+      expect(router.navigate).toHaveBeenCalledWith(path, {
         loginRedirect: {
           hash: '',
           host: 'www.determined.ai',

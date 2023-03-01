@@ -3,11 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
@@ -59,9 +58,9 @@ const Container: React.FC = () => {
   return (
     <SettingsProvider>
       <HelmetProvider>
-        <HistoryRouter history={history}>
+        <BrowserRouter>
           <UserManagement />;
-        </HistoryRouter>
+        </BrowserRouter>
       </HelmetProvider>
     </SettingsProvider>
   );

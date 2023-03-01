@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import history from 'shared/routes/history';
-
 import useTelemetry from './useTelemetry';
 
 const useRouteTracker = (): void => {

@@ -1,13 +1,11 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
-import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -40,7 +38,6 @@ const NotesCard: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedNotes, setEditedNotes] = useState(notes);
-  const location = useLocation();
 
   const existingNotes = useRef(notes);
 
@@ -54,6 +51,7 @@ const NotesCard: React.FC<Props> = ({
     setEditedNotes(existingNotes.current);
   }, [noteChangeSignal]);
 
+  /*
   useEffect(() => {
     // TODO: This is an alternative of Prompt from react-router-dom
     // As soon as react-router-domv6 supports Prompt, replace this with Promt
@@ -78,6 +76,7 @@ const NotesCard: React.FC<Props> = ({
 
     return () => unblock();
   }, [editedNotes, isEditing, location.pathname, notes]);
+  */
 
   const editNotes = useCallback(() => {
     if (disabled) return;
