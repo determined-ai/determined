@@ -90,6 +90,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
       }
       title="System Metrics">
       <LineChart
+        experimentId={trial.id}
         series={systemMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"

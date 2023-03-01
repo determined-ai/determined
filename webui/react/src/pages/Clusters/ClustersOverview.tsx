@@ -5,6 +5,7 @@ import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import Spinner from 'shared/components/Spinner';
 import { percent } from 'shared/utils/number';
 import { useClusterStore } from 'stores/cluster';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
@@ -81,7 +82,10 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const resourcePools = Loadable.match(useObservable(useClusterStore().resourcePools), {
+    Loaded: (rp) => rp,
+    NotLoaded: () => undefined,
+  });
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
@@ -93,9 +97,11 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallBar />
       <Section title="Resource Pools">
         <Card.Group size="medium">
-          {resourcePools.map((rp, idx) => (
-            <ResourcePoolCard key={idx} resourcePool={rp} />
-          ))}
+          <Spinner spinning={resourcePools === undefined}>
+            {resourcePools?.map((rp, idx) => (
+              <ResourcePoolCard key={idx} resourcePool={rp} />
+            ))}
+          </Spinner>
         </Card.Group>
       </Section>
       {!!rpDetail && (
