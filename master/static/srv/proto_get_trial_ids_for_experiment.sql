@@ -46,7 +46,6 @@ WITH searcher_info AS (
            SELECT searcher_info.sign * (v.metrics->'validation_metrics'->>searcher_info.metric_name)::float8
            FROM validations v
            WHERE v.trial_id = t.id
-             AND v.state = 'COMPLETED'
            ORDER BY v.id DESC
            LIMIT 1
         ) as latest_signed_search_metric
