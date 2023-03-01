@@ -320,7 +320,7 @@ type DataPointTime struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Total batches processed by the time this measurement is taken.
+	// The time the measurement is taken.
 	Time *timestamp.Timestamp `protobuf:"bytes,1,opt,name=time,proto3" json:"time,omitempty"`
 	// Value of the requested metric at this point in the trial.
 	Value float64 `protobuf:"fixed64,2,opt,name=value,proto3" json:"value,omitempty"`
@@ -2500,7 +2500,7 @@ func (x *MetricBatchesResponse) GetBatches() []int32 {
 	return nil
 }
 
-// Request metrics from all trials at a progress point of progress.
+// Request metrics from all trials at a point of progress.
 type TrialsSnapshotRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
