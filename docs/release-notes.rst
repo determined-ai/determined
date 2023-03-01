@@ -43,7 +43,7 @@ Version 0.20.0
    uneditable. Previously, users could attempt the action and would encounter a permission denied
    error.
 
--  CLI: When listing tensorboards, show ``workspaceName`` instead of ``workspaceId`` for better
+-  CLI: When listing TensorBoards, show ``workspaceName`` instead of ``workspaceId`` for better
    readability and prevent N/A values from appearing.
 
 **New Features**
