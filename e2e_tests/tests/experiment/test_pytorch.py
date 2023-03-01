@@ -118,7 +118,9 @@ def test_pytorch_const_with_amp(
 
 
 @pytest.mark.parallel
-def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_pytorch_cifar10_parallel(
+    collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
@@ -139,7 +141,9 @@ def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None])
 
 
 @pytest.mark.parallel
-def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_pytorch_gan_parallel(
+    collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
