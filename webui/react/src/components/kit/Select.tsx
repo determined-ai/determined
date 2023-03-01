@@ -93,10 +93,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   }
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
-  const [maxTagCount, maxTagPlaceholderValue] = useMemo((): [
-    -1 | 0 | undefined | 'responsive',
-    string,
-  ] => {
+  const [maxTagCount, maxTagPlaceholderValue] = useMemo((): [-1 | 0 | undefined, string] => {
     const defaultPlaceholderValue = maxTagPlaceholder ? maxTagPlaceholder : '';
     if (!disableTags) return [undefined, defaultPlaceholderValue];
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
