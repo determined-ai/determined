@@ -2,6 +2,7 @@ import React from 'react';
 
 import { router } from '../../index';
 
+import { reactHostAddress } from 'routes/utils';
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
 
@@ -206,17 +207,17 @@ describe('Routes Utilities', () => {
   describe('reactHostAddress', () => {
     it('should invoke reactHostAddress with example.com', () => {
       setup('/', 'http://www.example.com');
-      expect(routes.reactHostAddress()).toBe('http://www.example.com');
+      expect(reactHostAddress()).toBe('http://www.example.com');
     });
 
     it('should invoke reactHostAddress with determined.com', () => {
       setup('/', 'https://www.determined.ai/');
-      expect(routes.reactHostAddress()).toBe('https://www.determined.ai');
+      expect(reactHostAddress()).toBe('https://www.determined.ai');
     });
 
     it('should invoke reactHostAddress with determined.ai/project', () => {
       setup('/', 'https://www.determined.ai/project');
-      expect(routes.reactHostAddress()).toBe('https://www.determined.ai');
+      expect(reactHostAddress()).toBe('https://www.determined.ai');
     });
   });
 

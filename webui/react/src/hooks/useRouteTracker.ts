@@ -8,7 +8,7 @@ const useRouteTracker = (): void => {
   const { trackPage } = useTelemetry();
 
   useEffect(() => {
-    trackPage(location);
+    // trackPage(location);
   }, [location, trackPage]);
 };
 
