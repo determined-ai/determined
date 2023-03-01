@@ -9,7 +9,7 @@ import useModalCheckpoint from './useModalCheckpoint';
 import useModalCheckpointRegister from './useModalCheckpointRegister';
 
 interface Return {
-  contextHolder: ReactElement[];
+  contextHolders: ReactElement[];
   openCheckpoint: () => void;
 }
 
@@ -62,7 +62,7 @@ export const useCheckpointFlow = ({
     openModalCheckpoint();
   }, [openModalCheckpoint]);
 
-  const contextHolder = useMemo(
+  const contextHolders = useMemo(
     () => [
       modalCheckpointContextHolder,
       modalCheckpointRegisterContextHolder,
@@ -76,7 +76,7 @@ export const useCheckpointFlow = ({
   );
 
   return {
-    contextHolder,
+    contextHolders,
     openCheckpoint,
   };
 };
