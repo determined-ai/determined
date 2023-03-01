@@ -51,9 +51,17 @@ def test_pytorch_11_const(
 
 
 @pytest.mark.e2e_cpu
-def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
+@pytest.mark.parametrize("image_type", ["PT", "TF2"])
+def test_pytorch_load(image_type: str, collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_profiling_enabled(config)
+
+    if image_type == "PT":
+        config = conf.set_pt_image(config)
+    elif image_type == "TF2":
+        config = conf.set_tf2_image(config)
+    else:
+        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
@@ -70,13 +78,21 @@ def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_pytorch_const_warm_start() -> None:
+@pytest.mark.parametrize("image_type", ["PT", "TF2"])
+def test_pytorch_const_warm_start(image_type: str) -> None:
     """
     Test that specifying an earlier trial checkpoint to warm-start from
     correctly populates the later trials' `warm_start_checkpoint_id` fields.
     """
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+
+    if image_type == "PT":
+        config = conf.set_pt_image(config)
+    elif image_type == "TF2":
+        config = conf.set_tf2_image(config)
+    else:
+        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
