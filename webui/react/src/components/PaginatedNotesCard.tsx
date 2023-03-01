@@ -1,7 +1,6 @@
 import { CheckOutlined } from '@ant-design/icons';
 import type { DropDownProps, MenuProps } from 'antd';
-import { Dropdown, Modal } from 'antd';
-import { Select as AntdSelect } from 'antd';
+import { Select as AntdSelect, Dropdown, Modal } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
