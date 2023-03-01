@@ -1,70 +1,49 @@
 #!/usr/bin/env python3
 from dataclasses import dataclass, field
 import typing
-
-TypeDefs = typing.Dict[str, typing.Optional["TypeDef"]]
-
-
-class TypeAnno:
-    pass
-
-
-class TypeDef:
-    pass
+import typing_extensions
 
 
 class NoParse:
     pass
 
 
-class Any(NoParse, TypeAnno):
+class Any(NoParse):
     def __repr__(self):
         return "Any"
 
 
-class String(NoParse, TypeAnno):
-    def __init__(self):
-        pass
-
+class String(NoParse):
     def __repr__(self):
         return "str"
 
 
-class Float(TypeAnno):
-    def __init__(self):
-        pass
-
+class Float:
     def __repr__(self):
         return "float"
 
 
-class Int(NoParse, TypeAnno):
-    def __init__(self):
-        pass
-
+class Int(NoParse):
     def __repr__(self):
         return "int"
 
 
-class Bool(NoParse, TypeAnno):
-    def __init__(self):
-        pass
-
+class Bool(NoParse):
     def __repr__(self):
         return "bool"
 
 
 @dataclass
-class Dict(TypeAnno):
-    values: TypeAnno
+class Dict:
+    values: "TypeAnno"
 
     def __repr__(self):
         return f"Dict[str, {self.values}]"
 
 
 @dataclass
-class Sequence(TypeAnno):
-    items: TypeAnno
+class Sequence:
+    items: "TypeAnno"
 
     def __repr__(self):
         return f"Sequence[{self.items}]"
@@ -73,10 +52,11 @@ class Sequence(TypeAnno):
 @dataclass
 class Parameter:
     name: str
-    type: TypeAnno
+    type: "TypeAnno"
     required: bool
-    where: str
+    where: typing_extensions.Literal["query", "body", "path", "definitions"]
     serialized_name: typing.Optional[str] = None
+    title: typing.Optional[str] = None
 
     def __post_init__(self):
         # validations
@@ -93,26 +73,28 @@ class Parameter:
 
 
 @dataclass
-class Class(TypeDef):
+class Class:
     name: str
     params: typing.Dict[str, Parameter]
+    description: typing.Optional[str]
 
 
 @dataclass
-class Enum(TypeDef):
+class Enum:
     name: str
-    members: typing.List[str]  # ?
+    members: typing.List[str]
+    description: typing.Optional[str]
 
 
 @dataclass
-class Ref(TypeAnno):
+class Ref:
     # Collect refs as we instantiate them, for the linking step.
     all_refs: typing.ClassVar[typing.List["Ref"]] = []
 
     name: str
     url_encodable: bool = False
     linked: bool = field(default=False, init=False)
-    defn: typing.Optional[TypeDef] = field(default=None, init=False)
+    defn: typing.Optional["TypeDef"] = field(default=None, init=False)
 
     def __post_init__(self):
         Ref.all_refs.append(self)
@@ -127,8 +109,10 @@ class Function:
     method: str
     path: str
     params: typing.Dict[str, Parameter]
-    responses: typing.Dict[str, TypeAnno]
+    responses: typing.Dict[str, "TypeAnno"]
     streaming: bool
+    tags: typing.Set[str]
+    summary: str
 
     def __repr__(self) -> str:
         out = (
@@ -141,3 +125,9 @@ class Function:
             out += f"\n       {code} = {resp}"
         out += "\n    }"
         return out
+
+
+TypeAnno = typing.Union[Sequence, Dict, Float, Ref, Any, String, Int, Bool]
+TypeDef = typing.Union[Class, Enum]
+
+TypeDefs = typing.Dict[str, typing.Optional[TypeDef]]

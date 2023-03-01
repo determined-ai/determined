@@ -21,9 +21,18 @@ from .types import (
 
 
 @dataclass
+class ApiInfo:
+    title: str
+    description: str
+    version: str
+    contact: str
+
+
+@dataclass
 class ParseResult:
     defs: TypeDefs
     ops: typing.Dict[str, Function]
+    info: ApiInfo
 
 
 def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
@@ -102,7 +111,7 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
         if "enum" in schema:
             if schema["type"] == "string":
                 members = schema["enum"]
-                defs[name] = Enum(name, members)
+                defs[name] = Enum(name, members, schema["description"])
                 continue
             raise ValueError("unhandled enum type ({schema['type']}): {schema}")
 
@@ -113,11 +122,17 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
                 required = set(schema.get("required", []))
                 members = {
                     k: Parameter(
-                        k, classify_type(enums, f"{path}.{k}", v), (k in required), "definitions"
+                        k,
+                        classify_type(enums, f"{path}.{k}", v),
+                        (k in required),
+                        "definitions",
+                        None,
+                        v.get("title") or v.get("description"),
                     )
                     for k, v in schema["properties"].items()
                 }
-                defs[name] = Class(name, members)
+                description = schema.get("description")
+                defs[name] = Class(name, members, description)
                 continue
             else:
                 # empty responses or empty requests... we don't care.
@@ -219,11 +234,14 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
                 ptype = classify_type(enums, f"{name}.{pname}", pschema)
-                params[pname] = Parameter(pname, ptype, required, where, serialized_name)
+                title = pspec.get("title") or pspec.get("description")
+                params[pname] = Parameter(pname, ptype, required, where, serialized_name, title)
 
             assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
-            op = Function(name, method, path, params, responses, streaming)
+            tags = set(spec["tags"])
+            summary = spec["summary"]
+            op = Function(name, method, path, params, responses, streaming, tags, summary)
             ops[name] = op
     return ops
 
@@ -241,4 +259,14 @@ def load(path: str) -> ParseResult:
     defs = process_definitions(swagger_json["definitions"], enums)
     ops = process_paths(swagger_json["paths"], enums)
     link_all_refs(defs)
-    return ParseResult(ops=ops, defs=defs)
+
+    info_keys = ("title", "description", "version")
+    info_json = swagger_json["info"]
+    info = ApiInfo(
+        **{
+            **{k: info_json[k] for k in info_keys if k in info_json},
+            **{"contact": info_json["contact"]["email"]},
+        }
+    )
+
+    return ParseResult(ops=ops, defs=defs, info=info)
