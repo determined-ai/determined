@@ -1,14 +1,10 @@
-import { Select as AntdSelect } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-
-const { Option } = AntdSelect;
 
 interface Props {
   onChange?: (value: SelectValue) => void;

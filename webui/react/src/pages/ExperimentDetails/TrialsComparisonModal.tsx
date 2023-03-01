@@ -1,10 +1,9 @@
-import { Select as AntdSelect, Modal, Tag } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { Modal, Tag } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -21,8 +20,6 @@ import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFil
 import handleError from 'utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
-
-const { Option } = AntdSelect;
 
 interface ModalProps {
   experiment: ExperimentBase;

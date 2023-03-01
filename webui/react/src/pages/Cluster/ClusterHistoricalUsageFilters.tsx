@@ -1,10 +1,8 @@
-import { Select as AntdSelect } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
 import DatePicker from 'components/DatePicker';
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
   DEFAULT_RANGE_DAY,
@@ -14,8 +12,6 @@ import {
 } from 'pages/Cluster/ClusterHistoricalUsage';
 import { ValueOf } from 'shared/types';
 import { capitalize } from 'shared/utils/string';
-
-const { Option } = AntdSelect;
 
 const GroupBy = {
   Day: 'day',

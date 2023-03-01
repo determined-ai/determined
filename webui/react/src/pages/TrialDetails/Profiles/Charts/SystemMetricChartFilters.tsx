@@ -1,9 +1,6 @@
-import { Select as AntdSelect } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import Select from 'components/kit/Select';
-const { Option } = AntdSelect;
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { UpdateSettings } from 'hooks/useSettings';
 
 import { AvailableSeriesType } from '../types';

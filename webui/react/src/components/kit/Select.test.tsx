@@ -1,13 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { Select as AntdSelect } from 'antd';
 import React from 'react';
 
 import { generateAlphaNumeric } from 'shared/utils/string';
 
-import Select from './Select';
-
-const { Option } = AntdSelect;
+import Select, { Option } from './Select';
 
 const LABEL = generateAlphaNumeric();
 const PLACEHOLDER = generateAlphaNumeric();

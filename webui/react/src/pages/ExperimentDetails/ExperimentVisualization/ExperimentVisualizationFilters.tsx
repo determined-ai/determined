@@ -1,10 +1,9 @@
-import { Select as AntdSelect, Tooltip } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import HpSelect from 'components/HpSelect';
 import Button from 'components/kit/Button';
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
@@ -15,8 +14,6 @@ import { HpImportance, Metric, Scale } from 'types';
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
-
-const { Option } = AntdSelect;
 
 export interface VisualizationFilters {
   batch: number;

@@ -1,17 +1,14 @@
-import { Select as AntdSelect } from 'antd';
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Select, { Props as SelectProps } from 'components/kit/Select';
+import Select, { Option, Props as SelectProps } from 'components/kit/Select';
 import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
 
 import { hpImportanceSorter } from '../utils/experiment';
 
 import css from './HpSelect.module.scss';
-
-const { Option } = AntdSelect;
 
 interface Props extends SelectProps {
   fullHParams: string[];

@@ -9,6 +9,8 @@ import css from './Select.module.scss';
 
 const { OptGroup, Option } = AntdSelect;
 
+export { Option, SelectValue };
+
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface Props<T = SelectValue> {
   allowClear?: boolean;

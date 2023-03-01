@@ -1,11 +1,10 @@
-import { Select as AntdSelect, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
@@ -22,8 +21,6 @@ import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
-
-const { Option } = AntdSelect;
 
 interface Props {
   onClose?: () => void;

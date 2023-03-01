@@ -1,13 +1,9 @@
-import { Select as AntdSelect } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { capitalize } from 'shared/utils/string';
 
 import { Scale } from '../types';
-
-const { Option } = AntdSelect;
 
 interface Props {
   onChange: (value: Scale) => void;

@@ -1,11 +1,11 @@
-import { Select as AntdSelect, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
-import Select from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -45,8 +45,6 @@ import settingsConfig, {
 } from './WorkspaceList.settings';
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
-
-const { Option } = AntdSelect;
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.match(useUsers(), {

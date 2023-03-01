@@ -1,11 +1,11 @@
-import { Select as AntdSelect, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
-import Select from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
@@ -46,8 +46,6 @@ import settingsConfig, {
   WhoseProjects,
   WorkspaceDetailsSettings,
 } from './WorkspaceProjects.settings';
-
-const { Option } = AntdSelect;
 
 interface Props {
   id: number;
