@@ -25,7 +25,7 @@ WITH searcher_info AS (
         (
             SELECT coalesce(max(s.total_batches), 0)
             FROM steps s
-            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+            WHERE s.trial_id = t.id
         ) AS total_batches_processed,
         (
            CASE WHEN t.best_validation_id IS NOT NULL THEN

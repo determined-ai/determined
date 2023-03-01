@@ -27,7 +27,6 @@ trial_validations AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    v.state,
     v.metrics,
     (
       (
@@ -44,7 +43,6 @@ best_validation AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    'STATE_' || v.state AS state,
     json_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics,
     v.metrics->'num_inputs' as num_inputs
   FROM (
@@ -62,7 +60,6 @@ latest_validation AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    'STATE_' || v.state AS state,
     json_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics,
     v.metrics->'num_inputs' as num_inputs
   FROM (
@@ -132,7 +129,6 @@ latest_training AS (
   SELECT s.trial_id,
     s.total_batches,
     s.end_time,
-    'STATE_' || s.state AS state,
     json_build_object('avg_metrics', s.metrics->'avg_metrics') as metrics
   FROM (
       SELECT s.*,

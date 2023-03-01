@@ -10,7 +10,7 @@ SELECT (WITH const AS (
                 END) AS sign
         FROM experiments WHERE id = e.id
         ), vals AS (
-            SELECT v.trial_id, v.end_time, v.state,
+            SELECT v.trial_id, v.end_time,
                     (v.metrics->'validation_metrics'->>(const.metric_name))::float8
                     AS searcher_metric
             FROM validations v, trials t, const
