@@ -97,6 +97,7 @@ type hpcPartitionDetails struct {
 	TotalGpuSlots          int    `json:"totalGpuSlots"`
 	TotalAvailableCPUSlots int    `json:"totalAvailableCpuSlots"`
 	TotalCPUSlots          int    `json:"totalCpuSlots"`
+	Accelerator            string `json:"accelerator"`
 }
 
 // hpcNodeDetails holds HPC Slurm node details.
@@ -1379,6 +1380,7 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			ImageId:                      "",
 			InstanceType:                 wlmName,
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
+			Accelerator:                  v.Accelerator,
 		}
 		poolNameMap[pool.Name] = &pool
 		result = append(result, &pool)
