@@ -136,12 +136,12 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
                 showSearch>
                 {roles // This is ok as the Spinner has conditionalRender active
                   ? roles.map((r) => (
-                      <Select.Option
-                        disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
-                        key={r.id}
-                        value={r.id}>
-                        {r.name}
-                      </Select.Option>
+                    <Select.Option
+                      disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
+                      key={r.id}
+                      value={r.id}>
+                      {r.name}
+                    </Select.Option>
                     ))
                   : undefined}
               </Select>
