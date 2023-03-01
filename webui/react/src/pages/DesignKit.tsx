@@ -225,7 +225,7 @@ const DropdownsSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default dropdown</strong>
+        <strong>Default Select</strong>
         <SelectFilter
           defaultValue={1}
           options={[
@@ -234,14 +234,34 @@ const DropdownsSection: React.FC = () => {
             { label: 'Option 3', value: 3 },
           ]}
         />
-        <strong>Disabled dropdown</strong>
+        <strong>Disabled Select</strong>
         <SelectFilter
           defaultValue="disabled"
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <strong>Variations</strong>
-        <strong>Multiselect Dropdown</strong>
+        <strong>Select with search</strong>
+        <SelectFilter
+          filterOption={handleFilter}
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Search"
+        />
+        <strong>Search disabled Select</strong>
+        <SelectFilter
+          defaultValue={1}
+          enableSearchFilter={false}
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Multiple Select</strong>
         <SelectFilter
           disableTags
           mode="multiple"
@@ -253,7 +273,7 @@ const DropdownsSection: React.FC = () => {
           value={multiSelectValues}
           onChange={(value) => setMultiSelectValues(value)}
         />
-        <strong>Multiselect Dropdown with Tags</strong>
+        <strong>Multiple Select with tags</strong>
         <SelectFilter
           mode="multiple"
           options={[
@@ -262,9 +282,10 @@ const DropdownsSection: React.FC = () => {
             { label: 'Option 3', value: 3 },
           ]}
         />
-        <strong>Dropdown with Search</strong>
+        <strong>Select with tags and search</strong>
         <SelectFilter
           filterOption={handleFilter}
+          mode="multiple"
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
@@ -272,15 +293,32 @@ const DropdownsSection: React.FC = () => {
           ]}
           placeholder="Search"
         />
-        <hr />
-        <strong>MultiSelect Dropdown with Tags and Search</strong>
+        <strong>Clearable Select</strong>
         <SelectFilter
-          filterOption={handleFilter}
+          allowClear
+          disableTags
           mode="multiple"
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Select with sorted search results</strong>
+        <SelectFilter
+          disableTags
+          filterOption={(input, option) =>
+            (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+          filterSort={(a: LabeledValue, b: LabeledValue) =>
+            (a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1
+          }
+          mode="multiple"
+          options={[
+            { label: 'Am', value: 1 },
+            { label: 'Az', value: 2 },
+            { label: 'Ac', value: 3 },
+            { label: 'Aa', value: 4 },
           ]}
           placeholder="Search"
         />
