@@ -97,10 +97,15 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
     -1 | 0 | undefined | 'responsive',
     string,
   ] => {
-    if (!disableTags) return [undefined, maxTagPlaceholder ? maxTagPlaceholder : ''];
+    const defaultPlaceholderValue = maxTagPlaceholder ? maxTagPlaceholder : '';
+    if (!disableTags) return [undefined, defaultPlaceholderValue];
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
     const itemLabel = 'selected';
-    const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
+    const placeholder = maxTagPlaceholder
+      ? defaultPlaceholderValue
+      : count === optionsCount
+      ? 'All'
+      : `${count} ${itemLabel}`;
     return isOpen ? [0, ''] : [0, placeholder];
   }, [disableTags, isOpen, optionsCount, maxTagPlaceholder, value]);
 
