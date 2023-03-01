@@ -79,6 +79,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
     placement,
     showSearch,
     value,
+    maxTagCount,
     maxTagPlaceholder,
     children,
   }: React.PropsWithChildren<Props>,
@@ -93,7 +94,10 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   }
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
-  const [maxTagCount, maxTagPlaceholderValue] = useMemo((): [0 | undefined, string] => {
+  const [maxTagCountValue, maxTagPlaceholderValue] = useMemo((): [
+    0 | undefined | 'responsive',
+    string,
+  ] => {
     const defaultPlaceholderValue = maxTagPlaceholder ?? '';
     const maxTags = maxTagCount ?? 0;
     if (!disableTags) return [undefined, defaultPlaceholderValue];
@@ -105,7 +109,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
       ? 'All'
       : `${count} ${itemLabel}`;
     return isOpen ? [maxTags, ''] : [maxTags, placeholder];
-  }, [disableTags, isOpen, optionsCount, maxTagPlaceholder, value]);
+  }, [disableTags, isOpen, optionsCount, maxTagCount, maxTagPlaceholder, value]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
@@ -137,7 +141,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
         }
         filterSort={filterSort}
         id={id}
-        maxTagCount={maxTagCount}
+        maxTagCount={maxTagCountValue}
         maxTagPlaceholder={maxTagPlaceholderValue}
         mode={mode}
         options={options ? options : undefined}
