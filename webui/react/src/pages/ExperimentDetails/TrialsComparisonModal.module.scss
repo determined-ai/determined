@@ -18,6 +18,10 @@ $border-color: var(--theme-surface-border);
     grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
     justify-content: space-between;
     min-width: fit-content;
+
+    & > div:first-child {
+      background-color: var(--theme-stage);
+    }
   }
   .row.sticky {
     position: sticky;
