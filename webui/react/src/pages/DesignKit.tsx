@@ -185,6 +185,7 @@ const SelectSection: React.FC = () => {
     );
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
+  const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <AntDCard>
@@ -251,16 +252,6 @@ const SelectSection: React.FC = () => {
           ]}
           placeholder="Search"
         />
-        <strong>Search disabled Select</strong>
-        <Select
-          defaultValue={1}
-          enableSearchFilter={false}
-          options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
-          ]}
-        />
         <strong>Multiple Select</strong>
         <Select
           disableTags
@@ -323,6 +314,8 @@ const SelectSection: React.FC = () => {
             { label: 'Aa', value: 4 },
           ]}
           placeholder="Search"
+          value={sortedSelectValues}
+          onChange={(value) => setSortedSelectValues(value)}
         />
         <strong>Select with Max Tags and Placeholder</strong>
         <Select
