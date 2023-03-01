@@ -14,7 +14,7 @@ interface Props {
   value: Scale;
 }
 
-const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
+const ScaleSelect: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
     <Select
       enableSearchFilter={false}
@@ -30,4 +30,4 @@ const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   );
 };
 
-export default ScaleSelectFilter;
+export default ScaleSelect;

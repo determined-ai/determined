@@ -2,12 +2,12 @@ import { Select as AntdSelect, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
-import HpSelectFilter from 'components/HpSelectFilter';
+import HpSelect from 'components/HpSelect';
 import Button from 'components/kit/Button';
 import Select from 'components/kit/Select';
-import MetricSelectFilter from 'components/MetricSelectFilter';
+import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
-import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import ScaleSelect from 'components/ScaleSelect';
 import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';
@@ -240,7 +240,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         </>
       )}
       {showHParams && (
-        <HpSelectFilter
+        <HpSelect
           fullHParams={fullHParams}
           hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
@@ -249,7 +249,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       {showMetrics && (
-        <MetricSelectFilter
+        <MetricSelect
           defaultMetrics={metrics}
           label="Metric"
           metrics={metrics}
@@ -258,7 +258,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           onChange={handleMetricChange}
         />
       )}
-      {showScales && <ScaleSelectFilter value={localFilters.scale} onChange={handleScaleChange} />}
+      {showScales && <ScaleSelect value={localFilters.scale} onChange={handleScaleChange} />}
       {showViews && (
         <RadioGroup
           iconOnly

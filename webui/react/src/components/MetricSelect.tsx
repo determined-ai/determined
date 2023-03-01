@@ -29,7 +29,7 @@ const filterFn = (search: string, metricName: string) => {
   return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
 };
 
-const MetricSelectFilter: React.FC<Props> = ({
+const MetricSelect: React.FC<Props> = ({
   defaultMetrics,
   label = 'Metrics',
   metrics,
@@ -207,4 +207,4 @@ const MetricSelectFilter: React.FC<Props> = ({
   );
 };
 
-export default MetricSelectFilter;
+export default MetricSelect;

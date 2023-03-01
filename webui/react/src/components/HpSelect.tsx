@@ -18,7 +18,7 @@ interface Props extends SelectProps {
   hpImportance?: HpImportance;
 }
 
-const HpSelectFilter: React.FC<Props> = ({
+const HpSelect: React.FC<Props> = ({
   fullHParams,
   hpImportance = {},
   onChange,
@@ -93,4 +93,4 @@ const HpSelectFilter: React.FC<Props> = ({
   );
 };
 
-export default HpSelectFilter;
+export default HpSelect;

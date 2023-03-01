@@ -1,7 +1,7 @@
 import React, { ReactNode, useCallback, useEffect, useReducer, useState } from 'react';
 
-import MetricSelectFilter from 'components/MetricSelectFilter';
-import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import MetricSelect from 'components/MetricSelect';
+import ScaleSelect from 'components/ScaleSelect';
 import { ValueOf } from 'shared/types';
 import { Metric, MetricType, Scale } from 'types';
 
@@ -68,7 +68,7 @@ export const MetricViewSelect: React.FC<MetricViewSelectProps> = ({ view, metric
 
   return (
     <>
-      <MetricSelectFilter
+      <MetricSelect
         defaultMetrics={metrics}
         label="Metric"
         metrics={metrics}
@@ -76,7 +76,7 @@ export const MetricViewSelect: React.FC<MetricViewSelectProps> = ({ view, metric
         value={localView.metric}
         onChange={handleMetricChange}
       />
-      <ScaleSelectFilter value={localView.scale} onChange={handleScaleChange} />
+      <ScaleSelect value={localView.scale} onChange={handleScaleChange} />
     </>
   );
 };

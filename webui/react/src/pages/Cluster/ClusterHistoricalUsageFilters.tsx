@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
-import DatePickerFilter from 'components/DatePickerFilter';
+import DatePicker from 'components/DatePicker';
 import Select from 'components/kit/Select';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
@@ -97,7 +97,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   if (value.groupBy === GroupBy.Day) {
     periodFilters = (
       <>
-        <DatePickerFilter
+        <DatePicker
           allowClear={false}
           disabledDate={isAfterDateDisabled}
           label="From"
@@ -105,7 +105,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           value={value.afterDate}
           onChange={handleAfterDateSelect}
         />
-        <DatePickerFilter
+        <DatePicker
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
           label="To"
@@ -119,7 +119,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   if (value.groupBy === GroupBy.Month) {
     periodFilters = (
       <>
-        <DatePickerFilter
+        <DatePicker
           allowClear={false}
           disabledDate={isAfterDateDisabled}
           label="From"
@@ -128,7 +128,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           value={value.afterDate}
           onChange={handleAfterDateSelect}
         />
-        <DatePickerFilter
+        <DatePicker
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
           label="To"
