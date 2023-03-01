@@ -243,6 +243,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 		TotalAvailableGpuSlots: 2,
 		TotalNodes:             10,
 		TotalGpuSlots:          5,
+		Accelerator:            "tesla",
 	}
 	p2 := hpcPartitionDetails{
 		TotalAvailableNodes:    0,
@@ -339,6 +340,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						SlotsAvailable: 5,
 						SlotsUsed:      3,
 						NumAgents:      10,
+						Accelerator:    "tesla",
 					},
 					{
 						Name:           "partition 2",
