@@ -1,9 +1,9 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import SelectFilter from 'components/kit/SelectFilter';
-const { Option } = Select;
+import Select from 'components/kit/Select';
+const { Option } = AntdSelect;
 import { UpdateSettings } from 'hooks/useSettings';
 
 import { AvailableSeriesType } from '../types';
@@ -56,7 +56,7 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
 
   return (
     <>
-      <SelectFilter
+      <Select
         enableSearchFilter={false}
         label="Metric Name"
         value={settings.name}
@@ -67,8 +67,8 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
               {name}
             </Option>
           ))}
-      </SelectFilter>
-      <SelectFilter
+      </Select>
+      <Select
         enableSearchFilter={false}
         label="Agent Name"
         value={validAgentIds.includes(settings.agentId as string) ? settings.agentId : undefined}
@@ -78,9 +78,9 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
             {agentId}
           </Option>
         ))}
-      </SelectFilter>
+      </Select>
       {uuidOptions.length !== 0 && (
-        <SelectFilter
+        <Select
           allowClear={true}
           enableSearchFilter={false}
           label="GPU"
@@ -92,7 +92,7 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
               {gpuUuid}
             </Option>
           ))}
-        </SelectFilter>
+        </Select>
       )}
     </>
   );

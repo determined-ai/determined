@@ -1,11 +1,11 @@
-import { Select, Tag } from 'antd';
+import { Select as AntdSelect, Tag } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -23,7 +23,7 @@ import handleError from 'utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 interface ModalProps {
   experiment: ExperimentBase;
@@ -287,7 +287,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
           <div className={[css.row, css.header, css.spanAll].join(' ')}>
             <div className={[css.cell, css.header, css.spanAll].join(' ')}>
               Hyperparameters
-              <SelectFilter
+              <Select
                 disableTags
                 label=""
                 mode="multiple"
@@ -298,7 +298,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
                     {hp}
                   </Option>
                 ))}
-              </SelectFilter>
+              </Select>
             </div>
           </div>
           {selectedHyperparameters.map((hp) => (

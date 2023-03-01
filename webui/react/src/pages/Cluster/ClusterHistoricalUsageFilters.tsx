@@ -1,10 +1,10 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
 import DatePickerFilter from 'components/DatePickerFilter';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import {
   DEFAULT_RANGE_DAY,
@@ -15,7 +15,7 @@ import {
 import { ValueOf } from 'shared/types';
 import { capitalize } from 'shared/utils/string';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 const GroupBy = {
   Day: 'day',
@@ -144,7 +144,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   return (
     <ResponsiveFilters>
       {periodFilters}
-      <SelectFilter
+      <Select
         enableSearchFilter={false}
         label="Group by"
         value={value.groupBy}
@@ -154,7 +154,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
             {capitalize(value)}
           </Option>
         ))}
-      </SelectFilter>
+      </Select>
     </ResponsiveFilters>
   );
 };

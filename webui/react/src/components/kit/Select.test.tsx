@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import React from 'react';
 
 import { generateAlphaNumeric } from 'shared/utils/string';
 
-import SelectFilter from './SelectFilter';
+import Select from './Select';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 const LABEL = generateAlphaNumeric();
 const PLACEHOLDER = generateAlphaNumeric();
@@ -19,18 +19,18 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = () => {
   const handleOpen = jest.fn();
   const view = render(
-    <SelectFilter label={LABEL} placeholder={PLACEHOLDER} showSearch>
+    <Select label={LABEL} placeholder={PLACEHOLDER} showSearch>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (
         <Option key={index} title={OPTION_TITLE} value={String.fromCharCode(65 + index)}>
           {'Option ' + String.fromCharCode(65 + index)}
         </Option>
       ))}
-    </SelectFilter>,
+    </Select>,
   );
   return { handleOpen, user, view };
 };
 
-describe('SelectFilter', () => {
+describe('Select', () => {
   it('displays label and placeholder', async () => {
     setup();
 

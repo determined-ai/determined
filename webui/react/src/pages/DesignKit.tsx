@@ -21,7 +21,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import UserBadge from 'components/kit/UserBadge';
@@ -189,8 +189,8 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <AntDCard>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a
-          dropdown giving people a way to select an option from a list or enter their own choice.
+          A dropdown/combo box (<code>{'<Select>'}</code>) combines a text field and a dropdown
+          giving people a way to select an option from a list or enter their own choice.
         </p>
       </AntDCard>
       <AntDCard title="Best practices">
@@ -226,7 +226,7 @@ const DropdownsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Default Select</strong>
-        <SelectFilter
+        <Select
           defaultValue={1}
           options={[
             { label: 'Option 1', value: 1 },
@@ -235,14 +235,14 @@ const DropdownsSection: React.FC = () => {
           ]}
         />
         <strong>Disabled Select</strong>
-        <SelectFilter
+        <Select
           defaultValue="disabled"
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <strong>Variations</strong>
         <strong>Select with search</strong>
-        <SelectFilter
+        <Select
           filterOption={handleFilter}
           options={[
             { label: 'Option 1', value: 1 },
@@ -252,7 +252,7 @@ const DropdownsSection: React.FC = () => {
           placeholder="Search"
         />
         <strong>Search disabled Select</strong>
-        <SelectFilter
+        <Select
           defaultValue={1}
           enableSearchFilter={false}
           options={[
@@ -262,7 +262,7 @@ const DropdownsSection: React.FC = () => {
           ]}
         />
         <strong>Multiple Select</strong>
-        <SelectFilter
+        <Select
           disableTags
           mode="multiple"
           options={[
@@ -274,7 +274,7 @@ const DropdownsSection: React.FC = () => {
           onChange={(value) => setMultiSelectValues(value)}
         />
         <strong>Multiple Select with tags</strong>
-        <SelectFilter
+        <Select
           mode="multiple"
           options={[
             { label: 'Option 1', value: 1 },
@@ -283,7 +283,7 @@ const DropdownsSection: React.FC = () => {
           ]}
         />
         <strong>Select with tags and search</strong>
-        <SelectFilter
+        <Select
           filterOption={handleFilter}
           mode="multiple"
           options={[
@@ -294,7 +294,7 @@ const DropdownsSection: React.FC = () => {
           placeholder="Search"
         />
         <strong>Clearable Select</strong>
-        <SelectFilter
+        <Select
           allowClear
           disableTags
           mode="multiple"
@@ -305,7 +305,7 @@ const DropdownsSection: React.FC = () => {
           ]}
         />
         <strong>Select with sorted search results</strong>
-        <SelectFilter
+        <Select
           disableTags
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
@@ -1308,8 +1308,8 @@ const FormSection: React.FC = () => {
         <p>
           <code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for
           submitting user input. When these components wrap a user input field (such as{' '}
-          <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>), they can show a standard
-          label, indicate that the field is required, apply input validation, or display an input
+          <code>{'<Input>'}</code> or <code>{'<Select>'}</code>), they can show a standard label,
+          indicate that the field is required, apply input validation, or display an input
           validation error.
         </p>
       </AntDCard>
@@ -1405,7 +1405,7 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <Form.Item label="Required dropdown" name="required" required>
-            <SelectFilter
+            <Select
               defaultValue={1}
               options={[
                 { label: 'Option 1', value: 1 },
@@ -1418,7 +1418,7 @@ const FormSection: React.FC = () => {
             label="Invalid dropdown"
             validateMessage="Input validation error"
             validateStatus="error">
-            <SelectFilter />
+            <Select />
           </Form.Item>
         </Form>
       </AntDCard>

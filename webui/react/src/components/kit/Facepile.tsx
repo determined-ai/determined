@@ -1,7 +1,7 @@
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import React, { useMemo, useState } from 'react';
 
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import { DetailedUser } from 'types';
 
 import Button from './Button';
@@ -54,7 +54,7 @@ const Facepile: React.FC<Props> = ({
         <UserAvatar className={css.spacing} key={avatar.id} user={avatar} />
       ))}
       {showDropdown && (
-        <SelectFilter
+        <Select
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
           }

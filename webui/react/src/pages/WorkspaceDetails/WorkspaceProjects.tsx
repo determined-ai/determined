@@ -1,11 +1,11 @@
-import { Select, Space } from 'antd';
+import { Select as AntdSelect, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
@@ -47,7 +47,7 @@ import settingsConfig, {
   WorkspaceDetailsSettings,
 } from './WorkspaceProjects.settings';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 interface Props {
   id: number;
@@ -393,11 +393,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   return (
     <div className={css.base}>
       <div className={css.controls}>
-        <SelectFilter value={settings.whose} onSelect={handleViewSelect}>
+        <Select value={settings.whose} onSelect={handleViewSelect}>
           <Option value={WhoseProjects.All}>All Projects</Option>
           <Option value={WhoseProjects.Mine}>My Projects</Option>
           <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
           {!workspace.archived && (
             <Toggle
@@ -406,7 +406,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
               onChange={switchShowArchived}
             />
           )}
-          <SelectFilter value={settings.sortKey} onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
               Last Updated
@@ -414,7 +414,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
               Newest to Oldest
             </Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
           <div className={css.headerButton}>
             {!workspace.immutable &&

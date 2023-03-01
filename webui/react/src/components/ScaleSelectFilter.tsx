@@ -1,13 +1,13 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import { capitalize } from 'shared/utils/string';
 
 import { Scale } from '../types';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 interface Props {
   onChange: (value: Scale) => void;
@@ -16,7 +16,7 @@ interface Props {
 
 const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
-    <SelectFilter
+    <Select
       enableSearchFilter={false}
       label="Scale"
       value={value}
@@ -26,7 +26,7 @@ const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
           {capitalize(scale)}
         </Option>
       ))}
-    </SelectFilter>
+    </Select>
   );
 };
 

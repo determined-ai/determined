@@ -1,11 +1,11 @@
-import { Select, Typography } from 'antd';
+import { Select as AntdSelect, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
@@ -23,7 +23,7 @@ import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 interface Props {
   onClose?: () => void;
@@ -136,7 +136,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           <label className={css.label} htmlFor="workspace">
             Workspace
           </label>
-          <SelectFilter
+          <Select
             id="workspace"
             placeholder="Select a destination workspace."
             value={workspaceId ?? undefined}
@@ -151,7 +151,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
                 </Option>
               );
             })}
-          </SelectFilter>
+          </Select>
         </div>
         {workspaceId && workspaceId !== 1 && (
           <div>

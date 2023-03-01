@@ -1,15 +1,15 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import { Metric, MetricType } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
 
-const { OptGroup, Option } = Select;
+const { OptGroup, Option } = AntdSelect;
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
 
@@ -160,7 +160,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   }, [metricValues, totalNumMetrics]);
 
   return (
-    <SelectFilter
+    <Select
       disableTags
       filterOption={handleFiltering}
       label={label}
@@ -203,7 +203,7 @@ const MetricSelectFilter: React.FC<Props> = ({
           })}
         </OptGroup>
       )}
-    </SelectFilter>
+    </Select>
   );
 };
 

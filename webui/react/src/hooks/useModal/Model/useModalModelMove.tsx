@@ -4,7 +4,7 @@ import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -81,7 +81,7 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
               label="Workspace"
               name="workspaceId"
               rules={[{ message: 'Please select a workspace', required: true }]}>
-              <SelectFilter
+              <Select
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }

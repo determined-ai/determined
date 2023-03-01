@@ -1,19 +1,19 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import SelectFilter, { Props as SelectFilterProps } from 'components/kit/SelectFilter';
+import Select, { Props as SelectProps } from 'components/kit/Select';
 import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
 
 import { hpImportanceSorter } from '../utils/experiment';
 
-import css from './HpSelectFilter.module.scss';
+import css from './HpSelect.module.scss';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
-interface Props extends SelectFilterProps {
+interface Props extends SelectProps {
   fullHParams: string[];
   hpImportance?: HpImportance;
 }
@@ -67,7 +67,7 @@ const HpSelectFilter: React.FC<Props> = ({
   );
 
   return (
-    <SelectFilter
+    <Select
       disableTags
       mode="multiple"
       placeholder={ALL_VALUE}
@@ -89,7 +89,7 @@ const HpSelectFilter: React.FC<Props> = ({
           </Option>
         );
       })}
-    </SelectFilter>
+    </Select>
   );
 };
 

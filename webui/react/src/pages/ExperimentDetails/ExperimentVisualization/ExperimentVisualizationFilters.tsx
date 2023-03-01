@@ -1,10 +1,10 @@
-import { Select, Tooltip } from 'antd';
+import { Select as AntdSelect, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import HpSelectFilter from 'components/HpSelectFilter';
 import Button from 'components/kit/Button';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
@@ -16,7 +16,7 @@ import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 export interface VisualizationFilters {
   batch: number;
@@ -201,7 +201,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   return (
     <>
       {showMaxTrials && (
-        <SelectFilter
+        <Select
           enableSearchFilter={false}
           label="Top Trials"
           value={localFilters.maxTrial}
@@ -211,11 +211,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
               {option}
             </Option>
           ))}
-        </SelectFilter>
+        </Select>
       )}
       {showBatches && (
         <>
-          <SelectFilter
+          <Select
             enableSearchFilter={false}
             label="Batches Processed"
             value={localFilters.batch}
@@ -225,8 +225,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {batch}
               </Option>
             ))}
-          </SelectFilter>
-          <SelectFilter
+          </Select>
+          <Select
             enableSearchFilter={false}
             label="Batch Margin"
             value={localFilters.batchMargin}
@@ -236,7 +236,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {option}
               </Option>
             ))}
-          </SelectFilter>
+          </Select>
         </>
       )}
       {showHParams && (

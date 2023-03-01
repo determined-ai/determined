@@ -1,11 +1,11 @@
-import { Select, Space } from 'antd';
+import { Select as AntdSelect, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -46,7 +46,7 @@ import settingsConfig, {
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
-const { Option } = Select;
+const { Option } = AntdSelect;
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.match(useUsers(), {
@@ -344,21 +344,21 @@ const WorkspaceList: React.FC = () => {
       }
       title="Workspaces">
       <div className={css.controls}>
-        <SelectFilter value={settings.whose} onSelect={handleViewSelect}>
+        <Select value={settings.whose} onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
           <Toggle
             checked={settings.archived}
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
-          <SelectFilter value={settings.sortKey} onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
-import SelectFilter from 'components/kit/SelectFilter';
+import Select from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
@@ -199,7 +199,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
               label="Workspace"
               name="workspaceId"
               rules={[{ message: 'Please select a workspace', required: true }]}>
-              <SelectFilter
+              <Select
                 disabled={!workspaces.length || isWorkspace}
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())

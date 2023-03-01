@@ -1,13 +1,13 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import type { DefaultOptionType, LabeledValue, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
 import Icon from 'shared/components/Icon/Icon';
 
-import css from './SelectFilter.module.scss';
+import css from './Select.module.scss';
 
-const { OptGroup, Option } = Select;
+const { OptGroup, Option } = AntdSelect;
 
 type Options = DefaultOptionType | DefaultOptionType[];
 export interface Props<T = SelectValue> {
@@ -53,7 +53,7 @@ const countOptions = (children: React.ReactNode): number => {
   return count;
 };
 
-const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(function SelectFilter(
+const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Select(
   {
     allowClear,
     defaultValue,
@@ -117,7 +117,7 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
   return (
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
-      <Select
+      <AntdSelect
         allowClear={allowClear}
         defaultValue={defaultValue}
         disabled={disabled}
@@ -144,9 +144,9 @@ const SelectFilter: React.FC<React.PropsWithChildren<Props>> = forwardRef(functi
         onSearch={onSearch}
         onSelect={onSelect}>
         {children}
-      </Select>
+      </AntdSelect>
     </div>
   );
 });
 
-export default SelectFilter;
+export default Select;
