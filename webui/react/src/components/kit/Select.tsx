@@ -122,7 +122,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
       label = option.children;
     }
 
-    return !!label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+    return !!label && label.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   }, []);
   return (
     <div className={classes.join(' ')}>
