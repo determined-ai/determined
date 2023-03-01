@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client';
  * history version mismatches when supplying your own history.
  * https://reactrouter.com/en/v6.3.0/api#unstable_historyrouter
  */
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import history from 'shared/routes/history';
 
@@ -28,11 +28,17 @@ const container = document.getElementById('root');
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(container!);
 
+const router = createBrowserRouter(
+  [
+    // match everything with "*"
+    { element: <App />, path: '*' },
+  ],
+  { basename: process.env.PUBLIC_URL },
+);
+
 root.render(
   // <React.StrictMode>
-  <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
-    <App />
-  </HistoryRouter>,
+  <RouterProvider router={router} />,
   // </React.StrictMode>,
 );
 
