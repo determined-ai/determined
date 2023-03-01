@@ -1,5 +1,4 @@
-import { Select as AntdSelect, Tag } from 'antd';
-import Modal from 'antd/lib/modal/Modal';
+import { Select as AntdSelect, Modal, Tag } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -215,8 +214,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     <div className={css.base}>
       {isLoaded ? (
         <>
-          <div className={[css.row, css.header, css.sticky].join(' ')}>
-            <div className={[css.cell, css.blank, css.header, css.sticky].join(' ')} />
+          <div className={[css.row, css.sticky].join(' ')}>
+            <div className={[css.cell, css.blank, css.sticky].join(' ')} />
             {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>
                 <Tag className={css.trialTag} closable onClose={() => handleTrialUnselect(trialId)}>
@@ -226,7 +225,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
             ))}
           </div>
           <div className={css.row}>
-            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>State</div>
+            <div className={[css.cell, css.sticky, css.indent].join(' ')}>State</div>
             {trials.map((trial) => (
               <div className={css.cell} key={trial}>
                 <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
@@ -234,9 +233,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
             ))}
           </div>
           <div className={css.row}>
-            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
-              Batched Processed
-            </div>
+            <div className={[css.cell, css.sticky, css.indent].join(' ')}>Batched Processed</div>
             {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>
                 {trialsDetails[trialId].totalBatchesProcessed}
@@ -244,7 +241,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
             ))}
           </div>
           <div className={css.row}>
-            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
+            <div className={[css.cell, css.sticky, css.indent].join(' ')}>
               Total Checkpoint Size
             </div>
             {trials.map((trialId) => (
@@ -253,8 +250,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
               </div>
             ))}
           </div>
-          <div className={[css.row, css.header, css.spanAll].join(' ')}>
-            <div className={[css.cell, css.header, css.spanAll].join(' ')}>
+          <div className={[css.row, css.spanAll].join(' ')}>
+            <div className={[css.cell, css.spanAll].join(' ')}>
               Metrics
               <MetricSelect
                 defaultMetrics={metrics}
@@ -270,7 +267,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
             .filter((metric) => selectedMetrics.map((m) => m.name).includes(metric.name))
             .map((metric) => (
               <div className={css.row} key={metric.name}>
-                <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
+                <div className={[css.cell, css.sticky, css.indent].join(' ')}>
                   <MetricBadgeTag metric={metric} />
                 </div>
                 {trials.map((trialId) => (
@@ -284,8 +281,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
                 ))}
               </div>
             ))}
-          <div className={[css.row, css.header, css.spanAll].join(' ')}>
-            <div className={[css.cell, css.header, css.spanAll].join(' ')}>
+          <div className={[css.row, css.spanAll].join(' ')}>
+            <div className={[css.cell, css.spanAll].join(' ')}>
               Hyperparameters
               <Select
                 disableTags
@@ -303,7 +300,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
           </div>
           {selectedHyperparameters.map((hp) => (
             <div className={css.row} key={hp}>
-              <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>{hp}</div>
+              <div className={[css.cell, css.sticky, css.indent].join(' ')}>{hp}</div>
               {trials.map((trialId) => {
                 const value = trialsDetails[trialId].hyperparameters[hp];
                 const stringValue = JSON.stringify(value);
@@ -321,7 +318,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
           ))}
         </>
       ) : (
-        <Spinner spinning={!isLoaded} />
+        <Spinner center spinning={!isLoaded} />
       )}
     </div>
   );

@@ -173,6 +173,10 @@ if __name__ == "__main__":
     task_logging_metadata = json.loads(task_logging_metadata_json)
     task_logging_metadata["stdtype"] = args.stdtype
     task_logging_metadata["agent_id"] = socket.gethostname()
+    task_logging_metadata["source"] = "task"
+    container_id = os.environ.get("DET_CONTAINER_ID")
+    if container_id is not None:
+        task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
 

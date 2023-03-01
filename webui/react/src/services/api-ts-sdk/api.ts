@@ -118,38 +118,6 @@ export enum Devicev1Type {
 }
 
 /**
- * Series of data points for an experiment trial.
- * @export
- * @interface ExpCompareTrialsSampleResponseExpTrial
- */
-export interface ExpCompareTrialsSampleResponseExpTrial {
-    /**
-     * The id of the trial.
-     * @type {number}
-     * @memberof ExpCompareTrialsSampleResponseExpTrial
-     */
-    trialId: number;
-    /**
-     * Hyperparamters values for this specific trial.
-     * @type {any}
-     * @memberof ExpCompareTrialsSampleResponseExpTrial
-     */
-    hparams: any;
-    /**
-     * Data related to a trial.
-     * @type {Array<V1DataPoint>}
-     * @memberof ExpCompareTrialsSampleResponseExpTrial
-     */
-    data: Array<V1DataPoint>;
-    /**
-     * 
-     * @type {number}
-     * @memberof ExpCompareTrialsSampleResponseExpTrial
-     */
-    experimentId: number;
-}
-
-/**
  * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
  * @export
  * @enum {string}
@@ -358,46 +326,6 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
-}
-
-/**
- * 
- * @export
- * @interface StreamResultOfV1ExpCompareMetricNamesResponse
- */
-export interface StreamResultOfV1ExpCompareMetricNamesResponse {
-    /**
-     * 
-     * @type {V1ExpCompareMetricNamesResponse}
-     * @memberof StreamResultOfV1ExpCompareMetricNamesResponse
-     */
-    result?: V1ExpCompareMetricNamesResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1ExpCompareMetricNamesResponse
-     */
-    error?: RuntimeStreamError;
-}
-
-/**
- * 
- * @export
- * @interface StreamResultOfV1ExpCompareTrialsSampleResponse
- */
-export interface StreamResultOfV1ExpCompareTrialsSampleResponse {
-    /**
-     * 
-     * @type {V1ExpCompareTrialsSampleResponse}
-     * @memberof StreamResultOfV1ExpCompareTrialsSampleResponse
-     */
-    result?: V1ExpCompareTrialsSampleResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1ExpCompareTrialsSampleResponse
-     */
-    error?: RuntimeStreamError;
 }
 
 /**
@@ -2055,7 +1983,7 @@ export interface V1DataPointEpoch {
  */
 export interface V1DataPointTime {
     /**
-     * Total batches processed by the time this measurement is taken.
+     * The time the measurement is taken.
      * @type {Date}
      * @memberof V1DataPointTime
      */
@@ -2322,52 +2250,6 @@ export interface V1EnableSlotResponse {
 export enum V1EntityType {
     UNSPECIFIED = <any> 'ENTITY_TYPE_UNSPECIFIED',
     PROJECT = <any> 'ENTITY_TYPE_PROJECT'
-}
-
-/**
- * Response to MetricNamesRequest.
- * @export
- * @interface V1ExpCompareMetricNamesResponse
- */
-export interface V1ExpCompareMetricNamesResponse {
-    /**
-     * List of training metric names.
-     * @type {Array<string>}
-     * @memberof V1ExpCompareMetricNamesResponse
-     */
-    trainingMetrics?: Array<string>;
-    /**
-     * List of validation metric names.
-     * @type {Array<string>}
-     * @memberof V1ExpCompareMetricNamesResponse
-     */
-    validationMetrics?: Array<string>;
-}
-
-/**
- * 
- * @export
- * @interface V1ExpCompareTrialsSampleResponse
- */
-export interface V1ExpCompareTrialsSampleResponse {
-    /**
-     * A historical or incremental series of data points for the trials.
-     * @type {Array<ExpCompareTrialsSampleResponseExpTrial>}
-     * @memberof V1ExpCompareTrialsSampleResponse
-     */
-    trials: Array<ExpCompareTrialsSampleResponseExpTrial>;
-    /**
-     * IDs of trials that are newly included in the data.
-     * @type {Array<number>}
-     * @memberof V1ExpCompareTrialsSampleResponse
-     */
-    promotedTrials: Array<number>;
-    /**
-     * IDs of trials that are no loger included in the top N trials.
-     * @type {Array<number>}
-     * @memberof V1ExpCompareTrialsSampleResponse
-     */
-    demotedTrials: Array<number>;
 }
 
 /**
@@ -15671,134 +15553,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for a trial.
-         * @param {Array<number>} trialId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling expCompareMetricNames.');
-            }
-            const localVarPath = `/api/v1/trials/metrics-stream/metric-names`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (trialId) {
-                localVarQueryParameter['trialId'] = trialId;
-            }
-
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get a sample of the metrics over time for a sample of the trials.
-         * @param {Array<number>} experimentIds The id of the experiment.
-         * @param {string} metricName A metric name.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
-         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
-         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
-         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentIds' is not null or undefined
-            if (experimentIds === null || experimentIds === undefined) {
-                throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling expCompareTrialsSample.');
-            }
-            // verify required parameter 'metricName' is not null or undefined
-            if (metricName === null || metricName === undefined) {
-                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling expCompareTrialsSample.');
-            }
-            // verify required parameter 'metricType' is not null or undefined
-            if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling expCompareTrialsSample.');
-            }
-            const localVarPath = `/api/v1/experiments-compare`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (experimentIds) {
-                localVarQueryParameter['experimentIds'] = experimentIds;
-            }
-
-            if (metricName !== undefined) {
-                localVarQueryParameter['metricName'] = metricName;
-            }
-
-            if (metricType !== undefined) {
-                localVarQueryParameter['metricType'] = metricType;
-            }
-
-            if (maxTrials !== undefined) {
-                localVarQueryParameter['maxTrials'] = maxTrials;
-            }
-
-            if (maxDatapoints !== undefined) {
-                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
-            }
-
-            if (startBatches !== undefined) {
-                localVarQueryParameter['startBatches'] = startBatches;
-            }
-
-            if (endBatches !== undefined) {
-                localVarQueryParameter['endBatches'] = endBatches;
-            }
-
-            if (periodSeconds !== undefined) {
-                localVarQueryParameter['periodSeconds'] = periodSeconds;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -17307,52 +17061,6 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for a trial.
-         * @param {Array<number>} trialId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareMetricNames(trialId, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get a sample of the metrics over time for a sample of the trials.
-         * @param {Array<number>} experimentIds The id of the experiment.
-         * @param {string} metricName A metric name.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
-         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
-         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
-         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18042,34 +17750,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get the set of metric names recorded for a trial.
-         * @param {Array<number>} trialId The id of the experiment.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).expCompareMetricNames(trialId, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a sample of the metrics over time for a sample of the trials.
-         * @param {Array<number>} experimentIds The id of the experiment.
-         * @param {string} metricName A metric name.
-         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
-         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
-         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
-         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
-         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -18537,38 +18217,6 @@ export class InternalApi extends BaseAPI {
      */
     public deleteGroup(groupId: number, options?: any) {
         return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get the set of metric names recorded for a trial.
-     * @param {Array<number>} trialId The id of the experiment.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).expCompareMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get a sample of the metrics over time for a sample of the trials.
-     * @param {Array<number>} experimentIds The id of the experiment.
-     * @param {string} metricName A metric name.
-     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {number} [maxTrials] Maximum number of trials to fetch data for.
-     * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
-     * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
-     * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
-     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**

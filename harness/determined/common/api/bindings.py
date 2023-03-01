@@ -55,40 +55,6 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class ExpCompareTrialsSampleResponseExpTrial:
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1DataPoint]",
-        experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
-    ):
-        self.data = data
-        self.experimentId = experimentId
-        self.hparams = hparams
-        self.trialId = trialId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "experimentId": obj["experimentId"],
-            "hparams": obj["hparams"],
-            "trialId": obj["trialId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
-            "experimentId": self.experimentId,
-            "hparams": self.hparams,
-            "trialId": self.trialId,
-        }
-        return out
-
 class GetHPImportanceResponseMetricHPImportance:
     error: "typing.Optional[str]" = None
     experimentProgress: "typing.Optional[float]" = None
@@ -2386,70 +2352,6 @@ class v1EnableSlotResponse:
 class v1EntityType(enum.Enum):
     ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
-
-class v1ExpCompareMetricNamesResponse:
-    trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
-    validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
-
-    def __init__(
-        self,
-        *,
-        trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-    ):
-        if not isinstance(trainingMetrics, Unset):
-            self.trainingMetrics = trainingMetrics
-        if not isinstance(validationMetrics, Unset):
-            self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "trainingMetrics" in obj:
-            kwargs["trainingMetrics"] = obj["trainingMetrics"]
-        if "validationMetrics" in obj:
-            kwargs["validationMetrics"] = obj["validationMetrics"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "trainingMetrics" in vars(self):
-            out["trainingMetrics"] = self.trainingMetrics
-        if not omit_unset or "validationMetrics" in vars(self):
-            out["validationMetrics"] = self.validationMetrics
-        return out
-
-class v1ExpCompareTrialsSampleResponse:
-
-    def __init__(
-        self,
-        *,
-        demotedTrials: "typing.Sequence[int]",
-        promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
-    ):
-        self.demotedTrials = demotedTrials
-        self.promotedTrials = promotedTrials
-        self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": obj["demotedTrials"],
-            "promotedTrials": obj["promotedTrials"],
-            "trials": [ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": self.demotedTrials,
-            "promotedTrials": self.promotedTrials,
-            "trials": [x.to_json(omit_unset) for x in self.trials],
-        }
-        return out
 
 class v1Experiment:
     bestTrialSearcherMetric: "typing.Optional[float]" = None
@@ -12648,82 +12550,6 @@ def post_EnableSlot(
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
-
-def get_ExpCompareMetricNames(
-    session: "api.Session",
-    *,
-    trialId: "typing.Sequence[int]",
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareMetricNamesResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-        "trialId": trialId,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/trials/metrics-stream/metric-names",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareMetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareMetricNamesResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareMetricNames", _resp)
-
-def get_ExpCompareTrialsSample(
-    session: "api.Session",
-    *,
-    experimentIds: "typing.Sequence[int]",
-    metricName: str,
-    metricType: "v1MetricType",
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    maxTrials: "typing.Optional[int]" = None,
-    periodSeconds: "typing.Optional[int]" = None,
-    startBatches: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareTrialsSampleResponse]":
-    _params = {
-        "endBatches": endBatches,
-        "experimentIds": experimentIds,
-        "maxDatapoints": maxDatapoints,
-        "maxTrials": maxTrials,
-        "metricName": metricName,
-        "metricType": metricType.value,
-        "periodSeconds": periodSeconds,
-        "startBatches": startBatches,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/experiments-compare",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareTrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareTrialsSampleResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareTrialsSample", _resp)
 
 def get_GetActiveTasksCount(
     session: "api.Session",

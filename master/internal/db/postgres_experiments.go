@@ -172,59 +172,6 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 	return training, validation, sEndTime, vEndTime, err
 }
 
-// ExpCompareMetricNames returns the set of training and validation metric names
-// that have been recorded for a list of trials.
-func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
-	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
-	vEndTime time.Time, err error,
-) {
-	type namesWrapper struct {
-		Name    string    `db:"name"`
-		EndTime time.Time `db:"end_time"`
-	}
-	var rows []namesWrapper
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
-  max(s.end_time) AS end_time
-FROM trials t
-JOIN steps s ON t.id=s.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND s.end_time > $2
-GROUP BY name`, &rows, trialIDs, sStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying training metric names fort rials")
-	}
-	for _, row := range rows {
-		training = append(training, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
-
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
-  max(v.end_time) AS end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND v.end_time > $2
-GROUP BY name`, &rows, trialIDs, vStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying validation metric names for trials")
-	}
-	for _, row := range rows {
-		validation = append(validation, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
-	return training, validation, sEndTime, vEndTime, err
-}
-
 type batchesWrapper struct {
 	Batches int32     `db:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
@@ -420,32 +367,6 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-// ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
-// that recorded the best values for the specified metric at any point during the trial.
-func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
-	smallerIsBetter bool,
-) (trials []int32, err error) {
-	order := desc
-	aggregate := max
-	if smallerIsBetter {
-		order = asc
-		aggregate = min
-	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id in (SELECT unnest($2::int [])::int)
-    AND v.state = 'COMPLETED'
-  GROUP BY t.id
-  ORDER BY best_metric %s
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentIDs, maxTrials)
-	return trials, err
-}
-
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
 // number of batches, using the specified metric as a tie breaker.
 func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
@@ -552,9 +473,8 @@ SELECT
   total_batches AS batches,
   s.end_time as end_time,
   s.metrics->>'avg_metrics' AS metrics
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.id=$2
+FROM steps s
+WHERE s.trial_id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
   AND ($4 <= 0 OR total_batches <= $4)
@@ -581,9 +501,8 @@ SELECT
   v.total_batches AS batches,
   v.end_time as end_time,
   v.metrics->>'validation_metrics' AS metrics
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id=$2
+FROM validations v
+WHERE v.trial_id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
   AND ($4 <= 0 OR v.total_batches <= $4)
