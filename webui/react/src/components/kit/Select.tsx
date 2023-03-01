@@ -20,7 +20,7 @@ export interface Props<T = SelectValue> {
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
-  maxTagCount?: -1 | 0 | 'responsive';
+  maxTagCount?: 0 | 'responsive';
   maxTagPlaceholder?: string;
   mode?: 'multiple' | 'tags';
   onBlur?: () => void;

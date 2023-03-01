@@ -178,7 +178,7 @@ const ButtonsSection: React.FC = () => {
   );
 };
 
-const DropdownsSection: React.FC = () => {
+const SelectSection: React.FC = () => {
   const handleFilter = (input: string, option: LabeledValue | undefined) =>
     !!(
       option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true
@@ -189,8 +189,8 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <AntDCard>
         <p>
-          A dropdown/combo box (<code>{'<Select>'}</code>) combines a text field and a dropdown
-          giving people a way to select an option from a list or enter their own choice.
+          Components (<code>{'<Select>'}</code>) combine a text field and a dropdown giving people a
+          way to select an option from a list or enter their own choice.
         </p>
       </AntDCard>
       <AntDCard title="Best practices">
@@ -324,7 +324,7 @@ const DropdownsSection: React.FC = () => {
           ]}
           placeholder="Search"
         />
-        <strong>Select with Tags and Placeholder</strong>
+        <strong>Select with Max Tags and Placeholder</strong>
         <Select
           disableTags
           filterOption={(input, option) =>
@@ -1584,7 +1584,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  Dropdowns: <DropdownsSection />,
+  Dropdowns: <SelectSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
