@@ -53,7 +53,7 @@ Version 0.20.0
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
    has added support for role-based access control (RBAC) over new entities:
 
-   -  JupyterLab Notebooks, Tensorboards, Shells, and Commands are now housed under workspaces.
+   -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces.
       Access to these tasks can now be restricted by role.
    -  Model Registry: models are now associated with workspaces. Models can be moved between
       workspaces and access to them can be restricted by role.
