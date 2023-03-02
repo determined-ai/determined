@@ -517,21 +517,58 @@ class DeepSpeedTrialController(det.TrialController):
             metrics["avg_metrics"].update(
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
+ 
+        if self.is_chief:
+            step_duration = time.time() - step_start_time
+            logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
+            self.prof.set_training(False)
+            
+            # log tb metrics if chief process
+            self._log_tb_metrics(
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
+            )
 
+        # reset any attached tb writer on step end
+        self.context.maybe_reset_tbd_writer()
+        
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
             return {}
-
-        step_duration = time.time() - step_start_time
-        logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
-        self.prof.set_training(False)
-
-        self.metric_writer.on_train_step_end(
-            self.steps_completed,
-            metrics["avg_metrics"],
-            metrics["batch_metrics"],
-        )
+            
         return metrics
+        
+     def _log_tb_metrics(self,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        is_val: Optional[bool] = False
+    ) -> None:
+    
+        if is_val:
+            logging.debug("Write validation metrics for TensorBoard")
+        else:
+            logging.debug("Write training metrics for TensorBoard")
+            
+        metrics_seen = set()
+
+        with self.context.get_tensorboard_writer() as writer:
+            # Log all batch metrics.
+            if batch_metrics:
+                for batch_idx, batch in enumerate(batch_metrics):
+                    batches_seen = self.steps_completed - len(batch_metrics) + batch_idx
+                    for name, value in batch.items():
+                        if util.is_numerical_scalar(value):
+                            writer.add_scalar("Determined/" + name, value, batches_seen)
+                        metrics_seen.add(name)
+
+            # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
+            for name, value in metrics.items():
+                if name in metrics_seen:
+                    continue
+                if is_val and not name.startswith("val"):
+                    name = "val_" + name
+                if util.is_numerical_scalar(value):
+                    writer.add_scalar("Determined/" + name, value, batches_seen)
 
     @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
@@ -631,19 +668,28 @@ class DeepSpeedTrialController(det.TrialController):
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
 
+        if self.is_chief:
+            num_inputs *= self.context._mpu.data_parallel_world_size
+            step_duration = time.time() - step_start_time
+            logging.info(
+                det.util.make_timing_log(
+                    "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
+                )
+            )
+
+            # replace with self.context.get_writer...
+            self._log_tb_metrics
+
+        # reset writer on step end
+        self.context.maybe_reset_tbd_writer()
+            
         if not self.is_chief:
             return {}
 
-        num_inputs *= self.context._mpu.data_parallel_world_size
-        step_duration = time.time() - step_start_time
-        logging.info(
-            det.util.make_timing_log(
-                "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
-            )
-        )
-
-        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
+
+    def on_validation_step_end(self, metrics):
+        self._log_tb_metrics(metrics, is_val=True)
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

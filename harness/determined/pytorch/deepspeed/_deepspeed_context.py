@@ -9,7 +9,7 @@ import torch
 from deepspeed.runtime import config_utils
 
 import determined as det
-from determined import profiler, pytorch
+from determined import profiler, pytorch, tensorboard
 from determined.pytorch import deepspeed as det_ds
 
 
@@ -113,6 +113,8 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._manual_grad_accumulation = False
 
         self._check_experiment_config_optimizations()
+        
+        self._tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
 
     def _check_experiment_config_optimizations(self) -> None:
         """
@@ -337,3 +339,28 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
+    
+    @contextlib.contextmanager
+    def get_tensorboard_writer(self) -> Generator[tensorboard.MetricWriter, None, None]:
+        """
+        Yield tensorboard writer to the user.
+        To be used via the `with` statement, eg:
+
+        with context.get_tensorboard_writer() as writer:
+            writer.add_scalar(value, idx)
+            writer.add_images(images, idx)
+        """
+
+        if self._tbd_writer is None:
+            from determined.pytorch.tensorboard_writer import TorchWriter
+
+            self._tbd_writer = TorchWriter()
+
+        try:
+            yield self._tbd_writer
+             
+    def maybe_reset_tbd_writer(self) -> None:
+        # add reset writer only if one exists
+        if self._tbd_writer in not None:
+            self._tbd_writer.reset()
+        
