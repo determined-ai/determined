@@ -4,6 +4,9 @@ DROP VIEW steps;
 DROP VIEW validations;
 DROP VIEW checkpoints;
 
+DELETE FROM raw_steps WHERE state != 'COMPLETED';
+DELETE FROM raw_validations WHERE state != 'COMPLETED';
+
 ALTER TABLE raw_steps
 	DROP COLUMN total_records,
 	DROP COLUMN total_epochs,
