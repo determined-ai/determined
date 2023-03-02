@@ -15,7 +15,6 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
@@ -53,11 +52,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
 
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
 
-  const loadableRoles = RolesStore.useRoles();
-  const roles = Loadable.match(loadableRoles, {
-    Loaded: (roles) => roles,
-    NotLoaded: () => undefined,
-  });
+  const roles = RolesStore.useRoles();
 
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
@@ -126,31 +121,30 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && group && (
-        <Spinner conditionalRender spinning={roles === undefined}>
-          <>
-            <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
-              <Select
-                mode="multiple"
-                optionFilterProp="children"
-                placeholder={'Add Roles'}
-                showSearch>
-                {roles // This is ok as the Spinner has conditionalRender active
-                  ? roles.map((r) => (
-                      <Select.Option
-                        disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
-                        key={r.id}
-                        value={r.id}>
-                        {r.name}
-                      </Select.Option>
-                    ))
-                  : undefined}
-              </Select>
-            </Form.Item>
-            <Typography.Text type="secondary">
-              Note that roles inherited from workspaces cannot be removed here.
-            </Typography.Text>
-          </>
-        </Spinner>
+        <>
+          <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
+            <Select
+              loading={Loadable.isLoading(roles)}
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder={'Add Roles'}
+              showSearch>
+              {Loadable.isLoaded(roles) // This is ok as the Spinner has conditionalRender active
+                ? roles.data.map((r) => (
+                    <Select.Option
+                      disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
+                      key={r.id}
+                      value={r.id}>
+                      {r.name}
+                    </Select.Option>
+                  ))
+                : undefined}
+            </Select>
+          </Form.Item>
+          <Typography.Text type="secondary">
+            Note that roles inherited from workspaces cannot be removed here.
+          </Typography.Text>
+        </>
       )}
     </Form>
   );

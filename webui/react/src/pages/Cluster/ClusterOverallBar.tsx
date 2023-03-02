@@ -12,60 +12,65 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 export const ClusterOverallBar: React.FC = () => {
-  const overview = Loadable.match(useObservable(useClusterStore().clusterOverview), {
-    Loaded: (co) => co,
-    NotLoaded: () => undefined,
-  });
-  const agents = Loadable.match(useObservable(useClusterStore().agents), {
-    Loaded: (ag) => ag,
-    NotLoaded: () => undefined,
-  });
+  const overview = useObservable(useClusterStore().clusterOverview);
+  const agents = useObservable(useClusterStore().agents);
 
   const cudaSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents || [], ResourceType.CUDA);
+    return getSlotContainerStates(
+      (Loadable.isLoaded(agents) && agents.data) || [],
+      ResourceType.CUDA,
+    ); // can't use a const here due to types
   }, [agents]);
 
   const rocmSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents || [], ResourceType.ROCM);
+    return getSlotContainerStates(
+      (Loadable.isLoaded(agents) && agents.data) || [],
+      ResourceType.ROCM,
+    );
   }, [agents]);
 
   const cpuSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents || [], ResourceType.CPU);
+    return getSlotContainerStates(
+      (Loadable.isLoaded(agents) && agents.data) || [],
+      ResourceType.CPU,
+    );
   }, [agents]);
 
   return (
     <Section hideTitle title="Overall Allocation">
-      <Spinner conditionalRender spinning={agents === undefined || overview === undefined}>
-        {agents !== undefined && overview !== undefined ? ( // This is ok as the Spinner has conditionalRender active
+      <Spinner
+        conditionalRender
+        spinning={Loadable.isLoading(agents) || Loadable.isLoading(overview)}>
+        {Loadable.isLoaded(agents) && Loadable.isLoaded(overview) ? ( // This is ok as the Spinner has conditionalRender active
           <>
-            {overview.CUDA.total + overview.ROCM.total + overview.CPU.total === 0 ? (
+            {overview.data.CUDA.total + overview.data.ROCM.total + overview.data.CPU.total === 0 ? (
               <Message title="No connected agents." type={MessageType.Empty} />
             ) : null}
-            {overview.CUDA.total > 0 && (
+            {overview.data.CUDA.total > 0 && (
               <SlotAllocationBar
                 resourceStates={cudaSlotStates}
                 showLegends
                 size={ShirtSize.Large}
                 title={`Compute (${ResourceType.CUDA})`}
-                totalSlots={overview.CUDA.total}
+                totalSlots={overview.data.CUDA.total}
               />
             )}
-            {overview.ROCM.total > 0 && (
+            {overview.data.ROCM.total > 0 && (
               <SlotAllocationBar
                 resourceStates={rocmSlotStates}
                 showLegends
                 size={ShirtSize.Large}
                 title={`Compute (${ResourceType.ROCM})`}
-                totalSlots={overview.ROCM.total}
+                totalSlots={overview.data.ROCM.total}
               />
             )}
-            {overview.CPU.total > 0 && (
+            {overview.data.CPU.total > 0 && (
               <SlotAllocationBar
                 resourceStates={cpuSlotStates}
                 showLegends
                 size={ShirtSize.Large}
                 title={`Compute (${ResourceType.CPU})`}
-                totalSlots={overview.CPU.total}
+                totalSlots={overview.data.CPU.total}
               />
             )}
           </>

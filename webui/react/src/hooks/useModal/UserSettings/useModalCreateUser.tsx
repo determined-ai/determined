@@ -57,11 +57,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canAssignRoles, canModifyPermissions } = usePermissions();
 
-  const lodadbleKnownRoles = RolesStore.useRoles();
-  const knownRoles = Loadable.match(lodadbleKnownRoles, {
-    Loaded: (knownRoles) => knownRoles,
-    NotLoaded: () => undefined,
-  });
+  const knownRoles = RolesStore.useRoles();
 
   useEffect(() => {
     form.setFieldsValue({
@@ -100,35 +96,34 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
         </Form.Item>
       )}
       {rbacEnabled && canModifyPermissions && (
-        <Spinner conditionalRender spinning={knownRoles === undefined}>
-          <>
-            <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-              <Select
-                disabled={(user !== undefined && roles === null) || viewOnly}
-                mode="multiple"
-                optionFilterProp="children"
-                placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-                showSearch>
-                {knownRoles // This is ok as the Spinner has conditionalRender active
-                  ? knownRoles.map((r: UserRole) => (
-                      <Select.Option
-                        disabled={
-                          roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
-                          roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
-                        }
-                        key={r.id}
-                        value={r.id}>
-                        {r.name}
-                      </Select.Option>
-                    ))
-                  : undefined}
-              </Select>
-            </Form.Item>
-            <Typography.Text type="secondary">
-              Note that roles inherited from user groups or workspaces cannot be removed here.
-            </Typography.Text>
-          </>
-        </Spinner>
+        <>
+          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+            <Select
+              disabled={(user !== undefined && roles === null) || viewOnly}
+              loading={Loadable.isLoading(knownRoles)}
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+              showSearch>
+              {Loadable.isLoaded(knownRoles) // This is ok as the Spinner has conditionalRender active
+                ? knownRoles.data.map((r: UserRole) => (
+                    <Select.Option
+                      disabled={
+                        roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
+                        roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
+                      }
+                      key={r.id}
+                      value={r.id}>
+                      {r.name}
+                    </Select.Option>
+                  ))
+                : undefined}
+            </Select>
+          </Form.Item>
+          <Typography.Text type="secondary">
+            Note that roles inherited from user groups or workspaces cannot be removed here.
+          </Typography.Text>
+        </>
       )}
     </Form>
   );

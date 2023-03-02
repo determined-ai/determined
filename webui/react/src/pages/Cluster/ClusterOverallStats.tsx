@@ -24,16 +24,9 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 };
 
 export const ClusterOverallStats: React.FC = () => {
-  const resourcePools = Loadable.match(useObservable(useClusterStore().resourcePools), {
-    Loaded: (rsP) => rsP,
-    NotLoaded: () => undefined,
-  });
+  const resourcePools = useObservable(useClusterStore().resourcePools);
   const agents = useObservable(useClusterStore().agents);
-  const loadableClusterOverview = useObservable(useClusterStore().clusterOverview);
-  const clusterOverview = Loadable.match(loadableClusterOverview, {
-    Loaded: (overview) => overview,
-    NotLoaded: () => undefined,
-  });
+  const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const [canceler] = useState(new AbortController());
   const fetchActiveExperiments = experimentStore.fetchExperiments(
@@ -58,20 +51,22 @@ export const ClusterOverallStats: React.FC = () => {
       running: 0,
       total: 0,
     };
-    resourcePools?.forEach((rp) => {
-      tally.total += rp.auxContainerCapacity;
-      tally.running += rp.auxContainersRunning;
-    });
+    Loadable.isLoaded(resourcePools) &&
+      resourcePools.data.forEach((rp) => {
+        tally.total += rp.auxContainerCapacity;
+        tally.running += rp.auxContainersRunning;
+      });
     return tally;
   }, [resourcePools]);
 
-  const loadableMaxTotalSlots = useMemo(() => {
-    return Loadable.map(agents, (agents) => maxClusterSlotCapacity(resourcePools ?? [], agents));
+  const maxTotalSlots = useMemo(() => {
+    return Loadable.map(agents, (agents) =>
+      maxClusterSlotCapacity(
+        (Loadable.isLoaded(resourcePools) && resourcePools.data) || [],
+        agents,
+      ),
+    );
   }, [resourcePools, agents]);
-  const maxTotalSlots = Loadable.match(loadableMaxTotalSlots, {
-    Loaded: (maxTotalSlots) => maxTotalSlots,
-    NotLoaded: () => undefined,
-  });
 
   return (
     <Section hideTitle title="Overview Stats">
@@ -84,13 +79,13 @@ export const ClusterOverallStats: React.FC = () => {
         </OverviewStats>
         <Spinner
           conditionalRender
-          spinning={maxTotalSlots === undefined || clusterOverview === undefined}>
-          {maxTotalSlots !== undefined && clusterOverview !== undefined // This is ok as the Spinner has conditionalRender active
+          spinning={Loadable.isLoading(maxTotalSlots) || Loadable.isLoading(clusterOverview)}>
+          {Loadable.isLoaded(maxTotalSlots) && Loadable.isLoaded(clusterOverview) // This is ok as the Spinner has conditionalRender active
             ? [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
-                maxTotalSlots[resType] > 0 ? (
+                maxTotalSlots.data[resType] > 0 ? (
                   <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-                    {clusterOverview[resType].total - clusterOverview[resType].available}
-                    <small> / {maxTotalSlots[resType]}</small>
+                    {clusterOverview.data[resType].total - clusterOverview.data[resType].available}
+                    <small> / {maxTotalSlots.data[resType]}</small>
                   </OverviewStats>
                 ) : null,
               )

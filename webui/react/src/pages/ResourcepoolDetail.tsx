@@ -50,16 +50,13 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const resourcePools = Loadable.match(useObservable(useClusterStore().resourcePools), {
-    Loaded: (rp) => rp,
-    NotLoaded: () => undefined,
-  });
+  const resourcePools = useObservable(useClusterStore().resourcePools);
   const agents = Loadable.getOrElse([], useObservable(useClusterStore().agents));
 
   const pool = useMemo(() => {
-    if (resourcePools === undefined) return;
+    if (Loadable.isLoading(resourcePools)) return;
 
-    return resourcePools.find((pool) => pool.name === poolname);
+    return resourcePools.data.find((pool) => pool.name === poolname);
   }, [poolname, resourcePools]);
 
   const usage = useMemo(() => {
@@ -177,7 +174,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     ];
   }, [pool, poolStats, renderPoolConfig]);
 
-  if (!pool || resourcePools === undefined) return <div />;
+  if (!pool || Loadable.isLoading(resourcePools)) return <div />;
 
   return (
     <Page className={css.poolDetailPage}>
