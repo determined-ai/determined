@@ -246,7 +246,7 @@ func (a *apiServer) GetUserByUsername(
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
-	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+	if a.m.config.IsCommunityEdition() {
 		return nil, errCommunityEdition
 	}
 	if req.User == nil {
@@ -323,7 +323,7 @@ func (a *apiServer) PostUser(
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest,
 ) (*apiv1.SetUserPasswordResponse, error) {
-	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+	if a.m.config.IsCommunityEdition() {
 		return nil, errCommunityEdition
 	}
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -362,7 +362,7 @@ func (a *apiServer) SetUserPassword(
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
-	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+	if a.m.config.IsCommunityEdition() {
 		return nil, errCommunityEdition
 	}
 	if req.User == nil {
@@ -513,7 +513,7 @@ func (a *apiServer) GetUserSetting(
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
-	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+	if a.m.config.IsCommunityEdition() {
 		return nil, errCommunityEdition
 	}
 	if req.Setting == nil {

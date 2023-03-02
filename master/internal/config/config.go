@@ -273,6 +273,11 @@ func (c *Config) Deprecations() (errs []error) {
 	return errs
 }
 
+// IsCommunityEdition returns whether or not determined is running in the community edition context.
+func (c *Config) IsCommunityEdition() bool {
+	return len(c.InternalConfig.ExternalSessions.LoginURI) > 1
+}
+
 // SecurityConfig is the security configuration for the master.
 type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
