@@ -232,7 +232,7 @@ def run_tensorboard_fetcher_test(
             except AssertionError as e:
                 if retry_num == num_retries:
                     raise
-                sleep_time = 2 ** retry_num
+                sleep_time = 2**retry_num
                 print(f"{e}: sleeping: {sleep_time} seconds")
                 time.sleep(sleep_time)
 
