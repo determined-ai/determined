@@ -317,26 +317,6 @@ const SelectSection: React.FC = () => {
           value={sortedSelectValues}
           onChange={(value) => setSortedSelectValues(value)}
         />
-        <strong>Select with Max Tags and Placeholder</strong>
-        <Select
-          disableTags
-          filterOption={(input, option) =>
-            (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
-          }
-          filterSort={(a: LabeledValue, b: LabeledValue) =>
-            (a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1
-          }
-          maxTagCount={0}
-          maxTagPlaceholder={'Custom Placeholder'}
-          mode="multiple"
-          options={[
-            { label: 'Am', value: 1 },
-            { label: 'Az', value: 2 },
-            { label: 'Ac', value: 3 },
-            { label: 'Aa', value: 4 },
-          ]}
-          placeholder="Search"
-        />
         <span>
           Also see{' '}
           <Link reloadDocument to={`#${ComponentTitles.Form}`}>
