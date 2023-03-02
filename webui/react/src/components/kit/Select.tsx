@@ -12,7 +12,7 @@ const { OptGroup, Option } = AntdSelect;
 export { Option, SelectValue };
 
 type Options = DefaultOptionType | DefaultOptionType[];
-export interface SelectProps<T = SelectValue> {
+export interface SelectProps<T extends SelectValue = SelectValue> {
   allowClear?: boolean;
   defaultValue?: T;
   disableTags?: boolean;
