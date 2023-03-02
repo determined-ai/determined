@@ -1,5 +1,11 @@
 import * as Api from 'services/api-ts-sdk';
-import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
+import {
+  GetMasterResponseProduct,
+  V1AgentUserGroup,
+  V1Group,
+  V1LaunchWarning,
+  V1Trigger,
+} from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
 
 interface WithPagination {
@@ -52,6 +58,7 @@ export interface DeterminedInfo {
   featureSwitches: string[];
   isTelemetryEnabled: boolean;
   masterId: string;
+  product?: GetMasterResponseProduct;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
   version: string;

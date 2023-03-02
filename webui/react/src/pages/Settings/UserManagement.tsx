@@ -24,6 +24,7 @@ import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigur
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useModalManageGroups from 'hooks/useModal/UserSettings/useModalManageGroups';
 import usePermissions from 'hooks/usePermissions';
+import useProduct from 'hooks/useProduct';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -55,10 +56,11 @@ export const CREATE_USER_LABEL = 'add_user';
 interface DropdownProps {
   fetchUsers: () => void;
   groups: V1GroupSearchResult[];
+  isCommunity: boolean;
   user: DetailedUser;
 }
 
-const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups, isCommunity }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers, user });
   const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
@@ -104,14 +106,15 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     funcs[e.key as ValueOf<typeof MenuKey>]();
   };
 
-  const menuItems: MenuProps['items'] = canModifyUsers
-    ? [
-        { key: MenuKey.Edit, label: 'Edit User' },
-        { key: MenuKey.Groups, label: 'Manage Groups' },
-        { key: MenuKey.Agent, label: 'Configure Agent' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-      ]
-    : [{ key: MenuKey.View, label: 'View User' }];
+  const menuItems: MenuProps['items'] =
+    canModifyUsers && !isCommunity
+      ? [
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
+      : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
     <div className={dropdownCss.base}>
@@ -155,6 +158,7 @@ const UserManagement: React.FC = () => {
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
+  const { isCommunity } = useProduct();
 
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
@@ -222,7 +226,14 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
-      return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
+      return (
+        <UserActionDropdown
+          fetchUsers={fetchUsers}
+          groups={groups}
+          isCommunity={isCommunity}
+          user={record}
+        />
+      );
     };
     const columns = [
       {
@@ -317,7 +328,7 @@ const UserManagement: React.FC = () => {
           <Space>
             <Button
               aria-label={CREATE_USER_LABEL}
-              disabled={!canModifyUsers}
+              disabled={!canModifyUsers || isCommunity}
               onClick={onClickCreateUser}>
               {CREATE_USER}
             </Button>
