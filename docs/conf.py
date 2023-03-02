@@ -44,6 +44,7 @@ exclude_patterns = [
     "examples",
     "requirements.txt",
     "site",
+    "release-notes/README.md",
 ]
 html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.
 highlight_language = "none"
@@ -98,6 +99,11 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinx_reredirects",
+    "myst_parser",
+]
+
+myst_extensions = [
+    "colon_fence",
 ]
 
 # Our custom sphinx extension uses this value to decide where to look for
