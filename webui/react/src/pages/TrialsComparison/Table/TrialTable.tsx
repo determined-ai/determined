@@ -28,7 +28,7 @@ import { isFiniteNumber } from 'shared/utils/data';
 import { useUsers } from 'stores/users';
 import { StateOfUnion } from 'themes';
 import { MetricType } from 'types';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
@@ -75,8 +75,8 @@ const TrialTable: React.FC<Props> = ({
   const { settings, updateSettings } = tableSettingsHook;
 
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
 
   const { filters, setFilters } = collectionsInterface;
@@ -408,7 +408,7 @@ const TrialTable: React.FC<Props> = ({
   );
 
   const userColumn = useMemo(() => {
-    if (users === undefined) return;
+    if (Loadable.isLoading(users)) return;
 
     return {
       defaultWidth: 100,
@@ -422,11 +422,11 @@ const TrialTable: React.FC<Props> = ({
           onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
         />
       ),
-      filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+      filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
       render: (_: number, r: V1AugmentedTrial) =>
-        userRenderer(users.find((u) => u.id === r.userId)),
+        userRenderer(users.data.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
     };

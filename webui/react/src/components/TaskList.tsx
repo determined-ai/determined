@@ -65,7 +65,7 @@ import {
 } from 'types';
 import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
@@ -99,18 +99,15 @@ const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'w
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const workspaces = Loadable.match(useWorkspaces(), {
-    Loaded: (ws) => ws,
-    NotLoaded: () => undefined,
-  });
+  const workspaces = useWorkspaces();
   const [canceler] = useState(new AbortController());
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
@@ -136,7 +133,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         users: settings.user,
         workspaces: settings.workspace,
       },
-      users || [],
+      (Loadable.isLoaded(users) && users.data) || [],
       settings.search,
     );
   }, [loadedTasks, settings, users]);
@@ -342,7 +339,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
-    if (users === undefined || workspaces === undefined) return [];
+    if (Loadable.isLoading(users) || Loadable.isLoading(workspaces)) return [];
 
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
       if (record.type !== CommandType.TensorBoard || !record.misc) {
@@ -465,14 +462,15 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
-        render: (_: string, r: CommandTask) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_: string, r: CommandTask) =>
+          userRenderer(users.data.find((u) => u.id === r.userId)),
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
-            getDisplayName(users.find((u) => u.id === a.userId)),
-            getDisplayName(users.find((u) => u.id === b.userId)),
+            getDisplayName(users.data.find((u) => u.id === a.userId)),
+            getDisplayName(users.data.find((u) => u.id === b.userId)),
           );
         },
         title: 'User',
@@ -482,17 +480,17 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'workspace',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
-        filters: workspaces.map((ws) => ({
+        filters: workspaces.data.map((ws) => ({
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
         key: 'workspace',
-        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
+        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces.data),
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(
-            workspaces.find((u) => u.id === a.workspaceId)?.name ?? '',
-            workspaces.find((u) => u.id === b.workspaceId)?.name ?? '',
+            workspaces.data.find((u) => u.id === a.workspaceId)?.name ?? '',
+            workspaces.data.find((u) => u.id === b.workspaceId)?.name ?? '',
           ),
         title: 'Workspace',
       },

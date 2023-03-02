@@ -53,7 +53,7 @@ import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -72,8 +72,8 @@ interface Props {
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -106,7 +106,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
   const isTableLoading = useMemo(
-    () => isLoading || isLoadingSettings || users === undefined,
+    () => isLoading || isLoadingSettings || Loadable.isLoading(users),
     [isLoading, isLoadingSettings, users],
   );
 
@@ -455,7 +455,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
@@ -588,10 +588,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

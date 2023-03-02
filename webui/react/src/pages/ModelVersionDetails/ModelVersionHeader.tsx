@@ -24,7 +24,7 @@ import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { useUsers } from 'stores/users';
 import { ModelVersion, Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -53,8 +53,8 @@ const ModelVersionHeader: React.FC<Props> = ({
   onSaveName,
 }: Props) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
@@ -74,9 +74,9 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
-    const user = users.find((user) => user.id === modelVersion.userId);
+    const user = users.data.find((user) => user.id === modelVersion.userId);
     return [
       {
         content: (

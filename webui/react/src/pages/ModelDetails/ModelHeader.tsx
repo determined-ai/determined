@@ -23,7 +23,7 @@ import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { useUsers } from 'stores/users';
 import { ModelItem, Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
@@ -46,8 +46,8 @@ const ModelHeader: React.FC<Props> = ({
   onUpdateTags,
 }: Props) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
@@ -59,9 +59,9 @@ const ModelHeader: React.FC<Props> = ({
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
-    const user = users.find((user) => user.id === model.userId);
+    const user = users.data.find((user) => user.id === model.userId);
     return [
       {
         content: (

@@ -34,7 +34,7 @@ import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
@@ -48,8 +48,8 @@ import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
@@ -133,7 +133,7 @@ const WorkspaceList: React.FC = () => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose || users === undefined) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
@@ -143,13 +143,13 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
+        updateSettings({ user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
@@ -180,7 +180,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -292,7 +292,7 @@ const WorkspaceList: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={workspaces}
-            loading={isLoading || users === undefined}
+            loading={isLoading || Loadable.isLoading(users)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

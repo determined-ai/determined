@@ -25,7 +25,7 @@ import { isNotFound } from 'shared/utils/service';
 import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
@@ -51,8 +51,8 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
@@ -153,7 +153,10 @@ const WorkspaceDetails: React.FC = () => {
   );
 
   const addableUsers = useMemo(
-    () => users?.filter((user) => !usersAssignedDirectlyIds.has(user.id)) ?? [],
+    () =>
+      (Loadable.isLoaded(users) &&
+        users.data.filter((user) => !usersAssignedDirectlyIds.has(user.id))) ||
+      [],
     [users, usersAssignedDirectlyIds],
   );
   const addableUsersAndGroups = useMemo(
@@ -262,7 +265,7 @@ const WorkspaceDetails: React.FC = () => {
     return () => canceler.abort();
   }, [canceler]);
 
-  if (!workspace || users === undefined) {
+  if (!workspace || Loadable.isLoading(users)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;

@@ -9,8 +9,8 @@ import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
 import { useUsers } from 'stores/users';
-import { Workspace } from 'types';
-import { Loadable } from 'utils/loadable';
+import { DetailedUser, Workspace } from 'types';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
@@ -27,10 +27,14 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   });
 
   const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => undefined,
+    Loaded: (usersPagination) => Loaded(usersPagination.users),
+    NotLoaded: () => NotLoaded,
   });
-  const user = users?.find((user) => user.id === workspace.userId);
+  let user: DetailedUser | undefined = undefined;
+
+  if (Loadable.isLoaded(users)) {
+    user = users.data.find((user) => user.id === workspace.userId);
+  }
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);

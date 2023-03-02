@@ -83,7 +83,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -116,8 +116,8 @@ interface Props {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
@@ -402,7 +402,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
@@ -602,10 +602,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },
@@ -971,7 +971,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           containerRef={pageRef}
           ContextMenu={ContextMenu}
           dataSource={experiments}
-          loading={isLoading || users === undefined}
+          loading={isLoading || Loadable.isLoading(users)}
           numOfPinned={(settings.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {

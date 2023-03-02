@@ -34,7 +34,7 @@ import {
   orderedSchedulers,
   unsupportedQPosSchedulers,
 } from 'utils/job';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './JobQueue.module.scss';
@@ -49,19 +49,17 @@ interface Props {
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => undefined,
+    Loaded: (usersPagination) => Loaded(usersPagination.users),
+    NotLoaded: () => NotLoaded,
   });
   useRefetchClusterData();
-  const resourcePools = Loadable.match(useObservable(useClusterStore().resourcePools), {
-    Loaded: (rp) => rp,
-    NotLoaded: () => undefined,
-  });
+  const resourcePools = useObservable(useClusterStore().resourcePools);
+  const hasLoadingObservables = Loadable.isLoading(users) || Loadable.isLoading(resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(() => {
-    if (resourcePools === undefined) return [];
+    if (Loadable.isLoading(resourcePools)) return [];
 
-    return resourcePools.map(
+    return resourcePools.data.map(
       (rp) =>
         ({
           resourcePool: rp.name,
@@ -224,7 +222,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
-    if (users === undefined) return [];
+    if (Loadable.isLoading(users)) return [];
 
     return defaultColumns
       .map((col) => {
@@ -306,7 +304,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(users?.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(users.data.find((u) => u.id === r.userId));
             break;
         }
         return col;
@@ -348,7 +346,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       containerRef={pageRef}
       headerComponent={<div />}
       id="jobs"
-      loading={resourcePools === undefined || users === undefined}
       title="Job Queue by Resource Pool">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
         {settings ? (
@@ -356,7 +353,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
-            loading={pageState.isLoading || users === undefined}
+            loading={pageState.isLoading || hasLoadingObservables}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

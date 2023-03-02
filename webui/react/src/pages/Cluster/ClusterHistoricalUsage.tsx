@@ -10,7 +10,7 @@ import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import { useUsers } from 'stores/users';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
@@ -33,8 +33,8 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => undefined,
+    Loaded: (cUser) => Loaded(cUser.users),
+    NotLoaded: () => NotLoaded,
   });
 
   const filters = useMemo(() => {
@@ -113,11 +113,11 @@ const ClusterHistoricalUsage: React.FC = () => {
     return mapResourceAllocationApiToChartSeries(
       aggRes.resourceEntries,
       filters.groupBy,
-      users ?? [],
+      (Loadable.isLoaded(users) && users.data) || [],
     );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 
-  const isLoading = useMemo(() => !chartSeries || users === undefined, [users, chartSeries]);
+  const isLoading = useMemo(() => !chartSeries || Loadable.isLoaded(users), [users, chartSeries]);
 
   useEffect(() => {
     fetchResourceAllocationAggregated();
