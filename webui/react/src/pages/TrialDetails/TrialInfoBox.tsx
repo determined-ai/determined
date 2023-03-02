@@ -90,12 +90,14 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
         )}
         {bestCheckpoint && (
-          <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
-            Batch {bestCheckpoint.totalBatches}
+          <>
+            <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
+              Batch {bestCheckpoint.totalBatches}
+            </OverviewStats>
             {modalCheckpointContextHolder}
             {modalCheckpointRegisterContextHolder}
             {modalModelCreateContextHolder}
-          </OverviewStats>
+          </>
         )}
       </Card.Group>
     </Section>
