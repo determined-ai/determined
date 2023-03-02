@@ -44,8 +44,8 @@ After completing the steps in this guide, you will be able to do the following:
 -  Access to a Determined cluster. If you have not yet installed Determined, refer to the
    :ref:`installation instructions <install-cluster>`.
 
--  The Determined CLI should be installed on your local machine. For installation instructions, see
-   :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined
+-  The Determined CLI should be installed on your local machine. For installation instructions, visit
+   :ref:`Commands and Shells: Installation <install-cli>`. After installing the CLI, configure it to connect to your Determined
    cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where
    Determined is running.
 
