@@ -100,7 +100,6 @@ class TrialController(metaclass=abc.ABCMeta):
     def supports_mixed_precision(cls: Type["TrialController"]) -> bool:
         return False
 
-
     def close(self) -> None:
         self.context.close()
 

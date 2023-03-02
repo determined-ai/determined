@@ -2,7 +2,7 @@ import contextlib
 import importlib.util
 import json
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
+from typing import Any, Dict, Generator, Iterator, List, Optional, Set, Type, Union, cast
 
 import deepspeed
 import torch
@@ -113,7 +113,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._manual_grad_accumulation = False
 
         self._check_experiment_config_optimizations()
-        
+
         self._tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
 
     def _check_experiment_config_optimizations(self) -> None:
@@ -339,7 +339,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
-    
+
     @contextlib.contextmanager
     def get_tensorboard_writer(self) -> Generator[tensorboard.MetricWriter, None, None]:
         """
@@ -356,11 +356,9 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
             self._tbd_writer = TorchWriter()
 
-        try:
-            yield self._tbd_writer
-             
+        yield self._tbd_writer
+
     def maybe_reset_tbd_writer(self) -> None:
         # add reset writer only if one exists
-        if self._tbd_writer in not None:
+        if self._tbd_writer is not None:
             self._tbd_writer.reset()
-        

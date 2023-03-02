@@ -20,7 +20,7 @@ from torch import distributed as dist
 import determined as det
 from determined import core, profiler, pytorch, tensorboard, util
 from determined.horovod import hvd
-from determined.tensorboard.metric_writers import util
+from determined.tensorboard.metric_writers.util import is_numerical_scalar
 
 # Apex is included only for GPU trials.
 try:
@@ -270,7 +270,6 @@ class _PyTorchTrialController:
             assert (
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training."
-
 
     @classmethod
     def pre_execute_hook(
@@ -786,7 +785,7 @@ class _PyTorchTrialController:
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = val_metrics[self.searcher_metric_name]
-        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
+        if not is_numerical_scalar(searcher_metric):
             raise RuntimeError(
                 f"Searcher validation metric '{self.searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}."
@@ -891,21 +890,20 @@ class _PyTorchTrialController:
                 f"train_batch() must return a dictionary mapping string names to Tensor metrics, "
                 f"got {type(training_metrics).__name__}"
             )
-            
         return training_metrics
 
     def _log_tb_metrics(self,
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
-        is_val: Optional[bool] = False
+        is_val: Optional[bool] = False,
     ) -> None:
-    
+
         if is_val:
             logging.debug("Write validation metrics for TensorBoard")
         else:
             logging.debug("Write training metrics for TensorBoard")
-            
+
         metrics_seen = set()
 
         with self.context.get_tensorboard_writer() as writer:
@@ -914,17 +912,18 @@ class _PyTorchTrialController:
                 for batch_idx, batch in enumerate(batch_metrics):
                     batches_seen = steps_completed - len(batch_metrics) + batch_idx
                     for name, value in batch.items():
-                        if util.is_numerical_scalar(value):
+                        if is_numerical_scalar(value):
                             writer.add_scalar("Determined/" + name, value, batches_seen)
                         metrics_seen.add(name)
 
-            # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
+            # Log avg metrics which were calculated by a
+            # custom reducer and are not in batch metrics.
             for name, value in metrics.items():
                 if name in metrics_seen:
                     continue
                 if is_val and not name.startswith("val"):
                     name = "val_" + name
-                if util.is_numerical_scalar(value):
+                if is_numerical_scalar(value):
                     writer.add_scalar("Determined/" + name, value, batches_seen)
 
     @torch.no_grad()  # type: ignore
@@ -1055,11 +1054,7 @@ class _PyTorchTrialController:
 
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
-            
-        if self.is_chief:
-            # log tb_metrics if chief process
-            self._log_tb_metrics(self.state.batches_trained, metrics, is_val=True)
-            
+
         # reset all writers
         self.context.maybe_reset_tbd_writer()
 
