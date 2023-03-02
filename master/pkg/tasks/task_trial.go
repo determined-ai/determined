@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
@@ -33,15 +34,7 @@ type TrialSpec struct {
 func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	// TODO: remove this, but without breaking rendezvous api.
-	ports["trial"] = 1734
-	env.SetPorts(ports)
-	res.Environment = env
+	res.Environment = s.MakeEnvPorts()
 
 	res.ResourcesConfig = s.ExperimentConfig.Resources()
 	res.SlurmConfig = s.ExperimentConfig.SlurmConfig()
@@ -153,4 +146,52 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res.TaskType = model.TaskTypeTrial
 
 	return res
+}
+
+// MakeEnvPorts fills in `Environment.Ports` i.e. exposed ports for container config.
+func (s *TrialSpec) MakeEnvPorts() expconf.EnvironmentConfigV0 {
+	ppc := s.ProxyPorts()
+	ports := s.ExperimentConfig.Environment().Ports()
+	if ports == nil {
+		ports = map[string]int{}
+	}
+
+	for _, pp := range ppc {
+		port := pp.ProxyPort()
+		ports[strconv.Itoa(port)] = port
+	}
+
+	// TODO: remove this, but without breaking rendezvous api.
+	ports["trial"] = 1734
+
+	env := s.ExperimentConfig.Environment()
+	env.SetPorts(ports)
+
+	return env
+}
+
+// TrialSpecProxyPorts combines user-defined and system proxy configs.
+// This static function is public because trial actor builds `TrialSpec` instances late.
+func TrialSpecProxyPorts(
+	taskSpec *TaskSpec,
+	expConfig expconf.ExperimentConfigV0,
+) expconf.ProxyPortsConfig {
+	env := expConfig.Environment()
+	epp := schemas.WithDefaults(taskSpec.ExtraProxyPorts)
+	out := make(expconf.ProxyPortsConfig, 0, len(epp)+len(env.ProxyPorts()))
+
+	for _, pp := range epp {
+		out = append(out, pp)
+	}
+
+	for _, pp := range env.ProxyPorts() {
+		out = append(out, pp)
+	}
+
+	return out
+}
+
+// ProxyPorts combines user-defined and system proxy configs.
+func (s *TrialSpec) ProxyPorts() expconf.ProxyPortsConfig {
+	return TrialSpecProxyPorts(&s.Base, s.ExperimentConfig)
 }

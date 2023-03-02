@@ -17,3 +17,4 @@ kubernetes
 # when pytest executes e2e_tests.
 numpy>=1.20
 h5py>=3
+ray[default]

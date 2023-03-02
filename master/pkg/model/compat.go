@@ -92,13 +92,34 @@ func (r RuntimeItem) ToExpconf() expconf.EnvironmentImageMap {
 }
 
 // ToExpconf translates old model objects into an expconf object.
+func (p ProxyPort) ToExpconf() expconf.ProxyPort {
+	return schemas.WithDefaults(expconf.ProxyPort{
+		RawProxyPort:        p.ProxyPort,
+		RawProxyTCP:         &p.ProxyTCP,
+		RawUnauthenticated:  &p.Unauthenticated,
+		RawDefaultServiceID: &p.DefaultServiceID,
+	})
+}
+
+// ToExpconf translates old model objects into an expconf object.
+func (p ProxyPortsConfig) ToExpconf() expconf.ProxyPortsConfig {
+	var out expconf.ProxyPortsConfig
+	for _, pp := range p {
+		out = append(out, pp.ToExpconf())
+	}
+	return schemas.WithDefaults(out)
+}
+
+// ToExpconf translates old model objects into an expconf object.
 func (e Environment) ToExpconf() expconf.EnvironmentConfig {
 	image := e.Image.ToExpconf()
 	vars := e.EnvironmentVariables.ToExpconf()
+	proxyConf := e.ProxyPorts.ToExpconf()
 
 	return schemas.WithDefaults(expconf.EnvironmentConfig{
 		RawImage:                &image,
 		RawEnvironmentVariables: &vars,
+		RawProxyPorts:           &proxyConf,
 		RawPorts:                e.Ports,
 		RawRegistryAuth:         e.RegistryAuth,
 		RawForcePullImage:       ptrs.Ptr(e.ForcePullImage),

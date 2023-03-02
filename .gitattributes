@@ -4,6 +4,8 @@
 # ignore generated code for cli diffs and merges. treat as binary.
 # ignore generated code for GitHub UIs.
 proto/pkg/**/*    -diff -merge linguist-generated=true
-master/pkg/schemas/**/*    -diff -merge linguist-generated=true
+master/pkg/schemas/expconf/zgen_*    -diff -merge linguist-generated=true
 webui/react/src/services/api-ts-sdk/**/*    -diff -merge linguist-generated=true
 harness/determined/common/api/bindings.py    -diff -merge linguist-generated=true
+docs/swagger-ui/swagger-ui*js*    -diff -merge
+docs/swagger-ui/swagger-ui-main* diff merge

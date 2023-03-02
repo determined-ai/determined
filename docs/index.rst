@@ -57,6 +57,7 @@
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
+   Exposing Custom Ports <interfaces/proxy-ports>
 
 .. toctree::
    :caption: Integrations
