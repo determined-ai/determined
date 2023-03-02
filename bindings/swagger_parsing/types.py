@@ -18,6 +18,11 @@ class String(NoParse):
         return "str"
 
 
+class DateTime(NoParse):
+    def __repr__(self):
+        return "DateTime"
+
+
 class Float:
     def __repr__(self):
         return "float"
@@ -67,7 +72,7 @@ class Parameter:
                 raise AssertionError(f"bad type in path parameter {self.name}: {self.type}")
         if self.where == "query":
             underlying_typ = self.type.items if isinstance(self.type, Sequence) else self.type
-            if not isinstance(underlying_typ, (String, Int, Bool)):
+            if not isinstance(underlying_typ, (String, Int, Bool, DateTime)):
                 if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
                     raise AssertionError(f"bad type in query parameter {self.name}: {self.type}")
 
@@ -113,6 +118,7 @@ class Function:
     streaming: bool
     tags: typing.Set[str]
     summary: str
+    needs_auth: bool
 
     def __repr__(self) -> str:
         out = (
@@ -127,7 +133,7 @@ class Function:
         return out
 
 
-TypeAnno = typing.Union[Sequence, Dict, Float, Ref, Any, String, Int, Bool]
+TypeAnno = typing.Union[Sequence, Dict, Float, Ref, Any, String, Int, Bool, DateTime]
 TypeDef = typing.Union[Class, Enum]
 
 TypeDefs = typing.Dict[str, typing.Optional[TypeDef]]

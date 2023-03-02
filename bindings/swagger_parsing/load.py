@@ -3,6 +3,7 @@ import sys
 import typing
 from dataclasses import dataclass
 from .types import (
+    DateTime,
     TypeDefs,
     Function,
     TypeAnno,
@@ -57,6 +58,8 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     assert "type" in schema, (path, schema)
 
     if schema["type"] == "string":
+        if schema.get("format") == "date-time":
+            return DateTime()
         return String()
 
     if schema["type"] == "integer":
@@ -136,7 +139,8 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
                 continue
             else:
                 # empty responses or empty requests... we don't care.
-                defs[name] = None
+                description = schema.get("description")
+                defs[name] = Class(name, {}, description)
                 continue
         raise ValueError(f"unhandled schema: {schema} @ {path}")
     return defs
@@ -241,7 +245,10 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             path = path.replace(".", "_")
             tags = set(spec["tags"])
             summary = spec["summary"]
-            op = Function(name, method, path, params, responses, streaming, tags, summary)
+            needs_auth = "security" not in spec
+            op = Function(
+                name, method, path, params, responses, streaming, tags, summary, needs_auth
+            )
             ops[name] = op
     return ops
 

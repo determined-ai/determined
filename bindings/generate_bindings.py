@@ -17,7 +17,7 @@ head = itemgetter(0)
 def annotation(anno: swagger_types.TypeAnno, prequoted=False) -> Code:
     if isinstance(anno, swagger_types.Any):
         return "typing.Any"
-    if isinstance(anno, swagger_types.String):
+    if isinstance(anno, (swagger_types.String, swagger_types.DateTime)):
         return "str"
     if isinstance(anno, swagger_types.Float):
         return "float"
@@ -26,7 +26,9 @@ def annotation(anno: swagger_types.TypeAnno, prequoted=False) -> Code:
     if isinstance(anno, swagger_types.Bool):
         return "bool"
     if isinstance(anno, swagger_types.Ref):
-        if not anno.defn:
+        if anno.defn is None or (
+            isinstance(anno.defn, swagger_types.Class) and not anno.defn.params
+        ):
             return "None"
         out = anno.name
         if not prequoted:
@@ -209,14 +211,18 @@ def gen_function(anno: swagger_types.Function) -> Code:
     out += ["    )"]
     for expect, returntype in anno.responses.items():
         out += [f"    if _resp.status_code == {expect}:"]
-        is_none = isinstance(returntype, swagger_types.Ref) and returntype.defn is None
+        is_none = isinstance(returntype, swagger_types.Ref) and (
+            returntype.defn is None
+            or isinstance(returntype.defn, swagger_types.Class)
+            and not returntype.defn.params
+        )
         if not anno.streaming:
             if is_none:
                 out += ["        return"]
             else:
                 out += [f'        return {load(returntype, "_resp.json()")}']
         else:
-            assert not is_none, "unable to stream empty result class: {self}"
+            assert not is_none, "unable to stream empty result class: {anno}"
             # Too many quotes to do bit inline:
             yieldable = load(returntype, '_j["result"]')
             out += [
@@ -395,7 +401,7 @@ class APIHttpStreamError(APIHttpError):
     out = [prefix]
 
     for _, defn in sorted(swagger.defs.items(), key=head):
-        if defn is None:
+        if defn is None or isinstance(defn, swagger_types.Class) and not defn.params:
             continue
         out += [gen_def(defn)]
         out += [""]
