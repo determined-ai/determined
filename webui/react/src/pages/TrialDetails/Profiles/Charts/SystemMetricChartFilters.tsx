@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import Select, { Option } from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { UpdateSettings } from 'hooks/useSettings';
 
 import { AvailableSeriesType } from '../types';
