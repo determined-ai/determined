@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -30,7 +30,7 @@ import {
   selectIsAuthenticated,
 } from 'stores/auth';
 import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
@@ -44,7 +44,7 @@ const AppView: React.FC = () => {
 
   const isAuthenticated = useObservable(selectIsAuthenticated);
   const auth = useObservable(authObservable);
-  const loadableUser = useCurrentUser();
+  const loadableUser = usersStore.getCurrentUser();
   const infoLoadable = useDeterminedInfo();
   const authChecked = useObservable(observeAuthChecked);
   const info = Loadable.getOrElse(initInfo, infoLoadable);
@@ -59,8 +59,14 @@ const AppView: React.FC = () => {
     });
   }, [infoLoadable]);
 
-  const fetchUsers = useFetchUsers(canceler);
-  const fetchCurrentUser = useEnsureCurrentUserFetched(canceler);
+  const fetchUsers = useCallback(
+    () => usersStore.ensureUsersFetched(undefined, canceler),
+    [canceler],
+  );
+  const fetchCurrentUser = useCallback(
+    () => usersStore.ensureCurrentUserFetched(canceler),
+    [canceler],
+  );
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
