@@ -973,7 +973,10 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         try:
             yield self._tbd_writer
-        finally:
+            
+    def maybe_reset_tbd_writer(self) -> None:
+        # add reset writer only if one exists
+        if self._tbd_writer in not None:
             self._tbd_writer.reset()
 
     class _PyTorchDistributedDataParallel(

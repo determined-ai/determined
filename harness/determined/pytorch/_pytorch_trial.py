@@ -20,6 +20,7 @@ from torch import distributed as dist
 import determined as det
 from determined import core, profiler, pytorch, tensorboard, util
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers import util
 
 # Apex is included only for GPU trials.
 try:
@@ -270,16 +271,6 @@ class _PyTorchTrialController:
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training."
 
-        self.metric_writer = self._create_metric_writer()
-
-    @classmethod
-    def _create_metric_writer(
-        cls: Type["_PyTorchTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        from determined.pytorch.tensorboard_writer import TorchWriter
-
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -338,17 +329,20 @@ class _PyTorchTrialController:
             )
 
         if not self.is_chief:
+            self.context.maybe_reset_tbd_writer()
             return {}
 
         # Only report on the chief worker
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
 
-        self.metric_writer.on_train_step_end(
-            self.state.batches_trained,
+        self._log_tb_metrics(
             avg_metrics,
             batch_metrics,
         )
+
+        self.context.maybe_reset_tbd_writer()
+
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
             metrics=avg_metrics,
@@ -897,8 +891,41 @@ class _PyTorchTrialController:
                 f"train_batch() must return a dictionary mapping string names to Tensor metrics, "
                 f"got {type(training_metrics).__name__}"
             )
-
+            
         return training_metrics
+
+    def _log_tb_metrics(self,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        is_val: Optional[bool] = False
+    ) -> None:
+    
+        if is_val:
+            logging.debug("Write validation metrics for TensorBoard")
+        else:
+            logging.debug("Write training metrics for TensorBoard")
+            
+        metrics_seen = set()
+
+        with self.context.get_tensorboard_writer() as writer:
+            # Log all batch metrics.
+            if batch_metrics:
+                for batch_idx, batch in enumerate(batch_metrics):
+                    batches_seen = steps_completed - len(batch_metrics) + batch_idx
+                    for name, value in batch.items():
+                        if util.is_numerical_scalar(value):
+                            writer.add_scalar("Determined/" + name, value, batches_seen)
+                        metrics_seen.add(name)
+
+            # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
+            for name, value in metrics.items():
+                if name in metrics_seen:
+                    continue
+                if is_val and not name.startswith("val"):
+                    name = "val_" + name
+                if util.is_numerical_scalar(value):
+                    writer.add_scalar("Determined/" + name, value, batches_seen)
 
     @torch.no_grad()  # type: ignore
     def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
@@ -1028,6 +1055,13 @@ class _PyTorchTrialController:
 
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
+            
+        if self.is_chief:
+            # log tb_metrics if chief process
+            self._log_tb_metrics(self.state.batches_trained, metrics, is_val=True)
+            
+        # reset all writers
+        self.context.maybe_reset_tbd_writer()
 
         self.state.last_val = self.state.batches_trained
 
@@ -1041,9 +1075,10 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            self.metric_writer.on_validation_step_end(self.state.batches_trained, metrics)
+            self._log_tb_metrics(self.state.batches_trained, metrics, is_val=True)
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
+        self.context.maybe_reset_tbd_writer()
         searcher_metric = None
 
         # Report searcher status.
