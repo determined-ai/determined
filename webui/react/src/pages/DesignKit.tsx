@@ -184,15 +184,6 @@ const SelectSection: React.FC = () => {
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
-  const placementOptions: [
-    'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight' | undefined,
-    string,
-  ][] = [
-    ['bottomLeft', 'Bottom Left'],
-    ['bottomRight', 'Bottom Right'],
-    ['topLeft', 'Top Left'],
-    ['topRight', 'Top Right'],
-  ];
 
   return (
     <ComponentSection id="Select" title="Select">
@@ -252,19 +243,6 @@ const SelectSection: React.FC = () => {
             { label: 'Option 3', value: 3 },
           ]}
         />
-        <strong>Select with placement</strong>
-        {placementOptions.map((placement) => (
-          <Select
-            key={placement[1]}
-            label={placement[1]}
-            options={[
-              { label: 'Option 1', value: 1 },
-              { label: 'Option 2', value: 2 },
-              { label: 'Option 3', value: 3 },
-            ]}
-            placement={placement[0]}
-          />
-        ))}
         <strong>Select with label</strong>
         <Select
           label="Select Label"
@@ -342,7 +320,7 @@ const SelectSection: React.FC = () => {
           ]}
           placeholder="Case-sensitive Search"
         />
-        <strong>Select with custom sorted search and custom filter results</strong>
+        <strong>Select with sorted search</strong>
         <Select
           disableTags
           filterOption={(input, option) =>
@@ -361,33 +339,6 @@ const SelectSection: React.FC = () => {
           placeholder="Search"
           value={sortedSelectValues}
           onChange={(value) => setSortedSelectValues(value)}
-        />
-        <strong>Multiple Select with custom max tags and placeholder</strong>
-        <Select
-          disableTags
-          maxTagPlaceholder={'Value(s) Selected'}
-          mode="multiple"
-          options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
-          ]}
-          placeholder={'No Value Selected'}
-        />
-        <strong>Multiple Select with custom max tags, tag values, and placeholder</strong>
-        <Select
-          disableTags
-          maxTagCount={2}
-          maxTagPlaceholder={'+ more'}
-          mode="multiple"
-          options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
-            { label: 'Option 4', value: 4 },
-            { label: 'Option 5', value: 5 },
-          ]}
-          placeholder={'No Value Selected'}
         />
         <strong>Clearable Select</strong>
         <Select

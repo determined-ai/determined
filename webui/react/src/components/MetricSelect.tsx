@@ -143,29 +143,11 @@ const MetricSelect: React.FC<Props> = ({
     );
   }, [totalNumMetrics, visibleMetrics]);
 
-  const [maxTagCount, selectorPlaceholder] = useMemo((): [number, string] => {
-    // This should never happen, but fall back to inoffensive empty placeholder
-    if (metricValues === undefined) {
-      return [0, ''];
-    }
-    if (metricValues.length === 0) {
-      // If we set maxTagCount=0 in this case, this placeholder will not be displayed.
-      return [-1, 'None selected'];
-    } else if (metricValues.length === totalNumMetrics) {
-      // If we set maxTagCount=-1 in these cases, it will display tags instead of the placeholder.
-      return [0, `All ${totalNumMetrics} selected`];
-    } else {
-      return [0, `${metricValues.length} of ${totalNumMetrics} selected`];
-    }
-  }, [metricValues, totalNumMetrics]);
-
   return (
     <Select
       disableTags
       filterOption={handleFiltering}
       label={label}
-      maxTagCount={maxTagCount}
-      maxTagPlaceholder={selectorPlaceholder}
       mode={multiple ? 'multiple' : undefined}
       ref={selectRef}
       value={metricValues}
