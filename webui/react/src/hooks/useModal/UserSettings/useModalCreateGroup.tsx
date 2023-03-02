@@ -129,7 +129,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {Loadable.isLoaded(roles) // This is ok as the Spinner has conditionalRender active
+              {Loadable.isLoaded(roles)
                 ? roles.data.map((r) => (
                   <Select.Option
                     disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}

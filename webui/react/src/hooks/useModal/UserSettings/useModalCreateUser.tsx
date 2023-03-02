@@ -105,7 +105,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.isLoaded(knownRoles) // This is ok as the Spinner has conditionalRender active
+              {Loadable.isLoaded(knownRoles)
                 ? knownRoles.data.map((r: UserRole) => (
                   <Select.Option
                     disabled={
