@@ -2172,7 +2172,7 @@ workflows:
       - lint-secrets
 
 
-      - set-slack-user-id      
+      #- set-slack-user-id      
       - slack/status:
           only_for_branches: master          
           fail_only: true
