@@ -11,7 +11,7 @@ sphinx==4.2.0
 myst_parser
 
 # Theme
-furo==2021.10.9
+furo==2022.12.7
 
 # live.py
 watchdog
