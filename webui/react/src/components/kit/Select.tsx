@@ -12,7 +12,7 @@ const { OptGroup, Option } = AntdSelect;
 export { Option, SelectValue };
 
 type Options = DefaultOptionType | DefaultOptionType[];
-export interface Props<T = SelectValue> {
+export interface SelectProps<T extends SelectValue> {
   allowClear?: boolean;
   defaultValue?: T;
   disableTags?: boolean;
@@ -55,7 +55,7 @@ const countOptions = (children: React.ReactNode, options?: Options): number => {
   return count;
 };
 
-const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Select(
+const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(function Select(
   {
     allowClear,
     defaultValue,
@@ -76,7 +76,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
     placeholder,
     value,
     children,
-  }: React.PropsWithChildren<Props>,
+  }: React.PropsWithChildren<SelectProps>,
   ref?: React.Ref<RefSelectProps>,
 ) {
   const [isOpen, setIsOpen] = useState(false);
