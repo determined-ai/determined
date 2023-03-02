@@ -3,6 +3,6 @@ import warnings
 from determined.common import *  # noqa
 from .__version__ import __version__
 
-warnings.warn(
+warnings.warn(  # noqa: B028
     "determined_common package is deprecated, please use determined.common instead.", FutureWarning
 )
