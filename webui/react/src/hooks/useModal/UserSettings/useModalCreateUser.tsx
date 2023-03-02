@@ -107,15 +107,15 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               showSearch>
               {Loadable.isLoaded(knownRoles)
                 ? knownRoles.data.map((r: UserRole) => (
-                    <Select.Option
+                  <Select.Option
                       disabled={
                         roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
                         roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
                       }
                       key={r.id}
                       value={r.id}>
-                      {r.name}
-                    </Select.Option>
+                    {r.name}
+                  </Select.Option>
                   ))
                 : undefined}
             </Select>
