@@ -16,7 +16,7 @@ const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never
 const setup = () => {
   const handleOpen = jest.fn();
   const view = render(
-    <Select label={LABEL} placeholder={PLACEHOLDER} showSearch>
+    <Select label={LABEL} placeholder={PLACEHOLDER}>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (
         <Option key={index} title={OPTION_TITLE} value={String.fromCharCode(65 + index)}>
           {'Option ' + String.fromCharCode(65 + index)}

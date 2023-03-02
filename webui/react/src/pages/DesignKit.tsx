@@ -56,7 +56,6 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
-  Dropdowns: 'Comboboxes & Dropdowns',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -67,6 +66,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Select: 'Select',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
   UserBadge: 'UserBadge',
@@ -187,10 +187,10 @@ const SelectSection: React.FC = () => {
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
   return (
-    <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
+    <ComponentSection id="Select" title="Select">
       <AntDCard>
         <p>
-          Components (<code>{'<Select>'}</code>) combine a text field and a dropdown giving people a
+          A Select (<code>{'<Select>'}</code>) combines a text field and a dropdown giving people a
           way to select an option from a list or enter their own choice.
         </p>
       </AntDCard>
@@ -198,8 +198,8 @@ const SelectSection: React.FC = () => {
         <strong>Layout</strong>
         <ul>
           <li>
-            Use a combo box when there are multiple choices that can be collapsed under one title,
-            when the list of items is long, or when space is constrained.
+            Use a select when there are multiple choices that can be collapsed under one title, when
+            the list of items is long, or when space is constrained.
           </li>
         </ul>
         <strong>Content</strong>
@@ -210,18 +210,18 @@ const SelectSection: React.FC = () => {
         <strong>Accessibility</strong>
         <ul>
           <li>
-            ComboBox dropdowns render in their own layer by default to ensure they are not clipped
-            by containers with overflow: hidden or overflow: scroll. This causes extra difficulty
-            for people who use screen readers, so we recommend rendering the ComboBox options
-            dropdown inline unless they are in overflow containers.
+            Select dropdowns render in their own layer by default to ensure they are not clipped by
+            containers with overflow: hidden or overflow: scroll. This causes extra difficulty for
+            people who use screen readers, so we recommend rendering the ComboBox options dropdown
+            inline unless they are in overflow containers.
           </li>
         </ul>
         <strong>Truncation</strong>
         <ul>
           <li>
-            By default, the ComboBox truncates option text instead of wrapping to a new line.
-            Because this can lose meaningful information, it is recommended to adjust styles to wrap
-            the option text.
+            By default, the Select truncates option text instead of wrapping to a new line. Because
+            this can lose meaningful information, it is recommended to adjust styles to wrap the
+            option text.
           </li>
         </ul>
       </AntDCard>
@@ -1414,7 +1414,7 @@ const FormSection: React.FC = () => {
           <br />
           <strong>
             Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>
+            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
               Dropdown
             </Link>{' '}
             variations
@@ -1577,7 +1577,6 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  Dropdowns: <SelectSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
@@ -1588,6 +1587,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Select: <SelectSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
   UserBadge: <UserBadgeSection />,

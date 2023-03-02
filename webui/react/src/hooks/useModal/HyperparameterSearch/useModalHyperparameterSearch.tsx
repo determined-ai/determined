@@ -8,7 +8,7 @@ import {
   Space,
   Typography,
 } from 'antd';
-import { RefSelectProps, SelectValue } from 'antd/lib/select';
+import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -17,7 +17,7 @@ import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
-import Select from 'components/kit/Select';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
@@ -474,9 +474,9 @@ const useModalHyperparameterSearch = ({
             rules={[{ required: true }]}>
             <Select onChange={handleSelectPool}>
               {resourcePools.map((pool) => (
-                <AntdSelect.Option key={pool.name} value={pool.name}>
+                <Option key={pool.name} value={pool.name}>
                   {pool.name}
-                </AntdSelect.Option>
+                </Option>
               ))}
             </Select>
           </Form.Item>
@@ -497,10 +497,10 @@ const useModalHyperparameterSearch = ({
             name="length_units"
             rules={[{ required: true }]}>
             <Select>
-              <AntdSelect.Option value="records">records</AntdSelect.Option>
-              <AntdSelect.Option value="batches">batches</AntdSelect.Option>
+              <Option value="records">records</Option>
+              <Option value="batches">batches</Option>
               {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
-                <AntdSelect.Option value="epochs">epochs</AntdSelect.Option>
+                <Option value="epochs">epochs</Option>
               )}
             </Select>
           </Form.Item>
@@ -531,9 +531,9 @@ const useModalHyperparameterSearch = ({
             name="mode"
             rules={[{ required: true }]}>
             <Select>
-              <AntdSelect.Option value="aggressive">Aggressive</AntdSelect.Option>
-              <AntdSelect.Option value="standard">Standard</AntdSelect.Option>
-              <AntdSelect.Option value="conservative">Conservative</AntdSelect.Option>
+              <Option value="aggressive">Aggressive</Option>
+              <Option value="standard">Standard</Option>
+              <Option value="conservative">Conservative</Option>
             </Select>
           </Form.Item>
         )}
@@ -741,13 +741,13 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
           onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
             (type) => (
-              <AntdSelect.Option
+              <Option
                 disabled={HyperparameterType[type] === HyperparameterType.Categorical}
                 key={HyperparameterType[type]}
                 value={HyperparameterType[type]}>
                 {type}
                 {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
-              </AntdSelect.Option>
+              </Option>
             ),
           )}
         </AntdSelect>

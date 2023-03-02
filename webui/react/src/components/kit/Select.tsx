@@ -34,7 +34,6 @@ export interface Props<T = SelectValue> {
   placeholder?: string;
   placement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
   ref?: React.Ref<RefSelectProps>;
-  showSearch?: boolean;
   value?: T;
 }
 
@@ -79,7 +78,6 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
     options,
     placeholder,
     placement,
-    showSearch,
     value,
     maxTagCount,
     maxTagPlaceholder,
@@ -137,20 +135,17 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
         allowClear={allowClear}
         defaultValue={defaultValue}
         disabled={disabled}
-        dropdownMatchSelectWidth={250}
-        filterOption={
-          enableSearchFilter || filterOption ? (filterOption ? filterOption : handleFilter) : true
-        }
+        filterOption={filterOption ?? (enableSearchFilter ? handleFilter : true)}
         filterSort={filterSort}
         id={id}
         maxTagCount={maxTagCountValue}
         maxTagPlaceholder={maxTagPlaceholderValue}
         mode={mode}
-        options={options ? options : undefined}
+        options={options}
         placeholder={placeholder}
         placement={placement}
         ref={ref}
-        showSearch={!!onSearch || !!filterOption || showSearch}
+        showSearch={!!onSearch || !!filterOption || enableSearchFilter}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}
         onBlur={onBlur}

@@ -70,9 +70,6 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
         onClose?.();
       };
 
-      const handleFilter = (a: LabeledValue, b: LabeledValue) =>
-        (a?.label ?? '') < (b?.label ?? '') ? 1 : -1;
-
       return {
         closable: true,
         content: (
@@ -85,7 +82,9 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                filterSort={handleFilter}
+                filterSort={(a: LabeledValue, b: LabeledValue) =>
+                  (a?.label ?? '') < (b?.label ?? '') ? 1 : -1
+                }
                 options={workspaces
                   .filter(
                     (ws) =>
