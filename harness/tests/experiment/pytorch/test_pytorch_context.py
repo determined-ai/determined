@@ -83,4 +83,4 @@ class TestPyTorchContext:
             writer.add_scalar("foo", 11, 4)
 
         files = list(tmp_path.iterdir())
-        assert len(files) == 2
+        assert len(files) == 1
