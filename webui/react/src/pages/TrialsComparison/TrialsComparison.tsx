@@ -31,7 +31,9 @@ interface Props {
 }
 
 const TrialsComparison: React.FC<Props> = ({ projectId }) => {
-  const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
+  const tableSettingsHook = useSettings<InteractiveTableSettings>(
+    trialsTableSettingsConfig(projectId),
+  );
 
   const collections = useTrialCollections(projectId, tableSettingsHook);
 

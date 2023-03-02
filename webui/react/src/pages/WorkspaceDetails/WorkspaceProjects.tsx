@@ -40,7 +40,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceProjects.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   ProjectColumnName,
   WhoseProjects,
@@ -71,7 +72,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(
+    configForWorkspace(workspace.id),
+  );
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;
