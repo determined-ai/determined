@@ -72,13 +72,13 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
     (
       e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
       previousValue?: string,
+      tagID?: number,
     ) => {
       const newTag = (e.target as HTMLInputElement).value.trim();
       const oldTag = previousValue?.trim();
       if (newTag) {
         if (oldTag && newTag !== oldTag) {
-          const id = parseInt(e.currentTarget.getAttribute('data-id') || '');
-          onAction?.(TagAction.Update, newTag, id);
+          onAction?.(TagAction.Update, newTag, tagID);
         } else {
           onAction?.(TagAction.Add, newTag);
         }
@@ -132,15 +132,14 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
               <Input
                 aria-label={ARIA_LABEL_INPUT}
                 className={css.tagInput}
-                data-id={index}
                 defaultValue={tag}
                 key={tag}
                 ref={editInputRef}
                 size="small"
                 style={{ width: inputWidth }}
                 width={inputWidth}
-                onBlur={(e) => handleInputConfirm(e, tag)}
-                onPressEnter={(e) => handleInputConfirm(e, tag)}
+                onBlur={(e) => handleInputConfirm(e, tag, index)}
+                onPressEnter={(e) => handleInputConfirm(e, tag, index)}
               />
             );
           }
@@ -181,6 +180,7 @@ const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onActio
 
 export default Tags;
 
+// Eventually we will deprecate API calls that take the updated list of tags, and replace them with API calls that take only the updated tag. At that point, the tagsActionHelper could be removed or revised.
 export const tagsActionHelper = (
   tags: string[],
   callbackFn: (tags: string[]) => void,

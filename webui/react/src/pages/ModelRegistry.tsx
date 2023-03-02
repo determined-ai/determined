@@ -14,7 +14,7 @@ import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
 import Toggle from 'components/kit/Toggle';
-import TagList, { tagsActionHelper } from 'components/kit/Tags';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -455,10 +455,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels ?? []} />,
+            tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || !canModifyModel({ model: record })}
               tags={record.labels ?? []}

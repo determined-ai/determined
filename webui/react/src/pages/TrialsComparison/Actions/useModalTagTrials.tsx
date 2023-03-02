@@ -1,7 +1,7 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import TagList, { TagAction } from 'components/kit/Tags';
+import Tags, { TagAction } from 'components/kit/Tags';
 import {
   getDescriptionText,
   isTrialsCollection,
@@ -44,7 +44,7 @@ const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         Tags
-        <TagList ghost={false} tags={tags} onAction={onAction} />
+        <Tags ghost={false} tags={tags} onAction={onAction} />
       </div>
     );
   }, [tags, onAction]);

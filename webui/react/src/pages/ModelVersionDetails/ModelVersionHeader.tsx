@@ -7,7 +7,7 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import TagList, { tagsActionHelper } from 'components/kit/Tags';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
@@ -100,7 +100,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <TagList
+          <Tags
             disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}

@@ -12,7 +12,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Toggle from 'components/kit/Toggle';
-import TagList from 'components/kit/Tags';
+import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -406,10 +406,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels} />,
+            tooltip: <Tags disabled tags={record.labels} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || project?.archived || !canEditExperiment}
               tags={record.labels}

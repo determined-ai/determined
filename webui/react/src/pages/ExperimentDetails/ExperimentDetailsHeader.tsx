@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
 import InlineEditor from 'components/InlineEditor';
-import TagList from 'components/kit/Tags';
+import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
@@ -501,7 +501,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {maxRestarts ? `/${maxRestarts}` : ''}
               </span>
             </div>
-            <TagList
+            <Tags
               disabled={disabled}
               ghost={true}
               tags={experiment.config.labels || []}

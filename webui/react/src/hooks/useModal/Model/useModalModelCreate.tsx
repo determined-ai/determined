@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
-import EditableTagList, { tagsActionHelper } from 'components/kit/Tags';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
@@ -240,7 +240,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
                 <h2>
                   Tags <span>(optional)</span>
                 </h2>
-                <EditableTagList tags={tags} onAction={tagsActionHelper(tags, handleTagsChange)} />
+                <Tags tags={tags} onAction={tagsActionHelper(tags, handleTagsChange)} />
               </div>
             </>
           )}
