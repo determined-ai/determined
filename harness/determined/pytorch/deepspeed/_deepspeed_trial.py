@@ -71,13 +71,6 @@ class DeepSpeedTrialController(det.TrialController):
         self.steps_completed = self.env.steps_completed
 
     @classmethod
-    def create_metric_writer(
-        cls: Type["DeepSpeedTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
-
-    @classmethod
     def pre_execute_hook(
         cls: Type["DeepSpeedTrialController"],
         env: det.EnvContext,
