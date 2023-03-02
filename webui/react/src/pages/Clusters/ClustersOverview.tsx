@@ -5,7 +5,6 @@ import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import Spinner from 'shared/components/Spinner';
 import { percent } from 'shared/utils/number';
 import { useClusterStore } from 'stores/cluster';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
@@ -97,11 +96,9 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallBar />
       <Section title="Resource Pools">
         <Card.Group size="medium">
-          <Spinner spinning={resourcePools === undefined}>
-            {resourcePools?.map((rp, idx) => (
-              <ResourcePoolCard key={idx} resourcePool={rp} />
-            ))}
-          </Spinner>
+          {resourcePools?.map((rp, idx) => (
+            <ResourcePoolCard key={idx} resourcePool={rp} />
+          ))}
         </Card.Group>
       </Section>
       {!!rpDetail && (

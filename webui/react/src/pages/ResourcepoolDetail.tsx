@@ -177,7 +177,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     ];
   }, [pool, poolStats, renderPoolConfig]);
 
-  if (!pool || resourcePools === undefined) return <Page className={css.poolDetailPage} loading />;
+  if (!pool || resourcePools === undefined) return <div />;
 
   return (
     <Page className={css.poolDetailPage}>
