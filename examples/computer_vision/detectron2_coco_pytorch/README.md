@@ -28,5 +28,5 @@ configuration file in place of `const.yaml`.
 The default configurations are based on [the original Detectron benchmarks](https://github.com/facebookresearch/detectron2/blob/v0.6/configs/Detectron1-Comparisons/faster_rcnn_R_50_FPN_noaug_1x.yaml). At the end of training, the boxAP and and segmAP should be over 34.00.
 
 ## Environment
-We provide a Docker image with CUDA 10.1, PyTorch 1.10, other Determined dependencies, and Detectron2 0.6 - it is partially based on the [Detectron2 Dockerfile](https://github.com/facebookresearch/detectron2/blob/v0.6/docker/Dockerfile), but notably with OpenCV omitted.
+We provide a [Docker image](https://hub.docker.com/r/determinedai/example-detectron2) with CUDA 10.1, PyTorch 1.10, other Determined dependencies, and Detectron2 0.6 - it is partially based on the [Detectron2 Dockerfile](https://github.com/facebookresearch/detectron2/blob/v0.6/docker/Dockerfile), but notably with OpenCV omitted.
 
