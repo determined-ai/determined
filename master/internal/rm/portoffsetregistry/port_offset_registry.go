@@ -27,7 +27,7 @@ func NewPortOffsetRegistry() {
 	portOffsetRegistryTree = bst.New(root)
 }
 
-func GetPortOffsetRegistry() (int, error) {
+func GetPortOffset() (int, error) {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()
 	// Map implementation
@@ -58,7 +58,12 @@ func GetPortOffsetRegistry() (int, error) {
 	return portOffset, nil
 }
 
-func ReleasePortOffsetRegistry(portOffset bst.Int) bool {
+func RestorePortOffset(portOffset int) bool {
+	restoreNode := bst.NewNode(bst.Int(portOffset))
+	portOffsetRegistryTree.Insert(restoreNode)
+}
+
+func ReleasePortOffset(portOffset bst.Int) bool {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()
 

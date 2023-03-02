@@ -78,8 +78,9 @@ type (
 		// active all gather state
 		allGather *allGather
 
-		logCtx   detLogger.Context
-		restored bool
+		logCtx                       detLogger.Context
+		restored                     bool
+		offsetRestoredToPortRegistry bool
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -216,11 +217,14 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case sproto.ChangeRP:
 		a.Terminate(ctx, "allocation resource pool changed", false)
 	case actor.PostStop:
-		// restore logic: what states can the allocation actor be in for synchronization.
 		a.Cleanup(ctx)
-		// release this port only if it's been set.
-		// This is to avoid the race condition of a failed restored allocation releasing another allocation's port.
-		portoffsetregistry.ReleasePortOffsetRegistry(bst.Int(a.model.PortOffset))
+		// if this is a restore allocation req and a.restored is set
+		// then the port offset has been added to the port registry successfully.
+		// This is to avoid the race condition of a failed restored
+		// allocation releasing another allocation's port.
+		if a.req.Restore == a.restored {
+			portoffsetregistry.ReleasePortOffset(bst.Int(a.model.PortOffset))
+		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
 		a.sendEvent(ctx, msg.ToEvent())
@@ -468,14 +472,25 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		a.idleTimeoutWatcher.PreStart(ctx)
 	}
 
-	if !a.req.Restore {
+	if a.req.Restore {
+		portoffsetregistry.RestorePortOffset(a.model.PortOffset)
+
+		if a.getModelState() == model.AllocationStateRunning {
+			// Restore proxies.
+			for _, r := range a.resources {
+				if a.req.ProxyPort != nil && r.Started != nil && r.Started.Addresses != nil {
+					a.registerProxies(ctx, r.Started.Addresses)
+				}
+			}
+		}
+	} else {
 		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
 		if err != nil {
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
 		for cID, r := range a.resources {
-			portOffset, err := portoffsetregistry.GetPortOffsetRegistry()
+			portOffset, err := portoffsetregistry.GetPortOffset()
 			a.model.PortOffset = portOffset
 			a.db.UpdateAllocationPortOffset(a.model)
 			if err != nil {
@@ -490,18 +505,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 				return fmt.Errorf("starting resources (%v): %w", r, err)
 			}
 		}
-	} else if a.getModelState() == model.AllocationStateRunning {
-		// Restore proxies.
-		if len(a.req.ProxyPorts) > 0 {
-			for _, r := range a.resources {
-				if r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil {
-					a.registerProxies(ctx, r.Started.Addresses)
-				}
-			}
-		}
 	}
-
-	// if restore restore port just back to the port offset registry.
 
 	a.restored = a.req.Restore
 	a.resourcesStarted = true
