@@ -20,6 +20,14 @@ If `make live` fails or is killed, the browser window will crash itself so that
 you don't continue making edits and wonder why your edits aren't appearing in
 your browser.
 
+## using `rename.py`
+
+We care a lot about keeping our organic search links, so we are meticulous
+about maintaining links from old document paths to updated document paths.
+
+This is highly tedious when renaming e.g. a directory and configuring dozens of
+resulting redirects.  This is what `rename.py` automates.
+
 ## Algolia Search
 
 [Aloglia](https://www.algolia.com) search is a search-as-a-service provider.
