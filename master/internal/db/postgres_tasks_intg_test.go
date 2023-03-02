@@ -89,6 +89,8 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
 
+	// Update port offset and makes sure that it's set correctly.
+
 	// Retrieve it back and make sure the mapping is exhaustive.
 	aOut, err := db.AllocationByID(aIn.AllocationID)
 	require.NoError(t, err, "failed to retrieve allocation")

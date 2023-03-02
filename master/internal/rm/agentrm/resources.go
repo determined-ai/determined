@@ -59,8 +59,8 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
-	// Write the real DET_UNIQUE_PORT_OFFSET value now that we know which devices to use.
-	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = strconv.Itoa(tasks.UniquePortOffset(spec.Devices))
+	// DET_UNIQUE_PORT_OFFSET value is from the port offset registry.
+	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = string(rri.PortOffset)
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{

@@ -194,6 +194,16 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 	return err
 }
 
+// UpdateAllocationState stores the latest task state and readiness.
+func (db *PgDB) UpdateAllocationPortOffset(a model.Allocation) error {
+	_, err := db.sql.Exec(`
+		UPDATE allocations
+		SET port_offset=$2, 
+		WHERE allocation_id=$1
+	`, a.AllocationID, a.State, a.PortOffset)
+	return err
+}
+
 // UpdateAllocationStartTime stores the latest start time.
 func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
 	_, err := db.sql.Exec(`

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gyuho/bst"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/cluster"
@@ -15,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
+	"github.com/determined-ai/determined/master/internal/rm/portoffsetregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -214,7 +216,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case sproto.ChangeRP:
 		a.Terminate(ctx, "allocation resource pool changed", false)
 	case actor.PostStop:
+		// restore logic: what states can the allocation actor be in for synchronization.
 		a.Cleanup(ctx)
+		// only release thsi port
+		portoffsetregistry.ReleasePortOffsetRegistry(bst.Int(a.model.PortOffset))
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
 		a.sendEvent(ctx, msg.ToEvent())
@@ -469,10 +474,16 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		for cID, r := range a.resources {
+			portOffset, err := portoffsetregistry.GetPortOffsetRegistry()
+			a.model.PortOffset = portOffset
+			if err != nil {
+				return fmt.Errorf("getting port offset from the registry for an allocation.")
+			}
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
+				PortOffset:   portOffset,
 			}); err != nil {
 				return fmt.Errorf("starting resources (%v): %w", r, err)
 			}
@@ -487,6 +498,8 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			}
 		}
 	}
+
+	// if restore restore port just back to the port offset registry.
 
 	a.restored = a.req.Restore
 	a.resourcesStarted = true
