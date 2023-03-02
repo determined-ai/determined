@@ -129,16 +129,18 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {Loadable.isLoaded(roles)
-                ? roles.data.map((r) => (
-                  <Select.Option
+              {Loadable.isLoaded(roles) ? (
+                <>
+                  {roles.data.map((r) => (
+                    <Select.Option
                       disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
                       key={r.id}
                       value={r.id}>
-                    {r.name}
-                  </Select.Option>
-                  ))
-                : undefined}
+                      {r.name}
+                    </Select.Option>
+                  ))}
+                </>
+              ) : undefined}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
