@@ -218,7 +218,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		// restore logic: what states can the allocation actor be in for synchronization.
 		a.Cleanup(ctx)
-		// only release thsi port
+		// release this port only if it's been set.
+		// This is to avoid the race condition of a failed restored allocation releasing another allocation's port.
 		portoffsetregistry.ReleasePortOffsetRegistry(bst.Int(a.model.PortOffset))
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -476,6 +477,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		for cID, r := range a.resources {
 			portOffset, err := portoffsetregistry.GetPortOffsetRegistry()
 			a.model.PortOffset = portOffset
+			a.db.UpdateAllocationPortOffset(a.model)
 			if err != nil {
 				return fmt.Errorf("getting port offset from the registry for an allocation.")
 			}

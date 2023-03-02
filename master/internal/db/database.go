@@ -134,6 +134,7 @@ type DB interface {
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocation model.Allocation) error
+	UpdateAllocationPortOffset(allocation model.Allocation) error
 	UpdateAllocationStartTime(allocation model.Allocation) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
