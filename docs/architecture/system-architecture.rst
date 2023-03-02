@@ -20,6 +20,12 @@ agent has no state and only communicates with the master. Each agent is responsi
 -  Running the workloads that are requested by the master.
 -  Monitoring containers and sending information about them to the master.
 
+.. image:: /assets/images/det-ai-sys-arch-01-dark.png
+   :class: only-dark
+
+.. image:: /assets/images/det-ai-sys-arch-01-light.png
+   :class: only-light
+
 The **trial runner** runs a trial in a containerized environment. So the trial runners are expected
 to have access to the data that will be used in training. The **agents** are responsible for
 reporting the states of **trial runner** to the master.
