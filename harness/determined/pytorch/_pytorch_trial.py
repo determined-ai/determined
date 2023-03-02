@@ -924,7 +924,7 @@ class _PyTorchTrialController:
                 if is_val and not name.startswith("val"):
                     name = "val_" + name
                 if is_numerical_scalar(value):
-                    writer.add_scalar("Determined/" + name, value, batches_seen)
+                    writer.add_scalar("Determined/" + name, value, self.steps_completed)
 
     @torch.no_grad()  # type: ignore
     def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
