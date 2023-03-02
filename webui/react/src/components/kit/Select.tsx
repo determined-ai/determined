@@ -22,7 +22,7 @@ export interface Props<T = SelectValue> {
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
-  maxTagCount?: -1 | 0 | 'responsive';
+  maxTagCount?: number | 'responsive';
   maxTagPlaceholder?: string;
   mode?: 'multiple' | 'tags';
   onBlur?: () => void;
@@ -95,7 +95,7 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
   const [maxTagCountValue, maxTagPlaceholderValue] = useMemo((): [
-    -1 | 0 | undefined | 'responsive',
+    number | undefined | 'responsive',
     string,
   ] => {
     const defaultPlaceholderValue = maxTagPlaceholder ?? '';
@@ -116,7 +116,8 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
   }, []);
   const handleFilter = useCallback((search: string, option?: DefaultOptionType): boolean => {
     let label: string | null = null;
-    if (!option?.children) return false;
+
+    if (!option?.children && !option?.label) return false;
 
     if (Array.isArray(option.children)) {
       label = option.children.join(' ');
@@ -125,7 +126,6 @@ const Select: React.FC<React.PropsWithChildren<Props>> = forwardRef(function Sel
     } else if (typeof option.children === 'string') {
       label = option.children;
     }
-
     return !!label && label.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   }, []);
   return (

@@ -180,12 +180,20 @@ const ButtonsSection: React.FC = () => {
 
 const SelectSection: React.FC = () => {
   const handleFilter = (input: string, option: LabeledValue | undefined) =>
-    !!(
-      option?.label && option.label.toString().toLowerCase().includes(input.toLowerCase()) === true
-    );
+    !!(option?.label && option.label.toString().includes(input) === true);
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
+  const placementOptions: [
+    'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight' | undefined,
+    string,
+  ][] = [
+    ['bottomLeft', 'Bottom Left'],
+    ['bottomRight', 'Bottom Right'],
+    ['topLeft', 'Top Left'],
+    ['topRight', 'Top Right'],
+  ];
+
   return (
     <ComponentSection id="Select" title="Select">
       <AntDCard>
@@ -228,12 +236,52 @@ const SelectSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Default Select</strong>
         <Select
-          defaultValue={1}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+        />
+        <strong>Variations</strong>
+        <strong>Select with default value</strong>
+        <Select
+          defaultValue={2}
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Select with placement</strong>
+        {placementOptions.map((placement) => (
+          <Select
+            key={placement[1]}
+            label={placement[1]}
+            options={[
+              { label: 'Option 1', value: 1 },
+              { label: 'Option 2', value: 2 },
+              { label: 'Option 3', value: 3 },
+            ]}
+            placement={placement[0]}
+          />
+        ))}
+        <strong>Select with label</strong>
+        <Select
+          label="Select Label"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Select with placeholder</strong>
+        <Select
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select Placeholder"
         />
         <strong>Disabled Select</strong>
         <Select
@@ -241,7 +289,6 @@ const SelectSection: React.FC = () => {
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
-        <strong>Variations</strong>
         <strong>Select with search</strong>
         <Select
           filterOption={handleFilter}
@@ -252,7 +299,16 @@ const SelectSection: React.FC = () => {
           ]}
           placeholder="Search"
         />
-        <strong>Multiple Select</strong>
+        <strong>Multiple Select with tags</strong>
+        <Select
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Multiple Select with tags disabled</strong>
         <Select
           disableTags
           mode="multiple"
@@ -264,18 +320,9 @@ const SelectSection: React.FC = () => {
           value={multiSelectValues}
           onChange={(value) => setMultiSelectValues(value)}
         />
-        <strong>Multiple Select with tags</strong>
+        <strong>Select with tags and default search</strong>
         <Select
-          mode="multiple"
-          options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
-          ]}
-        />
-        <strong>Select with tags and search</strong>
-        <Select
-          filterOption={handleFilter}
+          enableSearchFilter
           mode="multiple"
           options={[
             { label: 'Option 1', value: 1 },
@@ -284,20 +331,18 @@ const SelectSection: React.FC = () => {
           ]}
           placeholder="Search"
         />
-        <strong>Clearable Select</strong>
+        <strong>Select with tags and custom search</strong>
         <Select
-          allowClear
-          disableTags
+          filterOption={handleFilter}
           mode="multiple"
           options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
+            { label: 'Case 1', value: 1 },
+            { label: 'Case 2', value: 2 },
+            { label: 'Case 3', value: 3 },
           ]}
-          value={clearableSelectValues}
-          onChange={(value) => setClearableSelectValues(value)}
+          placeholder="Case-sensitive Search"
         />
-        <strong>Select with sorted search results</strong>
+        <strong>Select with custom sorted search and custom filter results</strong>
         <Select
           disableTags
           filterOption={(input, option) =>
@@ -316,6 +361,46 @@ const SelectSection: React.FC = () => {
           placeholder="Search"
           value={sortedSelectValues}
           onChange={(value) => setSortedSelectValues(value)}
+        />
+        <strong>Multiple Select with custom max tags and placeholder</strong>
+        <Select
+          disableTags
+          maxTagPlaceholder={'Value(s) Selected'}
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder={'No Value Selected'}
+        />
+        <strong>Multiple Select with custom max tags, tag values, and placeholder</strong>
+        <Select
+          disableTags
+          maxTagCount={2}
+          maxTagPlaceholder={'+ more'}
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+            { label: 'Option 4', value: 4 },
+            { label: 'Option 5', value: 5 },
+          ]}
+          placeholder={'No Value Selected'}
+        />
+        <strong>Clearable Select</strong>
+        <Select
+          allowClear
+          disableTags
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          value={clearableSelectValues}
+          onChange={(value) => setClearableSelectValues(value)}
         />
         <span>
           Also see{' '}
