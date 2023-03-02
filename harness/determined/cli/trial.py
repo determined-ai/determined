@@ -29,12 +29,11 @@ def _format_state(state: Union[bindings.checkpointv1State, bindings.experimentv1
     return str(state.value).replace("STATE_", "")
 
 
-def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> List[Any]:
+def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> Optional[str]:
     if not validation:
-        return [None, None]
+        return None
 
-    # TODO(ilia): Get rid of `constants` in favor of the ones from bindings.
-    return [constants.COMPLETED, json.dumps(validation.metrics.to_json(), indent=4)]
+    return json.dumps(validation.metrics.to_json(), indent=4)
 
 
 def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> List[Any]:
@@ -60,12 +59,10 @@ def _workloads_tabulate(
     # Print information about individual steps.
     headers = [
         "# of Batches",
-        "State",
         "Report Time",
         "Checkpoint",
         "Checkpoint UUID",
         "Checkpoint Metadata",
-        "Validation",
         "Validation Metrics",
     ]
 
@@ -83,18 +80,12 @@ def _workloads_tabulate(
             if metrics_workload:
                 row_metrics = [json.dumps(metrics_workload.metrics.to_json(), indent=4)]
 
-        if isinstance(w_unpacked, bindings.v1CheckpointWorkload):
-            state = _format_state(w_unpacked.state)
-        else:
-            state = "COMPLETED"
-
         values.append(
             [
                 w_unpacked.totalBatches,
-                state,
                 render.format_time(w_unpacked.endTime),
                 *_format_checkpoint(w.checkpoint),
-                *_format_validation(w.validation),
+                _format_validation(w.validation),
                 *row_metrics,
             ]
         )
