@@ -85,6 +85,7 @@ $OPT_TASKCONTAINERDEFAULTS
           tres_supported: $OPT_TRESSUPPORTED
           gres_supported: $OPT_GRESSUPPORTED
           rendezvous_network_interface: $OPT_RENDEVOUSIFACE
+          default_compute_resource_pool: $OPT_DEFAULTCOMPUTERESOURCEPOOL
           slot_type: $OPT_SLOTTYPE
           partition_overrides: 
           # Next line is intentionally not indented to simplify inserting multi-line content.

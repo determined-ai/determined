@@ -367,6 +367,84 @@ OPT_GRESSUPPORTED_o184i023=false
 OPT_PROTOCOL_o184i023=http
 OPT_SLOTTYPE_o184i023=rocm
 
+# Configuration for Grenobal o186i208 (o186i208.gre.smktg.hpecorp.net)
+OPT_name_o186i208=o186i208.gre.smktg.hpecorp.net
+OPT_LAUNCHERPORT_o186i208=8181
+OPT_LAUNCHERPROTOCOL_o186i208=http
+OPT_CHECKPOINTPATH_o186i208=/nfs/determined/checkpoints
+OPT_MASTERHOST_o186i208=o186i208.gre.smktg.hpecorp.net
+OPT_MASTERPORT_o186i208=$USERPORT
+OPT_PROTOCOL_o186i208=http
+OPT_DEFAULTCOMPUTERESOURCEPOOL_o186i20=mlde_cuda
+# Indentation of task_container_defaults must match devcluster-slurm.yaml
+OPT_TASKCONTAINERDEFAULTS_o186i208=$(
+    cat <<EOF
+          environment_variables:
+            - NCCL_DEBUG=INFO
+            - NCCL_SOCKET_IFNAME=ens,eth,ib
+EOF
+)
+# Indentation of partition_overrides must match devcluster-slurm.yaml
+OPT_PARTITIONOVERRIDES_o186i208=$(
+    cat <<EOF
+            mlde_rocm:
+                slot_type: rocm
+            gre1:
+                slot_type: cpu
+            gre2:
+                slot_type: cpu
+            gre4:
+                slot_type: cpu
+            genom_icx:
+                slot_type: cpu
+            hpfss:
+                slot_type: cpu
+            dev:
+                slot_type: cpu
+            misc_cpus:
+                slot_type: cpu
+EOF
+)
+
+# Configuration for Grenobal o184i054 (o184i054.gre.smktg.hpecorp.net)
+OPT_name_o184i054=o184i054.gre.smktg.hpecorp.net
+OPT_LAUNCHERPORT_o184i054=8181
+OPT_LAUNCHERPROTOCOL_o184i054=http
+OPT_CHECKPOINTPATH_o184i054=/cstor/determined/checkpoints
+OPT_MASTERHOST_o184i054=o184i054.gre.smktg.hpecorp.net
+OPT_MASTERPORT_o184i054=$USERPORT
+OPT_PROTOCOL_o184i054=http
+OPT_DEFAULTCOMPUTERESOURCEPOOL_o184i054=mlde_cuda
+# Indentation of task_container_defaults must match devcluster-slurm.yaml
+OPT_TASKCONTAINERDEFAULTS_o184i054=$(
+    cat <<EOF
+          environment_variables:
+            - NCCL_DEBUG=INFO
+            - NCCL_SOCKET_IFNAME=ens,eth,ib
+EOF
+)
+# Indentation of partition_overrides must match devcluster-slurm.yaml
+OPT_PARTITIONOVERRIDES_o184i054=$(
+    cat <<EOF
+            mlde_rocm:
+                slot_type: rocm
+            gre1:
+                slot_type: cpu
+            gre2:
+                slot_type: cpu
+            gre4:
+                slot_type: cpu
+            genom_icx:
+                slot_type: cpu
+            hpfss:
+                slot_type: cpu
+            dev:
+                slot_type: cpu
+            misc_cpus:
+                slot_type: cpu
+EOF
+)
+
 # enroot-specific task container default if not otherwise defined
 # Indentation of task_container_defaults must match devcluster-slurm.yaml
 enroot_OPT_TASKCONTAINERDEFAULTS=$(
@@ -395,6 +473,7 @@ export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
 export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
 export OPT_SLOTTYPE=$(lookup "OPT_SLOTTYPE_$CLUSTER")
 export OPT_DEFAULTIMAGE=$(lookup "OPT_DEFAULTIMAGE_$CLUSTER")
+export OPT_DEFAULTCOMPUTERESOURCEPOOL=$(lookup "OPT_DEFAULTCOMPUTERESOURCEPOOL_$CLUSTER")
 export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 
