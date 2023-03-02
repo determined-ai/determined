@@ -1480,7 +1480,7 @@ const FormSection: React.FC = () => {
           <strong>
             Form-specific{' '}
             <Link reloadDocument to={`#${ComponentTitles.Select}`}>
-              Dropdown
+              Select
             </Link>{' '}
             variations
           </strong>
