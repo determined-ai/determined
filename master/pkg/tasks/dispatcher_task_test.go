@@ -930,7 +930,7 @@ func Test_getDataVolumns(t *testing.T) {
 		"yyy", "bbb", "/tmp",
 	}
 
-	volumns, mountOnTmp, _ := getDataVolumes(arg)
+	volumns, mountOnTmp, _, _ := getDataVolumes(arg)
 
 	assert.Equal(t, mountOnTmp, true)
 	for i, v := range volumns {
@@ -940,9 +940,21 @@ func Test_getDataVolumns(t *testing.T) {
 	}
 }
 
+func Test_preventRunDeterminedMount(t *testing.T) {
+	arg := []mount.Mount{
+		{
+			Source: "any",
+			Target: "/run/determined/workdir",
+		},
+	}
+	volumes, _, _, err := getDataVolumes(arg)
+	assert.Equal(t, len(volumes), 0)
+	assert.ErrorContains(t, err, "/run/determined/workdir")
+}
+
 func Test_addTmpFs(t *testing.T) {
 	arg := []mount.Mount{}
-	volumes, _, _ := getDataVolumes(arg)
+	volumes, _, _, err := getDataVolumes(arg)
 	name := "varTmp"
 	target := varTmp
 	volumes = addTmpFs(volumes, name, target)
@@ -950,6 +962,7 @@ func Test_addTmpFs(t *testing.T) {
 	assert.Equal(t, *v.Name, "varTmp")
 	assert.Equal(t, *v.Source, "tmpfs")
 	assert.Equal(t, *v.Target, "/var/tmp:x-create=dir")
+	assert.NilError(t, err)
 }
 
 func Test_getPayloadName(t *testing.T) {

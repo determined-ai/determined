@@ -1047,7 +1047,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	)
 	if err != nil {
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
-			"unable to create the launcher manifest")
+			"unable to launch job")
 		return
 	}
 

@@ -152,7 +152,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters := launcher.NewLaunchParameters()
 	launchParameters.SetMode("batch")
 
-	mounts, userWantsDirMountedOnTmp, varTmpExists := getDataVolumes(t.Mounts)
+	mounts, userWantsDirMountedOnTmp, varTmpExists, err := getDataVolumes(t.Mounts)
+	if err != nil {
+		return nil, "", "", err
+	}
 
 	// When the container run type is enroot, we need a binding for the
 	// "/var/tmp" folder.
@@ -721,12 +724,19 @@ func getPayloadName(taskSpec *TaskSpec) string {
 // Provide all task mount points as data volumes, and return true if there is a bind for /tmp
 // Launcher requires that a Data object has a name; source, target & read-only are all
 // that matter to Singularity.
-func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool, bool) {
+func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool, bool, error) {
 	volumes := []launcher.Data{}
 	userWantsDirMountedOnTmp := false
 	varTmpExists := false
+	var err error
 
 	for i, mount := range mounts {
+		if strings.HasPrefix(mount.Target, RunDir) {
+			err = fmt.Errorf("bind_mounts.container_path: %s not supported."+
+				"HPC launcher cannot mount under %s", mount.Target, RunDir)
+			return volumes, userWantsDirMountedOnTmp, varTmpExists, err
+		}
+
 		volume := *launcher.NewData()
 		volume.SetName("ds" + strconv.Itoa(i))
 		volume.SetSource(mount.Source)
@@ -743,7 +753,7 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool, bool) {
 		}
 	}
 
-	return volumes, userWantsDirMountedOnTmp, varTmpExists
+	return volumes, userWantsDirMountedOnTmp, varTmpExists, err
 }
 
 // Used for creating a tmpfs mount type at the target location.
