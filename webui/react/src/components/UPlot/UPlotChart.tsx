@@ -24,6 +24,7 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
 interface Props {
   allowDownload?: boolean;
   data?: AlignedData | FacetedData;
+  experimentId?: number;
   focusIndex?: number;
   noDataMessage?: string;
   options?: Partial<Options>;
@@ -87,6 +88,7 @@ const UPlotChart: React.FC<Props> = ({
   options,
   style,
   noDataMessage,
+  experimentId,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
@@ -253,7 +255,7 @@ const UPlotChart: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
-      {allowDownload && <DownloadButton containerRef={chartDivRef} />}
+      {allowDownload && <DownloadButton containerRef={chartDivRef} experimentId={experimentId} />}
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
@@ -267,9 +269,19 @@ const UPlotChart: React.FC<Props> = ({
 
 export default UPlotChart;
 
-const DownloadButton = ({ containerRef }: { containerRef: RefObject<HTMLDivElement> }) => {
+const DownloadButton = ({
+  containerRef,
+  experimentId,
+}: {
+  containerRef: RefObject<HTMLDivElement>;
+  experimentId?: number;
+}) => {
   const downloadUrl = useRef<string>();
   const downloadNode = useRef<HTMLAnchorElement>(null);
+  const fileName = useMemo(
+    () => (experimentId ? `chart-trial-${experimentId}.png` : 'chart.png'),
+    [experimentId],
+  );
 
   useEffect(() => {
     return () => {
@@ -295,8 +307,7 @@ const DownloadButton = ({ containerRef }: { containerRef: RefObject<HTMLDivEleme
       <a
         aria-disabled
         className={css.invisibleLink}
-        // TODO: add trial/exp id + metrics to filename
-        download="chart.png"
+        download={fileName}
         href={downloadUrl.current}
         ref={downloadNode}
       />

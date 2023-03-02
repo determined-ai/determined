@@ -24,6 +24,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
       <LineChart
+        experimentId={trial.id}
         series={throughputMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"

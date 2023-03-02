@@ -18,8 +18,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { Observable, observable, useObservable, WritableObservable } from 'utils/observable';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
-// TODO: dont export
-export const initClusterOverview: ClusterOverview = {
+const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.CUDA]: clone(initResourceTally),
   [ResourceType.ROCM]: clone(initResourceTally),

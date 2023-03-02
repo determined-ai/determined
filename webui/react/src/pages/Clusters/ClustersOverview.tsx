@@ -81,7 +81,7 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const resourcePools = useObservable(useClusterStore().resourcePools);
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
@@ -93,9 +93,8 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallBar />
       <Section title="Resource Pools">
         <Card.Group size="medium">
-          {resourcePools.map((rp, idx) => (
-            <ResourcePoolCard key={idx} resourcePool={rp} />
-          ))}
+          {Loadable.isLoaded(resourcePools) &&
+            resourcePools.data.map((rp, idx) => <ResourcePoolCard key={idx} resourcePool={rp} />)}
         </Card.Group>
       </Section>
       {!!rpDetail && (
