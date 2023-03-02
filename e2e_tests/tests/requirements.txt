@@ -1,4 +1,5 @@
 appdirs
+protobuf<3.20  # TODO(MLG-336): remove this requirement when tensorflow-macos is upgraded.
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 pytest-timeout
