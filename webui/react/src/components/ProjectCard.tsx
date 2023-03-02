@@ -19,7 +19,7 @@ interface Props {
   workspaceArchived?: boolean;
 }
 
-const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchived }: Props) => {
+const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchived, showWorkspace }: Props) => {
   const { menuProps, contextHolders } = useProjectActionMenu({
     onComplete: fetchProjects,
     project,
@@ -37,6 +37,7 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
         <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
           {project.name}
         </Typography.Title>
+        {showWorkspace && project.workspaceId !== 1 ? <h6 className={css.workspace}>{project.workspaceName}</h6> : null}
         <div className={css.footer}>
           <div className={css.experiments}>
             <Tooltip

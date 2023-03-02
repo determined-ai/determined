@@ -10,6 +10,12 @@
     margin-bottom: 0;
     width: fit-content;
   }
+  .workspace {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .footer {
     display: flex;
     font-size: 12px;
