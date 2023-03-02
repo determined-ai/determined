@@ -267,9 +267,9 @@ const SelectSection: React.FC = () => {
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
-        <strong>Select with search</strong>
+        <strong>Select without search</strong>
         <Select
-          filterOption={handleFilter}
+          enableSearchFilter={false}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
