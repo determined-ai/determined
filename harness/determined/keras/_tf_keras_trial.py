@@ -321,6 +321,8 @@ class TFKerasTrialController(det.TrialController):
     ) -> None:
         super().__init__(*args, **kwargs)
 
+        self.metric_writer = self.create_metric_writer()
+
         self.model = model
         self.session = session
         self.trial = trial

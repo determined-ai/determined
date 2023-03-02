@@ -388,6 +388,7 @@ class EstimatorTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(context, *args, **kwargs)
+        self.metric_writer = self.create_metric_writer()
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
