@@ -46,6 +46,7 @@ class NoOpTrialController(det.TrialController):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.metric_writer = self.create_metric_writer()
 
         check_startup_hook_ran = self.env.hparams.get("check_startup_hook_ran", False)
         if check_startup_hook_ran:
