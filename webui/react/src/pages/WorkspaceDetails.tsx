@@ -1,4 +1,5 @@
 import type { TabsProps } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -23,7 +24,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import usersStore from 'stores/usersObserve';
-import { User, Workspace } from 'types';
+import { DetailedUser, User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -50,8 +51,9 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();

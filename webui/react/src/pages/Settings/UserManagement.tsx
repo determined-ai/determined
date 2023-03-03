@@ -1,5 +1,6 @@
 import { Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -139,9 +140,9 @@ const UserManagement: React.FC = () => {
     }),
     [settings],
   );
-  const loadableUsers = usersStore.getUsers(apiConfig);
-  const users = Loadable.match(loadableUsers, {
-    Loaded: (users) => users.users,
+  const loadableUsers = useObservable(usersStore.getUsers(apiConfig));
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
   const total = Loadable.match(loadableUsers, {

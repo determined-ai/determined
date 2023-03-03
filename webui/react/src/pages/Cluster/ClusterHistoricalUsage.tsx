@@ -1,5 +1,6 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -33,8 +34,9 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users: Readonly<DetailedUser[]> = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
 

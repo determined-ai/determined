@@ -8,7 +8,7 @@
 // usersByKey: Map<string, UsersPagination>;
 
 import { Map } from 'immutable';
-import { observable, WritableObservable } from 'micro-observables';
+import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
@@ -28,9 +28,19 @@ class UsersService {
   #usersByKey: WritableObservable<Map<string, UsersPagination>> = observable(Map());
   #currentUserId: WritableObservable<Loadable<number>> = observable(NotLoaded);
 
-  public getCurrentUser = () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return Loadable.map(this.#currentUserId.get(), (userId) => this.#users.get().get(userId)!);
+  public getUser = (id: number): Observable<Loadable<DetailedUser>> => {
+    return this.#users.select((map) => {
+      const user = map.get(id);
+      return user ? Loaded(user) : NotLoaded;
+    });
+  };
+
+  public getCurrentUser = (): Observable<Loadable<DetailedUser>> => {
+    return this.#users.select((map) => {
+      const id = this.#currentUserId.get();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return Loadable.map(id, (id) => map.get(id)!);
+    });
   };
 
   public ensureCurrentUserFetched = async (canceler: AbortController): Promise<void> => {
@@ -51,22 +61,25 @@ class UsersService {
     else this.#currentUserId.set(Loaded(id));
   };
 
-  public getUsers = (cfg?: FetchUsersConfig) => {
+  public getUsers = (cfg?: FetchUsersConfig): Observable<Loadable<DetailedUserList>> => {
     const config = cfg ?? {};
-    const usersPagination = this.#usersByKey.get().get(encodeParams(config));
 
-    if (!usersPagination) return NotLoaded;
+    return this.#usersByKey.select((map) => {
+      const usersPagination = map.get(encodeParams(config));
 
-    const userPage: DetailedUserList = {
-      pagination: usersPagination.pagination,
-      users: usersPagination.users.flatMap((userId) => {
-        const user = this.#users.get().get(userId);
+      if (!usersPagination) return NotLoaded;
 
-        return user ? [user] : [];
-      }),
-    };
+      const userPage: DetailedUserList = {
+        pagination: usersPagination.pagination,
+        users: usersPagination.users.flatMap((userId) => {
+          const user = this.#users.get().get(userId);
 
-    return Loaded(userPage);
+          return user ? [user] : [];
+        }),
+      };
+
+      return Loaded(userPage);
+    });
   };
 
   public ensureUsersFetched = async (

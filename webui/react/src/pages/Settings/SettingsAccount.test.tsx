@@ -61,7 +61,7 @@ const Container: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    usersStore.ensureUsersFetched(undefined, canceler);
+    usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
   }, [canceler]);
 

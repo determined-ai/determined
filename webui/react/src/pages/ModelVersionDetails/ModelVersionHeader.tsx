@@ -1,6 +1,7 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Dropdown, Modal, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -22,7 +23,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import usersStore from 'stores/usersObserve';
-import { ModelVersion, Workspace } from 'types';
+import { DetailedUser, ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -51,8 +52,9 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);

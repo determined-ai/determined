@@ -1,4 +1,5 @@
 import * as t from 'io-ts';
+import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -134,7 +135,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

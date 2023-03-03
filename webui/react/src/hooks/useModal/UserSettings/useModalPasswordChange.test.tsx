@@ -69,7 +69,7 @@ const Container: React.FC = () => {
   const [canceler] = useState(new AbortController());
 
   const loadUsers = useCallback(async () => {
-    await usersStore.ensureUsersFetched(undefined, canceler);
+    await usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
     usersStore.updateCurrentUser(CURRENT_USER.id);
   }, [canceler]);

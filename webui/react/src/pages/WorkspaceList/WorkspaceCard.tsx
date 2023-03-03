@@ -1,5 +1,6 @@
 import { PushpinOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { useObservable } from 'micro-observables';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
@@ -25,11 +26,11 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     workspace,
   });
 
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
-  const user = users.find((user) => user.id === workspace.userId);
+  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
+  const user = Loadable.match(loadableUser, {
+    Loaded: (user) => user,
+    NotLoaded: () => undefined,
+  }); // TODO: handle loading state
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);

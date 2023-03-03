@@ -6,6 +6,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -98,11 +99,11 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(usersStore.getUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

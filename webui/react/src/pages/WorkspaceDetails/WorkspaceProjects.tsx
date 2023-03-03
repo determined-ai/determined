@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -55,11 +56,11 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.match(usersStore.getUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

@@ -51,7 +51,7 @@ jest.mock('antd', () => {
 const Component = ({ user }: Partial<Props> = {}) => {
   const [canceler] = useState(new AbortController());
   const asyncFetch = useCallback(async () => {
-    await usersStore.ensureUsersFetched(undefined, canceler);
+    await usersStore.ensureUsersFetched(canceler);
   }, [canceler]);
 
   useEffect(() => {

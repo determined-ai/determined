@@ -1,4 +1,5 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
+import { useObservable } from 'micro-observables';
 import React, { MutableRefObject, useCallback, useEffect, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -27,7 +28,7 @@ import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
 import usersStore from 'stores/usersObserve';
 import { StateOfUnion } from 'themes';
-import { MetricType } from 'types';
+import { DetailedUser, MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -74,8 +75,9 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
 

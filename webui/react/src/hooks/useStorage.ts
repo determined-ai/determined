@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';
@@ -18,7 +19,7 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const userNamespace = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => (cUser ? `u:${cUser.id}` : ''),
     NotLoaded: () => '',

@@ -98,7 +98,7 @@ const usePermissions = (): PermissionsHook => {
     rbacAllPermission = useFeature().isOn('mock_permissions_all'),
     rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
 
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable<Loadable<DetailedUser>>(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

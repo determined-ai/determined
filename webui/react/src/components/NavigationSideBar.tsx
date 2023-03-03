@@ -118,7 +118,7 @@ const NavigationSideBar: React.FC = () => {
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

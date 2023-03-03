@@ -6,6 +6,7 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
@@ -51,7 +52,7 @@ import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { ModelItem, Workspace } from 'types';
+import { DetailedUser, ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -71,8 +72,9 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const [models, setModels] = useState<ModelItem[]>([]);

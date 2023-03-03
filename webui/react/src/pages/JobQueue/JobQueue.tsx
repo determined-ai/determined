@@ -48,7 +48,7 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = Loadable.match(usersStore.getUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });

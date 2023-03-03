@@ -35,7 +35,7 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

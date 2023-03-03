@@ -44,7 +44,7 @@ const AppView: React.FC = () => {
 
   const isAuthenticated = useObservable(selectIsAuthenticated);
   const auth = useObservable(authObservable);
-  const loadableUser = usersStore.getCurrentUser();
+  const loadableUser = useObservable(usersStore.getCurrentUser());
   const infoLoadable = useDeterminedInfo();
   const authChecked = useObservable(observeAuthChecked);
   const info = Loadable.getOrElse(initInfo, infoLoadable);

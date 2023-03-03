@@ -1,6 +1,7 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -21,7 +22,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import usersStore from 'stores/usersObserve';
-import { ModelItem, Workspace } from 'types';
+import { DetailedUser, ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -44,8 +45,9 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.match(usersStore.getUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();

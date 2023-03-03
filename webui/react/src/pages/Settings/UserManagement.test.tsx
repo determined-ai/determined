@@ -17,6 +17,14 @@ import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
+const currentUser: DetailedUser = {
+  displayName: DISPLAY_NAME,
+  id: 1,
+  isActive: true,
+  isAdmin: true,
+  username: USERNAME,
+};
+
 jest.mock('services/api', () => ({
   ...jest.requireActual('services/api'),
   getGroups: () => Promise.resolve({ groups: [] }),
@@ -44,19 +52,11 @@ jest.mock('hooks/useTelemetry', () => ({
   },
 }));
 
-const currentUser: DetailedUser = {
-  displayName: DISPLAY_NAME,
-  id: 1,
-  isActive: true,
-  isAdmin: true,
-  username: USERNAME,
-};
-
 const Container: React.FC = () => {
   const [canceler] = useState(new AbortController());
 
   const loadUsers = useCallback(() => {
-    usersStore.ensureUsersFetched(undefined, canceler);
+    usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
     setAuthChecked();
     usersStore.updateCurrentUser(currentUser.id);
@@ -94,10 +94,13 @@ describe('UserManagement', () => {
     await waitFor(() => jest.setTimeout(300));
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
-      expect(screen.getByText(USERNAME)).toBeInTheDocument();
-    });
+
+    expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
+    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
+    // await waitFor(() => {
+    //   expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
+    //   expect(screen.getByText(USERNAME)).toBeInTheDocument();
+    // });
   });
 
   // TODO: make this test case work

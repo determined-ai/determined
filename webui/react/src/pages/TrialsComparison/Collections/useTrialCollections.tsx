@@ -1,5 +1,6 @@
 import { Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
+import { useObservable } from 'micro-observables';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -85,7 +86,7 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

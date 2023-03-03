@@ -32,7 +32,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const currentUser = usersStore.getCurrentUser();
+  const currentUser = useObservable(usersStore.getCurrentUser());
   const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const guardedFetchWorkspaces = useCallback(() => {

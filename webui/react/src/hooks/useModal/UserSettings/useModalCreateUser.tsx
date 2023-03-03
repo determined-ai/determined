@@ -1,5 +1,6 @@
 import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -148,7 +149,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const canAssignRolesFlag: boolean = canAssignRoles({});
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -40,7 +41,7 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions } from 'types';
+import { DetailedUser, Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
 
@@ -65,10 +66,11 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.match(usersStore.getUsers(), {
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
-  });
+  }); // TODO: handle loading state
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
   const lodableWorkspaces = useWorkspaces();
   const workspace = Loadable.getOrElse([], lodableWorkspaces).find(

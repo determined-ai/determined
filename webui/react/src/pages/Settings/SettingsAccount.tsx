@@ -1,5 +1,6 @@
 import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
 import { Divider, Typography } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -33,7 +34,7 @@ export const CHANGE_PASSWORD_TEXT = 'Change Password';
 const SettingsAccount: React.FC = () => {
   const [usernameForm] = Form.useForm<FormUsernameInputs>();
   const [displaynameForm] = Form.useForm<FormDisplaynameInputs>();
-  const loadableCurrentUser = usersStore.getCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

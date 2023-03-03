@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import React, { useCallback } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -99,7 +100,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const loadableUser = usersStore.getCurrentUser();
+  const loadableUser = useObservable(usersStore.getCurrentUser());
   const authUser = Loadable.match(loadableUser, {
     Loaded: (user) => user,
     NotLoaded: () => undefined,
