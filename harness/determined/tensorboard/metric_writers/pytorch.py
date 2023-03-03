@@ -1,6 +1,6 @@
 import warnings
 
-from determined.pytorch.tensorboard_writer import TorchWriter  # noqa: F401
+from determined.pytorch.tensorboard import TorchWriter  # noqa: F401
 
 warnings.warn(
     "'tensorboard.pytorch.TorchWriter' is deprecated in favor \

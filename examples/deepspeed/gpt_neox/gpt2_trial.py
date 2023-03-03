@@ -22,7 +22,6 @@ import deepspeed
 from determined import LOG_FORMAT, InvalidHP
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
@@ -40,7 +39,7 @@ class GPT2Trial(DeepSpeedTrial):
             traceback.print_exc()
             raise InvalidHP("Could not parse neox_args.")
         logging.info(self.neox_args)
-        self.wrapped_writer = TorchWriter()
+        self.wrapped_writer = self.context.get_tensorboard_writer()
         self.neox_args.tensorboard_writer = self.wrapped_writer.writer
         self.neox_args.configure_distributed_args()
         # The tokenizer needs to be built before model initialization in order to set the

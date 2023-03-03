@@ -51,7 +51,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
+from determined.pytorch.tensorboard import TorchWriter
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 

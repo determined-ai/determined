@@ -7,7 +7,7 @@ from eval_tasks.eval_adapter import run_eval_harness
 from megatron.neox_arguments import NeoXArgs
 
 from determined.pytorch import MetricReducer, PyTorchCallback
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
+from determined.pytorch.tensorboard import TorchWriter
 
 
 def get_neox_args(context):

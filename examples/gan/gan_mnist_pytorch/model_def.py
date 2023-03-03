@@ -35,7 +35,6 @@ import torchvision
 from torch.optim.lr_scheduler import LambdaLR
 
 from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -90,7 +89,7 @@ class Discriminator(nn.Module):
 class GANTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
-        self.logger = TorchWriter()
+        self.logger = self.context.get_tensorboard_writer()
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.

@@ -16,7 +16,6 @@ from determined.pytorch.deepspeed import (
     DeepSpeedTrialContext,
     overwrite_deepspeed_config,
 )
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 REAL_LABEL = 1
 FAKE_LABEL = 0
@@ -27,7 +26,7 @@ class DCGANTrial(DeepSpeedTrial):
         self.context = context
         self.hparams = AttrDict(self.context.get_hparams())
         self.data_config = AttrDict(self.context.get_data_config())
-        self.logger = TorchWriter()
+        self.logger = self.context.get_tensorboard_writer()
         num_channels = data.CHANNELS_BY_DATASET[self.data_config.dataset]
         gen_net = Generator(
             self.hparams.generator_width_base, num_channels, self.hparams.noise_length

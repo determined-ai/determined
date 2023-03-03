@@ -4,7 +4,7 @@ from typing import Any, Dict
 from _pytest import monkeypatch
 
 from determined import tensorboard
-from determined.pytorch import tensorboard_writer
+from determined.pytorch.tensorboard import TorchWriter
 
 
 def test_torch_writer(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
@@ -12,7 +12,7 @@ def test_torch_writer(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Pa
         return tmp_path
 
     monkeypatch.setattr(tensorboard, "get_base_path", mock_get_base_path)
-    logger = tensorboard_writer.TorchWriter()
+    logger = TorchWriter()
     logger.add_scalar("foo", 7, 0)
     logger.reset()
     logger.add_scalar("foo", 8, 1)
