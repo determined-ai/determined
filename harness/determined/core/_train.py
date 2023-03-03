@@ -268,3 +268,10 @@ class DummyTrainContext(TrainContext):
 
     def get_experiment_best_validation(self) -> Optional[float]:
         return None
+
+    def get_tensorboard_path(self) -> pathlib.Path:
+        # make an ephemeral directory for tensorboard tests
+        import tempfile
+
+        self._tbd_directory = tempfile.TemporaryDirectory()
+        return pathlib.Path(self._tbd_directory.name)
