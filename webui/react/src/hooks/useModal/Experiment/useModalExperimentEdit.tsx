@@ -61,8 +61,6 @@ const useModalExperimentEdit = ({
           publicMessage: 'Unable to update name',
           silent: false,
         });
-      } finally {
-        form.resetFields();
       }
     };
 
