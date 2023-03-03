@@ -327,7 +327,8 @@ func newDispatcherResourceManager(
 	// Authentication token that gets passed to the "launcher" REST API.
 	authToken := loadAuthToken(rmConfig)
 
-	return &dispatcherResourceManager{
+	watcher := newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile)
+	result := dispatcherResourceManager{
 		db:       db,
 		rmConfig: rmConfig,
 
@@ -339,13 +340,15 @@ func newDispatcherResourceManager(
 
 		masterTLSConfig:      masterTLSConfig,
 		loggingConfig:        loggingConfig,
-		jobWatcher:           newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile),
+		jobWatcher:           watcher,
 		authToken:            authToken,
 		launcherVersionIsOK:  false,
 		poolConfig:           poolConfig,
 		poolProviderMap:      makeProvidedPoolsMap(poolConfig),
 		dispatchIDToHPCJobID: make(map[string]string),
 	}
+	watcher.rm = &result
+	return &result
 }
 
 // makeProvidedPoolsMap returns a map where the key is the providing partition
@@ -960,7 +963,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 // Common method for sending a terminate request, and appropriately clean up a dispatch.
 func (m *dispatcherResourceManager) terminateAndDeleteDispatch(
-	ctx *actor.Context, dispatchID string, impersonatedUser string) {
+	ctx *actor.Context, dispatchID string, impersonatedUser string,
+) {
 	ctx.Log().Infof(
 		"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
 
@@ -1548,20 +1552,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
 	if err != nil {
-		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
-			r.StatusCode == http.StatusForbidden) {
-			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
-				"the launcher service followed by a restart of the determined-master service.",
-				err, m.rmConfig.LauncherAuthFile)
-			m.authToken = loadAuthToken(m.rmConfig)
-			m.jobWatcher.ReloadAuthToken()
-		} else {
-			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-				"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
-				" Try a restart the launcher service followed by a restart of the "+
-				"determined-master service. ", err, r)
-		}
+		m.handleServiceQueryError(r, ctx, err)
 		return
 	}
 	ctx.Log().Debugf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId())
@@ -1572,7 +1563,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	owner := "launcher"
 
-	defer m.resourceQueryPostActions(ctx, dispatchID, owner)
+	defer m.ResourceQueryPostActions(ctx, dispatchID, owner)
 
 	logFileName := "slurm-resources-info"
 	// HPC resource details will be listed in a log file with name
@@ -1625,6 +1616,27 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	if !m.launcherVersionIsOK {
 		m.getAndCheckLauncherVersion(ctx)
+	}
+}
+
+// handleServiceQueryError provides common error handling for REST API calls
+// to the launcher in support of RM operations.
+func (m *dispatcherResourceManager) handleServiceQueryError(
+	r *http.Response, ctx *actor.Context, err error,
+) {
+	if r != nil && (r.StatusCode == http.StatusUnauthorized ||
+		r.StatusCode == http.StatusForbidden) {
+		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+			"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
+			"the launcher service followed by a restart of the determined-master service.",
+			err, m.rmConfig.LauncherAuthFile)
+		m.authToken = loadAuthToken(m.rmConfig)
+		m.jobWatcher.ReloadAuthToken()
+	} else {
+		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+			"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
+			" Try a restart the launcher service followed by a restart of the "+
+			"determined-master service. ", err, r)
 	}
 }
 
@@ -1696,7 +1708,7 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 // On any REST failure where we cannot confirm the dispatch has been removed
 // by the launcher, we skip any attempt to delete the Dispatch from the DB.
 // The Dispatch is left in the DB, for a future cleanup attempt on startup.
-func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
+func (m *dispatcherResourceManager) ResourceQueryPostActions(ctx *actor.Context,
 	dispatchID string, owner string,
 ) {
 	if m.terminateDispatcherJob(ctx, dispatchID, owner, true) {
