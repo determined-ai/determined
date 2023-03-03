@@ -172,7 +172,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       experimentId: experiment.id,
       experimentName: experiment.name,
       fetchExperimentDetails,
-      tags: experiment.config.labels || [],
     });
 
   const {
@@ -187,6 +186,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
+
+  const disabled =
+    experiment?.parentArchived ||
+    experiment?.archived ||
+    !expPermissions.canModifyExperimentMetadata({ workspace: { id: experiment?.workspaceId } });
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);
@@ -468,15 +472,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {maxRestarts ? `/${maxRestarts}` : ''}
               </span>
             </div>
-            <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Tags:</span>
-              <TagList
-                disabled={true} // read only
-                ghost={true}
-                tags={experiment.config.labels || []}
-                onChange={experimentTags.handleTagListChange(experiment.id)}
-              />
-            </div>
+            <TagList
+              disabled={disabled}
+              ghost={true}
+              tags={experiment.config.labels || []}
+              onChange={experimentTags.handleTagListChange(experiment.id)}
+            />
           </div>
         }
         leftContent={
