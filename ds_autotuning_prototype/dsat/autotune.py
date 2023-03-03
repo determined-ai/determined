@@ -4,7 +4,7 @@ import tempfile
 from typing import Any, Dict
 
 from determined.experimental import client
-from dsat import constants, utils
+from dsat import defaults, utils
 
 
 def parse_args():
@@ -26,15 +26,21 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
 
     config_dict["name"] += " (DS AT Searcher)"
     config_dict["searcher"]["name"] = "single"
-    config_dict["searcher"]["max_length"] = constants.END_PROFILE_STEP
-    config_dict["resources"] = {"slots_per_trial": 0}  # Will need to get original resources later.
+    config_dict["searcher"]["max_length"] = defaults.END_PROFILE_STEP
+    # TODO: let users have more fine control over the searcher config.
+    # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assump
+    # e.g. on Grenoble.
+    config_dict["resources"] = {"slots_per_trial": 0}
+    # TODO: remove this Grenoble specific code.
+    # config_dict["resources"] = {
+    #     "resource_pool": "misc_cpus"
+    # }  # Will need to get original resources later.
     config_dict[
         "entrypoint"
     ] = f"python3 -m dsat.run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
 
-    # TODO: Need to account for case where config isn't in model_dir, in which case
-    # we need to pass its path to the `includes` arg of `create_experiment` (rather than config)
-    # for later stages to have access the original config file.
+    # TODO: early sanity check the submitted config. E.g. makesure that searcher.metric and
+    # hyperparameters.ds_config.autotuning.metric coincide.
 
     # TODO: Account for cases where DS is not initialized with yaml config file.
     # Create empty tempdir as the model_dir and upload everything else as an includes in order to
@@ -49,7 +55,6 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
 
 def run():
     args = parse_args()
-    client.login(master=args.master, user=args.user, password=args.password)
     config_dict = utils.get_config_dict_from_yaml_path(args.config_path)
     run_autotuning(args, config_dict)
 

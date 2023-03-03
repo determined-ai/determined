@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import determined as det
 import torch
-from dsat import constants
+from dsat import defaults
 from ruamel import yaml
 
 
@@ -82,21 +82,21 @@ def dsat_reporting_context(
         if "out of memory" in oom_error_string:
             report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
     except SystemExit as se:
-        if file_or_dir_exists(constants.MODEL_INFO_PROFILING_PATH):
+        if file_or_dir_exists(defaults.MODEL_INFO_PROFILING_PATH):
             report_json_results_and_exit(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
                 add_gpu_info=True,
-                path=constants.MODEL_INFO_PROFILING_PATH,
+                path=defaults.MODEL_INFO_PROFILING_PATH,
             )
-        elif file_or_dir_exists(constants.AUTOTUNING_RESULTS_PATH):
+        elif file_or_dir_exists(defaults.AUTOTUNING_RESULTS_PATH):
             report_json_results_and_exit(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
                 add_gpu_info=False,
-                path=constants.AUTOTUNING_RESULTS_PATH,
+                path=defaults.AUTOTUNING_RESULTS_PATH,
             )
         else:
             raise se
@@ -118,7 +118,7 @@ def report_oom_and_exit(
         )
         logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
-        report_oom_dict = {constants.OOM_KEY: True, "OOM_message": oom_error_string}
+        report_oom_dict = {defaults.OOM_KEY: oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
@@ -138,8 +138,8 @@ def report_json_results_and_exit(
         with open(path, "r") as f:
             results_dict = json.load(f)
         if add_gpu_info:
-            gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
-            results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory
+            results_dict["gpu_mem"] = gpu_mem
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=results_dict
         )
@@ -162,11 +162,13 @@ def file_or_dir_exists(
 def get_zero_optim_keys_and_defaults_per_stage(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    defaults = constants.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
-    assert zero_stage in defaults, f"Invalid zero_stage, must be one of {list(defaults)}"
-    keys_and_defaults = defaults[0]
+    default_settings = defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    assert (
+        zero_stage in default_settings
+    ), f"Invalid zero_stage, must be one of {list(default_settings)}"
+    keys_and_defaults = default_settings[0]
     for stage in range(1, zero_stage + 1):
-        keys_and_defaults = {**keys_and_defaults, **defaults[stage]}
+        keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
     return keys_and_defaults
 
 

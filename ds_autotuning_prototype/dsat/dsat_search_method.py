@@ -7,14 +7,13 @@ import uuid
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-import determined as det
 from determined import searcher
-from dsat import constants, utils
+from dsat import defaults, utils
 
 
 class DSATTrial:
     """
-    Serializable helper class for tracking the results and properties of individual Trials.
+    Helper class for tracking the results and properties of individual Trials.
     """
 
     def __init__(
@@ -26,9 +25,9 @@ class DSATTrial:
         parent: Optional["DSATTrial"] = None,
         children: Optional[Set["DSATTrial"]] = None,
         search_data: Optional[Any] = None,
+        oom: bool = False,
     ) -> None:
         self.hparams = hparams
-        self.ds_config = self.hparams["ds_config"]
         self.is_model_profiling_info_run = is_model_profiling_info_run
         self.request_id = request_id or uuid.uuid4()
         self.metric = metric
@@ -40,19 +39,20 @@ class DSATTrial:
         # Arbitrary attribute for search-specific data tracking.
         self.search_data = search_data
 
+        # Booleans for tracking OOM errors.
+        self.oom = oom
+
+    @property
+    def ds_config(self):
+        return self.hparams["ds_config"]
+
     @property
     def zero_stage(self):
         try:
-            zero_stage = int(self.hparams["ds_config"]["zero_optimization"]["stage"])
+            zero_stage = int(self.ds_config["zero_optimization"]["stage"])
         except KeyError:
-            zero_stage = 0  # The DS Default. TODO: add to constants.py
+            zero_stage = 0  # The DS Default. TODO: add to defaults.py
         return zero_stage
-
-    def record_metric(self, metric: Dict[str, Any]) -> None:
-        self.metric = metric
-
-    def set_search_data(self, search_data: Any) -> None:
-        self.search_data = search_data
 
     def add_child(self, trial: "DSATTrial") -> None:
         """Register child-parent relationship in lineage tree."""
@@ -84,16 +84,17 @@ class DSATTrial:
         num_trials = len(self.lineage_set)
         return num_trials
 
+    @property
+    def oom_in_direct_history(self) -> bool:
+        trial = self
+        while trial is not None:
+            if trial.oom:
+                return True
+            trial = trial.parent
+        return False
+
     def get_state_dict(self) -> Dict[str, Any]:
-        state_dict = {
-            "hparams": self.hparams,
-            "request_id": self.request_id,
-            "metric": self.metric,
-            "is_model_profiling_info_run": self.is_model_profiling_info_run,
-            "parent": self.parent,
-            "children": self.children,
-            "search_data": self.search_data,
-        }
+        state_dict = self.__dict__
         return state_dict
 
     @classmethod
@@ -103,18 +104,25 @@ class DSATTrial:
 
 class DSATTrialTracker:
     """
-    Class for organizing DSATTrial instances and retrieving their info.
+    Class for organizing DSATTrial instances and retrieving pertinent info.
     """
 
-    def __init__(self) -> None:
-        self._all_trials_dict = {}
-        # Altered after running autotuning trials.
-        self.best_autotuning_metric_val = None
-        self.num_trials_since_best_result = None
-        self.should_early_stop = False
+    def __init__(
+        self,
+        all_trials_dict: Optional[Dict[str, DSATTrial]] = None,
+        best_autotuning_metric_val: Optional[Any] = None,
+        num_trials_since_best_result: int = 0,
+        should_early_stop: bool = False,
+    ) -> None:
+        self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
+
+        # Altered after running autotuning trials:
+        self.best_autotuning_metric_val = best_autotuning_metric_val
+        self.num_trials_since_best_result = num_trials_since_best_result
+        self.should_early_stop = should_early_stop
 
     def __getitem__(self, request_id: uuid.UUID) -> DSATTrial:
-        return self._all_trials_dict[request_id]
+        return self.all_trials_dict[request_id]
 
     def create_trial(
         self,
@@ -129,10 +137,10 @@ class DSATTrialTracker:
         """
         trial = DSATTrial(hparams=hparams, is_model_profiling_info_run=is_model_profiling_info_run)
         if search_data is not None:
-            trial.set_search_data(search_data)
+            trial.search_data = search_data
         if parent_trial is not None:
             parent_trial.add_child(trial)
-        self._all_trials_dict[trial.request_id] = trial
+        self.all_trials_dict[trial.request_id] = trial
         return trial
 
     def get_closed_trials_dict(
@@ -168,7 +176,7 @@ class DSATTrialTracker:
         self, request_id_set: Set[int], zero_stage: Optional[int]
     ):
         for r_id in request_id_set:
-            trial = self._all_trials_dict[r_id]
+            trial = self.all_trials_dict[r_id]
             if zero_stage is None or trial.zero_stage == zero_stage:
                 request_id_set[r_id] = trial
 
@@ -185,12 +193,15 @@ class DSATTrialTracker:
     def update_best_trial_info(
         self,
         last_trial: DSATTrial,
-        metric: Dict[str, Any],
         searcher_metric_name: str,
         smaller_is_better: bool,
-    ):
-        if constants.OOM_KEY in metric:
-            last_trial_is_best = False
+        metric: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if metric is None or last_trial.oom:
+            # TODO: Curently not counting errors and ooms against num_trials_since_best_result
+            # because otherwise Trials can just all OOM, early_stopping is triggered, and no
+            # non-trivial results are returned
+            return
         else:
             searcher_metric_value = metric[searcher_metric_name]
             last_trial_is_best = self.best_autotuning_metric_val is None or (
@@ -198,28 +209,19 @@ class DSATTrialTracker:
                 if smaller_is_better
                 else searcher_metric_value > self.best_autotuning_metric_val
             )
-        if last_trial_is_best:
-            self.best_autotuning_metric_val = searcher_metric_value
-            self.num_trials_since_best_result = 0
-        else:
-            self.num_trials_since_best_result += 1
+            if last_trial_is_best:
+                self.best_autotuning_metric_val = searcher_metric_value
+                self.num_trials_since_best_result = 0
+            else:
+                self.num_trials_since_best_result += 1
 
     def get_state_dict(self) -> Dict[uuid.UUID, Any]:
-        state_dict = {
-            "all_trials_dict": self._all_trials_dict,
-            "best_autotuning_metric_val": self.best_autotuning_metric_val,
-            "num_trials_since_best_result": self.num_trials_since_best_result,
-            "should_early_stop": self.should_early_stop,
-        }
+        state_dict = self.__dict__
         return state_dict
 
     @classmethod
     def from_state_dict(cls, state_dict: Dict[uuid.UUID, Any]) -> "DSATTrialTracker":
-        trial_tracker = cls()
-        trial_tracker._all_trials_dict = state_dict["all_trials_dict"]
-        trial_tracker.best_autotuning_metric_val = state_dict["best_autotuning_metric_val"]
-        trial_tracker.num_trials_since_best_result = state_dict["num_trials_since_best_result"]
-        trial_tracker.should_early_stop = state_dict["should_early_stop"]
+        trial_tracker = cls(**state_dict)
         return trial_tracker
 
 
@@ -234,24 +236,39 @@ class DSATModelProfilingInfo:
         model_profiling_info_results: Dict[str, Any],
         slots: int,
         fp16: bool,
+        mp_size: int,
     ) -> None:
         self.request_id = request_id
         self.model_profiling_info_results = model_profiling_info_results
         self.slots = slots
         self.fp16 = fp16
+        self.mp_size = mp_size
 
-        self.gpu_mem_in_bytes = self.model_profiling_info_results["gpu_mem_in_bytes"]
-        self.activation_mem_per_gpu_in_bytes = self.model_profiling_info_results[
-            "activation_mem_per_gpu"
-        ]
-        self.num_params = self.model_profiling_info_results["num_params"]
-        self.trainable_num_params = self.model_profiling_info_results["trainable_num_params"]
+        logging.info(
+            f"Appprox. max mbs per stage: {self.max_mbs_per_stage}"
+        )  # TODO: remove after testing.
+        logging.info(f"Approx. GPU memory per stage: {self.mem_per_gpu_per_stage}")  # TODO: remove.
+        logging.info(f"Total GPU memory: {self.gpu_mem}")
+        logging.info(f"Viable zero stages: {self.viable_zero_stages}")
 
-        self.mem_per_gpu_per_stage = self.get_mem_per_gpu_per_stage()
-        self.viable_zero_stages = self.get_viable_zero_stages()
-        self.max_mbs_per_stage = self.get_max_mbs_per_stage()
+    @property
+    def gpu_mem(self) -> int:
+        return self.model_profiling_info_results["gpu_mem"]
 
-    def get_mem_per_gpu_per_stage(self) -> Dict[int, int]:
+    @property
+    def num_params(self) -> int:
+        return self.model_profiling_info_results["num_params"]
+
+    @property
+    def trainable_num_params(self) -> int:
+        return self.model_profiling_info_results["trainable_num_params"]
+
+    @property
+    def activation_mem_per_gpu(self) -> int:
+        return self.model_profiling_info_results["activation_mem_per_gpu"]
+
+    @property
+    def mem_per_gpu_per_stage(self) -> Dict[int, int]:
         """
         Returns the required gpu memory in bytes, per stage.
         """
@@ -260,50 +277,50 @@ class DSATModelProfilingInfo:
         # optimizer_mem assumes Adam like DS. TODO: don't assume this.
         optimizer_mem = self.trainable_num_params * (16 if self.fp16 else 8)
 
-        # TODO: account for model parallel degree.
         non_activation_mem_per_gpu_per_stage = {
             0: params_mem + gradients_mem + optimizer_mem,
             1: params_mem + gradients_mem + optimizer_mem // self.slots,
             2: params_mem + (gradients_mem + optimizer_mem) // self.slots,
             3: (params_mem + gradients_mem + optimizer_mem) // self.slots,
         }
+        if self.mp_size > 1:
+            non_activation_mem_per_gpu_per_stage = {
+                stage: mem // self.mp_size
+                for stage, mem in non_activation_mem_per_gpu_per_stage.items()
+            }
+        # TODO: Following DS here and not dividing activation memory by mp_size, but seems like
+        # you should?
         mem_per_gpu_per_stage = {
-            stage: mem + self.activation_mem_per_gpu_in_bytes
+            stage: mem + self.activation_mem_per_gpu
             for stage, mem in non_activation_mem_per_gpu_per_stage.items()
         }
         return mem_per_gpu_per_stage
 
-    def get_viable_zero_stages(self) -> Set[int]:
+    @property
+    def viable_zero_stages(self) -> Set[int]:
         """
         Returns the set of viable zero stages based on a rough computation.
         """
         # TODO: account for model parallelism. Add a fudge factor for a little leeway?
         viable_stages = {
-            stage
-            for stage, mem in self.mem_per_gpu_per_stage.items()
-            if mem < self.gpu_mem_in_bytes
+            stage for stage, mem in self.mem_per_gpu_per_stage.items() if mem < self.gpu_mem
         }
-        logging.info(f"Viable zero stages: {viable_stages}")
         return viable_stages
 
-    def get_max_mbs_per_stage(self) -> Dict[int, int]:
+    @property
+    def max_mbs_per_stage(self) -> Dict[int, int]:
         """
         Returns the approximate max train_micro_batch_size_per_gpu (mbs) per stage.
         """
         max_mbs_per_stage = {
-            stage: (self.gpu_mem_in_bytes - mem) // self.activation_mem_per_gpu_in_bytes
+            stage: (self.gpu_mem - mem) // self.activation_mem_per_gpu
             for stage, mem in self.mem_per_gpu_per_stage.items()
             if stage in self.viable_zero_stages
         }
         return max_mbs_per_stage
 
     def get_state_dict(self) -> Dict[str, Any]:
-        state_dict = {
-            "request_id": self.request_id,
-            "model_profiling_info_results": self.model_profiling_info_results,
-            "slots": self.slots,
-            "fp16": self.fp16,
-        }
+        state_dict = self.__dict__
         return state_dict
 
     @classmethod
@@ -343,8 +360,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self,
         searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
-        metric: Union[float, Dict[str, Any]],
         last_trial: DSATTrial,
+        metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[searcher.Operation]:
         """Generates a list of new operations to run."""
         pass
@@ -359,7 +376,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         model_profile_info_hps = copy.deepcopy(self._submitted_hps)
         utils.replace_dict_in_place(
             model_profile_info_hps["ds_config"],
-            constants.MODEL_INFO_PROFILING_DS_CONFIG,
+            defaults.MODEL_INFO_PROFILING_DS_CONFIG,
         )
         model_profile_info_trial = self.trial_tracker.create_trial(
             hparams=model_profile_info_hps, is_model_profiling_info_run=True
@@ -381,31 +398,37 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         train_length: int,
     ) -> List[searcher.Operation]:
         last_trial = self.trial_tracker[request_id]
+
+        # Update OOM info, as relevant.
+        last_trial.oom = defaults.OOM_KEY in metric
+
         if last_trial.is_model_profiling_info_run:
             slots = self._submitted_config_dict["resources"]["slots_per_trial"]
             if "fp16" in self._ds_config:
                 fp16 = self._ds_config["fp16"]["enabled"]
             else:
                 fp16 = False
+            mp_size = self._autotuning_config.get("mp_size", defaults.MP_SIZE)
             self.model_profile_info = DSATModelProfilingInfo(
                 request_id=request_id,
                 model_profiling_info_results=metric,
                 slots=slots,
                 fp16=fp16,
+                mp_size=mp_size,
             )
         else:
-            last_trial.record_metric(metric)
+            last_trial.metric = metric
             self.trial_tracker.update_best_trial_info(
                 last_trial=last_trial,
-                metric=metric,
                 searcher_metric_name=self._searcher_metric_name,
                 smaller_is_better=self._smaller_is_better,
+                metric=metric,
             )
 
         # All DS AT Trials should be closed upon completion.
         ops = [searcher.Close(request_id=request_id)]
 
-        # Abandon the search if the early stopping criteria is met, othewise continues
+        # Abandon the search if the early stopping criteria is met, otherwise continues
         self.trial_tracker.should_early_stop = (
             self.trial_tracker.should_early_stop
             or self.trial_tracker.num_trials_since_best_result == self._tuner_early_stopping
@@ -439,35 +462,68 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         request_id: uuid.UUID,
         exited_reason: searcher.ExitedReason,
     ) -> List[searcher.Operation]:
+        # TODO: some early exits are actually OOMs which take a path other than the standard
+        # RuntimeError. Handle theses cases.
         last_trial = self.trial_tracker[request_id]
+
         if last_trial.is_model_profiling_info_run:
             return [searcher.Shutdown()]
-        return []
+        if exited_reason == searcher.ExitedReason.ERRORED:
+            # Assuming Trial errored due to uncaught OOM, e.g. from model initialization.
+            # TODO: can we be less ham-fisted?
+            last_trial.oom = True
+            self.trial_tracker.update_best_trial_info(
+                last_trial=last_trial,
+                searcher_metric_name=self._searcher_metric_name,
+                smaller_is_better=self._smaller_is_better,
+                metric=None,
+            )
+            # TODO: Refactor repeated code here.
+            self.trial_tracker.should_early_stop = (
+                self.trial_tracker.should_early_stop
+                or self.trial_tracker.num_trials_since_best_result == self._tuner_early_stopping
+            )
+            if self.trial_tracker.should_early_stop:
+                new_ops_list = []
+                logging.info("Early stopping criteria met, no new Trials will be submitted.")
+            else:
+                new_ops_list = self.get_new_searcher_ops_list(
+                    searcher_state=searcher_state,
+                    request_id=request_id,
+                    metric=None,
+                    last_trial=last_trial,
+                )
+
+            return new_ops_list
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
+        # TODO: fill in.
         return 0
 
     def save_method_state(self, path: pathlib.Path) -> None:
+        if self.model_profile_info is None:
+            model_profile_info = None
+        else:
+            model_profile_info = self.model_profile_info.get_state_dict()
         state_dict = {
             "trial_tracker": self.trial_tracker.get_state_dict(),
-            "model_profile_info": self.model_profile_info.get_state_dict()
-            if self.model_profile_info is not None
-            else None,
+            "model_profile_info": model_profile_info,
         }
         checkpoint_path = path.joinpath("state_dict.pkl")
         with checkpoint_path.open("wb") as f:
             pickle.dump(state_dict, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
+        logging.info(f"Restoring searcher state from checkpoint.")
         checkpoint_path = path.joinpath("state_dict.pkl")
         with checkpoint_path.open("rb") as f:
             state_dict = pickle.load(f)
             self.trial_tracker = DSATTrialTracker.from_state_dict(state_dict["trial_tracker"])
-            self.model_profile_info = DSATModelProfilingInfo.from_state_dict(
-                state_dict["model_profile_info"]
-                if state_dict["model_profile_info"] is not None
-                else None
-            )
+            model_profile_info = state_dict["model_profile_info"]
+            if model_profile_info is None:
+                self.model_profile_info is None
+            else:
+                self.model_profile_info = DSATModelProfilingInfo.from_state_dict(model_profile_info)
 
 
 class DSATRandomSearchMethod(DSATSearchMethodBase):
@@ -479,21 +535,19 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         self,
         searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
-        metric: Union[float, Dict[str, Any]],
         last_trial: DSATTrial,
+        metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[searcher.Operation]:
-        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
-            new_ops_list = self._get_ops_list_after_model_profiling_info_run(metric)
+            new_ops_list = self._get_ops_list_after_model_profiling_info_run()
         elif len(searcher_state.trials_created) < self._tuner_num_trials:
-            new_ops_list = self._get_ops_list_after_autotuning_run(metric, last_trial)
+            new_ops_list = self._get_ops_list_after_autotuning_run(last_trial)
         else:
             new_ops_list = []
         return new_ops_list
 
     def _get_ops_list_after_model_profiling_info_run(
         self,
-        metric: Union[float, Dict[str, Any]],
     ) -> List[searcher.Operation]:
         approx_num_lineages = self._tuner_num_trials // self._num_tuning_micro_batch_sizes
         new_ops_list = []
@@ -503,20 +557,33 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 hparams=hparams, search_data=search_data, parent_trial=None
             )
             # A +1 is required to align DS step/DET max_length conventions.
-            length = self._autotuning_config.get("end_profile_step", constants.END_PROFILE_STEP) + 1
-            new_ops = self.trial_tracker.get_ops_list_from_trial(trial=new_trial, length=length)
+            end_profile_step = (
+                self._autotuning_config.get("end_profile_step", defaults.END_PROFILE_STEP) + 1
+            )
+            new_ops = self.trial_tracker.get_ops_list_from_trial(
+                trial=new_trial, length=end_profile_step
+            )
             new_ops_list.extend(new_ops)
         return new_ops_list
 
     def _get_ops_list_after_autotuning_run(
         self,
-        metric: Union[float, Dict[str, Any]],
         last_trial: DSATTrial,
     ) -> List[searcher.Operation]:
         if last_trial.num_trials_in_lineage < self._num_tuning_micro_batch_sizes:
-            hparams, search_data = self._get_hparams_and_search_data_from_results(
-                last_trial=last_trial, metric=metric
+            # TODO: remove print tests.
+            logging.info("**************** BSZ History ****************")
+            hparams, search_data = self._get_hparams_and_search_data_from_last_trial(
+                last_trial=last_trial,
             )
+            logging.info(
+                f'SUBMITTING follow-on BS: {hparams["ds_config"]["train_micro_batch_size_per_gpu"]}'
+            )
+            print_trial = last_trial
+            while print_trial is not None:
+                bsz = print_trial.ds_config["train_micro_batch_size_per_gpu"]
+                logging.info(f"Direct history batch sizes: {bsz}")
+                print_trial = print_trial.parent
             parent_trial = last_trial
         else:
             hparams, search_data = self._get_random_hparams_and_search_data()
@@ -527,30 +594,33 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             new_trial = self.trial_tracker.create_trial(
                 hparams=hparams, search_data=search_data, parent_trial=parent_trial
             )
+            # A +1 is required to align DS step/DET max_length conventions.
+            end_profile_step = (
+                self._autotuning_config.get("end_profile_step", defaults.END_PROFILE_STEP) + 1
+            )
             new_ops_list = self.trial_tracker.get_ops_list_from_trial(
-                trial=new_trial, length=constants.END_PROFILE_STEP
+                trial=new_trial, length=end_profile_step + 1
             )
         return new_ops_list
 
-    def _get_hparams_and_search_data_from_results(
+    def _get_hparams_and_search_data_from_last_trial(
         self,
         last_trial: DSATTrial,
-        metric: Union[float, Dict[str, Any]],
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
         """
         Perform a slightly modified binary search on the train_micro_batch_size_per_gpu.
         """
+        # TODO: verify we are always quitting when no more non-trivial trials are possible.
+
         lo, hi = last_trial.search_data["lo"], last_trial.search_data["hi"]
         mid = (lo + hi) // 2
-        last_trial_oom = constants.OOM_KEY in metric
-        oom_in_lineage = last_trial_oom or last_trial.search_data["oom_in_lineage"]
         # TODO: edge cases and +- 1 error checks.
-        if last_trial_oom:
+        if last_trial.oom:
             hi = mid - 1
         else:
             lo = mid + 1
             hi = (
-                hi if oom_in_lineage else int(1.05 * hi)
+                hi if last_trial.oom_in_direct_history else int(1.05 * hi)
             )  # TODO: let user configure ceiling factor. Current number is just a guess, and maybe
             # what native DS AT does.
         new_mid = (lo + hi) // 2
@@ -559,7 +629,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         else:
             new_hparams = copy.deepcopy(last_trial.hparams)
             new_hparams["ds_config"]["train_micro_batch_size_per_gpu"] = new_mid
-        return new_hparams, {"lo": lo, "hi": hi, "oom_in_lineage": oom_in_lineage}
+        return new_hparams, {"lo": lo, "hi": hi}
 
     def _get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         random_zero_stage = random.choice(tuple(self.model_profile_info.viable_zero_stages))
@@ -568,11 +638,12 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         utils.replace_dict_in_place(
             new_hparams["ds_config"], {"zero_optimization": zero_optim_config}
         )
-        initialsearch_data = {
-            "lo": 1,
-            "hi": 2 * self.model_profile_info.max_mbs_per_stage[random_zero_stage] - 1,
-            "oom_in_lineage": False,
+        random_zero_stage_max_mbs = self.model_profile_info.max_mbs_per_stage[random_zero_stage]
+        lo, hi = 1, 2 * random_zero_stage_max_mbs - 1
+        mid = (lo + hi) // 2
+        search_data = {
+            "lo": lo,
+            "hi": hi,
         }
-        mid = (initialsearch_data["lo"] + initialsearch_data["hi"]) // 2
         new_hparams["ds_config"]["train_micro_batch_size_per_gpu"] = mid
-        return (new_hparams, initialsearch_data)
+        return (new_hparams, search_data)

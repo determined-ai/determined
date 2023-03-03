@@ -1,6 +1,8 @@
 import argparse
 import logging
 import os
+import pathlib
+import shutil
 
 import determined as det
 from determined import searcher
@@ -19,6 +21,14 @@ def get_parsed_args():
     return args
 
 
+def dsat_copy_hack(model_dir: str) -> None:
+    """
+    Temporary hack to make the dsat directory available for follow-on experiments. TODO: remove.
+    """
+    src = pathlib.Path("dsat")
+    shutil.copytree(src, pathlib.Path(model_dir).joinpath(src), dirs_exist_ok=True)
+
+
 def main(core_context: det.core.Context) -> None:
     args = get_parsed_args()
     submitted_config_dict = utils.get_config_dict_from_yaml_path(args.config_path)
@@ -31,6 +41,9 @@ def main(core_context: det.core.Context) -> None:
 
     search_method = all_search_method_classes[tuner_type](submitted_config_dict)
     search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
+
+    # TODO: remove hack.
+    dsat_copy_hack(args.model_dir)
 
     search_runner.run(submitted_config_dict, model_dir=args.model_dir)
 

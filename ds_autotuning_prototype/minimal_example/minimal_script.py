@@ -17,7 +17,7 @@ class RandDataset(Dataset):
         self.dim = dim
 
     def __len__(self) -> int:
-        return 2 ** 16 - 1
+        return 2 ** 32
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         return torch.randn(self.dim)
@@ -69,19 +69,25 @@ def main(
             # A potential gotcha: steps_completed must not be altered within the below context.
             # Probably obvious from the usage, but should be noted in docs.
             with utils.dsat_reporting_context(core_context, op, steps_completed):
+                print("TRAINLOADLERLEN", len(train_loader))
                 for batch in train_loader:
                     if fp16:
                         batch = batch.half()
                     batch = batch.to(device)
-                    logging.info(f"BATCH SIZE: {batch.shape[0]}")  # Sanity checking.
+                    print("batch on device")
+                    logging.info(f"ACTUAL BATCH SIZE: {batch.shape[0]}")  # Sanity checking.
                     # outputs = utils.dsat_forward(
                     #     core_context, op, model_engine, steps_completed, batch
                     # )
                     outputs = model_engine(batch)
+                    print("forward complete")
                     loss = F.mse_loss(outputs, batch)
                     model_engine.backward(loss)
+                    print("backward complete")
                     model_engine.step()
                     if model_engine.is_gradient_accumulation_boundary():
+                        # Defining steps_completed as optimizer steps.
+                        print("stepped optimizer")
                         break
 
             if is_chief:
