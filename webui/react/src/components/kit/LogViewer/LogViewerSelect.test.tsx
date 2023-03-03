@@ -57,12 +57,7 @@ describe('LogViewerFilter', () => {
     setup(DEFAULT_FILTER_OPTIONS, values);
 
     await waitFor(() => {
-      Object.keys(LABELS).forEach((labelKey) => {
-        const key = labelKey as keyof Filters;
-        if (!values[key]?.length) return;
-
-        expect(screen.queryAllByText(new RegExp('\\+ \\d ...')).length).toBeGreaterThan(1);
-      });
+      expect(screen.getAllByText('1 selected')).toHaveLength(5);
     });
   });
 
