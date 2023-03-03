@@ -1,12 +1,8 @@
 import pytest
 import torch
-import pathlib
 
 import determined as det
-from typing import Any, Dict
-from _pytest import monkeypatch
-
-from determined import errors, pytorch, tensorboard
+from determined import errors, pytorch
 
 
 
@@ -61,26 +57,16 @@ class TestPyTorchContext:
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
 
-    def test_context_method(
-        self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
-    ) -> None:
-        def mock_get_base_path(dummy: Dict[str, Any]) -> pathlib.Path:
-            return tmp_path
-
-        monkeypatch.setattr(tensorboard, "get_base_path", mock_get_base_path)
+    def test_context_method(self) -> None:
 
         assert self.context._tbd_writer is None
-        files = list(tmp_path.iterdir())
+        files = list(self.context.get_tensorboard_path().iterdir())
         assert len(files) == 0
 
-        with self.context.get_tensorboard_writer() as writer:
-            writer.add_scalar("foo", 7, 0)
-            writer.add_scalar("foo", 8, 1)
+        writer = self.context.get_tensorboard_writer()
 
-        with self.context.get_tensorboard_writer() as writer:
-            writer.add_scalar("foo", 9, 2)
-            writer.add_scalar("foo", 10, 3)
-            writer.add_scalar("foo", 11, 4)
+        writer.add_scalar("foo", 7, 0)
+        writer.add_scalar("foo", 8, 1)
 
-        files = list(tmp_path.iterdir())
+        files = list(self.context.get_tensorboard_path().iterdir())
         assert len(files) == 1

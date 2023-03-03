@@ -1,6 +1,7 @@
 import enum
 import logging
 import pathlib
+import tempfile
 from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
@@ -227,7 +228,7 @@ class TrainContext:
 
 class DummyTrainContext(TrainContext):
     def __init__(self) -> None:
-        pass
+        self._tbd_directory = None  # type: Optional[tempfile.TemporaryDirectory]
 
     def set_status(self, status: str) -> None:
         logger.info(f"status: {status}")
@@ -271,7 +272,8 @@ class DummyTrainContext(TrainContext):
 
     def get_tensorboard_path(self) -> pathlib.Path:
         # make an ephemeral directory for tensorboard tests
-        import tempfile
 
-        self._tbd_directory = tempfile.TemporaryDirectory()
+        if self._tbd_directory is None:
+            self._tbd_directory = tempfile.TemporaryDirectory()
+
         return pathlib.Path(self._tbd_directory.name)
