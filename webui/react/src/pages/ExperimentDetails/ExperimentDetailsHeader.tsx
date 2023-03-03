@@ -1,4 +1,4 @@
-import { Button, Space } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -421,7 +421,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
-              <div className={css.description}>{experiment.description}</div>
+              <div className={css.description}>
+                {experiment.description || <Typography.Text disabled>N/A</Typography.Text>}
+              </div>
             </div>
             {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
               <div className={css.foldableItem}>
