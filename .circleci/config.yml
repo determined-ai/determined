@@ -1217,7 +1217,7 @@ jobs:
 
   check-ts-bindings:
     docker:
-      - image: cimg/openjdk:14.0.2
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - skip-if-docs-only
