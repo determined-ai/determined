@@ -8,6 +8,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 
+import DynamicIcon from './DynamicIcon';
 import Card from './kit/Card';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
@@ -43,7 +44,13 @@ const ProjectCard: React.FC<Props> = ({
           {project.name}
         </Typography.Title>
         {showWorkspace && project.workspaceId !== 1 ? (
-          <h6 className={css.workspace}>{project.workspaceName}</h6>
+          <div className={css.workspace}>
+            <Tooltip title={project.workspaceName}>
+              <span>
+                <DynamicIcon name={project.workspaceName} size={24} />
+              </span>
+            </Tooltip>
+          </div>
         ) : null}
         <div className={css.footer}>
           <div className={css.experiments}>

@@ -11,10 +11,7 @@
     width: fit-content;
   }
   .workspace {
-    -webkit-box-orient: vertical;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    overflow: hidden;
+    display: flex;
   }
   .footer {
     display: flex;
