@@ -20,10 +20,10 @@ Learn more:
 
 -  :doc:`Intro to Determined <introduction>`: Conceptual information about Determined including its
    features and benefits.
--  :doc:`System Architecture <system-architecture>`: Learn about the main components
-   of the Determined system architecture.
--  :doc:`Distributed Training <../training/dtrain-introduction>`: A conceptual overview of distributed
-   training with Determined.
+-  :doc:`System Architecture <system-architecture>`: Learn about the main components of the
+   Determined system architecture.
+-  :doc:`Distributed Training <../training/dtrain-introduction>`: A conceptual overview of
+   distributed training with Determined.
 
 .. toctree::
    :caption: How Determined Works
