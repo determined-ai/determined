@@ -199,6 +199,9 @@ func getJobWatcher() *launcherMonitor {
 	configFile := "dummyConfigFile"
 
 	jobWatcher := newDispatchWatcher(apiClient, authToken, configFile)
+	jobWatcher.rm = &dispatcherResourceManager{
+		wlmType: pbsSchedulerType,
+	}
 
 	return jobWatcher
 }

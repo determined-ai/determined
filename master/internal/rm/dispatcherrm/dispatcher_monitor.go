@@ -5,6 +5,7 @@ package dispatcherrm
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -30,6 +32,7 @@ const (
 	ignoredReporter                  = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
 	errorLinesToRetrieve             = 200
 	errorLinesToDisplay              = 15
+	ownerLauncher                    = "launcher"
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -82,9 +85,9 @@ type launcherMonitor struct {
 	authMu                sync.RWMutex
 	mu                    sync.RWMutex
 	processingWatchedJobs atomic.Bool
+	rm                    *dispatcherResourceManager
 }
 
-// newDispatchWatcher initiates the process of monitoring the progress of launched jobs.
 func newDispatchWatcher(
 	apiClient *launcher.APIClient, authToken string, authFile string,
 ) *launcherMonitor {
@@ -381,6 +384,8 @@ func (m *launcherMonitor) processWatchedJobs(
 	var job launcherJob
 	var ok bool
 
+	qStats := m.queuesFromCluster(ctx)
+
 	sortedDispatchIDs := m.getDispatchIDsSortedByLastJobStatusCheckTime(m.monitoredJobs, ctx)
 
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
@@ -389,10 +394,12 @@ func (m *launcherMonitor) processWatchedJobs(
 			m.removeJobFromMonitoredList(dispatchID, ctx)
 			continue
 		}
-
 		if job, ok = m.getJobByDispatchID(dispatchID); !ok {
 			ctx.Log().Warnf("dispatcher_monitor did not find job for dispatchID %s", dispatchID)
 			continue
+		}
+		if m.obtainJobStateFromWlmQueueDetails(dispatchID, qStats, ctx, job) {
+			continue // An optimization to avoid per-job use of updateJobStatus (below)
 		}
 
 		if m.shouldSkip(job) {
@@ -419,6 +426,88 @@ func (m *launcherMonitor) processWatchedJobs(
 	// There are chances that jobsToRemove might still have some elements remaining.
 	// These values are stale and can be removed safely.
 	m.clearJobsToRemoveMap()
+}
+
+// obtainJobStateFromWlmQueueDetails gets the state of the specified dispatch from
+// the supplied WLM queue details. If found the associated job state will be published.
+func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
+	dispatchID string, qStats map[string]map[string]string,
+	ctx *actor.Context, job launcherJob,
+) bool {
+	hpcJobID := m.rm.dispatchIDToHPCJobID[dispatchID]
+	nativeState := qStats[hpcJobID]["state"]
+	ctx.Log().WithField("dispatch-id", dispatchID).
+		WithField("hpc-job-id", hpcJobID).
+		WithField("native-state", nativeState).
+		Debugf("job state from HPC queue stats")
+	switch {
+	case nativeState == "PD" || strings.ToLower(nativeState) == "pending":
+		m.publishJobState(launcher.PENDING, job, ctx, dispatchID, hpcJobID)
+		return true
+	case nativeState == "R" || strings.ToLower(nativeState) == "running":
+		m.publishJobState(launcher.RUNNING, job, ctx, dispatchID, hpcJobID)
+		return true
+	}
+	return false
+}
+
+// queuesFromCluster fetches the latest job queue information from the cluster.
+func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[string]string {
+	result := map[string]map[string]string{}
+	if len(m.monitoredJobs) == 0 {
+		return result // Nothing to get of interest in this case
+	}
+	if m.rm.wlmType == pbsSchedulerType {
+		return result // No support for PBS yet -- FOUNDENG-449
+	}
+	ctx.Log().Debugf("Fetching HPC queue state")
+	payload := launcher.NewPayloadWithDefaults()
+	payload.SetName("DAI-HPC-Queues")
+	payload.SetId("com.cray.analytics.capsules.hpc.queue")
+	payload.SetVersion("latest")
+	payload.SetCarriers([]string{"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmQueue"})
+
+	launchParameters := launcher.NewLaunchParameters()
+	launchParameters.SetMode("batch")
+	payload.SetLaunchParameters(*launchParameters)
+
+	clientMetadata := launcher.NewClientMetadataWithDefaults()
+	clientMetadata.SetName("DAI-HPC-Queues")
+
+	manifest := *launcher.NewManifest("v1", *clientMetadata)
+	manifest.SetPayloads([]launcher.Payload{*payload})
+
+	dispatchInfo, r, err := m.apiClient.LaunchApi.Launch(m.authContext(ctx)).
+		Manifest(manifest).
+		Impersonate("").
+		Execute() //nolint:bodyclose
+	if err != nil {
+		m.rm.handleServiceQueryError(r, ctx, err)
+		return result
+	}
+	dispatchID := dispatchInfo.GetDispatchId()
+	defer m.rm.ResourceQueryPostActions(ctx, dispatchID, ownerLauncher)
+
+	resp, _, err := m.apiClient.MonitoringApi.
+		LoadEnvironmentLog(m.authContext(ctx), ownerLauncher, dispatchID, "slurm-queue-info").
+		Execute() //nolint:bodyclose
+	if err != nil {
+		ctx.Log().WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
+		return result
+	}
+
+	// Parse the carrier output file to a map of properties per job.
+	resourcesBytes, err := io.ReadAll(resp)
+	if err != nil {
+		ctx.Log().WithError(err).Errorf("failed to read HPC job queue details")
+		return result
+	}
+	if err = yaml.Unmarshal(resourcesBytes, &result); err != nil {
+		ctx.Log().WithError(err).Errorf("failed to parse HPC job queue details")
+		return result
+	}
+	ctx.Log().Debugf("HPC queue state done, size %d", len(result))
+	return result
 }
 
 func (m *launcherMonitor) addJobToMonitoredJobs(job launcherJob) {
@@ -688,21 +777,30 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		// that's not running), then Determined will report a state of
 		// "Pulling".  When all the containers are running, then Determined
 		// will report a state of "Running".
-		isPullingImage := *resp.State == launcher.RUNNING && !m.allContainersRunning(job)
-
-		ctx.Log().Debugf("For dispatchID %s, sending DAI a job state of %s (pulling=%t)",
-			dispatchID,
-			*resp.State,
-			isPullingImage)
-
-		ctx.Tell(ctx.Self(), DispatchStateChange{
-			DispatchID:     dispatchID,
-			State:          *resp.State,
-			IsPullingImage: isPullingImage,
-			HPCJobID:       getJobID(resp.GetAdditionalPropertiesField()),
-		})
+		m.publishJobState(
+			*resp.State, job, ctx, dispatchID, getJobID(resp.GetAdditionalPropertiesField()))
 	}
 	return removeJob
+}
+
+// publishJobState publishes the state of the specified job to the rest of the system.
+func (m *launcherMonitor) publishJobState(
+	notifyState launcher.DispatchState,
+	job launcherJob, ctx *actor.Context, dispatchID string, hpcJobID string,
+) {
+	isPullingImage := notifyState == launcher.RUNNING && !m.allContainersRunning(job)
+
+	ctx.Log().Debugf("For dispatchID %s, sending DAI a job state of %s (pulling=%t)",
+		dispatchID,
+		notifyState,
+		isPullingImage)
+
+	ctx.Tell(ctx.Self(), DispatchStateChange{
+		DispatchID:     dispatchID,
+		State:          notifyState,
+		IsPullingImage: isPullingImage,
+		HPCJobID:       hpcJobID,
+	})
 }
 
 /*
