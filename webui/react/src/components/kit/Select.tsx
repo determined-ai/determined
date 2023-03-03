@@ -17,7 +17,6 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   defaultValue?: T;
   disableTags?: boolean;
   disabled?: boolean;
-  enableSearchFilter?: boolean;
   filterOption?: boolean | ((inputValue: string, option: LabeledValue | undefined) => boolean);
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
@@ -31,6 +30,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   options?: LabeledValue[];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
+  searchable?: boolean;
   value?: T;
 }
 
@@ -61,7 +61,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     defaultValue,
     disabled,
     disableTags = false,
-    enableSearchFilter = true,
+    searchable = true,
     filterOption,
     filterSort,
     id,
@@ -120,7 +120,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         allowClear={allowClear}
         defaultValue={defaultValue}
         disabled={disabled}
-        filterOption={filterOption ?? (enableSearchFilter ? handleFilter : true)}
+        filterOption={filterOption ?? (searchable ? handleFilter : true)}
         filterSort={filterSort}
         id={id}
         maxTagCount={maxTagCount}
@@ -129,7 +129,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         options={options}
         placeholder={placeholder}
         ref={ref}
-        showSearch={!!onSearch || !!filterOption || enableSearchFilter}
+        showSearch={!!onSearch || !!filterOption || searchable}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}
         onBlur={onBlur}

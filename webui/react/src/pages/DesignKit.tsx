@@ -269,13 +269,13 @@ const SelectSection: React.FC = () => {
         />
         <strong>Select without search</strong>
         <Select
-          enableSearchFilter={false}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
           placeholder="Search"
+          searchable={false}
         />
         <strong>Multiple Select with tags</strong>
         <Select

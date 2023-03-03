@@ -20,8 +20,8 @@ interface Props {
 export const XAxisFilter: React.FC<Props> = ({ options, onChange, value }: Props) => {
   return (
     <Select
-      enableSearchFilter={false}
       label="X-Axis"
+      searchable={false}
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as XAxisDomain)}>
       {Object.values(XAxisDomain)

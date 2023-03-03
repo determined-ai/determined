@@ -54,8 +54,8 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
   return (
     <>
       <Select
-        enableSearchFilter={false}
         label="Metric Name"
+        searchable={false}
         value={settings.name}
         onChange={handleChangeName}>
         {systemSeries &&
@@ -66,8 +66,8 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
           ))}
       </Select>
       <Select
-        enableSearchFilter={false}
         label="Agent Name"
+        searchable={false}
         value={validAgentIds.includes(settings.agentId as string) ? settings.agentId : undefined}
         onChange={handleChangeAgentId}>
         {validAgentIds.map((agentId) => (
@@ -79,9 +79,9 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
       {uuidOptions.length !== 0 && (
         <Select
           allowClear={true}
-          enableSearchFilter={false}
           label="GPU"
           placeholder="All"
+          searchable={false}
           value={settings.gpuUuid}
           onChange={handleChangeGpuUuid}>
           {uuidOptions.map((gpuUuid) => (
