@@ -9,8 +9,8 @@
  */
 
 
-import * as url from "url";
-import * as portableFetch from "portable-fetch";
+import url from "url";
+import portableFetch from "portable-fetch";
 import { Configuration } from "./configuration";
 
 type ValueOf<T> = T[keyof T];
