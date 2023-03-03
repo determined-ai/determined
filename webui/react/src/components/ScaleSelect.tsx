@@ -13,8 +13,8 @@ interface Props {
 const ScaleSelect: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
     <Select
-      enableSearchFilter={false}
       label="Scale"
+      searchable={false}
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as Scale)}>
       {Object.values(Scale).map((scale) => (

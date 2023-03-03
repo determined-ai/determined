@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
-import Form from 'components/kit/Form';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -131,24 +130,26 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <div>
-          <Form.Item label="Workspace">
-            <Select
-              id="workspace"
-              placeholder="Select a destination workspace."
-              value={workspaceId ?? undefined}
-              onSelect={handleWorkspaceSelect}>
-              {Loadable.getOrElse([], workspaces).map((workspace) => {
-                return (
-                  <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
-                    <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
-                      <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                      {workspace.archived && <Icon name="archive" />}
-                    </div>
-                  </Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
+          <label className={css.label} htmlFor="workspace">
+            Workspace
+          </label>
+          <Select
+            id="workspace"
+            placeholder="Select a destination workspace."
+            searchable={false}
+            value={workspaceId ?? undefined}
+            onSelect={handleWorkspaceSelect}>
+            {Loadable.getOrElse([], workspaces).map((workspace) => {
+              return (
+                <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
+                  <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
+                    <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                    {workspace.archived && <Icon name="archive" />}
+                  </div>
+                </Option>
+              );
+            })}
+          </Select>
         </div>
         {workspaceId && workspaceId !== 1 && (
           <div>
