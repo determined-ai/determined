@@ -165,7 +165,7 @@ args_description = [
             Arg("det_username", help="name of Determined user to link"),
             *AGENT_USER_GROUP_ARGS,
         ]),
-        Cmd("whoami", whoami, "print the active user", [])
+        Cmd("whoami", whoami, "print the active user", []),
     ])
 ]  # type: List[Any]
 
