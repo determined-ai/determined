@@ -1,7 +1,7 @@
 # pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
 docutils==0.15.2
 pillow
-rstfmt==0.0.10
+rstfmt==0.0.12
 
 # Plugins
 sphinx-reredirects>=0.0.1
