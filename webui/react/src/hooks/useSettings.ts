@@ -9,7 +9,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

@@ -30,7 +30,7 @@ import {
   selectIsAuthenticated,
 } from 'stores/auth';
 import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';

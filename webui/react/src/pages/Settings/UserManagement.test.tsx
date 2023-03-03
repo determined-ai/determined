@@ -9,7 +9,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';

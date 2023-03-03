@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';
 import { StorageManager } from 'shared/utils/storage';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
 
 export const userPreferencesStorage = (): (() => void) => {

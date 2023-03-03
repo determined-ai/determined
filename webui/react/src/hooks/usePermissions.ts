@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,

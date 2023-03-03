@@ -7,7 +7,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';

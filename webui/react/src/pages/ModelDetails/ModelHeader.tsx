@@ -21,7 +21,7 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { DetailedUser, ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';

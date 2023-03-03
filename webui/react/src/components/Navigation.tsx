@@ -7,7 +7,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';

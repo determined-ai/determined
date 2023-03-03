@@ -32,7 +32,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { RolesStore } from 'stores/roles';
-import usersStore, { FetchUsersConfig } from 'stores/usersObserve';
+import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';

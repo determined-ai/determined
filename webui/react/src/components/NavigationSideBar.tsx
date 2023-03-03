@@ -22,7 +22,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { selectIsAuthenticated } from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';

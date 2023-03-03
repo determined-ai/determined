@@ -66,7 +66,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,

@@ -8,7 +8,7 @@ import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
 import { pluralizer } from 'shared/utils/string';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 

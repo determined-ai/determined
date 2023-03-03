@@ -9,7 +9,7 @@ import { isAuthFailure } from 'shared/utils/service';
 import { reset as resetAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { useResetWorkspaces } from 'stores/workspaces';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';

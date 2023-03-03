@@ -5,7 +5,7 @@ import { TooltipProps } from 'antd/es/tooltip';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';

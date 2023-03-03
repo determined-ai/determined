@@ -22,7 +22,7 @@ import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { DetailedUser, ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';

@@ -5,7 +5,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';

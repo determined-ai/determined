@@ -11,7 +11,7 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';

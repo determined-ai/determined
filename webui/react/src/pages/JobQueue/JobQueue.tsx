@@ -24,7 +24,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {

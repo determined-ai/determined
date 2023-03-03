@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 
 import CodeViewer, { Props } from './CodeViewer';
 

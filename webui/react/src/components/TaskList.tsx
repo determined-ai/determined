@@ -53,7 +53,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import {

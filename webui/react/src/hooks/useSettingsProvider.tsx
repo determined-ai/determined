@@ -6,7 +6,7 @@ import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { authChecked } from 'stores/auth';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

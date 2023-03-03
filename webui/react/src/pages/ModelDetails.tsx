@@ -39,7 +39,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';

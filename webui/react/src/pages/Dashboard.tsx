@@ -32,7 +32,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ErrorType } from 'shared/utils/error';
 import { dateTimeStringSorter } from 'shared/utils/sort';
-import usersStore from 'stores/usersObserve';
+import usersStore from 'stores/users';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
