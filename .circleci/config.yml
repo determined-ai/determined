@@ -1221,10 +1221,13 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - setup-python-venv:
+          install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
-      - run: make -C bindings get-deps
-      - run: make -C bindings check/typescript-fetch
+      - run: make -C bindings force-gen check/typescript
 
   check-py-bindings:
     docker:
@@ -1235,11 +1238,11 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
-      - run: make -C bindings force-gen
-      - run: make -C bindings check/python
+      - run: make -C bindings force-gen check/python
 
   upload-try-now-template:
     docker:
