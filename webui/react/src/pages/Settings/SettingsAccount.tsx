@@ -10,7 +10,6 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useUpdateUser } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -35,7 +34,6 @@ const SettingsAccount: React.FC = () => {
   const [usernameForm] = Form.useForm<FormUsernameInputs>();
   const [displaynameForm] = Form.useForm<FormDisplaynameInputs>();
   const loadableCurrentUser = usersStore.getCurrentUser();
-  const updateUser = useUpdateUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -57,14 +55,14 @@ const SettingsAccount: React.FC = () => {
         userId: currentUser?.id || 0,
         userParams: { displayName: values.displayName },
       });
-      updateUser(user.id, (oldUser) => ({ ...oldUser, displayName: values.displayName }));
+      usersStore.updateUsers(user);
       message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       setIsDisplaynameEditable(false);
     } catch (e) {
       handleError(e, { silent: false, type: ErrorType.Input });
       return e as Error;
     }
-  }, [currentUser?.id, displaynameForm, updateUser]);
+  }, [currentUser?.id, displaynameForm]);
 
   const handleSaveUsername = useCallback(async (): Promise<void | Error> => {
     const values = await usernameForm.validateFields();
@@ -73,7 +71,7 @@ const SettingsAccount: React.FC = () => {
         userId: currentUser?.id || 0,
         userParams: { username: values.username },
       });
-      updateUser(user.id, (oldUser) => ({ ...oldUser, username: values.username }));
+      usersStore.updateUsers(user);
       message.success(API_USERNAME_SUCCESS_MESSAGE);
       setIsUsernameEditable(false);
     } catch (e) {
@@ -81,7 +79,7 @@ const SettingsAccount: React.FC = () => {
       handleError(e, { silent: true, type: ErrorType.Input });
       return e as Error;
     }
-  }, [currentUser?.id, updateUser, usernameForm]);
+  }, [currentUser?.id, usernameForm]);
 
   return (
     <div className={css.base}>

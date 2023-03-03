@@ -59,10 +59,7 @@ const AppView: React.FC = () => {
     });
   }, [infoLoadable]);
 
-  const fetchUsers = useCallback(
-    () => usersStore.ensureUsersFetched(undefined, canceler),
-    [canceler],
-  );
+  const fetchUsers = useCallback(() => usersStore.ensureUsersFetched(canceler), [canceler]);
   const fetchCurrentUser = useCallback(
     () => usersStore.ensureCurrentUserFetched(canceler),
     [canceler],

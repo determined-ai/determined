@@ -49,7 +49,6 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useEnsureUsersFetched } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
@@ -107,8 +106,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
-
   const fetchModels = useCallback(async () => {
     if (!settings) return;
 
@@ -158,8 +155,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);
-  }, [fetchModels, fetchTags, fetchUsers, fetchWorkspaces]);
+    await Promise.allSettled([
+      fetchModels(),
+      fetchTags(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchWorkspaces(),
+    ]);
+  }, [canceler, fetchModels, fetchTags, fetchWorkspaces]);
 
   const workspaces = Loadable.match(useWorkspaces(), {
     Loaded: (ws) => ws,

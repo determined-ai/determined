@@ -31,7 +31,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { RolesStore } from 'stores/roles';
-import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
+import usersStore, { FetchUsersConfig } from 'stores/usersObserve';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -129,7 +129,6 @@ const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const fetchUsersHook = useFetchUsers(canceler);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
   const apiConfig = useMemo<FetchUsersConfig>(
     () => ({
@@ -140,12 +139,12 @@ const UserManagement: React.FC = () => {
     }),
     [settings],
   );
-  const loadableUser = useUsers(apiConfig);
-  const users = Loadable.match(loadableUser, {
+  const loadableUsers = usersStore.getUsers(apiConfig);
+  const users = Loadable.match(loadableUsers, {
     Loaded: (users) => users.users,
     NotLoaded: () => [],
   });
-  const total = Loadable.match(loadableUser, {
+  const total = Loadable.match(loadableUsers, {
     Loaded: (users) => users.pagination.total ?? 0,
     NotLoaded: () => 0,
   });
@@ -156,8 +155,8 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    fetchUsersHook(apiConfig);
-  }, [settings, apiConfig, fetchUsersHook]);
+    usersStore.ensureUsersFetched(canceler, apiConfig);
+  }, [settings, canceler, apiConfig]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -254,7 +253,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={loadableUser === NotLoaded}
+        loading={loadableUsers === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
@@ -278,7 +277,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUser, settings, columns, total, updateSettings]);
+  }, [users, loadableUsers, settings, columns, total, updateSettings]);
   return (
     <Page bodyNoPadding containerRef={pageRef}>
       <Section

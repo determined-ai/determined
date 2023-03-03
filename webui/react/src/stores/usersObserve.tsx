@@ -12,12 +12,11 @@ import { observable, WritableObservable } from 'micro-observables';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
+import type { GetUsersParams as FetchUsersConfig } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { encodeParams } from 'utils/store';
-
-import { FetchUsersConfig } from './users';
 
 type UsersPagination = {
   pagination: V1Pagination;
@@ -47,8 +46,9 @@ class UsersService {
     }
   };
 
-  public updateCurrentUser = (id: number) => {
-    this.#currentUserId.set(Loaded(id));
+  public updateCurrentUser = (id: number | null) => {
+    if (id === null) this.#currentUserId.set(NotLoaded);
+    else this.#currentUserId.set(Loaded(id));
   };
 
   public getUsers = (cfg?: FetchUsersConfig) => {
@@ -70,8 +70,8 @@ class UsersService {
   };
 
   public ensureUsersFetched = async (
+    canceler: AbortController,
     cfg?: FetchUsersConfig,
-    canceler?: AbortController,
   ): Promise<void> => {
     const config = cfg ?? {};
     const usersPagination = this.#usersByKey.get().get(encodeParams(config));
@@ -88,6 +88,15 @@ class UsersService {
     }
   };
 
+  public updateUsers = (users: DetailedUser | DetailedUser[]) => {
+    this.#users.update((map) => {
+      return map.withMutations((map) => {
+        if (Array.isArray(users)) users.forEach((user) => map.set(user.id, user));
+        else map.set(users.id, users);
+      });
+    });
+  };
+
   private updateUsersByKey = (
     config: FetchUsersConfig | Record<string, never>,
     usersList: DetailedUserList,
@@ -99,16 +108,10 @@ class UsersService {
 
     this.#usersByKey.update((map) => map.set(encodeParams(config), usersPages));
   };
-
-  private updateUsers = (users: DetailedUser[]) => {
-    this.#users.update((map) => {
-      return map.withMutations((map) => {
-        users.forEach((user) => map.set(user.id, user));
-      });
-    });
-  };
 }
 
 const usersStore = new UsersService();
+
+export { FetchUsersConfig };
 
 export default usersStore;

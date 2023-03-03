@@ -22,7 +22,6 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useEnsureUsersFetched } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -89,8 +88,6 @@ const WorkspaceDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [canceler.signal, id, pageError]);
-
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -224,7 +221,7 @@ const WorkspaceDetails: React.FC = () => {
     if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
-      fetchUsers(),
+      usersStore.ensureUsersFetched(canceler),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
@@ -232,8 +229,8 @@ const WorkspaceDetails: React.FC = () => {
   }, [
     canViewWorkspaceFlag,
     fetchWorkspace,
+    canceler,
     fetchGroups,
-    fetchUsers,
     fetchGroupsAndUsersAssignedToWorkspace,
     fetchRolesAssignableToScope,
   ]);

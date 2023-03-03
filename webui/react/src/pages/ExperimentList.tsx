@@ -65,7 +65,6 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useEnsureUsersFetched } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import {
   ExperimentAction as Action,
@@ -235,11 +234,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
-
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);
-  }, [fetchExperiments, fetchUsers, fetchLabels]);
+    await Promise.allSettled([
+      fetchExperiments(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchLabels(),
+    ]);
+  }, [fetchExperiments, canceler, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
