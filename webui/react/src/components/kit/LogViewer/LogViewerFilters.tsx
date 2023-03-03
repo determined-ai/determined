@@ -1,13 +1,12 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import Select, { Option } from 'components/kit/Select';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { LogLevelFromApi } from 'types';
-
-const { Option } = Select;
 
 interface Props {
   onChange?: (filters: Filters) => void;
@@ -105,10 +104,9 @@ const LogViewerFilters: React.FC<Props> = ({
         )}
         {moreThanOne.allocationIds && (
           <Select
-            maxTagCount="responsive"
+            disableTags
             mode="multiple"
             placeholder={`All ${LABELS.allocationIds}`}
-            style={{ width: 150 }}
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
@@ -120,10 +118,9 @@ const LogViewerFilters: React.FC<Props> = ({
         )}
         {moreThanOne.agentIds && (
           <Select
-            maxTagCount="responsive"
+            disableTags
             mode="multiple"
             placeholder={`All ${LABELS.agentIds}`}
-            style={{ width: 150 }}
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
@@ -135,10 +132,9 @@ const LogViewerFilters: React.FC<Props> = ({
         )}
         {moreThanOne.containerIds && (
           <Select
-            maxTagCount="responsive"
+            disableTags
             mode="multiple"
             placeholder={`All ${LABELS.containerIds}`}
-            style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
@@ -150,10 +146,9 @@ const LogViewerFilters: React.FC<Props> = ({
         )}
         {moreThanOne.rankIds && (
           <Select
-            maxTagCount="responsive"
+            disableTags
             mode="multiple"
             placeholder={`All ${LABELS.rankIds}`}
-            style={{ width: 150 }}
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
@@ -164,10 +159,9 @@ const LogViewerFilters: React.FC<Props> = ({
           </Select>
         )}
         <Select
-          maxTagCount="responsive"
+          disableTags
           mode="multiple"
           placeholder={`All ${LABELS.levels}`}
-          style={{ width: 150 }}
           value={values.levels}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
