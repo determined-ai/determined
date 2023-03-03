@@ -5,7 +5,7 @@ import { TooltipProps } from 'antd/es/tooltip';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -50,15 +50,13 @@ jest.mock('antd', () => {
 
 const Component = ({ user }: Partial<Props> = {}) => {
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
   const asyncFetch = useCallback(async () => {
-    await fetchUsers();
-  }, [fetchUsers]);
-  const updateCurrentUser = useUpdateCurrentUser();
+    await usersStore.ensureUsersFetched(undefined, canceler);
+  }, [canceler]);
 
   useEffect(() => {
     asyncFetch();
-    updateCurrentUser(44);
+    usersStore.updateCurrentUser(44);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -70,9 +68,7 @@ const setup = (testUser: DetailedUser) => {
 
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <Component user={testUser} />
-      </UsersProvider>
+      <Component user={testUser} />
     </UIProvider>,
   );
 

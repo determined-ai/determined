@@ -9,7 +9,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
@@ -53,16 +53,14 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(() => {
-    fetchUsers();
+    usersStore.ensureUsersFetched(undefined, canceler);
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-    updateCurrentUser(currentUser.id);
-  }, [fetchUsers, updateCurrentUser]);
+    usersStore.updateCurrentUser(currentUser.id);
+  }, [canceler]);
 
   useEffect(() => {
     loadUsers();
@@ -82,11 +80,9 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <StoreProvider>
-      <UsersProvider>
-        <DndProvider backend={HTML5Backend}>
-          <Container />
-        </DndProvider>
-      </UsersProvider>
+      <DndProvider backend={HTML5Backend}>
+        <Container />
+      </DndProvider>
     </StoreProvider>,
   );
 

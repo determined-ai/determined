@@ -7,7 +7,7 @@ import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPassword
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { DetailedUser } from 'types';
 
 import SettingsAccount, { CHANGE_PASSWORD_TEXT } from './SettingsAccount';
@@ -54,18 +54,16 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(() => {
-    updateCurrentUser(currentUser.id);
-  }, [updateCurrentUser]);
+    usersStore.updateCurrentUser(currentUser.id);
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
+    usersStore.ensureUsersFetched(undefined, canceler);
     setAuth({ isAuthenticated: true });
-  }, [fetchUsers]);
+  }, [canceler]);
 
   useEffect(() => {
     loadUsers();
@@ -77,9 +75,7 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <UIProvider>
-      <UsersProvider>
-        <Container />
-      </UsersProvider>
+      <Container />
     </UIProvider>,
   );
 
