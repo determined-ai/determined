@@ -1,26 +1,12 @@
 import contextlib
 import logging
-import pathlib
-
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generator,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union, cast
 
 import torch
 import torch.nn as nn
 
 import determined as det
-from determined import profiler, pytorch, tensorboard, util
+from determined import profiler, pytorch, util
 from determined.horovod import hvd
 
 # Apex is included only for GPU trials.
@@ -139,7 +125,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._stop_requested = False
 
-        self._tbd_writer = None  # type: Optional[tensorboard.MetricWriter]
+        self._tbd_writer = None  # type: Optional[Any]
 
     def get_global_batch_size(self) -> int:
         """
@@ -955,28 +941,28 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         """
         return self._core.train.get_tensorboard_path()
 
-    @contextlib.contextmanager
-    def get_tensorboard_writer(self) -> Generator[tensorboard.MetricWriter, None, None]:
+    def get_tensorboard_writer(self) -> Any:
         """
-        Yield tensorboard writer to the user.
-        To be used via the `with` statement, eg:
+        Return the context's tensorboard writer to the user if the user needs it.
 
-        with context.get_tensorboard_writer() as writer:
-            writer.add_scalar(value, idx)
-            writer.add_images(images, idx)
+        This method ensures we create a writer only when necessary
+        and imports SummaryWriter at runtime.
+
+        The return type is Any to avoid creating an environment dependency
+        on the tensorboard module, which is required to import SummaryWriter.
         """
 
         if self._tbd_writer is None:
-            from determined.pytorch.tensorboard_writer import TorchWriter
+            from torch.utils.tensorboard import SummaryWriter
 
-            self._tbd_writer = TorchWriter()
+            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
 
-        yield self._tbd_writer
+        return self._tbd_writer
 
     def maybe_reset_tbd_writer(self) -> None:
         # reset writer only if one exists
         if self._tbd_writer is not None:
-            self._tbd_writer.reset()
+            self._tbd_writer.close()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore

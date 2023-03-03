@@ -906,25 +906,26 @@ class _PyTorchTrialController:
 
         metrics_seen = set()
 
-        with self.context.get_tensorboard_writer() as writer:
-            # Log all batch metrics.
-            if batch_metrics:
-                for batch_idx, batch in enumerate(batch_metrics):
-                    batches_seen = steps_completed - len(batch_metrics) + batch_idx
-                    for name, value in batch.items():
-                        if is_numerical_scalar(value):
-                            writer.add_scalar("Determined/" + name, value, batches_seen)
-                        metrics_seen.add(name)
+        writer = self.context.get_tensorboard_writer()
 
-            # Log avg metrics which were calculated by a
-            # custom reducer and are not in batch metrics.
-            for name, value in metrics.items():
-                if name in metrics_seen:
-                    continue
-                if is_val and not name.startswith("val"):
-                    name = "val_" + name
-                if is_numerical_scalar(value):
-                    writer.add_scalar("Determined/" + name, value, self.steps_completed)
+        # Log all batch metrics.
+        if batch_metrics:
+            for batch_idx, batch in enumerate(batch_metrics):
+                batches_seen = steps_completed - len(batch_metrics) + batch_idx
+                for name, value in batch.items():
+                    if is_numerical_scalar(value):
+                        writer.add_scalar("Determined/" + name, value, batches_seen)
+                    metrics_seen.add(name)
+
+        # Log avg metrics which were calculated by a
+        # custom reducer and are not in batch metrics.
+        for name, value in metrics.items():
+            if name in metrics_seen:
+                continue
+            if is_val and not name.startswith("val"):
+                name = "val_" + name
+            if is_numerical_scalar(value):
+                writer.add_scalar("Determined/" + name, value, steps_completed)
 
     @torch.no_grad()  # type: ignore
     def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
