@@ -2099,6 +2099,9 @@ jobs:
       determined_master_host:
         type: string
         default: localhost:8080
+      slack-mentions:
+        type: string
+        default: ""
       cluster_unix_user:
         type: string
         default: launcher
@@ -2130,6 +2133,7 @@ jobs:
       - attach_workspace:
           at: .
 
+      - set-slack-user-id
       - run: sudo yum install -y xmlsec1
       - run:
           name: Remove previous HPE MLDE Master RPM
@@ -2213,6 +2217,13 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
+
+      - slack/status:
+          fail_only: True
+          only_for_branches: main
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E slurm job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<pipeline.parameters.default-slack-channel>>
 
   test-e2e:
     parameters:
@@ -3040,6 +3051,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
           mark: e2e_slurm_misconfigured
@@ -3082,6 +3094,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot
+          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
           master_config: |
@@ -3129,11 +3142,13 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm
+          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
 
       - test-e2e-slurm:
           name: test-e2e-slurm-podman
+          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
           master_config: |
@@ -3177,6 +3192,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local
@@ -3911,6 +3927,7 @@ workflows:
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
           mark: "e2e_slurm_restart"
+          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
