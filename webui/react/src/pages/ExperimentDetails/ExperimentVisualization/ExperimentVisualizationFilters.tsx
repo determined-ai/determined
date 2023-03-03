@@ -252,6 +252,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           metrics={metrics}
           multiple={false}
           value={localFilters.metric}
+          width={250}
           onChange={handleMetricChange}
         />
       )}

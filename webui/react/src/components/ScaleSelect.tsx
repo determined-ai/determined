@@ -16,6 +16,7 @@ const ScaleSelect: React.FC<Props> = ({ onChange, value }: Props) => {
       label="Scale"
       searchable={false}
       value={value}
+      width={90}
       onSelect={(newValue: SelectValue) => onChange(newValue as Scale)}>
       {Object.values(Scale).map((scale) => (
         <Option key={scale} value={scale}>

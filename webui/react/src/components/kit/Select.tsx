@@ -32,6 +32,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   ref?: React.Ref<RefSelectProps>;
   searchable?: boolean;
   value?: T;
+  width?: number;
 }
 
 const countOptions = (children: React.ReactNode, options?: Options): number => {
@@ -74,6 +75,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     onSelect,
     options,
     placeholder,
+    width,
     value,
     children,
   }: React.PropsWithChildren<SelectProps>,
@@ -85,7 +87,6 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
   if (disableTags) classes.push(css.disableTags);
 
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
-
   const [maxTagCount, maxTagPlaceholder] = useMemo((): [0 | undefined, string] => {
     if (!disableTags) return [undefined, ''];
     const count = Array.isArray(value) ? value.length : value ? 1 : 0;
@@ -111,6 +112,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     }
     return !!label && label.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   }, []);
+
   return (
     <div className={classes.join(' ')}>
       {label && <Label type={LabelTypes.TextOnly}>{label}</Label>}
@@ -118,6 +120,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         allowClear={allowClear}
         defaultValue={defaultValue}
         disabled={disabled}
+        dropdownMatchSelectWidth
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
         filterSort={filterSort}
         id={id}
@@ -128,6 +131,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         placeholder={placeholder}
         ref={ref}
         showSearch={!!onSearch || !!filterOption || searchable}
+        style={{ width }}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         value={value}
         onBlur={onBlur}

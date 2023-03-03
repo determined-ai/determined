@@ -144,6 +144,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         label="Group by"
         searchable={false}
         value={value.groupBy}
+        width={1000}
         onSelect={handleGroupBySelect}>
         {Object.values(GroupBy).map((value) => (
           <Option key={value} value={value}>

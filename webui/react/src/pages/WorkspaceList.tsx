@@ -342,7 +342,7 @@ const WorkspaceList: React.FC = () => {
       }
       title="Workspaces">
       <div className={css.controls}>
-        <Select value={settings.whose} onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
@@ -353,7 +353,7 @@ const WorkspaceList: React.FC = () => {
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
-          <Select value={settings.sortKey} onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
           </Select>

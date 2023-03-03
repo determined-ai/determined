@@ -23,6 +23,7 @@ interface Props {
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
   value?: Metric | Metric[];
+  width?: number;
 }
 
 const filterFn = (search: string, metricName: string) => {
@@ -35,6 +36,7 @@ const MetricSelect: React.FC<Props> = ({
   metrics,
   multiple,
   value,
+  width = 200,
   onChange,
 }: Props) => {
   const [filterString, setFilterString] = useState('');
@@ -151,6 +153,7 @@ const MetricSelect: React.FC<Props> = ({
       mode={multiple ? 'multiple' : undefined}
       ref={selectRef}
       value={metricValues}
+      width={width}
       onBlur={handleBlur}
       onDeselect={handleMetricDeselect}
       onSearch={handleSearchInputChange}

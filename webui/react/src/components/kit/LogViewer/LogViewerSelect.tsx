@@ -108,6 +108,7 @@ const LogViewerSelect: React.FC<Props> = ({
             mode="multiple"
             placeholder={`All ${LABELS.allocationIds}`}
             value={values.allocationIds}
+            width={150}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -122,6 +123,7 @@ const LogViewerSelect: React.FC<Props> = ({
             mode="multiple"
             placeholder={`All ${LABELS.agentIds}`}
             value={values.agentIds}
+            width={150}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -136,6 +138,7 @@ const LogViewerSelect: React.FC<Props> = ({
             mode="multiple"
             placeholder={`All ${LABELS.containerIds}`}
             value={values.containerIds}
+            width={150}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
@@ -150,6 +153,7 @@ const LogViewerSelect: React.FC<Props> = ({
             mode="multiple"
             placeholder={`All ${LABELS.rankIds}`}
             value={values.rankIds}
+            width={150}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map((id, index) => (
               <Option key={id ?? `no-id-${index}`} value={id}>

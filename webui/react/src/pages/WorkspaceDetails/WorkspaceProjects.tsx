@@ -391,7 +391,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   return (
     <div className={css.base}>
       <div className={css.controls}>
-        <Select value={settings.whose} onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
           <Option value={WhoseProjects.All}>All Projects</Option>
           <Option value={WhoseProjects.Mine}>My Projects</Option>
           <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
@@ -404,7 +404,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
               onChange={switchShowArchived}
             />
           )}
-          <Select value={settings.sortKey} onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
               Last Updated
