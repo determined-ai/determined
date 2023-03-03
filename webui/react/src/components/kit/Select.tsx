@@ -83,9 +83,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
   const classes = [css.base];
 
   if (disableTags) classes.push(css.disableTags);
-  if (mode === 'multiple') {
-    classes.push(css.multiple);
-  }
+
   const optionsCount = useMemo(() => countOptions(children, options), [children, options]);
 
   const [maxTagCount, maxTagPlaceholder] = useMemo((): [0 | undefined, string] => {
