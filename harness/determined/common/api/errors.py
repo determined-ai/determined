@@ -31,7 +31,7 @@ class APIException(BadRequestException):
     def __init__(self, response: requests.Response) -> None:
         try:
             m = response.json()["message"]
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError):
             m = response.text
         super().__init__(m)
         self.status_code = response.status_code

@@ -198,7 +198,3 @@ publish-nvcr:
 		docker tag $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-amd64 $$image; \
 		docker push $$image; \
 	done
-
-.PHONY: test-python
-test-python:
-	pytest
