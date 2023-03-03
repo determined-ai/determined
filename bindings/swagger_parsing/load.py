@@ -158,8 +158,11 @@ def is_expected_path(text: str) -> bool:
     return True
 
 
-def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function]:
+def process_paths(
+    swagger_paths: dict, enums: dict
+) -> typing.Tuple[typing.Dict[str, Function], typing.Dict[str, Class]]:
     ops = {}
+    extra_classes = {}
     for path, methods in swagger_paths.items():
         for method, spec in methods.items():
             name = spec["operationId"]
@@ -182,15 +185,12 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     bad_op = True
                     break
 
-                if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
+                if rschema.get("title", "").startswith("Stream result"):
                     # We expect a specific structure to streaming endpoints.
                     assert rschema["type"] == "object", rschema
                     assert "additionalProperties" not in rschema, rschema
                     rprops = rschema["properties"]
                     assert set(rprops.keys()) == set(("result", "error")), rschema
-                    result_type = classify_type(
-                        enums, f"{name}.responses.{code}.properties.result", rprops["result"]
-                    )
                     error_type = classify_type(
                         enums, f"{name}.responses.{code}.properties.error", rprops["error"]
                     )
@@ -203,6 +203,19 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                             f"a method must be either all-streaming or all-nonstreaming: {rspec}"
                         )
                     streaming = True
+
+                    # handle inlined objects similar to how swagger-codegen does
+                    result_type_class = classify_definition(
+                        enums, f"{name}.response.{code}", rschema
+                    )
+                    assert isinstance(result_type_class, Class)
+                    result_type_class_ref = result_type_class.params["result"].type
+                    assert isinstance(result_type_class_ref, Ref)
+                    pascal_name = result_type_class_ref.name
+                    pascal_name = pascal_name[0].upper() + pascal_name[1:]
+                    result_type_class.name = f"StreamResultOf{pascal_name}"
+                    result_type = Ref(result_type_class.name)
+                    extra_classes[result_type_class.name] = result_type_class
 
                     responses[code] = result_type
                     continue
@@ -247,7 +260,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                 name, method, path, params, responses, streaming, tags, summary, needs_auth
             )
             ops[name] = op
-    return ops
+    return ops, extra_classes
 
 
 def link_all_refs(defs: TypeDefs) -> None:
@@ -261,7 +274,8 @@ def load(path: str) -> ParseResult:
         swagger_json = json.load(f)
     enums = process_enums(swagger_json["definitions"])
     defs = process_definitions(swagger_json["definitions"], enums)
-    ops = process_paths(swagger_json["paths"], enums)
+    ops, streaming_refs = process_paths(swagger_json["paths"], enums)
+    defs.update(streaming_refs)
     link_all_refs(defs)
 
     info_keys = ("title", "description", "version")

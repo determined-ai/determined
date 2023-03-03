@@ -535,30 +535,6 @@ export class RequiredError extends Error {{
             fixed_tag = upper_first(camel_case(tag))
             ops_by_tag[fixed_tag] = ops_by_tag.get(fixed_tag, [])
             ops_by_tag[fixed_tag].append(defn)
-        # parser unwraps streaming responses -- re-wrap here
-        if defn.streaming:
-            success_parameter = defn.responses.get("200")
-            assert success_parameter
-            assert isinstance(success_parameter, swagger_types.Ref)
-            streaming_response_class_params = {
-                "result": swagger_types.Parameter(
-                    name="result", type=success_parameter, required=False, where="definitions"
-                ),
-                "error": swagger_types.Parameter(
-                    name="error", type=runtime_stream_error_ref, required=False, where="definitions"
-                ),
-            }
-            streaming_response_class = swagger_types.Class(
-                name=f"StreamResultOf{upper_first(success_parameter.name)}",
-                params=streaming_response_class_params,
-                description=None,
-            )
-            swagger.defs[streaming_response_class.name] = streaming_response_class
-            streaming_response_class_ref = swagger_types.Ref(name=streaming_response_class.name)
-            swagger_types.Ref.all_refs.append(streaming_response_class_ref)
-            streaming_response_class_ref.defn = streaming_response_class
-            streaming_response_class_ref.linked = True
-            defn.responses["200"] = streaming_response_class_ref
 
     for _, defn in sorted(swagger.defs.items(), key=head):
         if defn is None:
