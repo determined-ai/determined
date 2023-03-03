@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
-import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
@@ -26,7 +25,6 @@ import {
   activateExperiment,
   archiveExperiment,
   openOrCreateTensorBoard,
-  patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -170,9 +168,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const { contextHolder: modalExperimentEditContextHolder, modalOpen: openModalEdit } =
     useModalExperimentEdit({
+      description: experiment.description ?? '',
       experimentId: experiment.id,
       experimentName: experiment.name,
       fetchExperimentDetails,
+      tags: experiment.config.labels || [],
     });
 
   const {
@@ -187,10 +187,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
-  const disabled =
-    experiment?.parentArchived ||
-    experiment?.archived ||
-    !expPermissions.canModifyExperimentMetadata({ workspace: { id: experiment?.workspaceId } });
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);
@@ -266,25 +262,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   useEffect(() => {
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
-
-  const handleDescriptionUpdate = useCallback(
-    async (newValue: string) => {
-      try {
-        await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
-        await fetchExperimentDetails();
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment description.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-        return e as Error;
-      }
-    },
-    [experiment.id, fetchExperimentDetails],
-  );
 
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
@@ -444,20 +421,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
-              <Input
-                defaultValue={experiment.description ?? ''}
-                disabled={disabled}
-                maxLength={500}
-                placeholder={disabled ? 'Archived' : 'Add description...'}
-                style={{ minWidth: 120 }}
-                onBlur={(e) => {
-                  const newValue = e.currentTarget.value;
-                  handleDescriptionUpdate(newValue);
-                }}
-                onPressEnter={(e) => {
-                  e.currentTarget.blur();
-                }}
-              />
+              <div className={css.description}>{experiment.description}</div>
             </div>
             {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
               <div className={css.foldableItem}>
@@ -502,12 +466,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {maxRestarts ? `/${maxRestarts}` : ''}
               </span>
             </div>
-            <TagList
-              disabled={disabled}
-              ghost={true}
-              tags={experiment.config.labels || []}
-              onChange={experimentTags.handleTagListChange(experiment.id)}
-            />
+            <div className={css.foldableItem}>
+              <span className={css.foldableItemLabel}>Tags:</span>
+              <TagList
+                disabled={true} // read only
+                ghost={true}
+                tags={experiment.config.labels || []}
+                onChange={experimentTags.handleTagListChange(experiment.id)}
+              />
+            </div>
           </div>
         }
         leftContent={
