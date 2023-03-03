@@ -107,43 +107,39 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     return enums
 
 
-def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
-    defs = {}  # type: TypeDefs
-    for name, schema in swagger_definitions.items():
-        path = name
-        if "enum" in schema:
-            if schema["type"] == "string":
-                members = schema["enum"]
-                defs[name] = Enum(name, members, schema["description"])
-                continue
-            raise ValueError("unhandled enum type ({schema['type']}): {schema}")
+def classify_definition(enums: dict, name: str, schema: dict):
+    path = name
+    if "enum" in schema:
+        if schema["type"] == "string":
+            members = schema["enum"]
+            return Enum(name, members, schema["description"])
+        raise ValueError("unhandled enum type ({schema['type']}): {schema}")
 
-        if schema["type"] == "object":
-            # top-level named objects should be classes, not typed dictionaries:
-            assert "additionalProperties" not in schema, (name, schema)
-            if "properties" in schema:
-                required = set(schema.get("required", []))
-                members = {
-                    k: Parameter(
-                        k,
-                        classify_type(enums, f"{path}.{k}", v),
-                        (k in required),
-                        "definitions",
-                        None,
-                        v.get("title") or v.get("description"),
-                    )
-                    for k, v in schema["properties"].items()
-                }
-                description = schema.get("description")
-                defs[name] = Class(name, members, description)
-                continue
-            else:
-                # empty responses or empty requests... we don't care.
-                description = schema.get("description")
-                defs[name] = Class(name, {}, description)
-                continue
-        raise ValueError(f"unhandled schema: {schema} @ {path}")
-    return defs
+    if schema["type"] == "object":
+        # top-level named objects should be classes, not typed dictionaries:
+        assert "additionalProperties" not in schema, (name, schema)
+        required = set(schema.get("required", []))
+        members = {
+            k: Parameter(
+                k,
+                classify_type(enums, f"{path}.{k}", v),
+                (k in required),
+                "definitions",
+                None,
+                v.get("title") or v.get("description"),
+            )
+            for k, v in schema.get("properties", {}).items()
+        }
+        description = schema.get("description")
+        return Class(name, members, description)
+    raise ValueError(f"unhandled schema: {schema} @ {path}")
+
+
+def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
+    return {
+        name: classify_definition(enums, name, schema)
+        for name, schema in swagger_definitions.items()
+    }
 
 
 def is_expected_path(text: str) -> bool:
@@ -207,6 +203,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                             f"a method must be either all-streaming or all-nonstreaming: {rspec}"
                         )
                     streaming = True
+
                     responses[code] = result_type
                     continue
 

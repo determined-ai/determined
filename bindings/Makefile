@@ -11,10 +11,10 @@ all: build
 force-gen:
 	touch $(SWAGGER_SPEC)
 
-$(py_bindings_dest): $(SWAGGER_SPEC) $(py_generator)
+$(py_bindings_dest): $(SWAGGER_SPEC) $(py_generator) $(wildcard swagger_parsing/*)
 	python $(py_generator) --output $(py_bindings_dest)
 
-$(ts_bindings_dest): $(SWAGGER_SPEC) $(ts_generator) $(wildcard static_ts_files/*)
+$(ts_bindings_dest): $(SWAGGER_SPEC) $(ts_generator) $(wildcard static_ts_files/*) $(wildcard swagger_parsing/*)
 	python $(ts_generator) --output $@
 
 .PHONY: build/python
