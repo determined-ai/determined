@@ -7,7 +7,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
@@ -32,7 +32,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const currentUser = useCurrentUser();
+  const currentUser = usersStore.getCurrentUser();
   const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const guardedFetchWorkspaces = useCallback(() => {

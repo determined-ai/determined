@@ -52,7 +52,8 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import {
@@ -102,7 +103,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = usersStore.getCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

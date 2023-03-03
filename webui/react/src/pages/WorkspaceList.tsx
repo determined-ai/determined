@@ -32,7 +32,8 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useCurrentUser, useUsers } from 'stores/users';
+import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -51,7 +52,7 @@ const WorkspaceList: React.FC = () => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = usersStore.getCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

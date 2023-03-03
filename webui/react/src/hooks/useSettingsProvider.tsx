@@ -6,7 +6,7 @@ import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { authChecked } from 'stores/auth';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -35,7 +35,7 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = usersStore.getCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

@@ -15,7 +15,7 @@ import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { selectIsAuthenticated } from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -49,7 +49,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
 const NavigationTabbar: React.FC = () => {
   const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = usersStore.getCurrentUser();
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

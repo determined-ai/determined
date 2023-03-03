@@ -10,7 +10,8 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUser, useUpdateUser } from 'stores/users';
+import { useUpdateUser } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -33,7 +34,7 @@ export const CHANGE_PASSWORD_TEXT = 'Change Password';
 const SettingsAccount: React.FC = () => {
   const [usernameForm] = Form.useForm<FormUsernameInputs>();
   const [displaynameForm] = Form.useForm<FormDisplaynameInputs>();
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = usersStore.getCurrentUser();
   const updateUser = useUpdateUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
