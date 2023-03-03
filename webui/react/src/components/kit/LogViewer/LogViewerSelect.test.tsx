@@ -6,7 +6,7 @@ import React from 'react';
 import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
 
-import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerFilters';
+import LogViewerSelect, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerSelect';
 
 const DEFAULT_FILTER_OPTIONS: Filters = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
@@ -21,7 +21,7 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
   const handleOnChange = jest.fn();
   const handleOnReset = jest.fn();
   const view = render(
-    <LogViewerFilters
+    <LogViewerSelect
       options={filterOptions}
       showSearch={true}
       values={filterValues}

@@ -38,7 +38,7 @@ export const LABELS: Record<keyof Filters, string> = {
   searchText: 'Searches',
 };
 
-const LogViewerFilters: React.FC<Props> = ({
+const LogViewerSelect: React.FC<Props> = ({
   onChange,
   onReset,
   options,
@@ -176,4 +176,4 @@ const LogViewerFilters: React.FC<Props> = ({
   );
 };
 
-export default LogViewerFilters;
+export default LogViewerSelect;
