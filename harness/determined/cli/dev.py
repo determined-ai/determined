@@ -1,3 +1,4 @@
+import argparse
 import json
 import shlex
 import shutil
@@ -34,7 +35,7 @@ def curl(args: Namespace) -> None:
         "-s",
     ]
     if args.curl_args:
-        cmd.append(args.curl_args)
+        cmd += args.curl_args
 
     if args.x:
         if hasattr(shlex, "join"):  # added in py 3.8
@@ -75,7 +76,7 @@ args_description = [
                         "-x", help="display the curl command that will be run", action="store_true"
                     ),
                     Arg("path", help="path to curl (e.g. /api/v1/experiments?x=z)"),
-                    Arg("curl_args", nargs="?"),
+                    Arg("curl_args", nargs=argparse.REMAINDER, help="curl arguments"),
                 ],
             ),
         ],
