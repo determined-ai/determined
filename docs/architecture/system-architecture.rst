@@ -26,6 +26,8 @@ agent has no state and only communicates with the master. Each agent is responsi
 .. image:: /assets/images/det-ai-sys-arch-01-light.png
    :class: only-light
 
-The **trial runner** runs a trial in a containerized environment. So the trial runners are expected
+The **task container** runs a training task or other task(s) in a containerized environment. Training tasks are expected
 to have access to the data that will be used in training. The **agents** are responsible for
-reporting the states of **trial runner** to the master.
+reporting the status of the **task container** to the master.
+
+
