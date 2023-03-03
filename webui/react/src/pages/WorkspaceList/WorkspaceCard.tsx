@@ -7,7 +7,7 @@ import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
 import { pluralizer } from 'shared/utils/string';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -25,7 +25,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     workspace,
   });
 
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });

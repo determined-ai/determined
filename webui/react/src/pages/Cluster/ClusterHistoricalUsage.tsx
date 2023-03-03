@@ -8,7 +8,7 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -33,7 +33,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users: Readonly<DetailedUser[]> = Loadable.match(useUsers(), {
+  const users: Readonly<DetailedUser[]> = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

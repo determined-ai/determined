@@ -38,7 +38,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
@@ -65,7 +65,7 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });

@@ -51,6 +51,24 @@ class UsersService {
     this.#currentUserId.set(Loaded(id));
   };
 
+  public getUsers = (cfg?: FetchUsersConfig) => {
+    const config = cfg ?? {};
+    const usersPagination = this.#usersByKey.get().get(encodeParams(config));
+
+    if (!usersPagination) return NotLoaded;
+
+    const userPage: DetailedUserList = {
+      pagination: usersPagination.pagination,
+      users: usersPagination.users.flatMap((userId) => {
+        const user = this.#users.get().get(userId);
+
+        return user ? [user] : [];
+      }),
+    };
+
+    return Loaded(userPage);
+  };
+
   public ensureUsersFetched = async (
     cfg?: FetchUsersConfig,
     canceler?: AbortController,

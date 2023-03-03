@@ -32,7 +32,6 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useUsers } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -48,7 +47,7 @@ import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

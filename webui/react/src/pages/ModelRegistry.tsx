@@ -49,7 +49,8 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -71,7 +72,7 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

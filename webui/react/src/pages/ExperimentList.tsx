@@ -65,7 +65,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import {
   ExperimentAction as Action,
@@ -116,7 +116,7 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

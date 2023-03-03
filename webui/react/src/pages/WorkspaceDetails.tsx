@@ -22,7 +22,8 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -50,7 +51,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

@@ -52,7 +52,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureUsersFetched } from 'stores/users';
 import usersStore from 'stores/usersObserve';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ShirtSize } from 'themes';
@@ -99,7 +99,7 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

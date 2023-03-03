@@ -21,7 +21,7 @@ import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -51,7 +51,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state

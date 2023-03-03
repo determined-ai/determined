@@ -20,7 +20,7 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/usersObserve';
 import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -44,7 +44,7 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(usersStore.getUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
