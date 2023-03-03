@@ -333,7 +333,7 @@ def gen_def(anno: swagger_types.TypeDef) -> Code:
         out = [f"class {anno.name}(enum.Enum):"]
         out += [f'    {v} = "{v}"' for v in anno.members]
         return "\n".join(out)
-    raise NotImplementedError(type(anno))
+    assert_never(anno)
 
 
 def gen_paginated(defs: swagger_types.TypeDefs) -> typing.List[str]:
