@@ -121,12 +121,12 @@ def classify_definition(enums: dict, name: str, schema: dict):
         required = set(schema.get("required", []))
         members = {
             k: Parameter(
-                k,
-                classify_type(enums, f"{path}.{k}", v),
-                (k in required),
-                "definitions",
-                None,
-                v.get("title") or v.get("description"),
+                name=k,
+                type=classify_type(enums, f"{path}.{k}", v),
+                required=(k in required),
+                where="definitions",
+                serialized_name=None,
+                title=v.get("title") or v.get("description"),
             )
             for k, v in schema.get("properties", {}).items()
         }
