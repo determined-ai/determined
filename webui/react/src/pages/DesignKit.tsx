@@ -298,17 +298,6 @@ const SelectSection: React.FC = () => {
           value={multiSelectValues}
           onChange={(value) => setMultiSelectValues(value)}
         />
-        <strong>Select with tags and default search</strong>
-        <Select
-          enableSearchFilter
-          mode="multiple"
-          options={[
-            { label: 'Option 1', value: 1 },
-            { label: 'Option 2', value: 2 },
-            { label: 'Option 3', value: 3 },
-          ]}
-          placeholder="Search"
-        />
         <strong>Select with tags and custom search</strong>
         <Select
           filterOption={handleFilter}
