@@ -166,10 +166,10 @@ class DCGANTrial(DeepSpeedTrial):
             fake = self.generator(self.fixed_noise)
             denormalized_real = (real + 1) / 2
             denormalized_fake = (fake + 1) / 2
-            self.logger.writer.add_image(
+            self.logger.add_image(
                 "real_images", torchvision.utils.make_grid(denormalized_real), batch_idx
             )
-            self.logger.writer.add_image(
+            self.logger.add_image(
                 "fake_images", torchvision.utils.make_grid(denormalized_fake), batch_idx
             )
 
