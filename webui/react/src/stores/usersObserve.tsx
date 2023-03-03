@@ -1,12 +1,3 @@
-// currentUser: Loadable<number>;
-// updateCurrentUser: (fn: (currentUser: Loadable<number>) => Loadable<number>) => void;
-// updateUsers: (fn: (users: Map<number, DetailedUser>) => Map<number, DetailedUser>) => void;
-// updateUsersByKey: (
-//   fn: (users: Map<string, UsersPagination>) => Map<string, UsersPagination>,
-// ) => void;
-// users: Map<number, DetailedUser>;
-// usersByKey: Map<string, UsersPagination>;
-
 import { Map } from 'immutable';
 import { Observable, observable, WritableObservable } from 'micro-observables';
 
