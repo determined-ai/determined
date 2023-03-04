@@ -892,7 +892,7 @@ func Test_HandleFailedJobTerminationRetries(t *testing.T) {
 	// called.
 	numTimesJobTerminationFuncCalled := 0
 
-	var jobTerminationFunc = func(
+	jobTerminationFunc := func(
 		ctx *actor.Context,
 		allocationID model.AllocationID,
 	) {

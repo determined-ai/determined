@@ -271,26 +271,26 @@ func New(
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
 type dispatcherResourceManager struct {
-	db                                         *db.PgDB
-	rmConfig                                   *config.DispatcherResourceManagerConfig
-	poolConfig                                 []config.ResourcePoolConfig
-	apiClient                                  *launcher.APIClient
-	hpcResourcesManifest                       *launcher.Manifest
-	reqList                                    *tasklist.TaskList
-	groups                                     map[*actor.Ref]*tasklist.Group
-	dispatchIDToAllocationID                   map[string]model.AllocationID
-	masterTLSConfig                            model.TLSClientConfig
-	loggingConfig                              model.LoggingConfig
-	jobWatcher                                 *launcherMonitor
-	authToken                                  string
-	resourceDetails                            hpcResourceDetailsCache
-	wlmType                                    string
-	launcherVersionIsOK                        bool
-	poolProviderMap                            map[string][]string
-	dispatchIDToHPCJobID                       map[string]string
-	dispatchIDToAllocationIDMutex              sync.RWMutex
-	dispatchIDToHPCJobIDMutex                  sync.RWMutex
-	allocationsCanceledBeforeDispatchIDCreated sync.Map
+	db                                       *db.PgDB
+	rmConfig                                 *config.DispatcherResourceManagerConfig
+	poolConfig                               []config.ResourcePoolConfig
+	apiClient                                *launcher.APIClient
+	hpcResourcesManifest                     *launcher.Manifest
+	reqList                                  *tasklist.TaskList
+	groups                                   map[*actor.Ref]*tasklist.Group
+	dispatchIDToAllocationID                 map[string]model.AllocationID
+	masterTLSConfig                          model.TLSClientConfig
+	loggingConfig                            model.LoggingConfig
+	jobWatcher                               *launcherMonitor
+	authToken                                string
+	resourceDetails                          hpcResourceDetailsCache
+	wlmType                                  string
+	launcherVersionIsOK                      bool
+	poolProviderMap                          map[string][]string
+	dispatchIDToHPCJobID                     map[string]string
+	dispatchIDToAllocationIDMutex            sync.RWMutex
+	dispatchIDToHPCJobIDMutex                sync.RWMutex
+	allocationsCanceledBeforeHpcJobIDCreated sync.Map
 }
 
 func newDispatcherResourceManager(
@@ -699,111 +699,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		}
 
 	case KillDispatcherResources:
-		ctx.Log().Debugf("Received request to terminate jobs associated with AllocationID %s",
-			msg.AllocationID)
-
-		// Find the Dispatch IDs associated with the allocation ID. We'll need the
-		// Dispatch ID to cancel the job on the launcher side.
-		dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), msg.AllocationID)
-		if err != nil {
-			ctx.Log().WithError(err).Errorf(
-				"Failed to retrieve the DispatchIDs associated with AllocationID %s",
-				msg.AllocationID)
-
-			m.allocationsCanceledBeforeDispatchIDCreated.Store(string(msg.AllocationID), "")
-
-			return nil
-		}
-
-		ctx.Log().Debugf("Found %d jobs associated with AllocationID %s",
-			len(dispatches), msg.AllocationID)
-
-		// The job cancelation message arrived before the launcher created the
-		// dispatch ID. Without the dispatch ID, we cannot ask the launcher to
-		// terminate the job.
-		if len(dispatches) == 0 {
-			// Make a note that we tried to cancel a job whose dispatch ID was
-			// not created yet. This way, when the dispatch ID gets created and
-			// the workload manager returns an HPC job ID, we can go ahead
-			// terminate the job.
-			//
-			// The value we associate with the allocation ID doesn't really
-			// matter, so we use "". We could have used a list instead of a map,
-			// but then we have to iterate through the list every time. A map
-			// seemed more efficient.
-			m.allocationsCanceledBeforeDispatchIDCreated.Store(string(msg.AllocationID), "")
-			return nil
-		}
-
-		// We have a dispatch ID for this allocation ID, so remove the entry
-		// for this allocation ID from the map, if one previously existed. This
-		// ensures the map doesn't grow indefinitely from stale entries.
-		m.allocationsCanceledBeforeDispatchIDCreated.Delete(string(msg.AllocationID))
-
-		for _, dispatch := range dispatches {
-			dispatchID := dispatch.DispatchID
-			impersonatedUser := dispatch.ImpersonatedUser
-
-			ctx.Log().WithField("allocation-id", msg.AllocationID).Infof(
-				"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
-
-			// Terminate and cleanup, on failure leave Dispatch in DB for later retry
-			if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser, false) {
-				// Remove the dispatch ID from the failed job termination maps
-				// in case we had previously failed to terminate the job
-				// associated with the dispatch ID. This prevents the map from
-				// growing indefinitely.
-				failedJobTerminations.Delete(dispatchID)
-
-				// Do not remove the dispatch environment if the job is being
-				// monitored by the job watcher, as it is needed in order for
-				// the launcher to report the job status. If we remove the
-				// dispatch environment, then the launcher will no longer be
-				// able to provide job information and will return an HTTP 404
-				// status when the job watcher asks it for status. As a result,
-				// the Detemined AI job status will never get updated from
-				// "Running" to "Canceled", for example.  When the job watcher
-				// gets a terminatal state from the launcher, it will take care
-				// of removing the dispatch environment at that time.
-				if m.jobWatcher.isJobBeingMonitored(dispatchID) {
-					ctx.Log().WithField("allocation-id", msg.AllocationID).Debugf(
-						"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
-						dispatchID)
-				} else {
-					// If we are here, then we are likely being called from
-					// startup, as opposed to a user explicitly canceling
-					// a job. It's OK to remove the environment in this case
-					// because we aren't actively monitoring any jobs, but we need to wait
-					// for the terminate request above to complete, before we can actually
-					// do the delete of the environment to avoid a 500 error response.
-					m.waitForDispatchTerminalState(ctx, impersonatedUser, dispatchID)
-					m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
-				}
-			} else {
-				// Use a variable to store the job termination function, so
-				// that we can mock the function for the unit test.
-				var jobTerminationFunc = func(
-					ctx *actor.Context,
-					allocationID model.AllocationID,
-				) {
-					ctx.Log().WithField("allocation-id", msg.AllocationID).
-						Info("Sending KillDispatcherResources message")
-
-					// Send the dispatcher resource manager a request to terminate the job.
-					ctx.Tell(ctx.Self(), KillDispatcherResources{
-						AllocationID: allocationID,
-					})
-				}
-
-				// Schedule another retry, if we haven't exhausted all retries.
-				go performFailedJobTerminationRetries(ctx,
-					dispatchID,
-					msg.AllocationID,
-					waitTimeBeforeRetryingTermination,
-					maxFailedTerminationRetries,
-					jobTerminationFunc)
-			}
-		}
+		go m.stopLauncherJob(ctx, msg)
 
 	case DispatchStateChange:
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
@@ -833,18 +729,30 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			})
 			m.addDispatchIDToHpcJobIDMap(msg.DispatchID, msg.HPCJobID)
 
-			// We have a job ID from the workload manager. Check if the user
-			// canceled the job immediately after he/she submitted it.
-			if _, ok = m.allocationsCanceledBeforeDispatchIDCreated.Load(string(allocationID)); ok {
+			// We have an HPC job ID from the workload manager. Check if the
+			// user canceled the job immediately after it was submitted.
+			if _, ok = m.allocationsCanceledBeforeHpcJobIDCreated.Load(string(allocationID)); ok {
 				ctx.Log().WithField("allocation-id", allocationID).
 					WithField("dispatch-id", msg.DispatchID).
 					WithField("hpc-job-id", msg.HPCJobID).
 					Infof("Received HPC job ID for job that has been canceled. Terminating launcher job.")
 
-				// Send the dispatcher resource manager a request to terminate the job.
+				// We have the dispatch ID and HPC job ID, which is everything
+				// we need to terminate the job. So remove the allocation ID
+				// from the map.
+				m.deleteAllocationIDFromAllocationsCanceledBeforeJobCreated(ctx, string(allocationID))
+
+				// The job had been canceled before the launcher gave us the
+				// HPC job ID.  Now that we have the HPC job ID, we can go ahead
+				// and termiante the job.
 				ctx.Tell(ctx.Self(), KillDispatcherResources{
 					AllocationID: allocationID,
 				})
+			} else {
+				ctx.Log().WithField("allocation-id", allocationID).
+					WithField("dispatch-id", msg.DispatchID).
+					WithField("hpc-job-id", msg.HPCJobID).
+					Debugf("Received HPC job ID for job.")
 			}
 		}
 
@@ -862,9 +770,14 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
 		allocationID, ok := m.getAllocationIDFromDispatchID(msg.DispatchID)
 		if !ok {
-			log.Warnf("received DispatchExited for unknown dispatch %s", msg.DispatchID)
+			log.Warnf("Received DispatchExited but cannot map the dispatch ID to an allocation ID")
 			return nil
 		}
+
+		// Remove the allocation ID from the map, if it exists. Don't want to
+		// have a memory leak due to old allocations remaining in the map
+		// forever.
+		m.deleteAllocationIDFromAllocationsCanceledBeforeJobCreated(ctx, string(allocationID))
 
 		task, ok := m.reqList.TaskByID(allocationID)
 		if !ok {
@@ -941,7 +854,6 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		// Remove the dispatch from mapping tables.
 		m.removeDispatchIDFromAllocationIDMap(msg.DispatchID)
 		m.removeDispatchIDFromHpcJobIDMap(msg.DispatchID)
-
 	case sproto.SetGroupMaxSlots:
 		m.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
 
@@ -1092,14 +1004,128 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		ctx.Log().WithError(err).Errorf("failed to persist dispatch: %v", dispatchID)
 	}
 
-	// Check if the job was canceled before the launcher returned a dispatch ID.
-	if _, ok = m.allocationsCanceledBeforeDispatchIDCreated.Load(string(req.AllocationID)); ok {
-		ctx.Log().WithField("allocation-id", req.AllocationID).
-			WithField("dispatch-id", dispatchID).
-			Info("Obtained dispatch ID from launcher for job is pending cancelation.")
+	m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName)
+}
+
+func (m *dispatcherResourceManager) stopLauncherJob(ctx *actor.Context,
+	msg KillDispatcherResources,
+) {
+	ctx.Log().Debugf("Received request to terminate jobs associated with AllocationID %s",
+		msg.AllocationID)
+
+	// Find the Dispatch IDs associated with the allocation ID. We'll need the
+	// Dispatch ID to cancel the job on the launcher side.
+	dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), msg.AllocationID)
+	if err != nil {
+		ctx.Log().WithError(err).Errorf(
+			"Failed to retrieve the DispatchIDs associated with AllocationID %s",
+			msg.AllocationID)
+
+		m.addAllocationIDToAllocationsCanceledBeforeJobCreated(ctx, string(msg.AllocationID))
+
+		return
 	}
 
-	m.jobWatcher.monitorJob(impersonatedUser, dispatchID, payloadName)
+	ctx.Log().Debugf("Found %d jobs associated with AllocationID %s",
+		len(dispatches), msg.AllocationID)
+
+	// The job cancelation message arrived before the launcher created the
+	// dispatch ID. We need the dispatch ID to find the HPC job ID, as the
+	// HPC job ID is what the launcher uses to ask Slurm/PBS to cancel the
+	// job.  Therefore, no dispatch ID means not HPC job ID either, so we
+	// cannot ask the launcher to terminate the job.
+	if len(dispatches) == 0 {
+		// Make a note that we tried to cancel a job whose dispatch ID was
+		// not created yet. This way, when the dispatch ID gets created and
+		// the workload manager returns an HPC job ID, we can go ahead
+		// terminate the job.
+		//
+		// The value we associate with the allocation ID doesn't really
+		// matter, so we use "". We could have used a list instead of a map,
+		// but then we have to iterate through the list every time. A map
+		// seemed more efficient.
+		m.addAllocationIDToAllocationsCanceledBeforeJobCreated(ctx, string(msg.AllocationID))
+	}
+
+	for _, dispatch := range dispatches {
+		dispatchID := dispatch.DispatchID
+		impersonatedUser := dispatch.ImpersonatedUser
+
+		// Don't try to ask the launcher to terminate a Slurm/PBS job that has
+		// not been created yet, otherwise the launcher will return an error
+		// because it cannot find the HPC job ID associated with the dispatch
+		// ID.  Without the HPC job ID, the launcher cannot ask Slurm/PBS to
+		// cancel the job.
+		if _, ok := m.getHpcJobIDFromDispatchID(dispatchID); !ok {
+			ctx.Log().WithField("allocation-id", msg.AllocationID).
+				WithField("dispatch-id", dispatchID).
+				Infof("Cannot terminate job because its HPC job ID is not available yet")
+
+			m.addAllocationIDToAllocationsCanceledBeforeJobCreated(ctx, string(msg.AllocationID))
+
+			continue
+		}
+
+		ctx.Log().WithField("allocation-id", msg.AllocationID).Infof(
+			"Terminating job with DispatchID %s initiated by %s", dispatchID, impersonatedUser)
+
+		// Terminate and cleanup, on failure leave Dispatch in DB for later retry
+		if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser, false) {
+			// Remove the dispatch ID from the failed job termination maps
+			// in case we had previously failed to terminate the job
+			// associated with the dispatch ID. This prevents the map from
+			// growing indefinitely.
+			failedJobTerminations.Delete(dispatchID)
+
+			// Do not remove the dispatch environment if the job is being
+			// monitored by the job watcher, as it is needed in order for
+			// the launcher to report the job status. If we remove the
+			// dispatch environment, then the launcher will no longer be
+			// able to provide job information and will return an HTTP 404
+			// status when the job watcher asks it for status. As a result,
+			// the Detemined AI job status will never get updated from
+			// "Running" to "Canceled", for example.  When the job watcher
+			// gets a terminatal state from the launcher, it will take care
+			// of removing the dispatch environment at that time.
+			if m.jobWatcher.isJobBeingMonitored(dispatchID) {
+				ctx.Log().WithField("allocation-id", msg.AllocationID).Debugf(
+					"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
+					dispatchID)
+			} else {
+				// If we are here, then we are likely being called from
+				// startup, as opposed to a user explicitly canceling
+				// a job. It's OK to remove the environment in this case
+				// because we aren't actively monitoring any jobs, but we need to wait
+				// for the terminate request above to complete, before we can actually
+				// do the delete of the environment to avoid a 500 error response.
+				m.waitForDispatchTerminalState(ctx, impersonatedUser, dispatchID)
+				m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
+			}
+		} else {
+			// Use a variable to store the job termination function, so
+			// that we can mock the function for the unit test.
+			jobTerminationFunc := func(
+				ctx *actor.Context,
+				allocationID model.AllocationID,
+			) {
+				ctx.Log().WithField("allocation-id", msg.AllocationID).
+					Info("Sending KillDispatcherResources message")
+
+				// Send the dispatcher resource manager a request to terminate the job.
+				ctx.Tell(ctx.Self(), KillDispatcherResources{
+					AllocationID: allocationID,
+				})
+			}
+
+			// Schedule another retry, if we haven't exhausted all retries.
+			go performFailedJobTerminationRetries(ctx,
+				dispatchID,
+				msg.AllocationID,
+				waitTimeBeforeRetryingTermination,
+				maxFailedTerminationRetries,
+				jobTerminationFunc)
+		}
+	}
 }
 
 // Adds the mapping of dispatch ID to allocation ID.
@@ -2254,4 +2280,50 @@ func (d DispatcherResourceManager) TaskContainerDefaults(
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	request := taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: resourcePoolName}
 	return result, d.Ask(ctx, request, &result)
+}
+
+func (m *dispatcherResourceManager) addAllocationIDToAllocationsCanceledBeforeJobCreated(
+	ctx *actor.Context,
+	allocationID string,
+) {
+	// Helps us verify when we look at the log that the number of entries added
+	// equals the number of entries deleted. This is to check for memory leaks.
+	// That is, allocations were added, but never removed.
+	//
+	// For example,
+	//
+	// det master logs | grep "Adding.*allocationsCanceledBeforeHpcJobIDCreated" | wc -l
+	//
+	// should equal
+	//
+	// det master logs | grep "Deleting.*allocationsCanceledBeforeHpcJobIDCreated" | wc -l
+	if _, ok := m.allocationsCanceledBeforeHpcJobIDCreated.Load(allocationID); !ok {
+		ctx.Log().WithField("allocation-id", allocationID).
+			Debug("Adding allocation ID to allocationsCanceledBeforeHpcJobIDCreated map")
+
+		m.allocationsCanceledBeforeHpcJobIDCreated.Store(allocationID, "")
+	}
+}
+
+func (m *dispatcherResourceManager) deleteAllocationIDFromAllocationsCanceledBeforeJobCreated(
+	ctx *actor.Context,
+	allocationID string,
+) {
+	// Helps us verify when we look at the log that the number of entries added
+	// equals the number of entries deleted. This is to check for memory leaks.
+	// That is, allocations were added, but never removed.
+	//
+	// For example,
+	//
+	// det master logs | grep "Adding.*allocationsCanceledBeforeHpcJobIDCreated" | wc -l
+	//
+	// should equal
+	//
+	// det master logs | grep "Deleting.*allocationsCanceledBeforeHpcJobIDCreated" | wc -l
+	if _, ok := m.allocationsCanceledBeforeHpcJobIDCreated.Load(allocationID); ok {
+		ctx.Log().WithField("allocation-id", allocationID).
+			Debug("Deleting allocation ID from allocationsCanceledBeforeHpcJobIDCreated map")
+
+		m.allocationsCanceledBeforeHpcJobIDCreated.Delete(allocationID)
+	}
 }

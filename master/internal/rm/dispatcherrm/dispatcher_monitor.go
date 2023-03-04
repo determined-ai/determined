@@ -63,6 +63,7 @@ type containerInfo struct {
 type launcherJob struct {
 	user                   string
 	dispatcherID           string
+	hpcJobID               string
 	payloadName            string
 	lastJobStatusCheckTime time.Time
 	totalContainers        int
@@ -73,7 +74,7 @@ type launcherJob struct {
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
 type launcherMonitor struct {
-	monitoredJobs         map[string]launcherJob
+	monitoredJobs         map[string]*launcherJob
 	jobsToRemove          map[string]bool
 	apiClient             *launcher.APIClient
 	newLauncherJob        chan launcherJob
@@ -92,7 +93,7 @@ func newDispatchWatcher(
 	apiClient *launcher.APIClient, authToken string, authFile string,
 ) *launcherMonitor {
 	return &launcherMonitor{
-		monitoredJobs:     map[string]launcherJob{},
+		monitoredJobs:     map[string]*launcherJob{},
 		jobsToRemove:      map[string]bool{},
 		apiClient:         apiClient,
 		newLauncherJob:    make(chan launcherJob),
@@ -154,7 +155,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 		case msg := <-m.newLauncherJob:
 			ctx.Log().Infof("Starting monitoring of %s", msg.dispatcherID)
 			// Add job to collection of those being monitored.
-			m.addJobToMonitoredJobs(msg)
+			m.addJobToMonitoredJobs(&msg)
 
 		case msg := <-m.removeLauncherJob:
 			// Don't think the "removeLauncherJob" message is ever sent, but
@@ -164,7 +165,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 			job, ok := m.getJobByDispatchID(msg.dispatcherID)
 
 			if ok {
-				_ = m.updateJobStatus(ctx, job)
+				_ = m.updateJobStatus(ctx, job, true)
 
 				// Save the job to be removed in map. This job will deleted
 				// later when processing watched jobs.
@@ -178,7 +179,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 
 			if ok {
 				// Check the status of the given job.
-				_ = m.updateJobStatus(ctx, job)
+				_ = m.updateJobStatus(ctx, job, true)
 			}
 
 		case <-m.schedulerTick.C:
@@ -282,7 +283,7 @@ func (m *launcherMonitor) notifyContainerRunning(
 	switch existingEntry, ok := job.runningContainers[int(rank)]; {
 	case !ok:
 		job.runningContainers[int(rank)] = containerInfo{nodeName: nodeName}
-		m.monitoredJobs[dispatchID] = job
+
 		ctx.Log().Infof("For dispatchID %s, %d out of %d containers running on nodes %s",
 			dispatchID,
 			len(job.runningContainers),
@@ -319,7 +320,7 @@ func (m *launcherMonitor) notifyContainerRunning(
 // Returns a comma separated string containing the nodes that have notified
 // the Determined master that the are running the container. Used for logging
 // purposes only.
-func getNodesThatAreRunningContainer(job launcherJob) string {
+func getNodesThatAreRunningContainer(job *launcherJob) string {
 	var sb strings.Builder
 
 	for _, v := range job.runningContainers {
@@ -335,7 +336,7 @@ func getNodesThatAreRunningContainer(job launcherJob) string {
 
 // Returns true if all the containers have notified the Determined Master that
 // they are running; false otherwise.
-func (m *launcherMonitor) allContainersRunning(job launcherJob) bool {
+func (m *launcherMonitor) allContainersRunning(job *launcherJob) bool {
 	// Since each container has a unique ID, the number of running containers
 	// is the number of unique IDs in the "runningContainers" map.
 	numContainersRunning := len(job.runningContainers)
@@ -381,7 +382,7 @@ func (m *launcherMonitor) processWatchedJobs(
 ) {
 	defer m.processingWatchedJobs.Store(false)
 
-	var job launcherJob
+	var job *launcherJob
 	var ok bool
 
 	qStats := m.queuesFromCluster(ctx)
@@ -394,10 +395,12 @@ func (m *launcherMonitor) processWatchedJobs(
 			m.removeJobFromMonitoredList(dispatchID, ctx)
 			continue
 		}
+
 		if job, ok = m.getJobByDispatchID(dispatchID); !ok {
 			ctx.Log().Warnf("dispatcher_monitor did not find job for dispatchID %s", dispatchID)
 			continue
 		}
+
 		if m.obtainJobStateFromWlmQueueDetails(dispatchID, qStats, ctx, job) {
 			continue // An optimization to avoid per-job use of updateJobStatus (below)
 		}
@@ -415,7 +418,16 @@ func (m *launcherMonitor) processWatchedJobs(
 			break
 		}
 
-		if removeJob := m.updateJobStatus(ctx, job); removeJob {
+		// Without a job ID response, the Slurm/PBS job has not even been
+		// created yet by the launchAsync, so do not bother setting
+		// refresh=true because that is accomplished by a workload manager
+		// command that needs the job ID in the first place. Reduce overhead on
+		// the launcher by avoiding workload manager status polling until the
+		// job is actually created. Polling without refresh will get the job ID
+		// when available, or a failed state if the job cannot be created.
+		refresh := len(job.hpcJobID) > 0
+
+		if removeJob := m.updateJobStatus(ctx, job, refresh); removeJob {
 			m.removeJobFromMonitoredList(dispatchID, ctx)
 			continue
 		}
@@ -432,7 +444,7 @@ func (m *launcherMonitor) processWatchedJobs(
 // the supplied WLM queue details. If found the associated job state will be published.
 func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	dispatchID string, qStats map[string]map[string]string,
-	ctx *actor.Context, job launcherJob,
+	ctx *actor.Context, job *launcherJob,
 ) bool {
 	hpcJobID := m.rm.dispatchIDToHPCJobID[dispatchID]
 	nativeState := qStats[hpcJobID]["state"]
@@ -510,7 +522,7 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 	return result
 }
 
-func (m *launcherMonitor) addJobToMonitoredJobs(job launcherJob) {
+func (m *launcherMonitor) addJobToMonitoredJobs(job *launcherJob) {
 	// Obtain a read/write lock.
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -526,7 +538,7 @@ func (m *launcherMonitor) markJobForRemoval(dispatchID string) {
 	m.jobsToRemove[dispatchID] = true
 }
 
-func (m *launcherMonitor) getJobByDispatchID(dispatchID string) (launcherJob, bool) {
+func (m *launcherMonitor) getJobByDispatchID(dispatchID string) (*launcherJob, bool) {
 	// Obtain a read lock.
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -555,7 +567,6 @@ func (m *launcherMonitor) markJobAsTerminated(ctx *actor.Context, dispatchID str
 
 	if ok {
 		job.jobWasTerminated = true
-		m.monitoredJobs[dispatchID] = job
 	} else {
 		ctx.Log().Tracef("Cannot mark job with dispatchID %s for termination, "+
 			"because it is not found in the monitored jobs",
@@ -580,7 +591,6 @@ func (m *launcherMonitor) updateLastJobStatusCheckTime(dispatchID string) {
 
 	if job, ok := m.monitoredJobs[dispatchID]; ok {
 		job.lastJobStatusCheckTime = time.Now()
-		m.monitoredJobs[dispatchID] = job
 	}
 }
 
@@ -597,7 +607,7 @@ func (m *launcherMonitor) clearJobsToRemoveMap() {
 // Returns an array of dispatch IDs sorted by the time that the last
 // status check was made to the launcher.
 func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime(
-	monitoredJobs map[string]launcherJob,
+	monitoredJobs map[string]*launcherJob,
 	ctx *actor.Context,
 ) []string {
 	// Obtain a read lock.
@@ -678,19 +688,26 @@ func minimizeErrorLog(messages []string) []string {
 Processes the job state and sends DispatchStateChange on each call.
 updateJobStatus returns true when the job has finished or no longer exists,
 and monitoring should stop.
+
+When "refresh" is true, it means we want the latest job status from the launcher.
+When "refresh" is false, it means we only want the HPC job ID.
 */
-func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) bool {
+func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob, refresh bool) bool {
 	removeJob := false
 	dispatchID := job.dispatcherID
 	owner := job.user
-	ctx.Log().Debugf("Checking status of launcher job %s", dispatchID)
 
-	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID)
+	if refresh {
+		ctx.Log().WithField("dispatch-id", dispatchID).Debug("Checking status of launcher job")
+	} else {
+		ctx.Log().WithField("dispatch-id", dispatchID).Debugf("Checking if HPC job ID is available")
+	}
+
+	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID, refresh)
 	if doesNotExist {
 		// The user canceled the job.
 		if job.jobWasTerminated {
-			ctx.Log().Infof("For dispatchID %s, the job was canceled",
-				dispatchID)
+			ctx.Log().WithField("dispatch-id", dispatchID).Infof("The job was canceled")
 
 			ctx.Tell(ctx.Self(), DispatchExited{
 				DispatchID: dispatchID,
@@ -741,7 +758,7 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 			// If we have no messages, it may be a connection failure from the container
 			// and we will have no logs to assist in diagnosis, so insert the last
 			// few lines of the error log into the failure message.
-			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, &job, "error.log", errorLinesToRetrieve)
+			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, job, "error.log", errorLinesToRetrieve)
 			exitMessages = minimizeErrorLog(exitMessages)
 		}
 
@@ -766,6 +783,10 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		// keep list of jobs to be removed for later.
 		removeJob = true
 	} else {
+		// Copy the HPC job ID, which is the ID that Slurm/PBS generate
+		// to track the jobs they run.
+		job.hpcJobID = getJobID(resp.GetAdditionalPropertiesField())
+
 		// From the launcher's perspective, a job is running when the Workload
 		// Manager (e.g., Slurm, PBS, etc) starts the job. However, from the
 		// Determined perspective, a job is not running until the all
@@ -786,7 +807,7 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 // publishJobState publishes the state of the specified job to the rest of the system.
 func (m *launcherMonitor) publishJobState(
 	notifyState launcher.DispatchState,
-	job launcherJob, ctx *actor.Context, dispatchID string, hpcJobID string,
+	job *launcherJob, ctx *actor.Context, dispatchID string, hpcJobID string,
 ) {
 	isPullingImage := notifyState == launcher.RUNNING && !m.allContainersRunning(job)
 
@@ -799,7 +820,7 @@ func (m *launcherMonitor) publishJobState(
 		DispatchID:     dispatchID,
 		State:          notifyState,
 		IsPullingImage: isPullingImage,
-		HPCJobID:       hpcJobID,
+		HPCJobID:       job.hpcJobID,
 	})
 }
 
@@ -811,10 +832,11 @@ is reported as no longer  existing at all (i.e. 404).
 func (m *launcherMonitor) getDispatchStatus(
 	ctx *actor.Context, owner string,
 	dispatchID string,
+	refresh bool,
 ) (dispatchInfo launcher.DispatchInfo, doesNotExist bool) {
 	resp, r, err := m.apiClient.MonitoringApi.
 		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
-		Refresh(true).
+		Refresh(refresh).
 		Execute() //nolint:bodyclose
 	if err != nil {
 		// This may happen if the job is canceled before the launcher creates
@@ -861,7 +883,7 @@ func (m *launcherMonitor) getDispatchStatus(
 // for the above (or any other) reason, then the next scheduling tick may arrive
 // soon thereafter, resulting in the overhead of unnecessarily rapid polling.
 // Avoid the latter by applying a rate limit to each job.
-func (*launcherMonitor) shouldSkip(job launcherJob) bool {
+func (*launcherMonitor) shouldSkip(job *launcherJob) bool {
 	durationSinceJobAddedOrLastStatusCollection := time.Since(job.lastJobStatusCheckTime)
 	return durationSinceJobAddedOrLastStatusCollection < minJobStatusCheckPollingInterval
 }
@@ -995,7 +1017,7 @@ func (m *launcherMonitor) isDispatchInProgress(
 	owner string,
 	dispatchID string,
 ) bool {
-	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID)
+	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID, true)
 	if doesNotExist {
 		// We know it does not exist so not in progress
 		return false
