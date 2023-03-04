@@ -149,7 +149,7 @@ func Test_allContainersRunning(t *testing.T) {
 	job := getJob()
 
 	// Add the job to the monitored jobs.
-	jobWatcher.monitoredJobs[job.dispatcherID] = job
+	jobWatcher.monitoredJobs[job.dispatcherID] = &job
 
 	// Since there have not been any "NotifyContainerRunning" messages sent
 	// for this job, then we do not expect all containers to be running.
