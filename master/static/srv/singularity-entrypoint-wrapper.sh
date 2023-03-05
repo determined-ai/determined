@@ -7,6 +7,9 @@ trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container 
 # Controls debug logging for this method
 DEBUG=0
 
+# TODO(singularity): Turn this only iff DET_DEBUG == true.
+set -x
+
 # Clear all exported functions.  They are inherited into singularity containers
 # since they are passed by environment variables.  One specific breaking example
 # is the function that injects arguments into the which command.  These Red Hat
@@ -26,6 +29,11 @@ log_debug() {
 log() {
     echo -e "$*" >&2
 }
+
+for encoded_env_var_name in `echo $DET_B64_ENCODED_ENVVARS | tr "," "\n"`; do
+    decoded_env_var=`echo ${!encoded_env_var_name} | base64 --decode`
+    export ${encoded_env_var_name}="$decoded_env_var"
+done
 
 # Source volume of all archives to be cloned
 ROOT="/determined-local-fs"

@@ -11,6 +11,15 @@
 		},
 		{
 			"path": "../tools"
+		},
+		{
+			"path": "../harness"
+		},
+		{
+			"path": "../.circleci"
+		},
+		{
+			"path": "../examples"
 		}
 	]
 }
