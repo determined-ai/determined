@@ -3,6 +3,8 @@ package singularity
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -102,23 +104,23 @@ func (s *SingularityClient) PullImage(
 	ctx context.Context,
 	req docker.PullImage,
 	p events.Publisher[docker.Event],
-) error {
-	if err := p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
+) (err error) {
+	if err = p.Publish(ctx, docker.NewBeginStatsEvent(docker.ImagePullStatsKind)); err != nil {
 		return err
 	}
 	defer func() {
-		if scErr := p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); scErr != nil {
-			s.log.WithError(scErr).Warn("did not send image pull done stats")
+		if err = p.Publish(ctx, docker.NewEndStatsEvent(docker.ImagePullStatsKind)); err != nil {
+			s.log.WithError(err).Warn("did not send image pull done stats")
 		}
 	}()
 
-	uri, pErr := url.Parse(req.Name)
-	if pErr != nil || uri.Scheme == "" {
-		if pubErr := p.Publish(ctx, docker.NewLogEvent(
+	uri, err := url.Parse(req.Name)
+	if err != nil || uri.Scheme == "" {
+		if err = p.Publish(ctx, docker.NewLogEvent(
 			model.LogLevelInfo,
 			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", req.Name),
-		)); pubErr != nil {
-			return pubErr
+		)); err != nil {
+			return err
 		}
 		return nil
 	}
@@ -130,7 +132,9 @@ func (s *SingularityClient) PullImage(
 	}
 	args = append(args, req.Name)
 
-	s.printSingularityCommand(args)
+	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
+		return err
+	}
 
 	cmd := exec.CommandContext(ctx, "singularity", args...)
 	stdout, err := cmd.StdoutPipe()
@@ -159,7 +163,7 @@ func (s *SingularityClient) PullImage(
 		s.shipSingularityCmdLogs(ctx, stderr, stdcopy.Stderr, checkIgnoreErrors)
 	})
 
-	if err := cmd.Start(); err != nil {
+	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("starting pull command: %w", err)
 	}
 
@@ -170,7 +174,7 @@ func (s *SingularityClient) PullImage(
 		return ctx.Err()
 	}
 
-	if err := cmd.Wait(); err != nil && !ignoreErrors {
+	if err = cmd.Wait(); err != nil && !ignoreErrors {
 		return fmt.Errorf("running pull command: %w", err)
 	}
 	return nil
@@ -232,9 +236,32 @@ func (s *SingularityClient) RunContainer(
 	args = append(args, "--writable-tmpfs")
 	args = append(args, "--pwd", req.ContainerConfig.WorkingDir)
 	args = append(args, "--env", "DET_NO_FLUENT=true")
+
+	var b64EnvVars []string
 	for _, env := range req.ContainerConfig.Env {
-		args = append(args, "--env", env)
+		parts := strings.SplitN(env, "=", 2)
+
+		// If it isn't JSON, just pass it as is.
+		var unused map[string]interface{}
+		if err = json.Unmarshal([]byte(parts[1]), &unused); err != nil {
+			args = append(args, "--env", env)
+			continue
+		}
+
+		if err = p.Publish(ctx, docker.NewLogEvent(
+			model.LogLevelDebug,
+			fmt.Sprintf("encoding %s to avoid issues with env containing JSON", parts[0]),
+		)); err != nil {
+			return nil, err
+		}
+		enc := base64.StdEncoding.EncodeToString([]byte(parts[1]))
+		args = append(args, "--env", fmt.Sprintf("%s=%s", parts[0], enc))
+		b64EnvVars = append(b64EnvVars, parts[0])
 	}
+	args = append(args, "--env", fmt.Sprintf(
+		"DET_B64_ENCODED_ENVVARS=%s",
+		strings.Join(b64EnvVars, ","),
+	))
 
 	switch {
 	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
@@ -247,12 +274,12 @@ func (s *SingularityClient) RunContainer(
 			args = append(args, "--network-args", fmt.Sprintf("portmap=%d:%d/tcp", p, p))
 		}
 	case req.HostConfig.NetworkMode == bridgeNetworking:
-		if pErr := p.Publish(ctx, docker.NewLogEvent(
+		if err = p.Publish(ctx, docker.NewLogEvent(
 			model.LogLevelDebug,
 			"container requested network virtualization, but network creation isn't allowed; "+
 				"overriding to host networking",
-		)); pErr != nil {
-			return nil, pErr
+		)); err != nil {
+			return nil, err
 		}
 		req.HostConfig.NetworkMode = hostNetworking
 		fallthrough
@@ -316,33 +343,33 @@ func (s *SingularityClient) RunContainer(
 	for _, m := range req.HostConfig.Mounts {
 		// TODO(singularity): Investigate handling these options.
 		if m.ReadOnly {
-			if pErr := p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
+			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 				"mount %s:%s was requested as readonly but singularity does not support this; "+
 					"will bind mount anyway, without it being readonly",
 				m.Source, m.Target,
-			))); pErr != nil {
-				return nil, pErr
+			))); err != nil {
+				return nil, err
 			}
 		}
 		if m.BindOptions != nil && m.BindOptions.Propagation != "rprivate" { // rprivate is default.
-			if pErr := p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
+			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 				"mount %s:%s had propagation settings but singularity does not support this; "+
 					"will bind mount anyway, without them",
 				m.Source, m.Target,
-			))); pErr != nil {
-				return nil, pErr
+			))); err != nil {
+				return nil, err
 			}
 		}
 		args = append(args, "--bind", fmt.Sprintf("%s:%s", m.Source, m.Target))
 	}
 
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
-		if pErr := p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
+		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 			"shmsize was requested as %d but singularity does not support this; "+
 				"we do not launch with `--contain`, so we inherit the configuration of the host",
 			shmsize,
-		))); pErr != nil {
-			return nil, pErr
+		))); err != nil {
+			return nil, err
 		}
 	}
 
@@ -372,12 +399,12 @@ func (s *SingularityClient) RunContainer(
 
 	// TODO(singularity): It is unlikely we can handle this, but we should do better at documenting.
 	if len(req.HostConfig.CapAdd) != 0 || len(req.HostConfig.CapDrop) != 0 {
-		if pErr := p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
+		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 			"cap add or drop was requested but singularity does not support this; "+
 				"will be ignored (cap_add: %+v, cap_drop: %+v)", req.HostConfig.CapAdd,
 			req.HostConfig.CapDrop,
-		))); pErr != nil {
-			return nil, pErr
+		))); err != nil {
+			return nil, err
 		}
 	}
 
@@ -385,7 +412,9 @@ func (s *SingularityClient) RunContainer(
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
 
-	s.printSingularityCommand(args)
+	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
+		return nil, err
+	}
 
 	// #nosec G204 // We launch arbitrary user code as a service.
 	cmd := exec.CommandContext(waitCtx, "singularity", args...)
@@ -544,13 +573,24 @@ func (s *SingularityClient) waitOnContainer(
 		defer s.mu.Unlock()
 		s.log.Tracef("forgetting completed container: %s", id)
 		delete(s.containers, id)
-		if err := os.RemoveAll(cont.TmpDir); err != nil {
-			if pErr := p.Publish(ctx, docker.NewLogEvent(
-				model.LogLevelWarning,
-				fmt.Sprintf("failed to cleanup tmpdir (ephemeral mounts, etc): %s", err),
-			)); pErr != nil {
-				logrus.WithError(err).Error("publishing cleanup failure warning")
+
+		// Defer file cleanup until restart if debug logging is enabled.
+		if s.log.Logger.Level <= logrus.DebugLevel {
+			if err := p.Publish(ctx, docker.NewLogEvent(
+				model.LogLevelDebug,
+				fmt.Sprintf("leaving tmpdir %s for inspection", cont.TmpDir),
+			)); err != nil {
 				return
+			}
+		} else {
+			if err := os.RemoveAll(cont.TmpDir); err != nil {
+				if err = p.Publish(ctx, docker.NewLogEvent(
+					model.LogLevelWarning,
+					fmt.Sprintf("failed to cleanup tmpdir (ephemeral mounts, etc): %s", err),
+				)); err != nil {
+					logrus.WithError(err).Error("publishing cleanup failure warning")
+					return
+				}
 			}
 		}
 	})
@@ -586,8 +626,12 @@ func (s *SingularityClient) shipSingularityCmdLogs(
 	return
 }
 
-func (s *SingularityClient) printSingularityCommand(args []string) {
-	toPrint := "singularity "
+func (s *SingularityClient) pprintSingularityCommand(
+	ctx context.Context,
+	args []string,
+	p events.Publisher[docker.Event],
+) error {
+	toPrint := "singularity"
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--") { // print each arg on a new line
 			toPrint += " \\\n"
@@ -598,13 +642,21 @@ func (s *SingularityClient) printSingularityCommand(args []string) {
 			toPrint += arg
 		}
 	}
+
 	s.log.Trace(toPrint)
+	if err := p.Publish(ctx, docker.NewLogEvent(
+		model.LogLevelDebug,
+		toPrint,
+	)); err != nil {
+		return err
+	}
+	return nil
 }
 
 // TODO(singularity): should we do this conversion for the user, or no? No for now.
 func (s *SingularityClient) canonicalizeImage(image string) string {
-	_, pErr := url.Parse(image)
-	isURIForm := pErr == nil
+	_, err := url.Parse(image)
+	isURIForm := err == nil
 	isFSForm := path.IsAbs(image)
 	if isFSForm || isURIForm {
 		return image
