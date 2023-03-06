@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
+import Form from 'components/kit/Form';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -128,17 +129,13 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <div>
-          <label className={css.label} htmlFor="workspace">
-            Workspace
-          </label>
+      <Form className={css.base}>
+        <Form.Item label="Workspace">
           <Select
             id="workspace"
             placeholder="Select a destination workspace."
             searchable={false}
             value={workspaceId ?? undefined}
-            width="100%"
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
@@ -151,7 +148,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
               );
             })}
           </Select>
-        </div>
+        </Form.Item>
         {workspaceId && workspaceId !== 1 && (
           <div>
             <label className={css.label} htmlFor="project">
@@ -178,7 +175,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             )}
           </div>
         )}
-      </div>
+      </Form>
     );
   }, [handleWorkspaceSelect, projects, renderRow, workspaceId, workspaces]);
 
