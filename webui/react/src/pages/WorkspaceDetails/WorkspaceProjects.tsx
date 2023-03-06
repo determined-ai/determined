@@ -54,7 +54,7 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -151,7 +151,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         break;
       case WhoseProjects.Others:
         updateSettings({
-          user: users.data.users.filter((u) => u.id !== user?.id).map((u) => u.id),
+          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
         });
         break;
     }
@@ -239,7 +239,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

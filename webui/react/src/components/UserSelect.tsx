@@ -18,7 +18,7 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const loadableCurrentUser = useCurrentUser();
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -50,7 +50,7 @@ const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
     }
 
     if (Loadable.isLoaded(users)) {
-      const allOtherUsers = users.data.users
+      const allOtherUsers = users.data
         .filter((user) => !authUser || user.id !== authUser.id)
         .sort((a, b) => getDisplayName(a).localeCompare(getDisplayName(b), 'en'))
         .map(userToSelectOption);

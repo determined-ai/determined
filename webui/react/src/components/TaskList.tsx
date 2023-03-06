@@ -98,7 +98,7 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -130,7 +130,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         users: settings.user,
         workspaces: settings.workspace,
       },
-      (Loadable.isLoaded(users) && users.data.users) || [],
+      (Loadable.isLoaded(users) && users.data) || [],
       settings.search,
     );
   }, [loadedTasks, settings, users]);
@@ -459,15 +459,15 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.data.users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
         render: (_: string, r: CommandTask) =>
-          userRenderer(users.data.users.find((u) => u.id === r.userId)),
+          userRenderer(users.data.find((u) => u.id === r.userId)),
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
-            getDisplayName(users.data.users.find((u) => u.id === a.userId)),
-            getDisplayName(users.data.users.find((u) => u.id === b.userId)),
+            getDisplayName(users.data.find((u) => u.id === a.userId)),
+            getDisplayName(users.data.find((u) => u.id === b.userId)),
           );
         },
         title: 'User',

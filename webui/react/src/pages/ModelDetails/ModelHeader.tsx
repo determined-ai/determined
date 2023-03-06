@@ -45,7 +45,7 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
@@ -58,7 +58,7 @@ const ModelHeader: React.FC<Props> = ({
   const infoRows: InfoRow[] = useMemo(() => {
     if (Loadable.isLoading(users)) return [];
 
-    const user = users.data.users.find((user) => user.id === model.userId);
+    const user = users.data.find((user) => user.id === model.userId);
     return [
       {
         content: (

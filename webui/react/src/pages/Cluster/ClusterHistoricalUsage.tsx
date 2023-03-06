@@ -32,7 +32,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -110,7 +110,7 @@ const ClusterHistoricalUsage: React.FC = () => {
     return mapResourceAllocationApiToChartSeries(
       aggRes.resourceEntries,
       filters.groupBy,
-      (Loadable.isLoaded(users) && users.data.users) || [],
+      (Loadable.isLoaded(users) && users.data) || [],
     );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 

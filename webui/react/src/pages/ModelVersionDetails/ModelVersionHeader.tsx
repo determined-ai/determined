@@ -52,7 +52,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -73,7 +73,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   const infoRows: InfoRow[] = useMemo(() => {
     if (Loadable.isLoading(users)) return [];
 
-    const user = users.data.users.find((user) => user.id === modelVersion.userId);
+    const user = users.data.find((user) => user.id === modelVersion.userId);
     return [
       {
         content: (

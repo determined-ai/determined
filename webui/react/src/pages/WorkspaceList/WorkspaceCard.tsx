@@ -26,11 +26,11 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     workspace,
   });
 
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   let user: DetailedUser | undefined = undefined;
 
   if (Loadable.isLoaded(users)) {
-    user = users.data.users.find((user) => user.id === workspace.userId);
+    user = users.data.find((user) => user.id === workspace.userId);
   }
 
   const classnames = [css.base];

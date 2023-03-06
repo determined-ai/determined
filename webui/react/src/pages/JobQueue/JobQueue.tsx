@@ -48,7 +48,7 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   useRefetchClusterData();
   const resourcePools = useObservable(useClusterStore().resourcePools);
   const hasLoadingObservables = Loadable.isLoading(users) || Loadable.isLoading(resourcePools);
@@ -301,7 +301,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(users.data.find((u) => u.id === r.userId));
             break;
         }
         return col;

@@ -74,7 +74,7 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
 
   const { filters, setFilters } = collectionsInterface;
 
@@ -419,11 +419,11 @@ const TrialTable: React.FC<Props> = ({
           onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
         />
       ),
-      filters: users.data.users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+      filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
       render: (_: number, r: V1AugmentedTrial) =>
-        userRenderer(users.data.users.find((u) => u.id === r.userId)),
+        userRenderer(users.data.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
     };

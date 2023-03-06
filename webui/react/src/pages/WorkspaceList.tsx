@@ -47,7 +47,7 @@ import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const WorkspaceList: React.FC = () => {
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -141,7 +141,7 @@ const WorkspaceList: React.FC = () => {
         break;
       case WhoseWorkspaces.Others:
         updateSettings({
-          user: users.data.users.filter((u) => u.id !== user?.id).map((u) => u.id),
+          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
         });
         break;
     }
@@ -179,7 +179,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

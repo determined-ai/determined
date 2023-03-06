@@ -50,7 +50,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = useUsers();
+  const users = Loadable.map(useUsers(), ({ users }) => users);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -152,7 +152,7 @@ const WorkspaceDetails: React.FC = () => {
   const addableUsers = useMemo(
     () =>
       (Loadable.isLoaded(users) &&
-        users.data.users.filter((user) => !usersAssignedDirectlyIds.has(user.id))) ||
+        users.data.filter((user) => !usersAssignedDirectlyIds.has(user.id))) ||
       [],
     [users, usersAssignedDirectlyIds],
   );
