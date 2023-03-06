@@ -32,7 +32,7 @@ DEFAULT_EXP_CFG = {
 
 # TODO (DET-1189): Use port registry to allocate ssh port.
 # SSH port used for agents during dtrain (currently used with horovod and deepspeed backend).
-DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350"))) + int(os.environ["DET_UNIQUE_PORT_OFFSET"]) 
+DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350"))) + int(os.getenv["DET_UNIQUE_PORT_OFFSET"]) 
 
 
 # GLOO port used by Horovod for the Gloo controller.
