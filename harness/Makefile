@@ -17,7 +17,9 @@ fmt:
 .PHONY: check
 check: check-gen
 	isort . --check-only
+	black --version
 	black . --exclude $(py_bindings_dest) --check
+	flake8 --version
 	flake8
 	mypy .
 
