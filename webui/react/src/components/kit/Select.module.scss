@@ -25,14 +25,3 @@
     max-width: calc(100% - 32px);
   }
 }
-.vertical {
-  align-items: flex-start;
-  flex-direction: column;
-
-  & > *:first-child {
-    margin-bottom: 4px;
-  }
-  & > *:not(:first-child) {
-    margin-left: 0;
-  }
-}
