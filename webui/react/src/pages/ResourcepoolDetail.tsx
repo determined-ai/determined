@@ -27,8 +27,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
+import { maxPoolSlotCapacity } from './Clusters/utils';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 

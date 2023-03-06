@@ -1,6 +1,6 @@
 import { ResourcePool } from 'types';
 
-import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
+import { maxPoolSlotCapacity } from './utils';
 
 const pools: Record<string, Partial<ResourcePool>> = {
   dynamic: { maxAgents: 3, slotsAvailable: 0, slotsPerAgent: 2 },

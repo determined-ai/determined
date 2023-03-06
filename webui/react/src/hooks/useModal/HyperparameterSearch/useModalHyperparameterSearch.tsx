@@ -12,7 +12,7 @@ import InputNumber from 'components/kit/InputNumber';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
-import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
+import { maxPoolSlotCapacity } from 'pages/Clusters/utils';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';

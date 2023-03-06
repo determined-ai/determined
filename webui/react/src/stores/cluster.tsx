@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 
-import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
+import { clusterStatusText } from 'pages/Clusters/utils';
 import { getAgents, getResourcePools } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';

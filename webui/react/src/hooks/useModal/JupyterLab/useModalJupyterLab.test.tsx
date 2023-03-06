@@ -17,8 +17,6 @@ const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
-const MonacoEditorMock: React.FC = () => <></>;
-
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
@@ -48,7 +46,7 @@ jest.mock('utils/wait', () => ({
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => MonacoEditorMock,
+  default: () => <></>,
 }));
 
 const ModalTrigger: React.FC = () => {

@@ -16,7 +16,7 @@ import { ResourceType, TaskCounts } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
+import { maxClusterSlotCapacity } from '../Clusters/utils';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
   limit: -2, // according to API swagger doc, [limit] -2 - returns pagination info but no experiments.
