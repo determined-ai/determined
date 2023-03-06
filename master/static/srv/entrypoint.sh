@@ -36,7 +36,9 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --trial --resources
 
+set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
+set +x
 
 # Do rendezvous last, to ensure all launch layers start around the same time.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --rendezvous

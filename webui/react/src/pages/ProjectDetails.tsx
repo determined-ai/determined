@@ -1,47 +1,44 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space, Tooltip } from 'antd';
+import { Space } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getProject, getWorkspace } from 'services/api';
+import { getProject, getWorkspace, postUserActivity } from 'services/api';
+import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
-import { useCurrentUser } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
-import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
-import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 
 type Params = {
   projectId: string;
 };
 
 const ProjectDetails: React.FC = () => {
-  const loadableCurrentUser = useCurrentUser();
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
   const { projectId } = useParams<Params>();
+  const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
 
-  const [project, setProject] = useState<Project>();
+  const [project, setProject] = useState<Project | undefined>();
 
   const permissions = usePermissions();
   const [pageError, setPageError] = useState<Error>();
@@ -50,7 +47,15 @@ const ProjectDetails: React.FC = () => {
 
   const [workspace, setWorkspace] = useState<Workspace>();
 
-  const id = parseInt(projectId ?? '1');
+  const id = Number(projectId ?? '1');
+
+  const postActivity = useCallback(() => {
+    postUserActivity({
+      activityType: V1ActivityType.GET,
+      entityId: id,
+      entityType: V1EntityType.PROJECT,
+    });
+  }, [id]);
 
   const fetchWorkspace = useCallback(async () => {
     const workspaceId = project?.workspaceId;
@@ -107,35 +112,49 @@ const ProjectDetails: React.FC = () => {
         key: 'notes',
         label: 'Notes',
       });
-      items.push({
-        children: (
-          <div className={css.tabPane}>
-            <div className={css.base}>
-              <TrialsComparison projectId={projectId} />
+      if (trialsComparisonEnabled) {
+        items.push({
+          children: (
+            <div className={css.tabPane}>
+              <div className={css.base}>
+                <TrialsComparison projectId={projectId} />
+              </div>
             </div>
-          </div>
-        ),
-        key: 'trials',
-        label: 'Trials',
-      });
+          ),
+          key: 'trials',
+          label: 'Trials',
+        });
+      }
     }
 
     return items;
-  }, [fetchProject, id, project, projectId]);
+  }, [fetchProject, id, project, trialsComparisonEnabled, projectId]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
 
+  useEffect(() => {
+    postActivity();
+  }, [postActivity]);
+
+  const onProjectDelete = useCallback(() => {
+    if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+  }, [project]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
-  } else if (!permissions.canViewWorkspaces) {
-    return <NoPermissions />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
+  } else if (
+    (!permissions.loading &&
+      project &&
+      !permissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) ||
+    (pageError && isNotFound(pageError))
+  ) {
+    return <PageNotFound />;
   } else if (!project) {
-    return <Spinner tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
+    return <Spinner spinning tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
   return (
     <Page
@@ -154,12 +173,12 @@ const ProjectDetails: React.FC = () => {
             )}
             {id !== 1 && (
               <ProjectActionDropdown
-                curUser={user}
                 project={project}
                 showChildrenIfEmpty={false}
                 trigger={['click']}
                 workspaceArchived={workspace?.archived}
-                onComplete={fetchProject}>
+                onComplete={fetchProject}
+                onDelete={onProjectDelete}>
                 <div style={{ cursor: 'pointer' }}>
                   <Icon name="arrow-down" size="tiny" />
                 </div>
@@ -171,12 +190,14 @@ const ProjectDetails: React.FC = () => {
         project={project}
         type="project"
       />
-      <DynamicTabs
-        basePath={paths.projectDetailsBasePath(id)}
-        destroyInactiveTabPane
-        items={tabItems}
-        tabBarStyle={{ height: 50, paddingLeft: 16 }}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ height: '100%', padding: 16 }}>
+        <DynamicTabs
+          basePath={paths.projectDetailsBasePath(id)}
+          destroyInactiveTabPane
+          items={tabItems}
+        />
+      </div>
     </Page>
   );
 };

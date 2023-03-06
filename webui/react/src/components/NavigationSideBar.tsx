@@ -1,4 +1,4 @@
-import { Button, Menu, MenuProps, Tooltip, Typography } from 'antd';
+import { Menu, MenuProps, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,27 +6,27 @@ import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
+import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
+import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { useAgents, useClusterOverview } from 'stores/agents';
-import { useAuth } from 'stores/auth';
+import { selectIsAuthenticated } from 'stores/auth';
+import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useResourcePools } from 'stores/resourcePools';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -35,6 +35,7 @@ interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
   icon: string | React.ReactNode;
+  iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
@@ -46,7 +47,6 @@ interface Settings {
 }
 
 const settingsConfig: SettingsConfig<Settings> = {
-  applicableRoutespace: 'navigation',
   settings: {
     navbarCollapsed: {
       defaultValue: false,
@@ -84,7 +84,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size="large" />
+            <Icon name={props.icon} size={props.iconSize ?? 'large'} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -115,30 +115,18 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const loadableAuth = useAuth();
-  const isAuthenticated = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.isAuthenticated,
-    NotLoaded: () => false,
-  });
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+
+  const isAuthenticated = useObservable(selectIsAuthenticated);
   const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
-  const agents = useAgents();
-  const overview = useClusterOverview();
-  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
-    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-    NotLoaded: () => undefined, // TODO show spinner when this is loading
-  });
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
   const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
     useModalWorkspaceCreate();
   const showNavigation = isAuthenticated && ui.showChrome;
@@ -154,8 +142,9 @@ const NavigationSideBar: React.FC = () => {
     const topNav = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
+    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
     const topItems = [
-      ...topNav,
+      ...dashboardTopNav.concat(topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -249,18 +238,6 @@ const NavigationSideBar: React.FC = () => {
           </Dropdown>
         </header>
         <main>
-          <section className={css.launch}>
-            <div className={css.launchBlock}>
-              <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
-                Launch JupyterLab
-              </Button>
-              {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="jupyter-lab" />
-                </Button>
-              ) : null}
-            </div>
-          </section>
           <section className={css.top}>
             {menuConfig.top.map((config) => (
               <NavigationItem
@@ -280,11 +257,11 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  {canCreateWorkspace ? (
+                  {canCreateWorkspace && (
                     <Button type="text" onClick={handleCreateWorkspace}>
                       <Icon name="add-small" size="tiny" />
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               }
               icon="workspaces"
@@ -294,36 +271,51 @@ const NavigationSideBar: React.FC = () => {
               tooltip={settings.navbarCollapsed}
             />
             {Loadable.match(pinnedWorkspaces, {
-              Loaded: (workspaces) =>
-                workspaces.length === 0 ? (
-                  <p className={css.noWorkspaces}>No pinned workspaces</p>
-                ) : (
-                  <ul className={css.pinnedWorkspaces} role="list">
-                    {workspaces
-                      .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
-                      .map((workspace) => (
-                        <WorkspaceActionDropdown
-                          key={workspace.id}
-                          returnIndexOnDelete={false}
-                          trigger={['contextMenu']}
-                          workspace={workspace}>
-                          <li>
-                            <NavigationItem
-                              icon={<DynamicIcon name={workspace.name} size={24} />}
-                              label={workspace.name}
-                              labelRender={
-                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                  {workspace.name}
-                                </Typography.Paragraph>
-                              }
-                              path={paths.workspaceDetails(workspace.id)}
-                            />
-                          </li>
-                        </WorkspaceActionDropdown>
-                      ))}
-                  </ul>
-                ),
-              NotLoaded: () => <Spinner />,
+              Loaded: (workspaces) => (
+                <ul className={css.pinnedWorkspaces} role="list">
+                  {workspaces
+                    .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
+                    .map((workspace) => (
+                      <WorkspaceActionDropdown
+                        key={workspace.id}
+                        returnIndexOnDelete={false}
+                        trigger={['contextMenu']}
+                        workspace={workspace}>
+                        <li>
+                          <NavigationItem
+                            icon={<DynamicIcon name={workspace.name} size={24} />}
+                            label={workspace.name}
+                            labelRender={
+                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                {workspace.name}
+                              </Typography.Paragraph>
+                            }
+                            path={paths.workspaceDetails(workspace.id)}
+                          />
+                        </li>
+                      </WorkspaceActionDropdown>
+                    ))}
+                  {canCreateWorkspace ? (
+                    <li>
+                      <NavigationItem
+                        icon="add-small"
+                        iconSize="tiny"
+                        label="New Workspace"
+                        labelRender={
+                          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                            New Workspace
+                          </Typography.Paragraph>
+                        }
+                        tooltip={settings.navbarCollapsed}
+                        onClick={handleCreateWorkspace}
+                      />
+                    </li>
+                  ) : workspaces.length === 0 ? (
+                    <div className={css.noWorkspaces}>No pinned workspaces</div>
+                  ) : null}
+                </ul>
+              ),
+              NotLoaded: () => <Spinner center />,
             })}
           </section>
           <section className={css.bottom}>
@@ -349,7 +341,6 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {modalJupyterLabContextHolder}
         {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>

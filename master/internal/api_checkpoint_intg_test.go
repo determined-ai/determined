@@ -60,7 +60,6 @@ func createVersionTwoCheckpoint(
 		AllocationID: aID,
 		TaskID:       trial.TaskID,
 		Slots:        1,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
@@ -86,7 +85,7 @@ func createVersionTwoCheckpoint(
 }
 
 func TestCheckpointAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
 	cases := []struct {
 		DenyFuncName            string

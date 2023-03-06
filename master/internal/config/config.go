@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/config"
@@ -31,8 +33,10 @@ var (
 )
 
 // KubernetesDefaultPriority is the default K8 resource manager priority.
-const KubernetesDefaultPriority = 50
-const sslModeDisable = "disable"
+const (
+	KubernetesDefaultPriority = 50
+	sslModeDisable            = "disable"
+)
 
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
@@ -101,9 +105,8 @@ func DefaultConfig() *Config {
 			AuthZ: *DefaultAuthZConfig(),
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
-		Port:        0,
-		HarnessPath: "/opt/determined",
-		Root:        "/usr/share/determined/master",
+		Port: 0,
+		Root: "/usr/share/determined/master",
 		Telemetry: config.TelemetryConfig{
 			Enabled:                  true,
 			OtelEnabled:              false,
@@ -145,7 +148,6 @@ type Config struct {
 	CheckpointStorage     expconf.CheckpointStorageConfig   `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 	Port                  int                               `json:"port"`
-	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
 	Telemetry             config.TelemetryConfig            `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
@@ -251,7 +253,24 @@ func (c *Config) Resolve() error {
 		return err
 	}
 
+	if c.Security.AuthZ.StrictNTSCEnabled {
+		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
+	}
+
 	return nil
+}
+
+// Deprecations describe fields which were recently or will soon be removed.
+func (c *Config) Deprecations() (errs []error) {
+	for _, rp := range c.ResourcePools {
+		if rp.AgentReattachEnabled {
+			errs = append(errs, fmt.Errorf(
+				"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
+					"as of 0.21.0 this feature is always on", rp.PoolName,
+			))
+		}
+	}
+	return errs
 }
 
 // SecurityConfig is the security configuration for the master.
@@ -415,22 +434,4 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
-}
-
-// IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.
-// Most other checks on Reattachability have been moved to the ResourceManager interface and
-// deligated to RM implementations, however this one is referenced in PreStart without
-// the ability to access the targeted resource manager.
-func IsAgentRMReattachEnabled() bool {
-	config := GetMasterConfig()
-
-	if config.ResourceManager.AgentRM == nil {
-		return false
-	}
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
 }

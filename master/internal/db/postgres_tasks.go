@@ -98,14 +98,14 @@ WHERE task_id = $1
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
 INSERT INTO allocations
-	(task_id, allocation_id, slots, resource_pool, agent_label, start_time, state)
+	(task_id, allocation_id, slots, resource_pool, start_time, state)
 VALUES
-	(:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time, :state)
+	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state)
 ON CONFLICT
 	(allocation_id)
 DO UPDATE SET
 	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
-	agent_label=EXCLUDED.agent_label, start_time=EXCLUDED.start_time, state=EXCLUDED.state
+	start_time=EXCLUDED.start_time, state=EXCLUDED.state
 `, a)
 }
 

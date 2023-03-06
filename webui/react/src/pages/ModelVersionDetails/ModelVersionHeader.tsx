@@ -1,24 +1,28 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Modal, Space } from 'antd';
+import { Dropdown, Modal, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import InlineEditor from 'components/InlineEditor';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
-import Avatar from 'components/UserAvatar';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
+import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
+import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { useUsers } from 'stores/users';
-import { ModelVersion } from 'types';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -37,10 +41,12 @@ interface Props {
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+  workspace: Workspace;
 }
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
+  workspace,
   onSaveDescription,
   onUpdateTags,
   onSaveName,
@@ -57,9 +63,14 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
     useModalModelVersionDelete();
 
+  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
+    useModalModelEdit({ modelName: modelVersion.name ?? '', onSaveName });
+
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
   }, [modelVersion, openModelDownload]);
+
+  const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
     const user = users.find((user) => user.id === modelVersion.userId);
@@ -82,30 +93,34 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <InlineEditor
-            disabled={modelVersion.model.archived}
+          <Input
+            defaultValue={modelVersion.comment ?? ''}
+            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-            value={modelVersion.comment ?? ''}
-            onSave={onSaveDescription}
+            onBlur={(e) => {
+              const newValue = e.currentTarget.value;
+              onSaveDescription(newValue);
+            }}
+            onPressEnter={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         ),
         label: 'Description',
       },
       {
         content: (
-          <TagList
-            disabled={modelVersion.model.archived}
+          <Tags
+            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}
-            onChange={onUpdateTags}
+            onAction={tagsActionHelper(modelVersion.labels ?? [], onUpdateTags)}
           />
         ),
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onSaveDescription, onUpdateTags, users]);
-
-  const { canDeleteModelVersion } = usePermissions();
+  }, [modelVersion, onSaveDescription, onUpdateTags, users, canModifyModelVersion]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
@@ -127,6 +142,13 @@ const ModelVersionHeader: React.FC<Props> = ({
         onClick: () => setShowUseInNotebook(true),
         text: 'Use in Notebook',
       },
+      {
+        danger: false,
+        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
+        key: 'edit-model-version-name',
+        onClick: openModelNameEdit,
+        text: 'Edit',
+      },
     ];
     if (canDeleteModelVersion({ modelVersion })) {
       items.push({
@@ -138,7 +160,14 @@ const ModelVersionHeader: React.FC<Props> = ({
       });
     }
     return items;
-  }, [handleDelete, handleDownloadModel, canDeleteModelVersion, modelVersion]);
+  }, [
+    modelVersion,
+    canModifyModelVersion,
+    openModelNameEdit,
+    handleDownloadModel,
+    canDeleteModelVersion,
+    handleDelete,
+  ]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -192,7 +221,18 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>Model Registry</Link>
+            <Link
+              path={
+                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+              }>
+              {workspace.name}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Separator />
+          <Breadcrumb.Item>
+            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+              Model Registry
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
@@ -209,19 +249,12 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
           <div className={css.title}>
             <div className={css.versionBox}>V{modelVersion.version}</div>
             <h1 className={css.versionName}>
-              <InlineEditor
-                allowClear={false}
-                disabled={modelVersion.model.archived}
-                placeholder="Add name..."
-                value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
-                onSave={onSaveName}
-              />
+              {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
             </h1>
           </div>
           <div className={css.buttons}>
             {actions.slice(0, 2).map((action) => (
               <Button
-                className={css.buttonAction}
                 danger={action.danger}
                 disabled={action.disabled}
                 key={action.key}
@@ -240,6 +273,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}
+      {modalModelNameEditContextHolder}
       <Modal
         className={css.useNotebookModal}
         footer={null}

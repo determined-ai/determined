@@ -153,7 +153,7 @@ export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise
   );
 };
 
-export const useUsers = (cfg?: FetchUsersConfig): Loadable<UserPage> => {
+export const useUsers = (cfg?: FetchUsersConfig): Loadable<Readonly<UserPage>> => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -164,7 +164,7 @@ export const useUsers = (cfg?: FetchUsersConfig): Loadable<UserPage> => {
 
   if (!usersPagination) return NotLoaded;
 
-  const userPage = {
+  const userPage: UserPage = {
     pagination: usersPagination.pagination,
     users: usersPagination.users.flatMap((userId) => {
       const user = context.users.get(userId);
@@ -176,7 +176,7 @@ export const useUsers = (cfg?: FetchUsersConfig): Loadable<UserPage> => {
   return Loaded(userPage);
 };
 
-export const useUpdateCurrentUser = (): ((id: number) => void) => {
+export const useUpdateCurrentUser = (): ((id: number | null) => void) => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -185,8 +185,12 @@ export const useUpdateCurrentUser = (): ((id: number) => void) => {
 
   const { updateCurrentUser } = context;
   const callback = useCallback(
-    (id: number) => {
-      updateCurrentUser(() => Loaded(id));
+    (id: number | null) => {
+      if (id === null) {
+        updateCurrentUser(() => NotLoaded);
+      } else {
+        updateCurrentUser(() => Loaded(id));
+      }
     },
     [updateCurrentUser],
   );

@@ -8,7 +8,7 @@ import (
 
 func TestFairShareMaxSlots(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 4, Label: ""},
+		{ID: "agent", Slots: 4},
 	}
 	groups := []*MockGroup{
 		{ID: "group1", MaxSlots: newMaxSlot(1), Weight: 1},
@@ -30,14 +30,14 @@ func TestFairShareMaxSlots(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareWeights(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 8, Label: ""},
+		{ID: "agent", Slots: 8},
 	}
 	groups := []*MockGroup{
 		{ID: "group1", MaxSlots: newMaxSlot(100), Weight: 10},
@@ -64,7 +64,7 @@ func TestFairShareWeights(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
@@ -88,14 +88,14 @@ func TestFairShareMultiSlot(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareMaxSlotsReleaseAllocatedTasks(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 4, Label: ""},
+		{ID: "agent", Slots: 4},
 	}
 	groups := []*MockGroup{
 		{ID: "group1", MaxSlots: newMaxSlot(2), Weight: 1},
@@ -112,15 +112,15 @@ func TestFairShareMaxSlotsReleaseAllocatedTasks(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareUnscheduled(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent1", Slots: 2, Label: ""},
-		{ID: "agent2", Slots: 2, Label: ""},
+		{ID: "agent1", Slots: 2},
+		{ID: "agent2", Slots: 2},
 	}
 	groups := []*MockGroup{
 		{ID: "group1", MaxSlots: newMaxSlot(2), Weight: 1},
@@ -136,14 +136,14 @@ func TestFairShareUnscheduled(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareMultiSlotDeadlock(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 2, Label: ""},
+		{ID: "agent", Slots: 2},
 	}
 	groups := []*MockGroup{
 		{ID: "group1"},
@@ -159,7 +159,7 @@ func TestFairShareMultiSlotDeadlock(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
@@ -168,7 +168,7 @@ func TestFairShareMultiSlotDeadlock(t *testing.T) {
 // tasks from being scheduled.
 func TestFairShareBigTask(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 4, Label: ""},
+		{ID: "agent", Slots: 4},
 	}
 	groups := []*MockGroup{
 		{ID: "group1"},
@@ -185,15 +185,15 @@ func TestFairShareBigTask(t *testing.T) {
 	expectedToAllocate := []*MockTask{tasks[1]}
 	expectedToRelease := []*MockTask{}
 
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareActiveTasks(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent1", Slots: 4, Label: ""},
-		{ID: "agent2", Slots: 3, Label: ""},
+		{ID: "agent1", Slots: 4},
+		{ID: "agent2", Slots: 3},
 	}
 	groups := []*MockGroup{
 		{ID: "group1"},
@@ -214,14 +214,14 @@ func TestFairShareActiveTasks(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareNilgroup(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 4, Label: ""},
+		{ID: "agent", Slots: 4},
 	}
 	tasks := []*MockTask{
 		{ID: "task1", SlotsNeeded: 4, AllocatedAgent: agents[0]},
@@ -233,39 +233,14 @@ func TestFairShareNilgroup(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, nil, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-}
-
-func TestFairShareLabels(t *testing.T) {
-	agents := []*MockAgent{
-		{ID: "agent1", Slots: 4, Label: "", MaxZeroSlotContainers: 100},
-		{ID: "agent2", Slots: 4, Label: "label1", MaxZeroSlotContainers: 100},
-		{ID: "agent3", Slots: 4, Label: "label2", MaxZeroSlotContainers: 100},
-	}
-	groups := []*MockGroup{
-		{ID: "group1", MaxSlots: newMaxSlot(1), Weight: 1},
-	}
-	tasks := []*MockTask{
-		{ID: "task1", SlotsNeeded: 4, Group: groups[0], Label: "label1"},
-		{ID: "task2", SlotsNeeded: 1, Group: groups[0], Label: "label2"},
-		{ID: "task3", SlotsNeeded: 0, Group: groups[0], Label: "label2"},
-	}
-
-	expectedToAllocate := []*MockTask{tasks[1], tasks[2]}
-	expectedToRelease := []*MockTask{}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairSharePreemptible(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 1, Label: ""},
+		{ID: "agent", Slots: 1},
 	}
 	tasks := []*MockTask{
 		{ID: "task1", SlotsNeeded: 1, AllocatedAgent: agents[0]},
@@ -277,14 +252,14 @@ func TestFairSharePreemptible(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, nil, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 1, Label: ""},
+		{ID: "agent", Slots: 1},
 	}
 	groups := []*MockGroup{
 		{ID: "group1", MaxSlots: newMaxSlot(2), Weight: 1},
@@ -304,7 +279,7 @@ func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
 	expectedToRelease := []*MockTask{tasks[0]}
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 
@@ -322,14 +297,14 @@ func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
 	expectedToRelease = []*MockTask{tasks[1]}
 	system = actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap = setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestFairShareHonorsNonPreemptibleNilGroup(t *testing.T) {
 	agents := []*MockAgent{
-		{ID: "agent", Slots: 1, Label: ""},
+		{ID: "agent", Slots: 1},
 	}
 	expectedToAllocate := []*MockTask{}
 
@@ -340,7 +315,7 @@ func TestFairShareHonorsNonPreemptibleNilGroup(t *testing.T) {
 	expectedToRelease := []*MockTask{tasks[0]}
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, nil, agents)
-	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 
@@ -352,7 +327,7 @@ func TestFairShareHonorsNonPreemptibleNilGroup(t *testing.T) {
 	expectedToRelease = []*MockTask{tasks[1]}
 	system = actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap = setupSchedulerStates(t, system, tasks, nil, agents)
-	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }

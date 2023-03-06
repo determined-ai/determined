@@ -77,7 +77,9 @@ class SimulateMaster:
     def _append_events_for_op(self, op: searcher.Operation) -> None:
         if type(op) == searcher.ValidateAfter:
             validation_completed = bindings.v1ValidationCompleted(
-                requestId=str(op.request_id), metric=self.metric, validateAfterLength=str(op.length)
+                requestId=str(op.request_id),
+                metric=self.metric,
+                validateAfterLength=str(op.length),
             )
             self.events_count += 1
             event = bindings.v1SearcherEvent(
@@ -108,7 +110,7 @@ class SimulateMaster:
             self.events_queue.append(event)
 
         if type(op) == searcher.Shutdown:
-            exp_state = bindings.determinedexperimentv1State.STATE_COMPLETED
+            exp_state = bindings.experimentv1State.STATE_COMPLETED
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, experimentInactive=exp_inactive)

@@ -134,8 +134,6 @@ def merge_resources(
       - a merged list of resources
       - a dict mapping conflicting files to ranks that would upload them
 
-    Note that we allow multiple ranks to upload directories, but only one rank may upload any
-    given file.
     """
     files: Set[str] = set()
     uploaders: Dict[str, List] = {}
@@ -202,6 +200,7 @@ class CheckpointContext:
         metadata: Optional[Dict[str, Any]] = None,
         *,
         shard: bool = False,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
         """
         ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
@@ -212,8 +211,11 @@ class CheckpointContext:
 
         When ``shard=True``, ``upload()`` becomes a synchronization point between workers, so all
         workers must call upload().  Those workers with nothing to upload may pass
-        ``ckpt_dir=None``.  The final checkpoint stored in checkpoint storage will contain a union
+        ``ckpt_dir=None``. The final checkpoint stored in checkpoint storage will contain a union
         of the contents from each ckpt_dir.
+
+        Each worker may optionally provide a ``selector`` that accepts a path
+        relative to the checkpoint root, and returns True for paths that should be uploaded.
 
         Returns:  The ``storage_id`` for this checkpoint.
 
@@ -241,7 +243,7 @@ class CheckpointContext:
                     "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
                     "nothing at all"
                 )
-            return self._upload_single(ckpt_dir, metadata)
+            return self._upload_single(ckpt_dir, metadata, selector=selector)
         else:
             storage_id = None
             if self._dist.rank == 0:
@@ -249,22 +251,42 @@ class CheckpointContext:
             storage_id = self._dist.broadcast(storage_id)
 
             assert storage_id
-            return self._upload_sharded(ckpt_dir, storage_id, metadata)
+            return self._upload_sharded(ckpt_dir, storage_id, metadata, selector=selector)
 
-    def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def _upload_single(
+        self,
+        ckpt_dir: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        selector: Optional[Callable[[str], bool]] = None,
+    ) -> str:
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
 
         # Add metadata pre-upload but without counting it among resources.
         self._write_metadata_file(ckpt_dir, metadata or {})
 
-        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+        paths = None
+        if selector is not None:
+            resources = {key: resources[key] for key in resources if selector(key)}
+            paths = set(resources)
+
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
         self._report_checkpoint(storage_id, resources, metadata)
         return storage_id
 
     def _upload_sharded(
-        self, ckpt_dir: Optional[str], storage_id: str, metadata: Optional[Dict[str, Any]] = None
+        self,
+        ckpt_dir: Optional[str],
+        storage_id: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
+
+        if selector is not None and ckpt_dir is None:
+            raise RuntimeError("ckpt_dir has to be provided if selector is not None")
+
         ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
         if not any(ckpt_dir_mask):
             raise RuntimeError(
@@ -272,48 +294,65 @@ class CheckpointContext:
                 "at least one rank must have a valid ckpt_dir"
             )
 
-        # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
-        # the lowest rank on each node will actually upload this directory.
+        # Deconflict locally-shared directories; if multiple ranks (with no selectors) upload
+        # /tmp/ckpt then only the lowest rank on each node will actually upload this directory.
+        # If multiple ranks (with selectors) want to upload selected files from /tmp/ckpt, then
+        # each rank will upload its selected files.
         if ckpt_dir is None:
             file_uid = None
         else:
             st = os.stat(ckpt_dir)
             file_uid = (st.st_dev, st.st_ino)
-        all_file_uids = self._dist.allgather(file_uid)
-        # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
-        want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
-        # Decide what we are going to upload.
+        all_file_uids = self._dist.allgather(file_uid)
+
+        # Rank uploads resources only if (1) it has a selector; or
+        # (2) it is the lowest local rank requested to upload this ckpt_dir.
+        want_upload = selector is not None or (
+            file_uid is not None and all_file_uids.index(file_uid) == self._dist.rank
+        )
+        # Collect and filter resources for all uploading ranks.
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
+            if selector is not None:
+                resources = {key: resources[key] for key in resources if selector(key)}
+
+            # Metadata.json is a special file that is created and uploaded separately.
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
-        # Merge resources, detect conflicts.
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
-        if conflicts:
-            self._try_resolving_conflicts(ckpt_dir, conflicts)
+        resources = self._resolve_conflicts(resources, conflicts, ckpt_dir)
 
-        # Merge and save merged metadata locally for each rank to avoid conflicts
-        # after pausing and unpausing experiment.
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
+        # Merge and upload metadata.
+        all_metadata = self._merge_metadata(metadata)
+        upload_mask = self._dist.allgather(want_upload)
+        metadata_upload_rank = upload_mask.index(True)
+        if self._dist.rank == metadata_upload_rank:
+            assert ckpt_dir
+            self._write_metadata_file(ckpt_dir, all_metadata)
+            # Include metadata in resources of the metadata uploading rank.
+            # Set value to 0 since it is not used anywhere.
+            resources["metadata.json"] = 0
 
         if want_upload:
             assert ckpt_dir
-            self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+            paths = set(resources.keys())
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.
         _ = self._dist.allgather(None)
+
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
-
         return storage_id
 
-    def _try_resolving_conflicts(
-        self, ckpt_dir: Optional[str], conflicts: Dict[str, List[int]]
-    ) -> None:
+    def _resolve_conflicts(
+        self, resources: Dict[str, int], conflicts: Dict[str, List[int]], ckpt_dir: Optional[str]
+    ) -> Dict[str, int]:
         all_conflicts = conflicts.copy()
 
         for fname in conflicts:
@@ -332,9 +371,18 @@ class CheckpointContext:
                 all_conflicts.pop(fname)
 
         if len(all_conflicts) > 0:
-            self._print_conflict_error(all_conflicts, "files")
+            self._raise_conflict_error(all_conflicts, "files")
 
-    def _print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
+        # There may still be multiple ranks having the same version of the file.
+        # To avoid uploading the same file multiple times, we use the smallest rank to upload.
+        filtered_resources = {
+            k: v
+            for k, v in resources.items()
+            if k not in conflicts or min(conflicts[k]) == self._dist.rank
+        }
+        return filtered_resources
+
+    def _raise_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
         if self._dist.rank > 0:
             raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts: {conflicts}")
@@ -477,12 +525,12 @@ class CheckpointContext:
             # Each rank saves files directly to ckpt_dir which means there is no conflict
             # detection on upload. Metadata still needs to be merged and saved,
             # and checkpoint has to be reported.
+            all_metadata = self._merge_metadata(metadata)
+
             if self._dist.rank == 0:
                 resources = self._storage_manager._list_directory(ckpt_dir)
 
-            all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
-
-            if self._dist.rank == 0:
+                self._write_metadata_file(os.fspath(path), all_metadata)
                 self._report_checkpoint(storage_id, resources, all_metadata)
 
             return
@@ -499,6 +547,7 @@ class CheckpointContext:
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
@@ -506,12 +555,11 @@ class CheckpointContext:
         all_resources = self._dist.allgather(resources)
 
         merged_resources, conflicts = merge_resources(all_resources)
-        if conflicts:
-            self._try_resolving_conflicts(ckpt_dir, conflicts)
+        self._resolve_conflicts(resources, conflicts, ckpt_dir)
 
-        # Merge and save merged metadata locally for each rank to avoid conflicts
-        # after pausing and unpausing experiment.
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
+        all_metadata = self._merge_metadata(metadata)
+        if self._dist.rank == 0:
+            self._write_metadata_file(ckpt_dir, all_metadata)
 
         if want_upload:
             # Use post_store_path to upload and clean up ckpt_dir after uploading.
@@ -525,19 +573,11 @@ class CheckpointContext:
 
         return storage_id
 
-    def _merge_and_save_metadata(
-        self,
-        ckpt_dir: Optional[str],
-        metadata: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
-        # Gather metadata across nodes.
+    def _merge_metadata(self, metadata: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         all_metadata = self._dist.allgather(metadata or {})
-        # Merge metadata and report errors when the same keys have different values.
         merged_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:
-            self._print_conflict_error(conflicts, "metadata")
-        if ckpt_dir is not None and self._dist.local_rank == 0:
-            self._write_metadata_file(ckpt_dir, merged_metadata)
+            self._raise_conflict_error(conflicts, "metadata")
         return merged_metadata
 
     @contextlib.contextmanager
@@ -655,7 +695,7 @@ class CheckpointContext:
             training=bindings.v1CheckpointTrainingMetadata(),
             uuid=storage_id,
             reportTime=datetime.now(timezone.utc).isoformat(),
-            state=bindings.determinedcheckpointv1State.STATE_COMPLETED,
+            state=bindings.checkpointv1State.STATE_COMPLETED,
         )
         bindings.post_ReportCheckpoint(self._session, body=ckpt)
         logger.info(f"Reported checkpoint to master {storage_id}")

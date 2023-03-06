@@ -1,10 +1,20 @@
 import abc
 import logging
 import pathlib
+import queue
+import threading
 import time
-from typing import Callable, List
+from dataclasses import dataclass
+from typing import Any, Callable, List
 
 from determined import tensorboard
+from determined.common import util
+
+
+@dataclass
+class PathUploadInfo:
+    path: pathlib.Path
+    mangled_relative_path: pathlib.Path
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):
@@ -23,10 +33,15 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self,
         base_path: pathlib.Path,
         sync_path: pathlib.Path,
+        async_upload: bool = True,
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
         self.last_sync = 0.0
+
+        self.upload_thread = None
+        if async_upload:
+            self.upload_thread = _TensorboardUploadThread(self._sync_impl)
 
     def list_tb_files(
         self,
@@ -63,16 +78,28 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         return sync_paths
 
     @abc.abstractmethod
+    def _sync_impl(self, path_info_list: List[PathUploadInfo]) -> None:
+        """
+        Save the object to the backing persistent storage.
+        """
+        pass
+
     def sync(
         self,
         selector: Callable[[pathlib.Path], bool] = lambda _: True,
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
-        """
-        Save the object to the backing persistent storage.
-        """
-        pass
+        paths = self.to_sync(selector)
+        path_list = []
+        for path in paths:
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            path_list.append(PathUploadInfo(path=path, mangled_relative_path=mangled_relative_path))
+        if self.upload_thread is not None and self.upload_thread.is_alive():
+            self.upload_thread.upload(path_list)
+        else:
+            util.preserve_random_state(self._sync_impl)(path_list)
 
     @abc.abstractmethod
     def delete(self) -> None:
@@ -80,6 +107,21 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         Delete all objects from the backing persistent storage.
         """
         pass
+
+    def start(self) -> None:
+        if self.upload_thread is not None:
+            self.upload_thread.start()
+
+    def close(self) -> None:
+        if self.upload_thread is not None and self.upload_thread.is_alive():
+            self.upload_thread.close()
+
+    def __enter__(self) -> "TensorboardManager":
+        self.start()
+        return self
+
+    def __exit__(self, exc_type: type, exc_val: Exception, exc_tb: Any) -> None:
+        self.close()
 
 
 def get_metric_writer() -> tensorboard.BatchMetricWriter:
@@ -95,3 +137,41 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
         writer = pytorch.TorchWriter()
 
     return tensorboard.BatchMetricWriter(writer)
+
+
+class _TensorboardUploadThread(threading.Thread):
+    def __init__(
+        self,
+        upload_function: Callable[[List[PathUploadInfo]], None],
+        work_queue_max_size: int = 50,
+    ) -> None:
+        self._upload_function = upload_function
+
+        self._work_queue: queue.Queue = queue.Queue(maxsize=work_queue_max_size)
+
+        super().__init__()
+
+    def run(self) -> None:
+        while True:
+            path_info_list = self._work_queue.get()
+
+            # None is the sentinel value
+            # to signal the thread to exit
+            if path_info_list is None:
+                return
+
+            # Try-catch is used to avoid exception from
+            # one failed sync attempt to cause the thread to exit.
+            try:
+                self._upload_function(path_info_list)
+            except Exception as e:
+                logging.warning(f"Sync of Tensorboard files failed with error: {e}")
+
+    def upload(self, path_info_list: List[PathUploadInfo]) -> None:
+        self._work_queue.put(path_info_list)
+
+    def close(self) -> None:
+        self._work_queue.put(None)
+        while self.is_alive():
+            logging.info("Waiting for Tensorboard files to finish uploading")
+            self.join(10)

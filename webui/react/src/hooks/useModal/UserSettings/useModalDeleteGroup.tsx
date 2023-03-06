@@ -1,10 +1,10 @@
-import { message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 export const API_SUCCESS_MESSAGE = 'Group deleted.';

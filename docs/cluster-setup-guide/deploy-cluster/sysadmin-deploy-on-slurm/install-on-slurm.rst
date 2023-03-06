@@ -53,7 +53,7 @@ fulfilled and configured, install and configure the Determined master:
 
 #. The launcher automatically adds a prototype ``resource_manager`` section for Slurm/PBS if not
    already present upon startup of the launcher service. Edit the provided ``resource_manager``
-   configuration section for your particular deployment. For RPM-based installations, the
+   configuration section for your particular deployment. For Linux package-based installations, the
    configuration file is typically the ``/etc/determined/master.yaml`` file.
 
    In this example, with Determined and the launcher colocated on a node named ``login``, the
@@ -109,7 +109,9 @@ fulfilled and configured, install and configure the Determined master:
    +----------------------------+----------------------------------------------------------------+
    | ``user_name`` and          | By default, the launcher runs from the root account. Create a  |
    | ``group_name``             | local account and group and update these values to enable      |
-   |                            | running from another account.                                  |
+   |                            | running from another account. This account must have access to |
+   |                            | the Slurm/PBS command line to discover partitions and          |
+   |                            | summarize cluster usage.                                       |
    +----------------------------+----------------------------------------------------------------+
    | ``path``                   | If any of the launcher dependencies are not on the default     |
    |                            | path, you can override the default by updating this value.     |
@@ -131,7 +133,7 @@ fulfilled and configured, install and configure the Determined master:
 
 #. Verify successful launcher startup using the ``systemctl status launcher`` command. If the
    launcher fails to start, check system log diagnostics, such as ``/var/log/messages`` or
-   ``journalctl --since=10m -u launcher``, make the needed changes to the
+   ``journalctl --since="10 minutes ago" -u launcher``, make the needed changes to the
    ``/etc/determined/master.yaml`` file, and restart the launcher.
 
    If the installer reported incorrect dependencies, verify that they have been resolved by changes
@@ -149,22 +151,29 @@ fulfilled and configured, install and configure the Determined master:
 
 #. Verify successful determined-master startup using the ``systemctl status determined-master``
    command. If the launcher fails to start, check system log diagnostics, such as
-   ``/var/log/messages`` or ``journalctl --since=10m -u determined-master``, make the needed changes
-   to the ``/etc/determined/master.yaml`` file, and restart the determined-master.
+   ``/var/log/messages`` or ``journalctl --since="10 minutes ago" -u determined-master``, make the
+   needed changes to the ``/etc/determined/master.yaml`` file, and restart the determined-master.
 
 #. If the compute nodes of your cluster do not have internet connectivity to download Docker images,
    see :ref:`slurm-image-config`.
 
+#. If internet connectivity requires use of a proxy, make sure the proxy variables are defined as
+   per :ref:`proxy-config-requirements`.
+
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
    cluster. If logged in with a Determined administrator account, the following example creates a
-   Determined user account that is linked to the current user's Linux account. For more details see
-   :ref:`run-as-user`.
+   Determined user account that is linked to the current user's Linux account.
 
    .. code:: bash
 
       det user create $USER
-      det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group employee $USER
+      det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group $(id -gn) $USER
       det user login $USER
+
+   .. note::
+
+      If an agent user has not been configured for a Determined username, jobs will run as user
+      root. For more details see :ref:`run-as-user`.
 
 #. Verify the configuration by sanity-checking your Determined configuration:
 

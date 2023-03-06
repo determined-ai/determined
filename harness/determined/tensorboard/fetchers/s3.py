@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List
 
 from .base import Fetcher
 
@@ -31,9 +31,11 @@ class S3Fetcher(Fetcher):
         self.storage_paths = storage_paths
         self._file_records = {}  # type: Dict[str, datetime.datetime]
 
-    def _find_keys(self, prefix: str) -> Generator[Tuple[str, datetime.datetime], None, None]:
-        logger.debug(f"Listing keys in bucket '{self.bucket_name}' with prefix '{prefix}'")
-        prefix = urllib.parse.urlparse(prefix).path.lstrip("/")
+    def _list(self, storage_path: str) -> Generator[str, None, None]:
+        logger.debug(
+            f"Listing keys in bucket: '{self.bucket_name}' with storage_path: '{storage_path}'"
+        )
+        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
 
         paginator = self.client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
@@ -41,34 +43,22 @@ class S3Fetcher(Fetcher):
         for page in page_iterator:
             page_count += 1
             for s3_obj in page.get("Contents", []):
-                yield (s3_obj["Key"], s3_obj["LastModified"])
+                filepath, mdatetime = s3_obj["Key"], s3_obj["LastModified"]
+                prev_mdatetime = self._file_records.get(filepath)
+                if prev_mdatetime is not None and prev_mdatetime >= mdatetime:
+                    continue
+                self._file_records[filepath] = mdatetime
+                yield filepath
         if page_count > 1:
             logger.info(f"Fetched {page_count} number of list_objects_v2 pages")
 
-    def fetch_new(self) -> int:
-        """Fetches changes files found in storage paths to local disk."""
-        new_files = []
+    def _fetch(self, filepath: str, new_file_callback: Callable) -> None:
+        local_path = os.path.join(self.local_dir, self.bucket_name, filepath)
+        dir_path = os.path.dirname(local_path)
+        os.makedirs(dir_path, exist_ok=True)
 
-        # Look at all files in our storage location.
-        for storage_path in self.storage_paths:
-            for filepath, mtime in self._find_keys(storage_path):
-                prev_mtime = self._file_records.get(filepath)
+        with open(local_path, "wb") as local_file:
+            self.client.download_fileobj(self.bucket_name, filepath, local_file)
 
-                if prev_mtime is not None and prev_mtime >= mtime:
-                    continue
-
-                new_files.append(filepath)
-                self._file_records[filepath] = mtime
-
-        # Download the new or updated files.
-        for filepath in new_files:
-            local_path = os.path.join(self.local_dir, self.bucket_name, filepath)
-            dir_path = os.path.dirname(local_path)
-            os.makedirs(dir_path, exist_ok=True)
-
-            with open(local_path, "wb") as local_file:
-                self.client.download_fileobj(self.bucket_name, filepath, local_file)
-
-            logger.debug(f"Downloaded file to local: {local_path}")
-
-        return len(new_files)
+        logger.debug(f"Downloaded s3 file to local: {local_path}")
+        new_file_callback()

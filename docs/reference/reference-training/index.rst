@@ -2,10 +2,15 @@
  Training Reference
 ####################
 
-This section includes reference documentation for the Determined training APIs:
+The Training Reference provides links to the reference documentation for the Determined training
+APIs and the experiment configuration file:
+
+***************
+ Training APIs
+***************
 
 +-------------------------------------------------+-----------------------------------------------+
-| Topic                                           | Documentation Content                         |
+| Title                                           | Description                                   |
 +=================================================+===============================================+
 | :doc:`training/api-core-reference`              | Core API reference documentation.             |
 +-------------------------------------------------+-----------------------------------------------+
@@ -20,10 +25,12 @@ This section includes reference documentation for the Determined training APIs:
 | :doc:`training/api-estimator-reference`         | Estimator API reference documentation.        |
 +-------------------------------------------------+-----------------------------------------------+
 
-Reference documentation for the experiment configuration file is also covered in this section:
+*******************************
+ Experiment Configuration File
+*******************************
 
 +------------------------------------+------------------------------------------------------------+
-| Topic                              | Documentation Content                                      |
+| Title                              | Description                                                |
 +====================================+============================================================+
 | :doc:`experiment-config-reference` | The experiment configuration reference describes available |
 |                                    | parameters for specifying experiment behavior.             |

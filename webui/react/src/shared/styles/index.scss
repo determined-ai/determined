@@ -11,6 +11,7 @@ body,
   font-family: var(--font-family);
   font-size: 16px;
   height: calc(var(--vh, 1vh) * 100);
+  line-height: 1.5715;
   width: 100vw;
 }
 h1 {
@@ -47,4 +48,11 @@ code.block {
   overflow-x: scroll;
   padding: 8px;
   white-space: pre;
+}
+.uplot canvas {
+  background-color: var(--theme-stage);
+}
+.u-wrap {
+  overflow-x: visible;
+  overflow-y: hidden;
 }

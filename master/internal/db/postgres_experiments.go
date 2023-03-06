@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/lttb"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -169,59 +169,6 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 		}
 	}
 
-	return training, validation, sEndTime, vEndTime, err
-}
-
-// ExpCompareMetricNames returns the set of training and validation metric names
-// that have been recorded for a list of trials.
-func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
-	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
-	vEndTime time.Time, err error,
-) {
-	type namesWrapper struct {
-		Name    string    `db:"name"`
-		EndTime time.Time `db:"end_time"`
-	}
-	var rows []namesWrapper
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
-  max(s.end_time) AS end_time
-FROM trials t
-JOIN steps s ON t.id=s.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND s.end_time > $2
-GROUP BY name`, &rows, trialIDs, sStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying training metric names fort rials")
-	}
-	for _, row := range rows {
-		training = append(training, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
-
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
-  max(v.end_time) AS end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND v.end_time > $2
-GROUP BY name`, &rows, trialIDs, vStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying validation metric names for trials")
-	}
-	for _, row := range rows {
-		validation = append(validation, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
 	return training, validation, sEndTime, vEndTime, err
 }
 
@@ -420,32 +367,6 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-// ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
-// that recorded the best values for the specified metric at any point during the trial.
-func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
-	smallerIsBetter bool,
-) (trials []int32, err error) {
-	order := desc
-	aggregate := max
-	if smallerIsBetter {
-		order = asc
-		aggregate = min
-	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id in (SELECT unnest($2::int [])::int)
-    AND v.state = 'COMPLETED'
-  GROUP BY t.id
-  ORDER BY best_metric %s
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentIDs, maxTrials)
-	return trials, err
-}
-
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
 // number of batches, using the specified metric as a tie breaker.
 func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
@@ -474,39 +395,86 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point, time.Time) {
+// MetricMeasurements represents a metric measured by all possible
+// independent variables.
+type MetricMeasurements struct {
+	AverageMetrics map[string][]lttb.Point
+	Batches        []lttb.Point
+	Time           []lttb.Point
+	MaxEndTime     time.Time
+}
+
+func timeToFloat(t time.Time) float64 {
+	// If time.Time is the empty value, UnixNano will return the farthest back
+	// timestamp a float can represent, which is some large negative value.
+	if t.IsZero() {
+		return 0
+	}
+	return float64(t.UnixNano()) / 1e9
+}
+
+func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
+	metricName string,
+) MetricMeasurements {
 	var maxEndTime time.Time
+	var avgMetrics map[string]float64
+	averageMetricsMap := make(map[string][]lttb.Point)
+	var metricMeasurements MetricMeasurements
+
+	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	for rows.Next() {
 		var batches uint
-		var value float64
 		var endTime time.Time
-		err := rows.Scan(&batches, &value, &endTime)
+		var metrics *string
+		err := rows.Scan(&batches, &endTime, &metrics)
 		if err != nil {
-			// Could be a bad metric name, sparse metric, nested type, etc.
 			continue
 		}
-		metricSeries = append(metricSeries, lttb.Point{X: float64(batches), Y: value})
-		if endTime.After(maxEndTime) {
-			maxEndTime = endTime
+		if metrics != nil {
+			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
+			if err != nil {
+				continue
+			}
+		}
+
+		value := avgMetrics[metricName]
+
+		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
+		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
+
+		for _, xAxisLabel := range xAxisMetricLabels {
+			// For now we will always only search for an "epoch" value but this will be updated in the future
+			// to accept or expect a dynamic list of poossible x-axis values.
+			epoch, ok := avgMetrics[xAxisLabel]
+			if ok {
+				metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
+			}
+			if endTime.After(maxEndTime) {
+				maxEndTime = endTime
+			}
 		}
 	}
-	return metricSeries, maxEndTime
+	averageMetricsMap["epoch"] = metricSeriesEpoch
+	metricMeasurements.AverageMetrics = averageMetricsMap
+	metricMeasurements.Batches = metricSeriesBatch
+	metricMeasurements.Time = metricSeriesTime
+	metricMeasurements.MaxEndTime = maxEndTime
+	return metricMeasurements
 }
 
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-	err error,
+	startBatches int, endBatches int, xAxisMetricLabels []string) (
+	metricMeasurements MetricMeasurements, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
   total_batches AS batches,
-  s.metrics->'avg_metrics'->$1 AS value,
-  s.end_time as end_time
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.id=$2
+  s.end_time as end_time,
+  s.metrics->>'avg_metrics' AS metrics
+FROM steps s
+WHERE s.trial_id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
   AND ($4 <= 0 OR total_batches <= $4)
@@ -514,27 +482,27 @@ WHERE t.id=$2
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		defer rows.Close()
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
+	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
 	defer rows.Close()
-	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
-	return metricSeries, maxEndTime, nil
+	return metricMeasurements, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-	err error,
+	startBatches int, endBatches int, xAxisMetricLabels []string) (
+	metricMeasurements MetricMeasurements, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
   v.total_batches AS batches,
-  (v.metrics->'validation_metrics'->>$1)::float8 AS value,
-  v.end_time as end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id=$2
+  v.end_time as end_time,
+  v.metrics->>'validation_metrics' AS metrics
+FROM validations v
+WHERE v.trial_id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
   AND ($4 <= 0 OR v.total_batches <= $4)
@@ -542,11 +510,12 @@ WHERE t.id=$2
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		defer rows.Close()
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
+	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
 	defer rows.Close()
-	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
-	return metricSeries, maxEndTime, nil
+	return metricMeasurements, nil
 }
 
 type hpImportanceDataWrapper struct {
@@ -743,14 +712,13 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 
 // ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
 func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
-	conf, err := db.ExperimentConfig(id)
+	exp, err := db.ExperimentByID(id)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get experiment config")
 	}
 
-	metricName := conf.Searcher().Metric()
 	metricOrdering := desc
-	if conf.Searcher().SmallerIsBetter() {
+	if exp.Config.Searcher.SmallerIsBetter {
 		metricOrdering = asc
 	}
 
@@ -762,7 +730,7 @@ WHERE v.trial_id = t.id
   AND t.experiment_id = $1
   AND v.state = 'COMPLETED'
 ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
-LIMIT 1`, metricOrdering), id, metricName).Scan(&metric); {
+LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
 	case errors.Is(err, sql.ErrNoRows):
 		return 0, ErrNotFound
 	case err != nil:
@@ -825,7 +793,9 @@ WHERE id = $1`, id)
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
+func (db *PgDB) AddExperiment(
+	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
@@ -838,17 +808,22 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		if err := addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
 		}
-		err := namedGet(tx, &experiment.ID, `
+		// HACK: insert literal "null" into the config, which we set in the next query.
+		if err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
  	project_id)
-	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
-					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes, :job_id, :project_id)
-	RETURNING id`, experiment)
-		if err != nil {
+	VALUES (:state, 'null'::::jsonb, :model_definition, :start_time, :end_time, :archived, :parent_id,
+					0, :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id,
+					:original_config, :notes, :job_id, :project_id)
+	RETURNING id`, experiment); err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
+		}
+		if _, err := tx.Exec(
+			`UPDATE experiments SET config = $1 WHERE id = $2`, activeConfig, experiment.ID,
+		); err != nil {
+			return errors.Wrapf(err, "error inserting experiment config")
 		}
 		return nil
 	})
@@ -865,6 +840,45 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentByTrialID looks up an experiment by a given trialID, returning an error
+// if none exists.
+func (db *PgDB) ExperimentByTrialID(trialID int) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
+       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
+       e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON (e.owner_id = u.id)
+WHERE t.id = $1`, &experiment, trialID); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentByTaskID looks up an experiment by a given taskID, returning an error
+// if none exists.
+func ExperimentByTaskID(
+	ctx context.Context, taskID model.TaskID,
+) (*model.Experiment, error) {
+	var experiment model.Experiment
+	if err := Bun().NewRaw(`
+SELECT e.id, e.state, e.config, e.model_definition AS model_definition_bytes, e.start_time,
+       e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
 		return nil, err
 	}
 
@@ -888,66 +902,6 @@ func (db *PgDB) LegacyExperimentConfigByID(
 	}
 
 	return config, nil
-}
-
-// ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
-// none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT e.id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-			 job_id, u.username as username, project_id
-FROM experiments e
-JOIN users u ON e.owner_id = u.id
-WHERE e.id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutConfigByTrialID looks up an experiment by a given trialID, returning an error if
-// none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
-       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-			 e.job_id, u.username as username, e.project_id
-FROM experiments e
-JOIN trials t ON e.id = t.experiment_id
-JOIN users u ON e.owner_id = u.id
-WHERE t.id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutConfigByTaskID looks up an experiment by a given taskID, returning an error
-// if none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func ExperimentWithoutConfigByTaskID(
-	ctx context.Context, taskID model.TaskID,
-) (*model.Experiment, error) {
-	var experiment model.Experiment
-	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time,
-       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id,
-       e.notes, e.job_id, u.username as username, e.project_id
-FROM experiments e
-JOIN trials t ON e.id = t.experiment_id
-JOIN users u ON e.owner_id = u.id
-WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
 }
 
 // ExperimentIDByTrialID looks up an experiment ID by a trial ID.
@@ -1084,12 +1038,13 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 }
 
 // SaveExperimentConfig saves the current experiment config to the database.
-func (db *PgDB) SaveExperimentConfig(experiment *model.Experiment) error {
+func (db *PgDB) SaveExperimentConfig(id int, config expconf.ExperimentConfig) error {
 	query := `
 UPDATE experiments
-SET config=:config
-WHERE id = :id`
-	return db.namedExecOne(query, experiment)
+SET config=$1
+WHERE id = $2`
+	_, err := db.sql.Exec(query, config, id)
+	return err
 }
 
 // SaveExperimentState saves the current experiment state to the database.
@@ -1226,8 +1181,8 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	return nil
 }
 
-// ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (expconf.ExperimentConfig, error) {
+// ActiveExperimentConfig returns the full config object for an experiment.
+func (db *PgDB) ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments

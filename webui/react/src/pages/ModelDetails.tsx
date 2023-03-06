@@ -1,12 +1,13 @@
-import { Input, Typography } from 'antd';
+import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -19,9 +20,9 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
@@ -38,9 +39,10 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import { useUsers } from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -56,6 +58,7 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
@@ -66,12 +69,19 @@ const ModelDetails: React.FC = () => {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const lodableWorkspaces = useWorkspaces();
+  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
+    (ws) => ws.id === model?.model.workspaceId,
+  );
+
+  const { canModifyModel, canModifyModelVersion } = usePermissions();
 
   const {
     settings,
     isLoading: isLoadingSettings,
     updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  } = useSettings<Settings>(settingsConfig(modelId));
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;
@@ -104,6 +114,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -168,14 +179,16 @@ const ModelDetails: React.FC = () => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels ?? []} />,
+            tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                saveModelVersionTags(record.model.name, record.version, tags),
+              )}
             />
           </div>
         </Typography.Text>
@@ -194,7 +207,7 @@ const ModelDetails: React.FC = () => {
       <Input
         className={css.descriptionRenderer}
         defaultValue={record.comment ?? ''}
-        disabled={record.model.archived}
+        disabled={record.model.archived || !canModifyModelVersion({ modelVersion: record })}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         title={record.model.archived ? 'Archived description' : 'Edit description'}
         onBlur={(e) => {
@@ -257,7 +270,14 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription, users]);
+  }, [
+    deleteModelVersion,
+    downloadModel,
+    saveModelVersionTags,
+    saveVersionDescription,
+    users,
+    canModifyModelVersion,
+  ]);
 
   const handleTableChange = useCallback(
     (
@@ -425,11 +445,10 @@ const ModelDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model) {
+  } else if (!model || lodableWorkspaces === NotLoaded) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
@@ -440,13 +459,15 @@ const ModelDetails: React.FC = () => {
       headerComponent={
         <ModelHeader
           model={model.model}
+          workspace={workspace}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
@@ -479,12 +500,12 @@ const ModelDetails: React.FC = () => {
           />
         )}
         <NotesCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           notes={model.model.notes ?? ''}
           onSave={saveNotes}
         />
         <MetadataCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />

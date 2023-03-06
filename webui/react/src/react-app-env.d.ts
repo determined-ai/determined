@@ -1,5 +1,5 @@
 /* eslint-disable */
-/// <reference types="react-scripts" />
+/// <reference types="vite/client" />
 /// <reference path="types.ts" />
 
 export {};
@@ -18,12 +18,12 @@ declare global {
   }
 }
 
-declare module global {
+declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      IS_DEV: boolean;
       VERSION: string;
       SERVER_ADDRESS?: string;
+      PUBLIC_URL: string;
     }
   }
 }

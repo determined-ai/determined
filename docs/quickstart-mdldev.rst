@@ -180,9 +180,6 @@ schedules to run.
 
       The ``-f`` option is the short form of ``--follow``.
 
-#. To view the uncategorized experiments, enter your username and password. If you deployed locally,
-   accept the default determined username with no password and click **Sign In**:
-
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
    ``http://localhost:8080/``. Accept the default ``determined`` username and click **Sign In**. No
@@ -346,8 +343,8 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 For detailed information on administrator tasks and how to install Determined on different
 platforms, see :doc:`/cluster-setup-guide/basic`.
 
-In the :doc:`example-solutions/examples` documentation, you can find machine learning models that
-have been ported to the Determined APIs. Each example includes a model definition and one or more
+Visit the :doc:`example-solutions/examples`, where you'll find machine learning models that have
+been converted to the Determined APIs. Each example includes a model definition and one or more
 experiment configuration files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning

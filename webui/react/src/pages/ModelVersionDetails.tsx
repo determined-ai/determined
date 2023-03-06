@@ -1,14 +1,16 @@
-import { Breadcrumb, Card, Tabs } from 'antd';
+import { Card } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
@@ -19,8 +21,10 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
 
 import css from './ModelVersionDetails.module.scss';
@@ -41,17 +45,23 @@ const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
   const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const workspaces = Loadable.getOrElse([], useWorkspaces());
+  const workspace = workspaces.find((ws) => ws.id === modelVersion?.model.workspaceId);
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
-  const modelId = modelID ?? '';
-  const versionNum = versionNUM ?? '';
+  const modelId = modelID ?? '0';
+  const versionNum = versionNUM ?? '0';
 
   const basePath = paths.modelVersionDetails(modelId, versionNum);
+
+  const { canModifyModelVersion } = usePermissions();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -78,6 +88,10 @@ const ModelVersionDetails: React.FC = () => {
     },
     [basePath, navigate],
   );
+
+  useEffect(() => {
+    ensureWorkspacesFetched();
+  }, [ensureWorkspacesFetched]);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_TAB_KEY);
@@ -209,7 +223,7 @@ const ModelVersionDetails: React.FC = () => {
     return [
       {
         content: hasExperiment ? (
-          <Breadcrumb className={css.link}>
+          <Breadcrumb>
             <Breadcrumb.Item>
               <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
                 Experiment {modelVersion.checkpoint.experimentId}
@@ -274,7 +288,7 @@ const ModelVersionDetails: React.FC = () => {
               <InfoBox rows={validationMetrics} separator />
             </Card>
             <MetadataCard
-              disabled={modelVersion.model.archived}
+              disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               metadata={modelVersion.metadata}
               onSave={saveMetadata}
             />
@@ -287,7 +301,7 @@ const ModelVersionDetails: React.FC = () => {
         children: (
           <div className={css.base}>
             <NotesCard
-              disabled={modelVersion.model.archived}
+              disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes}
             />
@@ -297,17 +311,23 @@ const ModelVersionDetails: React.FC = () => {
         label: 'Notes',
       },
     ];
-  }, [checkpointInfo, modelVersion, saveMetadata, saveNotes, validationMetrics]);
+  }, [
+    checkpointInfo,
+    modelVersion,
+    canModifyModelVersion,
+    saveMetadata,
+    saveNotes,
+    validationMetrics,
+  ]);
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (isNaN(parseInt(versionNum))) {
     return <Message title={`Invalid Version ID ${versionNum}`} />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!modelVersion) {
+  } else if (!modelVersion || !workspace) {
     return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
@@ -318,18 +338,18 @@ const ModelVersionDetails: React.FC = () => {
       headerComponent={
         <ModelVersionHeader
           modelVersion={modelVersion}
+          workspace={workspace}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onUpdateTags={saveVersionTags}
         />
       }
-      id="modelDetails">
-      <Tabs
-        activeKey={tabKey}
-        items={tabItems}
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
-        onChange={handleTabChange}
-      />
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
+      </div>
     </Page>
   );
 };

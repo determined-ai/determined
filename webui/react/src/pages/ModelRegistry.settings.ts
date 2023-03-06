@@ -13,11 +13,13 @@ export type ModelColumnName =
   | 'name'
   | 'tags'
   | 'numVersions'
-  | 'user';
+  | 'user'
+  | 'workspace';
 
 export const DEFAULT_COLUMNS: ModelColumnName[] = [
   'name',
   'description',
+  'workspace',
   'numVersions',
   'lastUpdatedTime',
   'tags',
@@ -34,9 +36,11 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelColumnName, number> = {
   numVersions: 74,
   tags: 106,
   user: 85,
+  workspace: 130,
 };
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelsRequestSortBy => {
-  return Object.values(V1GetModelsRequestSortBy).includes(String(sortKey));
+  const sortKeys = [...Object.values(V1GetModelsRequestSortBy), 'workspace'];
+  return sortKeys.includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
@@ -47,88 +51,98 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelsRequestSortBy;
   tags?: string[];
   users?: string[];
+  workspace?: number[];
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/models',
-  settings: {
-    archived: {
-      defaultValue: undefined,
-      storageKey: 'archived',
-      type: union([undefinedType, boolean]),
-    },
-    columns: {
-      defaultValue: DEFAULT_COLUMNS,
-      skipUrlEncoding: true,
-      storageKey: 'columns',
-      type: array(
-        union([
-          literal('action'),
-          literal('archived'),
-          literal('description'),
-          literal('lastUpdatedTime'),
-          literal('name'),
-          literal('tags'),
-          literal('numVersions'),
-          literal('user'),
+const config = (id: string): SettingsConfig<Settings> => {
+  const storagePath = `model-registry-${id}`;
+
+  return {
+    settings: {
+      archived: {
+        defaultValue: undefined,
+        storageKey: 'archived',
+        type: union([undefinedType, boolean]),
+      },
+      columns: {
+        defaultValue: DEFAULT_COLUMNS,
+        skipUrlEncoding: true,
+        storageKey: 'columns',
+        type: array(
+          union([
+            literal('action'),
+            literal('archived'),
+            literal('description'),
+            literal('lastUpdatedTime'),
+            literal('name'),
+            literal('tags'),
+            literal('numVersions'),
+            literal('user'),
+            literal('workspace'),
+          ]),
+        ),
+      },
+      columnWidths: {
+        defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+        skipUrlEncoding: true,
+        storageKey: 'columnWidths',
+        type: array(number),
+      },
+      description: {
+        defaultValue: undefined,
+        storageKey: 'description',
+        type: union([undefinedType, string]),
+      },
+      name: {
+        defaultValue: undefined,
+        storageKey: 'name',
+        type: union([undefinedType, string]),
+      },
+      sortDesc: {
+        defaultValue: true,
+        storageKey: 'sortDesc',
+        type: boolean,
+      },
+      sortKey: {
+        defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
+        storageKey: 'sortKey',
+        type: union([
+          literal(V1GetModelsRequestSortBy.CREATIONTIME),
+          literal(V1GetModelsRequestSortBy.UNSPECIFIED),
+          literal(V1GetModelsRequestSortBy.LASTUPDATEDTIME),
+          literal(V1GetModelsRequestSortBy.NAME),
+          literal(V1GetModelsRequestSortBy.NUMVERSIONS),
+          literal(V1GetModelsRequestSortBy.UNSPECIFIED),
         ]),
-      ),
+      },
+      tableLimit: {
+        defaultValue: MINIMUM_PAGE_SIZE,
+        storageKey: 'tableLimit',
+        type: number,
+      },
+      tableOffset: {
+        defaultValue: 0,
+        storageKey: 'tableOffset',
+        type: number,
+      },
+      tags: {
+        defaultValue: undefined,
+        storageKey: 'tags',
+        type: union([undefinedType, array(string)]),
+      },
+      users: {
+        defaultValue: undefined,
+        storageKey: 'users',
+        type: union([undefinedType, array(string)]),
+      },
+      workspace: {
+        defaultValue: [],
+        storageKey: 'workspace',
+        type: union([undefinedType, array(number)]),
+      },
     },
-    columnWidths: {
-      defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      skipUrlEncoding: true,
-      storageKey: 'columnWidths',
-      type: array(number),
-    },
-    description: {
-      defaultValue: undefined,
-      storageKey: 'description',
-      type: union([undefinedType, string]),
-    },
-    name: {
-      defaultValue: undefined,
-      storageKey: 'name',
-      type: union([undefinedType, string]),
-    },
-    sortDesc: {
-      defaultValue: true,
-      storageKey: 'sortDesc',
-      type: boolean,
-    },
-    sortKey: {
-      defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
-      storageKey: 'sortKey',
-      type: union([
-        literal(V1GetModelsRequestSortBy.CREATIONTIME),
-        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
-        literal(V1GetModelsRequestSortBy.LASTUPDATEDTIME),
-        literal(V1GetModelsRequestSortBy.NAME),
-        literal(V1GetModelsRequestSortBy.NUMVERSIONS),
-        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
-      ]),
-    },
-    tableLimit: {
-      defaultValue: MINIMUM_PAGE_SIZE,
-      storageKey: 'tableLimit',
-      type: number,
-    },
-    tableOffset: {
-      defaultValue: 0,
-      storageKey: 'tableOffset',
-      type: number,
-    },
-    tags: {
-      defaultValue: undefined,
-      storageKey: 'tags',
-      type: union([undefinedType, array(string)]),
-    },
-    users: {
-      defaultValue: undefined,
-      storageKey: 'users',
-      type: union([undefinedType, array(string)]),
-    },
-  },
-  storagePath: 'model-registry',
+    storagePath,
+  };
 };
 
 export default config;

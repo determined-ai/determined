@@ -68,11 +68,12 @@ class DistributedContext:
         self._is_chief = self.rank == 0
         self._is_local_chief = self.local_rank == 0
 
-        if self.cross_size > 1:
+        if self.local_size != self.size:
             if chief_ip is None:
                 raise AssertionError(
-                    f"rank_info has cross_size ({self.cross_size}) but chief_ip was not "
-                    "provided.  When cross_size > 1, the chief_ip parameter is required."
+                    f"This is a distributed job (local_size {self.local_size} != size {self.size}) "
+                    "but chief_ip was none provided.  When cross_size > 1, the chief_ip parameter "
+                    "is required."
                 )
             self._chief_ip = chief_ip
         else:
@@ -110,13 +111,13 @@ class DistributedContext:
             )
             self._worker_zmq.safe_start()
 
-        if self.local_size < 2:
-            # No local broadcasting necessary.
-            return
-
         # Local broadcast server.
         self.tempdir = None
-        if self._is_local_chief:
+        if self.local_size < 2:
+            # If local size is less than 2, we don't need a local chief but still need to
+            # participate in the global all gather, otherwise the other participants block forever.
+            _ = self.allgather(None)
+        elif self._is_local_chief:
             pub_url = None
             pull_url = None
             if hasattr(socket, "AF_UNIX") and not force_tcp:

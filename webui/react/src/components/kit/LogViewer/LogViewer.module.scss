@@ -1,0 +1,69 @@
+.base {
+  background-color: var(--theme-stage);
+  color: var(--theme-stage-on);
+  height: 100%;
+  position: relative;
+  width: 100%;
+
+  .container {
+    height: 100%;
+    position: relative;
+  }
+  .container > .logs {
+    font-family: var(--font-family-code);
+    font-size: 12px;
+    height: 100%;
+  }
+  .container > .empty {
+    height: 100%;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+  .buttons {
+    bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    right: 32px;
+  }
+  .buttons > button {
+    background-color: var(--theme-float);
+    border-color: var(--theme-float-border);
+    box-shadow: var(--theme-elevation);
+    color: var(--theme-float-on);
+    transition: opacity 0.2s linear;
+    user-select: none;
+  }
+  .buttons > button + button {
+    margin-top: 16px;
+  }
+  .scrollToOldest {
+    opacity: 0.2;
+    opacity: 1;
+    user-select: auto;
+  }
+  .scrollToOldest:focus {
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active-on);
+
+    &::after {
+      border-radius: var(--theme-border-radius);
+      box-shadow: var(--theme-outline);
+      content: '';
+      height: 100%;
+      position: absolute;
+      width: 100%;
+    }
+  }
+}
+.options {
+  padding: 8px 8px 0 0;
+
+  .transparentButton {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}

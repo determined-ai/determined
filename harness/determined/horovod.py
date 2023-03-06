@@ -85,11 +85,15 @@ class _PolyHorovod:
 hvd = _PolyHorovod()
 
 
-def create_hostlist_arg(num_proc_per_machine: int, ip_addresses: List[str]) -> str:
+def create_hostlist_arg(host_slot_counts: List[int], ip_addresses: List[str]) -> str:
+    assert len(host_slot_counts) == len(ip_addresses), "don't know slots for each node"
+
     trial_runner_hosts = ip_addresses.copy()
     # Horovodrun does not interpret "0.0.0.0" correctly.
     trial_runner_hosts[0] = "localhost"
-    return ",".join([f"{host}:{num_proc_per_machine}" for host in trial_runner_hosts])
+    return ",".join(
+        [f"{host}:{slots}" for host, slots in zip(trial_runner_hosts, host_slot_counts)]
+    )
 
 
 def create_performance_args(optimizations: Dict[str, Any]) -> List[str]:
@@ -124,7 +128,7 @@ def create_performance_args(optimizations: Dict[str, Any]) -> List[str]:
 
 
 def create_run_command(
-    num_proc_per_machine: int,
+    host_slot_counts: List[int],
     ip_addresses: List[str],
     inter_node_network_interface: Optional[str],
     optimizations: Dict[str, Any],
@@ -132,7 +136,7 @@ def create_run_command(
     optional_args: List[str],
 ) -> List[str]:
     num_machines = len(ip_addresses)
-    num_proc_total = num_proc_per_machine * num_machines
+    num_proc_total = sum(host_slot_counts)
 
     # Construct the horovodrun command.
     horovod_process_cmd = [
@@ -142,7 +146,7 @@ def create_run_command(
         "-p",
         str(constants.DTRAIN_SSH_PORT),
         "-H",
-        create_hostlist_arg(num_proc_per_machine, ip_addresses),
+        create_hostlist_arg(host_slot_counts, ip_addresses),
         "--start-timeout",
         str(constants.HOROVOD_STARTUP_TIMEOUT_SECONDS),
         "--gloo-timeout-seconds",

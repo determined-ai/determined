@@ -1,9 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Modal } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
+import Button from 'components/kit/Button';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -11,6 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
+import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
@@ -32,7 +35,11 @@ const TaskActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
-  const isKillable = isTaskKillable(task);
+  const { canModifyWorkspaceNSC } = usePermissions();
+  const isKillable = isTaskKillable(
+    task,
+    canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
+  );
 
   const handleMenuClick = (params: MenuInfo): void => {
     params.domEvent.stopPropagation();
@@ -42,7 +49,7 @@ const TaskActionDropdown: React.FC<Props> = ({
         action // Cases should match menu items.
       ) {
         case Action.Kill:
-          Modal.confirm({
+          modal.confirm({
             content: `
               Are you sure you want to kill
               this task?
@@ -95,9 +102,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <button onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
-        </button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
       </Dropdown>
     </div>
   );

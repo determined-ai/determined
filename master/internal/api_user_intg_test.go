@@ -35,32 +35,44 @@ import (
 )
 
 var (
-	pgDB      *db.PgDB
+	thePgDB   *db.PgDB
 	authzUser *mocks.UserAuthZ
 	system    *actor.System
 	mockRM    *actorrm.ResourceManager
 )
 
-func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
-	if pgDB == nil {
-		pgDB = db.MustResolveTestPostgres(t)
-		db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
-		require.NoError(t, etc.SetRootPath("../static/srv"))
+// pgdb can be nil to use the singleton database for testing.
+func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.Context) {
+	if pgdb == nil {
+		if thePgDB == nil {
+			thePgDB = db.MustResolveTestPostgres(t)
+			db.MustMigrateTestPostgres(t, thePgDB, "file://../static/migrations")
+			require.NoError(t, etc.SetRootPath("../static/srv"))
 
-		system = actor.NewSystem("mock")
-		ref, _ := system.ActorOf(sproto.K8sRMAddr, actor.ActorFunc(
-			func(context *actor.Context) error {
-				return nil
-			}))
-		mockRM = actorrm.Wrap(ref)
+			system = actor.NewSystem("mock")
+			ref, _ := system.ActorOf(sproto.K8sRMAddr, actor.ActorFunc(
+				func(context *actor.Context) error {
+					switch context.Message().(type) {
+					case sproto.DeleteJob:
+						context.Respond(sproto.EmptyDeleteJobResponse())
+					}
+					return nil
+				}))
+			mockRM = actorrm.Wrap(ref)
+		}
+		pgdb = thePgDB
+	} else {
+		// After a custom db is provided, we need to reinitialize the pgdb singleton.
+		thePgDB = nil
 	}
 
 	api := &apiServer{
 		m: &Master{
-			system:         system,
-			db:             pgDB,
-			taskLogBackend: pgDB,
-			rm:             mockRM,
+			trialLogBackend: pgdb,
+			system:          system,
+			db:              pgdb,
+			taskLogBackend:  pgdb,
+			rm:              mockRM,
 			config: &config.Config{
 				InternalConfig:        config.InternalConfig{},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
@@ -84,7 +96,7 @@ func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 }
 
 func TestPatchUser(t *testing.T) {
-	api, _, ctx := setupAPITest(t)
+	api, _, ctx := setupAPITest(t, nil)
 	userID, err := api.m.db.AddUser(&model.User{
 		Username: uuid.New().String(),
 		Active:   false,
@@ -176,8 +188,11 @@ func TestPatchUser(t *testing.T) {
 	require.Error(t, err)
 }
 
-func setupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
-	api, curUser, ctx := setupAPITest(t)
+// pgdb can be nil to use the singleton database for testing.
+func setupUserAuthzTest(
+	t *testing.T, pgdb *db.PgDB,
+) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
+	api, curUser, ctx := setupAPITest(t, pgdb)
 
 	if authzUser == nil {
 		authzUser = &mocks.UserAuthZ{}
@@ -190,7 +205,7 @@ func setupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User,
 }
 
 func TestAuthzGetUsers(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	// Error just passes error through.
 	expectedErr := fmt.Errorf("filterUseList")
@@ -216,7 +231,7 @@ func TestAuthzGetUsers(t *testing.T) {
 }
 
 func TestAuthzGetUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	// Error passes through when CanGetUser returns non nil error.
 	expectedErr := fmt.Errorf("canGetUserError")
@@ -241,7 +256,7 @@ func TestAuthzGetUser(t *testing.T) {
 }
 
 func TestAuthzPostUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", mock.Anything, curUser,
@@ -271,7 +286,7 @@ func TestAuthzPostUser(t *testing.T) {
 }
 
 func TestAuthzSetUserPassword(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	// If we can view the user we can get the error message from CanSetUsersPassword.
 	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersPassword")
@@ -303,7 +318,7 @@ func TestAuthzSetUserPassword(t *testing.T) {
 }
 
 func TestAuthzPatchUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	// If we can view the user we get the error from canSetUsersDisplayName.
 	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersDisplayName")
@@ -342,7 +357,7 @@ func TestAuthzPatchUser(t *testing.T) {
 }
 
 func TestAuthzGetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canGetUsersOwnSettings")
 	authzUsers.On("CanGetUsersOwnSettings", mock.Anything, curUser).
@@ -353,7 +368,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 }
 
 func TestAuthzPostUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", mock.Anything, curUser,
@@ -367,7 +382,7 @@ func TestAuthzPostUserSetting(t *testing.T) {
 }
 
 func TestAuthzResetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	expectedErr := status.Error(codes.PermissionDenied, "canResetUsersOwnSettings")
 	authzUsers.On("CanResetUsersOwnSettings", mock.Anything, curUser).
@@ -378,7 +393,7 @@ func TestAuthzResetUserSetting(t *testing.T) {
 }
 
 func TestPostUserActivity(t *testing.T) {
-	api, _, curUser, ctx := setupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,

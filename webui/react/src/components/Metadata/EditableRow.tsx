@@ -1,12 +1,18 @@
 import type { DropDownProps, MenuProps } from 'antd';
-import { Button, Dropdown, Form, Input } from 'antd';
-import { FormListFieldData } from 'antd/lib/form/FormList';
+import { Dropdown } from 'antd';
 import React, { useMemo } from 'react';
 
+import Button from 'components/kit/Button';
+import Form, { FormListFieldData } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 
 import css from './EditableRow.module.scss';
+
+export const METADATA_KEY_PLACEHOLDER = 'Enter metadata label';
+export const METADATA_VALUE_PLACEHOLDER = 'Enter metadata value';
+export const DELETE_ROW_LABEL = 'Delete Row';
 
 interface Props {
   field?: FormListFieldData;
@@ -24,7 +30,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
 
     const funcs = {
       [MenuKey.DeleteMetadataRow]: () => {
-        if (onDelete) onDelete();
+        onDelete?.();
       },
     };
 
@@ -33,7 +39,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
     };
 
     const menuItems: MenuProps['items'] = [
-      { danger: true, key: MenuKey.DeleteMetadataRow, label: 'Delete Row' },
+      { danger: true, key: MenuKey.DeleteMetadataRow, label: DELETE_ROW_LABEL },
     ];
 
     return { items: menuItems, onClick: onItemClick };
@@ -43,10 +49,10 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
     <Form.Item {...field} name={name} noStyle>
       <Input.Group className={css.row} compact>
         <Form.Item name={[name, 'key']} noStyle>
-          <Input placeholder="Enter metadata label" />
+          <Input placeholder={METADATA_KEY_PLACEHOLDER} />
         </Form.Item>
         <Form.Item name={[name, 'value']} noStyle>
-          <Input placeholder="Enter metadata value" />
+          <Input placeholder={METADATA_VALUE_PLACEHOLDER} />
         </Form.Item>
         {onDelete && (
           <Dropdown
@@ -54,9 +60,11 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
             getPopupContainer={(triggerNode) => triggerNode}
             menu={menu}
             trigger={['click']}>
-            <Button aria-label="action" type="text">
-              <Icon name="overflow-vertical" size="tiny" />
-            </Button>
+            <Button
+              aria-label="action"
+              ghost
+              icon={<Icon name="overflow-vertical" size="tiny" />}
+            />
           </Dropdown>
         )}
       </Input.Group>

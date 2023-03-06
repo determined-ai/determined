@@ -53,6 +53,7 @@ class DeepSpeedTrialController(det.TrialController):
                     "The on_checkpoint_end callback is deprecated, please use "
                     "on_checkpoint_write_end instead",
                     FutureWarning,
+                    stacklevel=2,
                 )
 
         if len(self.context.models) == 0:

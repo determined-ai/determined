@@ -87,7 +87,6 @@ message ResourceAllocationAggregatedEntry {
   // The seconds in the cluster used by experiments assigned to each resource
   // pool.
   map<string, float> by_resource_pool = 6;
-  // The seconds in the cluster used by experiments assigned to each agent
-  // label.
+  // This field has been deprecated and will be empty.
   map<string, float> by_agent_label = 7;
 }

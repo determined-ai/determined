@@ -39,8 +39,14 @@ class GCSStorageManager(storage.CloudStorageManager):
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         import google.cloud.storage
+        from google.auth import exceptions as auth_exceptions
 
-        self.client = google.cloud.storage.Client()
+        try:
+            self.client = google.cloud.storage.Client()
+
+        except auth_exceptions.GoogleAuthError as e:
+            raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
+
         self.bucket = self.client.bucket(bucket)
         self.prefix = normalize_prefix(prefix)
 
@@ -49,11 +55,14 @@ class GCSStorageManager(storage.CloudStorageManager):
 
     @no_type_check
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
         logging.info(f"Uploading to GCS: {prefix}")
-        for rel_path in sorted(self._list_directory(src)):
+        upload_paths = paths if paths is not None else self._list_directory(src)
+        for rel_path in sorted(upload_paths):
             blob_name = f"{prefix}/{rel_path}"
             blob = self.bucket.blob(blob_name)
 
@@ -85,32 +94,46 @@ class GCSStorageManager(storage.CloudStorageManager):
         dst: Union[str, os.PathLike],
         selector: Optional[storage.Selector] = None,
     ) -> None:
+        from google.api_core import exceptions as api_exceptions
+        from google.auth import exceptions as auth_exceptions
+
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
         logging.info(f"Downloading {path} from GCS")
         found = False
+
         # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
         # you include a `delimiter="/"` you will get only the file-like blobs inside of a
         # directory-like blob.
-        for blob in self.bucket.list_blobs(prefix=path):
-            found = True
-            relname = os.path.relpath(blob.name, path)
-            if selector is not None and not selector(relname):
-                continue
-            _dst = os.path.join(dst, relname)
-            dst_dir = os.path.dirname(_dst)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir, exist_ok=True)
+        try:
+            for blob in self.bucket.list_blobs(prefix=path):
+                found = True
+                relname = os.path.relpath(blob.name, path)
+                if blob.name.endswith("/"):
+                    relname = os.path.join(relname, "")
+                if selector is not None and not selector(relname):
+                    continue
+                _dst = os.path.join(dst, relname)
+                dst_dir = os.path.dirname(_dst)
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir, exist_ok=True)
 
-            # Only create empty directory for keys that end with "/".
-            # See `upload` method for more context.
-            if blob.name.endswith("/"):
-                os.makedirs(_dst, exist_ok=True)
-                continue
+                # Only create empty directory for keys that end with "/".
+                # See `upload` method for more context.
+                if blob.name.endswith("/"):
+                    os.makedirs(_dst, exist_ok=True)
+                    continue
 
-            logging.debug(f"Downloading from GCS: {blob.name}")
+                logging.debug(f"Downloading from GCS: {blob.name}")
 
-            blob.download_to_filename(_dst)
+                blob.download_to_filename(_dst)
+
+        except (
+            auth_exceptions.GoogleAuthError,
+            api_exceptions.Unauthorized,
+            api_exceptions.Forbidden,
+        ) as e:
+            raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
         if not found:
             raise errors.CheckpointNotFound(f"Did not find checkpoint {path} in GCS")

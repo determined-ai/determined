@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { relativeTimeRenderer } from 'components/Table/Table';

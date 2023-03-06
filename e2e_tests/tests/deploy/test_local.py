@@ -26,8 +26,10 @@ def det_deploy(subcommand: List) -> None:
     subprocess.run(command)
 
 
-def cluster_up(arguments: List) -> None:
+def cluster_up(arguments: List, delete_db: bool = True) -> None:
     command = ["cluster-up", "--no-gpu"]
+    if delete_db:
+        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
@@ -41,8 +43,10 @@ def cluster_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def master_up(arguments: List) -> None:
+def master_up(arguments: List, delete_db: bool = True) -> None:
     command = ["master-up"]
+    if delete_db:
+        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
@@ -165,13 +169,10 @@ def test_agent_config_path() -> None:
 
     # Validate CLI flags overwrite config file options.
     agent_name += "-2"
-    agent_up(
-        ["--agent-name", agent_name, "--agent-config-path", etc_path, "--agent-label", "cli-flag"]
-    )
+    agent_up(["--agent-name", agent_name, "--agent-config-path", etc_path])
     agent_list = json.loads(subprocess.check_output(["det", "a", "list", "--json"]).decode())
     agent_list = [el for el in agent_list if el["id"] == agent_name]
     assert len(agent_list) == 1
-    assert agent_list[0]["label"] == "cli-flag"
     agent_down(["--agent-name", agent_name])
 
     master_down([])
@@ -284,9 +285,10 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
     agents_are_up = [True] * num_agents
     for i in range(num_agents):
         agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
-    time.sleep(3)
+    time.sleep(10)
 
-    for _ in range(steps):
+    for step in range(steps):
+        print("================ step", step)
         for agent_id, agent_is_up in enumerate(agents_are_up):
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
@@ -305,6 +307,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 else:
                     agent_enable([f"agent-{agent_id}"])
                     agents_are_up[agent_id] = True
+        print("agents_are_up:", agents_are_up)
         time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
@@ -318,10 +321,25 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 ]
             ).decode()
         )
+        print("agent_list:", agent_list)
         assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
+            print("agent:", agent)
             agent_id = int(agent["id"].replace("agent-", ""))
-            assert agents_are_up[agent_id] == agent["enabled"]
+            if agents_are_up[agent_id] != agent["enabled"]:
+                p = subprocess.run(
+                    [
+                        "det",
+                        "deploy",
+                        "local",
+                        "logs",
+                    ]
+                )
+                print(p.stdout)
+                print(p.stderr)
+            assert (
+                agents_are_up[agent_id] == agent["enabled"]
+            ), f"agent is up: {agents_are_up[agent_id]}, agent status: {agent}"
 
         # Can we still schedule something?
         if any(agents_are_up):
@@ -330,9 +348,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 conf.fixtures_path("no_op"),
                 None,
             )
-            exp.wait_for_experiment_state(
-                experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
-            )
+            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
     for agent_id in range(num_agents):
         agent_down(["--agent-name", f"agent-{agent_id}"])

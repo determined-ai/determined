@@ -1,8 +1,21 @@
-.. _slurm-known-issues:
+.. _known-hpc-issues:
 
 ##############
  Known Issues
 ##############
+
+***********************************************
+ Agent-specific Scheduling Options are Ignored
+***********************************************
+
+When using the HPC Launcher, Determined delegates all job scheduling and prioritization to the HPC
+workload manager (either Slurm or PBS) and the following experiment configuration options are
+ignored.
+
+-  ``resources.agent_label``
+-  ``resources.max_slots``
+-  ``resources.priority``
+-  ``resources.weight``
 
 .. _slurm-and-docker-differences:
 
@@ -63,23 +76,16 @@ Some constraints are due to differences in behavior between Docker and Singulari
       :ref:`slurm-image-config` or configure ``SINGULARITY_CACHEDIR`` to point to a shared
       directory.
 
--  Some Docker features do not have an exact replacement in Singularity.
+-  Some Docker features do not have an exact replacement in Singularity, and therefore the
+   associated Determined features are not supported.
 
    +--------------------------------------+------------------------------------------------------+
    | Feature                              | Description                                          |
    +======================================+======================================================+
-   | ``resources.agent_label``            | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
    | ``resources.devices``                | By default ``/dev`` is mounted from the compute      |
    |                                      | host, so all devices are available. This can be      |
    |                                      | overridden by the ``singularity.conf`` ``mount dev`` |
    |                                      | option.                                              |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.max_slots``              | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.priority``               | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.weight``                 | Scheduling is managed by the Slurm workload manager. |
    +--------------------------------------+------------------------------------------------------+
    | ``resources.shm_size``               | By default ``/dev/shm`` is mounted from the compute  |
    |                                      | host. This can be overridden by the                  |
@@ -92,119 +98,224 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+**************************
+ Singularity Known Issues
+**************************
+
+Launching a PBS job with an experiment configuration that includes an embedded double quote
+character (") may cause the job to fail unless you have Singularity 3.10 or greater or Apptainer 1.1
+or greater. For example, the error might be the json.decoder.JSONDecodeError or the experiment log
+may contain ``source: /.inject-singularity-env.sh:224:1563: "export" must be followed by names or
+assignments`` and ``RuntimeError: missing environment keys [DET_MASTER, DET_CLUSTER_ID,
+DET_AGENT_ID, DET_SLOT_IDS, DET_TASK_ID, DET_ALLOCATION_ID, DET_SESSION_TOKEN, DET_TASK_TYPE], is
+this running on-cluster?``
+
+The version of Singularity is detected by the HPC Launcher invoking the singularity command and
+checking for the ``--no-eval`` option. If the singularity command is not on the path for the HPC
+launcher or is of an inconsistent version with the compute nodes, embedded double quote characters
+may still not work.
+
+************************
+ Apptainer Known Issues
+************************
+
+Starting with Apptainer version 1.1.0 some changes may trigger permission problems inside of
+Determined containers for shells, tensorboards, and experiments. For example, a tensorboard log may
+contain ``ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device``,
+or a shell may fail to function and the shell logs contain the message ``chown(/dev/pts/1, 63200, 5)
+failed: Invalid argument``, or an experiment may fail to launch due to ``FATAL: container creation
+failed: mount /var/tmp->/var/tmp error: while mounting /var/tmp: could not mount /var/tmp: operation
+not supported``. This likely indicates an installation or configuration error for unprivileged
+containers. Review the `Installing Apptainer
+<https://apptainer.org/docs/admin/main/installation.html>`_ documentation. These errors are
+sometimes resolved by additionally installing the ``apptainer-setuid`` package.
+
 *********************
  PodMan Known Issues
 *********************
 
-   -  Determined uses PodMan in `rootless mode
-      <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
-      configuration errors that may be encountered:
+-  Determined uses PodMan in `rootless mode
+   <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
+   configuration errors that may be encountered:
 
-      -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment
-         variable ``XDG_RUNTIME_DIR`` is referencing a directory that does not exist.
+   -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment
+      variable ``XDG_RUNTIME_DIR`` is referencing a directory that does not exist.
 
-      -  ``stat /run/user/NNN: permission denied`` may indicate a problem with default the
-         ``runroot`` configuration.
+   -  ``stat /run/user/NNN: permission denied`` may indicate a problem with default the ``runroot``
+      configuration.
 
-      -  ``Error: A network file system with user namespaces is not supported. Please use a
-         mount_program: backing file system is unsupported for this graph driver`` indicates that
-         the ``graphroot`` references a distributed file system.
+   -  ``Error: A network file system with user namespaces is not supported. Please use a
+      mount_program: backing file system is unsupported for this graph driver`` indicates that the
+      ``graphroot`` references a distributed file system.
 
-      Refer to :ref:`podman-config-requirements` for recommendations.
+   Refer to :ref:`podman-config-requirements` for recommendations.
 
-   -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
-      addresses of the login node and other compute nodes in the cluster. If jobs are unable to
-      resolve the address of the Determined master or other compute nodes in the job and you are
-      relying on ``/etc/hosts``, check the following:
+-  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
+   addresses of the login node and other compute nodes in the cluster. If jobs are unable to resolve
+   the address of the Determined master or other compute nodes in the job and you are relying on
+   ``/etc/hosts``, check the following:
 
-      #. Ensure that the ``/etc/hosts`` file is being mounted in the container by a :ref:`bind mount
-         <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration
-         as shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the
-         host into the running container by default. On the initial startup, the Determined Slurm
-         launcher automatically adds the ``task_container_defaults`` fragment below when adding the
-         ``resource_manager`` section. If, however, you have since changed the file you may need to
-         manually add the :ref:`bind mount <exp-bind-mounts>` to ensure that jobs can resolve all
-         host addresses in the cluster:
+   #. Ensure that the ``/etc/hosts`` file is being mounted in the container by a :ref:`bind mount
+      <exp-bind-mounts>` in the ``task_container_defaults`` section of your master configuration as
+      shown below. Unlike Singularity, PodMan V4.0+ no longer maps ``/etc/hosts`` from the host into
+      the running container by default. On the initial startup, the Determined Slurm launcher
+      automatically adds the ``task_container_defaults`` fragment below when adding the
+      ``resource_manager`` section. If, however, you have since changed the file you may need to
+      manually add the :ref:`bind mount <exp-bind-mounts>` to ensure that jobs can resolve all host
+      addresses in the cluster:
 
-         .. code:: yaml
+      .. code:: yaml
 
-            task_container_defaults:
-               bind_mounts:
-                  -  host_path: /etc/hosts
-                     container_path: /etc/hosts
+         task_container_defaults:
+            bind_mounts:
+               -  host_path: /etc/hosts
+                  container_path: /etc/hosts
 
-      #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
-         are consistently available in ``/etc/hosts`` on all nodes.
+   #. Ensure that the names and addresses of the login node, admin node, and all compute nodes are
+      consistently available in ``/etc/hosts`` on all nodes.
 
-   -  Podman containers only inherit environment variables that have been explicitly specified.
-      Determined adds Podman arguments to provide any Determined-configured environment variables,
-      and the launcher enables inheritance of the following variables: ``SLURM_*``,
-      ``CUDA_VISIBLE_DEVICES``, ``NVIDIA_VISIBLE_DEVICES``, ``ROCR_VISIBLE_DEVICES``,
-      ``HIP_VISIBLE_DEVICES``. You may enable the inheritance of additional variables from the host
-      environment by specifying the variable name with an empty value in the
-      ``environment_variables`` of your experiment configuration or :ref:`task container defaults
-      <master-task-container-defaults>`.
+-  Podman containers only inherit environment variables that have been explicitly specified.
+   Determined adds Podman arguments to provide any Determined-configured environment variables, and
+   the launcher enables inheritance of the following variables: ``SLURM_*``,
+   ``CUDA_VISIBLE_DEVICES``, ``NVIDIA_VISIBLE_DEVICES``, ``ROCR_VISIBLE_DEVICES``,
+   ``HIP_VISIBLE_DEVICES``. You may enable the inheritance of additional variables from the host
+   environment by specifying the variable name with an empty value in the ``environment_variables``
+   of your experiment configuration or :ref:`task container defaults
+   <master-task-container-defaults>`.
 
-         .. code:: yaml
+   .. code:: yaml
 
-            environment_variables:
-              - INHERITED_ENV_VAR=
+      environment_variables:
+         - INHERITED_ENV_VAR=
+
+-  Terminating a Determined AI job may cause the following conditions to occur:
+
+   -  Compute nodes go into drain state.
+
+   -  Processes inside the container continue to run.
+
+   -  An attempt to run another job results in ``Running a job gets the error level=error
+      msg="invalid internal status, try resetting the pause process with \"/usr/local/bin/podman
+      system migrate\": could not find any running process: no such process"``.
+
+   Podman creates several processes when running a container, such as podman, conmon, and catatonit.
+   When a user terminates a Determined AI job, Slurm will send a SIGTERM to the podman processes.
+   However, sometimes the container will continue running, even after the SIGTERM has been sent.
+
+   On Slurm versions prior to version 22, Slurm will place the node in the ``drain`` state,
+   requiring the use of the ``scontrol`` command to set the node back to the ``idle`` state. It may
+   also require ``podman system migrate`` to be run to clean up the running containers.
+
+   To ensure the container associated with the job is stopped when a Determined AI job is
+   terminated, create a Slurm task epilog script to stop the container.
+
+   Set the Task Epilog script in the ``slurm.conf`` file, as shown below, to point to a script that
+   resides in a shared filesystem accessible from all compute nodes.
+
+   .. code::
+
+      TaskEpilog=/path/to/task_epilog.sh
+
+   Set the contents of the Task Epilog script as shown below.
+
+   .. code:: bash
+
+      #!/usr/bin/env bash
+
+      slurm_job_name_suffix=$(echo ${SLURM_JOB_NAME} | sed 's/^\S\+-\([a-z0-9]\+-[a-z0-9]\+\)$/\1/')
+
+      if ps -fe | grep -E "[p]odman run .*-name ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}" > /dev/null
+      then
+         timeout -k 15s 15s bash -c "while ps -fe | grep -E \"[c]onmon .*-n ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}\" > /dev/null 2>&1; do sleep 1; done"
+
+         podman_container_stop_command="podman container stop --filter name='.+-${slurm_job_name_suffix}'"
+
+         echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+
+         eval ${podman_container_stop_command}
+      fi
+
+      exit 0
+
+   Restart the ``slurmd`` daemon on all compute nodes.
 
 *********************
  Enroot Known Issues
 *********************
 
-   -  Enroot uses ``XDG_RUNTIME_DIR`` which is not provided to the compute jobs by Slurm/PBS by
-      default. The error ``mkdir: cannot create directory ‘/run/enroot’: Permission denied``
-      indicates that the environment variable ``XDG_RUNTIME_DIR`` is not defined on the compute
-      nodes. See :ref:`podman-config-requirements` for recommendations.
+-  Enroot uses ``XDG_RUNTIME_DIR`` which is not provided to the compute jobs by Slurm/PBS by
+   default. The error ``mkdir: cannot create directory ‘/run/enroot’: Permission denied`` indicates
+   that the environment variable ``XDG_RUNTIME_DIR`` is not defined on the compute nodes. See
+   :ref:`podman-config-requirements` for recommendations.
 
-   -  Enroot requires manual download and creation of containers. The error ``[ERROR] No such file
-      or directory:
-      /home/users/test/.local/share/enroot/determinedai+environments+cuda-11.1-base-gpu-mpi-0.18.5``
-      indicates the user ``test`` has not created an Enroot container for docker image
-      ``determinedai/environments:cuda-11.1-base-gpu-mpi-0.18.5``. Check the available containers
-      using the ``enroot list`` command. See :ref:`enroot-config-requirements` for guidance on
-      creating Enroot containers.
+-  Enroot requires manual download and creation of containers. The error ``[ERROR] No such file or
+   directory:
+   /home/users/test/.local/share/enroot/determinedai+environments+cuda-11.1-base-gpu-mpi-0.18.5``
+   indicates the user ``test`` has not created an Enroot container for docker image
+   ``determinedai/environments:cuda-11.1-base-gpu-mpi-0.18.5``. Check the available containers using
+   the ``enroot list`` command. See :ref:`enroot-config-requirements` for guidance on creating
+   Enroot containers.
 
-   -  Enroot does not provide a mechanism for sharing containers. Each user must create any
-      containers needed by their Determined experiments prior to creating the experiment.
+-  Enroot does not provide a mechanism for sharing containers. Each user must create any containers
+   needed by their Determined experiments prior to creating the experiment.
+
+-  Some Docker features do not have an exact replacement in Enroot, and therefore the associated
+   Determined features are not supported.
+
+   +--------------------------------------+------------------------------------------------------+
+   | Feature                              | Description                                          |
+   +======================================+======================================================+
+   | ``resources.devices``                | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``resources.shm_size``               | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.server`` | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.email``  | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
+
+.. _slurm-known-issues:
 
 ********************
  Slurm Known Issues
 ********************
 
-   -  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
+-  Jobs may fail to submit with Slurm version 22.05.5 through at least 22.05.8 with the message
+   ``error: Unable to allocate resources: Requested node configuration is not available``.
 
-      Inspect the details of your queued jobs using the Slurm ``scontrol show jobs`` command. If the
-      Slurm job is ``PENDING`` review the ``Reason`` code provided. See `JOB REASON CODES
-      <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__. Some common reasons are:
+   Until `Slurm Bug 15857 <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__ has been resolved,
+   consider using Slurm 22.05.4.
 
-      -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
-         not requested more resources (gpus, cpus, nodes, memory) than are available in your
-         cluster.
+-  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
 
-      -  ``PartitionNodeLimit``: Ensure that the job is not requesting more nodes than ``MaxNodes``
-         of the partition.
+   Inspect the details of your queued jobs using the Slurm ``scontrol show jobs`` command. If the
+   Slurm job is ``PENDING`` review the ``Reason`` code provided. See `JOB REASON CODES
+   <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__. Some common reasons are:
 
-         Ensure that the ``MaxNodes`` setting for the partition is at least as high as the number of
-         GPUs in the partition. The ``MaxNodes`` value for a partition can be viewed in the
-         ``JOBS_SIZE`` column of the command:
+   -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
+      not requested more resources (gpus, cpus, nodes, memory) than are available in your cluster.
 
-            .. code:: bash
+   -  ``PartitionNodeLimit``: Ensure that the job is not requesting more nodes than ``MaxNodes`` of
+      the partition.
 
-               sinfo -O Partition,Size,Gres,OverSubscribe,NodeList,StateComplete,Reason
-               PARTITION  JOB_SIZE    GRES         OVERSUBSCRIBE NODELIST STATECOMPLETE REASON
-               defq*      1-infinite  gpu:tesla:4  NO            node002  idle          none
+      Ensure that the ``MaxNodes`` setting for the partition is at least as high as the number of
+      GPUs in the partition. The ``MaxNodes`` value for a partition can be viewed in the
+      ``JOBS_SIZE`` column of the command:
 
-         Until scheduled, the job's ``NumNodes`` is shown as the range 1-``slots_per_trial``. Ensure
-         the ``slots_per_trial`` shown is not larger than the value shown in the ``JOB_SIZE`` column
-         for the partition.
+      .. code:: bash
 
-         A second potential cause of ``PartitionNodeLimit`` is submitting CPU experiments (or when
-         the Determined cluster is configured with ``gres_supported: false`` ), without specifying
-         ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
-         ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
+         sinfo -O Partition,Size,Gres,OverSubscribe,NodeList,StateComplete,Reason
+         PARTITION  JOB_SIZE    GRES         OVERSUBSCRIBE NODELIST STATECOMPLETE REASON
+         defq*      1-infinite  gpu:tesla:4  NO            node002  idle          none
+
+      Until scheduled, the job's ``NumNodes`` is shown as the range 1-``slots_per_trial``. Ensure
+      the ``slots_per_trial`` shown is not larger than the value shown in the ``JOB_SIZE`` column
+      for the partition.
+
+      A second potential cause of ``PartitionNodeLimit`` is submitting CPU experiments (or when the
+      Determined cluster is configured with ``gres_supported: false`` ), without specifying
+      ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
+      ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
 
 ***********************
  AMD/ROCm Known Issues
@@ -265,18 +376,18 @@ the GPUs used for the experiment to be evenly distributed among the compute node
       the Determined master does not have an up-to-date authorization token to access the launcher.
       Restart the launcher, to ensure all configuration changes have been applied.
 
-         .. code:: bash
+      .. code:: bash
 
-            sudo systemctl restart launcher
-            sudo systemctl status launcher
+         sudo systemctl restart launcher
+         sudo systemctl status launcher
 
       Once it has successfully started, you should see the message ``INFO: launcher server ready
       ...``, then restart the Determined master so it will likewise load the latest configuration:
 
-         .. code:: bash
+      .. code:: bash
 
-            sudo systemctl restart determined-master
-            sudo systemctl status determined-master
+         sudo systemctl restart determined-master
+         sudo systemctl status determined-master
 
       Additional diagnostic messages may be present in the system log diagnostics, such as
       ``/var/log/messages`` or ``journalctl --since=yesterday -u launcher``, and ``journalctl

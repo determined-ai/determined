@@ -26,7 +26,9 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy
 
+set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
+set +x
 
 # Prepend each key in authorized_keys with a set of environment="KEY=VALUE"
 # options to inject the entire docker environment into the eventual ssh

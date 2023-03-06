@@ -91,7 +91,6 @@ type Allocation struct {
 	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,pk"`
 	TaskID       TaskID           `db:"task_id" bun:"task_id,notnull"`
 	Slots        int              `db:"slots" bun:"slots,notnull"`
-	AgentLabel   string           `db:"agent_label" bun:"agent_label,notnull"`
 	ResourcePool string           `db:"resource_pool" bun:"resource_pool,notnull"`
 	StartTime    *time.Time       `db:"start_time" bun:"start_time"`
 	EndTime      *time.Time       `db:"end_time" bun:"end_time"`
@@ -387,3 +386,9 @@ func (t TaskLogBatch) ForEach(f func(interface{}) error) error {
 	}
 	return nil
 }
+
+// AccessScopeID is an identifier for an access scope.
+type AccessScopeID int
+
+// AccessScopeSet is a set of access scopes.
+type AccessScopeSet = map[AccessScopeID]bool

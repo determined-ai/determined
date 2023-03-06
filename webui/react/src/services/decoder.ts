@@ -167,15 +167,15 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   });
 };
 
-const mapV1TaskState = (containerState: Sdk.Determinedtaskv1State): types.CommandState => {
+const mapV1TaskState = (containerState: Sdk.Taskv1State): types.CommandState => {
   switch (containerState) {
-    case Sdk.Determinedtaskv1State.PULLING:
+    case Sdk.Taskv1State.PULLING:
       return types.CommandState.Pulling;
-    case Sdk.Determinedtaskv1State.STARTING:
+    case Sdk.Taskv1State.STARTING:
       return types.CommandState.Starting;
-    case Sdk.Determinedtaskv1State.RUNNING:
+    case Sdk.Taskv1State.RUNNING:
       return types.CommandState.Running;
-    case Sdk.Determinedtaskv1State.TERMINATED:
+    case Sdk.Taskv1State.TERMINATED:
       return types.CommandState.Terminated;
     default:
       return types.CommandState.Queued;
@@ -195,6 +195,7 @@ const mapCommonV1Task = (
     state: mapV1TaskState(task.state),
     type,
     userId: task.userId ?? 0,
+    workspaceId: task.workspaceId,
   };
 };
 
@@ -265,6 +266,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     notes: model.notes,
     numVersions: model.numVersions,
     userId: model.userId ?? 0,
+    workspaceId: model.workspaceId,
   };
 };
 
@@ -375,59 +377,55 @@ export const ioToExperimentConfig = (
 };
 
 const checkpointStateMap = {
-  [Sdk.Determinedcheckpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
-  [Sdk.Determinedcheckpointv1State.ACTIVE]: types.CheckpointState.Active,
-  [Sdk.Determinedcheckpointv1State.COMPLETED]: types.CheckpointState.Completed,
-  [Sdk.Determinedcheckpointv1State.ERROR]: types.CheckpointState.Error,
-  [Sdk.Determinedcheckpointv1State.DELETED]: types.CheckpointState.Deleted,
+  [Sdk.Checkpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
+  [Sdk.Checkpointv1State.ACTIVE]: types.CheckpointState.Active,
+  [Sdk.Checkpointv1State.COMPLETED]: types.CheckpointState.Completed,
+  [Sdk.Checkpointv1State.ERROR]: types.CheckpointState.Error,
+  [Sdk.Checkpointv1State.DELETED]: types.CheckpointState.Deleted,
 };
 
 const experimentStateMap = {
-  [Sdk.Determinedexperimentv1State.UNSPECIFIED]: types.RunState.Unspecified,
-  [Sdk.Determinedexperimentv1State.ACTIVE]: types.RunState.Active,
-  [Sdk.Determinedexperimentv1State.PAUSED]: types.RunState.Paused,
-  [Sdk.Determinedexperimentv1State.STOPPINGCANCELED]: types.RunState.StoppingCanceled,
-  [Sdk.Determinedexperimentv1State.STOPPINGCOMPLETED]: types.RunState.StoppingCompleted,
-  [Sdk.Determinedexperimentv1State.STOPPINGERROR]: types.RunState.StoppingError,
-  [Sdk.Determinedexperimentv1State.CANCELED]: types.RunState.Canceled,
-  [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
-  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Error,
-  [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
-  [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
-  [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
-  [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
-  [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
-  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.Pulling,
-  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.Starting,
-  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
+  [Sdk.Experimentv1State.UNSPECIFIED]: types.RunState.Unspecified,
+  [Sdk.Experimentv1State.ACTIVE]: types.RunState.Active,
+  [Sdk.Experimentv1State.PAUSED]: types.RunState.Paused,
+  [Sdk.Experimentv1State.STOPPINGCANCELED]: types.RunState.StoppingCanceled,
+  [Sdk.Experimentv1State.STOPPINGCOMPLETED]: types.RunState.StoppingCompleted,
+  [Sdk.Experimentv1State.STOPPINGERROR]: types.RunState.StoppingError,
+  [Sdk.Experimentv1State.CANCELED]: types.RunState.Canceled,
+  [Sdk.Experimentv1State.COMPLETED]: types.RunState.Completed,
+  [Sdk.Experimentv1State.ERROR]: types.RunState.Error,
+  [Sdk.Experimentv1State.DELETED]: types.RunState.Deleted,
+  [Sdk.Experimentv1State.DELETING]: types.RunState.Deleting,
+  [Sdk.Experimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
+  [Sdk.Experimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
+  [Sdk.Experimentv1State.QUEUED]: types.RunState.Queued,
+  [Sdk.Experimentv1State.PULLING]: types.RunState.Pulling,
+  [Sdk.Experimentv1State.STARTING]: types.RunState.Starting,
+  [Sdk.Experimentv1State.RUNNING]: types.RunState.Running,
 };
 
-export const decodeCheckpointState = (
-  data: Sdk.Determinedcheckpointv1State,
-): types.CheckpointState => {
+export const decodeCheckpointState = (data: Sdk.Checkpointv1State): types.CheckpointState => {
   return checkpointStateMap[data];
 };
 
-export const encodeCheckpointState = (
-  state: types.CheckpointState,
-): Sdk.Determinedcheckpointv1State => {
+export const encodeCheckpointState = (state: types.CheckpointState): Sdk.Checkpointv1State => {
   const stateKey = Object.keys(checkpointStateMap).find(
-    (key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state,
+    (key) => checkpointStateMap[key as unknown as Sdk.Checkpointv1State] === state,
   );
-  if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
-  return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
+  if (stateKey) return stateKey as unknown as Sdk.Checkpointv1State;
+  return Sdk.Checkpointv1State.UNSPECIFIED;
 };
 
-export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
+export const decodeExperimentState = (data: Sdk.Experimentv1State): types.RunState => {
   return experimentStateMap[data];
 };
 
-export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexperimentv1State => {
+export const encodeExperimentState = (state: types.RunState): Sdk.Experimentv1State => {
   const stateKey = Object.keys(experimentStateMap).find(
-    (key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state,
+    (key) => experimentStateMap[key as unknown as Sdk.Experimentv1State] === state,
   );
-  if (stateKey) return stateKey as unknown as Sdk.Determinedexperimentv1State;
-  return Sdk.Determinedexperimentv1State.UNSPECIFIED;
+  if (stateKey) return stateKey as unknown as Sdk.Experimentv1State;
+  return Sdk.Experimentv1State.UNSPECIFIED;
 };
 
 export const mapV1GetExperimentDetailsResponse = ({
@@ -488,12 +486,16 @@ export const mapV1Experiment = (
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     projectId: data.projectId,
+    projectName: data.projectName,
     resourcePool: data.resourcePool || '',
+    searcherMetricValue: data.bestTrialSearcherMetric,
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
+    workspaceId: data.workspaceId,
+    workspaceName: data.workspaceName,
   };
 };
 
@@ -577,7 +579,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
     reportTime: data.reportTime?.toString(),
     resources: resources,
     searcherMetric: data.training.searcherMetric,
-    state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
+    state: decodeCheckpointState(data.state || Sdk.Checkpointv1State.UNSPECIFIED),
     taskId: data.taskId,
     totalBatches: data.metadata['steps_completed'] ?? 0,
     trainingMetrics: data.training.trainingMetrics && decodeMetrics(data.training.trainingMetrics),
@@ -616,17 +618,28 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
 };
 
 const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
-  return data.map((m) => ({
-    data: m.data.map((pt) => ({
-      batches: pt.batches,
-      value: pt.value,
-    })),
-    name: m.name,
-    type:
-      m.type === Sdk.V1MetricType.TRAINING
-        ? types.MetricType.Training
-        : types.MetricType.Validation,
-  }));
+  return data.map((m) => {
+    const metrics: types.MetricContainer = {
+      data: m.data.map((pt) => ({
+        batches: pt.batches,
+        value: pt.value,
+      })),
+      epochs: m.epochs?.map((pt) => ({
+        epoch: pt.epoch,
+        value: pt.value,
+      })),
+      name: m.name,
+      time: m.time?.map((pt) => ({
+        time: pt.time,
+        value: pt.value,
+      })),
+      type:
+        m.type === Sdk.V1MetricType.TRAINING
+          ? types.MetricType.Training
+          : types.MetricType.Validation,
+    };
+    return metrics;
+  });
 };
 
 export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
@@ -736,7 +749,7 @@ export const mapV1LogsResponse = <T extends Sdk.V1TrialLogsResponse | Sdk.V1Task
   };
 };
 
-export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {
+export const mapV1DeviceType = (data: Sdk.Devicev1Type): types.ResourceType => {
   return types.ResourceType[
     data.toString().toUpperCase().replace('TYPE_', '') as keyof typeof types.ResourceType
   ];
@@ -788,7 +801,7 @@ export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
 };
 
 export const decodeJobStates = (
-  states?: Sdk.Determinedjobv1State[],
+  states?: Sdk.Jobv1State[],
 ): Array<
   'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
 > => {

@@ -1,7 +1,9 @@
-import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { Alert, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -139,6 +141,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
       try {
         yaml.load(newConfigString);
         newModalState.configError = undefined;
+        newModalState.error = undefined;
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }
@@ -375,7 +378,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             <Icon name="fork" /> {titleLabel}
           </div>
         ),
-        width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
+        width: isAdvancedMode ? (isFork ? 760 : 1000) : 500,
       };
 
       return props;

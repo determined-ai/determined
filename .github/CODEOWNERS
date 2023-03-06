@@ -6,11 +6,6 @@
 # team-specific repo segments
 /.github  @determined-ai/infrastructure
 /docs     @determined-ai/docs
-
-### individuals
-# Ilia cares about agent RM.
-/master/internal/resourcemanagers/ @ioga
-/master/internal/sproto/ @ioga
-/proto/src/determined/ @ioga
-/agent/internal/ @ioga
-
+/master   @determined-ai/backend
+/agent    @determined-ai/backend
+/proto    @determined-ai/backend

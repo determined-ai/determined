@@ -59,15 +59,18 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:
-		return k8sV1.ResourceRequirements{
-			Limits: map[k8sV1.ResourceName]resource.Quantity{
-				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
-			},
-			Requests: map[k8sV1.ResourceName]resource.Quantity{
-				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
-			},
+		if p.slots > 0 {
+			return k8sV1.ResourceRequirements{
+				Limits: map[k8sV1.ResourceName]resource.Quantity{
+					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+				},
+				Requests: map[k8sV1.ResourceName]resource.Quantity{
+					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+				},
+			}
 		}
 	}
+	return k8sV1.ResourceRequirements{}
 }
 
 func (p *pod) configureEnvVars(
@@ -76,11 +79,11 @@ func (p *pod) configureEnvVars(
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
 	for _, envVar := range environment.EnvironmentVariables().For(deviceType) {
-		envVarSplit := strings.Split(envVar, "=")
-		if len(envVarSplit) != 2 {
-			return nil, errors.Errorf("unable to split envVar %s", envVar)
+		if key, val, found := strings.Cut(envVar, "="); found {
+			envVarsMap[key] = val
+		} else {
+			envVarsMap[envVar] = ""
 		}
-		envVarsMap[envVarSplit[0]] = envVarSplit[1]
 	}
 
 	var slotIds []string
@@ -140,7 +143,7 @@ func (p *pod) configureConfigMapSpec(
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      p.configMapName,
 			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.taskSpec.AllocationID},
+			Labels:    map[string]string{determinedLabel: p.submissionInfo.taskSpec.AllocationID},
 		},
 		BinaryData: configMapData,
 	}, nil
@@ -192,9 +195,9 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
 	volumes = append(volumes, hostVolumes...)
 
-	shmSize := p.taskSpec.ShmSize
+	shmSize := p.submissionInfo.taskSpec.ShmSize
 	if shmSize == 0 {
-		shmSize = p.taskSpec.TaskContainerDefaults.ShmSizeBytes
+		shmSize = p.submissionInfo.taskSpec.TaskContainerDefaults.ShmSizeBytes
 	}
 	shmVolumeMount, shmVolume := configureShmVolume(shmSize)
 	volumeMounts = append(volumeMounts, shmVolumeMount)
@@ -213,11 +216,11 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if p.taskSpec.Description == cmdTask {
+	if p.submissionInfo.taskSpec.Description == cmdTask {
 		return
 	}
 
-	if p.taskSpec.Description == gcTask {
+	if p.submissionInfo.taskSpec.Description == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -233,9 +236,10 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		p.configureCoscheduler(newPod, scheduler)
 	}
 
-	if newPod.Spec.PriorityClassName == "" && p.taskSpec.ResourcesConfig.Priority() != nil {
-		priority := int32(*p.taskSpec.ResourcesConfig.Priority())
-		name := fmt.Sprintf("%s-priorityclass", p.taskSpec.ContainerID)
+	if newPod.Spec.PriorityClassName == "" &&
+		p.submissionInfo.taskSpec.ResourcesConfig.Priority() != nil {
+		priority := int32(*p.submissionInfo.taskSpec.ResourcesConfig.Priority())
+		name := fmt.Sprintf("%s-priorityclass", p.submissionInfo.taskSpec.ContainerID)
 
 		err := p.createPriorityClass(name, priority)
 
@@ -252,7 +256,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	resources := p.taskSpec.ResourcesConfig
+	resources := p.submissionInfo.taskSpec.ResourcesConfig
 	minAvailable := 0
 
 	if p.slotType == device.CUDA && p.slots > 0 {
@@ -318,7 +322,7 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
 
 	p.modifyPodSpec(podSpec, scheduler)
 
@@ -355,7 +359,7 @@ func (p *pod) configurePodSpec(
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, sidecarContainers...)
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, determinedContainer)
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
-	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
+	podSpec.Spec.HostNetwork = p.submissionInfo.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
@@ -370,7 +374,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		deviceType = device.CPU
 	}
 
-	spec := p.taskSpec
+	spec := p.submissionInfo.taskSpec
 
 	runArchives, rootArchives := spec.Archives()
 
@@ -380,8 +384,15 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	env := spec.Environment
 
+	// This array containerPorts is set on the container spec.
+	// This field on the container spec is for "primarily informational"
+	// reasons and to allow us to read these ports in reattaching pods.
+	var containerPorts []k8sV1.ContainerPort
 	for _, port := range env.Ports() {
 		p.ports = append(p.ports, port)
+		containerPorts = append(containerPorts, k8sV1.ContainerPort{
+			ContainerPort: int32(port),
+		})
 	}
 
 	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
@@ -462,8 +473,8 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	)
 
 	var fluentSecCtx *k8sV1.SecurityContext
-	nonRootTask := p.taskSpec.AgentUserGroup != nil &&
-		p.taskSpec.AgentUserGroup.User != rootUserName
+	nonRootTask := p.submissionInfo.taskSpec.AgentUserGroup != nil &&
+		p.submissionInfo.taskSpec.AgentUserGroup.User != rootUserName
 	if p.fluentConfig.UID != 0 || p.fluentConfig.GID != 0 {
 		fluentSecCtx = configureSecurityContext(&model.AgentUserGroup{
 			UID: p.fluentConfig.UID,
@@ -493,6 +504,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      spec.WorkDir,
+		Ports:           containerPorts,
 	}
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)

@@ -1,10 +1,11 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -26,6 +27,7 @@ import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
+import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
@@ -38,21 +40,22 @@ type Params = {
 
 export const WorkspaceDetailsTab = {
   Members: 'members',
+  ModelRegistry: 'models',
   Projects: 'projects',
+  Tasks: 'tasks',
 } as const;
 
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();
-  const [workspace, setWorkspace] = useState<Workspace>();
+  const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
@@ -73,9 +76,9 @@ const WorkspaceDetails: React.FC = () => {
   );
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = workspaceID ?? '';
-  const id = parseInt(workspaceId);
+  const id = Number(workspaceId);
   const navigate = useNavigate();
-  const { canViewWorkspace } = usePermissions();
+  const { canViewWorkspace, canViewModelRegistry, loading: rbacLoading } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -102,9 +105,7 @@ const WorkspaceDetails: React.FC = () => {
   }, [canceler.signal]);
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async () => {
-    if (!rbacEnabled || mockWorkspaceMembers) {
-      return;
-    }
+    if (!rbacEnabled) return;
 
     const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
     const newGroupIds = new Set<number>();
@@ -118,7 +119,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
+  }, [id, nameFilter, rbacEnabled]);
 
   const fetchRolesAssignableToScope = useCallback(async (): Promise<void> => {
     // Only fetch roles if rbac is enabled.
@@ -134,26 +135,52 @@ const WorkspaceDetails: React.FC = () => {
         return response.roles || [];
       });
     } catch (e) {
-      handleError(e);
+      handleError(e, { silent: true });
     }
   }, [canceler.signal, id, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
+
+  // Users and Groups that are not already a part of the workspace
+  const addableGroups: V1Group[] = useMemo(
+    () =>
+      groups
+        ? groups
+            .map((groupDetails) => groupDetails.group)
+            .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+        : [],
+    [groups, groupsAssignedDirectlyIds],
+  );
+
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
+  const addableUsersAndGroups = useMemo(
+    () => [...addableGroups, ...addableUsers],
+    [addableGroups, addableUsers],
+  );
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
     }
 
-    return [
+    const items: TabsProps['items'] = [
       {
         children: <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />,
         key: WorkspaceDetailsTab.Projects,
         label: 'Projects',
       },
       {
+        children: <TaskList workspace={workspace} />,
+        key: WorkspaceDetailsTab.Tasks,
+        label: 'Tasks',
+      },
+    ];
+
+    if (rbacEnabled) {
+      items.push({
         children: (
           <WorkspaceMembers
+            addableUsersAndGroups={addableUsersAndGroups}
             assignments={workspaceAssignments}
             fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
             groupsAssignedDirectly={groupsAssignedDirectly}
@@ -166,19 +193,34 @@ const WorkspaceDetails: React.FC = () => {
         ),
         key: WorkspaceDetailsTab.Members,
         label: 'Members',
-      },
-    ];
+      });
+    }
+
+    if (canViewModelRegistry({ workspace })) {
+      items.push({
+        children: <ModelRegistry workspace={workspace} />,
+        key: WorkspaceDetailsTab.ModelRegistry,
+        label: 'Model Registry',
+      });
+    }
+
+    return items;
   }, [
+    addableUsersAndGroups,
+    canViewModelRegistry,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,
+    rbacEnabled,
     rolesAssignableToScope,
     usersAssignedDirectly,
     workspace,
     workspaceAssignments,
   ]);
 
+  const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });
   const fetchAll = useCallback(async () => {
+    if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
       fetchUsers(),
@@ -187,6 +229,7 @@ const WorkspaceDetails: React.FC = () => {
       fetchRolesAssignableToScope(),
     ]);
   }, [
+    canViewWorkspaceFlag,
     fetchWorkspace,
     fetchGroups,
     fetchUsers,
@@ -212,31 +255,19 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  // Users and Groups that are not already a part of the workspace
-  const addableGroups: V1Group[] = groups
-    ? groups
-        .map((groupDetails) => groupDetails.group)
-        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
-    : [];
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
-  const addableUsersAndGroups = [...addableGroups, ...addableUsers];
-
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!workspace) {
-    return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
-  }
-
-  if (!canViewWorkspace({ workspace: { id } })) {
+  } else if ((!rbacLoading && !canViewWorkspaceFlag) || (pageError && isNotFound(pageError))) {
     return <PageNotFound />;
+  } else if (!workspace) {
+    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   }
 
   return (
@@ -251,17 +282,14 @@ const WorkspaceDetails: React.FC = () => {
           workspace={workspace}
         />
       }
-      id="workspaceDetails">
-      {rbacEnabled ? (
-        <Tabs
-          activeKey={tabKey}
-          destroyInactiveTabPane
-          items={tabItems}
-          onChange={handleTabChange}
-        />
-      ) : (
-        <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-      )}
+      id="workspaceDetails"
+      key={workspaceId}>
+      <Pivot
+        activeKey={tabKey}
+        destroyInactiveTabPane
+        items={tabItems}
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

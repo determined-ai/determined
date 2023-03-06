@@ -17,28 +17,35 @@ import (
 )
 
 type priorityScheduler struct {
-	preemptionEnabled bool
+	preemptionEnabled      bool
+	allowHeterogeneousFits bool
 }
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	return &priorityScheduler{
-		preemptionEnabled: config.Priority.Preemption,
+		preemptionEnabled:      config.Priority.Preemption,
+		allowHeterogeneousFits: config.AllowHeterogeneousFits,
 	}
 }
 
-func (p *priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return p.prioritySchedule(rp.taskList, rp.groups, rp.queuePositions,
-		rp.agentStatesCache, rp.fittingMethod)
+func (p priorityScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	return p.prioritySchedule(
+		rp.taskList,
+		rp.groups,
+		rp.queuePositions,
+		rp.agentStatesCache,
+		rp.fittingMethod,
+	)
 }
 
-func (p *priorityScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
+func (p priorityScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
 	reqs := tasklist.SortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
 	jobQInfo := tasklist.ReduceToJobQInfo(reqs)
 	return jobQInfo
 }
 
-func (p *priorityScheduler) prioritySchedule(
+func (p priorityScheduler) prioritySchedule(
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
@@ -48,23 +55,20 @@ func (p *priorityScheduler) prioritySchedule(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
-	// Since labels are a hard scheduling constraint, process every label independently.
-	for label, agentsWithLabel := range splitAgentsByLabel(agents) {
-		// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
-		// zero-slot task can be started while a higher priority non-zero-slot task is pending, and
-		// vice versa.
-		for _, zeroSlots := range []bool{false, true} {
-			allocate, release := p.prioritySchedulerWithFilter(
-				taskList,
-				groups,
-				jobPositions,
-				agentsWithLabel,
-				fittingMethod,
-				taskFilter(label, zeroSlots),
-			)
-			toAllocate = append(toAllocate, allocate...)
-			toRelease = append(toRelease, release...)
-		}
+	// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
+	// zero-slot task can be started while a higher priority non-zero-slot task is pending, and
+	// vice versa.
+	for _, zeroSlots := range []bool{false, true} {
+		allocate, release := p.prioritySchedulerWithFilter(
+			taskList,
+			groups,
+			jobPositions,
+			agents,
+			fittingMethod,
+			taskFilter(zeroSlots),
+		)
+		toAllocate = append(toAllocate, allocate...)
+		toRelease = append(toRelease, release...)
 	}
 
 	return toAllocate, toRelease
@@ -74,7 +78,7 @@ func (p *priorityScheduler) prioritySchedule(
 // 1. Schedule pending tasks without preemption.
 // 2. Search if preempting any lower-priority tasks can make space.
 // 3. Back-fill lower-priority pending tasks if there are no tasks to preempt.
-func (p *priorityScheduler) prioritySchedulerWithFilter(
+func (p priorityScheduler) prioritySchedulerWithFilter(
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
@@ -106,8 +110,11 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 		log.Debugf("processing priority %d with %d pending tasks (backfilling: %v)",
 			priority, len(allocationRequests), backfilling)
 
-		successfulAllocations, unSuccessfulAllocations := trySchedulingPendingTasksInPriority(
-			allocationRequests, localAgentsState, fittingMethod)
+		successfulAllocations, unSuccessfulAllocations := p.trySchedulingPendingTasksInPriority(
+			allocationRequests,
+			localAgentsState,
+			fittingMethod,
+		)
 
 		// Only start tasks if there are no tasks of higher priorities to preempt.
 		if len(toRelease) == 0 {
@@ -137,7 +144,12 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 		if p.preemptionEnabled {
 			for _, prioritizedAllocation := range unSuccessfulAllocations {
 				// Check if we still need to preempt tasks to schedule this task.
-				if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(
+				if fits := findFits(
+					prioritizedAllocation,
+					localAgentsState,
+					fittingMethod,
+					p.allowHeterogeneousFits,
+				); len(
 					fits,
 				) > 0 {
 					log.Debugf(
@@ -147,7 +159,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 					continue
 				}
 
-				taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
+				taskPlaced, updatedLocalAgentState, preemptedTasks := p.trySchedulingTaskViaPreemption(
 					taskList,
 					prioritizedAllocation,
 					priority,
@@ -180,7 +192,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 
 // trySchedulingTaskViaPreemption checks whether preempting lower priority tasks
 // would allow this task to be scheduled.
-func trySchedulingTaskViaPreemption(
+func (p priorityScheduler) trySchedulingTaskViaPreemption(
 	taskList *tasklist.TaskList,
 	allocationRequest *sproto.AllocateRequest,
 	allocationPriority int,
@@ -216,7 +228,12 @@ func trySchedulingTaskViaPreemption(
 			removeTaskFromAgents(localAgentsState, resourcesAllocated)
 			preemptedTasks[preemptionCandidate.AllocationRef] = true
 
-			if fits := findFits(allocationRequest, localAgentsState, fittingMethod); len(fits) > 0 {
+			if fits := findFits(
+				allocationRequest,
+				localAgentsState,
+				fittingMethod,
+				p.allowHeterogeneousFits,
+			); len(fits) > 0 {
 				addTaskToAgents(fits)
 				return true, localAgentsState, preemptedTasks
 			}
@@ -229,7 +246,7 @@ func trySchedulingTaskViaPreemption(
 // trySchedulingPendingTasksInPriority tries to schedule all the tasks in the
 // current priority. Note tasks are scheduled based on the order in which they
 // are listed.
-func trySchedulingPendingTasksInPriority(
+func (p priorityScheduler) trySchedulingPendingTasksInPriority(
 	allocationRequests []*sproto.AllocateRequest,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
@@ -238,7 +255,7 @@ func trySchedulingPendingTasksInPriority(
 	unSuccessfulAllocations := make([]*sproto.AllocateRequest, 0)
 
 	for _, allocationRequest := range allocationRequests {
-		fits := findFits(allocationRequest, agents, fittingMethod)
+		fits := findFits(allocationRequest, agents, fittingMethod, p.allowHeterogeneousFits)
 		if len(fits) == 0 {
 			unSuccessfulAllocations = append(unSuccessfulAllocations, allocationRequest)
 			continue
@@ -335,21 +352,8 @@ func getOrderedPriorities(allocationsByPriority map[int][]*sproto.AllocateReques
 	return keys
 }
 
-func splitAgentsByLabel(
-	agents map[*actor.Ref]*agentState,
-) map[string]map[*actor.Ref]*agentState {
-	agentsSplitByLabel := make(map[string]map[*actor.Ref]*agentState, len(agents))
-	for agentRef, state := range agents {
-		if _, ok := agentsSplitByLabel[state.Label]; !ok {
-			agentsSplitByLabel[state.Label] = make(map[*actor.Ref]*agentState)
-		}
-		agentsSplitByLabel[state.Label][agentRef] = state
-	}
-	return agentsSplitByLabel
-}
-
-func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool {
+func taskFilter(zeroSlots bool) func(*sproto.AllocateRequest) bool {
 	return func(request *sproto.AllocateRequest) bool {
-		return request.AgentLabel == label && (request.SlotsNeeded == 0) == zeroSlots
+		return (request.SlotsNeeded == 0) == zeroSlots
 	}
 }

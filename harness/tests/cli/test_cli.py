@@ -41,6 +41,24 @@ def test_parse_config() -> None:
     }
 
 
+# mock_experiment was derived from a real v1Experiment.to_json(), with none of the optional fields.
+mock_experiment = {
+    "archived": False,
+    "config": {},
+    "id": 1,
+    "jobId": "c659255d-7f8c-408e-aad6-08bee6915b08",
+    "name": "mock-experiment",
+    "numTrials": 1,
+    "originalConfig": "",
+    "projectId": 1,
+    "projectOwnerId": 1,
+    "searcherType": "single",
+    "startTime": "2022-12-07T21:27:21.985656Z",
+    "state": "STATE_ACTIVE",
+    "username": "determined",
+}
+
+
 def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
@@ -54,10 +72,14 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
     )
 
     requests_mock.post(
-        "/experiments",
-        status_code=requests.codes.created,
+        "/api/v1/experiments",
+        status_code=requests.codes.ok,
         headers={"Location": "/experiments/1"},
-        json={"experiment": {}},
+        json={
+            "experiment": mock_experiment,
+            "config": mock_experiment["config"],
+            "jobSummary": None,
+        },
     )
 
     tempfile.mkstemp(dir=str(tmp_path))

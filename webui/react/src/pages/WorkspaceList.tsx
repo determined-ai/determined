@@ -1,11 +1,14 @@
-import { Button, Select, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
+import Empty from 'components/kit/Empty';
+import Select, { Option } from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -17,14 +20,12 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -32,7 +33,6 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -45,8 +45,6 @@ import settingsConfig, {
 } from './WorkspaceList.settings';
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
-
-const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.match(useUsers(), {
@@ -275,7 +273,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
+          <Card.Group size="medium">
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}
@@ -283,7 +281,7 @@ const WorkspaceList: React.FC = () => {
                 workspace={workspace}
               />
             ))}
-          </Grid>
+          </Card.Group>
         );
       case GridListView.List:
         return (
@@ -338,39 +336,23 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button
-          className={css.disableOverride}
-          disabled={!canCreateWorkspace}
-          title={canCreateWorkspace ? undefined : 'User lacks permission to create workspace'}
-          onClick={handleWorkspaceCreateClick}>
+        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
           New Workspace
         </Button>
       }
       title="Workspaces">
       <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={160}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
@@ -378,15 +360,11 @@ const WorkspaceList: React.FC = () => {
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="workspaces" size="mega" />
-            </div>
-            <h4>No Workspaces</h4>
-            <p className={css.description}>
-              Create a workspace to keep track of related projects and experiments.
-            </p>
-          </div>
+          <Empty
+            description="Create a workspace to keep track of related projects and experiments."
+            icon="workspaces"
+            title="No Workspaces"
+          />
         ) : (
           <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
         )}

@@ -197,12 +197,12 @@ export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
   id: string;
-  kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
   registeredTime: string;
   resourcePool: string;
   serviceAddress?: string;
   state: CommandState;
+  type: CommandType;
   user: User;
 }
 
@@ -319,6 +319,7 @@ export const ExperimentAction = {
   ContinueTrial: 'Continue Trial',
   Delete: 'Delete',
   DownloadCode: 'Download Experiment Code',
+  Edit: 'Edit',
   Fork: 'Fork',
   HyperparameterSearch: 'Hyperparameter Search',
   Kill: 'Kill',
@@ -429,14 +430,6 @@ export const TrialWorkloadFilter = {
 
 export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
 
-// This is to support the steps table in trial details and shouldn't be used
-// elsewhere so we can remove it with a redesign.
-export interface Step extends WorkloadGroup, StartEndTimes {
-  batchNum: number;
-  key: string;
-  training: MetricsWorkload;
-}
-
 type MetricStruct = Record<string, number>;
 export interface Metrics extends Api.V1Metrics {
   // these two fields are present in the protos
@@ -518,9 +511,21 @@ export interface MetricDatapoint {
   value: number;
 }
 
+export interface MetricDatapointTime {
+  time: Date;
+  value: number;
+}
+
+export interface MetricDatapointEpoch {
+  epoch: number;
+  value: number;
+}
+
 export interface MetricContainer {
   data: MetricDatapoint[];
+  epochs?: MetricDatapointEpoch[];
   name: string;
+  time?: MetricDatapointTime[];
   type: MetricType;
 }
 
@@ -547,12 +552,16 @@ export interface ExperimentItem {
   numTrials: number;
   progress?: number;
   projectId: number;
+  projectName?: string;
   resourcePool: string;
+  searcherMetricValue?: number;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
+  workspaceId?: number;
+  workspaceName?: string;
 }
 
 export interface ProjectExperiment extends ExperimentItem {
@@ -573,14 +582,6 @@ export interface ExperimentBase extends ProjectExperiment {
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   originalConfig: string;
-}
-
-// TODO we should be able to remove ExperimentOld but leaving this off.
-export interface ExperimentOld extends ExperimentItem {
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
-  url: string;
 }
 
 interface Allocation {
@@ -613,6 +614,7 @@ export interface ModelItem {
   notes?: string;
   numVersions: number;
   userId: number;
+  workspaceId: number;
 }
 
 export interface ModelVersion {
@@ -675,6 +677,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
+  workspaceId: number;
 }
 
 export type RecentEvent = {
@@ -724,6 +727,7 @@ export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   states?: string[];
   types?: T[];
   users?: string[];
+  workspaces?: string[];
 }
 
 export const LogLevel = {
@@ -782,10 +786,10 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 export interface Job extends Api.V1Job {
   summary: Api.V1JobSummary;
 }
-export const JobType = Api.Determinedjobv1Type;
-export type JobType = Api.Determinedjobv1Type;
-export const JobState = Api.Determinedjobv1State;
-export type JobState = Api.Determinedjobv1State;
+export const JobType = Api.Jobv1Type;
+export type JobType = Api.Jobv1Type;
+export const JobState = Api.Jobv1State;
+export type JobState = Api.Jobv1State;
 export type JobSummary = Api.V1JobSummary;
 export type RPStats = Api.V1RPQueueStat;
 

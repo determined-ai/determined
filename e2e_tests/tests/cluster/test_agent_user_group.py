@@ -5,7 +5,8 @@ from time import sleep
 import pytest
 
 from determined.common.api import Session, bindings, errors
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -41,7 +42,7 @@ def _check_test_experiment(project_id: int) -> None:
     )
     exp.wait_for_experiment_state(
         test_exp_id,
-        determinedexperimentv1State.STATE_COMPLETED,
+        experimentv1State.STATE_COMPLETED,
     )
 
     trials = exp.experiment_trials(test_exp_id)
@@ -66,7 +67,7 @@ def _check_test_experiment(project_id: int) -> None:
 
 @pytest.mark.e2e_cpu
 def test_workspace_post_gid() -> None:
-    sess = exp.determined_test_session(admin=True)
+    sess = api_utils.determined_test_session(admin=True)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(
@@ -96,7 +97,7 @@ def test_workspace_post_gid() -> None:
 
 @pytest.mark.e2e_cpu
 def test_workspace_patch_gid() -> None:
-    sess = exp.determined_test_session(admin=True)
+    sess = api_utils.determined_test_session(admin=True)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(
@@ -136,7 +137,7 @@ def test_workspace_patch_gid() -> None:
 def test_workspace_partial_patch() -> None:
     # TODO(ilia): Implement better partial patch with fieldmasks.
     # This may need a changes to the way python bindings generate json payloads.
-    sess = exp.determined_test_session(admin=True)
+    sess = api_utils.determined_test_session(admin=True)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(

@@ -39,12 +39,12 @@ BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 JOB_SUFFIXES = [
     "tf1-cpu",
     "tf2-cpu",
-    "tf24-cpu",
     "tf27-cpu",
+    "pt-cpu",
     "tf1-gpu",
     "tf2-gpu",
-    "tf24-gpu",
     "tf27-gpu",
+    "pt-gpu",
 ]
 
 JOB_SUFFIXES_WITHOUT_MPI = [
@@ -128,7 +128,9 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
     if found_expected:
         print(f"Found {found_expected} jobs not expected")
 
-    assert expected == found, f"expected jobs ({expected}) but found ({found})"
+    assert expected == found, "expected jobs\n  {expected_list}\nbut found\n  {found_list}".format(
+        expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
+    )
 
     return builds
 
@@ -144,7 +146,11 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
         expected = DOCKER_ARTIFACTS
 
     found = set(artifacts.keys())
-    assert expected == found, f"expected artifacts ({expected}) but found ({found})"
+    assert (
+        expected == found
+    ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
+        expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
+    )
 
     return artifacts
 

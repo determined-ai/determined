@@ -636,6 +636,14 @@ schemas = {
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
+        "proxy_ports": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+        },
         "ports": {
             "type": [
                 "object",
@@ -1734,6 +1742,61 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/proxy-port.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-port.json",
+    "title": "ProxyPort",
+    "additionalProperties": false,
+    "required": [
+        "proxy_port"
+    ],
+    "type": "object",
+    "properties": {
+        "proxy_port": {
+            "type": "number"
+        },
+        "proxy_tcp": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "unauthenticated": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "default_service_id": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/proxy-ports.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-ports.json",
+    "title": "ProxyPortsConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/registry-auth.json": json.loads(
         r"""
 {
@@ -1834,11 +1897,12 @@ schemas = {
     "required": [],
     "properties": {
         "agent_label": {
+            "$comment": "the agent_label feature was removed in 0.20.0, and the config is ignored",
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "devices": {
             "type": [

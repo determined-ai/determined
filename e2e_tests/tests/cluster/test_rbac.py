@@ -1,27 +1,88 @@
+import contextlib
+from typing import Dict, Generator, List, Tuple
+
 import pytest
 
+from determined import cli
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
-from tests.experiment import determined_test_session
+from determined.common.api import authentication, bindings, errors
+from tests import api_utils, utils
+from tests.api_utils import configure_token_store, create_test_user, determined_test_session
+from tests.cluster.test_workspace_org import setup_workspaces
 
 from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
-from .test_users import (
-    ADMIN_CREDENTIALS,
-    create_test_user,
-    get_random_string,
-    log_in_user,
-    logged_in_user,
-)
+from .test_users import ADMIN_CREDENTIALS, get_random_string, logged_in_user
 
 
 def roles_not_implemented() -> bool:
     return "Unimplemented" in det_cmd(["rbac", "my-permissions"]).stderr.decode()
 
 
+def rbac_disabled() -> bool:
+    try:
+        return not bindings.get_GetMaster(determined_test_session()).rbacEnabled
+    except (errors.APIException, errors.MasterNotFoundException):
+        return True
+
+
+@contextlib.contextmanager
+def create_workspaces_with_users(
+    assignments_list: List[List[Tuple[int, List[str]]]]
+) -> Generator[
+    Tuple[List[bindings.v1Workspace], Dict[int, authentication.Credentials]], None, None
+]:
+    """
+    eg:
+    perm_assigments = [
+        [
+            (1, ["Editor", "Viewer"]),
+            (2, ["Viewer"]),
+        ],
+        [
+            (1, ["Viewer"]),
+        ]
+    ]
+    """
+    configure_token_store(ADMIN_CREDENTIALS)
+    rid_to_creds: Dict[int, authentication.Credentials] = {}
+    with setup_workspaces(count=len(assignments_list)) as workspaces:
+        for workspace, user_list in zip(workspaces, assignments_list):
+            for (rid, roles) in user_list:
+                if rid not in rid_to_creds:
+                    rid_to_creds[rid] = create_test_user()
+                for role in roles:
+                    cli.rbac.assign_role(
+                        utils.CliArgsMock(
+                            username_to_assign=rid_to_creds[rid].username,
+                            workspace_name=workspace.name,
+                            role_name=role,
+                        )
+                    )
+        yield workspaces, rid_to_creds
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
+def test_user_role_setup() -> None:
+    perm_assigments = [
+        [
+            (1, ["Editor", "Viewer"]),
+            (2, ["Viewer"]),
+        ],
+        [
+            (1, ["Viewer"]),
+        ],
+    ]
+    with create_workspaces_with_users(perm_assigments) as (workspaces, rid_to_creds):
+        assert len(rid_to_creds) == 2
+        assert len(workspaces) == 2
+
+
 @pytest.mark.e2e_cpu
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment() -> None:
-    log_in_user(ADMIN_CREDENTIALS)
-    test_user_creds = create_test_user()
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
+    test_user_creds = api_utils.create_test_user()
 
     # User has no permissions.
     with logged_in_user(test_user_creds):
@@ -247,8 +308,8 @@ def test_rbac_permission_assignment_errors() -> None:
         "not find a workspace",
     )
 
-    log_in_user(ADMIN_CREDENTIALS)
-    test_user_creds = create_test_user()
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
+    test_user_creds = api_utils.create_test_user()
     group_name = get_random_string()
     with logged_in_user(ADMIN_CREDENTIALS):
         det_cmd(["user-group", "create", group_name], check=True)
@@ -336,8 +397,8 @@ def test_rbac_list_roles() -> None:
         assert json_out["pagination"]["offset"] == 1
 
         # Setup group / user to test with.
-        log_in_user(ADMIN_CREDENTIALS)
-        test_user_creds = create_test_user()
+        api_utils.configure_token_store(ADMIN_CREDENTIALS)
+        test_user_creds = api_utils.create_test_user()
         group_name = get_random_string()
         det_cmd(
             ["user-group", "create", group_name, "--add-user", test_user_creds.username], check=True
@@ -435,8 +496,8 @@ def test_rbac_describe_role() -> None:
         )
 
         # Role is assigned to our group and user.
-        log_in_user(ADMIN_CREDENTIALS)
-        test_user_creds = create_test_user()
+        api_utils.configure_token_store(ADMIN_CREDENTIALS)
+        test_user_creds = api_utils.create_test_user()
         group_name = get_random_string()
 
         det_cmd(["user-group", "create", group_name], check=True)
@@ -454,7 +515,7 @@ def test_rbac_describe_role() -> None:
             check=True,
         )
 
-        sess = determined_test_session()
+        sess = api_utils.determined_test_session()
         user_id = usernames_to_user_ids(sess, [test_user_creds.username])[0]
         group_id = group_name_to_group_id(sess, group_name)
 

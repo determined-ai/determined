@@ -251,7 +251,7 @@ checkpoint_storage:
 
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
-	// nolint:gosec // These are not potential hardcoded credentials.
+	//nolint:gosec // These are not potential hardcoded credentials.
 	s3Secret := "my_secret_key_secret"
 	masterSecret := "my_master_secret"
 	webuiSecret := "my_webui_secret"

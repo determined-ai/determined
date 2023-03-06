@@ -120,6 +120,8 @@ type (
 	SetAllocationProxyAddress struct {
 		ProxyAddress string
 	}
+	// IsAllocationRestoring asks the allocation if it is in the middle of a restore.
+	IsAllocationRestoring struct{}
 )
 
 const (
@@ -133,6 +135,9 @@ func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
 	logger *Logger,
 ) actor.Actor {
+	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
+		"allocation-id": req.AllocationID,
+	})
 	return &Allocation{
 		db:     db,
 		rm:     rm,
@@ -143,22 +148,20 @@ func NewAllocation(
 			AllocationID: req.AllocationID,
 			TaskID:       req.TaskID,
 			Slots:        req.SlotsNeeded,
-			AgentLabel:   req.AgentLabel,
 			ResourcePool: req.ResourcePool,
 		},
 
 		resources: resourcesList{},
 
-		logCtx: detLogger.MergeContexts(logCtx, detLogger.Context{
-			"allocation-id": req.AllocationID,
-		}),
+		logCtx: req.LogContext,
 	}
 }
 
 // Receive implements actor.Actor for the allocation.
 // The normal flow of an Allocation is to:
+//
 //	(1) request resources,
-// 	(2) receive resources,
+//	(2) receive resources,
 //	(3) start the given task on the resources and
 //	(4) monitor the task as it runs and handle releasing it's resources.
 //
@@ -184,6 +187,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+
+	case IsAllocationRestoring:
+		ctx.Respond(a.req.Restore && !a.restored)
+
 	case sproto.ResourcesAllocated:
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
@@ -242,7 +249,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			ctx.Respond(a.State())
 		}
 	case SetAllocationProxyAddress:
-		if a.req.ProxyPort == nil {
+		if len(a.req.ProxyPorts) == 0 {
 			if ctx.ExpectingResponse() {
 				ctx.Respond(ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)})
 			}
@@ -283,7 +290,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.rendezvous.unwatch(msg)
 		case rendezvousTimeout:
 			if err := a.rendezvous.checkTimeout(msg); err != nil {
-				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+				a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
 			}
 		default:
 			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
@@ -307,7 +314,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.allGather.unwatch(msg)
 		case allGatherTimeout:
 			if err := a.allGather.checkTimeout(msg); err != nil {
-				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+				a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
 				ctx.Log().WithError(err).Error("performing all gather through master")
 			}
 		default:
@@ -325,7 +332,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.preemption.ReceiveMsg(ctx); err != nil {
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+			a.sendTaskLog(ctx, model.TaskLog{Log: err.Error()})
 			a.Error(ctx, err)
 		}
 	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
@@ -472,13 +479,16 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 	} else if a.getModelState() == model.AllocationStateRunning {
 		// Restore proxies.
-		for _, r := range a.resources {
-			if a.req.ProxyPort != nil && r.Started != nil && r.Started.Addresses != nil {
-				a.registerProxies(ctx, r.Started.Addresses)
+		if len(a.req.ProxyPorts) > 0 {
+			for _, r := range a.resources {
+				if r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil {
+					a.registerProxies(ctx, r.Started.Addresses)
+				}
 			}
 		}
 	}
 
+	a.restored = a.req.Restore
 	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
@@ -496,12 +506,12 @@ func (a *Allocation) SetResourcesAsDaemon(
 		ctx.Respond(ErrStaleResources{ID: rID})
 		return nil
 	} else if len(a.resources) <= 1 {
-		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+		a.sendTaskLog(ctx, model.TaskLog{
 			Log: `Ignoring request to daemonize resources within an allocation for an allocation
 			with only one manageable set of resources, because this would just kill it. This is
 			expected in when using the HPC launcher.`,
 			Level: ptrs.Ptr(model.LogLevelInfo),
-		}))
+		})
 		return nil
 	}
 
@@ -573,7 +583,8 @@ func (a *Allocation) ResourcesStateChanged(
 			ctx.Log().
 				Info("all containers are connected successfully (task container state changed)")
 		}
-		if a.req.ProxyPort != nil && msg.ResourcesStarted.Addresses != nil {
+		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
+			a.resources[msg.ResourcesID].Rank == 0 {
 			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
 		}
 
@@ -613,22 +624,30 @@ func (a *Allocation) ResourcesStateChanged(
 
 		switch {
 		case a.killedWhileRunning:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			a.sendTaskLog(ctx, model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
 				Log: fmt.Sprintf(
 					"resources were killed: %s",
 					msg.ResourcesStopped.String(),
 				),
-			}))
+			})
 			a.Exit(ctx, "resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
-			a.Error(ctx, *msg.ResourcesStopped.Failure)
+			// Avoid erroring out if we have killed our daemons gracefully.
+			// This occurs in the case of an early stop in dtrain. One resource
+			// will exit with a 0 exit code and kill the rest of the resources sending
+			// failed messages for these resources.
+			if a.killedDaemonsGracefully {
+				a.Exit(ctx, "remaining resources terminated")
+			} else {
+				a.Error(ctx, *msg.ResourcesStopped.Failure)
+			}
 		default:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			a.sendTaskLog(ctx, model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
 				Log:         msg.ResourcesStopped.String(),
 				Level:       ptrs.Ptr(model.LogLevelInfo),
-			}))
+			})
 			a.Exit(ctx, msg.ResourcesStopped.String())
 		}
 
@@ -658,6 +677,7 @@ func (a *Allocation) RestoreResourceFailure(
 	}
 
 	if a.req.Restore {
+		// TODO(DET-8822): This heartbeat can be nil.
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
 			break
@@ -751,13 +771,13 @@ func (a *Allocation) exitedWithoutErr() bool {
 
 func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
-	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+	a.sendTaskLog(ctx, model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
 			"gracefully terminating allocation's remaining resources (reason: %s)",
 			reason,
 		),
-	}))
+	})
 
 	a.preemption.Preempt()
 	actors.NotifyAfter(ctx, preemptionTimeoutDuration, PreemptionTimeout{a.model.AllocationID})
@@ -770,13 +790,13 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 	}
 
 	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
-	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+	a.sendTaskLog(ctx, model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
 			"forcibly killing allocation's remaining resources (reason: %s)",
 			reason,
 		),
-	}))
+	})
 
 	for _, r := range a.resources.active() {
 		r.Kill(ctx, a.logCtx)
@@ -796,13 +816,8 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 }
 
 func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Address) {
-	cfg := a.req.ProxyPort
-	if cfg == nil {
-		return
-	}
-	if len(a.resources) > 1 {
-		// We don't support proxying multi-reservation allocations.
-		ctx.Log().Warnf("proxy for multi-reservation allocation aborted")
+	// For multi-reservation allocations, proxies are only setup for rank=0 (i.e. the chief).
+	if len(a.req.ProxyPorts) == 0 {
 		return
 	}
 
@@ -811,7 +826,13 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 		// additional addresses will appear her, but currently we only proxy one uuid to one
 		// port, so it doesn't make sense to send multiple proxy.Register messages for a
 		// single ServiceID (only the last one would work).
-		if address.ContainerPort != cfg.Port {
+		var pcfg *sproto.ProxyPortConfig
+		for _, cfg := range a.req.ProxyPorts {
+			if address.ContainerPort == cfg.Port {
+				pcfg = cfg
+			}
+		}
+		if pcfg == nil {
 			continue
 		}
 
@@ -819,25 +840,29 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
 		ctx.Ask(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Register{
-			ServiceID: cfg.ServiceID,
+			ServiceID: pcfg.ServiceID,
 			URL: &url.URL{
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 			},
-			ProxyTCP:        cfg.ProxyTCP,
-			Unauthenticated: cfg.Unauthenticated,
+			ProxyTCP:        pcfg.ProxyTCP,
+			Unauthenticated: pcfg.Unauthenticated,
 		})
-		a.proxies = append(a.proxies, cfg.ServiceID)
+		ctx.Log().Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
+		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
 
-	if len(a.proxies) != 1 {
-		ctx.Log().Errorf("did not proxy as expected %v (found addrs %v)", len(a.proxies), addresses)
+	if len(a.proxies) != len(a.req.ProxyPorts) {
+		a.sendTaskLog(ctx, model.TaskLog{
+			Log: fmt.Sprintf(
+				"did not proxy as expected %v (found addrs %v, requested %v)",
+				len(a.proxies), addresses, len(a.req.ProxyPorts)),
+		})
 	}
 }
 
 func (a *Allocation) unregisterProxies(ctx *actor.Context) {
-	cfg := a.req.ProxyPort
-	if cfg == nil {
+	if len(a.req.ProxyPorts) == 0 {
 		return
 	}
 
@@ -855,17 +880,22 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 
 // containerProxyAddresses forms the container address when proxyAddress is given.
 func (a *Allocation) containerProxyAddresses() []cproto.Address {
-	if a.proxyAddress == nil || a.req.ProxyPort == nil {
+	if a.proxyAddress == nil || len(a.req.ProxyPorts) == 0 {
 		return []cproto.Address{}
 	}
-	return []cproto.Address{
-		{
+
+	result := []cproto.Address{}
+
+	for _, pp := range a.req.ProxyPorts {
+		result = append(result, cproto.Address{
 			ContainerIP:   *a.proxyAddress,
-			ContainerPort: a.req.ProxyPort.Port,
+			ContainerPort: pp.Port,
 			HostIP:        *a.proxyAddress,
-			HostPort:      a.req.ProxyPort.Port,
-		},
+			HostPort:      pp.Port,
+		})
 	}
+
+	return result
 }
 
 func (a *Allocation) terminated(ctx *actor.Context, reason string) {
@@ -946,6 +976,12 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 				ctx.Log().Debug(exitReason)
 				exit.Err = err
 				return
+			case sproto.RestoreError:
+				exitReason = fmt.Sprintf("allocation failed due to restore error: %s", err)
+				ctx.Log().Warn(exitReason)
+				exit.Err = err
+				return
+
 			default:
 				panic(fmt.Errorf("unexpected allocation failure: %w", err))
 			}
@@ -1011,9 +1047,13 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	return log
 }
 
+func (a *Allocation) sendTaskLog(ctx *actor.Context, log model.TaskLog) {
+	a.logger.Insert(ctx, a.enrichLog(log))
+}
+
 func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
 	ev = a.enrichEvent(ctx, ev)
-	a.logger.Insert(ctx, a.enrichLog(ev.ToTaskLog()))
+	a.sendTaskLog(ctx, ev.ToTaskLog())
 	if a.req.StreamEvents != nil {
 		ctx.Tell(a.req.StreamEvents.To, ev)
 	}

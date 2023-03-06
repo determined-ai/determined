@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { ClusterProvider } from 'stores/cluster';
 import { ResourcePool } from 'types';
 
 import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
@@ -10,15 +11,18 @@ import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
 const rps = resourcePools as unknown as ResourcePool[];
 
 jest.mock('services/api', () => ({
-  getAgents: jest.fn().mockReturnValue({ agents: [] }),
+  getAgents: () => Promise.resolve([]),
+  getResourcePools: () => Promise.resolve({}),
 }));
 
 const setup = (pool: ResourcePool) => {
   const view = render(
     <UIProvider>
-      <Suspense>
-        <RenderAllocationBarResourcePool resourcePool={pool} />
-      </Suspense>
+      <ClusterProvider>
+        <Suspense>
+          <RenderAllocationBarResourcePool resourcePool={pool} />
+        </Suspense>
+      </ClusterProvider>
     </UIProvider>,
   );
   return { view };

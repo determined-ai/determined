@@ -1,8 +1,11 @@
-import { Divider, Form, Input, InputNumber, Switch } from 'antd';
+import { Divider, Switch } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getWorkspace, patchWorkspace } from 'services/api';
@@ -105,7 +108,13 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
-          rules={[{ message: 'Workspace name is required ', required: true }]}>
+          rules={[
+            {
+              message: 'Name must be 1 ~ 80 letters, and contain at least non-whitespace letter',
+              pattern: new RegExp('.*[^ ].*'),
+              required: true,
+            },
+          ]}>
           <Input maxLength={80} />
         </Form.Item>
         {canModifyAUG && (

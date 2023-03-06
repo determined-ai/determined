@@ -1,10 +1,9 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -184,8 +183,7 @@ const TrialDetailsComp: React.FC = () => {
     return <Message title={`Invalid Trial ID ${trialId}`} />;
   }
 
-  if (trialDetails.error !== undefined) {
-    if (isNotFound(trialDetails.error)) return <PageNotFound />;
+  if (trialDetails.error !== undefined && !isNotFound(trialDetails.error)) {
     const message = `Unable to fetch Trial ${trialId}`;
     return (
       <Message message={trialDetails.error.message} title={message} type={MessageType.Warning} />
@@ -198,7 +196,6 @@ const TrialDetailsComp: React.FC = () => {
 
   return (
     <Page
-      bodyNoPadding
       containerRef={pageRef}
       headerComponent={
         <TrialDetailsHeader
@@ -207,6 +204,7 @@ const TrialDetailsComp: React.FC = () => {
           trial={trial}
         />
       }
+      notFound={trialDetails.error && isNotFound(trialDetails.error)}
       stickyHeader
       title={`Trial ${trialId}`}>
       <TrialLogPreview
@@ -214,9 +212,8 @@ const TrialDetailsComp: React.FC = () => {
         trial={trial}
         onViewLogs={handleViewLogs}>
         <Spinner spinning={isFetching}>
-          <Tabs
+          <Pivot
             activeKey={tabKey}
-            className="no-padding"
             items={tabItems}
             tabBarExtraContent={
               <RoutePagination

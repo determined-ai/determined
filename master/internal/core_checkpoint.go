@@ -82,7 +82,7 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 		return nil, err
 	}
 
-	return ptrs.Ptr(legacyConfig.CheckpointStorage()), nil
+	return ptrs.Ptr(legacyConfig.CheckpointStorage), nil
 }
 
 func (m *Master) getCheckpointImpl(
@@ -127,15 +127,16 @@ func (m *Master) getCheckpointImpl(
 	return nil
 }
 
-// @Summary Get a checkpoint's contents in a tgz or zip file.
-// @Tags Checkpoints
-// @ID get-checkpoint
-// @Accept  json
-// @Produce  application/gzip,application/zip
-// @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
-// @Success 200 {} string ""
-//nolint:godot
-// @Router /checkpoints/{checkpoint_uuid} [get]
+//	@Summary	Get a checkpoint's contents in a tgz or zip file.
+//	@Tags		Checkpoints
+//	@ID			get-checkpoint
+//	@Accept		json
+//	@Produce	application/gzip,application/zip
+//	@Param		checkpoint_uuid	path	string	true	"Checkpoint UUID"
+//	@Success	200				{}		string	""
+//	@Router		/checkpoints/{checkpoint_uuid} [get]
+//
+// Read why this line exists on the comment on getAggregatedResourceAllocation in core.go.
 func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")

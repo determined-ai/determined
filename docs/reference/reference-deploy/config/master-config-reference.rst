@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -167,6 +167,10 @@ The master supports the following configuration settings:
             -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized
                agents.
 
+         -  ``allow_heterogeneous_fits``: Fit distributed jobs to onto agents of different sizes.
+            When enabled, we still prefer to fit jobs on same sized nodes but will fallback to allow
+            heterogeneous fits. Sizes should be powers of two for the fitting algorithm to work.
+
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
          resource pool is specified.
@@ -262,19 +266,25 @@ The master supports the following configuration settings:
          Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Defaults to ``cuda``.
+         in terms of ``slots``. Available values are ``cuda``, ``rocm`` and ``cpu``, where 1
+         ``cuda`` or ``rocm`` slot is 1 GPU. Otherwise, CPU slots are requested. The number of CPUs
+         allocated per node is 1, unless overridden by ``slots_per_node`` in the experiment
+         configuration. Defaults per-partition to ``cuda`` if GPU resources are found within the
+         partition, else ``cpu``. If GPUs cannot be detected automatically, for example when
+         operating with ``gres_supported: false``, then this result may be overridden using
+         ``partition_overrides``.
 
-         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
-            with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Partitions will
+            be represented as a resource pool with slot type ``cuda`` which can be overridden using
+            ``partition_overrides``.
 
-         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Any partitions with
-            GPUs will be represented as a resource pool with slot type ``rocm`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Partitions will be
+            represented as a resource pool with slot type ``rocm`` which can be overridden using
+            ``partition_overrides``.
 
          -  ``slot_type: cpu``: CPU resources will be requested for each compute slot. Partitions
-            that contain no GPUs will default to a resource pool with slot type ``cpu``. One node
-            will be allocated per slot.
+            will be represented as a resource pool with slot type ``cpu``. One node will be
+            allocated per slot.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
          distributed jobs. For example, when using horovod the IP address for the host on this
@@ -286,7 +296,9 @@ The master supports the following configuration settings:
 
       -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
          something other than ``root``. The user must have a home directory with read permissions
-         for all users to enable access to generated ``sbatch`` scripts and job log files.
+         for all users to enable access to generated ``sbatch`` scripts and job log files. It must
+         have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
+         ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
@@ -363,6 +375,8 @@ The master supports the following configuration settings:
             of the workload manager reporting tools that summarize usage by each WCKey/Project
             value.
 
+.. _cluster-resource-pools:
+
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
    the job is submitted. Refer to the documentation on :ref:`resource-pools` for more information.
@@ -387,6 +401,10 @@ The master supports the following configuration settings:
       in that resource pool. There is no merging behavior; when a resource pool's
       ``task_container_defaults`` is set, tasks launched in that pool will completely ignore the
       top-level setting.
+
+   -  ``kubernetes_namespace``: When the Kubernetes resource manager is in use, this specifies a
+      `namespace <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__
+      that tasks in this resource pool will be launched into.
 
    -  ``scheduler``: Specifies how Determined schedules tasks to agents. The scheduler configuration
       on each resource pool will override the global one. For more on scheduling behavior in
@@ -801,9 +819,6 @@ The master supports the following configuration settings:
                -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
                -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
                   is the role id of ``WorkspaceAdmin`` role.
-
-         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
-            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
 
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 

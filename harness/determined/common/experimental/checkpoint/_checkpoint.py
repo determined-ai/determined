@@ -31,11 +31,11 @@ class ModelFramework(enum.Enum):
 
 
 class CheckpointState(enum.Enum):
-    UNSPECIFIED = bindings.determinedcheckpointv1State.STATE_UNSPECIFIED.value
-    ACTIVE = bindings.determinedcheckpointv1State.STATE_ACTIVE.value
-    COMPLETED = bindings.determinedcheckpointv1State.STATE_COMPLETED.value
-    ERROR = bindings.determinedcheckpointv1State.STATE_ERROR.value
-    DELETED = bindings.determinedcheckpointv1State.STATE_DELETED.value
+    UNSPECIFIED = bindings.checkpointv1State.STATE_UNSPECIFIED.value
+    ACTIVE = bindings.checkpointv1State.STATE_ACTIVE.value
+    COMPLETED = bindings.checkpointv1State.STATE_COMPLETED.value
+    ERROR = bindings.checkpointv1State.STATE_ERROR.value
+    DELETED = bindings.checkpointv1State.STATE_DELETED.value
 
 
 @dataclasses.dataclass
@@ -193,7 +193,7 @@ class Checkpoint:
             self._download_direct(checkpoint_storage, local_ckpt_dir)
 
         except errors.NoDirectStorageAccess:
-            if checkpoint_storage["type"] != "s3":
+            if checkpoint_storage["type"] != "s3" and checkpoint_storage["type"] != "gcs":
                 raise
 
             logging.info("Unable to download directly, proxying download through master")
@@ -307,6 +307,7 @@ class Checkpoint:
             "  - det.keras.load_model_from_checkpoint_path()\n"
             "  - det.estimator.load_estimator_from_checkpoint_path()\n",
             FutureWarning,
+            stacklevel=2,
         )
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
@@ -319,7 +320,7 @@ class Checkpoint:
                 metadata=self.metadata,
                 resources={},
                 training=bindings.v1CheckpointTrainingMetadata(),
-                state=bindings.determinedcheckpointv1State.STATE_UNSPECIFIED,
+                state=bindings.checkpointv1State.STATE_UNSPECIFIED,
             ),
         )
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)
@@ -394,6 +395,7 @@ class Checkpoint:
             "  - det.keras.load_model_from_checkpoint_path()\n"
             "  - det.estimator.load_estimator_from_checkpoint_path()\n",
             FutureWarning,
+            stacklevel=2,
         )
         checkpoint_dir = pathlib.Path(path)
         metadata = Checkpoint._parse_metadata(checkpoint_dir)
@@ -436,6 +438,7 @@ class Checkpoint:
             "Checkpoint.parse_metadata() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return Checkpoint._parse_metadata(directory)
 
@@ -464,6 +467,7 @@ class Checkpoint:
             "Checkpoint.get_type() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return Checkpoint._get_type(metadata)
 
@@ -524,5 +528,6 @@ class Checkpoint:
             "Checkpoint.from_json() is deprecated and will be removed from the public API "
             "in a future version",
             FutureWarning,
+            stacklevel=2,
         )
         return cls._from_json(data, session)

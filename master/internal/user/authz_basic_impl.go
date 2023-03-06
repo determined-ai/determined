@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -119,23 +118,6 @@ func (a *UserAuthZBasic) CanCreateUsersOwnSetting(
 // CanResetUsersOwnSettings always returns nil.
 func (a *UserAuthZBasic) CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error {
 	return nil
-}
-
-// CanGetActiveTasksCount always returns a nil error.
-func (a *UserAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
-	return nil
-}
-
-// CanAccessNTSCTask returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
-func (a *UserAuthZBasic) CanAccessNTSCTask(
-	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (bool, error) {
-	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
-		return true, nil
-	}
-	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
 func init() {

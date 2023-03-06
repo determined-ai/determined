@@ -7,10 +7,6 @@ If you encounter an issue or would like to request a new feature, please create
 also join the [Slack](https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew)
 to get support and talk with other users and developers in real-time.
 
-## Project Roadmap
-
-<https://github.com/determined-ai/determined/wiki/Project-Roadmap>
-
 ## Contributing Changes
 
 We welcome outside contributions. If you'd like to make a contribution, please:
@@ -50,12 +46,12 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 
 #### Prerequisites
 
-- Go (>= 1.18)
+- Go (>= 1.20)
 - Python (>= 3.6, <= 3.9), including:
   - python3-venv
   - python3-wheel
   - python3-dev
-- Node (>= 16.13, < 17)
+- Node (>= 16.13, < 20)
 - NPM (>= 8)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
@@ -132,17 +128,6 @@ In the future, ensure that you activate the virtualenv (by running the
 `activate` command above) whenever you want to interact with Determined. Tools
 such as [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
 or [direnv](https://direnv.net/) may help streamline the process.
-
-### Building Errata
-
-If you are building Determined using Python 3.9, you must manually change the
-version of TensorFlow to 2.8.0 in the [end-to-end testing requirements file](https://github.com/determined-ai/determined/blob/master/e2e_tests/tests/requirements.txt#L8)
-because the version of TensorFlow currently set in the end-to-end requirements
-file is not compatible with Python 3.9:
-
-```plain
-tensorflow==2.8.0; sys_platform != 'darwin' or platform_machine != 'arm64'
-```
 
 ## Running Determined
 

@@ -74,7 +74,9 @@ export const isMetric = (metric?: Metric): metric is Metric => metric !== undefi
 export const metricToStr = (metric: Metric, truncateLimit = 30): string => {
   const type = metric.type === MetricType.Training ? 'T' : 'V';
   const name =
-    metric.name.length > truncateLimit ? metric.name.substr(0, truncateLimit) + '...' : metric.name;
+    metric.name.length > truncateLimit
+      ? metric.name.substring(0, truncateLimit) + '...'
+      : metric.name;
   return `[${type}] ${name}`;
 };
 

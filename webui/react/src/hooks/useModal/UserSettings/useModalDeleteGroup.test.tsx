@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
 
+import Button from 'components/kit/Button';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { DeleteGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';

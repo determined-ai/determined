@@ -17,7 +17,6 @@ type AgentSummary struct {
 	Slots          SlotsSummary `json:"slots"`
 	NumContainers  int          `json:"num_containers"`
 	ResourcePool   string       `json:"resource_pool"`
-	Label          string       `json:"label"`
 	Addresses      []string     `json:"addresses"`
 	Enabled        bool         `json:"enabled"`
 	Draining       bool         `json:"draining"`
@@ -41,7 +40,6 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		RegisteredTime: protoutils.ToTimestamp(a.RegisteredTime),
 		Slots:          slots,
 		Containers:     containers,
-		Label:          a.Label,
 		ResourcePools:  []string{a.ResourcePool},
 		Addresses:      a.Addresses,
 		Enabled:        a.Enabled,

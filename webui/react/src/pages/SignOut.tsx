@@ -6,21 +6,28 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
+import { reset as resetAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import { PermissionsStore } from 'stores/permissions';
+import { useUpdateCurrentUser } from 'stores/users';
+import { useResetWorkspaces } from 'stores/workspaces';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { resetAuth } = useAuth();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const updateCurrentUser = useUpdateCurrentUser();
+  const resetWorkspaces = useResetWorkspaces();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
+      PermissionsStore.resetMyAssignmentsAndRoles();
+      updateCurrentUser(null);
+      resetWorkspaces();
       try {
         await logout({});
       } catch (e) {
@@ -39,12 +46,19 @@ const SignOut: React.FC = () => {
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);
       } else {
-        navigate(paths.login(), { state: location.state });
+        navigate(paths.login() + '?r=' + Math.random(), { state: location.state });
       }
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetAuth]);
+  }, [
+    navigate,
+    info.externalLogoutUri,
+    location.state,
+    updateCurrentUser,
+    isSigningOut,
+    resetWorkspaces,
+  ]);
 
   return null;
 };

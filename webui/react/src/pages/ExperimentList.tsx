@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, MenuProps, Modal, Space, Typography } from 'antd';
+import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -8,6 +8,11 @@ import Badge, { BadgeType } from 'components/Badge';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
+import HumanReadableNumber from 'components/HumanReadableNumber';
+import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
+import Tags from 'components/kit/Tags';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -30,8 +35,6 @@ import {
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import TagList from 'components/TagList';
-import Toggle from 'components/Toggle';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
@@ -51,7 +54,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
@@ -73,6 +76,7 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
+import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -179,7 +183,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         projectId: id,
         sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
-        states: validateDetApiEnumList(Determinedexperimentv1State, states),
+        states: validateDetApiEnumList(Experimentv1State, states),
         users: settings.user,
       };
       const pinnedIds = pinned?.[id] ?? [];
@@ -402,14 +406,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels} />,
+            tooltip: <Tags disabled tags={record.labels} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || project?.archived || !canEditExperiment}
               tags={record.labels}
-              onChange={experimentTags.handleTagListChange(record.id)}
+              onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
           </div>
         </Typography.Text>
@@ -427,9 +431,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
-        onPressEnter={(e) => {
+        onBlur={(e) => {
           const newDesc = e.currentTarget.value;
           saveExperimentDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
           e.currentTarget.blur();
         }}
       />
@@ -611,6 +619,17 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
+      {
+        dataIndex: 'searcherMetricValue',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
+        key: V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL,
+        render: (_: string, record: ExperimentItem) => (
+          <HumanReadableNumber num={record.searcherMetricValue} />
+        ),
+        sorter: true,
+        title: 'Searcher Metric Value',
+        width: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
+      },
     ] as ColumnDef<ExperimentItem>[];
   }, [
     ContextMenu,
@@ -672,6 +691,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
+        if (!settings?.row?.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>
@@ -744,7 +764,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const showConfirmation = useCallback(
     (action: Action) => {
-      Modal.confirm({
+      modal.confirm({
         content: `
         Are you sure you want to ${action.toLocaleLowerCase()}
         all the eligible selected experiments?
@@ -903,11 +923,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
@@ -936,7 +952,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
-      <div className={css.experimentTab}>
+      <>
         <TableBatch
           actions={batchActions.map((action) => ({
             disabled: !availableBatchActions.includes(action),
@@ -975,7 +991,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           size="small"
           updateSettings={updateSettings as UpdateSettings}
         />
-      </div>
+      </>
       {modalColumnsCustomizeContextHolder}
       {modalExperimentMoveContextHolder}
     </Page>

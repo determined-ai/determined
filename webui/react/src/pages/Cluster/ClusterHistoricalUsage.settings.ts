@@ -17,7 +17,6 @@ export const GroupBy = {
 export type GroupBy = ValueOf<typeof GroupBy>;
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'cluster/historical-usage',
   settings: {
     after: {
       defaultValue: undefined,
@@ -35,7 +34,7 @@ const config: SettingsConfig<Settings> = {
       type: union([literal(GroupBy.Day), literal(GroupBy.Month)]),
     },
   },
-  storagePath: 'cluster/historical-usage',
+  storagePath: 'cluster-historical-usage',
 };
 
 export default config;

@@ -50,6 +50,7 @@
     pod_spec: '*'
     ports:
       asdf: 1
+    proxy_ports: []
     registry_auth:
       username: samiam
       password: eggsnham
@@ -207,7 +208,6 @@
       - host_path: "/h4"
         container_path: "/c4"
         mode: "mrw"
-    agent_label: ''
     native_parallel: false
     shm_size: null
     slots_per_trial: 1

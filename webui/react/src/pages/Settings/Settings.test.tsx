@@ -5,8 +5,6 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -42,15 +40,11 @@ const setup = () => {
   return render(
     <UIProvider>
       <UsersProvider>
-        <AuthProvider>
-          <UserRolesProvider>
-            <HelmetProvider>
-              <HistoryRouter history={history}>
-                <Container />
-              </HistoryRouter>
-            </HelmetProvider>
-          </UserRolesProvider>
-        </AuthProvider>
+        <HelmetProvider>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
+        </HelmetProvider>
       </UsersProvider>
     </UIProvider>,
   );

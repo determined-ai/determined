@@ -38,10 +38,10 @@ var nonRetryableErrors = []*regexp.Regexp{
 }
 
 // A trial is a task actor which is responsible for handling:
-//  - messages from the resource manager,
-//  - messages from the experiment,
-//  - messages from the trial container(s), and
-//  - keeping the trial table of the database up-to-date.
+//   - messages from the resource manager,
+//   - messages from the experiment,
+//   - messages from the trial container(s), and
+//   - keeping the trial table of the database up-to-date.
 //
 // The trial's desired state is dictated to it by the experiment, searcher and user; they push
 // it to states like 'ACTIVE', 'PAUSED' and kill or wake it when more work is available. It takes
@@ -288,7 +288,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
-			AgentLabel:        t.config.Resources().AgentLabel(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: false,
@@ -296,6 +295,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 			Preemptible: true,
 			Restore:     true,
+			ProxyPorts: sproto.NewProxyPortConfig(
+				tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 		}
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
@@ -323,13 +324,13 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
-		AgentLabel:   t.config.Resources().AgentLabel(),
 		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: false,
 		},
 
 		Preemptible: true,
+		ProxyPorts:  sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 	}
 
 	ctx.Log().
@@ -669,7 +670,8 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 	var allocations []model.Allocation
 	selectQuery := db.Bun().NewSelect().Model(&allocations).
 		Where("task_id = ?", t.taskID).
-		Where("end_time IS NULL")
+		Where("end_time IS NULL").
+		Where("state != ?", model.AllocationStateTerminated)
 
 	if t.rm.IsReattachableOnlyAfterStarted(ctx) {
 		selectQuery.Where("start_time IS NOT NULL")

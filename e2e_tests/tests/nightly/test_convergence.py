@@ -286,3 +286,28 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
+
+
+@pytest.mark.nightly
+def test_hf_trainer_api_accuracy() -> None:
+    config = conf.load_config(conf.integrations_examples_path("hf_trainer_api/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.integrations_examples_path("hf_trainer_api"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+
+    validation_accuracies = [
+        step["validation"]["metrics"]["validation_metrics"]["eval_accuracy"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    target_accuracy = 0.82
+    assert max(validation_accuracies) > target_accuracy, (
+        "hf_trainer_api did not reach minimum target accuracy {} in {} steps."
+        " full validation accuracy history: {}".format(
+            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+        )
+    )

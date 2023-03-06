@@ -4,7 +4,9 @@
  SAML Integration
 ##################
 
-SAML integration applies to Determined Enterprise Edition.
+.. attention::
+
+   SAML integration applies only to Determined Enterprise Edition.
 
 Determined EE provides a SAML integration to allow users to use single sign-on (SSO) with their
 organization's identity provider (IdP) and to provide system administrators better control over

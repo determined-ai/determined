@@ -1,11 +1,11 @@
-import { Empty, notification, Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import Empty from 'components/kit/Empty';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
@@ -17,11 +17,10 @@ import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Project } from 'types';
+import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
@@ -65,21 +64,21 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
-  const workspaces = Loadable.map(useWorkspaces({ archived: false }), (ws) =>
+  const loadableWorkspaces = useWorkspaces({ archived: false });
+  const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
   const projects = useWorkspaceProjects(workspaceId);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   useEffect(() => {
-    ensureWorkspacesFetched();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchWorkspaces();
+  }, [workspaceId, fetchWorkspaces]);
 
   useEffect(() => {
     ensureProjectsFetched(workspaceId);
@@ -134,11 +133,10 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           <label className={css.label} htmlFor="workspace">
             Workspace
           </label>
-          <SelectFilter
+          <Select
             id="workspace"
             placeholder="Select a destination workspace."
-            showSearch={false}
-            style={{ width: '100%' }}
+            searchable={false}
             value={workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
@@ -151,7 +149,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
                 </Option>
               );
             })}
-          </SelectFilter>
+          </Select>
         </div>
         {workspaceId && workspaceId !== 1 && (
           <div>
@@ -160,14 +158,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             </label>
             {workspaceId === undefined ? (
               <div className={css.emptyContainer}>
-                <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="Select a workspace" icon="error" />
               </div>
             ) : Loadable.quickMatch(projects, false, (ps) => ps.length === 0) ? (
               <div className={css.emptyContainer}>
-                <Empty
-                  description="Workspace contains no projects"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
+                <Empty description="Workspace contains no projects" icon="error" />
               </div>
             ) : (
               <List
@@ -234,12 +229,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         updateProjectSettings({ pinned: newPinned });
       }
     } else if (numFailures === experimentIds.length) {
-      notification.warn({
+      notification.warning({
         description: `Unable to move ${experimentText}`,
         message: 'Move Failure',
       });
     } else {
-      notification.warn({
+      notification.warning({
         description: (
           <div onClick={closeNotification}>
             <p>

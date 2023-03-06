@@ -22,7 +22,7 @@ import (
 var (
 	bunMutex         sync.Mutex
 	theOneBun        *bun.DB
-	modelsToRegister []interface{}
+	modelsToRegister []interface{} // TODO (eliu): currently allows duplicate models
 	tokenKeys        *model.AuthTokenKeypair
 )
 
@@ -37,9 +37,8 @@ func RegisterModel(m interface{}) {
 
 	if theOneBun != nil {
 		theOneBun.RegisterModel(m)
-	} else {
-		modelsToRegister = append(modelsToRegister, m)
 	}
+	modelsToRegister = append(modelsToRegister, m)
 }
 
 func initTheOneBun(db *sql.DB) {
@@ -55,7 +54,6 @@ func initTheOneBun(db *sql.DB) {
 	for _, m := range modelsToRegister {
 		theOneBun.RegisterModel(m)
 	}
-	modelsToRegister = nil
 
 	// This will print every query that runs.
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
@@ -77,7 +75,7 @@ func GetTokenKeys() *model.AuthTokenKeypair {
 }
 
 // Bun returns the singleton database connection through the bun library. bun is the database
-// library we we have decided to use for new code in the future due to its superior composability
+// library we have decided to use for new code in the future due to its superior composability
 // over bare SQL, and its superior flexibility over e.g. gorm.  New code should not use the old bare
 // SQL tooling.
 func Bun() *bun.DB {
@@ -363,7 +361,7 @@ func (db *PgDB) queryRowsWithParser(
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
 
-	if err := rows.Close(); err != nil {
+	if err := rows.Close(); err != nil { //nolint: sqlclosecheck
 		return errors.Wrapf(err, "rows.Close()")
 	}
 

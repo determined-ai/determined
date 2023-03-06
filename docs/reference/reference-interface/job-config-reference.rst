@@ -45,9 +45,9 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.
@@ -79,6 +79,9 @@ The following configuration settings are supported:
    -  ``drop_capabilities``: Just like ``add_capabilities`` but corresponding to the ``--cap-drop``
       argument of ``docker run`` rather than ``--cap-add``.
 
+   -  ``proxy_ports``: Expose configured network ports on the chief task container. See
+      :ref:`proxy-ports` for details.
+
 -  ``resources``: The resources Determined allows a task to use.
 
    -  ``slots``: Specifies the number of slots to use for the task. The default value is ``1``. The
@@ -86,11 +89,6 @@ The following configuration settings are supported:
       example, Determined will be unable to schedule a task that requests 4 slots if the Determined
       cluster is composed of agents with 2 slots each. The number of slots for TensorBoard is fixed
       at ``0`` and may not be changed.
-
-   -  ``agent_label``: If set, the task will *only* be scheduled on agents that have the given label
-      set. If this is not set (the default behavior), the task will only be scheduled on unlabeled
-      agents. An agent's label can be configured via the ``label`` field in the :ref:`agent
-      configuration <agent-config-reference>`.
 
    -  ``shm_size``: The size of ``/dev/shm`` for task containers. The value can be a number in bytes
       or a number with a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to
@@ -111,6 +109,9 @@ The following configuration settings are supported:
       honored by resource managers of type ``agent`` but is ignored by resource managers of type
       ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.
+
+   -  ``agent_label``: This field has been deprecated and will be ignored. Use ``resource_pool``
+      instead.
 
 -  ``bind_mounts``: Specifies a collection of directories that are bind-mounted into the Docker
    containers for execution. This can be used to allow commands to access additional data that is

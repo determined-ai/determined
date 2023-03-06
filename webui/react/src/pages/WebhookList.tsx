@@ -1,9 +1,11 @@
-import { Button, Dropdown, Space } from 'antd';
+import { Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -124,9 +126,7 @@ const WebhooksView: React.FC = () => {
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
       <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
-        <Button className={css.overflow} type="text">
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" />
       </Dropdown>
     );
 
@@ -217,15 +217,11 @@ const WebhooksView: React.FC = () => {
       }
       title="Webhooks">
       {webhooks.length === 0 && !isLoading ? (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="inbox" size="mega" />
-          </div>
-          <h4>No Webhooks Registered</h4>
-          <p className={css.description}>
-            Call external services when experiments complete or throw errors.
-          </p>
-        </div>
+        <Empty
+          description="Call external services when experiments complete or throw errors."
+          icon="inbox"
+          title="No Webhooks Registered"
+        />
       ) : settings ? (
         <InteractiveTable
           columns={columns}

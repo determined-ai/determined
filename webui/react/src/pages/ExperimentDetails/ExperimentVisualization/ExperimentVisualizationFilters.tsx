@@ -1,21 +1,19 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
-import HpSelectFilter from 'components/HpSelectFilter';
-import IconButton from 'components/IconButton';
-import MetricSelectFilter from 'components/MetricSelectFilter';
+import HpSelect from 'components/HpSelect';
+import Button from 'components/kit/Button';
+import Select, { Option, SelectValue } from 'components/kit/Select';
+import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
-import ScaleSelectFilter from 'components/ScaleSelectFilter';
-import SelectFilter from 'components/SelectFilter';
+import ScaleSelect from 'components/ScaleSelect';
+import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';
 
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
-
-const { Option } = Select;
 
 export interface VisualizationFilters {
   batch: number;
@@ -200,11 +198,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   return (
     <>
       {showMaxTrials && (
-        <SelectFilter
-          enableSearchFilter={false}
+        <Select
           label="Top Trials"
-          showSearch={false}
-          style={{ width: 70 }}
+          searchable={false}
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
           {TOP_TRIALS_OPTIONS.map((option) => (
@@ -212,14 +208,13 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
               {option}
             </Option>
           ))}
-        </SelectFilter>
+        </Select>
       )}
       {showBatches && (
         <>
-          <SelectFilter
-            enableSearchFilter={false}
+          <Select
             label="Batches Processed"
-            showSearch={false}
+            searchable={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
             {batches.map((batch) => (
@@ -227,11 +222,10 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {batch}
               </Option>
             ))}
-          </SelectFilter>
-          <SelectFilter
-            enableSearchFilter={false}
+          </Select>
+          <Select
             label="Batch Margin"
-            showSearch={false}
+            searchable={false}
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
             {BATCH_MARGIN_OPTIONS.map((option) => (
@@ -239,11 +233,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {option}
               </Option>
             ))}
-          </SelectFilter>
+          </Select>
         </>
       )}
       {showHParams && (
-        <HpSelectFilter
+        <HpSelect
           fullHParams={fullHParams}
           hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
@@ -252,17 +246,17 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       {showMetrics && (
-        <MetricSelectFilter
+        <MetricSelect
           defaultMetrics={metrics}
           label="Metric"
           metrics={metrics}
           multiple={false}
           value={localFilters.metric}
-          width={'100%'}
+          width={250}
           onChange={handleMetricChange}
         />
       )}
-      {showScales && <ScaleSelectFilter value={localFilters.scale} onChange={handleScaleChange} />}
+      {showScales && <ScaleSelect value={localFilters.scale} onChange={handleScaleChange} />}
       {showViews && (
         <RadioGroup
           iconOnly
@@ -275,7 +269,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       <div className={css.buttons}>
-        <IconButton icon="reset" label="Reset" onClick={handleReset} />
+        <Tooltip title="Reset">
+          <Button onClick={handleReset}>
+            <Icon name="reset" />
+          </Button>
+        </Tooltip>
       </div>
     </>
   );

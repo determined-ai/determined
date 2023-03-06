@@ -1,15 +1,17 @@
-import { Space, Tooltip, Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Tooltip from 'components/kit/Tooltip';
+import UserAvatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
-import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -151,6 +153,30 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   </div>
 );
 
+export const taskWorkspaceRenderer = (
+  record: CommandTask,
+  workspaces: Workspace[],
+): React.ReactNode => {
+  const workspace = workspaces.find((u) => u.id === record.workspaceId);
+  const workspaceId = record.workspaceId;
+  const isUncategorized = workspaceId === 1;
+
+  return (
+    <Tooltip placement="top" title={workspace?.name}>
+      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+        <Link
+          path={
+            isUncategorized
+              ? paths.projectDetails(workspaceId)
+              : paths.workspaceDetails(workspaceId)
+          }>
+          <DynamicIcon name={workspace?.name} size={24} />
+        </Link>
+      </div>
+    </Tooltip>
+  );
+};
+
 /* Experiment Table Column Renderers */
 
 export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
@@ -201,22 +227,6 @@ export const modelVersionNumberRenderer = (
 );
 
 /* Table Helper Functions */
-
-/*
- * For an `onClick` event on a table row, sometimes we have alternative and secondary
- * click interactions we want to capture. For example, we might want to capture different
- * link besides the one the table row is linked to. This function provides the means to
- * detect these alternative actions based on className definitions.
- */
-export const isAlternativeAction = (event: React.MouseEvent): boolean => {
-  const target = event.target as Element;
-  if (
-    target.className.includes('ant-checkbox-wrapper') ||
-    target.className.includes('ignoreTableRowClick')
-  )
-    return true;
-  return false;
-};
 
 /*
  * Default clickable row class name for Table components.

@@ -5,21 +5,21 @@ import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { useAgents, useClusterOverview } from 'stores/agents';
-import { useAuth } from 'stores/auth';
+import { selectIsAuthenticated } from 'stores/auth';
+import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useResourcePools } from 'stores/resourcePools';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
 
@@ -48,32 +48,29 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const loadableAuth = useAuth();
-  const isAuthenticated = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.isAuthenticated,
-    NotLoaded: () => false,
-  });
+  const isAuthenticated = useObservable(selectIsAuthenticated);
   const loadableCurrentUser = useCurrentUser();
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
-  const overview = useClusterOverview();
-  const agents = useAgents();
-  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
-    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-    NotLoaded: () => undefined, // TODO show spinner when this is loading
-  });
+
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
 
   const showNavigation = isAuthenticated && ui.showChrome;
+
+  const { canCreateWorkspace } = usePermissions();
+  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
+    useModalWorkspaceCreate();
+  const handleCreateWorkspace = useCallback(() => {
+    openWorkspaceCreateModal();
+  }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
@@ -88,10 +85,6 @@ const NavigationTabbar: React.FC = () => {
     setIsShowingOverflow(false);
     setIsShowingPinnedWorkspaces(false);
   }, []);
-  const handleLaunchJupyterLab = useCallback(() => {
-    setIsShowingOverflow(false);
-    openJupyterLabModal();
-  }, [openJupyterLabModal]);
 
   const handlePathUpdate = useCallback((e: AnyMouseEvent, path?: string) => {
     handlePath(e, { path });
@@ -101,9 +94,57 @@ const NavigationTabbar: React.FC = () => {
 
   if (!showNavigation) return null;
 
+  const overflowActionsTop = [
+    {
+      render: () => (
+        <AvatarCard className={css.user} darkLight={ui.darkLight} key="avatar" user={authUser} />
+      ),
+    },
+    {
+      icon: 'settings',
+      label: 'Settings',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
+    },
+    {
+      icon: 'user',
+      label: 'Sign out',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
+    },
+  ];
+
+  const overflowActionsBottom = [
+    {
+      icon: 'logs',
+      label: 'Cluster Logs',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.clusterLogs()),
+    },
+    {
+      external: true,
+      icon: 'docs',
+      label: 'Docs',
+      path: paths.docs(),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'cloud',
+      label: 'API (Beta)',
+      path: paths.docs('/rest-api/'),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'pencil',
+      label: 'Feedback',
+      path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
+      popout: true,
+    },
+  ];
+
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
+        <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
@@ -120,13 +161,22 @@ const NavigationTabbar: React.FC = () => {
             path: paths.workspaceList(),
           },
           ...Loadable.match(pinnedWorkspaces, {
-            Loaded: (workspaces) =>
-              workspaces.map((workspace) => ({
+            Loaded: (workspaces) => {
+              const workspaceIcons = workspaces.map((workspace) => ({
                 icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
                 label: workspace.name,
                 onClick: (e: AnyMouseEvent) =>
                   handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-              })),
+              }));
+              if (canCreateWorkspace) {
+                workspaceIcons.push({
+                  icon: <Icon name="add-small" size="large" />,
+                  label: 'New Workspace',
+                  onClick: handleCreateWorkspace,
+                });
+              }
+              return workspaceIcons;
+            },
             NotLoaded: () => [
               {
                 icon: <Spinner />,
@@ -139,63 +189,11 @@ const NavigationTabbar: React.FC = () => {
         onCancel={handleActionSheetCancel}
       />
       <ActionSheet
-        actions={[
-          {
-            render: () => (
-              <AvatarCard
-                className={css.user}
-                darkLight={ui.darkLight}
-                key="avatar"
-                user={authUser}
-              />
-            ),
-          },
-          {
-            icon: 'settings',
-            label: 'Settings',
-            onClick: (e) => handlePathUpdate(e, paths.settings('account')),
-          },
-          {
-            icon: 'user',
-            label: 'Sign out',
-            onClick: (e) => handlePathUpdate(e, paths.logout()),
-          },
-          {
-            icon: 'jupyter-lab',
-            label: 'Launch JupyterLab',
-            onClick: () => handleLaunchJupyterLab(),
-          },
-          {
-            icon: 'logs',
-            label: 'Cluster Logs',
-            onClick: (e) => handlePathUpdate(e, paths.clusterLogs()),
-          },
-          {
-            external: true,
-            icon: 'docs',
-            label: 'Docs',
-            path: paths.docs(),
-            popout: true,
-          },
-          {
-            external: true,
-            icon: 'cloud',
-            label: 'API (Beta)',
-            path: paths.docs('/rest-api/'),
-            popout: true,
-          },
-          {
-            external: true,
-            icon: 'pencil',
-            label: 'Feedback',
-            path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
-            popout: true,
-          },
-        ]}
+        actions={[...overflowActionsTop, ...overflowActionsBottom]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {modalJupyterLabContextHolder}
+      {modalWorkspaceCreateContextHolder}
     </nav>
   );
 };

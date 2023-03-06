@@ -1,5 +1,5 @@
 import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
-import { Tooltip, Tree } from 'antd';
+import { Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import { string } from 'io-ts';
 import yaml from 'js-yaml';
@@ -14,6 +14,7 @@ import React, {
   useState,
 } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import useResize from 'hooks/useResize';
@@ -147,7 +148,6 @@ const CodeViewer: React.FC<Props> = ({
     [_submittedConfig],
   );
   const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
-    applicableRoutespace: '/code',
     settings: {
       filePath: {
         defaultValue: firstConfig,
@@ -416,7 +416,7 @@ const CodeViewer: React.FC<Props> = ({
   useEffect(() => {
     const hasActiveFile = activeFile?.text;
     const isSameFile = activeFile?.key === settings.filePath;
-    const isIpybnFile = settings.filePath.includes('.ipynb');
+    const isIpybnFile = /\.ipynb$/i.test(settings.filePath);
 
     if (hasActiveFile && isSameFile && isIpybnFile) {
       setEditorMode('ipynb');

@@ -1,14 +1,16 @@
 import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Space, Tooltip } from 'antd';
+import { Card, Space } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
+import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
 import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
 
@@ -152,15 +154,19 @@ const NotesCard: React.FC<Props> = ({
           )
         )
       }
-      headStyle={{ minHeight: 'fit-content', paddingInline: '16px' }}
+      headStyle={{ marginTop: '16px', minHeight: 'fit-content', paddingInline: '16px' }}
       style={{ ...style }}
       title={
-        <InlineEditor
+        <Input
+          defaultValue={title}
           disabled={!onSaveTitle || disabled}
-          focusSignal={noteChangeSignal}
-          style={{ paddingLeft: '5px', paddingRight: '5px' }}
-          value={title}
-          onSave={onSaveTitle}
+          onBlur={(e) => {
+            const newValue = e.currentTarget.value;
+            onSaveTitle?.(newValue);
+          }}
+          onPressEnter={(e) => {
+            e.currentTarget.blur();
+          }}
         />
       }>
       <Spinner spinning={isLoading}>

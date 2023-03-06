@@ -8,7 +8,6 @@ import { GroupBy } from './ClusterHistoricalUsage.settings';
 
 export interface ResourceAllocationChartSeries {
   groupedBy: GroupBy;
-  hoursByAgentLabel: Record<string, number[]>;
   hoursByExperimentLabel: Record<string, number[]>;
   hoursByResourcePool: Record<string, number[]>;
   hoursByUsername: Record<string, number[]>;
@@ -17,13 +16,12 @@ export interface ResourceAllocationChartSeries {
 }
 
 export const mapResourceAllocationApiToChartSeries = (
-  apiRes: Array<V1ResourceAllocationAggregatedEntry>,
+  apiRes: Readonly<V1ResourceAllocationAggregatedEntry[]>,
   grouping: GroupBy,
-  users: DetailedUser[],
+  users: Readonly<DetailedUser[]>,
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
-    hoursByAgentLabel: mapToChartSeries(apiRes.map((item) => item.byAgentLabel)),
     hoursByExperimentLabel: mapToChartSeries(apiRes.map((item) => item.byExperimentLabel)),
     hoursByResourcePool: mapToChartSeries(apiRes.map((item) => item.byResourcePool)),
     hoursByUsername: mapToChartSeries(
@@ -37,8 +35,8 @@ export const mapResourceAllocationApiToChartSeries = (
 };
 
 const mapPeriodToDisplayNames = (
-  period: Record<string, number>,
-  users: DetailedUser[],
+  period: Readonly<Record<string, number>>,
+  users: Readonly<DetailedUser[]>,
 ): Record<string, number> => {
   const result: Record<string, number> = {};
   Object.keys(period).forEach((key) => {

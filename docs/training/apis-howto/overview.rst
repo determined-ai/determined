@@ -2,32 +2,53 @@
  Training APIs
 ###############
 
-This section describes how to use the training APIs and contains the API reference information.
+You can train almost any deep learning model using the Determined Training APIs. The Training API
+guides describe how to take your existing model code and train your model in Determined. Each API
+guide contains a link to its corresponding API reference.
 
-Determined leverages specific APIs for each Deep Learning framework. In general, users convert their
-existing training code by subclassing a Trial class and implementing methods that advertise
-components of the user's model - e.g., model architecture, data loader, optimizer, learning rate
-scheduler, callbacks, etc. This is called the Trial definition and by structuring their code in this
-way, Determined is able to run the training loop and provide advanced training and model management
-capabilities.
+**********
+ Core API
+**********
 
-Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
-configuration </reference/reference-training/experiment-config-reference>` to configure how
-Determined should train the model - e.g., multi-GPU, hyperparameter search, etc.
+The Core API is a low-level, flexible API that lets you train models in any deep learning framework.
+With the Core API, you can plug in your existing training code. You'll then use an :doc:`experiment
+configuration </reference/reference-training/experiment-config-reference>` to tell Determined how to
+train the model - e.g., multi-GPU, hyperparameter search, etc.
 
-If you have existing model code that you'd like to train with Determined, continue to one of the API
-docs below depending on your ML Framework.
+-  :doc:`/training/apis-howto/api-core-ug`
 
--  :doc:`/training/apis-howto/api-core/overview`
+*****************
+ High-Level APIs
+*****************
+
+The Trial APIs offer higher-level integrations with popular deep learning frameworks. With the Trial
+APIs, you first convert your existing training code by subclassing a Trial class and implementing
+methods that define each component of training - e.g., model architecture, data loader, optimizer,
+learning rate scheduler, callbacks, etc. This is called the Trial definition. With the code
+structured in this way, Determined is able to run the training loop and provide advanced training
+and model management capabilities.
+
+Once you have converted your code, you can use an :doc:`experiment configuration
+</reference/reference-training/experiment-config-reference>` to tell Determined how to train the
+model - e.g., multi-GPU, hyperparameter search, etc.
+
 -  :doc:`/training/apis-howto/api-pytorch-ug`
 -  :doc:`/training/apis-howto/api-pytorch-lightning-ug`
 -  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
-If you'd like a review of implementing the Determined APIs on simple models, please take a look at
-our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
-existing model that already runs on Determined, take a look at our :doc:`examples
-</example-solutions/examples>` to see if the model you'd like to train is already available.
+Looking for a Basic Tutorial?
+=============================
+
+If you'd like to review how to implement the Determined APIs on simple models, visit our `Tutorials
+<https://docs.determined.ai/latest/tutorials/index.html>`_.
+
+Prefer to use an Example Model?
+===============================
+
+If you'd like to build off of an existing model that already runs on Determined, visit our
+:doc:`examples </example-solutions/examples>` to see if the model you'd like to train is already
+available.
 
 ********************
  TensorFlow Support
@@ -49,15 +70,15 @@ Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is u
 experiment is controlled by the container image that has been configured for that experiment.
 Determined provides prebuilt Docker images that include TensorFlow 2.8, 1.15, and 2.7, respectively:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10`` (default)
--  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.19.10``
--  ``determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.10``
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` (default)
+-  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.20.1``
+-  ``determinedai/environments:cuda-11.2-pytorch-1.12-tf-2.7-gpu-0.20.1``
 
 We also provide lightweight CPU-only counterparts:
 
--  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10``
--  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.19.10``
--  ``determinedai/environments:py-3.8-tf-2.7-cpu-0.19.10``
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1``
+-  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.20.1``
+-  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.7-cpu-0.20.1``
 
 To change the container image used for an experiment, specify :ref:`environment.image
 <exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
@@ -73,7 +94,7 @@ images.
 Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
 includes ROCm 4.2, PyTorch 1.9 and Tensorflow 2.5:
 
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10``
+-  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1``
 
 Known limitations:
 
@@ -84,7 +105,7 @@ Known limitations:
    :caption: Training
    :hidden:
 
-   api-core/overview
+   api-core-ug
    api-pytorch-ug
    api-pytorch-lightning-ug
    api-keras-ug

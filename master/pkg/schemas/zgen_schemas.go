@@ -587,6 +587,14 @@ var (
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
+        "proxy_ports": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+        },
         "ports": {
             "type": [
                 "object",
@@ -1619,6 +1627,53 @@ var (
     }
 }
 `)
+	textProxyPortV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-port.json",
+    "title": "ProxyPort",
+    "additionalProperties": false,
+    "required": [
+        "proxy_port"
+    ],
+    "type": "object",
+    "properties": {
+        "proxy_port": {
+            "type": "number"
+        },
+        "proxy_tcp": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "unauthenticated": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "default_service_id": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
+`)
+	textProxyPortsConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-ports.json",
+    "title": "ProxyPortsConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+    }
+}
+`)
 	textRegistryAuthV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/registry-auth.json",
@@ -1709,11 +1764,12 @@ var (
     "required": [],
     "properties": {
         "agent_label": {
+            "$comment": "the agent_label feature was removed in 0.20.0, and the config is ignored",
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "devices": {
             "type": [
@@ -3116,6 +3172,10 @@ var (
 
 	schemaProfilingConfigV0 interface{}
 
+	schemaProxyPortV0 interface{}
+
+	schemaProxyPortsConfigV0 interface{}
+
 	schemaRegistryAuthV0 interface{}
 
 	schemaReproducibilityConfigV0 interface{}
@@ -3769,6 +3829,46 @@ func ParsedProfilingConfigV0() interface{} {
 	return schemaProfilingConfigV0
 }
 
+func ParsedProxyPortV0() interface{} {
+	cacheLock.RLock()
+	if schemaProxyPortV0 != nil {
+		cacheLock.RUnlock()
+		return schemaProxyPortV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaProxyPortV0 != nil {
+		return schemaProxyPortV0
+	}
+	err := json.Unmarshal(textProxyPortV0, &schemaProxyPortV0)
+	if err != nil {
+		panic("invalid embedded json for ProxyPortV0")
+	}
+	return schemaProxyPortV0
+}
+
+func ParsedProxyPortsConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaProxyPortsConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaProxyPortsConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaProxyPortsConfigV0 != nil {
+		return schemaProxyPortsConfigV0
+	}
+	err := json.Unmarshal(textProxyPortsConfigV0, &schemaProxyPortsConfigV0)
+	if err != nil {
+		panic("invalid embedded json for ProxyPortsConfigV0")
+	}
+	return schemaProxyPortsConfigV0
+}
+
 func ParsedRegistryAuthV0() interface{} {
 	cacheLock.RLock()
 	if schemaRegistryAuthV0 != nil {
@@ -4304,6 +4404,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
 	cachedSchemaBytesMap[url] = textProfilingConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+	cachedSchemaBytesMap[url] = textProxyPortV0
+	url = "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+	cachedSchemaBytesMap[url] = textProxyPortsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
 	cachedSchemaBytesMap[url] = textRegistryAuthV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"

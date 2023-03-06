@@ -26,6 +26,7 @@ def ls(args: Namespace) -> None:
     def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
         return bindings.get_GetJobs(
             session,
+            resourcePool=args.resource_pool,
             offset=offset,
             limit=args.limit,
             orderBy=order_by,
@@ -57,7 +58,7 @@ def ls(args: Namespace) -> None:
     ]
 
     def computed_job_name(job: bindings.v1Job) -> str:
-        if job.type == bindings.determinedjobv1Type.TYPE_EXPERIMENT:
+        if job.type == bindings.jobv1Type.TYPE_EXPERIMENT:
             return f"{job.name} ({job.entityId})"
         else:
             return job.name

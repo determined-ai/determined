@@ -227,7 +227,7 @@ class SearchMethod:
 
     @abstractmethod
     def on_validation_completed(
-        self, searcher_state: SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self, searcher_state: SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[Operation]:
         """
         Informs the searcher that the validation workload

@@ -23,7 +23,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
-import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
 import { useUsers } from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
@@ -35,6 +35,7 @@ import {
   unsupportedQPosSchedulers,
 } from 'utils/job';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -47,12 +48,12 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const loadableResourcePools = useResourcePools();
   const users = Loadable.match(useUsers(), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  useRefetchClusterData();
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(
     resourcePools.map(
@@ -73,7 +74,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig(jobState));
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
-  const fetchResourcePools = useFetchResourcePools(canceler);
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
@@ -196,11 +196,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [fetchAll]);
 
   useEffect(() => {
-    fetchResourcePools();
-    return () => canceler.abort();
-  }, [canceler, fetchResourcePools]);
-
-  useEffect(() => {
     if (!managingJob) return;
     const job = jobs.find((j) => j.jobId === managingJob.jobId);
     if (!job) {
@@ -220,7 +215,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
       if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
     }
-  }, [settings.columns, settingsColumns, updateSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
     return defaultColumns

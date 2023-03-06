@@ -1,6 +1,7 @@
 from determined.__version__ import __version__
 from determined._experiment_config import ExperimentConfig
 from determined._info import RendezvousInfo, TrialInfo, ResourcesInfo, ClusterInfo, get_cluster_info
+from determined._import import import_from_path
 from determined import core
 from determined._env_context import EnvContext
 from determined._trial_context import TrialContext
@@ -11,6 +12,7 @@ from determined._trial_controller import (
 )
 from determined._execution import (
     _catch_sys_exit,
+    _make_test_experiment_config,
     _make_local_execution_env,
     _local_execution_manager,
     _load_trial_for_checkpoint_export,

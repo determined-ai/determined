@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -31,23 +30,19 @@ type DB interface {
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
-	ExperimentConfigRaw(id int) ([]byte, error)
-	AddExperiment(experiment *model.Experiment) error
+	AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfig) error
 	ExperimentByID(id int) (*model.Experiment, error)
-	LegacyExperimentConfigByID(
-		id int,
-	) (expconf.LegacyConfig, error)
-	ExperimentWithoutConfigByID(id int) (*model.Experiment, error)
+	ExperimentByTrialID(trialID int) (*model.Experiment, error)
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
-	SaveExperimentConfig(experiment *model.Experiment) error
+	SaveExperimentConfig(id int, config expconf.ExperimentConfig) error
 	SaveExperimentState(experiment *model.Experiment) error
 	SaveExperimentArchiveStatus(experiment *model.Experiment) error
 	DeleteExperiment(id int) error
 	ExperimentHasCheckpointsInRegistry(id int) (bool, error)
 	SaveExperimentProgress(id int, progress *float64) error
-	ExperimentConfig(id int) (expconf.ExperimentConfig, error)
+	ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error)
 	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)
@@ -111,8 +106,6 @@ type DB interface {
 		err error)
 	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
 		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
-	ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) (
-		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
 	TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
@@ -125,16 +118,14 @@ type DB interface {
 		endTime time.Time, err error)
 	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	ExpCompareTopTrialsByMetric(experimentID []int32, maxTrials int, metric string,
-		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-		err error)
+		startBatches int, endBatches int, xAxisMetricLabels []string) (
+		metricMeasurements MetricMeasurements, err error)
 	ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-		err error)
+		startBatches int, endBatches int, xAxisMetricLabels []string) (
+		metricMeasurements MetricMeasurements, err error)
 	FetchHPImportanceTrainingData(experimentID int, metric string) (
 		map[int][]model.HPImportanceTrialData, error)
 	FetchHPImportanceValidationData(experimentID int, metric string) (

@@ -1,0 +1,45 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  justify-content: space-between;
+
+  .name {
+    font-size: 16px;
+    margin-bottom: 0;
+    width: fit-content;
+  }
+  .workspace {
+    display: flex;
+  }
+  .footer {
+    display: flex;
+    font-size: 12px;
+    justify-content: space-between;
+
+    .experiments {
+      align-self: end;
+
+      & > span {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+      }
+    }
+    .lastExperiment {
+      margin-left: 6px;
+    }
+    .archivedBadge {
+      background-color: var(--theme-status-inactive);
+      border-radius: var(--theme-border-radius);
+      color: var(--theme-status-warning-on);
+      opacity: 1;
+      padding: 2px 4px;
+    }
+  }
+  &.archived .name,
+  &.archived .experiments {
+    opacity: 55%;
+  }
+}

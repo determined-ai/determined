@@ -1,5 +1,6 @@
 // Package command provides utilities for commands. This package comment is to satisfy linters
 // without disabling golint for the file.
+//
 //nolint:dupl // So easy with generics, so hard without; just wait.
 package command
 
@@ -49,6 +50,9 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 			}
 		}
 		ctx.Respond(resp)
+
+	case *apiv1.DeleteWorkspaceRequest:
+		ctx.TellAll(msg, ctx.Children()...)
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()

@@ -1,16 +1,17 @@
 package main
 
 import (
-	"io/ioutil"
+	"context"
 	"os"
 	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/determined-ai/determined/agent/internal"
+	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 )
@@ -26,12 +27,12 @@ func readConfigFile(configPath string) ([]byte, error) {
 	var err error
 	if _, err = os.Stat(configPath); err != nil {
 		if isDefault && os.IsNotExist(err) {
-			logrus.Warnf("no configuration file at %s, skipping", configPath)
+			log.Warnf("no configuration file at %s, skipping", configPath)
 			return nil, nil
 		}
 		return nil, errors.Wrap(err, "error finding configuration file")
 	}
-	bs, err := ioutil.ReadFile(configPath) // #nosec G304
+	bs, err := os.ReadFile(configPath) // #nosec G304
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading configuration file")
 	}
@@ -39,7 +40,7 @@ func readConfigFile(configPath string) ([]byte, error) {
 }
 
 func newRunCmd() *cobra.Command {
-	opts := internal.Options{}
+	opts := options.Options{}
 
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -71,8 +72,10 @@ func newRunCmd() *cobra.Command {
 			return errors.Wrap(err, "command-line arguments specify illegal configuration")
 		}
 
-		if err := internal.Run(version, opts); err != nil {
-			logrus.Fatal(err)
+		opts.Resolve()
+
+		if err := internal.Run(context.Background(), version, opts); err != nil {
+			log.Fatal(err)
 		}
 
 		return nil
@@ -86,7 +89,7 @@ func newRunCmd() *cobra.Command {
 
 	// Labels flags.
 	cmd.Flags().StringVar(&opts.Label, "label", "",
-		"Label attached to the agent for scheduling constraints")
+		"This field has been deprecated and will be ignored, use ``resource_pool`` instead.")
 
 	// ResourcePool flags.
 	cmd.Flags().StringVar(&opts.ResourcePool, "resource-pool", "",
@@ -152,6 +155,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
 		"Name for the Fluent Bit container")
 
+	// Fault-tolerance flags.
 	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",
 		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")
 	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",

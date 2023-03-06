@@ -13,10 +13,8 @@ import {
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
+import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
-import { ResourcePoolsProvider } from 'stores/resourcePools';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
@@ -74,17 +72,13 @@ const setup = () => {
       <HelmetProvider>
         <WorkspacesProvider>
           <UsersProvider>
-            <AuthProvider>
-              <UserRolesProvider>
-                <ResourcePoolsProvider>
-                  <ProjectsProvider>
-                    <HistoryRouter history={history}>
-                      <ExperimentDetails />
-                    </HistoryRouter>
-                  </ProjectsProvider>
-                </ResourcePoolsProvider>
-              </UserRolesProvider>
-            </AuthProvider>
+            <ClusterProvider>
+              <ProjectsProvider>
+                <HistoryRouter history={history}>
+                  <ExperimentDetails />
+                </HistoryRouter>
+              </ProjectsProvider>
+            </ClusterProvider>
           </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
@@ -139,13 +133,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      const { container } = setup().view;
+      setup();
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
+        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
       });
 
       expect(screen.getByText('Overview')).toBeInTheDocument();
@@ -169,13 +163,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      const { container } = setup().view;
+      setup();
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
+        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
       });
 
       expect(screen.getByText('Visualization')).toBeInTheDocument();

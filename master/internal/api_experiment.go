@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -159,7 +158,6 @@ func (a *apiServer) getExperiment(
 func (a *apiServer) getExperimentAndCheckCanDoActions(
 	ctx context.Context,
 	expID int,
-	withConfig bool,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -167,12 +165,8 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 		return nil, model.User{}, err
 	}
 
-	var e *model.Experiment
-	if withConfig {
-		e, err = a.m.db.ExperimentByID(expID)
-	} else {
-		e, err = a.m.db.ExperimentWithoutConfigByID(expID)
-	}
+	e, err := a.m.db.ExperimentByID(expID)
+
 	expNotFound := status.Errorf(codes.NotFound, "experiment not found: %d", expID)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, model.User{}, expNotFound
@@ -250,7 +244,7 @@ func (a *apiServer) PostSearcherOperations(
 	resp *apiv1.PostSearcherOperationsResponse, err error,
 ) {
 	_, _, err = a.getExperimentAndCheckCanDoActions(
-		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
+		ctx, int(req.ExperimentId), expauth.AuthZProvider.Get().CanRunCustomSearch,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching experiment from database")
@@ -318,7 +312,7 @@ func (a *apiServer) GetExperiment(
 func (a *apiServer) DeleteExperiment(
 	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
-	e, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	e, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanDeleteExperiment)
 	if err != nil {
 		return nil, err
@@ -356,11 +350,6 @@ func (a *apiServer) DeleteExperiment(
 }
 
 func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
-	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
-	if err != nil {
-		return fmt.Errorf("failed to read config for experiment: %w", err)
-	}
-
 	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
 	if err != nil {
 		return err
@@ -376,15 +365,17 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 	if err != nil {
 		return err
 	}
-	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-	jobSubmissionTime := exp.StartTime
-	taskID := model.NewTaskID()
-	ckptGCTask := newCheckpointGCTask(
-		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		conf, checkpoints, true, agentUserGroup, userModel, nil,
-	)
-	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+	if len(checkpoints) > 0 {
+		addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+		jobSubmissionTime := exp.StartTime
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(
+			a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+		)
+		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
+			return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+		}
 	}
 
 	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
@@ -469,6 +460,21 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
+	if req.ShowTrialData {
+		query.ColumnExpr(`
+		(
+			SELECT searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) AS best_trial_searcher_metric`)
+	}
+
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:      "id",
@@ -486,6 +492,18 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:       "project_id",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
+		apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL: `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -688,7 +706,7 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 func (a *apiServer) GetExperimentValidationHistory(
 	ctx context.Context, req *apiv1.GetExperimentValidationHistoryRequest,
 ) (*apiv1.GetExperimentValidationHistoryResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -799,7 +817,7 @@ func (a *apiServer) PreviewHPSearch(
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -818,7 +836,7 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -837,7 +855,7 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -853,7 +871,7 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -870,7 +888,7 @@ func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
 	id := int(req.Id)
-	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id, false,
+	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id,
 		expauth.AuthZProvider.Get().CanEditExperimentsMetadata)
 	if err != nil {
 		return nil, err
@@ -898,7 +916,7 @@ func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
 	id := int(req.Id)
-	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id, false,
+	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id,
 		expauth.AuthZProvider.Get().CanEditExperimentsMetadata)
 	if err != nil {
 		return nil, err
@@ -1016,7 +1034,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
 	experimentID := int(req.Id)
 	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
-	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, useSearcherSortBy,
+	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if err != nil {
 		return nil, err
@@ -1025,7 +1043,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	// If SORT_BY_SEARCHER_METRIC is specified without an OrderBy
 	// default to ordering by "better" checkpoints.
 	if useSearcherSortBy && req.OrderBy == apiv1.OrderBy_ORDER_BY_UNSPECIFIED {
-		if exp.Config.Searcher().SmallerIsBetter() {
+		if exp.Config.Searcher.SmallerIsBetter {
 			req.OrderBy = apiv1.OrderBy_ORDER_BY_ASC
 		} else {
 			req.OrderBy = apiv1.OrderBy_ORDER_BY_DESC
@@ -1103,10 +1121,21 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	var commitDate *time.Time
+	pt, err := protoutils.ToTime(req.GitCommitDate)
+	if err == nil {
+		commitDate = &pt
+	}
+
 	detParams := CreateExperimentParams{
-		ConfigBytes:  req.Config,
-		ModelDef:     filesToArchive(req.ModelDefinition),
-		ValidateOnly: req.ValidateOnly,
+		ConfigBytes:   req.Config,
+		ModelDef:      filesToArchive(req.ModelDefinition),
+		ValidateOnly:  req.ValidateOnly,
+		Template:      req.Template,
+		GitRemote:     req.GitRemote,
+		GitCommit:     req.GitCommit,
+		GitCommitter:  req.GitCommitter,
+		GitCommitDate: commitDate,
 	}
 	if req.ParentId != 0 {
 		detParams.ParentID = ptrs.Ptr(int(req.ParentId))
@@ -1136,7 +1165,9 @@ func (a *apiServer) CreateExperiment(
 		detParams.ProjectID = &projectID
 	}
 
-	dbExp, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
+	dbExp, activeConfig, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(
+		&detParams, user,
+	)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
 			return nil, status.Errorf(codes.NotFound, err.Error())
@@ -1148,7 +1179,9 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if validateOnly {
-		return &apiv1.CreateExperimentResponse{}, nil
+		return &apiv1.CreateExperimentResponse{
+			Experiment: &experimentv1.Experiment{},
+		}, nil
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
@@ -1158,7 +1191,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1177,7 +1210,7 @@ func (a *apiServer) CreateExperiment(
 	}
 	return &apiv1.CreateExperimentResponse{
 		Experiment: protoExp,
-		Config:     protoutils.ToStruct(e.Config),
+		Config:     protoutils.ToStruct(activeConfig),
 		Warnings:   command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
@@ -1202,23 +1235,17 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	var vStartTime time.Time
 
 	var timeSinceLastAuth time.Time
-	var config expconf.ExperimentConfig
 	var searcherMetric string
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+			if err != nil {
 				return err
 			}
 
 			if timeSinceLastAuth == (time.Time{}) { // Initialzation.
-				var err error
-				config, err = a.m.db.ExperimentConfig(experimentID)
-				if err != nil {
-					return errors.Wrapf(err,
-						"error fetching experiment config from database: %d", experimentID)
-				}
-				searcherMetric = config.Searcher().Metric()
+				searcherMetric = exp.Config.Searcher.Metric
 			}
 			timeSinceLastAuth = time.Now()
 		}
@@ -1270,74 +1297,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
-// DEPRECATED -- do not use.
-func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
-	resp apiv1.Determined_ExpCompareMetricNamesServer,
-) error {
-	seenTrain := make(map[string]bool)
-	seenValid := make(map[string]bool)
-	var tStartTime time.Time
-	var vStartTime time.Time
-	period := time.Duration(req.PeriodSeconds) * time.Second
-	if period == 0 {
-		period = defaultMetricsStreamPeriod
-	}
-	if len(req.TrialId) == 0 {
-		return status.Errorf(
-			codes.InvalidArgument,
-			"at least one trial id required",
-		)
-	}
-
-	var timeSinceLastAuth time.Time
-	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			for _, trialID := range req.TrialId {
-				if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(trialID),
-					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-					return err
-				}
-			}
-			timeSinceLastAuth = time.Now()
-		}
-
-		var response apiv1.ExpCompareMetricNamesResponse
-
-		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
-			tStartTime, vStartTime)
-		if err != nil {
-			return err
-		}
-		tStartTime = tEndTime
-		vStartTime = vEndTime
-
-		for _, name := range newTrain {
-			if seen := seenTrain[name]; !seen {
-				response.TrainingMetrics = append(response.TrainingMetrics, name)
-				seenTrain[name] = true
-			}
-		}
-		for _, name := range newValid {
-			if seen := seenValid[name]; !seen {
-				response.ValidationMetrics = append(response.ValidationMetrics, name)
-				seenValid[name] = true
-			}
-		}
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-		if err = resp.Send(&response); err != nil {
-			return err
-		}
-
-		time.Sleep(period)
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-	}
-}
-
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer,
 ) error {
@@ -1360,7 +1319,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1451,7 +1410,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1503,7 +1462,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	}
 }
 
-func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.SearcherConfig) (
+func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacySearcher) (
 	trials []int32, err error,
 ) {
 	type Ranking int
@@ -1513,34 +1472,34 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 	)
 	var ranking Ranking
 
-	switch s.GetUnionMember().(type) {
-	case expconf.RandomConfig:
+	switch s.Name {
+	case "random":
 		ranking = ByMetricOfInterest
-	case expconf.GridConfig:
+	case "grid":
 		ranking = ByMetricOfInterest
-	case expconf.CustomConfig:
+	case "custom":
 		ranking = ByMetricOfInterest
-	case expconf.AsyncHalvingConfig:
+	case "async_halving":
 		ranking = ByTrainingLength
-	case expconf.AdaptiveASHAConfig:
+	case "adaptive_asha":
 		ranking = ByTrainingLength
-	case expconf.SingleConfig:
+	case "single":
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
 	// EOL searcher configs:
-	case expconf.AdaptiveConfig:
+	case "adaptive":
 		ranking = ByTrainingLength
-	case expconf.AdaptiveSimpleConfig:
+	case "adaptive_simple":
 		ranking = ByTrainingLength
-	case expconf.SyncHalvingConfig:
+	case "sync_halving":
 		ranking = ByTrainingLength
 	default:
-		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
+		return nil, errors.Errorf("unable to detect a searcher algorithm for trial sampling")
 	}
 	switch ranking {
 	case ByMetricOfInterest:
-		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
+		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	case ByTrainingLength:
-		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
+		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	default:
 		panic("Invalid state in trial sampling")
 	}
@@ -1555,6 +1514,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
+	var metricMeasurements db.MetricMeasurements
+	xAxisLabelMetrics := []string{"epoch"}
+
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1572,81 +1534,23 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
+		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches, xAxisLabelMetrics)
 	default:
 		panic("Invalid metric type")
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
-	if len(metricSeries) > 0 {
+	if len(metricMeasurements.Batches) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
 	if !seenBefore {
-		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
-	}
-
-	for _, in := range metricSeries {
-		out := apiv1.DataPoint{
-			Batches: int32(in.X),
-			Value:   in.Y,
-		}
-		trial.Data = append(trial.Data, &out)
-	}
-	return &trial, nil
-}
-
-// DEPRECATED -- do not use.
-func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
-	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
-	currentTrials map[int32]bool,
-	trialCursors map[int32]time.Time,
-) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
-	var metricSeries []lttb.Point
-	var endTime time.Time
-	var zeroTime time.Time
-	var err error
-	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
-	trial.TrialId = trialID
-
-	if _, current := currentTrials[trialID]; !current {
-		var trialConfig *model.Trial
-		trialConfig, err = a.m.db.TrialByID(int(trialID))
-		if err != nil {
-			return nil, errors.Wrapf(err, "error fetching trial metadata")
-		}
-		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
-		trial.ExperimentId = int32(trialConfig.ExperimentID)
-	}
-
-	startTime, seenBefore := trialCursors[trialID]
-	if !seenBefore {
-		startTime = zeroTime
-	}
-	switch metricType {
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches)
-	default:
-		panic("Invalid metric type")
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "error fetching time series of metrics")
-	}
-	if len(metricSeries) > 0 {
-		// if we get empty results, the endTime is incorrectly zero
-		trialCursors[trialID] = endTime
-	}
-	if !seenBefore {
-		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
+		metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
 	}
 
 	for _, in := range metricSeries {
@@ -1691,24 +1595,19 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 
 	var timeSinceLastAuth time.Time
-	var config expconf.ExperimentConfig
-	var searcherConfig expconf.SearcherConfig
+	var searcherConfig expconf.LegacySearcher
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+			if err != nil {
 				return err
 			}
 
 			if timeSinceLastAuth == (time.Time{}) { // Initialzation.
-				var err error
-				config, err = a.m.db.ExperimentConfig(experimentID)
-				if err != nil {
-					return errors.Wrapf(err, "error fetching experiment config from database")
-				}
-				searcherConfig = config.Searcher()
+				searcherConfig = exp.Config.Searcher
 			}
 			timeSinceLastAuth = time.Now()
 		}
@@ -1777,119 +1676,11 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
-func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
-	resp apiv1.Determined_ExpCompareTrialsSampleServer,
-) error {
-	experimentIDs := req.ExperimentIds
-	maxTrials := int(req.MaxTrials)
-	if maxTrials == 0 {
-		maxTrials = 25
-	}
-	maxDatapoints := int(req.MaxDatapoints)
-	if maxDatapoints == 0 {
-		maxDatapoints = 1000
-	}
-	startBatches := int(req.StartBatches)
-	endBatches := int(req.EndBatches)
-	if endBatches <= 0 {
-		endBatches = math.MaxInt32
-	}
-	period := time.Duration(req.PeriodSeconds) * time.Second
-	if period == 0 {
-		period = defaultMetricsStreamPeriod
-	}
-
-	metricName := req.MetricName
-	metricType := req.MetricType
-	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return status.Error(codes.InvalidArgument, "must specify a metric type")
-	}
-	if metricName == "" {
-		return status.Error(codes.InvalidArgument, "must specify a metric name")
-	}
-
-	var timeSinceLastAuth time.Time
-	trialCursors := make(map[int32]time.Time)
-	currentTrials := make(map[int32]bool)
-	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			for _, expID := range experimentIDs {
-				if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), int(expID), false,
-					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-					return err
-				}
-			}
-			timeSinceLastAuth = time.Now()
-		}
-
-		var response apiv1.ExpCompareTrialsSampleResponse
-		var promotedTrials []int32
-		var demotedTrials []int32
-		var trials []*apiv1.ExpCompareTrialsSampleResponse_ExpTrial
-
-		seenThisRound := make(map[int32]bool)
-
-		r := regexp.MustCompile("(?i)(error|loss|mse|mae|mse|deviation|false)")
-		smallerIsBetter := r.MatchString(metricName)
-
-		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs,
-			maxTrials,
-			metricName,
-			smallerIsBetter)
-		if err != nil {
-			return err
-		}
-
-		for _, trialID := range trialIDs {
-			var trial *apiv1.ExpCompareTrialsSampleResponse_ExpTrial
-			trial, err = a.expCompareFetchTrialSample(trialID, metricName, metricType, maxDatapoints,
-				startBatches, endBatches, currentTrials, trialCursors)
-			if err != nil {
-				return err
-			}
-
-			if _, current := currentTrials[trialID]; !current {
-				promotedTrials = append(promotedTrials, trialID)
-				currentTrials[trialID] = true
-			}
-			seenThisRound[trialID] = true
-
-			trials = append(trials, trial)
-		}
-		for oldTrial := range currentTrials {
-			if !seenThisRound[oldTrial] {
-				demotedTrials = append(demotedTrials, oldTrial)
-				delete(trialCursors, oldTrial)
-			}
-		}
-		// Deletes from currentTrials have to happen when not looping over currentTrials
-		for _, oldTrial := range demotedTrials {
-			delete(currentTrials, oldTrial)
-		}
-
-		response.Trials = trials
-		response.PromotedTrials = promotedTrials
-		response.DemotedTrials = demotedTrials
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-		if err = resp.Send(&response); err != nil {
-			return errors.Wrap(err, "error sending sample of trial metric streams")
-		}
-
-		time.Sleep(period)
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-	}
-}
-
 func (a *apiServer) ComputeHPImportance(ctx context.Context,
 	req *apiv1.ComputeHPImportanceRequest,
 ) (*apiv1.ComputeHPImportanceResponse, error) {
 	experimentID := int(req.ExperimentId)
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1944,7 +1735,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	var timeSinceLastAuth time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -2007,7 +1798,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 func (a *apiServer) GetBestSearcherValidationMetric(
 	ctx context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
 ) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -2028,7 +1819,7 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 func (a *apiServer) GetModelDef(
 	ctx context.Context, req *apiv1.GetModelDefRequest,
 ) (*apiv1.GetModelDefResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -2048,7 +1839,7 @@ func (a *apiServer) MoveExperiment(
 	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
 	// get experiment info
-	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false)
+	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
@@ -2097,7 +1888,7 @@ func (a *apiServer) MoveExperiment(
 func (a *apiServer) GetModelDefTree(
 	ctx context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -2113,7 +1904,7 @@ func (a *apiServer) GetModelDefTree(
 func (a *apiServer) GetModelDefFile(
 	ctx context.Context, req *apiv1.GetModelDefFileRequest,
 ) (*apiv1.GetModelDefFileResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}

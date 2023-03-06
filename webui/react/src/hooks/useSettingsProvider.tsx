@@ -1,10 +1,11 @@
 import { Map } from 'immutable';
+import { useObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/auth';
+import { authChecked } from 'stores/auth';
 import { useCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -34,20 +35,19 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const loadableAuth = useAuth();
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const checked = loadableAuth.authChecked;
+  const checked = useObservable(authChecked);
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');
   const [settingsState, setSettingsState] = useState(() => Map<string, Settings>());
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !checked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
@@ -81,10 +81,10 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, settingsState]);
+  }, [canceler, user?.id, checked, settingsState]);
 
   useEffect(() => {
-    const url = window.location.search.substr(/^\?/.test(location.search) ? 1 : 0);
+    const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
 
     querySettings.current = url;
   }, []);
@@ -95,17 +95,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading && !(checked && !user)) return <Spinner spinning />;
-
   return (
-    <UserSettings.Provider
-      value={{
-        isLoading: isLoading,
-        querySettings: querySettings.current,
-        state: settingsState,
-        update,
-      }}>
-      {children}
-    </UserSettings.Provider>
+    <Spinner spinning={isLoading && !(checked && !user)} tip="Loading Page">
+      <UserSettings.Provider
+        value={{
+          isLoading: isLoading,
+          querySettings: querySettings.current,
+          state: settingsState,
+          update,
+        }}>
+        {children}
+      </UserSettings.Provider>
+    </Spinner>
   );
 };

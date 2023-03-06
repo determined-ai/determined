@@ -71,11 +71,14 @@ class S3StorageManager(storage.CloudStorageManager):
         return os.path.join(self.prefix, storage_id)
 
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
         logging.info(f"Uploading to s3: {prefix}/{dst}")
-        for rel_path in sorted(self._list_directory(src)):
+        upload_paths = paths if paths is not None else self._list_directory(src)
+        for rel_path in sorted(upload_paths):
             key_name = f"{prefix}/{rel_path}"
             logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
 
@@ -113,6 +116,9 @@ class S3StorageManager(storage.CloudStorageManager):
             for obj in self.bucket.objects.filter(Prefix=prefix):
                 found = True
                 relname = os.path.relpath(obj.key, prefix)
+                if obj.key.endswith("/"):
+                    relname = os.path.join(relname, "")
+
                 if selector is not None and not selector(relname):
                     continue
                 _dst = os.path.join(dst, relname)

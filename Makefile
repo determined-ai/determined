@@ -18,9 +18,19 @@ get-deps-pip:
 
 .PHONY: get-deps-go
 get-deps-go:
+	$(MAKE) go-version-check
 	$(MAKE) get-deps-master
 	$(MAKE) get-deps-agent
 	$(MAKE) get-deps-proto
+
+# Go versions may look like goM, goM.N, or goM.N.P. Only 1.20.* is supported.
+supported_go_minor_version = go1.20
+system_go_version := $(shell go version | sed 's/.*\(go[[:digit:]][[:digit:].]*\).*/\1/')
+.PHONY: go-version-check
+go-version-check:
+	@: $(if $(findstring $(supported_go_minor_version), $(system_go_version)), \
+				, \
+				$(error go version $(system_go_version) not supported. Must use $(supported_go_minor_version).x))
 
 .PHONY: package
 package:

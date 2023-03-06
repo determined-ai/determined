@@ -1,8 +1,9 @@
 import { ProjectOutlined } from '@ant-design/icons';
-import { Input, Modal, Tree } from 'antd';
+import { Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';
@@ -17,7 +18,7 @@ import handleError from 'utils/error';
 import css from './WorkspaceQuickSearch.module.scss';
 
 interface Props {
-  children: React.ReactChild;
+  children: React.ReactNode;
 }
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
@@ -101,7 +102,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
               <Link onClick={() => onClickProject(project)}>{project.name}</Link>
             </div>
           ),
-          value: `project-${project.id}`,
         }));
       return treeChildren;
     },
@@ -125,7 +125,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
               <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
             </div>
           ),
-          value: `workspace-${workspace.id}`,
         };
       })
       .filter((item) => item.isWorkspaceIncluded);

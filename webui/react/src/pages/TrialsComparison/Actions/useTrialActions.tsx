@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 
+import Button from 'components/kit/Button';
 import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -50,7 +51,6 @@ interface Props {
 }
 
 export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
-  applicableRoutespace: '/trials',
   settings: {
     ids: {
       defaultValue: [],
@@ -169,9 +169,9 @@ const useTrialActions = ({
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
         <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-          <button onClick={(e) => e.stopPropagation()}>
+          <Button type="text" onClick={(e) => e.stopPropagation()}>
             <Icon name="overflow-vertical" />
-          </button>
+          </Button>
         </Dropdown>
       </div>
     );

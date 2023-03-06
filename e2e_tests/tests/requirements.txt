@@ -1,13 +1,22 @@
 appdirs
+# TODO(MLG-336): remove this requirement when tensorflow-macos is upgraded.
+protobuf<3.20; sys_platform == 'darwin' and platform_machine == 'arm64'
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 pytest-timeout
 pexpect
 torch==1.9.0
 torchvision==0.10.0
-tensorflow==2.4.3; sys_platform != 'darwin' or platform_machine != 'arm64'
-tensorflow-macos==2.7.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow==2.8.4; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow-macos==2.8.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 pandas
 pyyaml
 docker
 python-dateutil
+kubernetes
+# numby>1.20 and h5py==2.10 are incompatible, force newer versions of
+# of both to avoid AttributeError: module 'numpy' has no attribute 'typeDict'
+# when pytest executes e2e_tests.
+numpy>=1.20
+h5py>=3
+ray[default]

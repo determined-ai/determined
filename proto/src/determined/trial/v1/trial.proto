@@ -218,12 +218,14 @@ message TrialMetrics {
 // The rendezvous info for the trial to rendezvous with sibling containers.
 message RendezvousInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "addresses", "rank" ] }
+    json_schema: { required: [ "addresses", "rank", "slots" ] }
   };
   // The rendezvous addresses of the other containers.
   repeated string addresses = 1;
   // The container rank.
   int32 rank = 2;
+  // The slots for each address, respectively.
+  repeated int32 slots = 3;
 }
 
 // The metadata pertaining to the current running task for a trial.

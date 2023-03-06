@@ -10,6 +10,150 @@
  Version 0.19
 **************
 
+Version 0.19.11
+===============
+
+**Release Date:** February 17, 2023
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where environment variables with an equals character in the value, such
+   as ``func=f(x)=x``, were processed incorrectly in Kubernetes.
+-  Agent: Fix a bug where if agent reattach was enabled and the master was down while an active
+   task's Docker container failed, the task could get stuck in an unkillable running state.
+-  ``det deploy aws``: Update CloudFormation permissions to allow checkpoint downloads through
+   master.
+-  Tasks: Fix a bug where in rare cases tasks could take an extra 30 seconds to complete.
+
+**Improvements**
+
+-  Container Images: Publish multi-arch master and agent container image manifests with AMD64,
+   ARM64, and PPC64 architectures.
+
+-  Experiments: If an experiment with no checkpoints is deleted, a checkpoint GC task will no longer
+   be launched. Launching a checkpoint GC task could prevent experiments with certain incorrect
+   configuration from being deleted.
+
+-  Cluster: Capability added for checkpoint downloads from Google Cloud Storage via a master
+   instance.
+
+-  Installation: ``.deb`` and ``.rpm`` Linux packages will now install master and agent binaries
+   into ``/usr/bin/`` instead of ``/usr/local/bin/``, to be more in line with the Filesystem
+   Hierarchy Standard.
+
+-  Kubernetes: Empty environment variables can now be specified in Kubernetes, while before they
+   would throw an error.
+
+-  Kubernetes: Zero-slot tasks on GPU clusters will not request ``nvidia.com/gpu: 0`` resources any
+   more, allowing them to be scheduled on CPU-only nodes.
+
+-  Installation: Add experimental Homebrew (macOS) package.
+
+-  Scheduler: The scheduler can be configured to find fits for distributed jobs against agents of
+   different sizes.
+
+**New Features**
+
+-  CLI: Add a ``--add-tag`` flag to AWS ``det deploy aws up``, which specifies tags to add to the
+   underlying CloudFormation stack.
+
+   -  New tags will not replace automatically added tags such as ``deployment-type`` or
+      ``managed-by``.
+
+   -  Any added tags that should persist across updates should be always be included when using
+      ``det deploy aws up`` -- if the argument is missing, any previously added tags would be
+      removed.
+
+Version 0.19.10
+===============
+
+**Release Date:** January 20, 2023
+
+**Breaking Changes**
+
+-  Kubernetes: Add the ``kubernetes_namespace`` config field for resource pools, specifying a
+   Kubernetes `namespace
+   <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__ that tasks
+   will be launched into.
+
+-  The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to ``"default"``.
+   Forked experiments will need to have their configurations manually modified to update the
+   resource pool name.
+
+**New Features**
+
+-  Cluster: Add support for experiment tag propagation.
+
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+      now allows for experiment tags to be propagated as labels to the associated jobs on the HPC
+      cluster. A number of labeling schemes are supported, controlled by the configuration item
+      ``resource_manager.job_project_source``.
+
+-  Cluster: Add support for launcher-provided resource pools.
+
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+      now allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
+      partition on an HPC cluster with different submission options.
+
+-  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
+   <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
+   Apptainer/Singularity/PodMan.
+
+**Improvements**
+
+-  Notebooks: The default idle notebook termination timeout can now be set via the
+   ``notebook_timeout`` master config option.
+
+-  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously, if a trial
+   did not implement preemption correctly and was canceled, the trial did not stop and was
+   unkillable until the preemption timeout of an hour.
+
+**Bug Fixes**
+
+-  Fix a bug where notebooks, TensorBoards, shells, and commands restored after a master restart
+   would have a submission time of when the master restarted rather than the original job submission
+   time.
+
+-  ``det deploy aws``: Fix reliability issue in ``efs`` deployment type, fix broken ``fsx``
+   deployment type.
+
+-  Job queue: Fix an issue where the CLI command ``det job list`` would ignore the argument
+   ``--resource-pool``.
+
+-  Distributed training: Fix a bug where a distributed training trial that called
+   ``context.set_stop_requested`` would cause the trial to error and prevent it from completing
+   successfully.
+
+**Removed Features**
+
+-  The data layer feature, which was deprecated in 0.18.0 (May 2022), has been removed. A migration
+   guide to use the underlying `yogadl library <https://yogadl.readthedocs.io/en/latest/>`_ directly
+   may be found `here <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
+   Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
+
+Version 0.19.9
+==============
+
+**Release Date:** December 20, 2022
+
+**New Features**
+
+-  WebUI: Display total checkpoint size for experiments.
+
+-  WebUI: Add links from forked experiments and continued trials to their parents.
+
+-  API: Add structured fields to task log objects.
+
+-  Cluster: Add support for launcher-provided resource pools. Determined Enterprise Edition now
+   allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
+   partition on an HPC cluster with different submission options.
+
+-  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
+   <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
+   Apptainer/Singularity/PodMan.
+
 Version 0.19.8
 ==============
 
@@ -2810,7 +2954,7 @@ Version 0.12.7
    :class:`determined.pytorch.ClipGradsL2Value`.
 
 -  Add a ``metadata`` field to checkpoints. Checkpoints can now have arbitrary key-value pairs
-   associated with them. Metadata can be added, queried, and removed via a :class:`Python API
+   associated with them. Metadata can be added, queried, and removed via the :class:`Python SDK
    <determined.experimental.Checkpoint>`.
 
 -  Add support for Keras callbacks that stop training early, including the `official EarlyStopping

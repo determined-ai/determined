@@ -2,9 +2,13 @@ import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
-import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
-import { Settings, settingsConfigForTask } from 'components/LogViewer/LogViewerFilters.settings';
+import LogViewer, {
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+} from 'components/kit/LogViewer/LogViewer';
+import LogViewerSelect, { Filters } from 'components/kit/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogViewerSelect.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
@@ -130,7 +134,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
 
   const logFilters = (
     <div className={css.filters}>
-      <LogViewerFilters
+      <LogViewerSelect
         options={filterOptions}
         showSearch={true}
         values={filterValues}
@@ -145,7 +149,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       bodyNoPadding
       breadcrumb={[
         { breadcrumbName: 'Tasks', path: paths.taskList() },
-        { breadcrumbName: `${taskTypeLabel} ${taskId.substr(0, 8)}`, path: '#' },
+        { breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`, path: '#' },
       ]}
       headerComponent={headerComponent}
       id="task-logs"

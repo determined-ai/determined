@@ -1,11 +1,15 @@
-import { Button, Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import Button from 'components/kit/Button';
+import Form from 'components/kit/Form';
 import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
 import EditableRow from './EditableRow';
+
+export const ADD_ROW_TEXT = '+ Add Row';
+
 interface Props {
   editing?: boolean;
   metadata?: Metadata;
@@ -27,13 +31,21 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   }, [metadata]);
 
   const onValuesChange = useCallback(
-    (_changedValues: unknown, values: { metadata: Metadata[] }) => {
-      const newMetadata = values.metadata.reduce((acc, row) => {
-        if (row?.key) acc[row.key] = row.value;
-        return acc;
-      }, {} as Metadata);
+    (_changedValues: { metadata: Metadata[] }, values: { metadata: Metadata[] }) => {
+      const mapAndUpdate = (metadata: Metadata[]) => {
+        // filtering with Boolean as, upon removing a row, it triggers the onValuesChange with the removed row as an undefined entry.
+        const newMetadata = metadata.filter(Boolean).reduce((acc, row) => {
+          if (row.value === undefined) {
+            row.value = '';
+          }
+          if (row?.key) acc[row.key] = row.value;
+          return acc;
+        }, {} as Metadata);
 
-      updateMetadata?.(newMetadata);
+        updateMetadata?.(newMetadata);
+      };
+
+      mapAndUpdate(values.metadata);
     },
     [updateMetadata],
   );
@@ -56,8 +68,8 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
                   />
                 ))}
-                <Button className={css.addRow} type="link" onClick={add}>
-                  + Add Row
+                <Button type="link" onClick={() => add({ key: '', value: '' })}>
+                  {ADD_ROW_TEXT}
                 </Button>
               </>
             )}

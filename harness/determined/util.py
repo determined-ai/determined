@@ -125,8 +125,8 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     for name, values in metric_dict.items():
         m = None  # type: Optional[float]
         try:
-            values = np.array(values)
-            filtered_values = values[values != None]  # noqa: E711
+            np_values = np.array(values)
+            filtered_values = np_values[np_values != None]  # noqa: E711
             m = np.mean(filtered_values).item()
         except (TypeError, ValueError):
             # If we get here, values are non-scalars, which cannot be averaged.

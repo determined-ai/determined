@@ -1,15 +1,17 @@
-import { Button, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
+import Button from 'components/kit/Button';
+import UserBadge from 'components/kit/UserBadge';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
+import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -28,6 +30,7 @@ import settingsConfig, {
 } from './WorkspaceMembers.settings';
 
 interface Props {
+  addableUsersAndGroups: UserOrGroup[];
   assignments: V1RoleWithAssignments[];
   fetchMembers: () => void;
   groupsAssignedDirectly: V1Group[];
@@ -87,11 +90,9 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   }, [openWorkspaceRemoveMemberModal]);
 
   return (
-    <div>
+    <div className={css.dropdown}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button type="text">
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" />
       </Dropdown>
       {openWorkspaceRemoveMemberContextHolder}
     </div>
@@ -99,6 +100,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 };
 
 const WorkspaceMembers: React.FC<Props> = ({
+  addableUsersAndGroups,
   assignments,
   onFilterUpdate,
   usersAssignedDirectly,
@@ -112,71 +114,25 @@ const WorkspaceMembers: React.FC<Props> = ({
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
+  const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];
 
-  const usersAndGroups: UserOrGroup[] = useMemo(
-    () =>
-      mockWorkspaceMembers
-        ? [
-            {
-              displayName: 'Test User One Display Name',
-              id: 1,
-              username: 'TestUserOneUserName',
-            },
-            {
-              id: 2,
-              username: 'TestUserTwoUserName',
-            },
-            {
-              groupId: 1,
-              name: 'Test Group 1 Name',
-            },
-            {
-              groupId: 2,
-              name: 'Test Group 2 Name',
-            },
-          ]
-        : [...usersAssignedDirectly, ...groupsAssignedDirectly],
-    [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
-  );
-  if (mockWorkspaceMembers) {
-    assignments = [
-      {
-        groupRoleAssignments: [
-          {
-            groupId: 1,
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-          },
-          {
-            groupId: 2,
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-          },
-        ],
-        userRoleAssignments: [
-          {
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-            userId: 1,
-          },
-          {
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-            userId: 2,
-          },
-        ],
-      },
-    ];
-  }
+  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
+    useModalWorkspaceAddMember({
+      addableUsersAndGroups,
+      onClose: fetchMembers,
+      rolesAssignableToScope,
+      workspaceId: workspace.id,
+    });
+
+  const rbacEnabled = useFeature().isOn('rbac');
 
   useEffect(() => {
     onFilterUpdate(settings.name);
   }, [onFilterUpdate, settings.name]);
+
+  const handleAddMembersClick = useCallback(() => {
+    openWorkspaceAddMember();
+  }, [openWorkspaceAddMember]);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -264,10 +220,8 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: 'Role',
       },
       {
-        align: 'right',
         dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
         render: actionRenderer,
         title: '',
       },
@@ -283,7 +237,13 @@ const WorkspaceMembers: React.FC<Props> = ({
   ]);
 
   return (
-    <div className={css.membersContainer}>
+    <>
+      <div className={css.headerButton}>
+        {rbacEnabled &&
+          canAssignRoles({ workspace }) &&
+          !workspace.immutable &&
+          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
+      </div>
       {settings ? (
         <InteractiveTable
           columns={columns}
@@ -305,7 +265,8 @@ const WorkspaceMembers: React.FC<Props> = ({
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-    </div>
+      {workspaceAddMemberContextHolder}
+    </>
   );
 };
 

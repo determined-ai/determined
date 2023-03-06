@@ -26,6 +26,12 @@ message SummarizedMetric {
   // A possibly down-sampled series of metric readings through the progress of
   // the trial.
   repeated DataPoint data = 2;
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial in wall time.
+  repeated DataPointTime time = 4;
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial in epoch.
+  repeated DataPointEpoch epochs = 5;
   // Type of metrics (training, validation, or unset).
   MetricType type = 3;
 }
@@ -674,6 +680,18 @@ enum Scale {
   SCALE_LOG = 2;
 }
 
+// XAxis options available in metrics charts.
+enum XAxis {
+  // Unknown x-axis.
+  X_AXIS_UNSPECIFIED = 0;
+  // x-axis in batch. This is the default x-axis.
+  X_AXIS_BATCH = 1;
+  // x-axis in time.
+  X_AXIS_TIME = 2;
+  // x-axis in epoch.
+  X_AXIS_EPOCH = 3;
+}
+
 // Get downsampled metrics from a trial.
 message SummarizeTrialRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -736,6 +754,8 @@ message CompareTrialsRequest {
   MetricType metric_type = 6;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
+  // x-axis selection. Default is in batch.
+  XAxis x_axis = 8;
 }
 // Response to CompareTrialsRequest.
 message CompareTrialsResponse {

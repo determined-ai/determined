@@ -16,7 +16,7 @@ logger = logging.getLogger("determined.searcher")
 
 
 class _ExperimentInactiveException(Exception):
-    def __init__(self, exp_state: bindings.determinedexperimentv1State):
+    def __init__(self, exp_state: bindings.experimentv1State):
         self.exp_state = exp_state
 
 
@@ -154,13 +154,13 @@ class SearchRunner:
                             )
                             if (
                                 event.experimentInactive.experimentState
-                                == bindings.determinedexperimentv1State.STATE_COMPLETED
+                                == bindings.experimentv1State.STATE_COMPLETED
                             ):
                                 self.state.experiment_completed = True
 
                             if (
                                 event.experimentInactive.experimentState
-                                == bindings.determinedexperimentv1State.STATE_PAUSED
+                                == bindings.experimentv1State.STATE_PAUSED
                             ):
                                 self._show_experiment_paused_msg()
                             else:

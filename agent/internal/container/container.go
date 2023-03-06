@@ -176,7 +176,6 @@ func (c *Container) run(parent context.Context) (err error) {
 				switch signal {
 				case syscall.SIGKILL:
 					c.log.Tracef("signal %s, canceling run-scoped context", signal)
-					launchgroup.Cancel()
 					return ErrKilledBeforeRun
 				default:
 					c.log.Warnf("ignoring signal other than SIGKILL %s before running", signal)
@@ -219,6 +218,7 @@ func (c *Container) run(parent context.Context) (err error) {
 			if err != nil {
 				c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
 				if remove {
+					// TODO this context could be canceled between CreateContainer and this.
 					if rErr := c.docker.RemoveContainer(ctx, dockerID, true); rErr != nil {
 						c.log.WithError(rErr).Debug("couldn't cleanup container")
 					}
@@ -227,7 +227,7 @@ func (c *Container) run(parent context.Context) (err error) {
 			}
 		}()
 
-		c.log.Trace("starting container")
+		c.log.WithField("docker-id", dockerID).Trace("starting container")
 		dc, err := c.docker.RunContainer(ctx, parent, dockerID)
 		if err != nil {
 			return fmt.Errorf("starting container: %w", err)
@@ -288,7 +288,7 @@ func (c *Container) wait(ctx context.Context, dc *docker.Container) error {
 	for {
 		select {
 		case exit := <-dc.ContainerWaiter.Waiter:
-			c.log.Trace("container exited")
+			c.log.Tracef("container exited with %d", exit.StatusCode)
 			if exit.Error != nil {
 				return fmt.Errorf("receiving container exit: %s", exit.Error.Message)
 			}

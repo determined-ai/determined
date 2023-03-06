@@ -1,8 +1,10 @@
-import { Button, Dropdown, Select, Tooltip } from 'antd';
+import { Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
@@ -34,7 +36,6 @@ export interface TrialsCollectionInterface {
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
 const configForProject = (projectId: string): SettingsConfig<{ collection: string }> => ({
-  applicableRoutespace: '/trials',
   settings: {
     collection: {
       defaultValue: '',
@@ -374,11 +375,7 @@ export const useTrialCollections = (
                   ],
             }}
             trigger={['click']}>
-            <Button
-              className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}
-              ghost
-              icon={<Icon name="overflow-vertical" />}
-            />
+            <Button ghost icon={<Icon name="overflow-vertical" />} />
           </Dropdown>
           {viewFiltersContextHolder}
           {collectionContextHolder}

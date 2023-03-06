@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"golang.org/x/exp/maps"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -36,16 +38,18 @@ type (
 
 		// Resource configuration.
 		SlotsNeeded         int
-		AgentLabel          string
 		ResourcePool        string
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
 		Preemptible  bool
 		IdleTimeout  *IdleTimeoutConfig
-		ProxyPort    *ProxyPortConfig
+		ProxyPorts   []*ProxyPortConfig
 		StreamEvents *EventStreamConfig
 		Restore      bool
+
+		// Logging context of the allocation actor.
+		LogContext logger.Context
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.
@@ -59,10 +63,10 @@ type (
 
 	// ProxyPortConfig configures a proxy the allocation should start.
 	ProxyPortConfig struct {
-		ServiceID       string
-		Port            int
-		ProxyTCP        bool
-		Unauthenticated bool
+		ServiceID       string `json:"service_id"`
+		Port            int    `json:"port"`
+		ProxyTCP        bool   `json:"proxy_tcp"`
+		Unauthenticated bool   `json:"unauthenticated"`
 	}
 
 	// EventStreamConfig configures an event stream.
@@ -92,6 +96,7 @@ type (
 		Resources      []ResourcesSummary `json:"resources"`
 		SchedulerType  string             `json:"scheduler_type"`
 		Priority       *int               `json:"priority"`
+		ProxyPorts     []*ProxyPortConfig `json:"proxy_ports,omitempty"`
 	}
 	// SetAllocationName sets the name of the task.
 	SetAllocationName struct {
@@ -220,6 +225,15 @@ type ResourcesSummary struct {
 	Exited  *ResourcesStopped
 }
 
+// Slots returns slot count for the resources.
+func (s ResourcesSummary) Slots() int {
+	var res int
+	for _, devs := range s.AgentDevices {
+		res += len(devs)
+	}
+	return res
+}
+
 // Resources is an interface that provides function for task actors
 // to start tasks on assigned resources.
 type Resources interface {
@@ -263,13 +277,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.ScheduledEvent != nil:
 		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
 	case ev.ResourcesStartedEvent != nil:
-		hpcJobID := ev.ResourcesStartedEvent.HPCJobID
-		if hpcJobID != "" {
-			message = fmt.Sprintf("Resources for %s have started, associated HPC job ID %s",
-				description, hpcJobID)
-		} else {
-			message = fmt.Sprintf("Resources for %s have started", description)
-		}
+		message = fmt.Sprintf("Resources for %s have started", description)
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)
 	case ev.ExitedEvent != nil:
@@ -279,7 +287,11 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.ServiceReadyEvent != nil:
 		message = fmt.Sprintf("Service of %s is available", description)
 	case ev.AssignedEvent != nil:
-		message = fmt.Sprintf("%s was assigned to an agent", description)
+		if ev.AssignedEvent.Recovered {
+			message = fmt.Sprintf("%s was recovered on an agent", description)
+		} else {
+			message = fmt.Sprintf("%s was assigned to an agent", description)
+		}
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
 		// events we'd need to notify of them about these non existing logs either by adding a new
@@ -302,3 +314,22 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 
 // ResourceList is a wrapper for a list of resources.
 type ResourceList map[ResourcesID]Resources
+
+// NewProxyPortConfig converts expconf proxy configs into internal representation.
+func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*ProxyPortConfig {
+	out := []*ProxyPortConfig{}
+	for _, epp := range input {
+		serviceID := string(taskID)
+		if !epp.DefaultServiceID() {
+			serviceID = string(taskID) + ":" + strconv.Itoa(epp.ProxyPort())
+		}
+		out = append(out, &ProxyPortConfig{
+			Port:            epp.ProxyPort(),
+			ProxyTCP:        epp.ProxyTCP(),
+			Unauthenticated: epp.Unauthenticated(),
+			ServiceID:       serviceID,
+		})
+	}
+
+	return out
+}

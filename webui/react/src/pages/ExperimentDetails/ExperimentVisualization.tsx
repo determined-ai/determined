@@ -1,8 +1,9 @@
-import { Alert, Tabs } from 'antd';
+import { Alert } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
@@ -422,11 +423,11 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   return (
     <div className={css.base}>
-      <Tabs
+      <Pivot
         activeKey={typeKey}
         destroyInactiveTabPane
         items={tabItems}
-        type="card"
+        type="secondary"
         onChange={handleTabChange}
       />
     </div>

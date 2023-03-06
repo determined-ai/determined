@@ -16,7 +16,8 @@ export const getResponseStatus = (e: unknown): number | undefined =>
  * due to the server not being able to authenticate the request/user.
  * If this is the case, this can lead to the client being logged out and
  * redirected to the login page.
- * @param e
+ *
+ * @param u
  * @param supportExternalAuth
  * @returns
  */
@@ -113,7 +114,7 @@ export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any =>
   if (isObject(enumObject) && value !== undefined) {
     const enumRecord = enumObject as Record<string, string>;
     const stringValue = value as string;
-    const validOptions = Object.values(enumRecord).filter((_, index) => index % 2 === 0);
+    const validOptions = Object.values(enumRecord);
     if (validOptions.includes(stringValue)) return stringValue;
     return enumRecord.UNSPECIFIED;
   }

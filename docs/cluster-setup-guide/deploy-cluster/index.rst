@@ -1,12 +1,11 @@
-####################
- Cluster Deployment
-####################
+###################
+ Set Up Determined
+###################
 
-This section includes user guides for how to deploy Determined in on-premise, cloud, and kubernetes
-environments:
+To set up Determined, start by following the cluster deployment guide for your environment.
 
 +------------------------------------------+-----------------------------------------------------+
-| Topic                                    | Documentation Content                               |
+| Environment                              | Description                                         |
 +==========================================+=====================================================+
 | :doc:`sysadmin-deploy-on-prem/overview`  | How to deploy Determined on-premises.               |
 +------------------------------------------+-----------------------------------------------------+
@@ -19,6 +18,15 @@ environments:
 | :doc:`sysadmin-deploy-on-slurm/overview` | How to run Determined on an HPC cluster             |
 |                                          | (Slurm/PBS).                                        |
 +------------------------------------------+-----------------------------------------------------+
+
+************************************
+ Configuring the Determined Cluster
+************************************
+
+-  :doc:`Common configuration options </reference/reference-deploy/config/common-config-options>`
+-  :doc:`Master configuration reference
+   </reference/reference-deploy/config/master-config-reference>`
+-  :doc:`Agent configuration reference </reference/reference-deploy/config/agent-config-reference>`
 
 .. toctree::
    :hidden:

@@ -523,6 +523,10 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
         assert ref.startswith(start), ref
         return Ref(ref[len(start) :])
 
+    if "type" not in schema:
+        # When "type" is not present, any json element should be valid.
+        return Any()
+
     # only $refs don't have types
     assert "type" in schema, (path, schema)
 

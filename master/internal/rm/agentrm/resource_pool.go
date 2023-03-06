@@ -111,7 +111,9 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
 		AllocationRef: msg.AllocationRef,
 	})
-	log := ctx.Log().WithField("allocation-id", msg.AllocationID)
+	log := ctx.Log().
+		WithField("allocation-id", msg.AllocationID).
+		WithField("restoring", msg.Restore)
 
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
@@ -230,7 +232,12 @@ func (rp *resourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetAll
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
 func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.AllocateRequest) bool {
-	fits := findFits(req, rp.agentStatesCache, rp.fittingMethod)
+	fits := findFits(
+		req,
+		rp.agentStatesCache,
+		rp.fittingMethod,
+		rp.config.Scheduler.AllowHeterogeneousFits,
+	)
 
 	if len(fits) == 0 {
 		return false
@@ -482,6 +489,10 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
+			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			defer func() {
+				rp.agentStatesCache = nil
+			}()
 			for _, a := range rp.agentStatesCache {
 				totalSlots += len(a.slotStates)
 			}
@@ -507,7 +518,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(aproto.GetRPResponse{
 			AgentReconnectWait:    rp.config.AgentReconnectWait,
-			AgentReattachEnabled:  rp.config.AgentReattachEnabled,
 			MaxZeroSlotContainers: rp.config.MaxAuxContainersPerAgent,
 		})
 

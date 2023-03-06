@@ -8,7 +8,7 @@
 -r model_hub/tests/requirements.txt
 -r e2e_tests/tests/requirements.txt
 
-black>=20.8b1
+black==21.7b0
 click<=8.0.4  # Unpin click after tensorflow update.
 flake8>=3.8.0
 flake8-bugbear>=19.8.0
@@ -24,7 +24,7 @@ mypy==0.910
 bump2version>=1.0.1
 pre-commit~=2.20
 # Earlier versions had different type annotations
-pyzmq>=22
+pyzmq>=23.2.1
 devcluster>=1,<2
 coverage
 # typeshed

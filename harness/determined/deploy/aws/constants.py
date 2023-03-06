@@ -18,6 +18,7 @@ class defaults:
 
 class cloudformation:
     CLUSTER_ID = "ClusterId"
+    EXTRA_TAGS = "ExtraTags"
     KEYPAIR = "Keypair"
     MASTER_ID = "MasterId"
     BASTION_ID = "BastionId"

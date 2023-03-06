@@ -10,8 +10,8 @@ import (
 //
 // The Mergable psuedointerface is defined as:
 //
-//     "x.Merge(src) operates on a non-pointer x, accepts src of the same type as x, and returns
-//     another object of the same type as x"
+//	"x.Merge(src) operates on a non-pointer x, accepts src of the same type as x, and returns
+//	another object of the same type as x"
 //
 // Note that the requirement .Merge must not operate on a pointer type is unlike most go methods.
 //
@@ -55,15 +55,14 @@ func mergeIfMergable(obj reflect.Value, src reflect.Value) (reflect.Value, bool)
 //
 // Example usage:
 //
-//    config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
+//	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 //
-//    var cluster_default_storage expconf.CheckpointStorage = ...
+//	var cluster_default_storage expconf.CheckpointStorage = ...
 //
-//    // Use the cluster checkpoint storage if the user did not specify one.
-//    config.RawCheckpointStorage = schemas.Merge(
-//        config.RawCheckpointStorage, &cluster_default_storage
-//    )
-//
+//	// Use the cluster checkpoint storage if the user did not specify one.
+//	config.RawCheckpointStorage = schemas.Merge(
+//	    config.RawCheckpointStorage, &cluster_default_storage
+//	)
 func Merge[T any](obj T, src T) T {
 	name := fmt.Sprintf("%T", obj)
 

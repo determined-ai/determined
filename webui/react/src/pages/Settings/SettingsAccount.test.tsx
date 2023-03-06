@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { AuthProvider, useAuth } from 'stores/auth';
+import { setAuth } from 'stores/auth';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -54,7 +54,6 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const { setAuth } = useAuth();
   const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
@@ -62,15 +61,11 @@ const Container: React.FC = () => {
   const loadUsers = useCallback(() => {
     updateCurrentUser(currentUser.id);
   }, [updateCurrentUser]);
-  const getUsers = useCallback(async () => {
-    await fetchUsers();
-  }, [fetchUsers]);
 
   useEffect(() => {
-    (async () => await getUsers())();
+    fetchUsers();
     setAuth({ isAuthenticated: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchUsers]);
 
   useEffect(() => {
     loadUsers();
@@ -83,9 +78,7 @@ const setup = () =>
   render(
     <UIProvider>
       <UsersProvider>
-        <AuthProvider>
-          <Container />
-        </AuthProvider>
+        <Container />
       </UsersProvider>
     </UIProvider>,
   );
@@ -97,18 +90,15 @@ describe('SettingsAccount', () => {
   });
 
   it('should render with correct values', async () => {
-    const { container } = await setup();
-    await waitFor(() => expect(screen.getByDisplayValue(USERNAME)).toBeInTheDocument());
+    setup();
+    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
-
-    // Fetching element by specific attribute is not natively supported.
-    const editor = container.querySelector(`[data-value="${DISPLAY_NAME}"]`);
-    expect(editor).toBeInTheDocument();
   });
   it('should be able to change display name', async () => {
     act(() => {
       setup();
     });
+    await user.click(screen.getByTestId('edit-displayname'));
     await user.type(screen.getByPlaceholderText('Add display name'), 'a');
     await user.keyboard('{enter}');
     expect(mockPatchUser).toHaveBeenCalledWith({

@@ -32,8 +32,9 @@ const (
 // thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
 // Close method must be called or resources will be leaked.
 type WebSocket[TIn, TOut any] struct {
-	log  *logrus.Entry
-	conn *websocket.Conn
+	log      *logrus.Entry
+	conn     *websocket.Conn
+	connLock sync.Mutex
 
 	cancel    context.CancelFunc
 	errLock   sync.Mutex
@@ -49,7 +50,7 @@ type WebSocket[TIn, TOut any] struct {
 }
 
 // Wrap the given, underlying *websocket.Conn and returns a higher level, thread-safe wrapper.
-func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *WebSocket[TIn, TOut] {
+func Wrap[TIn, TOut any](name string, conn *websocket.Conn) (*WebSocket[TIn, TOut], error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	inbox := make(chan TIn, inboxBufferSize)
@@ -62,13 +63,23 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *WebSocket[TIn, TOut
 			"remote-addr": conn.RemoteAddr(),
 			"name":        name,
 		}),
-		conn: conn,
-
+		conn:   conn,
 		cancel: cancel,
 		Inbox:  inbox,
 		Outbox: outbox,
 		Done:   done,
 	}
+
+	s.conn.SetReadLimit(maxMessageSize)
+	if err := s.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		return nil, fmt.Errorf("setting initial read deadline: %w", err)
+	}
+	s.conn.SetPongHandler(func(string) error {
+		if err := s.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			s.log.WithError(err).Error("setting read deadline")
+		}
+		return nil
+	})
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -90,24 +101,13 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *WebSocket[TIn, TOut
 		close(done)
 	}()
 
-	return s
+	return s, nil
 }
 
 func (s *WebSocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn) error {
 	s.log.Trace("running socket read loop")
 	defer s.cancel()
 	defer close(inbox)
-
-	s.conn.SetReadLimit(maxMessageSize)
-	if err := s.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-		return fmt.Errorf("setting initial read deadline: %w", err)
-	}
-	s.conn.SetPongHandler(func(string) error {
-		if err := s.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
-			s.log.WithError(err).Error("setting read deadline")
-		}
-		return nil
-	})
 
 	for {
 		switch msgType, msg, err := s.conn.ReadMessage(); {
@@ -190,19 +190,23 @@ func (s *WebSocket[TIn, TOut]) Close() error {
 }
 
 func (s *WebSocket[TIn, TOut]) closeGraceful() error {
+	// https://github.com/gorilla/websocket/issues/448 suggests that you can do something like
+	//
+	//   s.conn.SetPongHandler(nil) // So the pong handler doesn't extend the deadline.
+	//   s.conn.SetReadDeadline(closeDeadline)
+	//
+	// to properly enforce a close deadline, but concurrently reading and writing pong handlers
+	// is a race, since handling of control frames within conn.advanceFrame uses the pong handlers.
+	// The likelihood of this race mattering in practice is miniscule but the race detector sees it.
+	// We enforce the deadline ourselves, outside of github.com/gorilla/websocket to avoid.
+	closeDeadline := time.Now().Add(closeWait)
 	s.cancel()
 
-	closeDeadline := time.Now().Add(closeWait)
-	s.conn.SetPongHandler(nil) // So the pong handler doesn't extend the deadline.
-	if err := s.conn.SetReadDeadline(closeDeadline); err != nil {
-		return fmt.Errorf("setting read deadline: %w", err)
-	}
-
 	// If this close message begins the handshake, the read loop will exhaust messages until our
-	// peer responds with their close, or it exceeds the read deadline (or, you know, the underlying
-	// connection is ripped from its hands), then exit. If we are already closed (have received and
-	// responded with, by the default close handler, a close), we will receive ErrCloseSent from the
-	// write and the read loop should have already exited.
+	// peer responds with their close, or it exceeds the read deadline (or, you know, the
+	// underlying connection is ripped from its hands), then exit. If we did not begin the close,
+	// we must have received and responded with, by the default close handler, a close. In this
+	// case, we will receive ErrCloseSent from the write and the read loop should have exited.
 	if err := s.conn.WriteControl(
 		websocket.CloseMessage,
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "close called"),
@@ -211,7 +215,12 @@ func (s *WebSocket[TIn, TOut]) closeGraceful() error {
 		return fmt.Errorf("sending close: %w", err)
 	}
 
-	<-s.Done
+	select {
+	case <-time.After(closeDeadline.Sub(time.Now())):
+		return fmt.Errorf("did not close within the deadline")
+	case <-s.Done:
+	}
+
 	if clErr := s.conn.Close(); clErr != nil {
 		return fmt.Errorf("closing underlying conn: %w", clErr)
 	}

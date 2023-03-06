@@ -147,7 +147,7 @@ func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
 func setupCheckpointTestEcho(t *testing.T) (
 	*apiServer, echo.Context, *httptest.ResponseRecorder,
 ) {
-	api, _, _ := setupAPITest(t)
+	api, _, _ := setupAPITest(t, nil)
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
@@ -161,17 +161,16 @@ func setupCheckpointTestEcho(t *testing.T) (
 
 func TestGetCheckpointEcho(t *testing.T) {
 	gitBranch := os.Getenv("CIRCLE_BRANCH")
-	if strings.HasPrefix(gitBranch, "pull/") {
+	if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
 		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
 			t.Name(), gitBranch)
 	}
-	var id string
 	cases := []struct {
 		DenyFuncName string
-		IDToReqCall  func(id string) error
+		IDToReqCall  func() error
 		Params       []any
 	}{
-		{"CanGetCheckpointTgz", func(id string) error {
+		{"CanGetCheckpointTgz", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
@@ -186,7 +185,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 			checkTgz(t, rec.Body, id)
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
-		{"CanGetCheckpointZip", func(id string) error {
+		{"CanGetCheckpointZip", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db)
 			if err != nil {
@@ -204,7 +203,7 @@ func TestGetCheckpointEcho(t *testing.T) {
 	}
 
 	for _, curCase := range cases {
-		require.NoError(t, curCase.IDToReqCall(id))
+		require.NoError(t, curCase.IDToReqCall())
 	}
 }
 
@@ -250,7 +249,8 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 }
 
 func TestAuthZCheckpointsEcho(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTestEcho(t)
+	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
+	ctx := newTestEchoContext(curUser)
 
 	checkpointUUID := uuid.New()
 	checkpointID := checkpointUUID.String()
@@ -282,7 +282,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 	require.Equal(t, expectedErr, api.m.getCheckpoint(ctx))
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func mockExperimentS3(
 	t *testing.T, pgDB *db.PgDB, user model.User, folderPath string,
 ) *model.Experiment {
@@ -317,14 +317,14 @@ func mockExperimentS3(
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               cfg,
+		Config:               cfg.AsLegacy(),
 		ModelDefinitionBytes: db.ReadTestModelDefiniton(t, folderPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	err := pgDB.AddExperiment(&exp)
+	err := pgDB.AddExperiment(&exp, cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }

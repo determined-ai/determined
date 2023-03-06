@@ -18,10 +18,7 @@ import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckp
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
-import {
-  Determinedcheckpointv1State,
-  V1GetExperimentCheckpointsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
@@ -41,7 +38,6 @@ import handleError from 'utils/error';
 
 import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
-import css from './ExperimentTrials.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
@@ -232,7 +228,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentCheckpointsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedcheckpointv1State, states),
+          states: validateDetApiEnumList(Checkpointv1State, states),
         },
         { signal: canceler.signal },
       );
@@ -307,7 +303,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [checkpointMap, settings.row]);
 
   return (
-    <div className={css.base}>
+    <>
       <Section>
         <TableBatch
           actions={batchActions.map((action) => ({
@@ -352,7 +348,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       {modalModelCreateContextHolder}
       {modalCheckpointRegisterContextHolder}
       {modalCheckpointDeleteContextHolder}
-    </div>
+    </>
   );
 };
 

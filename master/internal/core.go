@@ -83,11 +83,6 @@ var staticWebDirectoryPaths = map[string]bool{
 	"/docs/rest-api": true,
 }
 
-// gzipSkipPaths are locations of paths to be skipped by GZIP compression.
-var gzipSkipPaths = map[string]bool{
-	"/proxy": true,
-}
-
 // Master manages the Determined master state.
 type Master struct {
 	ClusterID string
@@ -189,20 +184,18 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-// @Summary Get a detailed view of resource allocation during the given time period (CSV).
-// @Tags Cluster
-// @ID get-raw-resource-allocation-csv
-// @Accept  json
-// @Produce  text/csv
-//nolint:lll
-// @Param   timestamp_after query string true "Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
-//nolint:lll
-// @Param   timestamp_before query string true "End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
-//nolint:lll
-// @Success 200 {} string "A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
-//nolint:godot
-// @Router /allocation/raw [get]
-// @Deprecated
+//	@Summary	Get a detailed view of resource allocation during the given time period (CSV).
+//	@Tags		Cluster
+//	@ID			get-raw-resource-allocation-csv
+//	@Accept		json
+//	@Produce	text/csv
+//	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//	@Success	200					{}		string	"A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
+//	@Router		/allocation/raw [get]
+//	@Deprecated
+//
+// nolint:lll
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -321,19 +314,217 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	}
 }
 
-// @Summary Get an aggregated view of resource allocation during the given time period (CSV).
-// @Tags Cluster
-// @ID get-aggregated-resource-allocation-csv
-// @Produce  text/csv
-//nolint:lll
-// @Param   start_date query string true "Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
-//nolint:lll
-// @Param   end_date query string true "End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
-//nolint:lll
-// @Param   period query string true "Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
-// @Success 200 {} string "aggregation_type,aggregation_key,date,seconds"
-//nolint:godot
-// @Router /allocation/aggregated [get]
+// TaskMetadata captures the historic allocation information for a given task.
+type TaskMetadata struct {
+	TaskID           model.TaskID
+	TaskType         model.TaskType
+	Username         string
+	WorkspaceName    string
+	ExperimentID     int
+	Slots            int
+	StartTime        time.Time
+	EndTime          time.Time
+	ImagepullingTime float64
+}
+
+//	@Summary	Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+//	@Tags		Cluster
+//	@ID			get-raw-resource-task-allocation-csv
+//	@Accept		json
+//	@Produce	text/csv
+//
+// nolint:lll
+//
+//	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Success	200					{}		string	"A CSV file containing the fields task_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, training_time, validation_time, checkpointing_time, imagepulling_time"
+//	@Router		/allocations/tasks-raw [get]
+func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
+	// Get start and end times from context
+	args := struct {
+		Start string `query:"timestamp_after"`
+		End   string `query:"timestamp_before"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	// Parse start & end timestamps
+	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
+	if err != nil {
+		return errors.Wrap(err, "invalid start time")
+	}
+	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
+	if err != nil {
+		return errors.Wrap(err, "invalid end time")
+	}
+	if start.After(end) {
+		return errors.New("start time cannot be after end time")
+	}
+
+	// Get task info for tasks in time range
+	tasksInRange := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("t.task_type").
+		ColumnExpr("t.start_time").
+		ColumnExpr("t.end_time").
+		ColumnExpr("t.job_id").
+		TableExpr("tasks t").
+		Where("start_time >= ? :: timestamptz AND end_time <= ? :: timestamptz", start, end)
+
+	// Get allocation info for allocations in time range
+	allocationsInRange := db.Bun().NewSelect().
+		ColumnExpr("a.task_id").
+		ColumnExpr("a.allocation_id").
+		ColumnExpr("a.start_time").
+		ColumnExpr("a.end_time").
+		ColumnExpr("a.slots").
+		TableExpr("allocations a").
+		Where("start_time >= ? :: timestamptz AND end_time <= ? :: timestamptz", start, end)
+
+	// Get the owner usernames associated with each task_id
+	taskOwners := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("u.username").
+		TableExpr("tasks_in_range t").
+		Join("INNER JOIN jobs j ON t.job_id = j.job_id").
+		Join("INNER JOIN users u ON j.owner_id = u.id")
+
+	// Get the number of slots request for a given task
+	taskSlots := db.Bun().NewSelect().
+		ColumnExpr("a.task_id").
+		ColumnExpr("(array_agg(a.slots) FILTER (WHERE a.slots IS NOT NULL))[1] as slots").
+		TableExpr("allocations_in_range a").
+		Group("a.task_id")
+
+	// Get imagepull times for tasks within time range
+	imagePullTimes := db.Bun().NewSelect().
+		ColumnExpr("a.task_id").
+		ColumnExpr("SUM(EXTRACT(EPOCH FROM (ts.end_time - ts.start_time))) imagepulling_time").
+		TableExpr("allocations_in_range a").
+		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
+		Where("ts.event_type = 'IMAGEPULL'").
+		Group("a.task_id")
+
+	// Get experiment info for tasks within time range
+	taskExperimentInfo := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("e.id as experiment_id").
+		ColumnExpr("w.name as workspace_name").
+		TableExpr("tasks_in_range t").
+		Join("INNER JOIN experiments e ON t.job_id = e.job_id").
+		Join("INNER JOIN projects p ON e.project_id = p.id").
+		Join("INNER JOIN workspaces w ON p.workspace_id = w.id")
+
+	// Get task information row-by-row for all tasks in time range
+	rows, err := db.Bun().NewSelect().
+		ColumnExpr("t.task_id AS task_id").
+		ColumnExpr("t.task_type AS task_type").
+		ColumnExpr("t_o.username AS username").
+		ColumnExpr("tei.workspace_name").
+		ColumnExpr("tei.experiment_id").
+		ColumnExpr("ts.slots as slots").
+		ColumnExpr("t.start_time AS start_time").
+		ColumnExpr("t.end_time AS end_time").
+		ColumnExpr("ip.imagepulling_time").
+		With("tasks_in_range", tasksInRange).
+		With("allocations_in_range", allocationsInRange).
+		With("task_slots", taskSlots).
+		With("task_owners", taskOwners).
+		With("image_pull_times", imagePullTimes).
+		With("task_experiment_info", taskExperimentInfo).
+		TableExpr("tasks_in_range t").
+		Join("LEFT JOIN task_slots ts ON ts.task_id = t.task_id").
+		Join("LEFT JOIN task_owners t_o ON t_o.task_id = t.task_id").
+		Join("LEFT JOIN task_experiment_info tei ON tei.task_id = t.task_id").
+		Join("LEFT JOIN image_pull_times ip ON ip.task_id = t.task_id").
+		Order("t.start_time").
+		Rows(c.Request().Context())
+
+	if err != nil && rows.Err() != nil {
+		return err
+	}
+	defer rows.Close()
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+	header := []string{
+		"task_id",
+		"task_type",
+		"username",
+		"workspace_name",
+		"experiment_id",
+		"slots",
+		"start_time",
+		"end_time",
+		"imagepulling_time",
+	}
+
+	formatTimestamp := func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
+		return t.Format(time.RFC3339Nano)
+	}
+
+	formatDuration := func(duration float64) string {
+		if duration == 0 {
+			return "0.0"
+		}
+		return fmt.Sprintf("%f", duration)
+	}
+
+	csvWriter := csv.NewWriter(c.Response())
+	if err = csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	// Write each entry to the output CSV
+	for rows.Next() {
+		taskMetadata := new(TaskMetadata)
+		if err := db.Bun().ScanRow(c.Request().Context(), rows, taskMetadata); err != nil {
+			return err
+		}
+		fields := []string{
+			taskMetadata.TaskID.String(),
+			string(taskMetadata.TaskType),
+			taskMetadata.Username,
+			taskMetadata.WorkspaceName,
+			strconv.Itoa(taskMetadata.ExperimentID),
+			strconv.Itoa(taskMetadata.Slots),
+			formatTimestamp(taskMetadata.StartTime),
+			formatTimestamp(taskMetadata.EndTime),
+			formatDuration(taskMetadata.ImagepullingTime),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
+}
+
+//	@Summary	Get an aggregated view of resource allocation during the given time period (CSV).
+//	@Tags		Cluster
+//	@ID			get-aggregated-resource-allocation-csv
+//	@Produce	text/csv
+//	@Param		start_date	query	string	true	"Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
+//	@Param		end_date	query	string	true	"End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
+//
+// nolint:lll
+//
+//	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
+//	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
+//	@Router		/allocation/aggregated [get]
+//
+// nolint:lll
+// To make both gofmt and swag fmt happy we need an unindented comment matched with the swagger
+// comment indented with tabs. https://github.com/swaggo/swag/pull/1386#issuecomment-1359242144
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start  string `query:"start_date"`
@@ -384,9 +575,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 			return err
 		}
 		if err = writeAggType("resource_pool", entry.ByResourcePool); err != nil {
-			return err
-		}
-		if err = writeAggType("agent_label", entry.ByAgentLabel); err != nil {
 			return err
 		}
 		if err = writeAggType("total", map[string]float32{"total": entry.Seconds}); err != nil {
@@ -588,16 +776,16 @@ func (m *Master) tryRestoreExperiment(sema chan struct{}, wg *sync.WaitGroup, e 
 }
 
 // Zero-downtime restore of task containers works the following way. On master startup,
-// 1. AgentRM is initialized.
-// 2. In AgentRM PreStart, agent state is fetched from database and agent actors are initialized.
-// 3. Restored experiment actors ping their restored trials to ensure they've initialized.
-// 4. The trial actors similarly ping allocations.
-// 5. Waitgroup waits for all on experiments.
-// 6. Allocation actors ask AgentRM for resources. Since AgentRM has already initialized
-//    the agent states in PreStart, it knows which containers it's supposed to have. If it does not
-//    have the required containers, allocation will receive a ResourcesFailure.
-// 7. When real agents finally connect, if the container is not on the agent, the restored
-//    allocation will get a containerStateChanged event notifying it about container termination.
+//  1. AgentRM is initialized.
+//  2. In AgentRM PreStart, agent state is fetched from database and agent actors are initialized.
+//  3. Restored experiment actors ping their restored trials to ensure they've initialized.
+//  4. The trial actors similarly ping allocations.
+//  5. Waitgroup waits for all on experiments.
+//  6. Allocation actors ask AgentRM for resources. Since AgentRM has already initialized
+//     the agent states in PreStart, it knows which containers it's supposed to have. If it does not
+//     have the required containers, allocation will receive a ResourcesFailure.
+//  7. When real agents finally connect, if the container is not on the agent, the restored
+//     allocation will get a containerStateChanged event notifying it about container termination.
 //
 // TODO(ilia): Here we wait for all experiments to restore and initialize their allocations before
 // starting any scheduling. This path is better for scheduling fairness.
@@ -693,6 +881,10 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
+
+	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
+	cluster.InitTheLastBootClusterHeartbeat()
+
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
@@ -756,7 +948,7 @@ func (m *Master) Run(ctx context.Context) error {
 	userService := user.GetService()
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
-		HTTPAuth: userService.ProcessProxyAuthentication,
+		HTTPAuth: processProxyAuthentication,
 	})
 
 	allocationmap.InitAllocationMap()
@@ -774,7 +966,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return !gzipSkipPaths[c.Path()]
+			webuiStaticAssets := regexp.MustCompile(`\/det\/(themes|static|determined)\/`)
+			return !webuiStaticAssets.MatchString(c.Request().URL.Path)
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
@@ -883,7 +1076,6 @@ func (m *Master) Run(ctx context.Context) error {
 	// The below function call is intentionally made after the call to CloseOpenAllocations.
 	// This ensures that in the scenario where a cluster fails all open allocations are
 	// set to the last cluster heartbeat when the cluster was running.
-	cluster.InitTheLastBootClusterHeartbeat()
 	go updateClusterHeartbeat(ctx, m.db)
 
 	// Docs and WebUI.
@@ -972,6 +1164,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
+	resourcesGroup.GET("/allocation/tasks-raw", m.getRawResourceAllocationTasks)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))

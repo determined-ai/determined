@@ -20,6 +20,7 @@ const SampleCommandTask: CommandTask = {
   state: 'PENDING' as CommandState,
   type: 'COMMAND' as CommandType,
   userId: 345,
+  workspaceId: 0,
 };
 
 describe('isExperimentTask', () => {

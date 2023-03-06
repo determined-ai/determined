@@ -37,6 +37,9 @@
     overflow: hidden;
 
     .actionButtons {
+      display: none; // action buttons are hidden when the cursor is not hovered on buttons
+    }
+    .navItemContainer:hover .actionButtons {
       align-items: center;
       display: flex;
     }
@@ -45,6 +48,7 @@
       color: var(--theme-stage-on-weak);
       font-size: 12px;
       padding: 6px;
+      text-align: center;
     }
     .pinnedWorkspaces {
       list-style: none;
@@ -81,15 +85,7 @@
     width: 206px;
 
     .launchButton {
-      background-color: transparent;
-      border-color: var(--theme-stage-border);
-      border-radius: var(--theme-border-radius);
-      border-style: solid;
-      border-width: var(--theme-stroke-width);
-      color: var(--theme-stage-on);
-      flex-grow: 1;
-      flex-shrink: 1;
-      overflow: hidden;
+      width: 100%;
     }
     .launchIcon {
       align-items: center;
@@ -137,7 +133,9 @@
       max-width: 100%;
 
       .icon {
+        min-width: 56px;
         padding-inline: 16px;
+        text-align: center;
       }
       .label {
         font-size: 12px;

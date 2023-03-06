@@ -46,6 +46,12 @@ export const postUser = generateDetApi<
   Api.V1PostUserResponse
 >(Config.postUser);
 
+export const postUserActivity = generateDetApi<
+  Api.V1PostUserActivityRequest,
+  Api.V1PostUserActivityResponse,
+  Api.V1PostUserActivityResponse
+>(Config.postUserActivity);
+
 export const getUsers = generateDetApi<
   Service.GetUsersParams,
   Api.V1GetUsersResponse,
@@ -454,6 +460,10 @@ export const unarchiveModel = generateDetApi<
   void
 >(Config.unarchiveModel);
 
+export const moveModel = generateDetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void>(
+  Config.moveModel,
+);
+
 export const deleteModel = generateDetApi<
   Service.DeleteModelParams,
   Api.V1DeleteModelResponse,
@@ -478,9 +488,11 @@ export const postModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.postModelVersion);
 
-export const getModelLabels = generateDetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]>(
-  Config.getModelLabels,
-);
+export const getModelLabels = generateDetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+>(Config.getModelLabels);
 
 /* Workspaces */
 
@@ -605,6 +617,12 @@ export const unarchiveProject = generateDetApi<
   Api.V1UnarchiveProjectResponse,
   void
 >(Config.unarchiveProject);
+
+export const getProjectsByUserActivity = generateDetApi<
+  Service.GetProjectsByUserActivityParams,
+  Api.V1GetProjectsByUserActivityResponse,
+  Type.Project[]
+>(Config.getProjectsByUserActivity);
 
 /* Tasks */
 

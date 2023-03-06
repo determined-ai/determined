@@ -132,6 +132,16 @@ export const postUser: DetApi<
   request: (params) => detApi.Users.postUser(params),
 };
 
+export const postUserActivity: DetApi<
+  Api.V1PostUserActivityRequest,
+  Api.V1PostUserActivityResponse,
+  Api.V1PostUserActivityResponse
+> = {
+  name: 'postUserActivity',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUserActivity(params),
+};
+
 export const setUserPassword: DetApi<
   Service.SetUserPasswordParams,
   Api.V1SetUserPasswordResponse,
@@ -189,6 +199,7 @@ export const resetUserSetting: DetApi<
 /**
  * Returns roles, and workspace/global assignment of those roles,
  * for a user specified in params.
+ *
  * @param {GetUserParams} params - An object containing userId to look up their roles.
  */
 export const getUserPermissions: DetApi<
@@ -258,6 +269,7 @@ export const getGroups: DetApi<
     detApi.Internal.getGroups({
       limit: params.limit || 10,
       offset: params.offset,
+      userId: params.userId,
     }),
 };
 
@@ -584,6 +596,7 @@ export const getExperiments: DetApi<
       undefined,
       params.experimentIdFilter?.incl,
       params.experimentIdFilter?.notIn,
+      true,
       options,
     );
   },
@@ -949,7 +962,7 @@ export const getActiveTasks: DetApi<
 > = {
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
-  request: () => detApi.Tasks.getActiveTasksCount(),
+  request: (_, options) => detApi.Tasks.getActiveTasksCount(options),
 };
 
 /* Webhooks */
@@ -1005,7 +1018,10 @@ export const getModels: DetApi<
       params.labels,
       params.archived,
       undefined,
+      undefined,
       getUserIds(params.users),
+      undefined,
+      params.workspaceIds,
     ),
 };
 
@@ -1094,6 +1110,16 @@ export const unarchiveModel: DetApi<
   request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params.modelName),
 };
 
+export const moveModel: DetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void> = {
+  name: 'moveModel',
+  postProcess: noOp,
+  request: (params: Service.MoveModelParams) =>
+    detApi.Models.moveModel(params.modelName, {
+      destinationWorkspaceId: params.destinationWorkspaceId,
+      modelName: params.modelName,
+    }),
+};
+
 export const deleteModel: DetApi<Service.DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
@@ -1111,10 +1137,14 @@ export const deleteModelVersion: DetApi<
     detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
 };
 
-export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {
+export const getModelLabels: DetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+> = {
   name: 'getModelLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Models.getModelLabels(options),
+  request: (params, options) => detApi.Models.getModelLabels(params.workspaceId, options),
 };
 
 export const postModel: DetApi<
@@ -1132,6 +1162,7 @@ export const postModel: DetApi<
       labels: params.labels,
       metadata: params.metadata,
       name: params.name,
+      workspaceId: params.workspaceId,
     }),
 };
 
@@ -1200,7 +1231,7 @@ export const createWorkspace: DetApi<
     return decoder.mapV1Workspace(response.workspace);
   },
   request: (params, options) =>
-    detApi.Workspaces.postWorkspace({ ...params, name: params.name.trim() }, options),
+    detApi.Workspaces.postWorkspace({ ...params, name: params.name }, options),
 };
 
 export const getWorkspaceMembers: DetApi<
@@ -1427,6 +1458,19 @@ export const unarchiveProject: DetApi<
   request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
+export const getProjectsByUserActivity: DetApi<
+  Service.GetProjectsByUserActivityParams,
+  Api.V1GetProjectsByUserActivityResponse,
+  Type.Project[]
+> = {
+  name: 'getProjectsByUserActivity',
+  postProcess: (response) => {
+    return (response.projects || []).map((project) => decoder.mapV1Project(project));
+  },
+  request: (params: Service.GetProjectsByUserActivityParams) =>
+    detApi.Projects.getProjectsByUserActivity(params.limit),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;
@@ -1447,6 +1491,7 @@ export const getCommands: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1466,6 +1511,7 @@ export const getJupyterLabs: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1484,6 +1530,7 @@ export const getShells: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1503,6 +1550,7 @@ export const getTensorBoards: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1584,7 +1632,7 @@ export const launchTensorBoard: DetApi<
   postProcess: (response) => {
     return {
       command: decoder.mapV1TensorBoard(response.tensorboard),
-      wanrings: response.warnings || [],
+      warnings: response.warnings || [],
     };
   },
   request: (params: Service.LaunchTensorBoardParams) =>
