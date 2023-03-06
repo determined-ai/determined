@@ -34,17 +34,15 @@ class UsersService {
     });
   };
 
-  public ensureCurrentUserFetched = async (canceler: AbortController): Promise<void> => {
+  public ensureCurrentUserFetched = (canceler: AbortController) => {
     if (this.#currentUserId.get() !== NotLoaded) return;
 
-    try {
-      const response = await getCurrentUser({ signal: canceler.signal });
-
-      this.updateUsers([response]);
-      this.#currentUserId.set(Loaded(response.id));
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch current user.' });
-    }
+    getCurrentUser({ signal: canceler.signal })
+      .then((response) => {
+        this.updateUsers([response]);
+        this.#currentUserId.set(Loaded(response.id));
+      })
+      .catch((e) => handleError(e, { publicSubject: 'Unable to fetch current user.' }));
   };
 
   public updateCurrentUser = (id: number | null) => {
@@ -73,23 +71,18 @@ class UsersService {
     });
   };
 
-  public ensureUsersFetched = async (
-    canceler: AbortController,
-    cfg?: FetchUsersConfig,
-  ): Promise<void> => {
+  public ensureUsersFetched = (canceler: AbortController, cfg?: FetchUsersConfig) => {
     const config = cfg ?? {};
     const usersPagination = this.#usersByKey.get().get(encodeParams(config));
 
     if (usersPagination) return;
 
-    try {
-      const response = await getUsers(config, { signal: canceler?.signal });
-
-      this.updateUsersByKey(config, response);
-      this.updateUsers(response.users);
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
-    }
+    getUsers(config, { signal: canceler?.signal })
+      .then((response) => {
+        this.updateUsersByKey(config, response);
+        this.updateUsers(response.users);
+      })
+      .catch((e) => handleError(e, { publicSubject: 'Unable to fetch users.' }));
   };
 
   public updateUsers = (users: DetailedUser | DetailedUser[]) => {
