@@ -8,6 +8,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 
+import DynamicIcon from './DynamicIcon';
 import Card from './kit/Card';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
@@ -19,7 +20,12 @@ interface Props {
   workspaceArchived?: boolean;
 }
 
-const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchived }: Props) => {
+const ProjectCard: React.FC<Props> = ({
+  project,
+  fetchProjects,
+  workspaceArchived,
+  showWorkspace,
+}: Props) => {
   const { menuProps, contextHolders } = useProjectActionMenu({
     onComplete: fetchProjects,
     project,
@@ -37,6 +43,15 @@ const ProjectCard: React.FC<Props> = ({ project, fetchProjects, workspaceArchive
         <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
           {project.name}
         </Typography.Title>
+        {showWorkspace && project.workspaceId !== 1 ? (
+          <div className={css.workspace}>
+            <Tooltip title={project.workspaceName}>
+              <span>
+                <DynamicIcon name={project.workspaceName} size={24} />
+              </span>
+            </Tooltip>
+          </div>
+        ) : null}
         <div className={css.footer}>
           <div className={css.experiments}>
             <Tooltip

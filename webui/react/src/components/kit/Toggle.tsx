@@ -1,25 +1,23 @@
 import { Space, Switch } from 'antd';
 import React, { useCallback } from 'react';
 
-import Label from './Label';
+import Label from 'components/Label';
 
 interface Props {
   checked?: boolean;
+  label?: string;
   onChange?: (checked: boolean) => void;
-  prefixLabel?: string;
-  suffixLabel?: string;
 }
 
-const Toggle: React.FC<Props> = ({ checked = false, onChange, ...props }: Props) => {
+const Toggle: React.FC<Props> = ({ checked = false, label, onChange }: Props) => {
   const handleClick = useCallback(() => {
     if (onChange) onChange(!checked);
   }, [checked, onChange]);
 
   return (
     <Space onClick={handleClick}>
-      {props.prefixLabel && <Label>{props.prefixLabel}</Label>}
+      {label && <Label>{label}</Label>}
       <Switch checked={checked} size="small" />
-      {props.suffixLabel && <Label>{props.suffixLabel}</Label>}
     </Space>
   );
 };

@@ -5,6 +5,7 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
@@ -19,7 +20,6 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -354,11 +354,7 @@ const WorkspaceList: React.FC = () => {
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
         </SelectFilter>
         <Space wrap>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <SelectFilter
             dropdownMatchSelectWidth={150}
             showSearch={false}

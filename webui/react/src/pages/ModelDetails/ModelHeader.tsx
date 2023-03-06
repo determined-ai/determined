@@ -7,9 +7,9 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
@@ -90,11 +90,11 @@ const ModelHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <TagList
+          <Tags
             disabled={model.archived || !canModifyModelFlag}
             ghost={false}
             tags={model.labels ?? []}
-            onChange={onUpdateTags}
+            onAction={tagsActionHelper(model.labels ?? [], onUpdateTags)}
           />
         ),
         label: 'Tags',

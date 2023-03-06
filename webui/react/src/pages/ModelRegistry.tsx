@@ -13,6 +13,8 @@ import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -31,8 +33,6 @@ import {
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import TagList from 'components/TagList';
-import Toggle from 'components/Toggle';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
@@ -455,14 +455,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels ?? []} />,
+            tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || !canModifyModel({ model: record })}
               tags={record.labels ?? []}
-              onChange={(tags) => setModelTags(record.name, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                setModelTags(record.name, tags),
+              )}
             />
           </div>
         </Typography.Text>
@@ -713,11 +715,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       id="models"
       options={
         <Space>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
