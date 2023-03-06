@@ -1353,15 +1353,15 @@ const TagsSection: React.FC = () => {
           &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
         </p>
       </Card>
-      <Card title="Best practices">
+      <AntDCard title="Best practices">
         <strong>Content</strong>
         <ul>
           <li>Don&apos;t use tags of the same content within one list.</li>
           <li>Tags are ordered alphabetically.</li>
           <li>Individual tags cannot be empty.</li>
         </ul>
-      </Card>
-      <Card title="Usage">
+      </AntDCard>
+      <AntDCard title="Usage">
         <strong>Tags default</strong>
         <Space>{useTags([...tags])()}</Space>
         <strong>Tags ghost</strong>
@@ -1376,7 +1376,7 @@ const TagsSection: React.FC = () => {
             'very very very long text, very very very long text, very very very long text, very very very long text.',
           ])()}
         </Space>
-      </Card>
+      </AntDCard>
     </ComponentSection>
   );
 };

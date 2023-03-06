@@ -11,8 +11,8 @@ import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
-import Toggle from 'components/kit/Toggle';
 import Tags from 'components/kit/Tags';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
