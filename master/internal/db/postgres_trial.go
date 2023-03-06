@@ -297,12 +297,17 @@ DO NOTHING
 func (db *PgDB) AddCheckpointMetadata(
 	ctx context.Context, m *model.CheckpointV2,
 ) error {
-	query := `
-INSERT INTO checkpoints_v2
-	(uuid, task_id, allocation_id, report_time, state, resources, metadata)
-VALUES
-	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)`
+	var size int64
+	for _, v := range m.Resources {
+		size += v
+	}
+	m.Size = size
 
+	query := `
+		INSERT INTO checkpoints_v2
+			(uuid, task_id, allocation_id, report_time, state, resources, metadata, size)
+		VALUES
+			(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata, :size)`
 	if _, err := db.sql.NamedExecContext(ctx, query, m); err != nil {
 		return errors.Wrap(err, "inserting checkpoint")
 	}

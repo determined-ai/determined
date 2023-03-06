@@ -535,6 +535,7 @@ type CheckpointV1 struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
+	Size              int        `db:"size"`
 }
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
@@ -547,6 +548,7 @@ type CheckpointV2 struct {
 	State        State            `db:"state"`
 	Resources    map[string]int64 `db:"resources"`
 	Metadata     JSONObj          `db:"metadata"`
+	Size         int64            `db:"size"`
 }
 
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific

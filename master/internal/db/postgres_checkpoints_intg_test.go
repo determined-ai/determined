@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -23,6 +24,71 @@ func sortUUIDSlice(uuids []uuid.UUID) {
 	sort.Slice(uuids, func(i, j int) bool {
 		return uuids[i].String() < uuids[j].String()
 	})
+}
+
+func TestUpdateCheckpointSize(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	var resources []map[string]int64
+	for i := 0; i < 8; i++ {
+		resources = append(resources, map[string]int64{"TEST": int64(i) + 1})
+	}
+
+	// Create two experiments with two trials each with two checkpoints.
+	var checkpointIDs []uuid.UUID
+	var trialIDs []int
+
+	resourcesIndex := 0
+	for i := 0; i < 2; i++ {
+		exp := RequireMockExperiment(t, db, user)
+		for j := 0; j < 2; j++ {
+			tr := RequireMockTrial(t, db, exp)
+			allocation := RequireMockAllocation(t, db, tr.TaskID)
+			trialIDs = append(trialIDs, tr.ID)
+
+			for k := 0; k < 2; k++ {
+				ckpt := uuid.New()
+				checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+				checkpoint.Resources = resources[resourcesIndex]
+				checkpointIDs = append(checkpointIDs, ckpt)
+
+				err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+				require.NoError(t, err)
+
+				resourcesIndex++
+			}
+		}
+	}
+
+	// Verify checkpoints have correct sizes.
+	for i, checkpointID := range checkpointIDs {
+		var size int64
+		err := Bun().NewSelect().Table("checkpoints_view").
+			Column("size").
+			Where("uuid = ?", checkpointID).
+			Scan(context.Background(), &size)
+		require.NoError(t, err)
+		require.Equal(t, int64(i+1), size)
+	}
+
+	// TODO counts...
+	// Verify trials have correct sizes and counts.
+	expectedTrialSizes := []int64{1 + 2, 3 + 4, 5 + 6, 7 + 8}
+	for i, trialID := range trialIDs {
+		var checkpointSize int64
+		err := Bun().NewSelect().Table("trials").
+			Column("checkpoint_size").
+			Where("id = ?", trialID).
+			Scan(context.Background(), &checkpointSize)
+		require.NoError(t, err)
+
+		require.Equal(t, expectedTrialSizes[i], checkpointSize)
+	}
+
+	// TODO counts...
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
