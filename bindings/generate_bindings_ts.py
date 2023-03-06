@@ -260,7 +260,7 @@ def generate_function(api: str, phase: Phase, function: swagger_types.Function) 
             code += f"if ({param.name}{null_check}) {{"
             code.indent()
             if isinstance(param.type, swagger_types.DateTime):
-                code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}.toISOSttring()"
+                code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}.toISOString()"
             else:
                 code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}"
             code.dedent()

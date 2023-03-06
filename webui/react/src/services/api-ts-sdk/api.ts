@@ -10366,11 +10366,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             
             if (timestampAfter !== undefined) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOSttring()
+                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
             if (timestampBefore !== undefined) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOSttring()
+                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -12729,11 +12729,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             
             if (timestampBefore !== undefined) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOSttring()
+                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
             if (timestampAfter !== undefined) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOSttring()
+                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
             if (orderBy) {
@@ -17815,11 +17815,11 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
             }
             
             if (timestampBefore !== undefined) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOSttring()
+                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
             if (timestampAfter !== undefined) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOSttring()
+                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
             if (orderBy) {
@@ -22343,11 +22343,11 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             }
             
             if (timestampBefore !== undefined) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOSttring()
+                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
             if (timestampAfter !== undefined) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOSttring()
+                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
             if (orderBy) {
@@ -24382,11 +24382,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             
             if (timestampBefore !== undefined) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOSttring()
+                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
             if (timestampAfter !== undefined) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOSttring()
+                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
             if (orderBy) {
