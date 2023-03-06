@@ -69,7 +69,7 @@ const HpSelect: React.FC<Props> = ({
       mode="multiple"
       placeholder={ALL_VALUE}
       value={value}
-      width={250}
+      width={200}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
