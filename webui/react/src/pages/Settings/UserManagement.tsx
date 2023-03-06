@@ -3,8 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import Nameplate from 'components/kit/Nameplate';
-import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -203,9 +202,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
-        render: (_: string, r: DetailedUser) => (
-          <Nameplate alias={r.displayName} icon={<UserAvatar user={r} />} name={r.username} />
-        ),
+        render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
         sorter: true,
         title: 'Name',
       },

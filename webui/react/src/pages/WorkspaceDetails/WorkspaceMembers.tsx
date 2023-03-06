@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Nameplate from 'components/kit/Nameplate';
-import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -171,13 +171,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return (
-          <Nameplate
-            alias={member.displayName}
-            icon={<UserAvatar user={member} />}
-            name={member.username}
-          />
-        );
+        return <UserBadge user={member} />;
       }
       const group = record as V1GroupDetails;
       return <Nameplate icon={<Icon name="group" />} name={group.name} />;

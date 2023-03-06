@@ -24,6 +24,7 @@ import Pivot from 'components/kit/Pivot';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -72,6 +73,7 @@ const ComponentTitles = {
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
+  UserBadge: 'UserBadge',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -863,6 +865,38 @@ const UserAvatarSection: React.FC = () => {
   );
 };
 
+const UserBadgeSection: React.FC = () => {
+  const testUser = { displayName: 'Abc', id: 1, username: 'alpha123' };
+
+  return (
+    <ComponentSection id="UserBadge" title="UserBadge">
+      <AntDCard>
+        <p>
+          A (<code>{'<UserBadge>'}</code>) fully represents a user with a UserAvatar circle icon,
+          and the user&apos;s display name and username. If there is a display name, it appears
+          first, otherwise only the username is visible. A &apos;compact&apos; option reduces the
+          size of the name for use in a smaller form or modal.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <li>User with Display Name</li>
+        <UserBadge user={testUser as User} />
+        <li>Compact format</li>
+        <UserBadge compact user={testUser as User} />
+        <li>User without Display Name</li>
+        <UserBadge user={{ ...testUser, displayName: undefined } as User} />
+        <hr />
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Nameplate}`}>
+            Nameplate
+          </Link>
+        </span>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const NameplateSection: React.FC = () => {
   const testUser: User = { displayName: 'Test User', id: 1, username: 'testUser123' };
 
@@ -876,7 +910,7 @@ const NameplateSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <li>User with Display Name</li>
+        <li>With name and alias</li>
         <Nameplate
           alias={testUser.displayName}
           icon={<UserAvatar user={testUser} />}
@@ -889,13 +923,15 @@ const NameplateSection: React.FC = () => {
           icon={<UserAvatar user={testUser} />}
           name={testUser.username}
         />
-        <li>User without Display Name</li>
-        <Nameplate
-          icon={<UserAvatar user={{ ...testUser, displayName: undefined }} />}
-          name={testUser.username}
-        />
-        <li>Group</li>
+        <li>With name and no alias</li>
         <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <hr />
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.UserBadge}`}>
+            UserBadge
+          </Link>
+        </span>
       </AntDCard>
     </ComponentSection>
   );
@@ -1525,6 +1561,7 @@ const Components = {
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
+  UserBadge: <UserBadgeSection />,
 };
 
 const DesignKit: React.FC = () => {

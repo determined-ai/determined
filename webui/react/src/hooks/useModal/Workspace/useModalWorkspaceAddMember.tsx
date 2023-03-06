@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Nameplate from 'components/kit/Nameplate';
-import UserAvatar from 'components/kit/UserAvatar';
+import UserBadge from 'components/kit/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
@@ -127,12 +127,7 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <Nameplate
-                    alias={(option as UserNameFields)?.displayName}
-                    compact
-                    icon={<UserAvatar user={option as UserNameFields} />}
-                    name={(option as UserNameFields)?.username}
-                  />
+                  <UserBadge compact user={option as UserNameFields} />
                 ) : (
                   <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),
