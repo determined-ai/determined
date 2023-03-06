@@ -96,7 +96,7 @@ type Allocation struct {
 	EndTime      *time.Time       `db:"end_time" bun:"end_time"`
 	State        *AllocationState `db:"state" bun:"state"`
 	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
-	PortOffset   int              `db:"portOffset" bun: "portOffset"`
+	PortOffset   int              `db:"port_offset" bun: "portOffset"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
