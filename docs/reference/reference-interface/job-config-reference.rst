@@ -79,6 +79,9 @@ The following configuration settings are supported:
    -  ``drop_capabilities``: Just like ``add_capabilities`` but corresponding to the ``--cap-drop``
       argument of ``docker run`` rather than ``--cap-add``.
 
+   -  ``proxy_ports``: Expose configured network ports on the chief task container. See
+      :ref:`proxy-ports` for details.
+
 -  ``resources``: The resources Determined allows a task to use.
 
    -  ``slots``: Specifies the number of slots to use for the task. The default value is ``1``. The

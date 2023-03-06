@@ -100,13 +100,14 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
           <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
+              loading={Loadable.isLoading(knownRoles)}
               mode="multiple"
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.match(knownRoles, {
-                Loaded: (knownRoles) =>
-                  knownRoles.map((r: UserRole) => (
+              {Loadable.isLoaded(knownRoles) ? (
+                <>
+                  {knownRoles.data.map((r: UserRole) => (
                     <Select.Option
                       disabled={
                         roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
@@ -116,9 +117,9 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
                       value={r.id}>
                       {r.name}
                     </Select.Option>
-                  )),
-                NotLoaded: () => undefined, // TODO show spinner when this is loading
-              })}
+                  ))}
+                </>
+              ) : undefined}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">

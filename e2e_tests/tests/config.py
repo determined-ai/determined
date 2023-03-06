@@ -25,6 +25,7 @@ TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
 GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 
 PROJECT_ROOT_PATH = Path(__file__).resolve().parents[2]
+EXAMPLES_PATH = PROJECT_ROOT_PATH / "examples"
 
 
 def fixtures_path(path: str) -> str:

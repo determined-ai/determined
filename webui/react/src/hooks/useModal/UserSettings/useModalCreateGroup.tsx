@@ -124,22 +124,23 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         <>
           <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
             <Select
+              loading={Loadable.isLoading(roles)}
               mode="multiple"
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {Loadable.match(roles, {
-                Loaded: (roles) =>
-                  roles.map((r) => (
+              {Loadable.isLoaded(roles) ? (
+                <>
+                  {roles.data.map((r) => (
                     <Select.Option
                       disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
                       key={r.id}
                       value={r.id}>
                       {r.name}
                     </Select.Option>
-                  )),
-                NotLoaded: () => undefined, // TODO show spinner when this is loading
-              })}
+                  ))}
+                </>
+              ) : undefined}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">

@@ -50,6 +50,7 @@ export interface Serie {
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
 interface Props {
+  experimentId?: number;
   focusedSeries?: number;
   height?: number;
   onPointClick?: (event: MouseEvent, point: UPlotPoint) => void;
@@ -66,6 +67,7 @@ interface Props {
 }
 
 export const LineChart: React.FC<Props> = ({
+  experimentId,
   focusedSeries,
   height = 350,
   onPointClick,
@@ -223,6 +225,7 @@ export const LineChart: React.FC<Props> = ({
       <UPlotChart
         allowDownload={hasPopulatedSeries}
         data={chartData}
+        experimentId={experimentId}
         focusIndex={focusedSeries}
         options={chartOptions}
       />

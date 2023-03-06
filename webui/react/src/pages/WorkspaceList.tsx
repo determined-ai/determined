@@ -6,6 +6,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
 import Select, { Option } from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -19,7 +20,6 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -348,11 +348,7 @@ const WorkspaceList: React.FC = () => {
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
         </Select>
         <Space wrap>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>

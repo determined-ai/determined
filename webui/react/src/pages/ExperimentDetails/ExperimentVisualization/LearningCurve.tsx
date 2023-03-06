@@ -268,6 +268,7 @@ const LearningCurve: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.chart}>
             <LineChart
+              experimentId={experiment.id}
               focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
               scale={selectedScale}
               series={v2ChartData}

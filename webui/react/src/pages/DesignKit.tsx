@@ -22,6 +22,7 @@ import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import UserBadge from 'components/kit/UserBadge';
@@ -67,6 +68,7 @@ const ComponentTitles = {
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
+  Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
   UserBadge: 'UserBadge',
@@ -1040,7 +1042,7 @@ const PivotSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default Pivot</strong>
+        <strong>Primary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -1055,7 +1057,7 @@ const PivotSection: React.FC = () => {
           />
         </Space>
         <hr />
-        <strong>Card Pivot</strong>
+        <strong>Secondary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -1067,7 +1069,7 @@ const PivotSection: React.FC = () => {
               { children: 'Profiler', key: 'profiler', label: 'Profiler' },
               { children: 'Logs', key: 'logs', label: 'Logs' },
             ]}
-            type="card"
+            type="secondary"
           />
         </Space>
       </AntDCard>
@@ -1594,6 +1596,26 @@ const EmptySection: React.FC = () => {
   );
 };
 
+const ToggleSection: React.FC = () => {
+  return (
+    <ComponentSection id="Toggle" title="Toggle">
+      <AntDCard>
+        <p>
+          A <code>{'<Toggle>'}</code> component represents switching between two states. This
+          component is controlled by its parent and may optionally include a label.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Toggle default</strong>
+        <Toggle />
+        <strong>Toggle variations</strong>
+        <Toggle checked={true} />
+        <Toggle label="Label" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
@@ -1611,6 +1633,7 @@ const Components = {
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
+  Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
   UserBadge: <UserBadgeSection />,
