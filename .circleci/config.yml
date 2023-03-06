@@ -2306,7 +2306,7 @@ workflows:
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
       
-       - test-e2e:
+      - test-e2e:
           name: test-e2e-port-offset-registry
           requires: 
             - build-go
