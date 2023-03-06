@@ -176,7 +176,6 @@ require (
 	github.com/uptrace/bun v1.1.8
 	github.com/uptrace/bun/dialect/pgdialect v1.1.8
 	github.com/uptrace/bun/extra/bundebug v1.1.2
-	github.com/wk8/go-ordered-map v1.0.0
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
