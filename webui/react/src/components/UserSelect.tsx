@@ -1,15 +1,10 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-
-import SelectFilter from './SelectFilter';
-
-const { Option } = Select;
 
 interface Props {
   onChange?: (value: SelectValue) => void;
@@ -22,7 +17,7 @@ const userToSelectOption = (user: User): React.ReactNode => (
   </Option>
 );
 
-const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
+const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
@@ -69,15 +64,10 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   }, [authUser, users]);
 
   return (
-    <SelectFilter
-      dropdownMatchSelectWidth={200}
-      label="Users"
-      style={{ maxWidth: 200 }}
-      value={value || ALL_VALUE}
-      onSelect={handleSelect}>
+    <Select label="Users" value={value || ALL_VALUE} width={200} onSelect={handleSelect}>
       {options}
-    </SelectFilter>
+    </Select>
   );
 };
 
-export default UserSelectFilter;
+export default UserSelect;

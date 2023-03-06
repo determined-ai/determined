@@ -1,34 +1,30 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
-import SelectFilter from 'components/SelectFilter';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { capitalize } from 'shared/utils/string';
 
 import { Scale } from '../types';
-
-const { Option } = Select;
 
 interface Props {
   onChange: (value: Scale) => void;
   value: Scale;
 }
 
-const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
+const ScaleSelect: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
-    <SelectFilter
-      enableSearchFilter={false}
+    <Select
       label="Scale"
-      showSearch={false}
+      searchable={false}
       value={value}
+      width={90}
       onSelect={(newValue: SelectValue) => onChange(newValue as Scale)}>
       {Object.values(Scale).map((scale) => (
         <Option key={scale} value={scale}>
           {capitalize(scale)}
         </Option>
       ))}
-    </SelectFilter>
+    </Select>
   );
 };
 
-export default ScaleSelectFilter;
+export default ScaleSelect;
