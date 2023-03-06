@@ -406,7 +406,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           {!workspace.archived && (
             <Toggle
               checked={settings.archived}
-              prefixLabel="Show Archived"
+              label="Show Archived"
               onChange={switchShowArchived}
             />
           )}

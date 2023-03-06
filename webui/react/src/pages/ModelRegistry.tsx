@@ -713,11 +713,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       id="models"
       options={
         <Space>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}

@@ -354,11 +354,7 @@ const WorkspaceList: React.FC = () => {
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
         </SelectFilter>
         <Space wrap>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <SelectFilter
             dropdownMatchSelectWidth={150}
             showSearch={false}

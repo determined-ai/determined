@@ -923,11 +923,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
