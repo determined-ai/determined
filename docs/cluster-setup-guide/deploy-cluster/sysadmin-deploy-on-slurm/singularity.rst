@@ -24,11 +24,11 @@ by default in this version of Determined are described below.
 +-------------+-------------------------------------------------------------------------+
 | Environment | File Name                                                               |
 +=============+=========================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c``    |
+| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-7aa5364``    |
 +-------------+-------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c`` |
+| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-7aa5364`` |
 +-------------+-------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c`` |
+| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364`` |
 +-------------+-------------------------------------------------------------------------+
 
 See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location, and add
