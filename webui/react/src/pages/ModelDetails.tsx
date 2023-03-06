@@ -42,7 +42,7 @@ import { useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -65,10 +65,7 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => Loaded(usersPagination.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
   const lodableWorkspaces = useWorkspaces();
   const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
@@ -256,7 +253,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

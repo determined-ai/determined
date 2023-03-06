@@ -53,7 +53,7 @@ import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -71,10 +71,7 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -588,10 +585,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

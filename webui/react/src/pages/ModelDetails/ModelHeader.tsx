@@ -23,7 +23,7 @@ import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { useUsers } from 'stores/users';
 import { ModelItem, Workspace } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
@@ -45,10 +45,7 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
@@ -61,7 +58,7 @@ const ModelHeader: React.FC<Props> = ({
   const infoRows: InfoRow[] = useMemo(() => {
     if (Loadable.isLoading(users)) return [];
 
-    const user = users.data.find((user) => user.id === model.userId);
+    const user = users.data.users.find((user) => user.id === model.userId);
     return [
       {
         content: (
@@ -231,7 +228,7 @@ const ModelHeader: React.FC<Props> = ({
             </Dropdown>
           </Space>
         </div>
-        <Spinner spinning={users === undefined}>
+        <Spinner spinning={Loadable.isLoading(users)}>
           <InfoBox rows={infoRows} separator={false} />
         </Spinner>
       </div>

@@ -83,7 +83,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -115,10 +115,7 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -602,10 +599,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.data.users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },

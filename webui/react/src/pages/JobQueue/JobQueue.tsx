@@ -34,7 +34,7 @@ import {
   orderedSchedulers,
   unsupportedQPosSchedulers,
 } from 'utils/job';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './JobQueue.module.scss';
@@ -48,10 +48,7 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => Loaded(usersPagination.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   useRefetchClusterData();
   const resourcePools = useObservable(useClusterStore().resourcePools);
   const hasLoadingObservables = Loadable.isLoading(users) || Loadable.isLoading(resourcePools);
@@ -304,7 +301,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.data.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId));
             break;
         }
         return col;

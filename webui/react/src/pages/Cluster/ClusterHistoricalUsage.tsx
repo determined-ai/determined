@@ -10,7 +10,7 @@ import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
 import { useUsers } from 'stores/users';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
@@ -32,10 +32,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -113,7 +110,7 @@ const ClusterHistoricalUsage: React.FC = () => {
     return mapResourceAllocationApiToChartSeries(
       aggRes.resourceEntries,
       filters.groupBy,
-      (Loadable.isLoaded(users) && users.data) || [],
+      (Loadable.isLoaded(users) && users.data.users) || [],
     );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 

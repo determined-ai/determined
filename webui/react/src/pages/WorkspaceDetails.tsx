@@ -25,7 +25,7 @@ import { isNotFound } from 'shared/utils/service';
 import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 
 import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
@@ -50,10 +50,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -155,7 +152,7 @@ const WorkspaceDetails: React.FC = () => {
   const addableUsers = useMemo(
     () =>
       (Loadable.isLoaded(users) &&
-        users.data.filter((user) => !usersAssignedDirectlyIds.has(user.id))) ||
+        users.data.users.filter((user) => !usersAssignedDirectlyIds.has(user.id))) ||
       [],
     [users, usersAssignedDirectlyIds],
   );

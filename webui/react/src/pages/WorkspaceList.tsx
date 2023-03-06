@@ -34,7 +34,7 @@ import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { Workspace } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
@@ -47,10 +47,7 @@ import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -143,7 +140,9 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id) });
+        updateSettings({
+          user: users.data.users.filter((u) => u.id !== user?.id).map((u) => u.id),
+        });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
@@ -180,7 +179,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

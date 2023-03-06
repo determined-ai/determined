@@ -37,7 +37,7 @@ import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceProjects.module.scss';
 import settingsConfig, {
@@ -54,10 +54,7 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -153,7 +150,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id) });
+        updateSettings({
+          user: users.data.users.filter((u) => u.id !== user?.id).map((u) => u.id),
+        });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
@@ -240,7 +239,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.data.users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import { useCurrentUser, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
-import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 interface Props {
@@ -18,10 +18,7 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => Loaded(cUser.users),
-    NotLoaded: () => NotLoaded,
-  });
+  const users = useUsers();
   const loadableCurrentUser = useCurrentUser();
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
@@ -53,7 +50,7 @@ const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
     }
 
     if (Loadable.isLoaded(users)) {
-      const allOtherUsers = users.data
+      const allOtherUsers = users.data.users
         .filter((user) => !authUser || user.id !== authUser.id)
         .sort((a, b) => getDisplayName(a).localeCompare(getDisplayName(b), 'en'))
         .map(userToSelectOption);
