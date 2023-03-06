@@ -1,6 +1,5 @@
 import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -44,6 +43,7 @@ import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {

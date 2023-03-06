@@ -1,5 +1,4 @@
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import { useObservable } from 'micro-observables';
 import React, { MutableRefObject, useCallback, useEffect, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -30,6 +29,7 @@ import usersStore from 'stores/users';
 import { StateOfUnion } from 'themes';
 import { DetailedUser, MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';

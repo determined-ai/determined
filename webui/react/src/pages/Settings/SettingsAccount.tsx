@@ -1,6 +1,5 @@
 import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
 import { Divider, Typography } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -15,6 +14,7 @@ import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './SettingsAccount.module.scss';
 

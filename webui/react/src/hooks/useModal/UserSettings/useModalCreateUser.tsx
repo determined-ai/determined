@@ -1,6 +1,5 @@
 import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -24,6 +23,7 @@ import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';

@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +11,7 @@ import { ErrorType } from 'shared/utils/error';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 

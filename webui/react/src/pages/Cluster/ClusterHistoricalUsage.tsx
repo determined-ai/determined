@@ -1,6 +1,5 @@
 import { Space } from 'antd';
 import dayjs from 'dayjs';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -13,6 +12,7 @@ import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';

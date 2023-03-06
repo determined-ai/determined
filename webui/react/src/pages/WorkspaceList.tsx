@@ -1,5 +1,4 @@
 import { Space } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -36,6 +35,7 @@ import { validateDetApiEnum } from 'shared/utils/service';
 import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {

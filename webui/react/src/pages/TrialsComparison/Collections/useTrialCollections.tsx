@@ -1,6 +1,5 @@
 import { Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
-import { useObservable } from 'micro-observables';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +15,7 @@ import { ErrorType } from 'shared/utils/error';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 

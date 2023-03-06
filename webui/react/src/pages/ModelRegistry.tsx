@@ -6,7 +6,6 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
@@ -55,6 +54,7 @@ import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';

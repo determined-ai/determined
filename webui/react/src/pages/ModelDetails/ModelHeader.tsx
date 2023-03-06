@@ -1,7 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -24,6 +23,7 @@ import { formatDatetime } from 'shared/utils/datetime';
 import usersStore from 'stores/users';
 import { DetailedUser, ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';

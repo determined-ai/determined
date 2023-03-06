@@ -1,6 +1,5 @@
 import { Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -37,6 +36,7 @@ import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {

@@ -6,7 +6,6 @@ import {
   SorterResult,
   TablePaginationConfig,
 } from 'antd/es/table/interface';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -67,6 +66,7 @@ import {
 import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 

@@ -1,5 +1,4 @@
 import { Map } from 'immutable';
-import { Observable, observable, WritableObservable } from 'micro-observables';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
@@ -7,6 +6,7 @@ import type { GetUsersParams as FetchUsersConfig } from 'services/types';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { Observable, observable, WritableObservable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 
 type UsersPagination = {

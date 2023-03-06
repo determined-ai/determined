@@ -1,5 +1,4 @@
 import type { TabsProps } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -27,6 +26,7 @@ import usersStore from 'stores/users';
 import { DetailedUser, User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';

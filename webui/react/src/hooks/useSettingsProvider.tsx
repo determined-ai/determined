@@ -1,5 +1,4 @@
 import { Map } from 'immutable';
-import { useObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
@@ -9,6 +8,7 @@ import { authChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 /*
  * UserSettingsState contains all the settings for a user

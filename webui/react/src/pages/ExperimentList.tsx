@@ -2,7 +2,6 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -85,6 +84,7 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 

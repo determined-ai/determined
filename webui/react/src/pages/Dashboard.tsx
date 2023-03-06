@@ -1,4 +1,3 @@
-import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
@@ -36,6 +35,7 @@ import usersStore from 'stores/users';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './Dashboard.module.scss';
 

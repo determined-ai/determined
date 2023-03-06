@@ -1,4 +1,3 @@
-import { useObservable } from 'micro-observables';
 import React, { useCallback } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -10,6 +9,7 @@ import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 interface Props {
   form: FormInstance;

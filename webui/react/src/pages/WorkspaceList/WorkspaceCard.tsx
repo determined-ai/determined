@@ -1,6 +1,5 @@
 import { PushpinOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
-import { useObservable } from 'micro-observables';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
@@ -11,6 +10,7 @@ import { pluralizer } from 'shared/utils/string';
 import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
