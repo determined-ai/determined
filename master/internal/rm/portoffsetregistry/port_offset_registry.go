@@ -60,7 +60,7 @@ func GetPortOffset() (int, error) {
 	return portOffset, nil
 }
 
-// Restores a port offset by adding it back to the global port registry tree.
+// RestorePortOffset restores a port offset by adding it back to the global port registry tree.
 func RestorePortOffset(portOffset int) {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()

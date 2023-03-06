@@ -490,6 +490,9 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		portOffset, err := portoffsetregistry.GetPortOffset()
+		if err != nil {
+			return fmt.Errorf("getting port offset from the registry for an allocation")
+		}
 		a.model.PortOffset = portOffset
 		ctx.Log().Debugf(" : %v", portOffset)
 		err = db.UpdateAllocationPortOffset(a.model)
@@ -498,9 +501,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		for cID, r := range a.resources {
-			if err != nil {
-				return fmt.Errorf("getting port offset from the registry for an allocation.")
-			}
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
