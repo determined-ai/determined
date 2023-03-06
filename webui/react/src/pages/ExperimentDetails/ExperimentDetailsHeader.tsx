@@ -1,9 +1,8 @@
-import { Button, Space } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
-import InlineEditor from 'components/InlineEditor';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -15,6 +14,7 @@ import useModalExperimentCreate, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
+import useModalExperimentEdit from 'hooks/useModal/Experiment/useModalExperimentEdit';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -25,7 +25,6 @@ import {
   activateExperiment,
   archiveExperiment,
   openOrCreateTensorBoard,
-  patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -114,6 +113,7 @@ const headerActions = [
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
   Action.DownloadCode,
+  Action.Edit,
   Action.Archive,
   Action.Unarchive,
   Action.Delete,
@@ -166,6 +166,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const { contextHolder: modalExperimentCreateContextHolder, modalOpen: openModalCreate } =
     useModalExperimentCreate();
 
+  const { contextHolder: modalExperimentEditContextHolder, modalOpen: openModalEdit } =
+    useModalExperimentEdit({
+      description: experiment.description ?? '',
+      experimentId: experiment.id,
+      experimentName: experiment.name,
+      fetchExperimentDetails,
+    });
+
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -178,6 +186,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
+
   const disabled =
     experiment?.parentArchived ||
     experiment?.archived ||
@@ -258,44 +267,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
 
-  const handleDescriptionUpdate = useCallback(
-    async (newValue: string) => {
-      try {
-        await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
-        await fetchExperimentDetails();
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment description.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-        return e as Error;
-      }
-    },
-    [experiment.id, fetchExperimentDetails],
-  );
-
-  const handleNameUpdate = useCallback(
-    async (newValue: string) => {
-      try {
-        await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
-        await fetchExperimentDetails();
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment name.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-        return e as Error;
-      }
-    },
-    [experiment.id, fetchExperimentDetails],
-  );
-
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
       [Action.Unarchive]: {
@@ -341,6 +312,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         key: 'fork',
         label: 'Fork',
         onClick: handleForkClick,
+      },
+      [Action.Edit]: {
+        key: 'edit',
+        label: 'Edit',
+        onClick: openModalEdit,
       },
       [Action.Move]: {
         key: 'move',
@@ -392,6 +368,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     handleDeleteClick,
     handleHyperparameterSearch,
     handleForkClick,
+    openModalEdit,
     handleMoveClick,
     isRunningTensorBoard,
     isRunningUnarchive,
@@ -448,15 +425,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
-              <InlineEditor
-                allowNewline
-                disabled={disabled}
-                maxLength={500}
-                placeholder={disabled ? 'Archived' : 'Add description...'}
-                style={{ minWidth: 120 }}
-                value={experiment.description || ''}
-                onSave={handleDescriptionUpdate}
-              />
+              <div className={css.description}>
+                {experiment.description || <Typography.Text disabled>N/A</Typography.Text>}
+              </div>
             </div>
             {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
               <div className={css.foldableItem}>
@@ -561,14 +532,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name}>
-              <InlineEditor
-                disabled={disabled}
-                maxLength={128}
-                placeholder="experiment name"
-                value={experiment.name}
-                onSave={handleNameUpdate}
-              />
+            <div className={css.name} role="experimentName">
+              {experiment.name}
             </div>
             {trial ? (
               <>
@@ -585,6 +550,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
+      {modalExperimentEditContextHolder}
       {modalHyperparameterSearchContextHolder}
     </>
   );
