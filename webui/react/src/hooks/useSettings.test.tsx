@@ -14,6 +14,15 @@ import { SettingsProvider } from './useSettingsProvider';
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
+jest.mock('index', () => {
+  return {
+    router: {
+      navigate: (path: string) => {
+        global.window.history.pushState({}, '', path);
+      },
+    },
+  };
+});
 
 interface Settings {
   boolean: boolean;

@@ -1,11 +1,6 @@
 import 'micro-observables/batchingForReactDom';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-/**
- * It's considered unstable until `react-router-dom` can detect
- * history version mismatches when supplying your own history.
- * https://reactrouter.com/en/v6.3.0/api#unstable_historyrouter
- */
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 /* Import the styles first to allow components to override styles. */
@@ -22,17 +17,50 @@ if (process.env.PUBLIC_URL && window.location.pathname === '/') {
   window.location.href = process.env.PUBLIC_URL;
 }
 
-const container = document.getElementById('root');
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const root = createRoot(container!);
+interface State {
+  hasError: boolean;
+}
+
+interface NodeProps {
+  children?: ReactNode[];
+}
+
+class ErrorBoundary extends React.Component<NodeProps, State> {
+  constructor(props: NodeProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  componentDidCatch(): void {
+    // You can also log the error to an error reporting service
+    // logErrorToMyService(error, errorInfo);
+    // console.log('error: ' + error);
+    // console.log('errorInfo: ' + JSON.stringify(errorInfo));
+    // console.log('componentStack: ' + errorInfo.componentStack);
+    router.navigate('/logout');
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return <div />;
+    }
+
+    return <App />;
+  }
+}
 
 export const router = createBrowserRouter(
   [
     // match everything with "*"
-    { element: <App />, path: '*' },
+    { element: <ErrorBoundary />, path: '*' },
   ],
   { basename: process.env.PUBLIC_URL },
 );
+
+const container = document.getElementById('root');
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(container!);
 
 root.render(
   // <React.StrictMode>

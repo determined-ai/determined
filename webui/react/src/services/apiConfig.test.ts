@@ -1,5 +1,15 @@
 import * as utils from './apiConfig';
 
+jest.mock('index', () => {
+  return {
+    router: {
+      navigate: (path: string) => {
+        global.window.history.pushState({}, '', path);
+      },
+    },
+  };
+});
+
 describe('apiConfig', () => {
   describe('getUserIds', () => {
     it('should convert user id strings into user id numbers', () => {

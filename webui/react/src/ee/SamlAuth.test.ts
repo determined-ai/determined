@@ -1,5 +1,15 @@
 import * as utils from './SamlAuth';
 
+jest.mock('index', () => {
+  return {
+    router: {
+      navigate: (path: string) => {
+        global.window.history.pushState({}, '', path);
+      },
+    },
+  };
+});
+
 describe('SamlAuth', () => {
   describe('samlUrl', () => {
     const BASE_PATHS = ['/abc/def-ghi', '/HelloWorld/What%20is%20up?'];

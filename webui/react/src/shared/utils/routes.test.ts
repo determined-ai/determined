@@ -1,10 +1,21 @@
 import React from 'react';
 
+import { reactHostAddress } from 'routes/utils';
+
 import { router } from '../../index';
 
-import { reactHostAddress } from 'routes/utils';
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
+
+jest.mock('index', () => {
+  return {
+    router: {
+      navigate: (path: string) => {
+        global.window.history.pushState({}, '', path);
+      },
+    },
+  };
+});
 
 const setup = (url = '/', base = 'http://www.example.com') => {
   const newUrl = new URL(url, base);
@@ -315,21 +326,7 @@ describe('Routes Utilities', () => {
       expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(router.navigate).toHaveBeenCalledTimes(1);
-      expect(router.navigate).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.example.com',
-          hostname: 'www.example.com',
-          href: 'http://www.example.com/',
-          origin: 'http://www.example.com',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'http:',
-          search: '',
-          username: '',
-        },
-      });
+      expect(router.navigate).toHaveBeenCalledWith(path);
     });
 
     it('should route to react URL with determined.ai base url', () => {
@@ -338,21 +335,7 @@ describe('Routes Utilities', () => {
       expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
       expect(router.navigate).toHaveBeenCalledTimes(1);
-      expect(router.navigate).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.determined.ai',
-          hostname: 'www.determined.ai',
-          href: 'https://www.determined.ai/',
-          origin: 'https://www.determined.ai',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'https:',
-          search: '',
-          username: '',
-        },
-      });
+      expect(router.navigate).toHaveBeenCalledWith(path);
     });
   });
 });

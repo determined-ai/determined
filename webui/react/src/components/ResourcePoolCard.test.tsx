@@ -15,6 +15,16 @@ vi.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve({}),
 }));
 
+jest.mock('index', () => {
+  return {
+    router: {
+      navigate: (path: string) => {
+        global.window.history.pushState({}, '', path);
+      },
+    },
+  };
+});
+
 const setup = (pool: ResourcePool) => {
   const view = render(
     <UIProvider>
