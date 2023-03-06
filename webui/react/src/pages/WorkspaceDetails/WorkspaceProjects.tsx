@@ -5,6 +5,7 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
@@ -21,7 +22,6 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -406,7 +406,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           {!workspace.archived && (
             <Toggle
               checked={settings.archived}
-              prefixLabel="Show Archived"
+              label="Show Archived"
               onChange={switchShowArchived}
             />
           )}
