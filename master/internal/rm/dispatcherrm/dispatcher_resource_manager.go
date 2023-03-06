@@ -1650,19 +1650,22 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 func (m *dispatcherResourceManager) handleServiceQueryError(
 	r *http.Response, ctx *actor.Context, err error,
 ) {
-	if r != nil && (r.StatusCode == http.StatusUnauthorized ||
-		r.StatusCode == http.StatusForbidden) {
-		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-			"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
-			"the launcher service followed by a restart of the determined-master service.",
-			err, m.rmConfig.LauncherAuthFile)
-		m.authToken = loadAuthToken(m.rmConfig)
-		m.jobWatcher.ReloadAuthToken()
+	if r != nil {
+		if r.StatusCode == http.StatusUnauthorized ||
+			r.StatusCode == http.StatusForbidden {
+			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
+				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
+				"the launcher service followed by a restart of the determined-master service.",
+				err, m.rmConfig.LauncherAuthFile)
+			m.authToken = loadAuthToken(m.rmConfig)
+			m.jobWatcher.ReloadAuthToken()
+		} else {
+			ctx.Log().Errorf("Failed to retrieve HPC resources from launcher due to error: "+
+				"{%v}, response: {%v}. ", err, r.Body)
+		}
 	} else {
 		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-			"{%v}, response: {%v}. Verify that the launcher service is up and reachable."+
-			" Try a restart the launcher service followed by a restart of the "+
-			"determined-master service. ", err, r)
+			"{%v}. Verify that the launcher service is up and reachable.", err)
 	}
 }
 
@@ -1840,10 +1843,11 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 		if response != nil {
 			// So we can show the HTTP status code, if available.
 			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
+			return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
+				"Verify that the launcher service is up and reachable.", httpStatus, response.Body)
 		}
-		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
-			"Verify that the launcher service is up and reachable. Try a restart the "+
-			"launcher service followed by a restart of the determined-master service.", httpStatus, response)
+		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error. "+
+			"Verify that the launcher service is up and reachable.")
 	}
 	return dispatchInfo.GetDispatchId(), nil
 }
