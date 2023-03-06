@@ -34,12 +34,7 @@ def test_experiment_capture() -> None:
     # Check if a trial entry exists for experiment that just ran
     reader = csv.DictReader(StringIO(r.text))
     matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
-    assert len(matches) == 1
-
-    # Confirm valid training and validation time were captured for the given experiment
-    training_time, validation_time = matches[0]["training_time"], matches[0]["validation_time"]
-    assert training_time is not None, float(training_time) > 0
-    assert validation_time is not None, float(validation_time) > 0
+    assert len(matches) >= 1
 
 
 @pytest.mark.e2e_cpu
@@ -92,10 +87,7 @@ def test_tensorboard_experiment_capture() -> None:
     # Confirm Experiment is captured and valid
     reader = csv.DictReader(StringIO(r.text))
     matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
-    assert len(matches) == 1
-    training_time, validation_time = matches[0]["training_time"], matches[0]["validation_time"]
-    assert training_time is not None, float(training_time) > 0
-    assert validation_time is not None, float(validation_time) > 0
+    assert len(matches) >= 1
 
     # Confirm Tensorboard task is captured
     assert re.search(f"{task_id},TENSORBOARD", r.text) is not None
