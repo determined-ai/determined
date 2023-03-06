@@ -38,12 +38,15 @@ func TestUpdateCheckpointSize(t *testing.T) {
 	}
 
 	// Create two experiments with two trials each with two checkpoints.
-	var checkpointIDs []uuid.UUID
+	var experimentIDs []int
 	var trialIDs []int
+	var checkpointIDs []uuid.UUID
 
 	resourcesIndex := 0
 	for i := 0; i < 2; i++ {
 		exp := RequireMockExperiment(t, db, user)
+		experimentIDs = append(experimentIDs, exp.ID)
+
 		for j := 0; j < 2; j++ {
 			tr := RequireMockTrial(t, db, exp)
 			allocation := RequireMockAllocation(t, db, tr.TaskID)
@@ -74,20 +77,42 @@ func TestUpdateCheckpointSize(t *testing.T) {
 		require.Equal(t, int64(i+1), size)
 	}
 
-	// TODO counts...
 	// Verify trials have correct sizes and counts.
 	expectedTrialSizes := []int64{1 + 2, 3 + 4, 5 + 6, 7 + 8}
 	for i, trialID := range trialIDs {
-		var checkpointSize int64
+		actual := struct {
+			CheckpointSize  int64
+			CheckpointCount int
+		}{}
 		err := Bun().NewSelect().Table("trials").
 			Column("checkpoint_size").
+			Column("checkpoint_count").
 			Where("id = ?", trialID).
-			Scan(context.Background(), &checkpointSize)
+			Scan(context.Background(), &actual)
 		require.NoError(t, err)
 
-		require.Equal(t, expectedTrialSizes[i], checkpointSize)
+		require.Equal(t, expectedTrialSizes[i], actual.CheckpointSize)
+		require.Equal(t, 2, actual.CheckpointCount)
 	}
 
+	expectedExperimentSizes := []int64{1 + 2 + 3 + 4, 5 + 6 + 7 + 8}
+	for i, experimentID := range experimentIDs {
+		actual := struct {
+			CheckpointSize  int64
+			CheckpointCount int
+		}{}
+		err := Bun().NewSelect().Table("experiments").
+			Column("checkpoint_size").
+			Column("checkpoint_count").
+			Where("id = ?", experimentID).
+			Scan(context.Background(), &actual)
+		require.NoError(t, err)
+
+		require.Equal(t, expectedExperimentSizes[i], actual.CheckpointSize)
+		require.Equal(t, 4, actual.CheckpointCount)
+	}
+
+	fmt.Println("HELLO")
 	// TODO counts...
 }
 

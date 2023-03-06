@@ -138,8 +138,8 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
 	var res bool
 	err := Bun().NewRaw(`
-UPDATE trials SET checkpoint_size=sub.size FROM (
-	SELECT trial_id, SUM(size) AS size FROM checkpoints_view 
+UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT trial_id, SUM(size) AS size, COUNT(*) as count FROM checkpoints_view 
 	WHERE checkpoints_view.state != 'DELETED' 
 	AND trial_id IN (
 		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
@@ -149,7 +149,21 @@ UPDATE trials SET checkpoint_size=sub.size FROM (
 WHERE trials.id = sub.trial_id
 RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
+	}
+
+	err = Bun().NewRaw(`
+UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
+	WHERE id IN (
+		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
+	)
+	GROUP BY experiment_id
+) sub
+WHERE experiments.id = sub.experiment_id
+RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
+	if err != nil {
+		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
 	}
 
 	return nil
