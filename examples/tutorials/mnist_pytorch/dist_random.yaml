@@ -1,4 +1,4 @@
-name: mnist_pytorch_dist_adaptive_search
+name: mnist_pytorch_dist_random_search
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 resources:
@@ -9,6 +9,22 @@ hyperparameters:
     type: double
     minval: .0001
     maxval: 1.0
+  n_filters1:
+    type: int
+    minval: 8
+    maxval: 64
+  n_filters2:
+    type: int
+    minval: 8
+    maxval: 72
+  dropout1:
+    type: double
+    minval: .2
+    maxval: .8
+  dropout2:
+    type: double
+    minval: .2
+    maxval: .8
 searcher:
   name: random
   metric: accuracy
