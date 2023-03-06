@@ -801,7 +801,21 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
+                command: |
+                  gcloud container node-pools create accel \
+                    --cluster ${CLUSTER_ID} \
+                    --region '<<parameters.region>>' \
+                    --num-nodes '<<parameters.num-machines>>' \
+                    --accelerator 'type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>>' \
+                    --machine-type='<<parameters.machine-type>>' \
+                    --scopes cloud-platform \
+                    --node-taints='<<parameters.accel-node-taints>>' \
+                    || (
+                      curl "$SLACK_WEBHOOK" \
+                        -H 'Content-Type: application/json' \
+                        -d "{\"text\":\"GKE node pool creation failed! $CIRCLE_BUILD_URL\"}"
+                      circleci-agent step halt
+                    )
                 name: Create GPU node pool
       - unless:
           condition: <<parameters.gpus-per-machine>>
