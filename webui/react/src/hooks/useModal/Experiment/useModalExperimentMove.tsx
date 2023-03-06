@@ -138,6 +138,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             placeholder="Select a destination workspace."
             searchable={false}
             value={workspaceId ?? undefined}
+            width="100%"
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
