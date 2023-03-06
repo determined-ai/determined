@@ -2,7 +2,7 @@ import queryString from 'query-string';
 
 import { clone } from 'shared/utils/data';
 
-import { router } from '../index';
+import router from '../router';
 
 export const samlUrl = (basePath: string, queries?: string): string => {
   if (!queries) return basePath;

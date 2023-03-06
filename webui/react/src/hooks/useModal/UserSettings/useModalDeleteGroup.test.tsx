@@ -13,15 +13,11 @@ vi.mock('services/api', () => ({
   deleteGroup: vi.fn(),
 }));
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';

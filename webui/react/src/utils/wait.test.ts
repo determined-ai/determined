@@ -58,15 +58,11 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
   },
 };
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 describe('Wait Page Utilities', () => {
   describe('commandToEventUrl', () => {

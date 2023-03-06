@@ -13,15 +13,11 @@ const setup = (tags: string[] = []) => {
   return { handleOnChange, user, view };
 };
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 describe('TagList', () => {
   it('displays list of tags in order', () => {

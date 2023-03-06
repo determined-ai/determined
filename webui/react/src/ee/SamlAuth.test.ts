@@ -1,14 +1,10 @@
 import * as utils from './SamlAuth';
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 describe('SamlAuth', () => {
   describe('samlUrl', () => {

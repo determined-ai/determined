@@ -14,15 +14,11 @@ const FeatureTest: React.FC = () => {
   );
 };
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 const setup = () => {
   return render(<FeatureTest />);

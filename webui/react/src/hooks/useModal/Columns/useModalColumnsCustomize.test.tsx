@@ -67,15 +67,11 @@ const setup = async () => {
   return { user, view };
 };
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 describe('useModalCustomizeColumns', () => {
   it('should open modal', async () => {

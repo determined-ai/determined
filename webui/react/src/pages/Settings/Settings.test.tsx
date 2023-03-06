@@ -12,15 +12,11 @@ import Settings from './Settings';
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 const Container: React.FC = () => {
   const currentUser: DetailedUser = useMemo(

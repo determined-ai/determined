@@ -39,15 +39,11 @@ interface TableItem {
   name: string;
 }
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 const ARIA_LABEL_FILTER = 'filter';
 const ARIA_LABEL_FILTER_CLEAR = 'close-circle';

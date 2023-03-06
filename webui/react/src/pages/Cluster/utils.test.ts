@@ -8,15 +8,11 @@ const pools: Record<string, Partial<ResourcePool>> = {
   onPrem: { maxAgents: 0, slotsAvailable: 1 },
 };
 
-jest.mock('index', () => {
-  return {
-    router: {
-      navigate: (path: string) => {
-        global.window.history.pushState({}, '', path);
-      },
-    },
-  };
-});
+jest.mock('router', () => ({
+  navigate: (path: string) => {
+    global.window.history.pushState({}, '', path);
+  },
+}));
 
 describe('cluster overview', () => {
   describe('maxPoolSlotCapacity', () => {
