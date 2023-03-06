@@ -2,12 +2,11 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Callable, Tuple
 
 import pkg_resources
 from termcolor import colored
 
-import determined
 import determined.deploy
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
@@ -61,6 +60,8 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         print("Delete Successful")
         return
 
+    det_configs["labels"] = dict(det_configs.get("add_label", []))
+
     # Handle Up subcommand.
     if (args.cpu_env_image and not args.gpu_env_image) or (
         args.gpu_env_image and not args.cpu_env_image
@@ -93,6 +94,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "master_config_template_path",
         "tf_state_gcs_bucket_name",
         "func",
+        "add_label",
         "_command",
         "_subcommand",
         "_subsubcommand",
@@ -144,21 +146,19 @@ def handle_dump_master_config_template(args: argparse.Namespace) -> None:
         print(fin.read())
 
 
-def parse_labels() -> Callable:
-    def parse(s: str) -> Dict[str, str]:
-        label_map = dict()
-        for kv in s.split(","):
-            try:
-                key, value = kv.split("=")
-            except ValueError:
-                raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
+def parse_add_label() -> Callable:
+    def parse(s: str) -> Tuple[str, str]:
+        try:
+            key, value = s.split("=", 1)
+        except ValueError:
+            raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
 
-            if not key or not value:
-                raise argparse.ArgumentTypeError(
-                    "both key and value must be defined in key=value format"
-                )
-            label_map[key] = value
-        return label_map
+        if not key or not value:
+            raise argparse.ArgumentTypeError(
+                "both key and value must be defined in key=value format"
+            )
+        return key, value
+
     return parse
 
 
@@ -436,10 +436,12 @@ args_description = Cmd(
                             "instead of a local directory",
                         ),
                         Arg(
-                            "--master-labels",
-                            type=parse_labels(),
+                            "--add-label",
+                            type=parse_add_label(),
+                            action="append",
                             default=None,
-                            help="apply labels to master instance in key=value[,key=value] format",
+                            help="apply label to master instance in key=value format, "
+                            "can be repeated",
                         ),
                     ],
                 ),

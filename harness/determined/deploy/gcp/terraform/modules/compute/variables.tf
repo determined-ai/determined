@@ -139,5 +139,5 @@ variable "gpu_env_image" {
 variable "master_config_template" {
 }
 
-variable "master_labels" {
+variable "labels" {
 }
