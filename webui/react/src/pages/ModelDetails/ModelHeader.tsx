@@ -4,14 +4,15 @@ import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import InlineEditor from 'components/InlineEditor';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
+import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -50,6 +51,8 @@ const ModelHeader: React.FC<Props> = ({
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
+  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
+    useModalModelEdit({ modelName: model.name, onSaveName });
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
@@ -70,22 +73,28 @@ const ModelHeader: React.FC<Props> = ({
       { content: <TimeAgo datetime={new Date(model.lastUpdatedTime)} />, label: 'Updated' },
       {
         content: (
-          <InlineEditor
+          <Input
+            defaultValue={model.description ?? ''}
             disabled={model.archived || !canModifyModelFlag}
             placeholder={model.archived ? 'Archived' : 'Add description...'}
-            value={model.description ?? ''}
-            onSave={onSaveDescription}
+            onBlur={(e) => {
+              const newValue = e.currentTarget.value;
+              onSaveDescription(newValue);
+            }}
+            onPressEnter={(e) => {
+              e.currentTarget.blur();
+            }}
           />
         ),
         label: 'Description',
       },
       {
         content: (
-          <TagList
+          <Tags
             disabled={model.archived || !canModifyModelFlag}
             ghost={false}
             tags={model.labels ?? []}
-            onChange={onUpdateTags}
+            onAction={tagsActionHelper(model.labels ?? [], onUpdateTags)}
           />
         ),
         label: 'Tags',
@@ -100,6 +109,7 @@ const ModelHeader: React.FC<Props> = ({
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
+      EditModelName: 'edit-model-name',
       MoveModel: 'move-model',
       SwitchArchived: 'switch-archive',
     } as const;
@@ -107,6 +117,9 @@ const ModelHeader: React.FC<Props> = ({
     const funcs = {
       [MenuKey.SwitchArchived]: () => {
         onSwitchArchive();
+      },
+      [MenuKey.EditModelName]: () => {
+        openModelNameEdit();
       },
       [MenuKey.MoveModel]: () => {
         handleMove();
@@ -120,7 +133,14 @@ const ModelHeader: React.FC<Props> = ({
       funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
-    const menuItems: MenuProps['items'] = [];
+    const menuItems: MenuProps['items'] = [
+      {
+        disabled: model.archived || !canModifyModelFlag,
+        key: MenuKey.EditModelName,
+        label: 'Edit',
+      },
+    ];
+
     if (canModifyModelFlag) {
       menuItems.push({
         key: MenuKey.SwitchArchived,
@@ -135,7 +155,15 @@ const ModelHeader: React.FC<Props> = ({
     }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [canDeleteModelFlag, canModifyModelFlag, handleDelete, handleMove, model, onSwitchArchive]);
+  }, [
+    canDeleteModelFlag,
+    canModifyModelFlag,
+    handleDelete,
+    handleMove,
+    model.archived,
+    onSwitchArchive,
+    openModelNameEdit,
+  ]);
 
   return (
     <header className={css.base}>
@@ -187,15 +215,7 @@ const ModelHeader: React.FC<Props> = ({
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
             <Icon name="model" size="big" />
-            <h1 className={css.name}>
-              <InlineEditor
-                allowClear={false}
-                disabled={model.archived || !canModifyModelFlag}
-                placeholder="Add name..."
-                value={model.name}
-                onSave={onSaveName}
-              />
-            </h1>
+            <h1 className={css.name}>{model.name}</h1>
           </Space>
           <Space size="small">
             <Dropdown
@@ -212,6 +232,7 @@ const ModelHeader: React.FC<Props> = ({
       </div>
       {modalModelDeleteContextHolder}
       {modalModelMoveContextHolder}
+      {modalModelNameEditContextHolder}
     </header>
   );
 };

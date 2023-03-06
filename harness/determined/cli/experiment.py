@@ -17,7 +17,7 @@ import determined as det
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, render
+from determined.cli import checkpoint, proxy, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -274,7 +274,12 @@ def submit_experiment(args: Namespace) -> None:
             cli.print_warnings(resp.warnings)
 
         if not args.paused and args.follow_first_trial:
-            _follow_experiment_logs(sess, resp.experiment.id)
+            if args.publish:
+                port_map = proxy.parse_port_map_flag(args.publish)
+                with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
+                    _follow_experiment_logs(sess, resp.experiment.id)
+            else:
+                _follow_experiment_logs(sess, resp.experiment.id)
 
 
 def local_experiment(args: Namespace) -> None:
@@ -1065,6 +1070,14 @@ main_cmd = Cmd(
                         "checkpoints can be saved. The test experiment will "
                         "be archived on creation.",
                     ),
+                ),
+                Arg(
+                    "-p",
+                    "--publish",
+                    action="append",
+                    default=[],
+                    type=str,
+                    help="publish task ports to the host",
                 ),
             ],
         ),

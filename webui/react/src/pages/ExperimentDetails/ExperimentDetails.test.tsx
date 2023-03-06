@@ -133,13 +133,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      const { container } = setup().view;
+      setup();
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
+        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
       });
 
       expect(screen.getByText('Overview')).toBeInTheDocument();
@@ -163,13 +163,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      const { container } = setup().view;
+      setup();
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
+        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
       });
 
       expect(screen.getByText('Visualization')).toBeInTheDocument();

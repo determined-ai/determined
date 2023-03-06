@@ -3,6 +3,7 @@ from .experiment import (
     assert_equivalent_trials,
     assert_performed_final_checkpoint,
     assert_performed_initial_validation,
+    cancel_experiment,
     cancel_single,
     cancel_trial,
     check_if_string_present_in_trial_logs,

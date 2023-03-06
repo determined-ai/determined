@@ -40,6 +40,8 @@ type (
 	SingleConfig              = SingleConfigV0
 	SlurmConfig               = SlurmConfigV0
 	PbsConfig                 = PbsConfigV0
+	ProxyPort                 = ProxyPortV0
+	ProxyPortsConfig          = ProxyPortsConfigV0
 )
 
 // These are EOL searchers, not to be used in new experiments.

@@ -1,12 +1,11 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
@@ -22,8 +21,6 @@ import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
@@ -136,11 +133,10 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           <label className={css.label} htmlFor="workspace">
             Workspace
           </label>
-          <SelectFilter
+          <Select
             id="workspace"
             placeholder="Select a destination workspace."
-            showSearch={false}
-            style={{ width: '100%' }}
+            searchable={false}
             value={workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
@@ -153,7 +149,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
                 </Option>
               );
             })}
-          </SelectFilter>
+          </Select>
         </div>
         {workspaceId && workspaceId !== 1 && (
           <div>

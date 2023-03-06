@@ -1,5 +1,6 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
+import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -20,15 +21,17 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
+import Select from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import UserBadge from 'components/kit/UserBadge';
+import { useTags } from 'components/kit/useTags';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import ResourcePoolCard from 'components/ResourcePoolCard';
-import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
@@ -55,7 +58,6 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
-  Dropdowns: 'Comboboxes & Dropdowns',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -66,6 +68,9 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Select: 'Select',
+  Tags: 'Tags',
+  Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
   UserBadge: 'UserBadge',
@@ -177,21 +182,27 @@ const ButtonsSection: React.FC = () => {
   );
 };
 
-const DropdownsSection: React.FC = () => {
+const SelectSection: React.FC = () => {
+  const handleFilter = (input: string, option: LabeledValue | undefined) =>
+    !!(option?.label && option.label.toString().includes(input) === true);
+  const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
+  const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
+  const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
+
   return (
-    <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
+    <ComponentSection id="Select" title="Select">
       <AntDCard>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a
-          dropdown giving people a way to select an option from a list or enter their own choice.
+          A Select (<code>{'<Select>'}</code>) combines a text field and a dropdown giving people a
+          way to select an option from a list or enter their own choice.
         </p>
       </AntDCard>
       <AntDCard title="Best practices">
         <strong>Layout</strong>
         <ul>
           <li>
-            Use a combo box when there are multiple choices that can be collapsed under one title,
-            when the list of items is long, or when space is constrained.
+            Use a select when there are multiple choices that can be collapsed under one title, when
+            the list of items is long, or when space is constrained.
           </li>
         </ul>
         <strong>Content</strong>
@@ -202,38 +213,157 @@ const DropdownsSection: React.FC = () => {
         <strong>Accessibility</strong>
         <ul>
           <li>
-            ComboBox dropdowns render in their own layer by default to ensure they are not clipped
-            by containers with overflow: hidden or overflow: scroll. This causes extra difficulty
-            for people who use screen readers, so we recommend rendering the ComboBox options
-            dropdown inline unless they are in overflow containers.
+            Select dropdowns render in their own layer by default to ensure they are not clipped by
+            containers with overflow: hidden or overflow: scroll. This causes extra difficulty for
+            people who use screen readers, so we recommend rendering the ComboBox options dropdown
+            inline unless they are in overflow containers.
           </li>
         </ul>
         <strong>Truncation</strong>
         <ul>
           <li>
-            By default, the ComboBox truncates option text instead of wrapping to a new line.
-            Because this can lose meaningful information, it is recommended to adjust styles to wrap
-            the option text.
+            By default, the Select truncates option text instead of wrapping to a new line. Because
+            this can lose meaningful information, it is recommended to adjust styles to wrap the
+            option text.
           </li>
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default dropdown</strong>
-        <SelectFilter
-          defaultValue={1}
+        <strong>Default Select</strong>
+        <Select
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
+        <strong>Variations</strong>
+        <strong>Select with default value</strong>
+        <Select
+          defaultValue={2}
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
         />
-        <strong>Disabled dropdown</strong>
-        <SelectFilter
+        <strong>Select with label</strong>
+        <Select
+          label="Select Label"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
+        <strong>Select without placeholder</strong>
+        <Select
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Disabled Select</strong>
+        <Select
           defaultValue="disabled"
           disabled
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
-        <hr />
+        <strong>Select without search</strong>
+        <Select
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Nonsearcahble Select"
+          searchable={false}
+        />
+        <strong>Multiple Select with tags</strong>
+        <Select
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select Tags"
+          width={300}
+        />
+        <strong>Multiple Select with tags disabled</strong>
+        <Select
+          disableTags
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select Multiple"
+          value={multiSelectValues}
+          width={150}
+          onChange={(value) => setMultiSelectValues(value)}
+        />
+        <strong>Select with tags and custom search</strong>
+        <Select
+          filterOption={handleFilter}
+          mode="multiple"
+          options={[
+            { label: 'Case 1', value: 1 },
+            { label: 'Case 2', value: 2 },
+            { label: 'Case 3', value: 3 },
+          ]}
+          placeholder="Case-sensitive Search"
+          width={300}
+        />
+        <strong>Select with sorted search</strong>
+        <Select
+          disableTags
+          filterOption={(input, option) =>
+            (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+          filterSort={(a: LabeledValue, b: LabeledValue) =>
+            (a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1
+          }
+          mode="multiple"
+          options={[
+            { label: 'Am', value: 1 },
+            { label: 'Az', value: 2 },
+            { label: 'Ac', value: 3 },
+            { label: 'Aa', value: 4 },
+          ]}
+          placeholder="Search"
+          value={sortedSelectValues}
+          width={120}
+          onChange={(value) => setSortedSelectValues(value)}
+        />
+        <strong>Clearable Select</strong>
+        <Select
+          allowClear
+          disableTags
+          mode="multiple"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          value={clearableSelectValues}
+          width={130}
+          onChange={(value) => setClearableSelectValues(value)}
+        />
+        <strong>Responsive Select with large width defined</strong>
+        <Select
+          disableTags
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          width={999999}
+        />
         <span>
           Also see{' '}
           <Link reloadDocument to={`#${ComponentTitles.Form}`}>
@@ -914,7 +1044,7 @@ const PivotSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default Pivot</strong>
+        <strong>Primary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -929,7 +1059,7 @@ const PivotSection: React.FC = () => {
           />
         </Space>
         <hr />
-        <strong>Card Pivot</strong>
+        <strong>Secondary Pivot</strong>
         <Space>
           <Pivot
             items={[
@@ -941,7 +1071,7 @@ const PivotSection: React.FC = () => {
               { children: 'Profiler', key: 'profiler', label: 'Profiler' },
               { children: 'Logs', key: 'logs', label: 'Logs' },
             ]}
-            type="card"
+            type="secondary"
           />
         </Space>
       </AntDCard>
@@ -1220,8 +1350,8 @@ const FormSection: React.FC = () => {
         <p>
           <code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for
           submitting user input. When these components wrap a user input field (such as{' '}
-          <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>), they can show a standard
-          label, indicate that the field is required, apply input validation, or display an input
+          <code>{'<Input>'}</code> or <code>{'<Select>'}</code>), they can show a standard label,
+          indicate that the field is required, apply input validation, or display an input
           validation error.
         </p>
       </AntDCard>
@@ -1311,13 +1441,13 @@ const FormSection: React.FC = () => {
           <br />
           <strong>
             Form-specific{' '}
-            <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>
-              Dropdown
+            <Link reloadDocument to={`#${ComponentTitles.Select}`}>
+              Select
             </Link>{' '}
             variations
           </strong>
           <Form.Item label="Required dropdown" name="required" required>
-            <SelectFilter
+            <Select
               defaultValue={1}
               options={[
                 { label: 'Option 1', value: 1 },
@@ -1330,9 +1460,48 @@ const FormSection: React.FC = () => {
             label="Invalid dropdown"
             validateMessage="Input validation error"
             validateStatus="error">
-            <SelectFilter />
+            <Select />
           </Form.Item>
         </Form>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const TagsSection: React.FC = () => {
+  const tags: string[] = ['working', 'TODO'];
+  const moreTags: string[] = ['working', 'TODO', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
+  return (
+    <ComponentSection id="Tags" title="Tags">
+      <Card>
+        <p>
+          The editable tags list (<code>{'<Tags>'}</code>) supports &quot;add&quot;,
+          &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
+        </p>
+      </Card>
+      <AntDCard title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>Don&apos;t use tags of the same content within one list.</li>
+          <li>Tags are ordered alphabetically.</li>
+          <li>Individual tags cannot be empty.</li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Tags default</strong>
+        <Space>{useTags([...tags])()}</Space>
+        <strong>Tags ghost</strong>
+        <Space>{useTags([...tags])({ ghost: true })}</Space>
+        <strong>Tags disabled</strong>
+        <Space>{useTags([...tags])({ disabled: true })}</Space>
+        <strong>Tags compact</strong>
+        <Space>{useTags([...moreTags])({ compact: true })}</Space>
+        <strong>Tags with long text</strong>
+        <Space>
+          {useTags([
+            'very very very long text, very very very long text, very very very long text, very very very long text.',
+          ])()}
+        </Space>
       </AntDCard>
     </ComponentSection>
   );
@@ -1468,13 +1637,32 @@ const EmptySection: React.FC = () => {
   );
 };
 
+const ToggleSection: React.FC = () => {
+  return (
+    <ComponentSection id="Toggle" title="Toggle">
+      <AntDCard>
+        <p>
+          A <code>{'<Toggle>'}</code> component represents switching between two states. This
+          component is controlled by its parent and may optionally include a label.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Toggle default</strong>
+        <Toggle />
+        <strong>Toggle variations</strong>
+        <Toggle checked={true} />
+        <Toggle label="Label" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  Dropdowns: <DropdownsSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
@@ -1485,6 +1673,9 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Select: <SelectSection />,
+  Tags: <TagsSection />,
+  Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
   UserBadge: <UserBadgeSection />,

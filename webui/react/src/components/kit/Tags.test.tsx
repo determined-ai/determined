@@ -2,13 +2,13 @@ import { render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER } from './TagList';
+import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER, tagsActionHelper } from './Tags';
 
 const initTags = ['hello', 'world', 'space gap'].sort();
 
 const setup = (tags: string[] = []) => {
   const handleOnChange = jest.fn();
-  const view = render(<TagList tags={tags} onChange={handleOnChange} />);
+  const view = render(<TagList tags={tags} onAction={tagsActionHelper(tags, handleOnChange)} />);
   const user = userEvent.setup();
   return { handleOnChange, user, view };
 };
@@ -63,8 +63,8 @@ describe('TagList', () => {
     await user.keyboard(rename);
     await user.click(view.getByLabelText(ARIA_LABEL_CONTAINER));
 
-    const resultTags = initTags.filter((tag: string) => tag !== renameTag);
-    resultTags.push(rename);
-    expect(handleOnChange).toHaveBeenCalledWith(resultTags);
+    const updatedIndex = initTags.findIndex((tag: string) => tag === renameTag);
+    initTags[updatedIndex] = rename;
+    expect(handleOnChange).toHaveBeenCalledWith(initTags);
   });
 });

@@ -427,7 +427,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         activeKey={typeKey}
         destroyInactiveTabPane
         items={tabItems}
-        type="card"
+        type="secondary"
         onChange={handleTabChange}
       />
     </div>
