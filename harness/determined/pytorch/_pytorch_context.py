@@ -142,7 +142,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         # Second, eliminate any need for the loss functions to be in that context:
         def end_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:  # noqa: A002
-
             if isinstance(output, torch.Tensor):
                 return output.float() if output.dtype == torch.float16 else output
             if isinstance(output, dict):
@@ -178,7 +177,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
-
                 wrapped_model = self._PyTorchDistributedDataParallel(model)
             else:
                 wrapped_model = model
