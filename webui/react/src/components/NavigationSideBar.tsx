@@ -7,9 +7,9 @@ import { CSSTransition } from 'react-transition-group';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import Nameplate from 'components/kit/Nameplate';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import AvatarCard from 'components/UserAvatarCard';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -27,7 +27,9 @@ import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
+import { getDisplayName } from 'utils/user';
 
+import UserAvatar from './kit/UserAvatar';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 
@@ -233,7 +235,12 @@ const NavigationSideBar: React.FC = () => {
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             {currentUser ? (
-              <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
+              <Nameplate
+                className={css.user}
+                compact
+                icon={<UserAvatar user={currentUser} />}
+                name={getDisplayName(currentUser)}
+              />
             ) : null}
           </Dropdown>
         </header>

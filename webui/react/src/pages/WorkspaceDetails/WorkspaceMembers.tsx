@@ -3,9 +3,9 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
-import UserBadge from 'components/kit/UserBadge';
+import Nameplate from 'components/kit/Nameplate';
+import UserAvatar from 'components/kit/UserAvatar';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -171,10 +171,16 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return <UserBadge user={member} />;
+        return (
+          <Nameplate
+            alias={member.displayName}
+            icon={<UserAvatar user={member} />}
+            name={member.username}
+          />
+        );
       }
       const group = record as V1GroupDetails;
-      return <GroupAvatar groupName={group.name} />;
+      return <Nameplate icon={<Icon name="group" />} name={group.name} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (

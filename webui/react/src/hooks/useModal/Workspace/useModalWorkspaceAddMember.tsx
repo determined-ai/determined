@@ -2,11 +2,12 @@ import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Form from 'components/kit/Form';
-import UserBadge from 'components/kit/UserBadge';
+import Nameplate from 'components/kit/Nameplate';
+import UserAvatar from 'components/kit/UserAvatar';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
@@ -126,9 +127,14 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserBadge compact user={option as UserNameFields} />
+                  <Nameplate
+                    alias={(option as UserNameFields)?.displayName}
+                    compact
+                    icon={<UserAvatar user={option as UserNameFields} />}
+                    name={(option as UserNameFields)?.username}
+                  />
                 ) : (
-                  <GroupAvatar groupName={getName(option)} />
+                  <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}

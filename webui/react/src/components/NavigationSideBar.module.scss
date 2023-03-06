@@ -188,6 +188,11 @@
   }
   .user {
     background-color: var(--theme-stage-weak);
+    padding: 16px 16px;
+
+    :first-child {
+      pointer-events: none;
+    }
   }
   .user:hover {
     background-color: var(--theme-stage-strong);

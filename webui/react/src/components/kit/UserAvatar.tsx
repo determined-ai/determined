@@ -2,11 +2,9 @@ import React from 'react';
 
 import Avatar, { Props as AvatarProps } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
-import { DetailedUser } from 'types';
-import { getDisplayName } from 'utils/user';
-
+import { getDisplayName, UserNameFields } from 'utils/user';
 export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
-  user?: DetailedUser;
+  user?: UserNameFields;
 }
 
 const UserAvatar: React.FC<Props> = ({ user, ...rest }) => {
