@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Dict
 
 import pkg_resources
 from termcolor import colored
@@ -142,6 +142,24 @@ def handle_dump_master_config_template(args: argparse.Namespace) -> None:
     fn = pkg_resources.resource_filename("determined.deploy.gcp", "terraform/master.yaml.tmpl")
     with open(fn, "r") as fin:
         print(fin.read())
+
+
+def parse_labels() -> Callable:
+    def parse(s: str) -> Dict[str, str]:
+        label_map = dict()
+        for kv in s.split(","):
+            try:
+                key, value = kv.split("=")
+            except ValueError:
+                raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
+
+            if not key or not value:
+                raise argparse.ArgumentTypeError(
+                    "both key and value must be defined in key=value format"
+                )
+            label_map[key] = value
+        return label_map
+    return parse
 
 
 args_description = Cmd(
@@ -416,6 +434,12 @@ args_description = Cmd(
                             default=None,
                             help="use the GCS bucket to store the terraform state "
                             "instead of a local directory",
+                        ),
+                        Arg(
+                            "--master-labels",
+                            type=parse_labels(),
+                            default=None,
+                            help="apply labels to master instance in key=value[,key=value] format",
                         ),
                     ],
                 ),

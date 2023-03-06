@@ -176,6 +176,7 @@ module "compute" {
   preemption_enabled = var.preemption_enabled
   cpu_env_image = var.cpu_env_image
   gpu_env_image = var.gpu_env_image
+  master_labels = var.master_labels
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name

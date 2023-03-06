@@ -163,6 +163,11 @@ variable "preemption_enabled" {
   default = false
 }
 
+variable "master_labels" {
+  type = map
+  default = {}
+}
+
 /******************************************
 	Determined
  *****************************************/
