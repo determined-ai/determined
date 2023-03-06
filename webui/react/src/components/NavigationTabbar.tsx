@@ -97,7 +97,9 @@ const NavigationTabbar: React.FC = () => {
 
   const overflowActionsTop = [
     {
-      render: () => <UserBadge className={css.user} compact key="avatar" user={authUser as UserNameFields} />,
+      render: () => (
+        <UserBadge className={css.user} compact key="avatar" user={authUser as UserNameFields} />
+      ),
     },
     {
       icon: 'settings',
