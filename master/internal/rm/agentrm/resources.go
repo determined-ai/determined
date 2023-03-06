@@ -60,7 +60,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	// DET_UNIQUE_PORT_OFFSET value is from the port offset registry.
-	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = string(rri.PortOffset)
+	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = strconv.Itoa(rri.PortOffset)
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{

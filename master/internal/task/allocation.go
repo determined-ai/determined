@@ -489,10 +489,12 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
+		portOffset, err := portoffsetregistry.GetPortOffset()
+		a.model.PortOffset = portOffset
+		ctx.Log().Debugf(" : %v", portOffset)
+		a.db.UpdateAllocationPortOffset(a.model)
+
 		for cID, r := range a.resources {
-			portOffset, err := portoffsetregistry.GetPortOffset()
-			a.model.PortOffset = portOffset
-			a.db.UpdateAllocationPortOffset(a.model)
 			if err != nil {
 				return fmt.Errorf("getting port offset from the registry for an allocation.")
 			}

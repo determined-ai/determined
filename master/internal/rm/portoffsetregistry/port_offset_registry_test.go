@@ -1,7 +1,6 @@
 package portoffsetregistry
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,5 +56,17 @@ func TestPortOffsetRegistry(t *testing.T) {
 	offset, err = GetPortOffset()
 	require.NoError(t, err)
 	require.Equal(t, 1, offset)
-	fmt.Println("in here hi")
+	RestorePortOffset(2)
+	offset, err = GetPortOffset()
+	require.NoError(t, err)
+	require.Equal(t, 3, offset)
+	deleted = ReleasePortOffset(2)
+	require.True(t, deleted)
+	deleted = ReleasePortOffset(3)
+	require.True(t, deleted)
+	RestorePortOffset(2)
+	RestorePortOffset(3)
+	offset, err = GetPortOffset()
+	require.NoError(t, err)
+	require.Equal(t, 8, offset)
 }

@@ -58,9 +58,13 @@ func GetPortOffset() (int, error) {
 	return portOffset, nil
 }
 
-func RestorePortOffset(portOffset int) bool {
+func RestorePortOffset(portOffset int) {
+	portOffsetRegistryMutex.Lock()
+	defer portOffsetRegistryMutex.Unlock()
+
 	restoreNode := bst.NewNode(bst.Int(portOffset))
 	portOffsetRegistryTree.Insert(restoreNode)
+
 }
 
 func ReleasePortOffset(portOffset bst.Int) bool {
