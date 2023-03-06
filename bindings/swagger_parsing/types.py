@@ -4,21 +4,17 @@ import typing
 import typing_extensions
 
 
-class NoParse:
-    pass
-
-
-class Any(NoParse):
+class Any:
     def __repr__(self):
         return "Any"
 
 
-class String(NoParse):
+class String:
     def __repr__(self):
         return "str"
 
 
-class DateTime(NoParse):
+class DateTime:
     def __repr__(self):
         return "DateTime"
 
@@ -28,12 +24,12 @@ class Float:
         return "float"
 
 
-class Int(NoParse):
+class Int:
     def __repr__(self):
         return "int"
 
 
-class Bool(NoParse):
+class Bool:
     def __repr__(self):
         return "bool"
 

@@ -10,6 +10,13 @@ SWAGGER = os.path.join(os.path.dirname(__file__), "..", SWAGGER)
 
 Code = str
 SwaggerType = typing.Union[swagger_types.TypeAnno, swagger_types.TypeDef]
+no_parse_types = (
+    swagger_types.Any,
+    swagger_types.String,
+    swagger_types.DateTime,
+    swagger_types.Int,
+    swagger_types.Bool,
+)
 
 head = itemgetter(0)
 
@@ -48,7 +55,7 @@ def annotation(anno: swagger_types.TypeAnno, prequoted=False) -> Code:
 
 
 def need_parse(anno: swagger_types.TypeAnno) -> bool:
-    if isinstance(anno, swagger_types.NoParse):
+    if isinstance(anno, no_parse_types):
         return False
     if isinstance(anno, (swagger_types.Float, swagger_types.Ref)):
         return True
@@ -60,7 +67,7 @@ def need_parse(anno: swagger_types.TypeAnno) -> bool:
 
 
 def load(anno: SwaggerType, val: Code) -> Code:
-    if isinstance(anno, swagger_types.NoParse):
+    if isinstance(anno, no_parse_types):
         return val
     if isinstance(anno, swagger_types.Float):
         return f"float({val})"

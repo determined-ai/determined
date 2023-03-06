@@ -252,10 +252,17 @@ def generate_function(api: str, phase: Phase, function: swagger_types.Function) 
             code += ""
 
         for param in params_by_location.get("query", []):
-            null_check = " !== undefined" if isinstance(param.type, swagger_types.Sequence) else ""
+            null_check = (
+                " !== undefined"
+                if isinstance(param.type, (swagger_types.Sequence, swagger_types.DateTime))
+                else ""
+            )
             code += f"if ({param.name}{null_check}) {{"
             code.indent()
-            code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}"
+            if isinstance(param.type, swagger_types.DateTime):
+                code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}.toISOSttring()"
+            else:
+                code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}"
             code.dedent()
             code += "}"
             code += ""
