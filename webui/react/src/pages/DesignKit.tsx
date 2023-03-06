@@ -232,6 +232,7 @@ const SelectSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          placeholder="Select"
         />
         <strong>Variations</strong>
         <strong>Select with default value</strong>
@@ -251,15 +252,15 @@ const SelectSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          placeholder="Select"
         />
-        <strong>Select with placeholder</strong>
+        <strong>Select without placeholder</strong>
         <Select
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
-          placeholder="Select Placeholder"
         />
         <strong>Disabled Select</strong>
         <Select
@@ -274,7 +275,7 @@ const SelectSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
-          placeholder="Search"
+          placeholder="Nonsearcahble Select"
           searchable={false}
         />
         <strong>Multiple Select with tags</strong>
@@ -285,6 +286,8 @@ const SelectSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          placeholder="Select Tags"
+          width={300}
         />
         <strong>Multiple Select with tags disabled</strong>
         <Select
@@ -295,7 +298,9 @@ const SelectSection: React.FC = () => {
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
+          placeholder="Select Multiple"
           value={multiSelectValues}
+          width={150}
           onChange={(value) => setMultiSelectValues(value)}
         />
         <strong>Select with tags and custom search</strong>
@@ -308,6 +313,7 @@ const SelectSection: React.FC = () => {
             { label: 'Case 3', value: 3 },
           ]}
           placeholder="Case-sensitive Search"
+          width={300}
         />
         <strong>Select with sorted search</strong>
         <Select
@@ -327,6 +333,7 @@ const SelectSection: React.FC = () => {
           ]}
           placeholder="Search"
           value={sortedSelectValues}
+          width={120}
           onChange={(value) => setSortedSelectValues(value)}
         />
         <strong>Clearable Select</strong>
@@ -340,7 +347,18 @@ const SelectSection: React.FC = () => {
             { label: 'Option 3', value: 3 },
           ]}
           value={clearableSelectValues}
+          width={130}
           onChange={(value) => setClearableSelectValues(value)}
+        />
+        <strong>Responsive Select with large width defined</strong>
+        <Select
+          disableTags
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          width={999999}
         />
         <span>
           Also see{' '}
