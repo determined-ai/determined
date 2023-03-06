@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
 import InlineEditor from 'components/InlineEditor';
+import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
@@ -501,11 +501,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {maxRestarts ? `/${maxRestarts}` : ''}
               </span>
             </div>
-            <TagList
+            <Tags
               disabled={disabled}
               ghost={true}
               tags={experiment.config.labels || []}
-              onChange={experimentTags.handleTagListChange(experiment.id)}
+              onAction={experimentTags.handleTagListChange(
+                experiment.id,
+                experiment.config.labels || [],
+              )}
             />
           </div>
         }

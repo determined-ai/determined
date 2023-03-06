@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import Select from 'components/kit/Select';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import EditableTagList from 'components/TagList';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
@@ -239,7 +239,7 @@ const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks =
                 <h2>
                   Tags <span>(optional)</span>
                 </h2>
-                <EditableTagList tags={tags} onChange={handleTagsChange} />
+                <Tags tags={tags} onAction={tagsActionHelper(tags, handleTagsChange)} />
               </div>
             </>
           )}

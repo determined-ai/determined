@@ -7,9 +7,9 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
@@ -100,11 +100,11 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <TagList
+          <Tags
             disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}
-            onChange={onUpdateTags}
+            onAction={tagsActionHelper(modelVersion.labels ?? [], onUpdateTags)}
           />
         ),
         label: 'Tags',
