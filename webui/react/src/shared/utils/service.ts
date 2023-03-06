@@ -114,8 +114,8 @@ export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any =>
   if (isObject(enumObject) && value !== undefined) {
     const enumRecord = enumObject as Record<string, string>;
     const stringValue = value as string;
-    if (stringValue in enumRecord) return stringValue;
-    return enumRecord.UNSPECIFIED;
+    const enumValues = Object.values(enumRecord);
+    return enumValues.includes(stringValue) ? stringValue : enumRecord.UNSPECIFIED;
   }
   return undefined;
 };

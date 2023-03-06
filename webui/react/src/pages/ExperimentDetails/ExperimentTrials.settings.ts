@@ -47,7 +47,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
 };
 
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {
-  return sortKey in V1GetExperimentTrialsRequestSortBy;
+  return Object.values<string>(V1GetExperimentTrialsRequestSortBy).includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
