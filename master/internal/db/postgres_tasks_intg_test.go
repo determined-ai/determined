@@ -91,7 +91,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 
 	// Update port offset
 	aIn.PortOffset = 3
-	err = db.UpdateAllocationPortOffset(*aIn)
+	err = UpdateAllocationPortOffset(*aIn)
 	require.NoError(t, err, "failed to update port offset")
 
 	// Retrieve it back and make sure the mapping is exhaustive.

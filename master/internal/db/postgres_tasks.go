@@ -195,7 +195,7 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 }
 
 // UpdateAllocationState stores the latest task state and readiness.
-func (db *PgDB) UpdateAllocationPortOffset(a model.Allocation) error {
+func UpdateAllocationPortOffset(a model.Allocation) error {
 	_, err := Bun().NewUpdate().Table("allocations").Set(
 		"port_offset = ?", a.PortOffset).Where(
 		"allocation_id = ?", a.AllocationID).Exec(context.TODO())

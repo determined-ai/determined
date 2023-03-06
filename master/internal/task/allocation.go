@@ -492,7 +492,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		portOffset, err := portoffsetregistry.GetPortOffset()
 		a.model.PortOffset = portOffset
 		ctx.Log().Debugf(" : %v", portOffset)
-		a.db.UpdateAllocationPortOffset(a.model)
+		err = db.UpdateAllocationPortOffset(a.model)
+		if err != nil {
+			return fmt.Errorf("updating allocation db")
+		}
 
 		for cID, r := range a.resources {
 			if err != nil {

@@ -1,9 +1,8 @@
 package portoffsetregistry
 
 import (
-	"sync"
-
 	"strconv"
+	"sync"
 
 	bst "github.com/gyuho/bst"
 	"github.com/pkg/errors"
@@ -16,6 +15,7 @@ var (
 	portOffsetRegistryMutex      sync.RWMutex
 )
 
+// NewPortOffsetRegistry initializes the global port registry tree.
 func NewPortOffsetRegistry() {
 	// initialize Map with 0,range
 	portOffsetRegistryOrderedMap = orderedmap.New()
@@ -27,14 +27,15 @@ func NewPortOffsetRegistry() {
 	portOffsetRegistryTree = bst.New(root)
 }
 
+// GetPortOffset returns available port offset.
 func GetPortOffset() (int, error) {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()
 	// Map implementation
 	// Get lowest key in range 0 - 10,000
-	//portOffsetRegistryOrderedMap[key+1] = val
+	// portOffsetRegistryOrderedMap[key+1] = val
 
-	//Tree implementation
+	// Tree implementation
 	chInorder := make(chan string)
 	go portOffsetRegistryTree.InOrder(chInorder)
 	prevNum := -2 // smallest number is always -1 because tree is initialized with root node as -1.
@@ -52,21 +53,23 @@ func GetPortOffset() (int, error) {
 		}
 		prevNum = vInt
 	}
-	portOffset := prevNum + 1 // lowest skipped number in registry or next value after the last in the registry.
+	portOffset := prevNum + 1
+	// lowest skipped number in registry or next value after the last in the registry.
 	newNode := bst.NewNode(bst.Int(portOffset))
 	portOffsetRegistryTree.Insert(newNode)
 	return portOffset, nil
 }
 
+// Restores a port offset by adding it back to the global port registry tree.
 func RestorePortOffset(portOffset int) {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()
 
 	restoreNode := bst.NewNode(bst.Int(portOffset))
 	portOffsetRegistryTree.Insert(restoreNode)
-
 }
 
+// ReleasePortOffset release port offset and removes it from the port registry tree.
 func ReleasePortOffset(portOffset bst.Int) bool {
 	portOffsetRegistryMutex.Lock()
 	defer portOffsetRegistryMutex.Unlock()
@@ -91,7 +94,7 @@ func ReleasePortOffset(portOffset bst.Int) bool {
 	// Tree implementation
 	if portOffsetRegistryTree.Delete(portOffset) != nil {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
