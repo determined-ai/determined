@@ -51,6 +51,7 @@ func TestProtoGetTrial(t *testing.T) {
 			TaskID:       tr.TaskID,
 			StartTime:    ptrs.Ptr(startTime.Add(time.Duration(i) * time.Second)),
 			EndTime:      ptrs.Ptr(startTime.Add(time.Duration(i+1) * time.Second)),
+			PortOffset:   0,
 		}
 		err = db.AddAllocation(a)
 		require.NoError(t, err, "failed to add allocation")
@@ -103,6 +104,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
 		TaskID:       tr.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
+		PortOffset:   0,
 	}
 	require.NoError(t, db.AddAllocation(a))
 
@@ -128,6 +130,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 1)),
 		TaskID:       tr.TaskID,
 		StartTime:    ptrs.Ptr(time.Now()),
+		PortOffset:   0,
 	}
 	require.NoError(t, db.AddAllocation(a))
 	require.NoError(t, db.UpdateTrialRunID(tr.ID, 1))

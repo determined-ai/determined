@@ -1,2 +1,2 @@
 ALTER TABLE allocations
-ADD port_offset integer; 
+ADD port_offset integer not null; 

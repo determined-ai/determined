@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/portoffsetregistry"
 
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -274,6 +275,7 @@ func setup(t *testing.T) (
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 	allocationmap.InitAllocationMap()
+	portoffsetregistry.NewPortOffsetRegistry()
 
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
