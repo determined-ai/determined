@@ -20,6 +20,7 @@ import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
+import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import UserBadge from 'components/kit/UserBadge';
@@ -66,6 +67,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
   UserBadge: 'UserBadge',
@@ -1468,6 +1470,26 @@ const EmptySection: React.FC = () => {
   );
 };
 
+const ToggleSection: React.FC = () => {
+  return (
+    <ComponentSection id="Toggle" title="Toggle">
+      <AntDCard>
+        <p>
+          A <code>{'<Toggle>'}</code> component represents switching between two states. This
+          component is controlled by its parent and may optionally include a label.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Toggle default</strong>
+        <Toggle />
+        <strong>Toggle variations</strong>
+        <Toggle checked={true} />
+        <Toggle label="Label" />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
@@ -1485,6 +1507,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
   UserBadge: <UserBadgeSection />,
