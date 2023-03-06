@@ -24,6 +24,7 @@ import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import UserBadge from 'components/kit/UserBadge';
+import { useTags } from 'components/kit/useTags';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -67,6 +68,7 @@ const ComponentTitles = {
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
+  Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
@@ -1340,6 +1342,45 @@ const FormSection: React.FC = () => {
   );
 };
 
+const TagsSection: React.FC = () => {
+  const tags: string[] = ['working', 'TODO'];
+  const moreTags: string[] = ['working', 'TODO', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
+  return (
+    <ComponentSection id="Tags" title="Tags">
+      <Card>
+        <p>
+          The editable tags list (<code>{'<Tags>'}</code>) supports &quot;add&quot;,
+          &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
+        </p>
+      </Card>
+      <AntDCard title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>Don&apos;t use tags of the same content within one list.</li>
+          <li>Tags are ordered alphabetically.</li>
+          <li>Individual tags cannot be empty.</li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Tags default</strong>
+        <Space>{useTags([...tags])()}</Space>
+        <strong>Tags ghost</strong>
+        <Space>{useTags([...tags])({ ghost: true })}</Space>
+        <strong>Tags disabled</strong>
+        <Space>{useTags([...tags])({ disabled: true })}</Space>
+        <strong>Tags compact</strong>
+        <Space>{useTags([...moreTags])({ compact: true })}</Space>
+        <strong>Tags with long text</strong>
+        <Space>
+          {useTags([
+            'very very very long text, very very very long text, very very very long text, very very very long text.',
+          ])()}
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -1507,6 +1548,7 @@ const Components = {
   LogViewer: <LogViewerSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
+  Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
