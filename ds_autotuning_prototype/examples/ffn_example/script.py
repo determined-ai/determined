@@ -13,14 +13,17 @@ from torch.utils.data import Dataset
 
 
 class RandDataset(Dataset):
-    def __init__(self, dim: int) -> None:
+    def __init__(self, dim: int, num_actual_datapoints: int = 128) -> None:
+        self.num_actual_datapoints = num_actual_datapoints
         self.dim = dim
+        self.data = torch.randn(self.num_actual_datapoints, self.dim)
 
     def __len__(self) -> int:
-        return 2 ** 32
+        return 2 ** 16
 
     def __getitem__(self, idx: int) -> torch.Tensor:
-        return torch.randn(self.dim)
+        data = self.data[idx % self.num_actual_datapoints]
+        return data
 
 
 class MinimalModel(nn.Module):

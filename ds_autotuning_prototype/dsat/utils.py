@@ -7,9 +7,10 @@ import re
 import time
 from contextlib import contextmanager
 from random import choice
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import determined as det
+import numpy as np
 import torch
 from dsat import defaults
 from ruamel import yaml
@@ -118,7 +119,7 @@ def report_oom_and_exit(
         )
         logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
-        report_oom_dict = {defaults.OOM_KEY: oom_error_string}
+        report_oom_dict = {"OOM": True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
@@ -200,3 +201,12 @@ def get_tbs_mps_gas(ds_config: Dict[str, Any]) -> Tuple[int, int, int]:
         tbs = mbs * gas
 
     return tbs, mbs, gas
+
+
+# TODO: implement reproducibility and use this function.
+def set_random_seeds(seed: Optional[int] = None) -> None:
+    if seed is None:
+        seed = random.randint(0, 2 ** 31 - 1)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.random.manual_seed(seed)

@@ -5,14 +5,13 @@ AUTOTUNING_EXP_DIR_PATH = WORKDIR_PATH + "autotuning_exps"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
 END_PROFILE_STEP = 5
-OOM_KEY = "OOM_message"
-MP_SIZE = 1
+SMALLER_IS_BETTER = True
 
 MODEL_INFO_PROFILING_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
     "zero_optimization": {
-        "stage": 0
-    },  # DS set the stage to 3; not sure why? See DEFAULT_MIN_MEM_CONFIG. Verify not crucial.
+        "stage": 3
+    },  # Stage 3 gives the best chance for the model to successfully run without OOM.
     "autotuning": {
         "enabled": True,
         # The two fields below essentially use DS internals! Maybe fragile.

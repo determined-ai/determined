@@ -1,0 +1,39 @@
+name: torchvision_models
+workspace: DS_AT_PROTOTYPING
+project: native_dsat_tests
+max_restarts: 0
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.19.4
+resources:
+  slots_per_trial: 2
+  max_slots: 8
+  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
+  # resource_pool: young # Grenoble specific; remove later.
+searcher:
+  name: single
+  metric: throughput
+  max_length: 100 # Just setting this to something larger than the default exit step.
+  smaller_is_better: False
+hyperparameters:
+  model_name: vgg19
+  # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  ds_config:
+    train_micro_batch_size_per_gpu: 128
+    gradient_accumulation_steps: 1
+    optimizer:
+      TYPE: Adam
+      params:
+        lr: 1e-3
+    fp16:
+      enabled: True
+    autotuning:
+      enabled: True
+      tuner_type: random
+      tuner_num_trials: 50
+      num_tuning_micro_batch_sizes: 10
+      tuner_early_stopping: 5
+      metric: throughput
+    # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?).
+entrypoint: python3 deepspeed_single_node_launcher.py --autotuning tune -- main.py --deepspeed_config ds_config.json
+# entrypoint: python3 -m determined.launch.torch_distributed python3 main.py --deepspeed_config ds_config.json

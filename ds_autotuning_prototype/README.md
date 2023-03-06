@@ -13,11 +13,13 @@ The basic steps:
 
 ## Basic Usage
 
-In the same directory as this `README`, run the following:
+In the same directory as this `README`, run the following, for instance:
 
 ```bash
-python3 -m dsat.autotune autotune_config.yaml .
+python3 -m dsat.autotune examples/minimal_example/autotune_config.yaml examples/minimal_example
 ```
+
+(the config may need to be altered for your cluster.)
 
 ## Pros, Cons, and TODOs
 

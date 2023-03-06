@@ -24,18 +24,26 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     config_path_absolute = os.path.abspath(args.config_path)
     model_dir_absolute = os.path.abspath(args.model_dir)
 
-    config_dict["name"] += " (DS AT Searcher)"
-    config_dict["searcher"]["name"] = "single"
-    config_dict["searcher"]["max_length"] = defaults.END_PROFILE_STEP
+    # Build the SearchRunner's config from the submitted config. The original config yaml file
+    # is added as an include and is reimported by the SearchRunner later.
+    # TODO: Revisit this choice. Might be worth giving the user the ability to specify some parts of
+    # the SearchRunner config separately, despite the annoying double-config workflow.
+    search_runner_config_dict = config_dict
+    search_runner_config_dict["name"] += " (DS AT Searcher)"
+    search_runner_config_dict["searcher"]["name"] = "single"
+    search_runner_config_dict["searcher"]["max_length"] = 0  # max_length not used by DS AT.
+    # TODO: don't hardcode the searcher's max_restarts.
+    search_runner_config_dict["max_restarts"] = 3
+
     # TODO: let users have more fine control over the searcher config.
     # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assump
     # e.g. on Grenoble.
-    config_dict["resources"] = {"slots_per_trial": 0}
+    search_runner_config_dict["resources"] = {"slots_per_trial": 0}
     # TODO: remove this Grenoble specific code.
     # config_dict["resources"] = {
     #     "resource_pool": "misc_cpus"
     # }  # Will need to get original resources later.
-    config_dict[
+    search_runner_config_dict[
         "entrypoint"
     ] = f"python3 -m dsat.run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
 
@@ -50,7 +58,9 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
         # TODO: need to append dsat here for searcher logic to be available on-cluster, but this
         # will be removed when the logic lives in determined proper.
         includes.append("dsat")
-        client.create_experiment(config=config_dict, model_dir=temp_dir, includes=includes)
+        client.create_experiment(
+            config=search_runner_config_dict, model_dir=temp_dir, includes=includes
+        )
 
 
 def run():

@@ -24,6 +24,7 @@ def get_parsed_args():
 def dsat_copy_hack(model_dir: str) -> None:
     """
     Temporary hack to make the dsat directory available for follow-on experiments. TODO: remove.
+    Won't be needed when we can import dsat from determined.
     """
     src = pathlib.Path("dsat")
     shutil.copytree(src, pathlib.Path(model_dir).joinpath(src), dirs_exist_ok=True)

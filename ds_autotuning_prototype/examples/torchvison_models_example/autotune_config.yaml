@@ -1,18 +1,18 @@
-name: minimal_testing
+name: torchvision_models
 workspace: DS_AT_PROTOTYPING
-project: minimal_testing
-max_restarts: 1
+project: torchvision_models
+max_restarts: 0
 resources:
   slots_per_trial: 2
   max_slots: 8
+  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
   name: custom
   metric: throughput
   smaller_is_better: False
 hyperparameters:
-  data:
-    root: /run/determined/workdir/datasets/CIFAR10 # Custom-master Grenoble specific.
+  model_name: vgg19
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
   ds_config:
     train_micro_batch_size_per_gpu: 128
@@ -22,13 +22,13 @@ hyperparameters:
       params:
         lr: 1e-3
     fp16:
-      enabled: False
+      enabled: True
     autotuning:
       enabled: True
       tuner_type: random
       tuner_num_trials: 50
-      num_tuning_micro_batch_sizes: 3
+      num_tuning_micro_batch_sizes: 10
       tuner_early_stopping: 5
       metric: throughput
     # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?).
-entrypoint: python3 -m determined.launch.torch_distributed python3 cifar10_script.py
+entrypoint: python3 -m determined.launch.torch_distributed python3 script.py
