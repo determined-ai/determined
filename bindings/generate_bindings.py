@@ -90,7 +90,7 @@ def load(anno: SwaggerType, val: Code) -> Code:
 
 
 def dump(anno: SwaggerType, val: Code, omit_unset: Code) -> Code:
-    if isinstance(anno, swagger_types.NoParse):
+    if isinstance(anno, no_parse_types):
         return val
     if isinstance(anno, swagger_types.Float):
         return f"dump_float({val})"
