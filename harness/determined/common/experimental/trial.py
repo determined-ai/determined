@@ -1,5 +1,5 @@
 import enum
-from typing import Any, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api
 from determined.common.api import bindings, logs
@@ -30,6 +30,35 @@ class TrialReference:
     def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
+        self._hydrated = False
+        self._hparams = None  # type: Optional[Dict[str, Any]]
+
+    @classmethod
+    def _from_bindings(cls, trial: bindings.trialv1Trial, session: api.Session) -> "TrialReference":
+        out = cls(trial.id, session)
+        out._hydrate(trial)
+        return out
+
+    def _hydrate(self, trial: bindings.trialv1Trial) -> None:
+        self._hparams = trial.hparams
+        self._hydrated = True
+
+    def _maybe_fetch(self) -> None:
+        if self._hydrated:
+            return
+        resp = bindings.get_GetTrial(self._session, trialId=self.id)
+        self._hydrate(resp.trial)
+
+    def get_hparams(self) -> Dict[str, Any]:
+        """
+        Return the hyperparameter values chosen for this trial.
+
+        Since hyperparameters for a trial are constant, the results of this method will be cached
+        on the TrialReference after the first call to ``get_hparams()``.
+        """
+        self._maybe_fetch()
+        assert self._hparams is not None
+        return self._hparams
 
     def logs(
         self,

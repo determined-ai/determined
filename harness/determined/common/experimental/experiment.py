@@ -109,7 +109,9 @@ class ExperimentReference:
 
         resps = api.read_paginated(get_with_offset)
 
-        return [trial.TrialReference(t.id, self._session) for r in resps for t in r.trials]
+        return [
+            trial.TrialReference._from_bindings(t, self._session) for r in resps for t in r.trials
+        ]
 
     def await_first_trial(self, interval: float = 0.1) -> trial.TrialReference:
         """
@@ -118,7 +120,7 @@ class ExperimentReference:
         while True:
             resp = bindings.get_GetExperimentTrials(self._session, experimentId=self._id)
             if len(resp.trials) > 0:
-                return trial.TrialReference(resp.trials[0].id, self._session)
+                return trial.TrialReference._from_bindings(resp.trials[0], self._session)
             time.sleep(interval)
 
     def kill(self) -> None:
