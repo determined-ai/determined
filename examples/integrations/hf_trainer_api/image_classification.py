@@ -51,7 +51,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-from determined.pytorch.tensorboard import TorchWriter
+from torch.utils.tensorboard import SummaryWriter
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -220,7 +220,7 @@ def parse_input_arguments(train_hps):
     return model_args, data_args, training_args
 
 
-def main(det_callback, model_args, data_args, training_args):
+def main(det_callback, core_context, model_args, data_args, training_args):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -407,7 +407,7 @@ def main(det_callback, model_args, data_args, training_args):
     )
 
     trainer.add_callback(det_callback)
-    trainer.add_callback(TensorBoardCallback(tb_writer=TorchWriter().writer))
+    trainer.add_callback(TensorBoardCallback(tb_writer=SummaryWriter(core_context.train.get_tensorboard_path())))
 
     # Training
     if training_args.do_train:
@@ -468,4 +468,4 @@ if __name__ == "__main__":
             core_context, training_args, filter_metrics=["loss", "accuracy"], user_data=user_data
         )
 
-        main(det_callback, model_args, data_args, training_args)
+        main(det_callback, core_context, model_args, data_args, training_args)
