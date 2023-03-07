@@ -22,7 +22,6 @@ from determined.pytorch import (
     PyTorchTrial,
     PyTorchTrialContext,
 )
-from determined.pytorch.tensorboard import TorchWriter
 from determined.util import filter_duplicates, has_param
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -78,7 +77,7 @@ def check_compatibility(lm: pl.LightningModule) -> None:
 
 
 def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContext) -> None:
-    writer = TorchWriter()
+    writer = context.get_tensorboard_writer()
 
     def lm_print(*args: Any, **kwargs: Any) -> None:
         if context.distributed.get_rank() == 0:
@@ -91,7 +90,7 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
             )
         for metric, value in a_dict.items():
             if type(value) == int or type(value) == float:
-                writer.add_scalar(metric, value, context.current_train_batch())
+                writer.add_scalar(metric, value, context.current_train_batch()) # type: ignore
 
     def lm_log(name: str, value: Any, *args: Any, **kwargs: Any) -> None:
         lm_log_dict({name: value}, *args, **kwargs)
