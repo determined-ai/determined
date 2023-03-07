@@ -98,18 +98,6 @@ of the ``Trial.__init__`` method. If desired, pass a wrapped model to ``Trial.__
 
 After defining the PyTorch Trial, initialize the trial and the trainer.
 
-Example:
-
-   .. code:: python
-
-      class MyUnion(schemas.UnionBase):
-          _id = "..."
-          _union_key = "type"
-
-      @MyUnion.member("a")
-      class MemberA(MyUnion):
-          _id = "..."
-
 .. code:: python
 
    from determined import pytorch
