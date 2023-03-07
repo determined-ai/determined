@@ -335,188 +335,194 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     [handleUserFilterApply, handleUserFilterReset, settings.user],
   );
 
-  const columns = useMemo(() => {
-    if (Loadable.isLoading(users) || Loadable.isLoading(workspaces)) return [];
+  const columns = useMemo(
+    () =>
+      Loadable.map(users, (users) => {
+        if (Loadable.isLoading(workspaces)) return [];
 
-    const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
-      if (record.type !== CommandType.TensorBoard || !record.misc) {
-        return taskNameRenderer(_, record, index);
-      }
+        const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
+          if (record.type !== CommandType.TensorBoard || !record.misc) {
+            return taskNameRenderer(_, record, index);
+          }
 
-      const info = {
-        path: '',
-        plural: '',
-        sources: [] as TensorBoardSource[],
-      };
-      record.misc.experimentIds.forEach((id) => {
-        info.sources.push({
-          id,
-          path: paths.experimentDetails(id),
-          type: TensorBoardSourceType.Experiment,
-        });
-      });
-      record.misc.trialIds.forEach((id) => {
-        info.sources.push({
-          id,
-          path: paths.trialDetails(id),
-          type: TensorBoardSourceType.Trial,
-        });
-      });
-      info.plural = info.sources.length > 1 ? 's' : '';
-      info.sources.sort((a, b) => {
-        if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
-        return numericSorter(a.id, b.id);
-      });
+          const info = {
+            path: '',
+            plural: '',
+            sources: [] as TensorBoardSource[],
+          };
+          record.misc.experimentIds.forEach((id) => {
+            info.sources.push({
+              id,
+              path: paths.experimentDetails(id),
+              type: TensorBoardSourceType.Experiment,
+            });
+          });
+          record.misc.trialIds.forEach((id) => {
+            info.sources.push({
+              id,
+              path: paths.trialDetails(id),
+              type: TensorBoardSourceType.Trial,
+            });
+          });
+          info.plural = info.sources.length > 1 ? 's' : '';
+          info.sources.sort((a, b) => {
+            if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
+            return numericSorter(a.id, b.id);
+          });
 
-      return (
-        <div className={css.sourceName}>
-          {taskNameRenderer(_, record, index)}
-          <Button type="text" onClick={() => handleSourceShow(info)}>
-            Show {info.sources.length} Source{info.plural}
-          </Button>
-        </div>
-      );
-    };
-
-    const actionRenderer: TaskRenderer = (_, record) => (
-      <TaskActionDropdown task={record} onComplete={handleActionComplete} />
-    );
-
-    const cols = [
-      {
-        dataIndex: 'id',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
-        key: 'id',
-        render: taskIdRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
-        title: 'Short ID',
-      },
-      {
-        dataIndex: 'type',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
-        filterDropdown: typeFilterDropdown,
-        filters: Object.values(CommandType).map((value) => ({
-          text: (
-            <div className={css.typeFilter}>
-              <Icon name={value.toLocaleLowerCase()} />
-              <span>{commandTypeToLabel[value]}</span>
+          return (
+            <div className={css.sourceName}>
+              {taskNameRenderer(_, record, index)}
+              <Button type="text" onClick={() => handleSourceShow(info)}>
+                Show {info.sources.length} Source{info.plural}
+              </Button>
             </div>
-          ),
-          value,
-        })),
-        isFiltered: (settings: Settings) => !!settings.type,
-        key: 'type',
-        render: taskTypeRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.type, b.type),
-        title: 'Type',
-      },
-      {
-        dataIndex: 'name',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
-        filterDropdown: nameFilterSearch,
-        filterIcon: tableSearchIcon,
-        isFiltered: (settings: Settings) => !!settings.search,
-        key: 'name',
-        render: nameNSourceRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.name, b.name),
-        title: 'Name',
-      },
-      {
-        dataIndex: 'startTime',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
-        key: 'startTime',
-        render: (_: number, record: CommandTask): React.ReactNode => {
-          return relativeTimeRenderer(new Date(record.startTime));
-        },
-        sorter: (a: CommandTask, b: CommandTask): number => {
-          return dateTimeStringSorter(a.startTime, b.startTime);
-        },
-        title: 'Started',
-      },
-      {
-        dataIndex: 'state',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-        filterDropdown: stateFilterDropdown,
-        filters: Object.values(CommandState).map((value) => ({
-          text: <Badge state={value} type={BadgeType.State} />,
-          value,
-        })),
-        isFiltered: (settings: Settings) => !!settings.state,
-        key: 'state',
-        render: stateRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
-        title: 'State',
-      },
-      {
-        dataIndex: 'resourcePool',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
-        key: 'resourcePool',
-        sorter: (a: CommandTask, b: CommandTask): number =>
-          alphaNumericSorter(a.resourcePool, b.resourcePool),
-        title: 'Resource Pool',
-      },
-      {
-        dataIndex: 'user',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
-        filterDropdown: userFilterDropdown,
-        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: Settings) => !!settings.user,
-        key: 'user',
-        render: (_: string, r: CommandTask) =>
-          userRenderer(users.data.find((u) => u.id === r.userId)),
-        sorter: (a: CommandTask, b: CommandTask): number => {
-          return alphaNumericSorter(
-            getDisplayName(users.data.find((u) => u.id === a.userId)),
-            getDisplayName(users.data.find((u) => u.id === b.userId)),
           );
-        },
-        title: 'User',
-      },
-      workspaceId === 'global' && {
-        align: 'center',
-        dataIndex: 'workspace',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
-        filterDropdown: workspaceFilterDropdown,
-        filters: workspaces.data.map((ws) => ({
-          text: <WorkspaceFilter workspace={ws} />,
-          value: ws.id,
-        })),
-        isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
-        key: 'workspace',
-        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces.data),
-        sorter: (a: CommandTask, b: CommandTask): number =>
-          alphaNumericSorter(
-            workspaces.data.find((u) => u.id === a.workspaceId)?.name ?? '',
-            workspaces.data.find((u) => u.id === b.workspaceId)?.name ?? '',
-          ),
-        title: 'Workspace',
-      },
-      {
-        align: 'right',
-        className: 'fullCell',
-        dataIndex: 'action',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
-        key: 'action',
-        render: actionRenderer,
-        title: '',
-      },
-    ].filter(Boolean) as ColumnDef<CommandTask>[];
+        };
 
-    return cols;
-  }, [
-    handleActionComplete,
-    handleSourceShow,
-    nameFilterSearch,
-    stateFilterDropdown,
-    tableSearchIcon,
-    typeFilterDropdown,
-    userFilterDropdown,
-    workspaceFilterDropdown,
-    users,
-    workspaces,
-    workspaceId,
-  ]);
+        const actionRenderer: TaskRenderer = (_, record) => (
+          <TaskActionDropdown task={record} onComplete={handleActionComplete} />
+        );
+
+        const cols = [
+          {
+            dataIndex: 'id',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
+            key: 'id',
+            render: taskIdRenderer,
+            sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
+            title: 'Short ID',
+          },
+          {
+            dataIndex: 'type',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
+            filterDropdown: typeFilterDropdown,
+            filters: Object.values(CommandType).map((value) => ({
+              text: (
+                <div className={css.typeFilter}>
+                  <Icon name={value.toLocaleLowerCase()} />
+                  <span>{commandTypeToLabel[value]}</span>
+                </div>
+              ),
+              value,
+            })),
+            isFiltered: (settings: Settings) => !!settings.type,
+            key: 'type',
+            render: taskTypeRenderer,
+            sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.type, b.type),
+            title: 'Type',
+          },
+          {
+            dataIndex: 'name',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
+            filterDropdown: nameFilterSearch,
+            filterIcon: tableSearchIcon,
+            isFiltered: (settings: Settings) => !!settings.search,
+            key: 'name',
+            render: nameNSourceRenderer,
+            sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.name, b.name),
+            title: 'Name',
+          },
+          {
+            dataIndex: 'startTime',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
+            key: 'startTime',
+            render: (_: number, record: CommandTask): React.ReactNode => {
+              return relativeTimeRenderer(new Date(record.startTime));
+            },
+            sorter: (a: CommandTask, b: CommandTask): number => {
+              return dateTimeStringSorter(a.startTime, b.startTime);
+            },
+            title: 'Started',
+          },
+          {
+            dataIndex: 'state',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+            filterDropdown: stateFilterDropdown,
+            filters: Object.values(CommandState).map((value) => ({
+              text: <Badge state={value} type={BadgeType.State} />,
+              value,
+            })),
+            isFiltered: (settings: Settings) => !!settings.state,
+            key: 'state',
+            render: stateRenderer,
+            sorter: (a: CommandTask, b: CommandTask): number =>
+              commandStateSorter(a.state, b.state),
+            title: 'State',
+          },
+          {
+            dataIndex: 'resourcePool',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
+            key: 'resourcePool',
+            sorter: (a: CommandTask, b: CommandTask): number =>
+              alphaNumericSorter(a.resourcePool, b.resourcePool),
+            title: 'Resource Pool',
+          },
+          {
+            dataIndex: 'user',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
+            filterDropdown: userFilterDropdown,
+            filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+            isFiltered: (settings: Settings) => !!settings.user,
+            key: 'user',
+            render: (_: string, r: CommandTask) =>
+              userRenderer(users.find((u) => u.id === r.userId)),
+            sorter: (a: CommandTask, b: CommandTask): number => {
+              return alphaNumericSorter(
+                getDisplayName(users.find((u) => u.id === a.userId)),
+                getDisplayName(users.find((u) => u.id === b.userId)),
+              );
+            },
+            title: 'User',
+          },
+          workspaceId === 'global' && {
+            align: 'center',
+            dataIndex: 'workspace',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
+            filterDropdown: workspaceFilterDropdown,
+            filters: workspaces.data.map((ws) => ({
+              text: <WorkspaceFilter workspace={ws} />,
+              value: ws.id,
+            })),
+            isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
+            key: 'workspace',
+            render: (v: string, record: CommandTask) =>
+              taskWorkspaceRenderer(record, workspaces.data),
+            sorter: (a: CommandTask, b: CommandTask): number =>
+              alphaNumericSorter(
+                workspaces.data.find((u) => u.id === a.workspaceId)?.name ?? '',
+                workspaces.data.find((u) => u.id === b.workspaceId)?.name ?? '',
+              ),
+            title: 'Workspace',
+          },
+          {
+            align: 'right',
+            className: 'fullCell',
+            dataIndex: 'action',
+            defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+            fixed: 'right',
+            key: 'action',
+            render: actionRenderer,
+            title: '',
+          },
+        ].filter(Boolean) as ColumnDef<CommandTask>[];
+
+        return cols;
+      }),
+    [
+      handleActionComplete,
+      handleSourceShow,
+      nameFilterSearch,
+      stateFilterDropdown,
+      tableSearchIcon,
+      typeFilterDropdown,
+      userFilterDropdown,
+      workspaceFilterDropdown,
+      users,
+      workspaces,
+      workspaceId,
+    ],
+  );
 
   const handleBatchKill = useCallback(async () => {
     try {
@@ -572,10 +578,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<CommandTask> | SorterResult<CommandTask>[],
     ) => {
-      if (Array.isArray(tableSorter)) return;
+      if (Array.isArray(tableSorter) || Loadable.isLoading(columns)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
-      if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
+      if (!columnKey || !columns.data.find((column) => column.key === columnKey)) return;
       const newSettings = {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
@@ -646,12 +652,12 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           onClear={clearSelected}
         />
         <InteractiveTable
-          columns={columns}
+          columns={Loadable.isLoaded(columns) ? columns.data : []}
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           defaultColumns={stgsConfig.settings.columns.defaultValue}
-          loading={tasks === undefined || !settings || !columns.length}
+          loading={tasks === undefined || !settings || Loadable.isLoading(columns)}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
