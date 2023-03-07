@@ -95,7 +95,7 @@ describe('SettingsAccount', () => {
       userParams: { displayName: `${DISPLAY_NAME}a` },
     });
     await waitFor(() =>
-      expect(screen.getByPlaceholderText('Add display name')).toHaveValue(`${DISPLAY_NAME}a`),
+      expect(screen.getByTestId('text-displayname')).toHaveTextContent(`${DISPLAY_NAME}a`),
     );
   });
   it('should be able to view change password modal when click', async () => {
