@@ -24,13 +24,13 @@ const CardSize: Record<string, CSSProperties> = {
 
 type CardProps = (
   | {
-      href?: string;
-      onClick?: never;
-    }
+    href?: string;
+    onClick?: never;
+  }
   | {
-      href?: never;
-      onClick?: () => void;
-    }
+    href?: never;
+    onClick?: () => void;
+  }
 ) &
   CardPropsBase;
 
@@ -76,7 +76,7 @@ const Card: Card = ({
         </div>
       )}
       wrapper={(children) => (
-        <Link className={classnames.join(' ')} path={href} rawLink style={sizeStyle}>
+        <Link className={classnames.join(' ')} path={href} style={sizeStyle}>
           {children}
         </Link>
       )}>
