@@ -5,6 +5,9 @@ ALTER TABLE public.checkpoints_v2
 ALTER TABLE public.raw_checkpoints
    ADD COLUMN size bigint NOT NULL DEFAULT 0;
 
+CREATE OR REPLACE VIEW checkpoints AS
+    SELECT * FROM raw_checkpoints WHERE NOT archived;
+
 CREATE OR REPLACE VIEW public.checkpoints_old_view AS
     SELECT
         c.id AS id,

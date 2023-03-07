@@ -139,9 +139,11 @@ func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
 	var res bool
 	err := Bun().NewRaw(`
 UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
-	SELECT trial_id, SUM(size) AS size, COUNT(*) as count FROM checkpoints_view 
-	WHERE checkpoints_view.state != 'DELETED' 
-	AND trial_id IN (
+	SELECT trial_id,
+    SUM(size) FILTER (WHERE state != 'DELETED') AS size,
+    COUNT(*) FILTER (WHERE state != 'DELETED') AS count
+    FROM checkpoints_view
+	WHERE trial_id IN (
 		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
 	)
 	GROUP BY trial_id
@@ -155,8 +157,8 @@ RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
 	err = Bun().NewRaw(`
 UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
-	WHERE id IN (
-		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
+	WHERE experiment_id IN (
+		SELECT experiment_id FROM checkpoints_view WHERE uuid IN (?)
 	)
 	GROUP BY experiment_id
 ) sub
@@ -167,62 +169,4 @@ RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
 	}
 
 	return nil
-
-	// SUM up all the deleted.
-
-	/*
-		trialID := Bun().NewSelect().Table("checkpoints_view").
-			Column("trial_id").
-			Where("uuid IN (?)", bun.In(checkpoints)).
-			Distinct()
-
-			sizeTuple := Bun().NewSelect().TableExpr("checkpoints_view AS c").
-				ColumnExpr("jsonb_each(c.resources) AS size_tuple").
-				Column("experiment_id").
-				Column("uuid").
-				Column("trial_id").
-				Where("state != ?", "DELETED").
-				Where("c.resources != 'null'::jsonb").
-				Where("trial_id IN (?)", trialID)
-
-			sizeAndCount := Bun().NewSelect().With("cp_size_tuple", sizeTuple).With("trial_ids", trialID).
-				Table("cp_size_tuple").
-				ColumnExpr("coalesce(sum((size_tuple).value::text::bigint), 0) AS size").
-				ColumnExpr("count(distinct(uuid)) AS count").
-				ColumnExpr("trial_ids.trial_id").
-				GroupExpr("trial_ids.trial_id").
-				Join("RIGHT JOIN trial_ids ON trial_ids.trial_id = cp_size_tuple.trial_id")
-
-			_, err := Bun().NewUpdate().With("size_and_count", sizeAndCount).
-				Table("trials", "size_and_count").
-				Set("checkpoint_size = size").
-				Set("checkpoint_count = count").
-				Where("id IN (?)", trialID).
-				Where("trials.id = size_and_count.trial_id").
-				Exec(context.Background())
-			if err != nil {
-				return err
-			}
-
-			experimentID := Bun().NewSelect().Table("checkpoints_view").
-				Column("experiment_id").
-				Where("uuid IN (?)", bun.In(checkpoints)).Distinct()
-
-			sizeAndCount = Bun().NewSelect().Table("trials").
-				ColumnExpr("coalesce(sum(checkpoint_size), 0) AS size").
-				ColumnExpr("coalesce(sum(checkpoint_count), 0) AS count").
-				Column("experiment_id").
-				Group("experiment_id").
-				Where("experiment_id IN (?)", experimentID)
-
-			_, err = Bun().NewUpdate().With("size_and_count", sizeAndCount).
-				Table("experiments", "size_and_count").
-				Set("checkpoint_size = size").
-				Set("checkpoint_count = count").
-				Where("id IN (?)", experimentID).
-				Where("experiments.id = experiment_id").
-				Exec(context.Background())
-
-			return err
-	*/
 }

@@ -5,7 +5,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -54,66 +54,129 @@ func TestUpdateCheckpointSize(t *testing.T) {
 
 			for k := 0; k < 2; k++ {
 				ckpt := uuid.New()
-				checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
-				checkpoint.Resources = resources[resourcesIndex]
 				checkpointIDs = append(checkpointIDs, ckpt)
+				// Ensure it works with both checkpoint versions.
+				if i == 0 && j == 0 && k == 0 {
+					checkpointBun := struct {
+						bun.BaseModel `bun:"table:checkpoints"`
+						TrialID       int
+						TrialRunID    int
+						TotalBatches  int
+						State         model.State
+						UUID          string
+						EndTime       time.Time
+						Resources     map[string]int64
+						Size          int64
+					}{
+						TrialID:      tr.ID,
+						TrialRunID:   1,
+						TotalBatches: 1,
+						State:        model.ActiveState,
+						UUID:         ckpt.String(),
+						EndTime:      time.Now().UTC().Truncate(time.Millisecond),
+						Resources:    resources[resourcesIndex],
+						Size:         resources[resourcesIndex]["TEST"],
+					}
 
-				err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
-				require.NoError(t, err)
+					_, err := Bun().NewInsert().Model(&checkpointBun).Exec(context.TODO())
+					require.NoError(t, err)
+				} else {
+					checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+					checkpoint.Resources = resources[resourcesIndex]
+					err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+					require.NoError(t, err)
+				}
 
 				resourcesIndex++
 			}
 		}
 	}
 
-	// Verify checkpoints have correct sizes.
-	for i, checkpointID := range checkpointIDs {
-		var size int64
-		err := Bun().NewSelect().Table("checkpoints_view").
-			Column("size").
-			Where("uuid = ?", checkpointID).
-			Scan(context.Background(), &size)
-		require.NoError(t, err)
-		require.Equal(t, int64(i+1), size)
+	type expected struct {
+		checkpointSizes []int64
+
+		trialCounts []int
+		trialSizes  []int64
+
+		experimentCounts []int
+		experimentSizes  []int64
 	}
 
-	// Verify trials have correct sizes and counts.
-	expectedTrialSizes := []int64{1 + 2, 3 + 4, 5 + 6, 7 + 8}
-	for i, trialID := range trialIDs {
-		actual := struct {
-			CheckpointSize  int64
-			CheckpointCount int
-		}{}
-		err := Bun().NewSelect().Table("trials").
-			Column("checkpoint_size").
-			Column("checkpoint_count").
-			Where("id = ?", trialID).
-			Scan(context.Background(), &actual)
-		require.NoError(t, err)
+	verifySizes := func(e expected) {
+		for i, checkpointID := range checkpointIDs {
+			var size int64
+			err := Bun().NewSelect().Table("checkpoints_view").
+				Column("size").
+				Where("uuid = ?", checkpointID).
+				Scan(context.Background(), &size)
+			require.NoError(t, err)
+			require.Equal(t, e.checkpointSizes[i], size)
+		}
 
-		require.Equal(t, expectedTrialSizes[i], actual.CheckpointSize)
-		require.Equal(t, 2, actual.CheckpointCount)
+		for i, trialID := range trialIDs {
+			actual := struct {
+				CheckpointSize  int64
+				CheckpointCount int
+			}{}
+			err := Bun().NewSelect().Table("trials").
+				Column("checkpoint_size").
+				Column("checkpoint_count").
+				Where("id = ?", trialID).
+				Scan(context.Background(), &actual)
+			require.NoError(t, err)
+
+			require.Equal(t, e.trialCounts[i], actual.CheckpointCount)
+			require.Equal(t, e.trialSizes[i], actual.CheckpointSize)
+		}
+
+		for i, experimentID := range experimentIDs {
+			actual := struct {
+				CheckpointSize  int64
+				CheckpointCount int
+			}{}
+			err := Bun().NewSelect().Table("experiments").
+				Column("checkpoint_size").
+				Column("checkpoint_count").
+				Where("id = ?", experimentID).
+				Scan(context.Background(), &actual)
+			require.NoError(t, err)
+
+			require.Equal(t, e.experimentCounts[i], actual.CheckpointCount)
+			require.Equal(t, e.experimentSizes[i], actual.CheckpointSize)
+		}
 	}
 
-	expectedExperimentSizes := []int64{1 + 2 + 3 + 4, 5 + 6 + 7 + 8}
-	for i, experimentID := range experimentIDs {
-		actual := struct {
-			CheckpointSize  int64
-			CheckpointCount int
-		}{}
-		err := Bun().NewSelect().Table("experiments").
-			Column("checkpoint_size").
-			Column("checkpoint_count").
-			Where("id = ?", experimentID).
-			Scan(context.Background(), &actual)
-		require.NoError(t, err)
+	e := expected{
+		checkpointSizes: []int64{1, 2, 3, 4, 5, 6, 7, 8},
 
-		require.Equal(t, expectedExperimentSizes[i], actual.CheckpointSize)
-		require.Equal(t, 4, actual.CheckpointCount)
+		trialCounts: []int{2, 2, 2, 2},
+		trialSizes:  []int64{1 + 2, 3 + 4, 5 + 6, 7 + 8},
+
+		experimentCounts: []int{4, 4},
+		experimentSizes:  []int64{1 + 2 + 3 + 4, 5 + 6 + 7 + 8},
 	}
+	verifySizes(e)
 
-	fmt.Println("HELLO")
-	// TODO counts...
+	db.MarkCheckpointsDeleted(checkpointIDs[:2])
+	e.trialCounts = []int{0, 2, 2, 2}
+	e.trialSizes = []int64{0, 3 + 4, 5 + 6, 7 + 8}
+	e.experimentCounts = []int{2, 4}
+	e.experimentSizes = []int64{3 + 4, 5 + 6 + 7 + 8}
+	verifySizes(e)
+
+	db.MarkCheckpointsDeleted(checkpointIDs[3:5])
+	e.trialCounts = []int{0, 1, 1, 2}
+	e.trialSizes = []int64{0, 3, 6, 7 + 8}
+	e.experimentCounts = []int{1, 3}
+	e.experimentSizes = []int64{3, 6 + 7 + 8}
+	verifySizes(e)
+
+	db.MarkCheckpointsDeleted(checkpointIDs)
+	e.trialCounts = []int{0, 0, 0, 0}
+	e.trialSizes = []int64{0, 0, 0, 0}
+	e.experimentCounts = []int{0, 0}
+	e.experimentSizes = []int64{0, 0}
+	verifySizes(e)
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
