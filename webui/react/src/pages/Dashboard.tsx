@@ -154,11 +154,7 @@ const Dashboard: React.FC = () => {
     setSubmissionsLoading(false);
   }, [currentUser, fetchExperiments, fetchProjects, fetchTasks]);
 
-  const fetchAll = useCallback(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
-
-  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchSubmissions, { rerunOnNewFn: true });
 
   useEffect(() => {
     setSubmissions(
