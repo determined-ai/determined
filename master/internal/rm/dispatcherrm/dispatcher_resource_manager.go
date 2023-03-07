@@ -1406,9 +1406,9 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			AuxContainerCapacityPerAgent: 0,
 			SchedulerType:                schedulerType,
 			SchedulerFittingPolicy:       fittingPolicy,
-			Location:                     wlmName,
+			Location:                     "",
 			ImageId:                      "",
-			InstanceType:                 wlmName,
+			InstanceType:                 "",
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 			Accelerator:                  v.Accelerator,
 		}
