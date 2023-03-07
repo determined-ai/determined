@@ -5977,13 +5977,11 @@ class v1MetricsWorkload:
         *,
         metrics: "v1Metrics",
         numInputs: int,
-        state: "experimentv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.metrics = metrics
         self.numInputs = numInputs
-        self.state = state
         self.totalBatches = totalBatches
         if not isinstance(endTime, Unset):
             self.endTime = endTime
@@ -5993,7 +5991,6 @@ class v1MetricsWorkload:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
             "numInputs": obj["numInputs"],
-            "state": experimentv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -6004,7 +6001,6 @@ class v1MetricsWorkload:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
             "numInputs": self.numInputs,
-            "state": self.state.value,
             "totalBatches": self.totalBatches,
         }
         if not omit_unset or "endTime" in vars(self):
