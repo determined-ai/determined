@@ -21,7 +21,7 @@ The PyTorch Trainer API lets you do the following:
 -  Work locally, iterating on your model code.
 -  Debug models in your favorite debug environment (e.g., directly on your machine, IDE, or Jupyter
    notebook).
--  Run training scripts without needing to use an experiment configuration (YAML) file.
+-  Run training scripts without needing to use an experiment configuration file.
 -  Load previous saved checkpoints directly into your model.
 
 ************
@@ -52,12 +52,11 @@ After completing the steps in this guide, you will be able to do the following:
  Step 1: Define a PyTorch Trial
 ********************************
 
-Start by defining a PyTorchTrial by instantiating the `Trial` and `TrialContext` objects. When using
-the PyTorch Trainer API, you do not have to initialize and wrap models and optimizers inside of the
-`Trial.__init__` method. If desired, pass a wrapped model to `Trial.__init__`.
+Start by defining a PyTorchTrial by instantiating the ``Trial`` and ``TrialContext`` objects. When
+using the PyTorch Trainer API, you do not have to initialize and wrap models and optimizers inside
+of the ``Trial.__init__`` method. If desired, pass a wrapped model to ``Trial.__init__``.
 
-..
-   code::python
+.. code:: python
 
    class MyPyTorchTrial(pytorch.PyTorchTrial):
        def __init__(self, context: PyTorchTrialContext, hparams: Dict) -> None:
@@ -99,10 +98,9 @@ the PyTorch Trainer API, you do not have to initialize and wrap models and optim
 
 After defining the PyTorch Trial, initialize the trial and the trainer.
 
-   Example:
+Example:
 
-   ..
-      code::python
+   .. code:: python
 
       class MyUnion(schemas.UnionBase):
           _id = "..."
@@ -112,7 +110,7 @@ After defining the PyTorch Trial, initialize the trial and the trainer.
       class MemberA(MyUnion):
           _id = "..."
 
-.. code::
+.. code:: python
 
    from determined import pytorch
 
@@ -144,12 +142,12 @@ After defining the PyTorch Trial, initialize the trial and the trainer.
 ******************************************
 
 With the PyTorch Trainer API, you can run training scripts locally without needing to use an
-experiment configuration (YAML) file. Be sure to specify max_length in the .fit() call, and
+experiment configuration file. Be sure to specify max_length in the ``.fit()`` call, and
 global_batch_size in pytorch.init().
 
 Run this script directly (python3 train.py), or inside of a Jupyter notebook.
 
-.. code::
+.. code:: python
 
    + hparams = {"global_batch_size": 32, "lr": 0.02}
    + expconf = yaml.safe_load(pathlib.Path("./det.yaml").read_text())
@@ -174,9 +172,9 @@ code.
 
 .. note::
 
-   Only Horovod and PyTorch Distributed backends are supported.
+   Both Horovod and PyTorch Distributed backends are supported.
 
-.. code::
+.. code:: python
 
     def main():
    +     # Initialize distributed backend before pytorch.init()
@@ -187,7 +185,7 @@ code.
 
    +     # Initialize DistributedContext specifying chief IP
          with det.pytorch.init(
-   +       distributed=core.DistributedContext.from_torch_distributed  (chief_ip="localhost")
+   +       distributed=core.DistributedContext.from_torch_distributed (chief_ip="localhost")
          ) as train_context:
              trial = MNistTrial(train_context)
              trainer = det.pytorch.Trainer(trial, train_context)
@@ -197,15 +195,16 @@ code.
                  validation_period=pytorch.Batch(10),
              )
 
-Call your distributed backend's launcher directly: `torchrun --nproc_per_node=4 train.py`.
+Call your distributed backend's launcher directly: ``torchrun --nproc_per_node=4 train.py``.
 
 Local Training - Test Mode
 ==========================
 
 PyTorch Trainer accepts a test_mode parameter which, if true, trains and validates your training
-code for only one batch, then exits. This is helpful for debugging code.
+code for only one batch, then exits. This is helpful for debugging code or writing automated tests
+around your model code.
 
-.. code::
+.. code:: python
 
     trainer.fit(
                  max_length=pytorch.Epoch(1),
@@ -232,7 +231,7 @@ cluster.
 
 This code should allow for local and cluster training with no code changes.
 
-.. code::
+.. code:: python
 
     def main():
    +   local = det.get_cluster_info() is None
@@ -241,7 +240,7 @@ This code should allow for local and cluster training with no code changes.
    +       dist.init_process_group(backend="gloo|nccl")
    +       # Set flag used by internal PyTorch training loop
    +       os.environ["USE_TORCH_DISTRIBUTED"] = "true"
-   +       distributed_context = core.DistributedContext.from_torch_distributed  (chief_ip="localhost")
+   +       distributed_context = core.DistributedContext.from_torch_distributed (chief_ip="localhost")
    +       # (Optional) Pass in an exp conf and instance of hparams if training code needs it
    +       expconf = yaml.safe_load(pathlib.Path("./config.yaml"))
    +       hparams = {"lr": 0.02}
@@ -265,7 +264,7 @@ This code should allow for local and cluster training with no code changes.
 
 **To run Trainer API solely on-cluster, the code is much simpler**
 
-.. code::
+.. code:: python
 
    def on_cluster():
        """
@@ -286,14 +285,14 @@ This code should allow for local and cluster training with no code changes.
  Step 5: Submit Your Trial for Training on Cluster
 ***************************************************
 
-To run your experiment on cluster, you'll need to create a YAML file. Your YAML file must contain
-searcher configuration and entrypoint.
+To run your experiment on cluster, you'll need to create an experiment configuration (YAML) file.
+Your experiment configuration file must contain searcher configuration and entrypoint.
 
 .. note::
 
-   `global_batch_size` is required if `max_length` is configured in records
+   ``global_batch_size`` is required if ``max_length`` is configured in records
 
-.. code::
+.. code:: python
 
    name: my_pytorch_trainer_trial
    hyperparameters:
@@ -331,12 +330,12 @@ them as different names, of course).
 outside of normal training loops. It does not support any training features such as metrics
 reporting or uploading checkpoints and is intended for use with the Trainer directly.
 
-.. code::
+.. code:: python
 
    import determined as det
    from determined import pytorch
    from determined.experimental import client
-       # Download checkpoint and load training code from checkpoint.
+    # Download checkpoint and load training code from checkpoint.
        path = client.get_checkpoint(CHECKPOINT_UUID)
        with det.import_from_path(path + "/code/"):
            import my_model_def

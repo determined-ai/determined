@@ -34,8 +34,8 @@ corresponding variables on ``PyTorchTrialContext``. So if not passed in, calling
 otherwise, it will be automatically initialized from the launch layer.
 
 All ``trainer.*`` calls must be within the scope of this ``with pytorch.init() as trial_context``,
-as there are resources necessary for training which start in the **enter** method and must be
-cleaned up in the corresponding **exit**\ () method.
+as there are resources necessary for training which start in the ``_enter_()`` method and must be
+cleaned up in the corresponding ``__exit__()`` method.
 
 ********************************
  ``determined.pytorch.Trainer``
