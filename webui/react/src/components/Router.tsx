@@ -36,7 +36,7 @@ const Router: React.FC<Props> = (props: Props) => {
         const { element, ...route } = config;
 
         if (route.needAuth && !isAuthenticated) {
-          if (!authChecked) return <Route element={<Spinner center />} key="authCheckPending" />;
+          if (!authChecked) return;
           return (
             <Route
               {...route}
