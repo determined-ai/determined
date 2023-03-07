@@ -209,41 +209,28 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   ]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    // In the case of Custom Searchers, all the tabs besides
-    // "Learning Curve" aren't helpful or relevant, so we are hiding them
-    if (experiment.config.searcher.name === ExperimentSearcherName.Custom) {
-      return [
-        {
-          children: (
-            <LearningCurve
-              experiment={experiment}
-              filters={visualizationFilters}
-              fullHParams={fullHParams.current}
-              selectedMaxTrial={filters.maxTrial}
-              selectedMetric={filters.metric}
-              selectedScale={filters.scale}
-            />
-          ),
-          key: ExperimentVisualizationType.LearningCurve,
-          label: 'Learning Curve',
-        },
-      ];
-    } else {
-      return [
-        {
-          children: (
-            <LearningCurve
-              experiment={experiment}
-              filters={visualizationFilters}
-              fullHParams={fullHParams.current}
-              selectedMaxTrial={filters.maxTrial}
-              selectedMetric={filters.metric}
-              selectedScale={filters.scale}
-            />
-          ),
-          key: ExperimentVisualizationType.LearningCurve,
-          label: 'Learning Curve',
-        },
+    /**
+     * In the case of Custom Searchers, all the tabs besides
+     * "Learning Curve" aren't helpful or relevant, so we are hiding them
+     */
+    const tabs: TabsProps['items'] = [
+      {
+        children: (
+          <LearningCurve
+            experiment={experiment}
+            filters={visualizationFilters}
+            fullHParams={fullHParams.current}
+            selectedMaxTrial={filters.maxTrial}
+            selectedMetric={filters.metric}
+            selectedScale={filters.scale}
+          />
+        ),
+        key: ExperimentVisualizationType.LearningCurve,
+        label: 'Learning Curve',
+      },
+    ];
+    if (experiment.config.searcher.name !== ExperimentSearcherName.Custom) {
+      tabs.push(
         {
           children: (
             <HpParallelCoordinates
@@ -293,8 +280,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
           key: ExperimentVisualizationType.HpHeatMap,
           label: 'HP Heat Map',
         },
-      ];
+      );
     }
+    return tabs;
   }, [
     experiment,
     filters.batch,

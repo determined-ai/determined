@@ -25,9 +25,11 @@ interface HyperParameter {
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
   const hyperparameters: HyperParameter[] = useMemo(() => {
-    // In the case of Custom Searchers, we may not have experiment
-    // configs to generate the ranges with. Instead, simply show
-    // the values as constants.
+    /**
+     * In the case of Custom Searchers, we may not have experiment
+     * configs to generate the ranges with. Instead, simply show
+     * the values as constants.
+     */
     if (experiment.config.searcher.name === ExperimentSearcherName.Custom) {
       return Object.entries(trial.hyperparameters).map(([name, value]) => {
         return {
