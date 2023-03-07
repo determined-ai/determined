@@ -88,15 +88,20 @@ func (a AllocationID) String() string {
 type Allocation struct {
 	bun.BaseModel `bun:"table:allocations"`
 
-	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,pk"`
-	TaskID       TaskID           `db:"task_id" bun:"task_id,notnull"`
-	Slots        int              `db:"slots" bun:"slots,notnull"`
-	ResourcePool string           `db:"resource_pool" bun:"resource_pool,notnull"`
-	StartTime    *time.Time       `db:"start_time" bun:"start_time"`
-	EndTime      *time.Time       `db:"end_time" bun:"end_time"`
-	State        *AllocationState `db:"state" bun:"state"`
-	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
-	PortOffset   int              `db:"port_offset" bun:"port_offset,notnull"`
+	AllocationID               AllocationID     `db:"allocation_id" bun:"allocation_id,pk"`
+	TaskID                     TaskID           `db:"task_id" bun:"task_id,notnull"`
+	Slots                      int              `db:"slots" bun:"slots,notnull"`
+	ResourcePool               string           `db:"resource_pool" bun:"resource_pool,notnull"`
+	StartTime                  *time.Time       `db:"start_time" bun:"start_time"`
+	EndTime                    *time.Time       `db:"end_time" bun:"end_time"`
+	State                      *AllocationState `db:"state" bun:"state"`
+	IsReady                    *bool            `db:"is_ready" bun:"is_ready"`
+	DTrainPort                 int              `db:"dtrain_port" bun:"dtrain_port,notnull"`
+	InterTrainProcessCommPort1 int              `db:"inter_train_process_comm_port1" 
+	bun:"inter_train_process_comm_port1,notnull`
+	InterTrainProcessCommPort2 int `db:"inter_train_process_comm_port2"
+	 bun:"inter_train_process_comm_port2,notnull`
+	C10DPort int `db:"c10d_port" bun:"c10d_port,notnull"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.

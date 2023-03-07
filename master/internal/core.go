@@ -52,7 +52,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/rm/portoffsetregistry"
+	"github.com/determined-ai/determined/master/internal/rm/portregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
@@ -913,7 +913,7 @@ func (m *Master) Run(ctx context.Context) error {
 	})
 
 	allocationmap.InitAllocationMap()
-	portoffsetregistry.NewPortOffsetRegistry()
+	portregistry.NewPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)

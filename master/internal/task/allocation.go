@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gyuho/bst"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/cluster"
@@ -16,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/rm/portoffsetregistry"
+	"github.com/determined-ai/determined/master/internal/rm/portregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -27,6 +26,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+)
+
+var (
+	dtrainSSHPortBase              = 12350
+	interTrainProcessCommPort1Base = 12360
+	interTrainProcessCommPort2Base = 12365
+	c10DPortBase                   = 29400
 )
 
 type (
@@ -78,9 +84,8 @@ type (
 		// active all gather state
 		allGather *allGather
 
-		logCtx                       detLogger.Context
-		restored                     bool
-		offsetRestoredToPortRegistry bool
+		logCtx   detLogger.Context
+		restored bool
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -219,11 +224,14 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		a.Cleanup(ctx)
 		// if this is a restore allocation req and a.restored is set
-		// then the port offset has been added to the port registry successfully.
+		// then the ports have been added to the port registry successfully.
 		// This is to avoid the race condition of a failed restored
-		// allocation releasing another allocation's port.
-		if a.req.Restore == a.restored {
-			portoffsetregistry.ReleasePortOffset(bst.Int(a.model.PortOffset))
+		// allocation releasing another allocation's port(s).
+		if a.req.Restore == a.restored { // XNOR
+			portregistry.ReleasePort(a.model.DTrainPort)
+			portregistry.ReleasePort(a.model.InterTrainProcessCommPort1)
+			portregistry.ReleasePort(a.model.InterTrainProcessCommPort2)
+			portregistry.ReleasePort(a.model.C10DPort)
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -416,6 +424,31 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	}
 }
 
+func (a *Allocation) getPorts(ctx *actor.Context) (int, int, int, int, error) {
+	dTrainport, err := portregistry.GetPort(dtrainSSHPortBase)
+	if err != nil {
+		return -1, -1, -1, -1, fmt.Errorf("getting dtrain port from the registry for an allocation")
+	}
+	ctx.Log().Debugf(" dTrainPort : %v", dTrainport)
+
+	intertrainport1, err := portregistry.GetPort(interTrainProcessCommPort1Base)
+	if err != nil {
+		return -1, -1, -1, -1, fmt.Errorf("getting intertrain port1 from the registry for an allocation")
+	}
+
+	intertrainport2, err := portregistry.GetPort(interTrainProcessCommPort2Base)
+	if err != nil {
+		return -1, -1, -1, -1, fmt.Errorf("getting intertrain port2 from the registry for an allocation")
+	}
+
+	c10Dport, err := portregistry.GetPort(c10DPortBase)
+	if err != nil {
+		return -1, -1, -1, -1, fmt.Errorf("getting c10D port from the registry for an allocation")
+	}
+
+	return dTrainport, intertrainport1, intertrainport2, c10Dport, nil
+}
+
 // ResourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
 // ask to the parent to build its task spec.. this is mostly a hack to defer lots of computationally
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
@@ -473,7 +506,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Restore {
-		portoffsetregistry.RestorePortOffset(a.model.PortOffset)
+		portregistry.RestorePort(a.model.DTrainPort)
+		portregistry.RestorePort(a.model.InterTrainProcessCommPort1)
+		portregistry.RestorePort(a.model.InterTrainProcessCommPort2)
+		portregistry.RestorePort(a.model.C10DPort)
 
 		if a.getModelState() == model.AllocationStateRunning {
 			// Restore proxies.
@@ -489,23 +525,30 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
-		portOffset, err := portoffsetregistry.GetPortOffset()
+		dTrainPort, intercommTrainport1, intercommTrainport2, c10DPort, err := a.getPorts(ctx)
 		if err != nil {
-			return fmt.Errorf("getting port offset from the registry for an allocation")
+			return errors.Wrap(err, "getting ports")
 		}
-		a.model.PortOffset = portOffset
-		ctx.Log().Debugf(" : %v", portOffset)
-		err = db.UpdateAllocationPortOffset(a.model)
+
+		a.model.DTrainPort = dTrainPort
+		a.model.InterTrainProcessCommPort1 = intercommTrainport1
+		a.model.InterTrainProcessCommPort2 = intercommTrainport2
+		a.model.C10DPort = c10DPort
+
+		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {
 			return fmt.Errorf("updating allocation db")
 		}
 
 		for cID, r := range a.resources {
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
-				Token:        token,
-				AgentRank:    a.resources[cID].Rank,
-				IsMultiAgent: len(a.resources) > 1,
-				PortOffset:   portOffset,
+				Token:                      token,
+				AgentRank:                  a.resources[cID].Rank,
+				IsMultiAgent:               len(a.resources) > 1,
+				DTrainPort:                 dTrainPort,
+				InterTrainProcessCommPort1: intercommTrainport1,
+				InterTrainProcessCommPort2: intercommTrainport2,
+				C10DPort:                   c10DPort,
 			}); err != nil {
 				return fmt.Errorf("starting resources (%v): %w", r, err)
 			}

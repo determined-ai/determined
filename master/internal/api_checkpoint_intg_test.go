@@ -62,7 +62,6 @@ func createVersionTwoCheckpoint(
 		Slots:        1,
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
-		PortOffset:   0,
 	}
 	require.NoError(t, api.m.db.AddAllocation(aIn))
 

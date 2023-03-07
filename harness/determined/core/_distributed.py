@@ -61,8 +61,8 @@ class DistributedContext:
         self.cross_rank = cross_rank if cross_rank is not None else 0
         self.cross_size = cross_size if cross_size is not None else 1
 
-        self._pub_port = pub_port + port_offset
-        self._pull_port = pull_port + port_offset
+        self._pub_port = pub_port
+        self._pull_port = pull_port
         self._chief_ip = chief_ip
 
         self._is_chief = self.rank == 0

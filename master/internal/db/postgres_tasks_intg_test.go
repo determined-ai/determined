@@ -80,19 +80,25 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	// And an allocation.
 	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
-		AllocationID: aID,
-		TaskID:       tID,
-		Slots:        8,
-		ResourcePool: "somethingelse",
-		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
-		PortOffset:   0,
+		AllocationID:               aID,
+		TaskID:                     tID,
+		Slots:                      8,
+		ResourcePool:               "somethingelse",
+		StartTime:                  ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
+		DTrainPort:                 0,
+		InterTrainProcessCommPort1: 0,
+		InterTrainProcessCommPort2: 0,
+		C10DPort:                   0,
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
 
-	// Update port offset
-	aIn.PortOffset = 3
-	err = UpdateAllocationPortOffset(*aIn)
+	// Update ports
+	aIn.DTrainPort = 3
+	aIn.InterTrainProcessCommPort1 = 4
+	aIn.InterTrainProcessCommPort2 = 5
+	aIn.C10DPort = 6
+	err = UpdateAllocationPorts(*aIn)
 	require.NoError(t, err, "failed to update port offset")
 
 	// Retrieve it back and make sure the mapping is exhaustive.

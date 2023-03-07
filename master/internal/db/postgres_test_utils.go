@@ -289,7 +289,6 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 		TaskID:       tID,
 		StartTime:    ptrs.Ptr(time.Now().UTC()),
 		State:        ptrs.Ptr(model.AllocationStateTerminated),
-		PortOffset:   0,
 	}
 	err := db.AddAllocation(&a)
 	require.NoError(t, err, "failed to add allocation")

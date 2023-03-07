@@ -98,14 +98,19 @@ WHERE task_id = $1
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
 INSERT INTO allocations
-	(task_id, allocation_id, slots, resource_pool, start_time, state, port_offset)
+	(task_id, allocation_id, slots, resource_pool, start_time, state, dtrain_port, 
+	inter_train_process_comm_port1, inter_train_process_comm_port2,c10d_port)
 VALUES
-	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state, :port_offset)
+	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state, :dtrain_port, 
+	:inter_train_process_comm_port1, :inter_train_process_comm_port2, :c10d_port)
 ON CONFLICT
 	(allocation_id)
 DO UPDATE SET
 	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
-	start_time=EXCLUDED.start_time, state=EXCLUDED.state, port_offset=EXCLUDED.port_offset
+	start_time=EXCLUDED.start_time, state=EXCLUDED.state, dtrain_port=EXCLUDED.dtrain_port, 
+	inter_train_process_comm_port1 = EXCLUDED.inter_train_process_comm_port1, 
+	inter_train_process_comm_port2 = EXCLUDED.inter_train_process_comm_port2, 
+	c10d_port = EXCLUDED.c10d_port
 `, a)
 }
 
@@ -194,10 +199,11 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 	return err
 }
 
-// UpdateAllocationPortOffset stores the latest task state and readiness.
-func UpdateAllocationPortOffset(a model.Allocation) error {
+// UpdateAllocationPorts stores the latest task state and readiness.
+func UpdateAllocationPorts(a model.Allocation) error {
 	_, err := Bun().NewUpdate().Table("allocations").Set(
-		"port_offset = ?", a.PortOffset).Where(
+		"dtrain_port = ?, inter_train_process_comm_port1 = ?, inter_train_process_comm_port2 = ?, c10d_port = ?",
+		a.DTrainPort, a.InterTrainProcessCommPort1, a.InterTrainProcessCommPort2, a.C10DPort).Where(
 		"allocation_id = ?", a.AllocationID).Exec(context.TODO())
 	return err
 }
