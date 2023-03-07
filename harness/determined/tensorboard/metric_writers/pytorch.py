@@ -1,5 +1,6 @@
 import pathlib
 import warnings
+import numpy as np
 from typing import Union
 
 from determined import tensorboard
