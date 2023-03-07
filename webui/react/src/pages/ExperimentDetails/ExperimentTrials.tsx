@@ -42,7 +42,8 @@ import { getMetricValue } from 'utils/metric';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import settingsConfig, {
+import {
+  configForExperiment,
   DEFAULT_COLUMNS,
   isOfSortKey,
   Settings,
@@ -69,7 +70,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();

@@ -41,7 +41,7 @@ export interface Settings extends InteractiveTableSettings {
   tableOffset: number;
 }
 
-const config: SettingsConfig<Settings> = {
+export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -114,7 +114,5 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'checkpoints',
-};
-
-export default config;
+  storagePath: `${id}-checkpoints`,
+});
