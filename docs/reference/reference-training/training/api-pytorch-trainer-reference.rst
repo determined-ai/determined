@@ -14,7 +14,8 @@
        *,
        hparams: Optional[Dict] = None,
        exp_conf: Optional[Dict[str, Any]] = None,
-       distributed: Optional[core.DistributedContext] = None
+       distributed: Optional[core.DistributedContext] = None,
+       aggregation_frequency: int = 1,
    ) -> pytorch.PyTorchTrialContext:
 
 ``pytorch.init()`` builds a ``pytorch.PyTorchTrialContext`` for use with ``PyTorchTrial``.
@@ -25,6 +26,11 @@ directly.
 All of the arguments are optional, but ``hparams`` and ``exp_conf`` are used to set the
 corresponding variables on ``PyTorchTrialContext``. So if not passed in, calling
 ``context.get_hparams()`` or ``context.get_experiment_config()`` will fail in local-training mode.
+
+``aggregation_frequency`` configures the number of batches before gradients are exchanged in
+    distributed training. This value is configured here because it is used in
+    context.wrap_optimizer.
+
 ``DistributedContext`` can be optionally passed in to manually configure distributed training;
 otherwise, it will be automatically initialized from the launch layer.
 
@@ -58,10 +64,11 @@ called before ``.fit()``
        checkpoint_period: Optional[pytorch.TrainUnit] = None,
        validation_period: Optional[pytorch.TrainUnit] = None,
        max_length: Optional[pytorch.TrainUnit] = None,
-       reporting_period: Optional[pytorch.TrainUnit] = None,
-       aggregation_frequency: Optional[int] = None,
-       checkpoint_policy: Optional[str] = None,
-       test_mode: Optional[bool] = None,
+       reporting_period: pytorch.TrainUnit = pytorch.Batch(100),
+       checkpoint_policy: str = "best",
+       latest_checkpoint: Optional[str] = None,
+       step_zero_validation: bool = False,
+       test_mode: bool = False,
    )
 
 ``fit()`` trains a ``PyTorchTrial`` configured from the ``Trainer`` and handles checkpointing and
@@ -90,9 +97,6 @@ which can take an ``int`` or instance of ``collections.abc.Container`` (list, tu
 example, ``Batch(100)`` would report metrics every 100 batches, while ``Batch([5, 30, 45])`` would
 report after every 5th, 30th, and 45th batch.
 
-``aggregation_frequency`` The number of batches trained before gradients are exchanged during
-distributed training. If unset, will default to 1.
-
 ``checkpoint_policy`` Controls how Determined performs checkpoints after validation operations, if
 at all. Should be set to one of the following values:
 
@@ -106,6 +110,13 @@ all: A checkpoint will be taken after every validation, no matter the validation
 none: A checkpoint will never be taken due to a validation. However, even with this policy selected,
 checkpoints are still expected to be taken after the trial is finished training, due to cluster
 scheduling decisions, before search method decisions, or due to min_checkpoint_period.
+
+``latest_checkpoint`` Configures the checkpoint used to start or continue training. This value 
+should be set to ``det.get_cluster_info().latest_checkpoint`` for standard continue training 
+functionality.
+
+``step_zero_validation`` Configures whether or not to perform an initial validation before 
+training.
 
 ``test_mode`` Runs a minimal loop of training for testing and debugging purposes. Will train and
 validate one batch. Defaults to false.
