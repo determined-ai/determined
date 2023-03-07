@@ -998,13 +998,6 @@ const RESPONSES = {
           test1: { test2: { test3: { test4: { optimizer_fake: { lr: 0.0001, momentum: 0.9 } } } } },
         },
         id: 3521,
-        latestTraining: {
-          endTime: '2022-08-01T16:17:50.142291Z',
-          metrics: { loss: 0.0822979062795639 },
-          numInputs: 0,
-          state: 'STATE_COMPLETED',
-          totalBatches: 937,
-        },
         latestValidation: {
           endTime: '2022-08-01T16:17:55.711568Z',
           metrics: { accuracy: 0.9800955414012739, validation_loss: 0.05823593354751697 },
