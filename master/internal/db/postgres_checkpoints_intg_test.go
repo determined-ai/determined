@@ -5,10 +5,12 @@ package db
 
 import (
 	"context"
+	"math/rand"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -292,4 +294,36 @@ func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, numValidDCheckpoints, numDStateCheckpoints,
 		"didn't correctly delete the valid checkpoints")
+}
+
+func BenchmarkUpdateCheckpointSize(b *testing.B) {
+	t := (*testing.T)(unsafe.Pointer(b)) //nolint: gosec // forgive me.
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	// Insert 1000 experiments with 1000 trials with 1000 resources.
+	var checkpoints []uuid.UUID
+	exp := RequireMockExperiment(t, db, user)
+	for j := 0; j < 10; j++ {
+		t.Logf("Adding trial #%d", j)
+		tr := RequireMockTrial(t, db, exp)
+		allocation := RequireMockAllocation(t, db, tr.TaskID)
+		for k := 0; k < 100; k++ {
+			ckpt := uuid.New()
+			checkpoints = append(checkpoints, ckpt)
+
+			resources := make(map[string]int64)
+			for r := 0; r < 1000; r++ {
+				resources[uuid.New().String()] = rand.Int63n(2500)
+			}
+
+			checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
+			err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+			require.NoError(t, err)
+		}
+	}
+
+	db.MarkCheckpointsDeleted(checkpoints)
 }
