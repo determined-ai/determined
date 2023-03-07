@@ -255,7 +255,7 @@ type Event struct {
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *ResourcesAllocated `json:"assigned_event"`
+	AssignedEvent *ResourcesAssigned `json:"assigned_event"`
 	// ResourcesStartedEvent is triggered when the resources started on an agent.
 	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
@@ -288,9 +288,9 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		message = fmt.Sprintf("Service of %s is available", description)
 	case ev.AssignedEvent != nil:
 		if ev.AssignedEvent.Recovered {
-			message = fmt.Sprintf("%s was recovered on an agent", description)
+			message = fmt.Sprintf("%s was recovered", description)
 		} else {
-			message = fmt.Sprintf("%s was assigned to an agent", description)
+			message = fmt.Sprintf("%s was scheduled", description)
 		}
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
@@ -332,4 +332,8 @@ func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*
 	}
 
 	return out
+}
+
+type ResourcesAssigned struct {
+	Recovered bool
 }
