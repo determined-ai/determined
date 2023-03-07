@@ -25,7 +25,7 @@ directly.
 
 All of the arguments are optional, but ``hparams`` and ``exp_conf`` are used to set the
 corresponding variables on ``PyTorchTrialContext``. So if not passed in, calling
-``context.get_hparams()`` or ``context.get_experiment_config()`` will fail in local-training mode.
+``context.get_hparams()`` or ``context.get_experiment_config()`` will fail.
 
 ``aggregation_frequency`` configures the number of batches before gradients are exchanged in
    distributed training. This value is configured here because it is used in context.wrap_optimizer.
