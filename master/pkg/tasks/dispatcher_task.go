@@ -314,20 +314,22 @@ func (t *TaskSpec) jobAndProjectLabels(mode *string) (pbsResult, slurmResult []s
 	// Recover the configuration from the JSON in the env. var.
 	configJSON := t.ExtraEnvVars["DET_EXPERIMENT_CONFIG"]
 	var expConf expconf.ExperimentConfig
-	if err := json.Unmarshal([]byte(configJSON), &expConf); err != nil {
-		logrus.Infof("Unable to Unmarshal exp config: %s", err)
-		return pbsResult, slurmResult
-	}
-	switch {
-	case (mode == nil || *mode == config.Project):
-		return computeJobProjectResult(expConf.RawProject)
-	case *mode == config.Workspace:
-		return computeJobProjectResult(expConf.RawWorkspace)
-	case *mode == config.Label:
-		return computeJobProjectResultForLabels(expConf.Labels(), "")
-	case strings.HasPrefix(*mode, config.LabelPrefix):
-		prefix := strings.TrimPrefix(*mode, config.LabelPrefix)
-		return computeJobProjectResultForLabels(expConf.Labels(), prefix)
+	if len(configJSON) > 0 {
+		if err := json.Unmarshal([]byte(configJSON), &expConf); err != nil {
+			logrus.Infof("Unable to Unmarshal exp config: %s", err)
+			return pbsResult, slurmResult
+		}
+		switch {
+		case (mode == nil || *mode == config.Project):
+			return computeJobProjectResult(expConf.RawProject)
+		case *mode == config.Workspace:
+			return computeJobProjectResult(expConf.RawWorkspace)
+		case *mode == config.Label:
+			return computeJobProjectResultForLabels(expConf.Labels(), "")
+		case strings.HasPrefix(*mode, config.LabelPrefix):
+			prefix := strings.TrimPrefix(*mode, config.LabelPrefix)
+			return computeJobProjectResultForLabels(expConf.Labels(), prefix)
+		}
 	}
 	return pbsResult, slurmResult
 }
