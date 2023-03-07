@@ -1,8 +1,8 @@
 import { Alert, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import Form, { FormInstance } from 'components/kit/Form';
+import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -103,7 +103,6 @@ const DEFAULT_MODAL_STATE = {
 };
 
 const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
-  const formRef = useRef<FormInstance>(null);
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
@@ -112,6 +111,8 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState(DEFAULT_MODAL_STATE);
     onClose?.();
   }, [onClose]);
+
+  const [form] = Form.useForm();
 
   const {
     modalClose,
@@ -153,12 +154,12 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => {
       if (!prev) return prev;
 
-      if (prev.isAdvancedMode && formRef.current) {
+      if (prev.isAdvancedMode && form) {
         try {
           const newConfig = (yaml.load(prev.configString) || {}) as RawJson;
           const isFork = prev.type === CreateExperimentType.Fork;
 
-          formRef.current.setFields([
+          form.setFields([
             { name: 'name', value: getExperimentName(newConfig) },
             {
               name: 'maxLength',
@@ -166,7 +167,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             },
           ]);
 
-          formRef.current.validateFields();
+          form.validateFields();
         } catch (e) {
           handleError(e, { publicMessage: 'failed to load previous yaml config' });
         }
@@ -181,27 +182,29 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     });
   }, []);
 
-  const getConfigFromForm = useCallback((config: RawJson) => {
-    if (!formRef.current) return yaml.dump(config);
+  const getConfigFromForm = useCallback(
+    (config: RawJson) => {
+      if (!form) return yaml.dump(config);
 
-    const formValues = formRef.current.getFieldsValue();
-    const newConfig = clone(config);
+      const formValues = form.getFieldsValue();
+      const newConfig = clone(config);
 
-    if (formValues.name) {
-      newConfig.name = formValues.name;
-    }
-    if (formValues.maxLength) {
-      const maxLengthType = getMaxLengthType(newConfig);
-      if (maxLengthType === undefined) {
-        // Unitless searcher config.
-        newConfig.searcher.max_length = parseInt(formValues.maxLength);
-      } else {
-        newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+      if (formValues.name) {
+        newConfig.name = formValues.name;
       }
-    }
-
-    return yaml.dump(newConfig);
-  }, []);
+      if (formValues.maxLength) {
+        const maxLengthType = getMaxLengthType(newConfig);
+        if (maxLengthType === undefined) {
+          // Unitless searcher config.
+          newConfig.searcher.max_length = parseInt(formValues.maxLength);
+        } else {
+          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+        }
+      }
+      return yaml.dump(newConfig);
+    },
+    [form],
+  );
 
   const submitExperiment = useCallback(
     async (newConfig: string) => {
@@ -257,7 +260,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
-      await formRef.current?.validateFields();
+      await form?.validateFields();
       userConfig = modalState.config;
     }
 
@@ -274,7 +277,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
 
     const configString = isAdvancedMode ? yaml.dump(fullConfig) : getConfigFromForm(fullConfig);
     await submitExperiment(configString);
-  }, [getConfigFromForm, modalState, submitExperiment, registryCredentials]);
+  }, [getConfigFromForm, modalState, submitExperiment, registryCredentials, form]);
 
   const getModalContent = useCallback(
     (state: ModalState) => {
@@ -300,6 +303,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
           )}
           <Form
             className={css.form}
+            form={form}
             hidden={isAdvancedMode}
             initialValues={{
               maxLength: undefined,
@@ -307,7 +311,6 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             }}
             labelCol={{ span: 8 }}
             name="basic"
-            ref={formRef}
             onFieldsChange={handleFieldsChange}>
             <Form.Item
               label="Experiment name"
@@ -337,7 +340,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         </>
       );
     },
-    [handleEditorChange, handleFieldsChange],
+    [handleEditorChange, handleFieldsChange, form],
   );
 
   const getModalProps = useCallback(
