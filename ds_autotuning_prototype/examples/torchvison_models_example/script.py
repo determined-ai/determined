@@ -1,14 +1,13 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import deepspeed
 import determined as det
+import dsat
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 from attrdict import AttrDict
-from dsat import utils
+from dsat import _utils  # TODO: Remove import after resolving type key hack
 from torch.utils.data import Dataset
 from torchvision import models
 
@@ -20,7 +19,7 @@ class RandImageNetDataset(Dataset):
         self.labels = torch.randint(1000, size=(self.num_actual_datapoints,))
 
     def __len__(self) -> int:
-        return 2 ** 16
+        return 2 ** 32
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         img = self.imgs[idx % self.num_actual_datapoints]
@@ -39,7 +38,7 @@ def main(
         logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
-    ds_config = utils.lower_case_dict_key(hparams.ds_config, "TYPE")
+    ds_config = _utils.lower_case_dict_key(hparams.ds_config, "TYPE")
 
     deepspeed.init_distributed()
 
@@ -94,15 +93,13 @@ def main(
     # We simply have to loop over our data iterator, and feed the inputs to the
     # network and optimize.
 
-    device = model_engine.device
-
     steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             steps_completed += 1
             # A potential gotcha: steps_completed must not be altered within the below context.
             # Probably obvious from the usage, but should be noted in docs.
-            with utils.dsat_reporting_context(core_context, op, steps_completed):
+            with dsat.dsat_reporting_context(core_context, op, steps_completed):
                 for data in trainloader:
                     # get the inputs; data is a list of [inputs, labels]
                     inputs, labels = data[0].to(model_engine.local_rank), data[1].to(
@@ -117,6 +114,14 @@ def main(
 
                     model_engine.backward(loss)
                     model_engine.step()
+                    if model_engine.is_gradient_accumulation_boundary():
+                        steps_completed += 1
+                        if steps_completed == op.length:
+                            break
+                    if core_context.preempt.should_preempt():
+                        return
+        if is_chief:
+            op.report_completed(loss.item())
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import tempfile
 from typing import Any, Dict
 
 from determined.experimental import client
-from dsat import defaults, utils
+from dsat import _defaults, _utils
 
 
 def parse_args():
@@ -45,7 +45,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     # }  # Will need to get original resources later.
     search_runner_config_dict[
         "entrypoint"
-    ] = f"python3 -m dsat.run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
+    ] = f"python3 -m dsat._run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
 
     # TODO: early sanity check the submitted config. E.g. makesure that searcher.metric and
     # hyperparameters.ds_config.autotuning.metric coincide.
@@ -65,7 +65,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
 
 def run():
     args = parse_args()
-    config_dict = utils.get_config_dict_from_yaml_path(args.config_path)
+    config_dict = _utils.get_config_dict_from_yaml_path(args.config_path)
     run_autotuning(args, config_dict)
 
 

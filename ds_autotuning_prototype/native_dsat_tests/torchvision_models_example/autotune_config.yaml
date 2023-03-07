@@ -13,7 +13,7 @@ resources:
 searcher:
   name: single
   metric: throughput
-  max_length: 100 # Just setting this to something larger than the default exit step.
+  max_length: 10 # Just setting this to something larger than the default exit step.
   smaller_is_better: False
 hyperparameters:
   model_name: vgg19
@@ -29,11 +29,14 @@ hyperparameters:
       enabled: True
     autotuning:
       enabled: True
+      fast: False
       tuner_type: random
-      tuner_num_trials: 50
-      num_tuning_micro_batch_sizes: 10
-      tuner_early_stopping: 5
+      tuner_num_trials: 5 #50
+      num_tuning_micro_batch_sizes: 3
+      tuner_early_stopping: 2 #3
       metric: throughput
-    # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?).
-entrypoint: python3 deepspeed_single_node_launcher.py --autotuning tune -- main.py --deepspeed_config ds_config.json
-# entrypoint: python3 -m determined.launch.torch_distributed python3 main.py --deepspeed_config ds_config.json
+entrypoint: python3 deepspeed_single_node_launcher.py --autotuning run -- main.py --deepspeed_config ds_config.json
+# entrypoint: python3 deepspeed_single_node_launcher.py -- main.py --deepspeed_config ds_config.json
+# Using --autotuning run is a terrible hack: it sets off a short training run after autotuning so that
+# the report_and_save_native_autotuning_results function in main.py can be reached. In the autotuning runs which
+# proceed the final training run, exit() is called before reaching this function.

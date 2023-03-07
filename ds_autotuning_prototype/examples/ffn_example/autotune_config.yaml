@@ -12,8 +12,8 @@ searcher:
   metric: throughput
   smaller_is_better: False
 hyperparameters:
-  dim: 8192
-  layers: 16
+  dim: 1024
+  layers: 16 # Total params will be layers * 1024 ** 2
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
   ds_config:
     train_micro_batch_size_per_gpu: 128
@@ -26,6 +26,7 @@ hyperparameters:
       enabled: True
     autotuning:
       enabled: True
+      fast: False
       tuner_type: random
       tuner_num_trials: 50
       num_tuning_micro_batch_sizes: 5

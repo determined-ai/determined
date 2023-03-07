@@ -1,10 +1,7 @@
 WORKDIR_PATH = "/run/determined/workdir/"
 MODEL_INFO_PROFILING_PATH = WORKDIR_PATH + "model_info.json"
-AUTOTUNING_RESULTS_DIR_PATH = WORKDIR_PATH + "autotuning_results"
-AUTOTUNING_EXP_DIR_PATH = WORKDIR_PATH + "autotuning_exps"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
-END_PROFILE_STEP = 5
 SMALLER_IS_BETTER = True
 
 MODEL_INFO_PROFILING_DS_CONFIG = {

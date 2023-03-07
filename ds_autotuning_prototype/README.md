@@ -28,7 +28,6 @@ A very incomplete list.
 Pros:
 
 - Custom Searcher config generated from initial user config; user need only provide one config, per usual.
-- Largely independent of `DeepSpeedEngine`
 
 Cons:
 
@@ -40,4 +39,6 @@ Cons:
 TODOs:
 
 - Support workflows which initialize DS Engine through CLI args.
-- Error handling largely ignored throughout.
+- Support option for follow-on experiment.
+- Not all native DS AT code paths are currently supported, e.g. providing explicit batch sizes to use,
+  fast mode.

@@ -1,5 +1,7 @@
 import argparse
+import json
 import logging
+import os
 import pathlib
 import shutil
 from typing import Any, Dict, Optional
@@ -23,7 +25,7 @@ class RandImageNetDataset(Dataset):
         self.labels = torch.randint(1000, size=(self.num_actual_datapoints,))
 
     def __len__(self) -> int:
-        return 2 ** 16
+        return 2 ** 32
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         img = self.imgs[idx % self.num_actual_datapoints]
@@ -102,6 +104,8 @@ def main(
         "wide_resnet101_2": models.wide_resnet101_2,
         "vgg19": models.vgg19,
         "regnet_x_32gf": models.regnet_x_32gf,
+        "regnet_x_32gf": models.regnet_x_32gf,
+        "efficientnet_b0": models.efficientnet_b0,
     }
 
     net = model_dict[hparams.model_name]()
@@ -112,6 +116,18 @@ def main(
     # 1) Distributed model
     # 2) Distributed data loader
     # 3) DeepSpeed optimizer
+    logging.info(f"**** model_engine initialized with args {args} ****")
+    logging.info(f"{args.deepspeed_config}")
+    if os.path.exists("autotuning_results/ds_config_optimal.json"):
+        with open("autotuning_results/ds_config_optimal.json", "r") as f:
+            optimal_config = json.load(f)
+            logging.info(f"optimal_config: {optimal_config}")
+    if os.path.exists("autotuning_results/cmd_optimal.txt"):
+        with open("autotuning_results/cmd_optimal.txt", "r") as f:
+            logging.info("Optimal cmd")
+            for line in f:
+                logging.info(line)
+
     model_engine, optimizer, trainloader, __ = deepspeed.initialize(
         model=net,
         model_parameters=parameters,
@@ -120,7 +136,6 @@ def main(
     )
 
     fp16 = model_engine.fp16_enabled()
-    print(f"fp16={fp16}")
 
     ########################################################################
     # 3. Define a Loss function and optimizer
@@ -137,18 +152,14 @@ def main(
     # We simply have to loop over our data iterator, and feed the inputs to the
     # network and optimize.
 
-    device = model_engine.device
-
     steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
-            steps_completed += 1
             for data in trainloader:
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data[0].to(model_engine.local_rank), data[1].to(
                     model_engine.local_rank
                 )
-                logging.info(f"ACTUAL BATCH SIZE: {inputs.shape[0]}")  # Sanity checking.
                 if fp16:
                     inputs = inputs.half()
 
@@ -157,7 +168,16 @@ def main(
 
                 model_engine.backward(loss)
                 model_engine.step()
-    report_and_save_native_autotuning_results(core_context=core_context)
+                if model_engine.is_gradient_accumulation_boundary():
+                    steps_completed += 1
+                    if steps_completed == op.length:
+                        break
+                if core_context.preempt.should_preempt():
+                    return
+        op.report_completed(loss.item())
+    if os.path.exists("autotuning_results/profile_model_info/model_info.json") and is_chief:
+        logging.info("******** Saving Autotuning Results ******** ")
+        report_and_save_native_autotuning_results(core_context=core_context)
 
 
 if __name__ == "__main__":

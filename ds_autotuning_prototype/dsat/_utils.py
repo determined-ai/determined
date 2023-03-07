@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import determined as det
 import numpy as np
 import torch
-from dsat import defaults
+from dsat import _defaults
 from ruamel import yaml
 
 
@@ -83,21 +83,21 @@ def dsat_reporting_context(
         if "out of memory" in oom_error_string:
             report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
     except SystemExit as se:
-        if file_or_dir_exists(defaults.MODEL_INFO_PROFILING_PATH):
+        if file_or_dir_exists(_defaults.MODEL_INFO_PROFILING_PATH):
             report_json_results_and_exit(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
                 add_gpu_info=True,
-                path=defaults.MODEL_INFO_PROFILING_PATH,
+                path=_defaults.MODEL_INFO_PROFILING_PATH,
             )
-        elif file_or_dir_exists(defaults.AUTOTUNING_RESULTS_PATH):
+        elif file_or_dir_exists(_defaults.AUTOTUNING_RESULTS_PATH):
             report_json_results_and_exit(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
                 add_gpu_info=False,
-                path=defaults.AUTOTUNING_RESULTS_PATH,
+                path=_defaults.AUTOTUNING_RESULTS_PATH,
             )
         else:
             raise se
@@ -163,7 +163,7 @@ def file_or_dir_exists(
 def get_zero_optim_keys_and_defaults_per_stage(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings = defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    default_settings = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
