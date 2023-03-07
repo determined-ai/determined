@@ -1,6 +1,5 @@
-# mypy: ignore-errors
-# This is to silence mypy. All SummaryWriter methods are untyped, but are inherited here.
 import pathlib
+import warnings
 from typing import Union
 
 from determined import tensorboard
@@ -13,7 +12,7 @@ import distutils.version  # isort:skip  # noqa: F401
 from torch.utils.tensorboard import SummaryWriter  # isort:skip
 
 
-class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
+class _TorchWriter(tensorboard.MetricWriter):
     """
     TorchWriter uses PyTorch file writers and summary operations to write
     out tfevent files containing scalar batch metrics. It creates
@@ -41,15 +40,20 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
         if log_dir is None:
             log_dir = tensorboard.get_base_path({})
 
-        super().__init__(log_dir=log_dir)
+        self.writer = SummaryWriter(log_dir)
 
-        # Point to self for compatability with old functionality
-        # Since there are still references to logger.writer.add_scalar() in callback methods
-        self.writer = self
-
-    def add_scalar(self, *args) -> None:
-        SummaryWriter.add_scalar(self, *args)
+    def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
+        self.writer.add_scalar(name, value, step)
 
     def reset(self) -> None:
         # flush AND close the writer so that the next attempt to write will create a new file
         self.close()
+
+class TorchWriter(_TorchWriter):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "This object is deprecated in favor of the PyTorch SummaryWriter object",
+            FutureWarning,
+            stacklevel=2
+        )
+        super().__init__(*args, **kwargs)
