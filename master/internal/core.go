@@ -376,7 +376,7 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 		ColumnExpr("t.end_time").
 		ColumnExpr("t.job_id").
 		TableExpr("tasks t").
-		Where("start_time >= ? :: timestamptz AND end_time <= ? :: timestamptz", start, end)
+		Where("tstzrange(start_time, end_time) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get allocation info for allocations in time range
 	allocationsInRange := db.Bun().NewSelect().
@@ -386,7 +386,7 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 		ColumnExpr("a.end_time").
 		ColumnExpr("a.slots").
 		TableExpr("allocations a").
-		Where("start_time >= ? :: timestamptz AND end_time <= ? :: timestamptz", start, end)
+		Where("tstzrange(start_time, end_time) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get the owner usernames associated with each task_id
 	taskOwners := db.Bun().NewSelect().
