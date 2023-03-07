@@ -519,6 +519,7 @@ class DeepSpeedTrialController(det.TrialController):
             self.prof.set_training(False)
 
             self._log_tb_metrics(
+                False,
                 metrics["avg_metrics"],
                 metrics["batch_metrics"],
             )
@@ -532,9 +533,9 @@ class DeepSpeedTrialController(det.TrialController):
 
     def _log_tb_metrics(
         self,
+        is_val: bool,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
-        is_val: Optional[bool] = False,
     ) -> None:
 
         if is_val:
@@ -555,8 +556,7 @@ class DeepSpeedTrialController(det.TrialController):
                         writer.add_scalar("Determined/" + name, value, batches_seen)
                     metrics_seen.add(name)
 
-        # Log avg metrics which were calculated by a
-        # custom reducer and are not in batch metrics.
+        # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
         for name, value in metrics.items():
             if name in metrics_seen:
                 continue
@@ -672,7 +672,7 @@ class DeepSpeedTrialController(det.TrialController):
                 )
             )
             
-            self._log_tb_metrics(metrics, is_val=True)
+            self._log_tb_metrics(True, metrics)
 
 
         self.context._maybe_reset_tbd_writer()
@@ -683,7 +683,7 @@ class DeepSpeedTrialController(det.TrialController):
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
-        self._log_tb_metrics(metrics, is_val=True)
+        self._log_tb_metrics(True, metrics)
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

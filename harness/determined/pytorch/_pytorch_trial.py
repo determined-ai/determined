@@ -336,6 +336,7 @@ class _PyTorchTrialController:
         batch_metrics = metrics.get("batch_metrics", [])
 
         self._log_tb_metrics(
+            False,
             avg_metrics,
             batch_metrics,
         )
@@ -893,10 +894,10 @@ class _PyTorchTrialController:
         return training_metrics
 
     def _log_tb_metrics(self,
+        is_val: bool,
         steps_completed: int,
         metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-        is_val: Optional[bool] = False,
+        batch_metrics: Optional[List[Dict[str, Any]]] = None
     ) -> None:
 
         if is_val:
@@ -917,8 +918,7 @@ class _PyTorchTrialController:
                         writer.add_scalar("Determined/" + name, value, batches_seen)
                     metrics_seen.add(name)
 
-        # Log avg metrics which were calculated by a
-        # custom reducer and are not in batch metrics.
+        # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
         for name, value in metrics.items():
             if name in metrics_seen:
                 continue
@@ -1068,7 +1068,7 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            self._log_tb_metrics(self.state.batches_trained, metrics, is_val=True)
+            self._log_tb_metrics(True, self.state.batches_trained, metrics)
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         self.context.maybe_reset_tbd_writer()
