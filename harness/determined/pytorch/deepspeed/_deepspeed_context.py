@@ -341,15 +341,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         return self._current_batch_idx
 
     def get_tensorboard_writer(self) -> Any:
-        """
-        Return the context's tensorboard writer to the user if the user needs it.
-
-        This method ensures we create a writer only when necessary
-        and imports SummaryWriter at runtime.
-
-        The return type is Any to avoid creating an environment dependency
-        on the tensorboard module, which is required to import SummaryWriter.
-        """
+        # Return a managed PyTorch SummaryWriter object
 
         if self._tbd_writer is None:
             from torch.utils.tensorboard import SummaryWriter
@@ -358,7 +350,6 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         return self._tbd_writer
 
-    def maybe_reset_tbd_writer(self) -> None:
-        # reset writer only if one exists
+    def _maybe_reset_tbd_writer(self) -> None:
         if self._tbd_writer is not None:
             self._tbd_writer.close()

@@ -518,17 +518,14 @@ class DeepSpeedTrialController(det.TrialController):
             )
             self.prof.set_training(False)
 
-            # log tb metrics if chief process
             self._log_tb_metrics(
                 metrics["avg_metrics"],
                 metrics["batch_metrics"],
             )
 
-        # reset any attached tb writer on step end
-        self.context.maybe_reset_tbd_writer()
+        self.context._maybe_reset_tbd_writer()
 
         if not self.is_chief:
-            # The training metrics are reported only in the chief process.
             return {}
 
         return metrics
@@ -674,12 +671,11 @@ class DeepSpeedTrialController(det.TrialController):
                     "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
                 )
             )
+            
+            self._log_tb_metrics(metrics, is_val=True)
 
-            # replace with self.context.get_writer...
-            self._log_tb_metrics
 
-        # reset writer on step end
-        self.context.maybe_reset_tbd_writer()
+        self.context._maybe_reset_tbd_writer()
 
         if not self.is_chief:
             return {}

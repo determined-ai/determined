@@ -1056,9 +1056,6 @@ class _PyTorchTrialController:
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
 
-        # reset all writers
-        self.context.maybe_reset_tbd_writer()
-
         self.state.last_val = self.state.batches_trained
 
         # Report metrics.
