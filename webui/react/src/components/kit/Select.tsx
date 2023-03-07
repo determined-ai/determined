@@ -32,7 +32,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   ref?: React.Ref<RefSelectProps>;
   searchable?: boolean;
   value?: T;
-  width?: number | string;
+  width?: number;
 }
 
 const countOptions = (children: React.ReactNode, options?: Options): number => {
