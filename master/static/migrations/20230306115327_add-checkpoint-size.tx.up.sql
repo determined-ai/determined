@@ -1,13 +1,35 @@
- SELECT * FROM public.checkpoints_v2;
-
 ALTER TABLE public.checkpoints_v2
    ADD COLUMN size bigint NOT NULL DEFAULT 0;
+
+UPDATE public.checkpoints_v2 SET size=sub.size
+FROM (
+    SELECT id, coalesce(sum((size_tuple).value::text::bigint), 0) AS size
+    FROM (
+        SELECT jsonb_each(c.resources) AS size_tuple, id
+        FROM public.checkpoints_v2 c
+        WHERE c.resources != 'null'::jsonb 
+    ) as sizes GROUP BY id
+) AS sub
+WHERE checkpoints_v2.id = sub.id;
+
 ALTER TABLE public.raw_checkpoints
    ADD COLUMN size bigint NOT NULL DEFAULT 0;
+
+UPDATE public.raw_checkpoints SET size=sub.size
+FROM (
+    SELECT id, coalesce(sum((size_tuple).value::text::bigint), 0) AS size
+    FROM (
+        SELECT jsonb_each(c.resources) AS size_tuple, id
+        FROM raw_checkpoints c
+        WHERE c.resources != 'null'::jsonb 
+    ) as sizes GROUP BY id
+) AS sub
+WHERE public.raw_checkpoints.id = sub.id;
 
 CREATE OR REPLACE VIEW checkpoints AS
     SELECT * FROM raw_checkpoints WHERE NOT archived;
 
+-- Mostly copied from /migrations/20220504154053_add-checkpoints-v2-steps-completed-index.tx.up.sql
 CREATE OR REPLACE VIEW public.checkpoints_old_view AS
     SELECT
         c.id AS id,
@@ -63,6 +85,7 @@ CREATE OR REPLACE VIEW public.checkpoints_old_view AS
     WHERE s.archived IS NULL OR s.archived = false
       AND v.archived IS NULL OR v.archived = false;
 
+-- Mostly copied from /migrations/20220504154053_add-checkpoints-v2-steps-completed-index.tx.up.sql
 CREATE OR REPLACE VIEW public.checkpoints_new_view AS
     SELECT
         c.id AS id,
