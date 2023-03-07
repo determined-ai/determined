@@ -209,71 +209,92 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   ]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    return [
-      {
-        children: (
-          <LearningCurve
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.LearningCurve,
-        label: 'Learning Curve',
-      },
-      {
-        children: (
-          <HpParallelCoordinates
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpParallelCoordinates,
-        label: 'HP Parallel Coordinates',
-      },
-      {
-        children: (
-          <HpScatterPlots
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpScatterPlots,
-        label: 'HP Scatter Plots',
-      },
-      {
-        children: (
-          <HpHeatMaps
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-            selectedView={filters.view}
-          />
-        ),
-        key: ExperimentVisualizationType.HpHeatMap,
-        label: 'HP Heat Map',
-      },
-    ];
+    // In the case of Custom Searchers, all the tabs besides
+    // "Learning Curve" aren't helpful or relevant, so we are hiding them
+    if (experiment.config.searcher.name === ExperimentSearcherName.Custom) {
+      return [
+        {
+          children: (
+            <LearningCurve
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedMaxTrial={filters.maxTrial}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.LearningCurve,
+          label: 'Learning Curve',
+        },
+      ];
+    } else {
+      return [
+        {
+          children: (
+            <LearningCurve
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedMaxTrial={filters.maxTrial}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.LearningCurve,
+          label: 'Learning Curve',
+        },
+        {
+          children: (
+            <HpParallelCoordinates
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpParallelCoordinates,
+          label: 'HP Parallel Coordinates',
+        },
+        {
+          children: (
+            <HpScatterPlots
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpScatterPlots,
+          label: 'HP Scatter Plots',
+        },
+        {
+          children: (
+            <HpHeatMaps
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+              selectedView={filters.view}
+            />
+          ),
+          key: ExperimentVisualizationType.HpHeatMap,
+          label: 'HP Heat Map',
+        },
+      ];
+    }
   }, [
     experiment,
     filters.batch,

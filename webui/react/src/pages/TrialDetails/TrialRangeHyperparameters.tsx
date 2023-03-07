@@ -6,7 +6,7 @@ import Tooltip from 'components/kit/Tooltip';
 import Section from 'components/Section';
 import { unflattenObject } from 'shared/utils/data';
 import { clamp } from 'shared/utils/number';
-import { ExperimentBase, HyperparameterType, TrialDetails } from 'types';
+import { ExperimentBase, ExperimentSearcherName, HyperparameterType, TrialDetails } from 'types';
 
 import css from './TrialRangeHyperparameters.module.scss';
 
@@ -25,27 +25,42 @@ interface HyperParameter {
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
   const hyperparameters: HyperParameter[] = useMemo(() => {
-    return Object.entries(experiment.hyperparameters).map(([name, value]) => {
-      return {
-        name: name,
-        range:
-          value.type === HyperparameterType.Log
-            ? [
-                (value.base ?? 10) ** (value.minval ?? -5),
-                (value.base ?? 10) ** (value.maxval ?? 1),
-              ]
-            : [value.minval ?? 0, value.maxval ?? 1],
-        type: value.type,
-        val: JSON.stringify(
-          trial.hyperparameters[name] ?? unflattenObject(trial.hyperparameters)[name] ?? 0,
-        ),
-        vals: value.vals?.map((val) => JSON.stringify(val)) ?? [
-          JSON.stringify(value.minval ?? 0),
-          JSON.stringify(value.maxval ?? 1),
-        ],
-      };
-    });
-  }, [experiment.hyperparameters, trial.hyperparameters]);
+    // In the case of Custom Searchers, we may not have experiment
+    // configs to generate the ranges with. Instead, simply show
+    // the values as constants.
+    if (experiment.config.searcher.name === ExperimentSearcherName.Custom) {
+      return Object.entries(trial.hyperparameters).map(([name, value]) => {
+        return {
+          name: name,
+          range: [0, 1],
+          type: HyperparameterType.Constant,
+          val: JSON.stringify(value ?? unflattenObject(value ?? 0)),
+          vals: [],
+        };
+      });
+    } else {
+      return Object.entries(experiment.hyperparameters).map(([name, value]) => {
+        return {
+          name: name,
+          range:
+            value.type === HyperparameterType.Log
+              ? [
+                  (value.base ?? 10) ** (value.minval ?? -5),
+                  (value.base ?? 10) ** (value.maxval ?? 1),
+                ]
+              : [value.minval ?? 0, value.maxval ?? 1],
+          type: value.type,
+          val: JSON.stringify(
+            trial.hyperparameters[name] ?? unflattenObject(trial.hyperparameters)[name] ?? 0,
+          ),
+          vals: value.vals?.map((val) => JSON.stringify(val)) ?? [
+            JSON.stringify(value.minval ?? 0),
+            JSON.stringify(value.maxval ?? 1),
+          ],
+        };
+      });
+    }
+  }, [experiment.hyperparameters, trial.hyperparameters, experiment.config]);
 
   return (
     <div className={css.base}>
