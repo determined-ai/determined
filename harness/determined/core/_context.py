@@ -2,6 +2,7 @@ import logging
 import signal
 import sys
 import traceback
+import pathlib
 from typing import Any, Optional
 
 import appdirs
@@ -88,6 +89,7 @@ def _dummy_init(
     distributed: Optional[core.DistributedContext] = None,
     # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
+    tensorboard_path: Optional[pathlib.Path] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
@@ -104,7 +106,7 @@ def _dummy_init(
         storage_manager = storage.SharedFSStorageManager(base_path)
     checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
 
-    train = core.DummyTrainContext()
+    train = core.DummyTrainContext(tensorboard_path)
     searcher = core.DummySearcherContext(distributed)
 
     _install_stacktrace_on_sigusr1()

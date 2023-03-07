@@ -253,7 +253,8 @@ def make_trial_controller_from_trial_implementation(
     )
 
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    core_context = core._dummy_init(storage_manager=storage_manager)
+    tbd_path = pathlib.Path("/", "tmp", "/", "tensorboard")
+    core_context = core._dummy_init(storage_manager=storage_manager, tensorboard_path=tbd_path)
 
     distributed_backend = det._DistributedBackend()
 
