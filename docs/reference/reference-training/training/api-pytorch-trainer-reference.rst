@@ -28,8 +28,7 @@ corresponding variables on ``PyTorchTrialContext``. So if not passed in, calling
 ``context.get_hparams()`` or ``context.get_experiment_config()`` will fail in local-training mode.
 
 ``aggregation_frequency`` configures the number of batches before gradients are exchanged in
-    distributed training. This value is configured here because it is used in
-    context.wrap_optimizer.
+   distributed training. This value is configured here because it is used in context.wrap_optimizer.
 
 ``DistributedContext`` can be optionally passed in to manually configure distributed training;
 otherwise, it will be automatically initialized from the launch layer.
@@ -111,12 +110,11 @@ none: A checkpoint will never be taken due to a validation. However, even with t
 checkpoints are still expected to be taken after the trial is finished training, due to cluster
 scheduling decisions, before search method decisions, or due to min_checkpoint_period.
 
-``latest_checkpoint`` Configures the checkpoint used to start or continue training. This value 
-should be set to ``det.get_cluster_info().latest_checkpoint`` for standard continue training 
+``latest_checkpoint`` Configures the checkpoint used to start or continue training. This value
+should be set to ``det.get_cluster_info().latest_checkpoint`` for standard continue training
 functionality.
 
-``step_zero_validation`` Configures whether or not to perform an initial validation before 
-training.
+``step_zero_validation`` Configures whether or not to perform an initial validation before training.
 
 ``test_mode`` Runs a minimal loop of training for testing and debugging purposes. Will train and
 validate one batch. Defaults to false.

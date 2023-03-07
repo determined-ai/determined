@@ -1,8 +1,8 @@
 .. _pytorch-trainer-guide:
 
-################################
- PyTorch Trainer API User Guide
-################################
+#####################
+ PyTorch Trainer API
+#####################
 
 This guide will help you get up and running with the PyTorch Trainer API.
 
@@ -22,7 +22,7 @@ The PyTorch Trainer API lets you do the following:
 -  Debug models in your favorite debug environment (e.g., directly on your machine, IDE, or Jupyter
    notebook).
 -  Run training scripts without needing to use an experiment configuration (YAML) file.
--  Load previous saved checkpoints directly into your model
+-  Load previous saved checkpoints directly into your model.
 
 ************
  Objectives
@@ -313,38 +313,38 @@ Submit the trial to the cluster:
 
    det e create det.yaml .
 
-
-***************************************************
+*****************************
  Step 6: Loading Checkpoints
-***************************************************
-To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint 
-to a file directory and use an import helper method to import modules. You should instantiate your 
+*****************************
+
+To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint
+to a file directory and use an import helper method to import modules. You should instantiate your
 loaded Trial with a ``CheckpointLoadContext``.
 
-``det.import_from_path`` allows you to import from a specific directory and cleans up afterwards. 
-Even if you are importing identically-named files, you can import them as separate modules. This 
-is intended to help when you have, for example, a current model_def.py, but also import an older 
-model_def.py from a checkpoint into the same interpreter, without conflicts (so long as you import 
+``det.import_from_path`` allows you to import from a specific directory and cleans up afterwards.
+Even if you are importing identically-named files, you can import them as separate modules. This is
+intended to help when you have, for example, a current model_def.py, but also import an older
+model_def.py from a checkpoint into the same interpreter, without conflicts (so long as you import
 them as different names, of course).
 
-``CheckpointLoadContext`` is a special PyTorchTrialContext that can be used to load Trial classes 
-outside of normal training loops. It does not support any training features such as metrics 
+``CheckpointLoadContext`` is a special PyTorchTrialContext that can be used to load Trial classes
+outside of normal training loops. It does not support any training features such as metrics
 reporting or uploading checkpoints and is intended for use with the Trainer directly.
 
 .. code::
+
    import determined as det
    from determined import pytorch
    from determined.experimental import client
-    # Download checkpoint and load training code from checkpoint.
-    path = client.get_checkpoint(CHECKPOINT_UUID)
-    with det.import_from_path(path + "/code/"):
-       import my_model_def
-     
-    # Create CheckpointLoadContext for instantiating trial.
-    context = pytorch.CheckpointLoadContext()
-    # Instantiate trial with context and any other args.
-    my_trial = my_model_def.MyTrial(context, ...)
+       # Download checkpoint and load training code from checkpoint.
+       path = client.get_checkpoint(CHECKPOINT_UUID)
+       with det.import_from_path(path + "/code/"):
+           import my_model_def
 
+   # Create CheckpointLoadContext for instantiating trial.
+   context = pytorch.CheckpointLoadContext()
+   # Instantiate trial with context and any other args.
+   my_trial = my_model_def.MyTrial(context, ...)
 
 *********
  Summary
