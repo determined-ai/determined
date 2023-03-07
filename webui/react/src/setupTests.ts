@@ -6,6 +6,7 @@
  */
 import '@testing-library/jest-dom/extend-expect';
 import 'micro-observables/batchingForReactDom';
+import 'isomorphic-fetch';
 import 'shared/prototypes';
 
 import Schema from 'async-validator';
