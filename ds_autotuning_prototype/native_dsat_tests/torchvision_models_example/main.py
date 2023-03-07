@@ -174,7 +174,8 @@ def main(
                         break
                 if core_context.preempt.should_preempt():
                     return
-        op.report_completed(loss.item())
+        if is_chief:
+            op.report_completed(loss.item())
     if os.path.exists("autotuning_results/profile_model_info/model_info.json") and is_chief:
         logging.info("******** Saving Autotuning Results ******** ")
         report_and_save_native_autotuning_results(core_context=core_context)
