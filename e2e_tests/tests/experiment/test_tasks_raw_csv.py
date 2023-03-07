@@ -69,13 +69,18 @@ def test_tensorboard_experiment_capture() -> None:
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_COMPLETED)
+
     task_id = None
     with cmd.interactive_command("tensorboard", "start", "--detach", str(experiment_id)) as tb:
         task_id = tb.task_id
+        for line in tb.stdout:
+            if "TensorBoard is running at: http" in line:
+                break
+            if "TensorBoard is awaiting metrics" in line:
+                raise AssertionError("Tensorboard did not find metrics")
     assert task_id is not None
     clu.utils.wait_for_task_state("tensorboard", task_id, "TERMINATED")
-
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_COMPLETED)
 
     end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
