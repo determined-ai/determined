@@ -72,9 +72,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(
-    configForWorkspace(workspace.id),
-  );
+  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;

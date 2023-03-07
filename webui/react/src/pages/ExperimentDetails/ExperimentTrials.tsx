@@ -70,7 +70,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
 
-  const { settings, updateSettings } = useSettings<Settings>(configForExperiment(experiment.id));
+  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();

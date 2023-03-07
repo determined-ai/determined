@@ -52,7 +52,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [canceler] = useState(new AbortController());
 
-  const { settings, updateSettings } = useSettings<Settings>(configForExperiment(experiment.id));
+  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const {
     contextHolder: modalCheckpointRegisterContextHolder,

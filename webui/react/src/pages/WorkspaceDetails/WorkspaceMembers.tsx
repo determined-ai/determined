@@ -112,9 +112,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   fetchMembers,
 }: Props) => {
   const { canAssignRoles } = usePermissions();
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(
-    configForWorkspace(workspace.id),
-  );
+  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];

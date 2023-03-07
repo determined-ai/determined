@@ -25,7 +25,8 @@ interface HyperParameter {
 }
 
 const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props) => {
-  const { settings, updateSettings } = useSettings<Settings>(configForTrial(trial.id));
+  const config = useMemo(() => configForTrial(trial.id), [trial.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const columns: ColumnDef<HyperParameter>[] = useMemo(
     () => [
