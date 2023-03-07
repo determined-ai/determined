@@ -61,7 +61,12 @@ const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
   }, [authUser, users]);
 
   return (
-    <Select label="Users" loading={Loadable.isLoading(users)} value={value || ALL_VALUE} width={200} onSelect={handleSelect}>
+    <Select
+      label="Users"
+      loading={Loadable.isLoading(users)}
+      value={value || ALL_VALUE}
+      width={200}
+      onSelect={handleSelect}>
       {options}
     </Select>
   );
