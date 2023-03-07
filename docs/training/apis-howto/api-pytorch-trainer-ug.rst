@@ -189,8 +189,8 @@ Local Training - Test Mode
 ==========================
 
 PyTorch Trainer accepts a test_mode parameter which, if true, trains and validates your training
-code for only one batch, then exits. This is helpful for debugging code or writing automated tests
-around your model code.
+code for only one batch, checkpoints, then exits. This is helpful for debugging code or writing 
+automated tests around your model code.
 
 .. code:: python
 
@@ -198,15 +198,18 @@ around your model code.
                  max_length=pytorch.Epoch(1),
                  checkpoint_period=pytorch.Batch(10),
                  validation_period=pytorch.Batch(10),
-   +             # Train and validate 1 batch, then exit.
+   +             # Train and validate 1 batch, then checkpoint and exit.
    +             test_mode=True
              )
 
-This is the same codepath as
+This replaces the legacy test mode codepath, which supports this functionality for trials 
+going through harness:
 
 .. code:: bash
 
    det e create det.yaml . --local --test
+ 
+ 
 
 **************************************************************************
  Step 4: Prepare Your Training Code for Deploying to a Determined Cluster
@@ -229,17 +232,10 @@ This code should allow for local and cluster training with no code changes.
    +       # Set flag used by internal PyTorch training loop
    +       os.environ["USE_TORCH_DISTRIBUTED"] = "true"
    +       distributed_context = core.DistributedContext.from_torch_distributed (chief_ip="localhost")
-   +       # (Optional) Pass in an exp conf and instance of hparams if training code needs it
-   +       expconf = yaml.safe_load(pathlib.Path("./config.yaml"))
-   +       hparams = {"lr": 0.02}
    +   else:
-   +       hparams = det.get_cluster_info().trial.hparams
-   +       expconf = None
    +       distributed_context = None
 
    +     with det.pytorch.init(
-   +       hparams=hparams,
-   +       exp_conf=expconf,
    +       distributed=distributed_context
          ) as train_context:
              trial = MNistTrial(train_context)
@@ -248,6 +244,7 @@ This code should allow for local and cluster training with no code changes.
                  max_length=pytorch.Epoch(1),
                  checkpoint_period=pytorch.Batch(10),
                  validation_period=pytorch.Batch(10),
+                 latest_checkpoint=det.get_cluster_info().latest_checkpoint
              )
 
 **To run Trainer API solely on-cluster, the code is much simpler**
@@ -264,9 +261,9 @@ This code should allow for local and cluster training with no code changes.
            trial_inst = model.MNistTrial(train_context, hparams)
            trainer = det.pytorch.Trainer(trial_inst, train_context)
            trainer.fit(
-               max_length=pytorch.Epoch(1),
                checkpoint_period=pytorch.Batch(10),
-               validation_period=pytorch.Batch(10),
+               validation_period=pytorch.Batch(100),
+               latest_checkpoint=det.get_cluster_info().latest_checkpoint,
            )
 
 ***************************************************
@@ -324,7 +321,7 @@ reporting or uploading checkpoints and is intended for use with the Trainer dire
    from determined import pytorch
    from determined.experimental import client
     # Download checkpoint and load training code from checkpoint.
-       path = client.get_checkpoint(CHECKPOINT_UUID)
+       path = client.get_checkpoint(MY_CHECKPOINT_UUID)
        with det.import_from_path(path + "/code/"):
            import my_model_def
 
