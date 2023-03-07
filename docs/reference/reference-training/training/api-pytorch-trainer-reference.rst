@@ -101,7 +101,7 @@ pytorch.PyTorchTrialContext)``
                 ``int``. For example, ``Epoch(1)`` would train for a maximum length of one epoch.
                 reporting_period:
             checkpoint_policy: Controls how Determined performs checkpoints after validation
-            operations, if at all. Should be set to one of the following values:
+                operations, if at all. Should be set to one of the following values:
                     best (default): A checkpoint will be taken after every validation operation
                     that performs better than all previous validations for this experiment.
                     Validation metrics are compared according to the metric and smaller_is_better
@@ -119,5 +119,5 @@ pytorch.PyTorchTrialContext)``
             step_zero_validation: Configures whether or not to perform an initial validation
                 before training.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will 
-            train and validate one batch. Defaults to false.
+                train and validate one batch. Defaults to false.
         """
