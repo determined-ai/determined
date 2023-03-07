@@ -146,14 +146,17 @@ const Dashboard: React.FC = () => {
 
   const fetchSubmissions = useCallback(async () => {
     if (!currentUser) return;
-    await Promise.allSettled([fetchExperiments(currentUser), fetchTasks(currentUser)]);
+    await Promise.allSettled([
+      fetchProjects(),
+      fetchExperiments(currentUser),
+      fetchTasks(currentUser),
+    ]);
     setSubmissionsLoading(false);
-  }, [currentUser, fetchExperiments, fetchTasks]);
+  }, [currentUser, fetchExperiments, fetchProjects, fetchTasks]);
 
   const fetchAll = useCallback(() => {
-    fetchProjects();
     fetchSubmissions();
-  }, [fetchSubmissions, fetchProjects]);
+  }, [fetchSubmissions]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
