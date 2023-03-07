@@ -163,6 +163,7 @@ def _make_local_execution_env(
     test_mode: bool,
     config: Optional[Dict[str, Any]],
     checkpoint_dir: str,
+    tensorboard_path: Optional[pathlib.Path],
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
 ) -> Tuple[core.Context, det.EnvContext]:
@@ -199,7 +200,7 @@ def _make_local_execution_env(
         on_cluster=False,
     )
 
-    core_context = core._dummy_init()
+    core_context = core._dummy_init(tensorboard_path=tensorboard_path)
 
     return core_context, env
 
