@@ -1,4 +1,3 @@
-import { show } from 'fp-ts';
 import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
