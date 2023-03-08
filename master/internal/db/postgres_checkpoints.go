@@ -33,10 +33,6 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
 
-	for _, c := range checkpoints {
-		fmt.Println(c.Resources)
-	}
-
 	return checkpoints, nil
 }
 
@@ -149,7 +145,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	return groupeIDcUUIDS, nil
 }
 
-// UpdateCheckpointSize updates checkpoint size and count to experiment and trial.
+// UpdateCheckpointSizeTx updates checkpoint size and count to experiment and trial.
 func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
 	if idb == nil {
 		idb = Bun()

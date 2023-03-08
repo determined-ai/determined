@@ -5,7 +5,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -264,7 +263,6 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 	// Test CheckpointsByUUIDs
 	reqCheckpointUUIDs := []uuid.UUID{checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID}
-	fmt.Println(reqCheckpointUUIDs)
 	checkpointsByUUIDs, err := db.CheckpointByUUIDs(reqCheckpointUUIDs)
 	require.NoError(t, err)
 	dbCheckpointsUUIDs := []uuid.UUID{
