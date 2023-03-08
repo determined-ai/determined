@@ -20,6 +20,7 @@ python3 -m dsat.autotune examples/minimal_example/autotune_config.yaml examples/
 ```
 
 (the config may need to be altered for your cluster.)
+
 ## Pros, Cons, and TODOs
 
 A very incomplete list.
