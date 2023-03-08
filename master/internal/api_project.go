@@ -364,37 +364,37 @@ func (a *apiServer) GetProjectsByUserActivity(
 	}
 
 	err = db.Bun().NewSelect().Model(p).NewRaw(`
-SELECT
-	w.name AS workspace_name,
-	u.username,
-	p.id,
-	p.name,
-	p.archived,
-	p.workspace_id,
-	p.description,
-	p.immutable,
-	p.notes,
-	p.user_id,
-	'WORKSPACE_STATE_' || p.state AS state,
-	p.error_message,
-	COUNT(*) FILTER (WHERE e.project_id = p.id) AS num_experiments,
-	COUNT(*) FILTER (WHERE e.project_id = p.id AND e.state = 'ACTIVE') AS num_active_experiments,
-	MAX(e.start_time) FILTER (WHERE e.project_id = p.id) AS last_experiment_started_at
-FROM
-	projects AS p
-	INNER JOIN activity AS a ON p.id = a.entity_id AND a.user_id = ?
-	LEFT JOIN users AS u ON u.id = p.user_id
-	LEFT JOIN workspaces AS w ON w.id = p.workspace_id
-	LEFT JOIN experiments AS e ON e.project_id = p.id
-GROUP BY
-	p.id,
-	u.username,
-	w.name,
-	a.activity_time
-ORDER BY
-	a.activity_time DESC NULLS LAST
-LIMIT ?;
-`, curUser.ID, limit).
+	SELECT
+		w.name AS workspace_name,
+		u.username,
+		p.id,
+		p.name,
+		p.archived,
+		p.workspace_id,
+		p.description,
+		p.immutable,
+		p.notes,
+		p.user_id,
+		'WORKSPACE_STATE_' || p.state AS state,
+		p.error_message,
+		COUNT(*) FILTER (WHERE e.project_id = p.id) AS num_experiments,
+		COUNT(*) FILTER (WHERE e.project_id = p.id AND e.state = 'ACTIVE') AS num_active_experiments,
+		MAX(e.start_time) FILTER (WHERE e.project_id = p.id) AS last_experiment_started_at
+	FROM
+		projects AS p
+		INNER JOIN activity AS a ON p.id = a.entity_id AND a.user_id = ?
+		LEFT JOIN users AS u ON u.id = p.user_id
+		LEFT JOIN workspaces AS w ON w.id = p.workspace_id
+		LEFT JOIN experiments AS e ON e.project_id = p.id
+	GROUP BY
+		p.id,
+		u.username,
+		w.name,
+		a.activity_time
+	ORDER BY
+		a.activity_time DESC NULLS LAST
+	LIMIT ?;
+	`, curUser.ID, limit).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err
