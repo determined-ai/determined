@@ -24,7 +24,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {
@@ -48,7 +48,7 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });

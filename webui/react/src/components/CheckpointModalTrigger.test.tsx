@@ -7,7 +7,6 @@ import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
@@ -42,11 +41,9 @@ const setup = async () => {
   render(
     <HistoryRouter history={history}>
       <UIProvider>
-        <UsersProvider>
-          <WorkspacesProvider>
-            <ModalTrigger />
-          </WorkspacesProvider>
-        </UsersProvider>
+        <WorkspacesProvider>
+          <ModalTrigger />
+        </WorkspacesProvider>
       </UIProvider>
     </HistoryRouter>,
   );

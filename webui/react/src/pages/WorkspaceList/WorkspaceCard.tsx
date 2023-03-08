@@ -7,9 +7,10 @@ import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
 import { pluralizer } from 'shared/utils/string';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
@@ -25,11 +26,11 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     workspace,
   });
 
-  const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
-  const user = users.find((user) => user.id === workspace.userId);
+  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
+  const user = Loadable.match(loadableUser, {
+    Loaded: (user) => user,
+    NotLoaded: () => undefined,
+  }); // TODO: handle loading state
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);
