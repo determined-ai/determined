@@ -18,6 +18,7 @@ export interface Props {
   onClick?: AnyMouseEventHandler;
   path?: string;
   popout?: boolean;
+  rawLink?: boolean;
   size?: 'tiny' | 'small' | 'medium' | 'large';
   style?: CSSProperties;
 }
@@ -57,7 +58,7 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
       href={href}
       rel={rel}
       style={props.style}
-      onClick={handleClick}>
+      onClick={!props.rawLink ? handleClick : undefined}>
       {props.children}
     </a>
   );

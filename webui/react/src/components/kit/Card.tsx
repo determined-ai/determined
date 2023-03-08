@@ -76,7 +76,7 @@ const Card: Card = ({
         </div>
       )}
       wrapper={(children) => (
-        <Link className={classnames.join(' ')} path={href} style={sizeStyle}>
+        <Link className={classnames.join(' ')} path={href} rawLink style={sizeStyle}>
           {children}
         </Link>
       )}>
