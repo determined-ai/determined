@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
@@ -52,8 +52,6 @@ vi.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const [canceler] = useState(new AbortController());
-  const ensureCurrentUserFetched = useEnsureCurrentUserFetched(canceler);
   const { contextHolder, modalOpen } = useModalJupyterLab({
     workspace: {
       archived: false,
@@ -69,10 +67,9 @@ const ModalTrigger: React.FC = () => {
   });
 
   useEffect(() => {
-    ensureCurrentUserFetched();
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-  }, [ensureCurrentUserFetched]);
+  }, []);
 
   return (
     <SettingsProvider>
