@@ -1,8 +1,8 @@
 import logging
+import pathlib
 import signal
 import sys
 import traceback
-import pathlib
 from typing import Any, Optional
 
 import appdirs

@@ -1,7 +1,7 @@
-import pathlib
 import warnings
+from typing import Any, Union
+
 import numpy as np
-from typing import Union
 
 from determined import tensorboard
 
@@ -48,11 +48,12 @@ class _TorchWriter(tensorboard.MetricWriter):
         # flush AND close the writer so that the next attempt to write will create a new file
         self.writer.close()
 
+
 class TorchWriter(_TorchWriter):
     def __init__(self, *args, **kwargs):
         warnings.warn(
             "This object is deprecated in favor of the PyTorch SummaryWriter object",
             FutureWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         super().__init__(*args, **kwargs)

@@ -897,7 +897,7 @@ class _PyTorchTrialController:
         is_val: bool,
         steps_completed: int,
         metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
 
         if is_val:

@@ -671,9 +671,8 @@ class DeepSpeedTrialController(det.TrialController):
                     "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
                 )
             )
-            
-            self._log_tb_metrics(True, metrics)
 
+            self._log_tb_metrics(True, metrics)
 
         self.context._maybe_reset_tbd_writer()
 
