@@ -202,7 +202,7 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 // UpdateAllocationPorts stores the latest task state and readiness.
 func UpdateAllocationPorts(a model.Allocation) error {
 	_, err := Bun().NewUpdate().Table("allocations").Set(
-		"dtrain_port = ?, inter_train_process_comm_port1 = ?, inter_train_process_comm_port2 = ?, c10d_port = ?",
+		"dtrain_port = ?, inter_train_process_comm_port1 = ?,inter_train_process_comm_port2 = ?, c10d_port = ?", //nolint:lll
 		a.DTrainPort, a.InterTrainProcessCommPort1, a.InterTrainProcessCommPort2, a.C10DPort).Where(
 		"allocation_id = ?", a.AllocationID).Exec(context.TODO())
 	return err

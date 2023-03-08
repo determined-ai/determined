@@ -1,6 +1,5 @@
 import os
 
-
 # The default configs to use in when running test experiments.
 #
 # TODO: Unify the defaults used here with the defaults used in master.
@@ -37,8 +36,9 @@ HOROVOD_GLOO_RENDEZVOUS_PORT = int(str(os.getenv("HOROVOD_GLOO_RENDEZVOUS_PORT",
 # validation metrics.
 INTER_TRAIN_PROCESS_COMM_PORT_1 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_1", "12360")))
 
-INTER_TRAIN_PROCESS_COMM_PORT_2 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_2", "12365"))) 
-#  both of the above ports will be offset (value that we get from the port offset registry) in distributed context. 
+INTER_TRAIN_PROCESS_COMM_PORT_2 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_2", "12365")))
+#  both of the above ports will be offset
+#  (value that we get from the port offset registry) in distributed context.
 
 # How many seconds horovod waits for startup to complete before failing.
 HOROVOD_STARTUP_TIMEOUT_SECONDS = 1200

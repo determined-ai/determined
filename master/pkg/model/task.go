@@ -97,11 +97,9 @@ type Allocation struct {
 	State                      *AllocationState `db:"state" bun:"state"`
 	IsReady                    *bool            `db:"is_ready" bun:"is_ready"`
 	DTrainPort                 int              `db:"dtrain_port" bun:"dtrain_port,notnull"`
-	InterTrainProcessCommPort1 int              `db:"inter_train_process_comm_port1" 
-	bun:"inter_train_process_comm_port1,notnull`
-	InterTrainProcessCommPort2 int `db:"inter_train_process_comm_port2"
-	 bun:"inter_train_process_comm_port2,notnull`
-	C10DPort int `db:"c10d_port" bun:"c10d_port,notnull"`
+	InterTrainProcessCommPort1 int              `db:"inter_train_process_comm_port1" bun:"inter_train_process_comm_port1,notnull"` //nolint:lll
+	InterTrainProcessCommPort2 int              `db:"inter_train_process_comm_port2" bun:"inter_train_process_comm_port2,notnull"` //nolint:lll
+	C10DPort                   int              `db:"c10d_port" bun:"c10d_port,notnull"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
