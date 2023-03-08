@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -294,21 +295,26 @@ DO NOTHING
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
-func (db *PgDB) AddCheckpointMetadata(
-	ctx context.Context, m *model.CheckpointV2,
-) error {
+func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	var size int64
 	for _, v := range m.Resources {
 		size += v
 	}
 	m.Size = size
 
-	if _, err := Bun().NewInsert().Model(m).Exec(context.TODO()); err != nil {
-		return errors.Wrap(err, "inserting checkpoint")
-	}
+	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
+			return errors.Wrap(err, "inserting checkpoint")
+		}
 
-	if err := UpdateCheckpointSize([]uuid.UUID{m.UUID}); err != nil {
-		return errors.Wrap(err, "updating checkpoint size")
+		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
+			return errors.Wrap(err, "updating checkpoint size")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error adding checkpoint metadata: %w", err)
 	}
 
 	return nil

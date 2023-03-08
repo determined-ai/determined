@@ -79,28 +79,36 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 }
 
 // MarkCheckpointsDeleted updates the provided delete checkpoints to DELETED state.
-func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
+func MarkCheckpointsDeleted(ctx context.Context, deleteCheckpoints []uuid.UUID) error {
 	if len(deleteCheckpoints) == 0 {
 		return nil
 	}
 
-	if _, err := Bun().NewUpdate().Model(&model.CheckpointV1{}).
-		Set("state = ?", model.DeletedState).
-		Where("uuid IN (?)", bun.In(deleteCheckpoints)).
-		Exec(context.TODO()); err != nil {
-		return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
+	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().Model(&model.CheckpointV1{}).
+			Set("state = ?", model.DeletedState).
+			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
+		}
+
+		if _, err := tx.NewUpdate().Model(&model.CheckpointV2{}).
+			Set("state = ?", model.DeletedState).
+			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
+		}
+
+		if err := UpdateCheckpointSizeTx(ctx, tx, deleteCheckpoints); err != nil {
+			return fmt.Errorf("updating checkpoints size: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error adding checkpoint metadata: %w", err)
 	}
 
-	if _, err := Bun().NewUpdate().Model(&model.CheckpointV2{}).
-		Set("state = ?", model.DeletedState).
-		Where("uuid IN (?)", bun.In(deleteCheckpoints)).
-		Exec(context.TODO()); err != nil {
-		return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
-	}
-
-	if err := UpdateCheckpointSize(deleteCheckpoints); err != nil {
-		return fmt.Errorf("updating checkpoints size: %w", err)
-	}
 	return nil
 }
 
@@ -142,9 +150,13 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 }
 
 // UpdateCheckpointSize updates checkpoint size and count to experiment and trial.
-func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
+func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
+	if idb == nil {
+		idb = Bun()
+	}
+
 	var res bool
-	err := Bun().NewRaw(`
+	err := idb.NewRaw(`
 UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id,
     SUM(size) FILTER (WHERE state != 'DELETED') AS size,
@@ -156,12 +168,12 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	GROUP BY trial_id
 ) sub
 WHERE trials.id = sub.trial_id
-RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
+RETURNING true`, bun.In(checkpoints)).Scan(ctx, &res)
 	if err != nil {
 		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
 	}
 
-	err = Bun().NewRaw(`
+	err = idb.NewRaw(`
 UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
 	WHERE experiment_id IN (
@@ -170,7 +182,7 @@ UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM
 	GROUP BY experiment_id
 ) sub
 WHERE experiments.id = sub.experiment_id
-RETURNING true`, bun.In(checkpoints)).Scan(context.TODO(), &res)
+RETURNING true`, bun.In(checkpoints)).Scan(ctx, &res)
 	if err != nil {
 		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
 	}

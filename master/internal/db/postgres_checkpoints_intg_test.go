@@ -30,6 +30,8 @@ func sortUUIDSlice(uuids []uuid.UUID) {
 }
 
 func TestUpdateCheckpointSize(t *testing.T) {
+	ctx := context.Background()
+
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -81,12 +83,12 @@ func TestUpdateCheckpointSize(t *testing.T) {
 						Size:         resources[resourcesIndex]["TEST"],
 					}
 
-					_, err := Bun().NewInsert().Model(&checkpointBun).Exec(context.TODO())
+					_, err := Bun().NewInsert().Model(&checkpointBun).Exec(ctx)
 					require.NoError(t, err)
 				} else {
 					checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
 					checkpoint.Resources = resources[resourcesIndex]
-					err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+					err := AddCheckpointMetadata(ctx, &checkpoint)
 					require.NoError(t, err)
 				}
 
@@ -160,21 +162,21 @@ func TestUpdateCheckpointSize(t *testing.T) {
 	}
 	verifySizes(e)
 
-	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs[:2]))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpointIDs[:2]))
 	e.trialCounts = []int{0, 2, 2, 2}
 	e.trialSizes = []int64{0, 3 + 4, 5 + 6, 7 + 8}
 	e.experimentCounts = []int{2, 4}
 	e.experimentSizes = []int64{3 + 4, 5 + 6 + 7 + 8}
 	verifySizes(e)
 
-	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs[3:5]))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpointIDs[3:5]))
 	e.trialCounts = []int{0, 1, 1, 2}
 	e.trialSizes = []int64{0, 3, 6, 7 + 8}
 	e.experimentCounts = []int{1, 3}
 	e.experimentSizes = []int64{3, 6 + 7 + 8}
 	verifySizes(e)
 
-	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpointIDs))
 	e.trialCounts = []int{0, 0, 0, 0}
 	e.trialSizes = []int64{0, 0, 0, 0}
 	e.experimentCounts = []int{0, 0}
@@ -183,6 +185,8 @@ func TestUpdateCheckpointSize(t *testing.T) {
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
+	ctx := context.Background()
+
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -194,15 +198,15 @@ func TestDeleteCheckpoints(t *testing.T) {
 	// Create checkpoints
 	ckpt1 := uuid.New()
 	checkpoint1 := MockModelCheckpoint(ckpt1, tr, allocation)
-	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint1)
+	err := AddCheckpointMetadata(ctx, &checkpoint1)
 	require.NoError(t, err)
 	ckpt2 := uuid.New()
 	checkpoint2 := MockModelCheckpoint(ckpt2, tr, allocation)
-	err = db.AddCheckpointMetadata(context.TODO(), &checkpoint2)
+	err = AddCheckpointMetadata(ctx, &checkpoint2)
 	require.NoError(t, err)
 	ckpt3 := uuid.New()
 	checkpoint3 := MockModelCheckpoint(ckpt3, tr, allocation)
-	err = db.AddCheckpointMetadata(context.TODO(), &checkpoint3)
+	err = AddCheckpointMetadata(ctx, &checkpoint3)
 	require.NoError(t, err)
 
 	// Insert a model.
@@ -287,7 +291,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 	validDeleteCheckpoint := checkpoint3.UUID
 	numValidDCheckpoints := 1
 
-	require.NoError(t, db.MarkCheckpointsDeleted([]uuid.UUID{validDeleteCheckpoint}))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, []uuid.UUID{validDeleteCheckpoint}))
 
 	var numDStateCheckpoints int
 
@@ -299,6 +303,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 }
 
 func BenchmarkUpdateCheckpointSize(b *testing.B) {
+	ctx := context.Background()
 	t := (*testing.T)(unsafe.Pointer(b)) //nolint: gosec // forgive me.
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
@@ -323,10 +328,10 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 			checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
 			checkpoint.Resources = resources
 
-			err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+			err := AddCheckpointMetadata(ctx, &checkpoint)
 			require.NoError(t, err)
 		}
 	}
 
-	require.NoError(t, db.MarkCheckpointsDeleted(checkpoints))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpoints))
 }
