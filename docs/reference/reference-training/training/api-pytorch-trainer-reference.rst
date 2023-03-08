@@ -21,13 +21,13 @@
     Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within
     the scope of this context because there are resources started in __enter__ that must be
     cleaned up in __exit__.
-    
+
     Arguments:
         hparams: (Optional) instance of hyperparameters for the trial
-        exp_conf: (Optional) for local-training mode. If unset, calling 
+        exp_conf: (Optional) for local-training mode. If unset, calling
             context.get_experiment_config() will fail.
         distributed: (Optional) custom distributed training configuration
-        aggregation_frequency: number of batches before gradients are exchanged in distributed 
+        aggregation_frequency: number of batches before gradients are exchanged in distributed
             training. This value is configured here because it is used in context.wrap_optimizer.
     """
 
@@ -38,13 +38,11 @@
 ``class determined.pytorch.Trainer(trial: pytorch.PyTorchTrial, context:
 pytorch.PyTorchTrialContext)``
 
-    """
-    ``pytorch.Trainer`` is an abstraction on top of a vanilla PyTorch training loop that handles
-    many training details under-the-hood, and exposes APIs for configuring training-related features
-    such as automatic checkpointing, validation, profiling, metrics reporting, etc.
+   """ ``pytorch.Trainer`` is an abstraction on top of a vanilla PyTorch training loop that handles
+   many training details under-the-hood, and exposes APIs for configuring training-related features
+   such as automatic checkpointing, validation, profiling, metrics reporting, etc.
 
-    ``Trainer`` must be initialized and called from within a ``pytorch.PyTorchTrialContext``.
-    """
+   ``Trainer`` must be initialized and called from within a ``pytorch.PyTorchTrialContext``. """
 
 .. code::
 
@@ -56,10 +54,10 @@ pytorch.PyTorchTrialContext)``
         Configures the Determined profiler. This method should only be called before .fit(), and
         only once within the scope of init(). If called multiple times, the last call's
         configuration will be used.
-        
+
         Arguments:
             sync_timings: Specifies whether Determined should wait for all GPU kernel streams
-                before considering a timing as ended. Defaults to ‘true’. Applies only for 
+                before considering a timing as ended. Defaults to ‘true’. Applies only for
                 frameworks that collect timing metrics (currently just PyTorch).
             enabled: Defines whether profiles should be collected or not. Defaults to false.
             begin_on_batch: Specifies the batch on which profiling should begin.
@@ -118,6 +116,6 @@ pytorch.PyTorchTrialContext)``
                 standard continue training functionality.
             step_zero_validation: Configures whether or not to perform an initial validation
                 before training.
-            test_mode: Runs a minimal loop of training for testing and debugging purposes. Will 
+            test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
         """

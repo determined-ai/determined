@@ -713,7 +713,9 @@ of arguments.
 Run Your Training Script Locally
 ================================
 
-Run training scripts locally without submitting to a cluster or defining an experiment configuration file. Be sure to specify ``max_length`` in the ``.fit()`` call, which is used in local training mode to determined the maximum number of steps to train for.
+Run training scripts locally without submitting to a cluster or defining an experiment configuration
+file. Be sure to specify ``max_length`` in the ``.fit()`` call, which is used in local training mode
+to determined the maximum number of steps to train for.
 
 .. code:: python
 
@@ -734,18 +736,21 @@ Run training scripts locally without submitting to a cluster or defining an expe
        logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
        main()
 
-You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code will train for one epoch, and checkpoint and validate every 100 batches.
+You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code
+will train for one epoch, and checkpoint and validate every 100 batches.
 
 Local Distributed Training
 ==========================
 
-Local training can utilize multiple GPUs on a single node with a few modifications to the above code.
+Local training can utilize multiple GPUs on a single node with a few modifications to the above
+code.
 
 .. note::
 
    Both Horovod and PyTorch Distributed backends are supported.
 
 .. code:: python
+
     def main():
    +     # Initialize distributed backend before pytorch.init()
    +     dist.init_process_group(backend="gloo|nccl")
@@ -764,14 +769,18 @@ Local training can utilize multiple GPUs on a single node with a few modificatio
                  checkpoint_policy="all"
              )
 
-This code can be directly invoked with your distributed backend's launcher: ``torchrun --nproc_per_node=4 train.py``
+This code can be directly invoked with your distributed backend's launcher: ``torchrun
+--nproc_per_node=4 train.py``
 
 Test Mode
 =========
 
-Trainer accepts a test_mode parameter which, if true, trains and validates your training code for only one batch, checkpoints, then exits. This is helpful for debugging code or writing automated tests around your model code.
+Trainer accepts a test_mode parameter which, if true, trains and validates your training code for
+only one batch, checkpoints, then exits. This is helpful for debugging code or writing automated
+tests around your model code.
 
 .. code:: python
+
     trainer.fit(
                  max_length=pytorch.Epoch(1),
                  checkpoint_period=pytorch.Batch(100),
@@ -779,20 +788,24 @@ Trainer accepts a test_mode parameter which, if true, trains and validates your 
    +             test_mode=True
              )
 
-This replaces the legacy test mode codepath, which supports this functionality for trials 
-not using Trainer API:
+This replaces the legacy test mode codepath, which supports this functionality for trials not using
+Trainer API:
 
 .. code:: bash
+
    det e create det.yaml . --local --test
 
 Prepare Your Training Code for Deploying to a Determined Cluster
 ================================================================
+
 Once you are satisfied with the results of training the model locally, you submit the code to a
-cluster. This example allows for distributed training locally and on cluster without having to make code changes.
+cluster. This example allows for distributed training locally and on cluster without having to make
+code changes.
 
 **Example workflow of frequent iterations between local debugging and cluster deployment**
 
 .. code:: python
+
     def main():
    +   local = det.get_cluster_info() is None
    +   if local:
@@ -806,7 +819,7 @@ cluster. This example allows for distributed training locally and on cluster wit
    +       distributed_context = None
    +       # On-cluster: configure the latest checkpoint for pause/resume training functionality.
    +       latest_checkpoint = det.get_cluster_info().latest_checkpoint
-           
+
    +     with det.pytorch.init(
    +       distributed=distributed_context
          ) as train_context:
@@ -819,10 +832,10 @@ cluster. This example allows for distributed training locally and on cluster wit
    +             latest_checkpoint=latest_checkpoint,
              )
 
-
 **To run Trainer API solely on-cluster, the code is much simpler**
 
 .. code:: python
+
    def main():
        with det.pytorch.init() as train_context:
            trial_inst = model.MNistTrial(train_context)
@@ -844,6 +857,7 @@ Your experiment configuration file must contain searcher configuration and entry
    ``hyperparameters.global_batch_size`` is required if ``max_length`` is configured in records
 
 .. code:: python
+
    name: pytorch_trainer_trial
    searcher:
      name: single
@@ -857,13 +871,15 @@ Your experiment configuration file must contain searcher configuration and entry
 Submit the trial to the cluster:
 
 .. code:: bash
+
    det e create det.yaml .
 
-If your training code needs to read some values from the experiment configuration, ``pytorch.init()`` accepts an ``exp_conf`` argument which allows calling ``context.get_experiment_config()`` from ``PyTorchTrialContext``.
+If your training code needs to read some values from the experiment configuration,
+``pytorch.init()`` accepts an ``exp_conf`` argument which allows calling
+``context.get_experiment_config()`` from ``PyTorchTrialContext``.
 
 Loading Checkpoints
 ===================
-
 
 To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint
 to a file directory and use an import helper method to import modules. You should instantiate your
@@ -880,6 +896,7 @@ outside of normal training loops. It does not support any training features such
 reporting or uploading checkpoints and is intended for use with the Trainer directly.
 
 .. code:: python
+
    import determined as det
    from determined import pytorch
    from determined.experimental import client
