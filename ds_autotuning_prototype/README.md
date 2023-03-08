@@ -27,7 +27,7 @@ A very incomplete list.
 
 Pros:
 
-- Custom Searcher config generated from initial user config; user need only provide one config, per usual.
+- Custom Searcher config generated from initial user config; user need only provide one config, per usual. (Might actually be problematic.)
 
 Cons:
 
