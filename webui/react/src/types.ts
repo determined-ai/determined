@@ -319,6 +319,7 @@ export const ExperimentAction = {
   ContinueTrial: 'Continue Trial',
   Delete: 'Delete',
   DownloadCode: 'Download Experiment Code',
+  Edit: 'Edit',
   Fork: 'Fork',
   HyperparameterSearch: 'Hyperparameter Search',
   Kill: 'Kill',

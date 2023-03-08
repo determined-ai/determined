@@ -4977,12 +4977,6 @@ export interface V1MetricsWorkload {
      */
     endTime?: Date;
     /**
-     * The current validation state.
-     * @type {Experimentv1State}
-     * @memberof V1MetricsWorkload
-     */
-    state: Experimentv1State;
-    /**
      * Metrics.
      * @type {V1Metrics}
      * @memberof V1MetricsWorkload

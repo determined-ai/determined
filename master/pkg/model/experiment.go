@@ -467,7 +467,6 @@ type TrialMetrics struct {
 	TrialID      int        `db:"trial_id" json:"trial_id"`
 	TrialRunID   int        `db:"trial_run_id" json:"-"`
 	TotalBatches int        `db:"total_batches" json:"total_batches"`
-	State        State      `db:"state" json:"state"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }

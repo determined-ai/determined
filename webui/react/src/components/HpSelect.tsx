@@ -1,24 +1,21 @@
-import { Select } from 'antd';
 import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Select, { Option, SelectProps } from 'components/kit/Select';
 import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
 
 import { hpImportanceSorter } from '../utils/experiment';
 
-import css from './HpSelectFilter.module.scss';
-import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
+import css from './HpSelect.module.scss';
 
-const { Option } = Select;
-
-interface Props extends SelectFilterProps {
+interface Props extends SelectProps {
   fullHParams: string[];
   hpImportance?: HpImportance;
 }
 
-const HpSelectFilter: React.FC<Props> = ({
+const HpSelect: React.FC<Props> = ({
   fullHParams,
   hpImportance = {},
   onChange,
@@ -67,14 +64,12 @@ const HpSelectFilter: React.FC<Props> = ({
   );
 
   return (
-    <SelectFilter
-      className={css.base}
+    <Select
       disableTags
-      dropdownMatchSelectWidth={300}
       mode="multiple"
       placeholder={ALL_VALUE}
-      showArrow
       value={value}
+      width={200}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
@@ -92,8 +87,8 @@ const HpSelectFilter: React.FC<Props> = ({
           </Option>
         );
       })}
-    </SelectFilter>
+    </Select>
   );
 };
 
-export default HpSelectFilter;
+export default HpSelect;

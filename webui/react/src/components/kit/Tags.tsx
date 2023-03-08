@@ -5,16 +5,25 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Input, { InputRef } from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { toHtmlId, truncate } from 'shared/utils/string';
 
-import css from './TagList.module.scss';
+import css from './Tags.module.scss';
+export const TagAction = {
+  Add: 'Add',
+  Remove: 'Remove',
+  Update: 'Update',
+} as const;
 
-interface Props {
+export type TagAction = ValueOf<typeof TagAction>;
+
+export interface Props {
   compact?: boolean;
   disabled?: boolean;
   ghost?: boolean;
-  onChange?: (tags: string[]) => void;
+  // UpdatedId refers to index now, should change this to tag ID in the future.
+  onAction?: (action: TagAction, tag: string, updatedId?: number) => void;
   tags: string[];
 }
 
@@ -25,13 +34,7 @@ export const ARIA_LABEL_INPUT = 'new-tag-input';
 const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 6;
 
-const EditableTagList: React.FC<Props> = ({
-  compact,
-  disabled = false,
-  ghost,
-  tags,
-  onChange,
-}: Props) => {
+const Tags: React.FC<Props> = ({ compact, disabled = false, ghost, tags, onAction }: Props) => {
   const initialState = {
     editInputIndex: -1,
     inputVisible: false,
@@ -44,9 +47,9 @@ const EditableTagList: React.FC<Props> = ({
 
   const handleClose = useCallback(
     (removedTag: string) => {
-      onChange?.(tags.filter((tag) => tag !== removedTag));
+      onAction?.(TagAction.Remove, removedTag);
     },
-    [onChange, tags],
+    [onAction],
   );
 
   const handleTagPlus = useCallback(() => {
@@ -69,19 +72,20 @@ const EditableTagList: React.FC<Props> = ({
     (
       e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
       previousValue?: string,
+      tagID?: number,
     ) => {
       const newTag = (e.target as HTMLInputElement).value.trim();
       const oldTag = previousValue?.trim();
-      const updatedTags = tags.filter((tag) => tag !== oldTag);
       if (newTag) {
-        if (!updatedTags.includes(newTag)) {
-          updatedTags.push(newTag);
+        if (oldTag && newTag !== oldTag) {
+          onAction?.(TagAction.Update, newTag, tagID);
+        } else {
+          onAction?.(TagAction.Add, newTag);
         }
-        onChange?.(updatedTags);
       }
       setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
     },
-    [onChange, tags],
+    [onAction],
   );
 
   const { editInputIndex, inputVisible, inputWidth } = state;
@@ -134,14 +138,14 @@ const EditableTagList: React.FC<Props> = ({
                 size="small"
                 style={{ width: inputWidth }}
                 width={inputWidth}
-                onBlur={(e) => handleInputConfirm(e, tag)}
-                onPressEnter={(e) => handleInputConfirm(e, tag)}
+                onBlur={(e) => handleInputConfirm(e, tag, index)}
+                onPressEnter={(e) => handleInputConfirm(e, tag, index)}
               />
             );
           }
 
           const htmlId = toHtmlId(tag);
-          const isLongTag = tag.length > TAG_MAX_LENGTH;
+          const isLongTag: boolean = tag.length > TAG_MAX_LENGTH;
 
           const tagElement = (
             <Tag closable={!disabled} id={htmlId} key={tag} onClose={() => handleClose(tag)}>
@@ -174,4 +178,22 @@ const EditableTagList: React.FC<Props> = ({
   );
 };
 
-export default EditableTagList;
+export default Tags;
+
+// Eventually we will deprecate API calls that take the updated list of tags, and replace them with API calls that take only the updated tag. At that point, the tagsActionHelper could be removed or revised.
+export const tagsActionHelper = (
+  tags: string[],
+  callbackFn: (tags: string[]) => void,
+): ((action: TagAction, tag: string, updatedId?: number) => void) => {
+  return (action: TagAction, tag: string, updatedId?: number) => {
+    let newTags = [...tags];
+    if (action === TagAction.Add) {
+      newTags.push(tag);
+    } else if (action === TagAction.Remove) {
+      newTags = tags.filter((t) => t !== tag);
+    } else if (action === TagAction.Update && updatedId !== undefined) {
+      newTags[updatedId] = tag;
+    }
+    callbackFn(newTags);
+  };
+};

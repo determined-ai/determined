@@ -61,7 +61,7 @@ export interface Settings extends InteractiveTableSettings {
   tableOffset: number;
 }
 
-const config: SettingsConfig<Settings> = {
+export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -159,7 +159,5 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'experiment-trials-list',
-};
-
-export default config;
+  storagePath: `${id}-experiment-trials-list`,
+});

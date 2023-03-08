@@ -1,12 +1,12 @@
-import { Select, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Empty from 'components/kit/Empty';
+import Form from 'components/kit/Form';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
@@ -22,8 +22,6 @@ import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
@@ -131,16 +129,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <div>
-          <label className={css.label} htmlFor="workspace">
-            Workspace
-          </label>
-          <SelectFilter
+      <Form className={css.base}>
+        <Form.Item label="Workspace">
+          <Select
             id="workspace"
             placeholder="Select a destination workspace."
-            showSearch={false}
-            style={{ width: '100%' }}
+            searchable={false}
             value={workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
@@ -153,8 +147,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
                 </Option>
               );
             })}
-          </SelectFilter>
-        </div>
+          </Select>
+        </Form.Item>
         {workspaceId && workspaceId !== 1 && (
           <div>
             <label className={css.label} htmlFor="project">
@@ -181,7 +175,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             )}
           </div>
         )}
-      </div>
+      </Form>
     );
   }, [handleWorkspaceSelect, projects, renderRow, workspaceId, workspaces]);
 

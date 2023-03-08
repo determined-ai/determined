@@ -1,22 +1,23 @@
-import { DatePicker } from 'antd';
+import { DatePicker as AntdDatePicker } from 'antd';
 import { PickerProps } from 'antd/es/date-picker/generatePicker';
 import { Dayjs } from 'dayjs';
 import React from 'react';
 
-import Label from './Label';
-import css from './SelectFilter.module.scss';
+import Label from 'components/Label';
+
+import css from './DatePicker.module.scss';
 
 type Props = PickerProps<Dayjs> & {
   label: string;
 };
 
-const DatePickerFilter: React.FC<Props> = ({ label, ...props }: Props) => {
+const DatePicker: React.FC<Props> = ({ label, ...props }: Props) => {
   return (
     <div className={css.base}>
       <Label>{label}</Label>
-      <DatePicker {...props} />
+      <AntdDatePicker {...props} />
     </div>
   );
 };
 
-export default DatePickerFilter;
+export default DatePicker;

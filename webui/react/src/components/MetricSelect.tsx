@@ -1,15 +1,15 @@
-import { Select } from 'antd';
+import { Select as AntdSelect } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import Select from 'components/kit/Select';
 import { Metric, MetricType } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
-import SelectFilter from './SelectFilter';
 
-const { OptGroup, Option } = Select;
+const { OptGroup, Option } = AntdSelect;
 const allOptionId = 'ALL_RESULTS';
 const resetOptionId = 'RESET_RESULTS';
 
@@ -18,28 +18,24 @@ type MultipleHandler = (value: Metric[]) => void;
 
 interface Props {
   defaultMetrics: Metric[];
-  dropdownMatchSelectWidth?: number | boolean;
   label?: string;
   metrics: Metric[];
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
   value?: Metric | Metric[];
-  verticalLayout?: boolean;
-  width?: number | string;
+  width?: number;
 }
 
 const filterFn = (search: string, metricName: string) => {
   return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
 };
 
-const MetricSelectFilter: React.FC<Props> = ({
+const MetricSelect: React.FC<Props> = ({
   defaultMetrics,
-  dropdownMatchSelectWidth = 400,
   label = 'Metrics',
   metrics,
   multiple,
   value,
-  verticalLayout = false,
   width = 200,
   onChange,
 }: Props) => {
@@ -149,37 +145,15 @@ const MetricSelectFilter: React.FC<Props> = ({
     );
   }, [totalNumMetrics, visibleMetrics]);
 
-  const [maxTagCount, selectorPlaceholder] = useMemo(() => {
-    // This should never happen, but fall back to inoffensive empty placeholder
-    if (metricValues === undefined) {
-      return [0, ''];
-    }
-    if (metricValues.length === 0) {
-      // If we set maxTagCount=0 in this case, this placeholder will not be displayed.
-      return [-1, 'None selected'];
-    } else if (metricValues.length === totalNumMetrics) {
-      // If we set maxTagCount=-1 in these cases, it will display tags instead of the placeholder.
-      return [0, `All ${totalNumMetrics} selected`];
-    } else {
-      return [0, `${metricValues.length} of ${totalNumMetrics} selected`];
-    }
-  }, [metricValues, totalNumMetrics]);
-
   return (
-    <SelectFilter
-      autoClearSearchValue={false}
+    <Select
       disableTags
-      dropdownMatchSelectWidth={dropdownMatchSelectWidth}
       filterOption={handleFiltering}
       label={label}
-      maxTagCount={maxTagCount}
-      maxTagPlaceholder={selectorPlaceholder}
       mode={multiple ? 'multiple' : undefined}
       ref={selectRef}
-      showArrow
-      style={{ width }}
       value={metricValues}
-      verticalLayout={verticalLayout}
+      width={width}
       onBlur={handleBlur}
       onDeselect={handleMetricDeselect}
       onSearch={handleSearchInputChange}
@@ -214,8 +188,8 @@ const MetricSelectFilter: React.FC<Props> = ({
           })}
         </OptGroup>
       )}
-    </SelectFilter>
+    </Select>
   );
 };
 
-export default MetricSelectFilter;
+export default MetricSelect;

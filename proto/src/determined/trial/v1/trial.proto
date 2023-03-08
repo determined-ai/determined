@@ -63,8 +63,6 @@ message MetricsWorkload {
   };
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
-  // The current validation state.
-  determined.experiment.v1.State state = 3;
   // Metrics.
   determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.

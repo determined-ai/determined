@@ -1,14 +1,15 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
+import Select, { Option } from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -21,7 +22,6 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -40,14 +40,13 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceProjects.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   ProjectColumnName,
   WhoseProjects,
   WorkspaceDetailsSettings,
 } from './WorkspaceProjects.settings';
-
-const { Option } = Select;
 
 interface Props {
   id: number;
@@ -73,7 +72,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;
@@ -393,28 +393,20 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   return (
     <div className={css.base}>
       <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={140}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
           <Option value={WhoseProjects.All}>All Projects</Option>
           <Option value={WhoseProjects.Mine}>My Projects</Option>
           <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
           {!workspace.archived && (
             <Toggle
               checked={settings.archived}
-              prefixLabel="Show Archived"
+              label="Show Archived"
               onChange={switchShowArchived}
             />
           )}
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
               Last Updated
@@ -422,7 +414,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
               Newest to Oldest
             </Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
           <div className={css.headerButton}>
             {!workspace.immutable &&

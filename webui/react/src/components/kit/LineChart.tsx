@@ -3,7 +3,7 @@ import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import ScaleSelect from 'components/ScaleSelect';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
@@ -318,7 +318,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     return (
       <div className={css.chartgridContainer} ref={chartGridRef}>
         <div className={css.filterContainer}>
-          <ScaleSelectFilter value={scale} onChange={setScale} />
+          <ScaleSelect value={scale} onChange={setScale} />
           {xAxisOptions && xAxisOptions.length > 1 && (
             <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
           )}

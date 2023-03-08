@@ -1,7 +1,7 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import TagList from 'components/Tags';
+import Tags, { TagAction } from 'components/kit/Tags';
 import {
   getDescriptionText,
   isTrialsCollection,
@@ -36,20 +36,18 @@ const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
+  const onAction = useCallback((_: TagAction, tag: string) => {
+    setTags((tags) => [...tags, tag]);
+  }, []);
+
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
         Tags
-        <TagList
-          ghost={false}
-          tags={tags}
-          onChange={(newTags) => {
-            setTags(newTags);
-          }}
-        />
+        <Tags ghost={false} tags={tags} onAction={onAction} />
       </div>
     );
-  }, [tags]);
+  }, [tags, onAction]);
 
   const handleOk = useCallback(
     async (trials: TrialsSelectionOrCollection) => {

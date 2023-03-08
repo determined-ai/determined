@@ -11,6 +11,8 @@ import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import Tags from 'components/kit/Tags';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -33,8 +35,6 @@ import {
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import TagList from 'components/TagList';
-import Toggle from 'components/Toggle';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
@@ -406,14 +406,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels} />,
+            tooltip: <Tags disabled tags={record.labels} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || project?.archived || !canEditExperiment}
               tags={record.labels}
-              onChange={experimentTags.handleTagListChange(record.id)}
+              onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
           </div>
         </Typography.Text>
@@ -923,11 +923,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
