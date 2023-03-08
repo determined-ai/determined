@@ -46,8 +46,6 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		}
 	}
 
-	fmt.Println(expectedCheckpoints)
-
 	checkpoints, err := db.ExperimentCheckpointsToGCRaw(
 		exp.ID,
 		0,
@@ -55,7 +53,9 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		0,
 	)
 	require.NoError(t, err)
-	fmt.Println(checkpoints)
+
+	sortUUIDSlice(expectedCheckpoints)
+	sortUUIDSlice(checkpoints)
 
 	require.Equal(t, expectedCheckpoints, checkpoints)
 }
