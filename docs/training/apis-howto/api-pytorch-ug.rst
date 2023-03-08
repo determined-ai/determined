@@ -641,12 +641,12 @@ Take the following code for example.
 :doc:`experiment configuration </reference/reference-training/experiment-config-reference>`. By
 doing so, you get better tracking in the WebUI, especially for experiments that use a searcher.
 Depending on how your trial is run, you can access all the current hyperparameters from inside the
-trial by either: - calling ``self.context.get_hparams()`` if you submitted your trial with
-``entrypoint: model_def:Trial`` - passing in hyperparameters directly into the Trial ``__init__`` if
-using PyTorch Trainer API
+trial by either calling ``self.context.get_hparams()`` if you submitted your trial with
+``entrypoint: model_def:Trial`` or passing in hyperparameters directly into the Trial ``__init__`` if
+using PyTorch Trainer API.
 
 ************************
- Training (Trainer API)
+ Trainer API
 ************************
 
 +-----------------------------------------------------------------------------+
