@@ -1,11 +1,9 @@
 import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FixedSizeList as List } from 'react-window';
 
-import Empty from 'components/kit/Empty';
 import Form from 'components/kit/Form';
-import Select, { Option, SelectValue } from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
@@ -17,11 +15,16 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { DetailedUser, Project } from 'types';
+import { DetailedUser } from 'types';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
+
+type FormInputs = {
+  projectId?: number;
+  workspaceId: number;
+};
 
 interface Props {
   onClose?: () => void;
@@ -53,8 +56,9 @@ const moveExperimentWithHandler = async (
 
 const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const canceler = useRef(new AbortController());
-  const [workspaceId, setWorkspaceId] = useState<number>(1);
-  const [projectId, setProjectId] = useState<number | null>(null);
+  const [form] = Form.useForm<FormInputs>();
+  const workspaceId = Form.useWatch('workspaceId', form);
+  const projectId = Form.useWatch('projectId', form);
 
   const id = projectId ?? 1;
 
@@ -62,7 +66,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const { settings: projectSettings, updateSettings: updateProjectSettings } =
     useSettings<ExperimentListSettings>(experimentSettingsConfig);
-  const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
   const loadableWorkspaces = useWorkspaces({ archived: false });
@@ -79,68 +82,27 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   useEffect(() => {
     fetchWorkspaces();
-  }, [workspaceId, fetchWorkspaces]);
+  }, [fetchWorkspaces]);
 
   useEffect(() => {
     ensureProjectsFetched(workspaceId);
   }, [workspaceId, ensureProjectsFetched]);
 
-  const handleWorkspaceSelect = useCallback(
-    (workspaceId: SelectValue) => {
-      setProjectId(workspaceId === 1 && sourceProjectId !== 1 ? 1 : null);
-      if (workspaceId !== undefined && typeof workspaceId === 'number') {
-        setWorkspaceId(workspaceId);
-      }
-    },
-    [sourceProjectId],
-  );
-
-  const handleProjectSelect = useCallback(
-    (project: Project) => {
-      if (project.archived || project.id === sourceProjectId) return;
-      setProjectId(project.id);
-    },
-    [sourceProjectId],
-  );
-
-  const renderRow = useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      return Loadable.match(projects, {
-        Loaded: (projects) => {
-          const disabled = projects[index].archived || projects[index].id === sourceProjectId;
-          const selected = projects[index].id === projectId;
-          return (
-            <li
-              className={disabled ? css.disabled : selected ? css.selected : css.default}
-              style={style}
-              onClick={() => handleProjectSelect(projects[index])}>
-              <Typography.Text disabled={disabled} ellipsis={true}>
-                {projects[index].name}
-              </Typography.Text>
-              {projects[index].archived && <Icon name="archive" />}
-              {projects[index].id === sourceProjectId && <Icon name="checkmark" />}
-            </li>
-          );
-        },
-        NotLoaded: () => <Spinner spinning />,
-      });
-    },
-    [projectId, handleProjectSelect, projects, sourceProjectId],
-  );
   const modalContent = useMemo(() => {
     return (
-      <Form className={css.base}>
-        <Form.Item label="Workspace">
+      <Form className={css.base} form={form} layout="vertical">
+        <Form.Item
+          label="Workspace"
+          name="workspaceId"
+          rules={[{ message: 'Workspace is required', required: true }]}>
           <Select
             id="workspace"
             placeholder="Select a destination workspace."
-            searchable={false}
-            value={workspaceId ?? undefined}
-            onSelect={handleWorkspaceSelect}>
+            onChange={() => form.resetFields(['projectId'])}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
                 <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
-                  <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
+                  <div className={workspace.archived ? css.optionDisabled : undefined}>
                     <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
                     {workspace.archived && <Icon name="archive" />}
                   </div>
@@ -150,48 +112,41 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           </Select>
         </Form.Item>
         {workspaceId && workspaceId !== 1 && (
-          <div>
-            <label className={css.label} htmlFor="project">
-              Project
-            </label>
-            {workspaceId === undefined ? (
-              <div className={css.emptyContainer}>
-                <Empty description="Select a workspace" icon="error" />
-              </div>
-            ) : Loadable.quickMatch(projects, false, (ps) => ps.length === 0) ? (
-              <div className={css.emptyContainer}>
-                <Empty description="Workspace contains no projects" icon="error" />
-              </div>
-            ) : (
-              <List
-                className={css.listContainer}
-                height={200}
-                innerElementType="ul"
-                itemCount={Loadable.quickMatch(projects, 1, (ps) => ps.length)}
-                itemSize={24}
-                width="100%">
-                {renderRow}
-              </List>
-            )}
-          </div>
+          <Form.Item
+            label="Project"
+            name="projectId"
+            rules={[{ message: 'Project is required', required: true }]}>
+            {Loadable.match(projects, {
+              Loaded: (projects) => (
+                <Select placeholder="Select a destination project.">
+                  {projects.map((project) => (
+                    <Option disabled={project.archived} key={project.id} value={project.id}>
+                      <div className={project.archived ? css.optionDisabled : undefined}>
+                        <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
+                        {project.archived && <Icon name="archive" />}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              ),
+              NotLoaded: () => <Spinner center spinning />,
+            })}
+          </Form.Item>
         )}
       </Form>
     );
-  }, [handleWorkspaceSelect, projects, renderRow, workspaceId, workspaces]);
+  }, [form, projects, workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleOk = useCallback(async () => {
-    if (
-      !projectId ||
-      !experimentIds?.length ||
-      !projectSettings.pinned ||
-      Loadable.isLoading(projects)
-    )
-      return;
+    const values = await form.validateFields();
+    const projId = values.projectId ?? 1;
+
+    if (!experimentIds?.length || !projectSettings.pinned || Loadable.isLoading(projects)) return;
 
     const results = await Promise.allSettled(
-      experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projectId)),
+      experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projId)),
     );
     const numFailures = results.filter(
       (res) => res.status !== 'fulfilled' || res.value === 1,
@@ -202,7 +157,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ? `Experiment ${experimentIds[0]}`
         : `${experimentIds.length} experiments`;
 
-    const destinationProjectName = projects.data.find((p) => p.id === projectId)?.name ?? '';
+    const destinationProjectName = projects.data.find((p) => p.id === projId)?.name ?? '';
 
     if (numFailures === 0) {
       notification.open({
@@ -212,18 +167,18 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             <p>
               {experimentText} moved to project {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(projectId)}>View Project</Link>
+            <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
         ),
         message: 'Move Success',
       });
-      if (sourceProjectId) {
+      if (projId) {
         const newPinned = { ...projectSettings.pinned };
-        const pinSet = new Set(newPinned[sourceProjectId]);
+        const pinSet = new Set(newPinned?.[projId] ?? []);
         for (const experimentId of experimentIds) {
           pinSet.delete(experimentId);
         }
-        newPinned[sourceProjectId] = Array.from(pinSet);
+        newPinned[projId] = Array.from(pinSet);
         updateProjectSettings({ pinned: newPinned });
       }
     } else if (numFailures === experimentIds.length) {
@@ -239,31 +194,30 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
               {numFailures} out of {experimentIds.length} experiments failed to move to project{' '}
               {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(projectId)}>View Project</Link>
+            <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
         ),
         key: 'move-notification',
         message: 'Partial Move Failure',
       });
     }
+    form.resetFields();
   }, [
     closeNotification,
     experimentIds,
-    projectId,
+    form,
     projectSettings.pinned,
     projects,
-    sourceProjectId,
     updateProjectSettings,
   ]);
 
   const getModalProps = useCallback(
-    (experimentIds?: number[], destinationProjectId?: number): ModalFuncProps => {
+    (experimentIds?: number[]): ModalFuncProps => {
       const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
       return {
         closable: true,
         content: modalContent,
         icon: null,
-        okButtonProps: { disabled: !destinationProjectId },
         okText: `Move Experiment${pluralizer}`,
         onOk: handleOk,
         title: `Move Experiment${pluralizer}`,
@@ -273,26 +227,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
 
   const modalOpen = useCallback(
-    ({
-      initialModalProps,
-      experimentIds,
-      sourceWorkspaceId,
-      sourceProjectId,
-    }: ShowModalProps = {}) => {
-      if (!workspaceId || projectId) return;
-
+    ({ initialModalProps, experimentIds }: ShowModalProps = {}) => {
       setExperimentIds(experimentIds);
-      if (!workspaceId) setProjectId(null);
-      setWorkspaceId(sourceWorkspaceId ?? 1);
-
-      setSourceProjectId(sourceProjectId);
 
       openOrUpdate({
-        ...getModalProps(experimentIds, projectId ?? undefined),
+        ...getModalProps(experimentIds),
         ...initialModalProps,
       });
     },
-    [getModalProps, openOrUpdate, projectId, workspaceId],
+    [getModalProps, openOrUpdate],
   );
 
   /**
@@ -300,7 +243,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(experimentIds, projectId ?? undefined));
+    if (modalRef.current) openOrUpdate(getModalProps(experimentIds));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, projects._tag, workspaceId, experimentIds]);
 
