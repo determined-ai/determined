@@ -2,8 +2,7 @@ from dataclasses import dataclass, field
 import os
 import re
 from shutil import copy, rmtree
-import swagger_parsing
-import swagger_parsing.types as swagger_types
+import swagger_parser
 import typing
 from typing_extensions import assert_never, Literal
 
@@ -13,7 +12,9 @@ SWAGGER = os.path.join(DIRNAME, "..", SWAGGER)
 STATIC_FOLDER = os.path.join(DIRNAME, "static_ts_files")
 
 Code = str
-SwaggerType = typing.Union[swagger_types.TypeAnno, swagger_types.TypeDef, swagger_types.Parameter]
+SwaggerType = typing.Union[
+    swagger_parser.TypeAnno, swagger_parser.TypeDef, swagger_parser.Parameter
+]
 
 
 def head(item: typing.Tuple[str, typing.Any]) -> str:
@@ -74,26 +75,26 @@ class IndentedLines:
         return "\n".join(self.lines)
 
 
-def annotation(anno: swagger_types.TypeAnno) -> Code:
-    if isinstance(anno, swagger_types.Any):
+def annotation(anno: swagger_parser.TypeAnno) -> Code:
+    if isinstance(anno, swagger_parser.Any):
         return "any"
-    if isinstance(anno, swagger_types.String):
+    if isinstance(anno, swagger_parser.String):
         return "string"
-    if isinstance(anno, (swagger_types.Float, swagger_types.Int)):
+    if isinstance(anno, (swagger_parser.Float, swagger_parser.Int)):
         return "number"
-    if isinstance(anno, swagger_types.Bool):
+    if isinstance(anno, swagger_parser.Bool):
         return "boolean"
-    if isinstance(anno, swagger_types.DateTime):
+    if isinstance(anno, swagger_parser.DateTime):
         return "Date"
-    if isinstance(anno, swagger_types.Ref):
+    if isinstance(anno, swagger_parser.Ref):
         if not anno.defn:
             return "void"
         return anno.name[0].upper() + anno.name[1:]
-    if isinstance(anno, swagger_types.Dict):
-        if isinstance(anno.values, swagger_types.Any):
+    if isinstance(anno, swagger_parser.Dict):
+        if isinstance(anno.values, swagger_parser.Any):
             return "any"
         return f"{{ [key: string]: {annotation(anno.values)}; }}"
-    if isinstance(anno, swagger_types.Sequence):
+    if isinstance(anno, swagger_parser.Sequence):
         return f"Array<{annotation(anno.items)}>"
     assert_never(anno)
 
@@ -105,9 +106,9 @@ def longest_common_prefix(members: typing.List[str]) -> str:
     return prefix
 
 
-def gen_def(anno: swagger_types.TypeDef) -> Code:
+def gen_def(anno: swagger_parser.TypeDef) -> Code:
     code = IndentedLines()
-    if isinstance(anno, swagger_types.Class):
+    if isinstance(anno, swagger_parser.Class):
         clean_description = (anno.description or "").replace("\n", " ")
         proper_name = upper_first(anno.name)
 
@@ -132,7 +133,7 @@ def gen_def(anno: swagger_types.TypeDef) -> Code:
         code.dedent()
         code += "}"
         return str(code)
-    if isinstance(anno, swagger_types.Enum):
+    if isinstance(anno, swagger_parser.Enum):
         clean_description = (anno.description or "").replace("\n", " ")
         proper_name = anno.name[0].upper() + anno.name[1:]
 
@@ -160,12 +161,12 @@ def gen_def(anno: swagger_types.TypeDef) -> Code:
 Phase = Literal["params", "fp", "factory", "api"]
 
 
-def generate_function(api: str, phase: Phase, function: swagger_types.Function) -> Code:
+def generate_function(api: str, phase: Phase, function: swagger_parser.Function) -> Code:
     indent_level = 1 if phase == "api" else 2
     code = IndentedLines(indent_level)
     function_name = camel_case(function.name)
 
-    params_by_location: typing.Dict[str, typing.List[swagger_types.Parameter]] = {}
+    params_by_location: typing.Dict[str, typing.List[swagger_parser.Parameter]] = {}
     for param in function.params.values():
         params_by_location[param.where] = params_by_location.get(param.where, [])
         params_by_location[param.where].append(param)
@@ -254,12 +255,12 @@ def generate_function(api: str, phase: Phase, function: swagger_types.Function) 
         for param in params_by_location.get("query", []):
             null_check = (
                 " !== undefined"
-                if isinstance(param.type, (swagger_types.Sequence, swagger_types.DateTime))
+                if isinstance(param.type, (swagger_parser.Sequence, swagger_parser.DateTime))
                 else ""
             )
             code += f"if ({param.name}{null_check}) {{"
             code.indent()
-            if isinstance(param.type, swagger_types.DateTime):
+            if isinstance(param.type, swagger_parser.DateTime):
                 code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}.toISOString()"
             else:
                 code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}"
@@ -282,7 +283,7 @@ def generate_function(api: str, phase: Phase, function: swagger_types.Function) 
         )
 
         if body_param:
-            if not isinstance(body_param.type, swagger_types.String):
+            if not isinstance(body_param.type, swagger_parser.String):
                 code += f"localVarRequestOptions.body = JSON.stringify({body_param.name})"
             else:
                 code += "const needsSerialization = localVarRequestOptions.headers['Content-Type'] === 'application/json';"
@@ -363,7 +364,7 @@ def generate_function(api: str, phase: Phase, function: swagger_types.Function) 
     assert_never(phase)
 
 
-def generate_api(tag: str, functions: typing.List[swagger_types.Function]) -> Code:
+def generate_api(tag: str, functions: typing.List[swagger_parser.Function]) -> Code:
     code = IndentedLines()
     api_name = f"{tag}Api"
     functions_in_order = sorted(functions, key=lambda f: f.name.lower())
@@ -440,7 +441,7 @@ def generate_api(tag: str, functions: typing.List[swagger_types.Function]) -> Co
     return str(code)
 
 
-def tsbindings(swagger: swagger_parsing.ParseResult) -> str:
+def tsbindings(swagger: swagger_parser.ParseResult) -> str:
     clean_description = swagger.info.description.replace("\n", " ")
     prelude = f"""
 /**
@@ -526,8 +527,8 @@ export class RequiredError extends Error {{
     # workaround for streaming function behavior
     runtime_stream_error = swagger.defs["runtimeStreamError"]
     assert runtime_stream_error
-    runtime_stream_error_ref = swagger_types.Ref(name="RuntimeStreamError")
-    swagger_types.Ref.all_refs.append(runtime_stream_error_ref)
+    runtime_stream_error_ref = swagger_parser.Ref(name="RuntimeStreamError")
+    swagger_parser.Ref.all_refs.append(runtime_stream_error_ref)
     runtime_stream_error_ref.defn = runtime_stream_error
     runtime_stream_error_ref.linked = True
 
@@ -561,7 +562,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", "-o", action="store", required=True, help="output folder")
     args = parser.parse_args()
 
-    swagger = swagger_parsing.load(SWAGGER)
+    swagger = swagger_parser.parse(SWAGGER)
     bindings = tsbindings(swagger)
 
     if os.path.isdir(args.output):

@@ -1,7 +1,7 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
-py_generator := generate_bindings.py
+py_generator := generate_bindings_py.py
 ts_generator := generate_bindings_ts.py
 
 .PHONY: all
@@ -11,10 +11,10 @@ all: build
 force-gen:
 	touch $(SWAGGER_SPEC)
 
-$(py_bindings_dest): $(SWAGGER_SPEC) $(py_generator) $(wildcard swagger_parsing/*)
+$(py_bindings_dest): $(SWAGGER_SPEC) swagger_parser.py $(py_generator)
 	python $(py_generator) --output $(py_bindings_dest)
 
-$(ts_bindings_dest): $(SWAGGER_SPEC) $(ts_generator) $(wildcard static_ts_files/*) $(wildcard swagger_parsing/*)
+$(ts_bindings_dest): $(SWAGGER_SPEC) swagger_parser.py $(ts_generator) $(wildcard static_ts_files/*)
 	python $(ts_generator) --output $@
 
 .PHONY: build/python

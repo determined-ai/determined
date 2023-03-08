@@ -1,52 +1,48 @@
 import os
-import swagger_parsing
-import swagger_parsing.types as swagger_types
+import swagger_parser
 import typing
 from typing_extensions import assert_never
-from operator import itemgetter
 
 SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
 SWAGGER = os.path.join(os.path.dirname(__file__), "..", SWAGGER)
 
 Code = str
-SwaggerType = typing.Union[swagger_types.TypeAnno, swagger_types.TypeDef]
+SwaggerType = typing.Union[swagger_parser.TypeAnno, swagger_parser.TypeDef]
 no_parse_types = (
-    swagger_types.Any,
-    swagger_types.String,
-    swagger_types.DateTime,
-    swagger_types.Int,
-    swagger_types.Bool,
+    swagger_parser.Any,
+    swagger_parser.String,
+    swagger_parser.DateTime,
+    swagger_parser.Int,
+    swagger_parser.Bool,
 )
 
-head = itemgetter(0)
 
-
-def annotation(anno: swagger_types.TypeAnno, prequoted=False) -> Code:
-    if isinstance(anno, swagger_types.Any):
+def annotation(anno: swagger_parser.TypeAnno, prequoted=False) -> Code:
+    if isinstance(anno, swagger_parser.Any):
         return "typing.Any"
-    if isinstance(anno, (swagger_types.String, swagger_types.DateTime)):
+    if isinstance(anno, (swagger_parser.String, swagger_parser.DateTime)):
         return "str"
-    if isinstance(anno, swagger_types.Float):
+    if isinstance(anno, swagger_parser.Float):
         return "float"
-    if isinstance(anno, swagger_types.Int):
+    if isinstance(anno, swagger_parser.Int):
         return "int"
-    if isinstance(anno, swagger_types.Bool):
+    if isinstance(anno, swagger_parser.Bool):
         return "bool"
-    if isinstance(anno, swagger_types.Ref):
+    if isinstance(anno, swagger_parser.Ref):
         if anno.defn is None or (
-            isinstance(anno.defn, swagger_types.Class) and not anno.defn.params
+            isinstance(anno.defn, swagger_parser.Class) and not anno.defn.params
         ):
             return "None"
         out = anno.name
         if not prequoted:
             return f'"{out}"'
         return out
-    if isinstance(anno, swagger_types.Dict):
+    if isinstance(anno, swagger_parser.Dict):
         out = f"typing.Dict[str, {annotation(anno.values, True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
-    if isinstance(anno, swagger_types.Sequence):
+    if isinstance(anno, swagger_parser.Sequence):
         out = f"typing.Sequence[{annotation(anno.items, True)}]"
         if not prequoted:
             return f'"{out}"'
@@ -54,14 +50,14 @@ def annotation(anno: swagger_types.TypeAnno, prequoted=False) -> Code:
     assert_never(anno)
 
 
-def need_parse(anno: swagger_types.TypeAnno) -> bool:
+def need_parse(anno: swagger_parser.TypeAnno) -> bool:
     if isinstance(anno, no_parse_types):
         return False
-    if isinstance(anno, (swagger_types.Float, swagger_types.Ref)):
+    if isinstance(anno, (swagger_parser.Float, swagger_parser.Ref)):
         return True
-    if isinstance(anno, swagger_types.Dict):
+    if isinstance(anno, swagger_parser.Dict):
         return need_parse(anno.values)
-    if isinstance(anno, swagger_types.Sequence):
+    if isinstance(anno, swagger_parser.Sequence):
         return need_parse(anno.items)
     assert_never(anno)
 
@@ -69,22 +65,22 @@ def need_parse(anno: swagger_types.TypeAnno) -> bool:
 def load(anno: SwaggerType, val: Code) -> Code:
     if isinstance(anno, no_parse_types):
         return val
-    if isinstance(anno, swagger_types.Float):
+    if isinstance(anno, swagger_parser.Float):
         return f"float({val})"
-    if isinstance(anno, swagger_types.Ref):
+    if isinstance(anno, swagger_parser.Ref):
         assert anno.defn
         return load(anno.defn, val)
-    if isinstance(anno, swagger_types.Dict):
+    if isinstance(anno, swagger_parser.Dict):
         if not need_parse(anno):
             return val
         return f"{{k: {load(anno.values, 'v')} for k, v in {val}.items()}}"
-    if isinstance(anno, swagger_types.Sequence):
+    if isinstance(anno, swagger_parser.Sequence):
         if not need_parse(anno):
             return val
         return f"[{load(anno.items, 'x')} for x in {val}]"
-    if isinstance(anno, swagger_types.Class):
+    if isinstance(anno, swagger_parser.Class):
         return f"{anno.name}.from_json({val})"
-    if isinstance(anno, swagger_types.Enum):
+    if isinstance(anno, swagger_parser.Enum):
         return f"{anno.name}({val})"
     assert_never(anno)
 
@@ -92,29 +88,29 @@ def load(anno: SwaggerType, val: Code) -> Code:
 def dump(anno: SwaggerType, val: Code, omit_unset: Code) -> Code:
     if isinstance(anno, no_parse_types):
         return val
-    if isinstance(anno, swagger_types.Float):
+    if isinstance(anno, swagger_parser.Float):
         return f"dump_float({val})"
-    if isinstance(anno, swagger_types.Ref):
+    if isinstance(anno, swagger_parser.Ref):
         assert anno.defn
         return dump(anno.defn, val, omit_unset)
-    if isinstance(anno, swagger_types.Dict):
+    if isinstance(anno, swagger_parser.Dict):
         if not need_parse(anno):
             return val
         each = dump(anno.values, "v", omit_unset)
         return f"{{k: {each} for k, v in {val}.items()}}"
-    if isinstance(anno, swagger_types.Sequence):
+    if isinstance(anno, swagger_parser.Sequence):
         if not need_parse(anno):
             return val
         each = dump(anno.items, "x", omit_unset)
         return f"[{each} for x in {val}]"
-    if isinstance(anno, swagger_types.Class):
+    if isinstance(anno, swagger_parser.Class):
         return f"{val}.to_json({omit_unset})"
-    if isinstance(anno, swagger_types.Enum):
+    if isinstance(anno, swagger_parser.Enum):
         return f"{val}.value"
     assert_never(anno)
 
 
-def gen_init_param(param: swagger_types.Parameter) -> Code:
+def gen_init_param(param: swagger_parser.Parameter) -> Code:
     if param.required:
         typestr = annotation(param.type)
         default = ""
@@ -124,7 +120,7 @@ def gen_init_param(param: swagger_types.Parameter) -> Code:
     return f"    {param.name}: {typestr}{default},"
 
 
-def gen_function_param(param: swagger_types.Parameter):
+def gen_function_param(param: swagger_parser.Parameter):
     if param.required:
         typestr = annotation(param.type)
         default = ""
@@ -134,55 +130,50 @@ def gen_function_param(param: swagger_types.Parameter):
     return f"    {param.name}: {typestr}{default},"
 
 
-def is_streaming_response(defn: typing.Optional[swagger_types.TypeDef]):
-    if isinstance(defn, swagger_types.Class) and set(defn.params.keys()) == set(
+def is_streaming_response(defn: typing.Optional[swagger_parser.TypeDef]):
+    if isinstance(defn, swagger_parser.Class) and set(defn.params.keys()) == set(
         ["result", "error"]
     ):
         error_ref = defn.params["error"]
         return (
-            isinstance(error_ref.type, swagger_types.Ref)
+            isinstance(error_ref.type, swagger_parser.Ref)
             and error_ref.type.name == "runtimeStreamError"
         )
     return False
 
 
-def unwrap_streaming_response(anno: swagger_types.TypeAnno):
-    if not isinstance(anno, swagger_types.Ref) or not is_streaming_response(anno.defn):
+def unwrap_streaming_response(anno: swagger_parser.TypeAnno):
+    if not isinstance(anno, swagger_parser.Ref) or not is_streaming_response(anno.defn):
         return anno
-    assert isinstance(anno.defn, swagger_types.Class)
+    assert isinstance(anno.defn, swagger_parser.Class)
     return anno.defn.params["result"].type
 
 
-def gen_function(anno: swagger_types.Function) -> Code:
+def gen_function(func: swagger_parser.Function) -> Code:
     # Function name.
-    out = [f"def {anno.method}_{anno.name}("]
+    out = [f"def {func.method}_{func.name}("]
 
     # Function parameters.
     out += ['    session: "api.Session",']
-    if anno.params:
+    if func.params:
         out += ["    *,"]
 
-    required = sorted(
-        ((pname, param) for pname, param in anno.params.items() if param.required),
-        key=head,
-    )
-    optional = sorted(
-        ((pname, param) for pname, param in anno.params.items() if not param.required),
-        key=head,
-    )
+    required = sorted((k, v) for k, v in func.params.items() if v.required)
+    optional = sorted((k, v) for k, v in func.params.items() if not v.required)
+
     for _, param in required + optional:
         out += [gen_function_param(param)]
 
     # Function return type.
     # We wrap the return type annotation for streaming or union responses.
-    need_quotes = anno.streaming or len(anno.responses) > 1
-    if anno.streaming:
-        anno.responses = {code: unwrap_streaming_response(r) for code, r in anno.responses.items()}
-    returntypes = set(annotation(r, prequoted=need_quotes) for r in anno.responses.values())
+    need_quotes = func.streaming or len(func.responses) > 1
+    if func.streaming:
+        func.responses = {code: unwrap_streaming_response(r) for code, r in func.responses.items()}
+    returntypes = set(annotation(r, prequoted=need_quotes) for r in func.responses.values())
     returntypestr = ",".join(sorted(returntypes))
     if len(returntypes) > 1:
         returntypestr = f"typing.Union[{returntypestr}]"
-    if anno.streaming:
+    if func.streaming:
         returntypestr = f"typing.Iterable[{returntypestr}]"
     if need_quotes:
         returntypestr = f'"{returntypestr}"'
@@ -190,14 +181,11 @@ def gen_function(anno: swagger_types.Function) -> Code:
     out += [f") -> {returntypestr}:"]
 
     # Function body.
-    has_path_params = any(p for p in anno.params.values() if p.where == "path")
-    # body_params = sorted(p for p in self.params if anno.params[p].where == "body") # not in use
-    query_params = sorted(
-        ((pname, param) for pname, param in anno.params.items() if param.where == "query"),
-        key=head,
-    )
+    has_path_params = any(p for p in func.params.values() if p.where == "path")
+    # body_params = sorted(p for p in self.params if func.params[p].where == "body") # not in use
+    query_params = sorted((k, v) for k, v in func.params.items() if v.where == "query")
 
-    pathstr = f'"{anno.path}"'
+    pathstr = f'"{func.path}"'
     if has_path_params:
         # Happily, we can just generate an f-string based on the path swagger gives us.
         pathstr = "f" + pathstr
@@ -205,7 +193,7 @@ def gen_function(anno: swagger_types.Function) -> Code:
     if query_params:
         out += ["    _params = {"]
         for _, param in query_params:
-            if isinstance(param.type, swagger_types.Bool):
+            if isinstance(param.type, swagger_parser.Bool):
                 value = f"str({param.name}).lower()"
                 if not param.required:
                     value += f" if {param.name} is not None else None"
@@ -220,134 +208,136 @@ def gen_function(anno: swagger_types.Function) -> Code:
     else:
         out += ["    _params = None"]
 
-    if "body" in anno.params:
+    if "body" in func.params:
         # It is important that request bodies omit unset values so that PATCH request bodies
         # do not include extraneous None values.
-        body_param = anno.params["body"]
+        body_param = func.params["body"]
         bodystr = dump(body_param.type, body_param.name, "True")
     else:
         bodystr = "None"
     out += ["    _resp = session._do_request("]
-    out += [f'        method="{anno.method.upper()}",']
+    out += [f'        method="{func.method.upper()}",']
     out += [f"        path={pathstr},"]
     out += ["        params=_params,"]
     out += [f"        json={bodystr},"]
     out += ["        data=None,"]
     out += ["        headers=None,"]
     out += ["        timeout=None,"]
-    out += [f"        stream={anno.streaming},"]
+    out += [f"        stream={func.streaming},"]
     out += ["    )"]
-    for expect, returntype in anno.responses.items():
+    for expect, returntype in func.responses.items():
         out += [f"    if _resp.status_code == {expect}:"]
-        is_none = isinstance(returntype, swagger_types.Ref) and (
+        is_none = isinstance(returntype, swagger_parser.Ref) and (
             returntype.defn is None
-            or isinstance(returntype.defn, swagger_types.Class)
+            or isinstance(returntype.defn, swagger_parser.Class)
             and not returntype.defn.params
         )
-        if not anno.streaming:
+        if not func.streaming:
             if is_none:
                 out += ["        return"]
             else:
                 out += [f'        return {load(returntype, "_resp.json()")}']
         else:
-            assert not is_none, "unable to stream empty result class: {anno}"
-            # Too many quotes to do bit inline:
+            assert not is_none, "unable to stream empty result class: {func}"
+            # Too many quotes to do it inline:
             yieldable = load(returntype, '_j["result"]')
             out += [
                 f"        for _line in _resp.iter_lines():",
                 f"            _j = json.loads(_line)",
                 f'            if "error" in _j:',
                 f"                raise APIHttpStreamError(",
-                f'                    "{anno.method}_{anno.name}",',
+                f'                    "{func.method}_{func.name}",',
                 f'                    runtimeStreamError.from_json(_j["error"])',
                 f"            )",
                 f"            yield {yieldable}",
                 f"        return",
             ]
-    out += [f'    raise APIHttpError("{anno.method}_{anno.name}", _resp)']
+    out += [f'    raise APIHttpError("{func.method}_{func.name}", _resp)']
 
     return "\n".join(out)
 
 
-def gen_def(anno: swagger_types.TypeDef) -> Code:
-    if isinstance(anno, swagger_types.Class):
-        required = sorted(
-            ((pname, param) for pname, param in anno.params.items() if param.required),
-            key=head,
-        )
-        optional = sorted(
-            ((pname, param) for pname, param in anno.params.items() if not param.required),
-            key=head,
-        )
-        out = [f"class {anno.name}:"]
-        for k, v in optional:
-            out += [f'    {k}: "typing.Optional[{annotation(v.type, prequoted=True)}]" = None']
-        out += [""]
-        out += ["    def __init__("]
-        out += ["        self,"]
-        out += ["        *,"]
-        for k, v in required + optional:
-            out += ["    " + gen_init_param(v)]
-        out += ["    ):"]
-        for k, _ in required:
-            out += [f"        self.{k} = {k}"]
-        for k, _ in optional:
-            out += [f"        if not isinstance({k}, Unset):"]
-            out += [f"            self.{k} = {k}"]
-        out += [""]
-        out += ["    @classmethod"]
-        out += [f'    def from_json(cls, obj: Json) -> "{anno.name}":']
-        out += ['        kwargs: "typing.Dict[str, typing.Any]" = {']
-        for k, v in required:
-            if need_parse(v.type):
-                parsed = load(v.type, f'obj["{k}"]')
-            else:
-                parsed = f'obj["{k}"]'
-            out += [f'            "{k}": {parsed},']
-        out += ["        }"]
-        for k, v in optional:
-            if need_parse(v.type):
-                parsed = load(v.type, f'obj["{k}"]')
-                parsed = parsed + f' if obj["{k}"] is not None else None'
-            else:
-                parsed = f'obj["{k}"]'
-            out += [f'        if "{k}" in obj:']
-            out += [f'            kwargs["{k}"] = {parsed}']
-        out += ["        return cls(**kwargs)"]
-        out += [""]
-        out += ["    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:"]
-        out += ['        out: "typing.Dict[str, typing.Any]" = {']
-        for k, v in required:
-            if need_parse(v.type):
-                parsed = dump(v.type, f"self.{k}", "omit_unset")
-            else:
-                parsed = f"self.{k}"
-            out.append(f'            "{k}": {parsed},')
-        out += ["        }"]
-        for k, v in optional:
-            if need_parse(v.type):
-                parsed = dump(v.type, f"self.{k}", "omit_unset")
-                parsed = f"None if self.{k} is None else {parsed}"
-            else:
-                parsed = f"self.{k}"
-            out += [f'        if not omit_unset or "{k}" in vars(self):']
-            out += [f'            out["{k}"] = {parsed}']
-        out += ["        return out"]
+def gen_class(klass: swagger_parser.Class) -> Code:
+    required = sorted((k, v) for k, v in klass.params.items() if v.required)
+    optional = sorted((k, v) for k, v in klass.params.items() if not v.required)
 
-        return "\n".join(out)
+    out = [f"class {klass.name}:"]
+    for k, v in optional:
+        out += [f'    {k}: "typing.Optional[{annotation(v.type, prequoted=True)}]" = None']
+    out += [""]
+    out += ["    def __init__("]
+    out += ["        self,"]
+    out += ["        *,"]
+    for k, v in required + optional:
+        out += ["    " + gen_init_param(v)]
+    out += ["    ):"]
+    for k, _ in required:
+        out += [f"        self.{k} = {k}"]
+    for k, _ in optional:
+        out += [f"        if not isinstance({k}, Unset):"]
+        out += [f"            self.{k} = {k}"]
+    out += [""]
+    out += ["    @classmethod"]
+    out += [f'    def from_json(cls, obj: Json) -> "{klass.name}":']
+    out += ['        kwargs: "typing.Dict[str, typing.Any]" = {']
+    for k, v in required:
+        if need_parse(v.type):
+            parsed = load(v.type, f'obj["{k}"]')
+        else:
+            parsed = f'obj["{k}"]'
+        out += [f'            "{k}": {parsed},']
+    out += ["        }"]
+    for k, v in optional:
+        if need_parse(v.type):
+            parsed = load(v.type, f'obj["{k}"]')
+            parsed = parsed + f' if obj["{k}"] is not None else None'
+        else:
+            parsed = f'obj["{k}"]'
+        out += [f'        if "{k}" in obj:']
+        out += [f'            kwargs["{k}"] = {parsed}']
+    out += ["        return cls(**kwargs)"]
+    out += [""]
+    out += ["    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:"]
+    out += ['        out: "typing.Dict[str, typing.Any]" = {']
+    for k, v in required:
+        if need_parse(v.type):
+            parsed = dump(v.type, f"self.{k}", "omit_unset")
+        else:
+            parsed = f"self.{k}"
+        out.append(f'            "{k}": {parsed},')
+    out += ["        }"]
+    for k, v in optional:
+        if need_parse(v.type):
+            parsed = dump(v.type, f"self.{k}", "omit_unset")
+            parsed = f"None if self.{k} is None else {parsed}"
+        else:
+            parsed = f"self.{k}"
+        out += [f'        if not omit_unset or "{k}" in vars(self):']
+        out += [f'            out["{k}"] = {parsed}']
+    out += ["        return out"]
 
-    if isinstance(anno, swagger_types.Enum):
-        out = [f"class {anno.name}(enum.Enum):"]
-        out += [f'    {v} = "{v}"' for v in anno.members]
-        return "\n".join(out)
+    return "\n".join(out)
+
+
+def gen_enum(enum: swagger_parser.Enum) -> Code:
+    out = [f"class {enum.name}(enum.Enum):"]
+    out += [f'    {v} = "{v}"' for v in enum.members]
+    return "\n".join(out)
+
+
+def gen_def(anno: swagger_parser.TypeDef) -> Code:
+    if isinstance(anno, swagger_parser.Class):
+        return gen_class(anno)
+    if isinstance(anno, swagger_parser.Enum):
+        return gen_enum(anno)
     assert_never(anno)
 
 
-def gen_paginated(defs: swagger_types.TypeDefs) -> typing.List[str]:
+def gen_paginated(defs: swagger_parser.TypeDefs) -> typing.List[str]:
     paginated = []
     for k, defn in defs.items():
         defn = defs[k]
-        if defn is None or not isinstance(defn, swagger_types.Class):
+        if defn is None or not isinstance(defn, swagger_parser.Class):
             continue
         # Note that our goal is to mimic duck typing, so we only care if the "pagination" attribute
         # exists with a v1Pagination type.
@@ -366,13 +356,13 @@ def gen_paginated(defs: swagger_types.TypeDefs) -> typing.List[str]:
     return out
 
 
-def skip_defn(defn: swagger_types.TypeDef):
-    return (isinstance(defn, swagger_types.Class) and not defn.params) or is_streaming_response(
+def skip_defn(defn: swagger_parser.TypeDef):
+    return (isinstance(defn, swagger_parser.Class) and not defn.params) or is_streaming_response(
         defn
     )
 
 
-def pybindings(swagger: swagger_parsing.ParseResult) -> str:
+def pybindings(swagger: swagger_parser.ParseResult) -> str:
     prefix = """
 # Code generated by generate_bindings.py. DO NOT EDIT.
 import enum
@@ -434,13 +424,13 @@ class APIHttpStreamError(APIHttpError):
 
     out = [prefix]
 
-    for _, defn in sorted(swagger.defs.items(), key=head):
+    for _, defn in sorted(swagger.defs.items()):
         if defn is None or skip_defn(defn):
             continue
         out += [gen_def(defn)]
         out += [""]
 
-    for _, op in sorted(swagger.ops.items(), key=head):
+    for _, op in sorted(swagger.ops.items()):
         out += [gen_function(op)]
         out += [""]
 
@@ -457,7 +447,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", "-o", action="store", required=True, help="output file")
     args = parser.parse_args()
 
-    swagger = swagger_parsing.load(SWAGGER)
+    swagger = swagger_parser.parse(SWAGGER)
     bindings = pybindings(swagger)
     with open(args.output, "w") as f:
         print(bindings, file=f)
