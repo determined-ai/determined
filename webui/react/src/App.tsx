@@ -24,7 +24,11 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
-import { auth as authObservable, selectIsAuthenticated } from 'stores/auth';
+import {
+  auth as authObservable,
+  authChecked as observeAuthChecked,
+  selectIsAuthenticated,
+} from 'stores/auth';
 import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
@@ -42,6 +46,7 @@ const AppView: React.FC = () => {
   const auth = useObservable(authObservable);
   const loadableUser = useCurrentUser();
   const infoLoadable = useDeterminedInfo();
+  const authChecked = useObservable(observeAuthChecked);
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
@@ -126,28 +131,34 @@ const AppView: React.FC = () => {
   return Loadable.match(infoLoadable, {
     Loaded: () => (
       <div className={css.base}>
-        {isServerReachable ? (
-          <SettingsProvider>
-            <ThemeProvider>
-              <AntdApp>
-                <Navigation>
-                  <main>
-                    <Router routes={appRoutes} />
-                  </main>
-                </Navigation>
-              </AntdApp>
-            </ThemeProvider>
-          </SettingsProvider>
+        {authChecked ? (
+          <>
+            {isServerReachable ? (
+              <SettingsProvider>
+                <ThemeProvider>
+                  <AntdApp>
+                    <Navigation>
+                      <main>
+                        <Router routes={appRoutes} />
+                      </main>
+                    </Navigation>
+                  </AntdApp>
+                </ThemeProvider>
+              </SettingsProvider>
+            ) : (
+              <PageMessage title="Server is Unreachable">
+                <p>
+                  Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
+                  check the firewall and cluster settings.
+                </p>
+                <Button onClick={refreshPage}>Try Again</Button>
+              </PageMessage>
+            )}
+            <Omnibar />
+          </>
         ) : (
-          <PageMessage title="Server is Unreachable">
-            <p>
-              Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please check
-              the firewall and cluster settings.
-            </p>
-            <Button onClick={refreshPage}>Try Again</Button>
-          </PageMessage>
+          <Spinner center />
         )}
-        <Omnibar />
       </div>
     ),
     NotLoaded: () => <Spinner center />,
