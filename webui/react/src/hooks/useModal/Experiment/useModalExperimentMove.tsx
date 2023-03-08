@@ -32,7 +32,7 @@ interface Props {
 }
 
 export interface ShowModalProps {
-  experimentIds?: number[];
+  experimentIds: number[];
   initialModalProps?: ModalFuncProps;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
@@ -66,7 +66,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const { settings: projectSettings, updateSettings: updateProjectSettings } =
     useSettings<ExperimentListSettings>(experimentSettingsConfig);
-  const [experimentIds, setExperimentIds] = useState<number[]>();
+  const [experimentIds, setExperimentIds] = useState<number[]>([]);
   const { canMoveExperimentsTo } = usePermissions();
   const loadableWorkspaces = useWorkspaces({ archived: false });
   const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
@@ -143,8 +143,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    if (!experimentIds?.length || !projectSettings.pinned || Loadable.isLoading(projects)) return;
-
     const results = await Promise.allSettled(
       experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projId)),
     );
@@ -157,7 +155,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ? `Experiment ${experimentIds[0]}`
         : `${experimentIds.length} experiments`;
 
-    const destinationProjectName = projects.data.find((p) => p.id === projId)?.name ?? '';
+    const destinationProjectName =
+      Loadable.getOrElse([], projects).find((p) => p.id === projId)?.name ?? '';
 
     if (numFailures === 0) {
       notification.open({
@@ -212,8 +211,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   ]);
 
   const getModalProps = useCallback(
-    (experimentIds?: number[]): ModalFuncProps => {
-      const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
+    (experimentIds: number[]): ModalFuncProps => {
+      const pluralizer = experimentIds.length > 1 ? 's' : '';
       return {
         closable: true,
         content: modalContent,
@@ -227,15 +226,21 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
 
   const modalOpen = useCallback(
-    ({ initialModalProps, experimentIds }: ShowModalProps = {}) => {
+    (
+      { initialModalProps, experimentIds, sourceWorkspaceId, sourceProjectId }: ShowModalProps = {
+        experimentIds: [],
+      },
+    ) => {
       setExperimentIds(experimentIds);
+      form.setFieldValue('projectId', sourceProjectId);
+      form.setFieldValue('workspaceId', sourceWorkspaceId ?? 1);
 
       openOrUpdate({
         ...getModalProps(experimentIds),
         ...initialModalProps,
       });
     },
-    [getModalProps, openOrUpdate],
+    [form, getModalProps, openOrUpdate],
   );
 
   /**

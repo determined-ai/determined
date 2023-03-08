@@ -74,7 +74,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: id ? [id] : undefined,
+      experimentIds: [id],
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
