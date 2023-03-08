@@ -870,10 +870,12 @@ export interface Permission {
 
 export interface UserRole {
   fromGroup?: number[];
+  fromUser?: boolean;
   fromWorkspace?: number[];
   id: number;
   name: string;
   permissions: Permission[];
+  scopeCluster?: boolean;
 }
 
 export interface UserAssignment {

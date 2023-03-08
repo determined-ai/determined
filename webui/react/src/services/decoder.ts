@@ -42,6 +42,9 @@ export const mapV1UserRole = (res: Sdk.V1RoleWithAssignments): types.UserRole =>
   const { role, groupRoleAssignments, userRoleAssignments } = res;
   return {
     fromGroup: groupRoleAssignments?.map((g) => g.groupId),
+    fromUser:
+      (userRoleAssignments?.filter((u) => !!(u.userId && u.roleAssignment.scopeCluster)) || [])
+        .length > 0,
     fromWorkspace: userRoleAssignments
       ?.map((ur) => ur.roleAssignment?.scopeWorkspaceId || 0)
       .filter((v) => v > 0),
@@ -58,6 +61,7 @@ export const mapV1GroupRole = (res: Sdk.V1GetRolesAssignedToGroupResponse): type
     id: role.roleId,
     name: role.name || '',
     permissions: (role.permissions || []).map(mapV1Permission),
+    scopeCluster: assignments.find((a) => a.roleId === role.roleId)?.scopeCluster,
   }));
 };
 
