@@ -230,7 +230,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 
 	type want struct {
 		pools         []resourcepoolv1.ResourcePool
-		location      string
+		wlmName       string
 		schedulerType resourcepoolv1.SchedulerType
 		fittingPolicy resourcepoolv1.FittingPolicy
 	}
@@ -289,7 +289,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						NumAgents:      10,
 					},
 				},
-				location:      "Slurm",
+				wlmName:       "Slurm",
 				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
 				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
 			},
@@ -320,7 +320,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						NumAgents:      10,
 					},
 				},
-				location:      "Slurm",
+				wlmName:       "Slurm",
 				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
 				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
 			},
@@ -351,7 +351,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						SlotsPerAgent:  1,
 					},
 				},
-				location:      "PBS",
+				wlmName:       "PBS",
 				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PBS,
 				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_PBS,
 			},
@@ -388,7 +388,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 						NumAgents:      15,
 					},
 				},
-				location:      "Unknown",
+				wlmName:       "Unknown",
 				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_UNSPECIFIED,
 				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_UNSPECIFIED,
 			},
@@ -444,7 +444,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 				assert.Equal(t, pool.NumAgents, tt.want.pools[i].NumAgents)
 				wantDescription := tt.want.pools[i].Description
 				if wantDescription == "" {
-					wantDescription = tt.want.location + "-managed pool of resources"
+					wantDescription = tt.want.wlmName + "-managed pool of resources"
 				}
 				assert.Equal(t, pool.Description, wantDescription)
 				assert.Equal(t, pool.Type, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC)
@@ -452,8 +452,8 @@ func Test_summarizeResourcePool(t *testing.T) {
 				assert.Equal(t, pool.AuxContainerCapacityPerAgent, int32(0))
 				assert.Equal(t, pool.SchedulerType, tt.want.schedulerType)
 				assert.Equal(t, pool.SchedulerFittingPolicy, tt.want.fittingPolicy)
-				assert.Equal(t, pool.Location, tt.want.location)
-				assert.Equal(t, pool.InstanceType, tt.want.location)
+				assert.Equal(t, pool.Location, "")
+				assert.Equal(t, pool.InstanceType, "")
 				assert.Equal(t, pool.ImageId, "")
 			}
 		})
