@@ -50,7 +50,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [trial],
   );
 
-  const { contextHolder, openCheckpoint } = useCheckpointFlow({
+  const { contextHolders, openCheckpoint } = useCheckpointFlow({
     checkpoint,
     config: experiment.config,
     title: `Best checkpoint for Trial ${trial?.id}`,
@@ -177,7 +177,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           onXAxisChange={setXAxis}
         />
       ) : null}
-      {contextHolder}
+      {contextHolders}
     </>
   );
 };
