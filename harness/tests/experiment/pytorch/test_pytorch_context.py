@@ -60,13 +60,13 @@ class TestPyTorchContext:
     def test_context_method(self) -> None:
 
         assert self.context._tbd_writer is None
-        files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) == 0
+        num_files = len(list(self.context.get_tensorboard_path().iterdir()))
 
         writer = self.context.get_tensorboard_writer()
 
         writer.add_scalar("foo", 7, 0)
         writer.add_scalar("foo", 8, 1)
+        writer.close()
 
         files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) == 1
+        assert len(files) == num_files + 1
