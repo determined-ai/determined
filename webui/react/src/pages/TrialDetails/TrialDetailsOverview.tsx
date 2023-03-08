@@ -1,3 +1,4 @@
+import { show } from 'fp-ts';
 import React, { useMemo, useState } from 'react';
 
 import { ChartGrid, ChartsProps, Serie } from 'components/kit/LineChart';
@@ -6,9 +7,12 @@ import { UPlotPoint } from 'components/UPlot/types';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { activeStates } from 'constants/states';
 import { useCheckpointFlow } from 'hooks/useModal/Checkpoint/useCheckpointFlow';
 import usePermissions from 'hooks/usePermissions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -56,7 +60,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     title: `Best checkpoint for Trial ${trial?.id}`,
   });
 
-  const { metrics, data, scale, setScale } = useTrialMetrics(trial);
+  const { metrics, data, scale, setScale, dataIsPresent } = useTrialMetrics(trial);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
     const checkpointXHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
@@ -169,13 +173,22 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
-        <ChartGrid
-          chartsProps={chartsProps}
-          scale={scale}
-          setScale={setScale}
-          xAxis={xAxis}
-          onXAxisChange={setXAxis}
-        />
+        dataIsPresent ? (
+          <ChartGrid
+            chartsProps={chartsProps}
+            scale={scale}
+            setScale={setScale}
+            xAxis={xAxis}
+            onXAxisChange={setXAxis}
+          />
+        ) : (
+          <Spinner
+            conditionalRender={true}
+            spinning={trial?.state && activeStates.includes(trial?.state)}
+            tip="Waiting for data...">
+            <Message title="No learning curve data to show." type={MessageType.Empty} />
+          </Spinner>
+        )
       ) : null}
       {contextHolders.map((context, i) => (
         <React.Fragment key={i}>{context}</React.Fragment>

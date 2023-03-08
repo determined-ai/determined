@@ -8,7 +8,15 @@ import { compareTrials } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { Metric, MetricContainer, MetricType, RunState, Scale, TrialDetails } from 'types';
+import {
+  Metric,
+  MetricContainer,
+  MetricType,
+  RunState,
+  Scale,
+  TrialDetails,
+  TrialSummary,
+} from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
@@ -52,6 +60,7 @@ export const useTrialMetrics = (
   trial: TrialDetails | undefined,
 ): {
   data: Record<string, Serie> | undefined;
+  dataIsPresent: boolean;
   metrics: Metric[];
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
@@ -72,20 +81,38 @@ export const useTrialMetrics = (
   const metrics = useMetricNames(trial?.experimentId, handleMetricNamesError);
   const [data, setData] = useState<Record<MetricName, Serie>>();
   const [scale, setScale] = useState<Scale>(Scale.Linear);
+  const [dataIsPresent, setDataIsPresent] = useState<boolean>(false);
 
   const fetchTrialSummary = useCallback(async () => {
     if (trial?.id) {
-      const response = await compareTrials({
-        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
-        metricNames: metrics,
-        scale: scale,
-        startBatches: 0,
-        trialIds: [trial?.id],
-      });
+      let response: TrialSummary[] | undefined;
+      try {
+        response = await compareTrials({
+          maxDatapoints: screen.width > 1600 ? 1500 : 1000,
+          metricNames: metrics,
+          scale: scale,
+          startBatches: 0,
+          trialIds: [trial?.id],
+        });
+      } catch (e) {
+        handleError(e, {
+          publicMessage: `Failed to load metric data for trial ${trial?.id}.`,
+          publicSubject: 'Experiment metric name stream failed.',
+          type: ErrorType.Api,
+        });
+        setDataIsPresent(false);
+        return;
+      }
+
+      const dataRaw = response[0]?.metrics;
+      const dataIsPresent = !!dataRaw?.some(
+        (c) => c.data.length || c.epochs?.length || c.time?.length,
+      );
+      setDataIsPresent(dataIsPresent);
 
       setData((prev) => {
         if (isEqual(prev, response)) return prev;
-        const trialData = response[0]?.metrics
+        const trialData = response?.[0]?.metrics
           .map((summMetric) => {
             const key = metricToKey({ name: summMetric.name, type: summMetric.type });
             return { [key]: summarizedMetricToSeries(summMetric) };
@@ -112,5 +139,5 @@ export const useTrialMetrics = (
     stopPolling();
   }
 
-  return { data, metrics, scale, setScale };
+  return { data, dataIsPresent, metrics, scale, setScale };
 };

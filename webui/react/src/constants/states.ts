@@ -25,7 +25,7 @@ export const activeRunStates: Array<
 
 /* activeStates are sub-states which replace the previous Active RunState,
   and Active for backward compatibility  */
-const activeStates: Array<RunState> = [
+export const activeStates: Array<RunState> = [
   RunState.Active,
   RunState.Pulling,
   RunState.Queued,
