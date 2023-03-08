@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import { useCurrentUser, useUsers } from 'stores/users';
-import { ALL_VALUE, User } from 'types';
+import usersStore from 'stores/users';
+import { ALL_VALUE, DetailedUser, User } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 interface Props {
@@ -18,11 +19,12 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelect: React.FC<Props> = ({ onChange, value }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
-  }); // TODO: handle loading state // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  }); // TODO: handle loading state
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
