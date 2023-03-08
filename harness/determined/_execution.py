@@ -163,7 +163,7 @@ def _make_local_execution_env(
     test_mode: bool,
     config: Optional[Dict[str, Any]],
     checkpoint_dir: str,
-    tensorboard_path: Optional[pathlib.Path],
+    tensorboard_path: Optional[pathlib.Path] = None,
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
 ) -> Tuple[core.Context, det.EnvContext]:
