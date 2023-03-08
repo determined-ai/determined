@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { paths } from 'routes/utils';
-import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
@@ -36,7 +35,6 @@ const Router: React.FC<Props> = (props: Props) => {
         const { element, ...route } = config;
 
         if (route.needAuth && !isAuthenticated) {
-          if (!authChecked) return;
           return (
             <Route
               {...route}
