@@ -32,6 +32,11 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
+
+	for _, c := range checkpoints {
+		fmt.Println(c.Resources)
+	}
+
 	return checkpoints, nil
 }
 
@@ -75,24 +80,26 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 
 // MarkCheckpointsDeleted updates the provided delete checkpoints to DELETED state.
 func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
-	_, err := db.sql.Exec(`UPDATE raw_checkpoints c
-    SET state = 'DELETED'
-    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
-	if err != nil {
+	if len(deleteCheckpoints) == 0 {
+		return nil
+	}
+
+	if _, err := Bun().NewUpdate().Model(&model.CheckpointV1{}).
+		Set("state = ?", model.DeletedState).
+		Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+		Exec(context.TODO()); err != nil {
 		return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
 	}
 
-	_, err = db.sql.Exec(`UPDATE checkpoints_v2 c
-    SET state = 'DELETED'
-    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
-	if err != nil {
+	if _, err := Bun().NewUpdate().Model(&model.CheckpointV2{}).
+		Set("state = ?", model.DeletedState).
+		Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+		Exec(context.TODO()); err != nil {
 		return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
 	}
 
-	if len(deleteCheckpoints) > 0 {
-		if err := UpdateCheckpointSize(deleteCheckpoints); err != nil {
-			return fmt.Errorf("updating checkpoints size: %w", err)
-		}
+	if err := UpdateCheckpointSize(deleteCheckpoints); err != nil {
+		return fmt.Errorf("updating checkpoints size: %w", err)
 	}
 	return nil
 }

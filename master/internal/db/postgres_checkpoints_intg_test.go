@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -159,21 +160,21 @@ func TestUpdateCheckpointSize(t *testing.T) {
 	}
 	verifySizes(e)
 
-	db.MarkCheckpointsDeleted(checkpointIDs[:2])
+	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs[:2]))
 	e.trialCounts = []int{0, 2, 2, 2}
 	e.trialSizes = []int64{0, 3 + 4, 5 + 6, 7 + 8}
 	e.experimentCounts = []int{2, 4}
 	e.experimentSizes = []int64{3 + 4, 5 + 6 + 7 + 8}
 	verifySizes(e)
 
-	db.MarkCheckpointsDeleted(checkpointIDs[3:5])
+	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs[3:5]))
 	e.trialCounts = []int{0, 1, 1, 2}
 	e.trialSizes = []int64{0, 3, 6, 7 + 8}
 	e.experimentCounts = []int{1, 3}
 	e.experimentSizes = []int64{3, 6 + 7 + 8}
 	verifySizes(e)
 
-	db.MarkCheckpointsDeleted(checkpointIDs)
+	require.NoError(t, db.MarkCheckpointsDeleted(checkpointIDs))
 	e.trialCounts = []int{0, 0, 0, 0}
 	e.trialSizes = []int64{0, 0, 0, 0}
 	e.experimentCounts = []int{0, 0}
@@ -259,13 +260,14 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 	// Test CheckpointsByUUIDs
 	reqCheckpointUUIDs := []uuid.UUID{checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID}
+	fmt.Println(reqCheckpointUUIDs)
 	checkpointsByUUIDs, err := db.CheckpointByUUIDs(reqCheckpointUUIDs)
+	require.NoError(t, err)
 	dbCheckpointsUUIDs := []uuid.UUID{
 		*checkpointsByUUIDs[0].UUID, *checkpointsByUUIDs[1].UUID, *checkpointsByUUIDs[2].UUID,
 	}
 	sortUUIDSlice(reqCheckpointUUIDs)
 	sortUUIDSlice(dbCheckpointsUUIDs)
-	require.NoError(t, err)
 	require.Equal(t, reqCheckpointUUIDs, dbCheckpointsUUIDs)
 
 	// Test GetModelIDsAssociatedWithCheckpoint
@@ -315,7 +317,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 
 			resources := make(map[string]int64)
 			for r := 0; r < 100000; r++ {
-				resources[uuid.New().String()] = rand.Int63n(2500)
+				resources[uuid.New().String()] = rand.Int63n(2500) //nolint: gosec
 			}
 
 			checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
@@ -326,5 +328,5 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 		}
 	}
 
-	db.MarkCheckpointsDeleted(checkpoints)
+	require.NoError(t, db.MarkCheckpointsDeleted(checkpoints))
 }

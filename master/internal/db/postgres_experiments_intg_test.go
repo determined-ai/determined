@@ -46,6 +46,8 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		}
 	}
 
+	fmt.Println(expectedCheckpoints)
+
 	checkpoints, err := db.ExperimentCheckpointsToGCRaw(
 		exp.ID,
 		0,
@@ -53,6 +55,8 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		0,
 	)
 	require.NoError(t, err)
+	fmt.Println(checkpoints)
+
 	require.Equal(t, expectedCheckpoints, checkpoints)
 }
 
@@ -180,7 +184,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				require.Equal(t, expected.ReportTime.Truncate(time.Millisecond),
 					actual.ReportTime.AsTime().Truncate(time.Millisecond))
 				require.Equal(t, expected.Resources, actual.Resources)
-				require.Equal(t, expected.Metadata, model.JSONObj(actual.Metadata.AsMap()))
+				require.Equal(t, expected.Metadata, actual.Metadata.AsMap())
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.State, conv.ToCheckpointState(actual.State))
 				if tt.hasValidation {

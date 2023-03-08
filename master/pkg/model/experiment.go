@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 
@@ -521,8 +522,9 @@ const (
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
-// CheckpointV1 represents a row from the `checkpoints` table.
+// CheckpointV1 represents a row from the `raw_checkpoints` table.
 type CheckpointV1 struct {
+	bun.BaseModel     `bun:"table:raw_checkpoints"`
 	ID                int        `db:"id" json:"id"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
@@ -540,15 +542,16 @@ type CheckpointV1 struct {
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
-	ID           int              `db:"id"`
-	UUID         uuid.UUID        `db:"uuid"`
-	TaskID       TaskID           `db:"task_id"`
-	AllocationID AllocationID     `db:"allocation_id"`
-	ReportTime   time.Time        `db:"report_time"`
-	State        State            `db:"state"`
-	Resources    map[string]int64 `db:"resources"`
-	Metadata     JSONObj          `db:"metadata"`
-	Size         int64            `db:"size"`
+	bun.BaseModel `bun:"table:checkpoints_v2"`
+	ID            int                    `db:"id"`
+	UUID          uuid.UUID              `db:"uuid"`
+	TaskID        TaskID                 `db:"task_id"`
+	AllocationID  AllocationID           `db:"allocation_id"`
+	ReportTime    time.Time              `db:"report_time"`
+	State         State                  `db:"state"`
+	Resources     map[string]int64       `db:"resources"`
+	Metadata      map[string]interface{} `db:"metadata"`
+	Size          int64                  `db:"size"`
 }
 
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
@@ -575,6 +578,7 @@ type Checkpoint struct {
 	State        State         `db:"state"`
 	Resources    JSONObj       `db:"resources"`
 	Metadata     JSONObj       `db:"metadata"`
+	Size         int64         `db:"size"`
 
 	CheckpointTrainingMetadata
 
