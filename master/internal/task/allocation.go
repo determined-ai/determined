@@ -513,9 +513,11 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 		if a.getModelState() == model.AllocationStateRunning {
 			// Restore proxies.
-			for _, r := range a.resources {
-				if a.req.ProxyPort != nil && r.Started != nil && r.Started.Addresses != nil {
-					a.registerProxies(ctx, r.Started.Addresses)
+			if len(a.req.ProxyPorts) > 0 {
+				for _, r := range a.resources {
+					if r.Rank == 0 && r.Started != nil && r.Started.Addresses != nil {
+						a.registerProxies(ctx, r.Started.Addresses)
+					}
 				}
 			}
 		}
