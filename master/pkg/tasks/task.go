@@ -83,6 +83,10 @@ type TaskSpec struct {
 	PbsConfig        expconf.PbsConfig
 
 	ExtraProxyPorts expconf.ProxyPortsConfig
+
+	Workspace string
+	Project   string
+	Labels    []string
 }
 
 // ResolveWorkDir resolves the work dir.
