@@ -366,7 +366,7 @@ the following:
    controller like a `PodNodeSelector
    <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podnodeselector>`__
    or `PodTolerationRestriction.
-   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podtolerationrestriction>`.
+   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podtolerationrestriction>`__.
    Alternatively, the cluster admin can also add a resource pool (and hence namespace) specific
    podSpec to the ``task_container_defaults`` sub-section of the ``resourcePools`` section of the
    helm ``values.yaml`` like:
