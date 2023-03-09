@@ -100,7 +100,7 @@ fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 
 .PHONY: test
 test:
-	npm run test -- --watchAll=false
+	npm run test -- run
 
 .PHONY: test-ci
 test-ci:
