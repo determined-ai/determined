@@ -314,9 +314,9 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	}
 }
 
-// TaskMetadata captures the historic allocation information for a given task.
-type TaskMetadata struct {
-	TaskID           model.TaskID
+// AllocationMetadata captures the historic allocation information for a given task.
+type AllocationMetadata struct {
+	AllocationID     model.AllocationID
 	TaskType         model.TaskType
 	Username         string
 	WorkspaceName    string
@@ -327,9 +327,9 @@ type TaskMetadata struct {
 	ImagepullingTime float64
 }
 
-//	@Summary	Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+//	@Summary	Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
 //	@Tags		Cluster
-//	@ID			get-raw-resource-task-allocation-csv
+//	@ID			get-resource-allocation-csv
 //	@Accept		json
 //	@Produce	text/csv
 //
@@ -343,9 +343,9 @@ type TaskMetadata struct {
 //
 // nolint:lll
 //
-//	@Success	200					{}		string	"A CSV file containing the fields task_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, training_time, validation_time, checkpointing_time, imagepulling_time"
-//	@Router		/allocations/tasks-raw [get]
-func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
+//	@Success	200					{}		string	"A CSV file containing the fields allocation_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, checkpointing_time, imagepulling_time"
+//	@Router		/allocations/allocations-csv [get]
+func (m *Master) getResourceAllocations(c echo.Context) error {
 	// Get start and end times from context
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -372,11 +372,9 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 	tasksInRange := db.Bun().NewSelect().
 		ColumnExpr("t.task_id").
 		ColumnExpr("t.task_type").
-		ColumnExpr("t.start_time").
-		ColumnExpr("t.end_time").
 		ColumnExpr("t.job_id").
 		TableExpr("tasks t").
-		Where("tstzrange(start_time, end_time) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
 	// Get allocation info for allocations in time range
 	allocationsInRange := db.Bun().NewSelect().
@@ -386,9 +384,9 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 		ColumnExpr("a.end_time").
 		ColumnExpr("a.slots").
 		TableExpr("allocations a").
-		Where("tstzrange(start_time, end_time) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
-	// Get the owner usernames associated with each task_id
+	// Get task owner names
 	taskOwners := db.Bun().NewSelect().
 		ColumnExpr("t.task_id").
 		ColumnExpr("u.username").
@@ -396,21 +394,14 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 		Join("INNER JOIN jobs j ON t.job_id = j.job_id").
 		Join("INNER JOIN users u ON j.owner_id = u.id")
 
-	// Get the number of slots request for a given task
-	taskSlots := db.Bun().NewSelect().
-		ColumnExpr("a.task_id").
-		ColumnExpr("(array_agg(a.slots) FILTER (WHERE a.slots IS NOT NULL))[1] as slots").
-		TableExpr("allocations_in_range a").
-		Group("a.task_id")
-
 	// Get imagepull times for tasks within time range
 	imagePullTimes := db.Bun().NewSelect().
-		ColumnExpr("a.task_id").
+		ColumnExpr("a.allocation_id").
 		ColumnExpr("SUM(EXTRACT(EPOCH FROM (ts.end_time - ts.start_time))) imagepulling_time").
 		TableExpr("allocations_in_range a").
 		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
 		Where("ts.event_type = 'IMAGEPULL'").
-		Group("a.task_id")
+		Group("a.allocation_id")
 
 	// Get experiment info for tasks within time range
 	taskExperimentInfo := db.Bun().NewSelect().
@@ -424,27 +415,27 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 
 	// Get task information row-by-row for all tasks in time range
 	rows, err := db.Bun().NewSelect().
-		ColumnExpr("t.task_id AS task_id").
-		ColumnExpr("t.task_type AS task_type").
-		ColumnExpr("t_o.username AS username").
+		ColumnExpr("a.allocation_id").
+		ColumnExpr("t.task_type").
+		ColumnExpr("t_o.username").
 		ColumnExpr("tei.workspace_name").
 		ColumnExpr("tei.experiment_id").
-		ColumnExpr("ts.slots as slots").
-		ColumnExpr("t.start_time AS start_time").
-		ColumnExpr("t.end_time AS end_time").
+		ColumnExpr("a.slots").
+		ColumnExpr("a.start_time").
+		ColumnExpr("a.end_time").
 		ColumnExpr("ip.imagepulling_time").
 		With("tasks_in_range", tasksInRange).
 		With("allocations_in_range", allocationsInRange).
-		With("task_slots", taskSlots).
 		With("task_owners", taskOwners).
 		With("image_pull_times", imagePullTimes).
 		With("task_experiment_info", taskExperimentInfo).
-		TableExpr("tasks_in_range t").
-		Join("LEFT JOIN task_slots ts ON ts.task_id = t.task_id").
-		Join("LEFT JOIN task_owners t_o ON t_o.task_id = t.task_id").
-		Join("LEFT JOIN task_experiment_info tei ON tei.task_id = t.task_id").
-		Join("LEFT JOIN image_pull_times ip ON ip.task_id = t.task_id").
-		Order("t.start_time").
+		With("task_in_range", tasksInRange).
+		TableExpr("allocations_in_range a").
+		Join("LEFT JOIN task_in_range t ON a.task_id = t.task_id").
+		Join("LEFT JOIN task_owners t_o ON a.task_id = t_o.task_id").
+		Join("LEFT JOIN task_experiment_info tei ON a.task_id = tei.task_id").
+		Join("LEFT JOIN image_pull_times ip ON a.allocation_id = ip.allocation_id").
+		Order("a.start_time").
 		Rows(c.Request().Context())
 
 	if err != nil && rows.Err() != nil {
@@ -454,7 +445,7 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 
 	c.Response().Header().Set("Content-Type", "text/csv")
 	header := []string{
-		"task_id",
+		"allocation_id",
 		"task_type",
 		"username",
 		"workspace_name",
@@ -486,20 +477,20 @@ func (m *Master) getRawResourceAllocationTasks(c echo.Context) error {
 
 	// Write each entry to the output CSV
 	for rows.Next() {
-		taskMetadata := new(TaskMetadata)
-		if err := db.Bun().ScanRow(c.Request().Context(), rows, taskMetadata); err != nil {
+		allocationMetadata := new(AllocationMetadata)
+		if err := db.Bun().ScanRow(c.Request().Context(), rows, allocationMetadata); err != nil {
 			return err
 		}
 		fields := []string{
-			taskMetadata.TaskID.String(),
-			string(taskMetadata.TaskType),
-			taskMetadata.Username,
-			taskMetadata.WorkspaceName,
-			strconv.Itoa(taskMetadata.ExperimentID),
-			strconv.Itoa(taskMetadata.Slots),
-			formatTimestamp(taskMetadata.StartTime),
-			formatTimestamp(taskMetadata.EndTime),
-			formatDuration(taskMetadata.ImagepullingTime),
+			allocationMetadata.AllocationID.String(),
+			string(allocationMetadata.TaskType),
+			allocationMetadata.Username,
+			allocationMetadata.WorkspaceName,
+			strconv.Itoa(allocationMetadata.ExperimentID),
+			strconv.Itoa(allocationMetadata.Slots),
+			formatTimestamp(allocationMetadata.StartTime),
+			formatTimestamp(allocationMetadata.EndTime),
+			formatDuration(allocationMetadata.ImagepullingTime),
 		}
 		if err := csvWriter.Write(fields); err != nil {
 			return err
@@ -1164,7 +1155,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
-	resourcesGroup.GET("/allocation/tasks-raw", m.getRawResourceAllocationTasks)
+	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
