@@ -316,7 +316,7 @@ To assign or unassign a role for a user or a group on a particular workspace,
 #. To create new role assignments, use "Add Members" button at the top right.
 #. To remove existing role assignments, click the triple-dot menu for a user/group and select
    "Remove".
-#. To edit the role just click on the dropdown in the role column for a user/group and make your
+#. To edit the role, click on the dropdown in the role column for a user/group and make your
    selection.
 
 .. _rbac-concepts:
