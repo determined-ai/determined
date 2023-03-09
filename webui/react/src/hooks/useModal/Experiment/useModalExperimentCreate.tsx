@@ -150,7 +150,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     });
   }, []);
 
-  const toggleMode = useCallback(() => {
+  const toggleMode = useCallback(async () => {
     setModalState((prev) => {
       if (!prev) return prev;
 
@@ -166,8 +166,6 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
               value: !isFork ? getMaxLengthValue(newConfig) : undefined,
             },
           ]);
-
-          form.validateFields();
         } catch (e) {
           handleError(e, { publicMessage: 'failed to load previous yaml config' });
         }
@@ -180,7 +178,8 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         isAdvancedMode: !prev.isAdvancedMode,
       };
     });
-  }, []);
+    await form.validateFields();
+  }, [form]);
 
   const getConfigFromForm = useCallback(
     (config: RawJson) => {
