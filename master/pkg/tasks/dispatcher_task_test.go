@@ -1423,36 +1423,9 @@ func TestTaskSpec_computeResources(t *testing.T) {
 
 func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 	type fields struct {
-		// Description            string
-		// LoggingFields          map[string]string
-		// ClusterID              string
-		// HarnessPath            string
-		// MasterCert             *tls.Certificate
-		// SSHRsaSize             int
-		// SegmentEnabled         bool
-		// SegmentAPIKey          string
-		// TaskContainerDefaults  model.TaskContainerDefaultsConfig
-		// Environment            expconf.EnvironmentConfig
-		// ResourcesConfig        expconf.ResourcesConfig
-		// WorkDir                string
-		// Owner                  *model.User
-		// AgentUserGroup         *model.AgentUserGroup
-		// ExtraArchives          []cproto.RunArchive
-		ExtraEnvVars map[string]string
-		// Entrypoint             []string
-		// Mounts                 []mount.Mount
-		// UseHostMode            bool
-		// ShmSize                int64
-		// TaskID                 string
-		// AllocationID           string
-		// AllocationSessionToken string
-		// ResourcesID            string
-		// ContainerID            string
-		// Devices                []device.Device
-		// UserSessionToken       string
-		// TaskType               model.TaskType
-		// SlurmConfig            expconf.SlurmConfig
-		// PbsConfig              expconf.PbsConfig
+		Workspace string
+		Project   string
+		Labels    []string
 	}
 	type args struct {
 		mode *string
@@ -1467,9 +1440,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "Default mode; workspace & project not specified",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"","workspace":""}`,
-				},
+				Project:   "",
+				Workspace: "",
+				Labels:    []string{},
 			},
 			args: args{
 				mode: nil,
@@ -1478,9 +1451,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "Default mode; workspace & project values present",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{},
 			},
 			args: args{
 				mode: nil,
@@ -1491,9 +1464,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "Project mode",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{},
 			},
 			args: args{
 				mode: ptrs.Ptr("project"),
@@ -1504,9 +1477,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "workspace mode",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{},
 			},
 			args: args{
 				mode: ptrs.Ptr("workspace"),
@@ -1517,10 +1490,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "label mode",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1",` +
-						`"labels":["label1","label2"]}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{"label1", "label2"},
 			},
 			args: args{
 				mode: ptrs.Ptr("label"),
@@ -1531,9 +1503,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "label mode, but no labels specified",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{},
 			},
 			args: args{
 				mode: ptrs.Ptr("label"),
@@ -1544,10 +1516,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "label mode, empty prefix",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1",` +
-						`"labels":["label1","label2"]}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{"label1", "label2"},
 			},
 			args: args{
 				mode: ptrs.Ptr("label:"),
@@ -1558,9 +1529,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 		{
 			name: "label:prefix mode",
 			fields: fields{
-				ExtraEnvVars: map[string]string{
-					"DET_EXPERIMENT_CONFIG": `{"labels":["label1","label2","no-match"]}`,
-				},
+				Project:   "project1",
+				Workspace: "workspace1",
+				Labels:    []string{"label1", "label2", "no-match"},
 			},
 			args: args{
 				mode: ptrs.Ptr("label:lab"),
@@ -1572,7 +1543,9 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &TaskSpec{
-				ExtraEnvVars: tt.fields.ExtraEnvVars,
+				Workspace: tt.fields.Workspace,
+				Project:   tt.fields.Project,
+				Labels:    tt.fields.Labels,
 			}
 			gotPbsResult, gotSlurmResult := tr.jobAndProjectLabels(tt.args.mode)
 			if !reflect.DeepEqual(gotPbsResult, tt.wantPbsResult) {
