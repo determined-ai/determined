@@ -391,7 +391,7 @@ the following:
    instance you may add a taint like ``kubectl taint nodes prod_node_name
    pool_taint=prod:NoSchedule`` and the appropriate toleration to the PodTolerationRestriction
    admissions controller or in the ``resourcePools. pool_name.task_container_defaults.gpu_pod_spec``
-   as above so it is automatically added to the podSpec based on which namespace (and hence resource
+   as above so it is automatically added to the pod spec based on which namespace (and hence resource
    pool) a task runs in.
 
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
