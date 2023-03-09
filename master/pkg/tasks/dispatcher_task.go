@@ -3,7 +3,6 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -22,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -311,43 +309,37 @@ func (t *TaskSpec) ToDispatcherManifest(
 // jobAndProjectLabels returns as command options the strings necessary to label
 // the job in the specified mode.
 func (t *TaskSpec) jobAndProjectLabels(mode *string) (pbsResult, slurmResult []string) {
-	// Recover the configuration from the JSON in the env. var.
-	configJSON := t.ExtraEnvVars["DET_EXPERIMENT_CONFIG"]
-	var expConf expconf.ExperimentConfig
-	if len(configJSON) > 0 {
-		if err := json.Unmarshal([]byte(configJSON), &expConf); err != nil {
-			logrus.Infof("Unable to Unmarshal exp config: %s", err)
-			return pbsResult, slurmResult
-		}
-		switch {
-		case (mode == nil || *mode == config.Project):
-			return computeJobProjectResult(expConf.RawProject)
-		case *mode == config.Workspace:
-			return computeJobProjectResult(expConf.RawWorkspace)
-		case *mode == config.Label:
-			return computeJobProjectResultForLabels(expConf.Labels(), "")
-		case strings.HasPrefix(*mode, config.LabelPrefix):
-			prefix := strings.TrimPrefix(*mode, config.LabelPrefix)
-			return computeJobProjectResultForLabels(expConf.Labels(), prefix)
-		}
+	switch {
+	case (mode == nil || *mode == config.Project):
+		return computeJobProjectResult(t.Project)
+	case *mode == config.Workspace:
+		return computeJobProjectResult(t.Workspace)
+	case *mode == config.Label:
+		return computeJobProjectResultForLabels(t.Labels, "")
+	case strings.HasPrefix(*mode, config.LabelPrefix):
+		prefix := strings.TrimPrefix(*mode, config.LabelPrefix)
+		return computeJobProjectResultForLabels(t.Labels, prefix)
 	}
 	return pbsResult, slurmResult
 }
 
-func computeJobProjectResult(labelValue *string) (pbsResult, slurmResult []string) {
-	if labelValue == nil || *labelValue == "" {
+func computeJobProjectResult(labelValue string) (pbsResult, slurmResult []string) {
+	if len(labelValue) == 0 {
 		return slurmResult, pbsResult
 	}
-	slurmResult = append(slurmResult, formatSlurmLabelResult(*labelValue))
-	pbsResult = append(pbsResult, formatPbsLabelResult(*labelValue))
+	slurmResult = append(slurmResult, formatSlurmLabelResult(labelValue))
+	pbsResult = append(pbsResult, formatPbsLabelResult(labelValue))
 	return pbsResult, slurmResult
 }
 
 func computeJobProjectResultForLabels(
-	labels expconf.Labels, prefix string,
+	labels []string, prefix string,
 ) (pbsResult, slurmResult []string) {
+	if len(labels) == 0 {
+		return pbsResult, slurmResult
+	}
 	var labelNames []string
-	for labelName := range labels {
+	for _, labelName := range labels {
 		if prefix != "" && !strings.HasPrefix(labelName, prefix) {
 			continue
 		}
