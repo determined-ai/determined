@@ -688,7 +688,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
-        return openOrCreateTensorBoard({ experimentIds: settings.row });
+        return openOrCreateTensorBoard({
+          experimentIds: settings.row,
+          workspaceId: project?.workspaceId,
+        });
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;

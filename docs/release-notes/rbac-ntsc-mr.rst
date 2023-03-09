@@ -8,7 +8,9 @@
    has added support for Role-Based Access Control over new entities:
 
    -  JupyterLab Notebooks, Tensorboards, Shells, and Commands are now housed under workspaces.
-      Access to these tasks can now be restricted by role.
+      Access to these tasks can now be restricted by role. Launching Tensorboards from WebUI
+      launches at the experiment worspace by default.
+
    -  Model Registry: models are now associated with workspaces. Models can be moved between
       workspaces and access to them can be restricted by role.
 
