@@ -38,10 +38,16 @@ def main(
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
-
-    trainset = torchvision.datasets.CIFAR10(
-        root=hparams.data.root, train=True, download=False, transform=transform
-    )
+    # Cluster specific code for Grenoble.
+    try:
+        # This works on GG's Grenoble setup, but not otherwise.
+        trainset = torchvision.datasets.CIFAR10(
+            root=hparams.data.root, train=True, download=False, transform=transform
+        )
+    except:
+        trainset = torchvision.datasets.CIFAR10(
+            root=".", train=True, download=True, transform=transform
+        )
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=16, shuffle=True, num_workers=2)
 
