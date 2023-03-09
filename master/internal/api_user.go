@@ -152,7 +152,7 @@ func (a *apiServer) GetUsers(
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	users := []model.FullUser{}
-	nameFilterExpr := "%"+ req.Name+ "%"
+	nameFilterExpr := "%" + req.Name + "%"
 	selectExpr := `
 SELECT
 	u.id, u.display_name, u.username, u.admin, u.active, u.modified_at,
@@ -163,7 +163,7 @@ LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
 WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
 `
 	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
-	err := db.Bun().NewRaw(query, req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users);
+	err := db.Bun().NewRaw(query, req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
 	if err != nil {
 		return nil, err
 	}
