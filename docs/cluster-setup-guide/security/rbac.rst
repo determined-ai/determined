@@ -309,7 +309,7 @@ To assign or unassign a role for a user or a group on a particular workspace,
 .. attention::
 
    Only users with the WorkspaceAdmin role can add/edit workspaced-scoped role assignments for users
-   and groups
+   and groups.
 
 #. Go to the workspaces page, select the target workspace.
 #. Click "Members" tab at the top.
