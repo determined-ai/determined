@@ -42,7 +42,6 @@ APIs and the experiment configuration file:
 
    Core API Reference <training/api-core-reference>
    PyTorch API Reference <training/api-pytorch-reference>
-   PyTorch Trainer API Reference <training/api-pytorch-trainer-reference>
    PyTorch Lightning API Reference <training/api-pytorch-lightning-reference>
    Keras API Reference <training/api-keras-reference>
    DeepSpeed API Reference <training/api-deepspeed-reference>

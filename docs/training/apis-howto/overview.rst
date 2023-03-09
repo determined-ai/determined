@@ -33,7 +33,6 @@ Once you have converted your code, you can use an :doc:`experiment configuration
 model - e.g., multi-GPU, hyperparameter search, etc.
 
 -  :doc:`/training/apis-howto/api-pytorch-ug`
--  :doc:`/training/apis-howto/api-pytorch-trainer-ug`
 -  :doc:`/training/apis-howto/api-pytorch-lightning-ug`
 -  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
@@ -108,7 +107,6 @@ Known limitations:
 
    api-core-ug
    api-pytorch-ug
-   api-pytorch-trainer-ug
    api-pytorch-lightning-ug
    api-keras-ug
    deepspeed/overview
