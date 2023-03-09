@@ -355,7 +355,7 @@ Setting Up Multiple Resource Pools
 In order to set up multiple resource pools for Determined on your Kubernetes cluster, you need to do
 the following:
 
-#. First `create a namespace
+#. `Create a namespace
    <https://kubernetes.io/docs/tasks/administer-cluster/namespaces/#creating-a-new-namespace>`__ for
    each resource pool. The default namespace can also be mapped to a resource pool.
 
