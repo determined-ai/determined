@@ -160,6 +160,20 @@ message AssignRolesRequest {
 // to grant a user or group a role.
 message AssignRolesResponse {}
 
+// TransferRoles is the body of the request for the call to
+// transfer a user or group to a new role. It requires group_id, role_id,
+// and either scope_workspace_id or scope_project_id.
+message TransferRolesRequest {
+  // the set of groups being assigned to a role.
+  repeated determined.rbac.v1.GroupRoleAssignment group_role_assignments = 1;
+  // the set of users being assigned to a role.
+  repeated determined.rbac.v1.UserRoleAssignment user_role_assignments = 2;
+}
+
+// TransferRolesResponse is the body of the request for the call
+// to transfer a user or group to a new role.
+message TransferRolesResponse {}
+
 // RemoveAssignmentsRequest is the body of the request for the call
 // to remove a user or group from a role.
 message RemoveAssignmentsRequest {

@@ -8141,6 +8141,32 @@ export interface V1TimestampFieldFilter {
     gte?: Date;
 }
 /**
+ * TransferRoles is the body of the request for the call to transfer a user or group to a new role. It requires group_id, role_id, and either scope_workspace_id or scope_project_id.
+ * @export
+ * @interface V1TransferRolesRequest
+ */
+export interface V1TransferRolesRequest {
+    /**
+     * the set of groups being assigned to a role.
+     * @type {Array<V1GroupRoleAssignment>}
+     * @memberof V1TransferRolesRequest
+     */
+    groupRoleAssignments?: Array<V1GroupRoleAssignment>;
+    /**
+     * the set of users being assigned to a role.
+     * @type {Array<V1UserRoleAssignment>}
+     * @memberof V1TransferRolesRequest
+     */
+    userRoleAssignments?: Array<V1UserRoleAssignment>;
+}
+/**
+ * TransferRolesResponse is the body of the request for the call to transfer a user or group to a new role.
+ * @export
+ * @interface V1TransferRolesResponse
+ */
+export interface V1TransferRolesResponse {
+}
+/**
  * TrialClosed is a searcher event triggered when a trial has successfully finished.
  * @export
  * @interface V1TrialClosed
@@ -21301,6 +21327,45 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary TransferRoles changes a set of role assignments to the system.
+         * @param {V1TransferRolesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        transferRoles(body: V1TransferRolesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling transferRoles.');
+            }
+            const localVarPath = `/api/v1/roles/transfer-assignments`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -21481,6 +21546,25 @@ export const RBACApiFp = function (configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary TransferRoles changes a set of role assignments to the system.
+         * @param {V1TransferRolesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        transferRoles(body: V1TransferRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TransferRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).transferRoles(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -21579,6 +21663,16 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          */
         searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
             return RBACApiFp(configuration).searchRolesAssignableToScope(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary TransferRoles changes a set of role assignments to the system.
+         * @param {V1TransferRolesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        transferRoles(body: V1TransferRolesRequest, options?: any) {
+            return RBACApiFp(configuration).transferRoles(body, options)(fetch, basePath);
         },
     }
 };
@@ -21696,6 +21790,18 @@ export class RBACApi extends BaseAPI {
      */
     public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
         return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary TransferRoles changes a set of role assignments to the system.
+     * @param {V1TransferRolesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RBACApi
+     */
+    public transferRoles(body: V1TransferRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).transferRoles(body, options)(this.fetch, this.basePath)
     }
     
 }

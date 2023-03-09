@@ -10313,6 +10313,40 @@ class v1TimestampFieldFilter:
             out["lte"] = self.lte
         return out
 
+class v1TransferRolesRequest:
+    groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
+    userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None
+
+    def __init__(
+        self,
+        *,
+        groupRoleAssignments: "typing.Union[typing.Sequence[v1GroupRoleAssignment], None, Unset]" = _unset,
+        userRoleAssignments: "typing.Union[typing.Sequence[v1UserRoleAssignment], None, Unset]" = _unset,
+    ):
+        if not isinstance(groupRoleAssignments, Unset):
+            self.groupRoleAssignments = groupRoleAssignments
+        if not isinstance(userRoleAssignments, Unset):
+            self.userRoleAssignments = userRoleAssignments
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TransferRolesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "groupRoleAssignments" in obj:
+            kwargs["groupRoleAssignments"] = [v1GroupRoleAssignment.from_json(x) for x in obj["groupRoleAssignments"]] if obj["groupRoleAssignments"] is not None else None
+        if "userRoleAssignments" in obj:
+            kwargs["userRoleAssignments"] = [v1UserRoleAssignment.from_json(x) for x in obj["userRoleAssignments"]] if obj["userRoleAssignments"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "groupRoleAssignments" in vars(self):
+            out["groupRoleAssignments"] = None if self.groupRoleAssignments is None else [x.to_json(omit_unset) for x in self.groupRoleAssignments]
+        if not omit_unset or "userRoleAssignments" in vars(self):
+            out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
+        return out
+
 class v1TrialClosed:
 
     def __init__(
@@ -15617,6 +15651,26 @@ def post_TestWebhook(
     if _resp.status_code == 200:
         return v1TestWebhookResponse.from_json(_resp.json())
     raise APIHttpError("post_TestWebhook", _resp)
+
+def post_TransferRoles(
+    session: "api.Session",
+    *,
+    body: "v1TransferRolesRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/roles/transfer-assignments",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_TransferRoles", _resp)
 
 def get_TrialLogs(
     session: "api.Session",

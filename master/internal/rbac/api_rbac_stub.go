@@ -68,6 +68,12 @@ func (s *rbacAPIServerStub) AssignRoles(ctx context.Context, req *apiv1.AssignRo
 	return nil, UnimplementedError
 }
 
+func (s *rbacAPIServerStub) TransferRoles(ctx context.Context, req *apiv1.TransferRolesRequest) (
+	*apiv1.TransferRolesResponse, error,
+) {
+	return nil, UnimplementedError
+}
+
 func (s *rbacAPIServerStub) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest,
 ) (*apiv1.RemoveAssignmentsResponse, error) {

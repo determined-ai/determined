@@ -30,6 +30,8 @@ type RBACAPIServer interface {
 		*apiv1.ListRolesResponse, error)
 	AssignRoles(context.Context, *apiv1.AssignRolesRequest) (
 		*apiv1.AssignRolesResponse, error)
+	TransferRoles(context.Context, *apiv1.TransferRolesRequest) (
+		*apiv1.TransferRolesResponse, error)
 	RemoveAssignments(context.Context, *apiv1.RemoveAssignmentsRequest) (
 		*apiv1.RemoveAssignmentsResponse, error)
 	AssignWorkspaceAdminToUserTx(

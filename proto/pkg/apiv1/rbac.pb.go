@@ -895,6 +895,106 @@ func (*AssignRolesResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{15}
 }
 
+// TransferRoles is the body of the request for the call to
+// transfer a user or group to a new role. It requires group_id, role_id,
+// and either scope_workspace_id or scope_project_id.
+type TransferRolesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// the set of groups being assigned to a role.
+	GroupRoleAssignments []*rbacv1.GroupRoleAssignment `protobuf:"bytes,1,rep,name=group_role_assignments,json=groupRoleAssignments,proto3" json:"group_role_assignments,omitempty"`
+	// the set of users being assigned to a role.
+	UserRoleAssignments []*rbacv1.UserRoleAssignment `protobuf:"bytes,2,rep,name=user_role_assignments,json=userRoleAssignments,proto3" json:"user_role_assignments,omitempty"`
+}
+
+func (x *TransferRolesRequest) Reset() {
+	*x = TransferRolesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_rbac_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TransferRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferRolesRequest) ProtoMessage() {}
+
+func (x *TransferRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_rbac_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferRolesRequest.ProtoReflect.Descriptor instead.
+func (*TransferRolesRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TransferRolesRequest) GetGroupRoleAssignments() []*rbacv1.GroupRoleAssignment {
+	if x != nil {
+		return x.GroupRoleAssignments
+	}
+	return nil
+}
+
+func (x *TransferRolesRequest) GetUserRoleAssignments() []*rbacv1.UserRoleAssignment {
+	if x != nil {
+		return x.UserRoleAssignments
+	}
+	return nil
+}
+
+// TransferRolesResponse is the body of the request for the call
+// to transfer a user or group to a new role.
+type TransferRolesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *TransferRolesResponse) Reset() {
+	*x = TransferRolesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_rbac_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TransferRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferRolesResponse) ProtoMessage() {}
+
+func (x *TransferRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_rbac_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferRolesResponse.ProtoReflect.Descriptor instead.
+func (*TransferRolesResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{17}
+}
+
 // RemoveAssignmentsRequest is the body of the request for the call
 // to remove a user or group from a role.
 type RemoveAssignmentsRequest struct {
@@ -911,7 +1011,7 @@ type RemoveAssignmentsRequest struct {
 func (x *RemoveAssignmentsRequest) Reset() {
 	*x = RemoveAssignmentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_rbac_proto_msgTypes[16]
+		mi := &file_determined_api_v1_rbac_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -924,7 +1024,7 @@ func (x *RemoveAssignmentsRequest) String() string {
 func (*RemoveAssignmentsRequest) ProtoMessage() {}
 
 func (x *RemoveAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_rbac_proto_msgTypes[16]
+	mi := &file_determined_api_v1_rbac_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -937,7 +1037,7 @@ func (x *RemoveAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*RemoveAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{16}
+	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RemoveAssignmentsRequest) GetGroupRoleAssignments() []*rbacv1.GroupRoleAssignment {
@@ -965,7 +1065,7 @@ type RemoveAssignmentsResponse struct {
 func (x *RemoveAssignmentsResponse) Reset() {
 	*x = RemoveAssignmentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_rbac_proto_msgTypes[17]
+		mi := &file_determined_api_v1_rbac_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -978,7 +1078,7 @@ func (x *RemoveAssignmentsResponse) String() string {
 func (*RemoveAssignmentsResponse) ProtoMessage() {}
 
 func (x *RemoveAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_rbac_proto_msgTypes[17]
+	mi := &file_determined_api_v1_rbac_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -991,7 +1091,7 @@ func (x *RemoveAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*RemoveAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{17}
+	return file_determined_api_v1_rbac_proto_rawDescGZIP(), []int{19}
 }
 
 var File_determined_api_v1_rbac_proto protoreflect.FileDescriptor
@@ -1137,26 +1237,41 @@ var file_determined_api_v1_rbac_proto_rawDesc = []byte{
 	0x72, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52,
 	0x13, 0x75, 0x73, 0x65, 0x72, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
 	0x65, 0x6e, 0x74, 0x73, 0x22, 0x15, 0x0a, 0x13, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x6f,
-	0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd5, 0x01, 0x0a, 0x18,
-	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x5d, 0x0a, 0x16, 0x67, 0x72, 0x6f, 0x75,
-	0x70, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e,
-	0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x72,
-	0x6f, 0x75, 0x70, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e,
-	0x74, 0x52, 0x14, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69,
-	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x5a, 0x0a, 0x15, 0x75, 0x73, 0x65, 0x72, 0x5f,
-	0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
-	0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
-	0x6e, 0x65, 0x64, 0x2e, 0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72,
-	0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x13,
-	0x75, 0x73, 0x65, 0x72, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65,
-	0x6e, 0x74, 0x73, 0x22, 0x1b, 0x0a, 0x19, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x73, 0x73,
-	0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
-	0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd1, 0x01, 0x0a, 0x14,
+	0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x5d, 0x0a, 0x16, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f, 0x72, 0x6f,
+	0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2e, 0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52,
+	0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x14, 0x67,
+	0x72, 0x6f, 0x75, 0x70, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x12, 0x5a, 0x0a, 0x15, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x72, 0x6f, 0x6c, 0x65,
+	0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x26, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e,
+	0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x6f, 0x6c, 0x65,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x13, 0x75, 0x73, 0x65, 0x72,
+	0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x22,
+	0x17, 0x0a, 0x15, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x66, 0x65, 0x72, 0x52, 0x6f, 0x6c, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd5, 0x01, 0x0a, 0x18, 0x52, 0x65, 0x6d,
+	0x6f, 0x76, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x5d, 0x0a, 0x16, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x5f, 0x72,
+	0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2e, 0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x72, 0x6f, 0x75, 0x70,
+	0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x14,
+	0x67, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x73, 0x12, 0x5a, 0x0a, 0x15, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x72, 0x6f, 0x6c,
+	0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x02, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
+	0x2e, 0x72, 0x62, 0x61, 0x63, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x6f, 0x6c,
+	0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x13, 0x75, 0x73, 0x65,
+	0x72, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x22, 0x1b, 0x0a, 0x19, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a,
+	0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
+	0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61,
+	0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1171,7 +1286,7 @@ func file_determined_api_v1_rbac_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_rbac_proto_rawDescData
 }
 
-var file_determined_api_v1_rbac_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_determined_api_v1_rbac_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_determined_api_v1_rbac_proto_goTypes = []interface{}{
 	(*GetPermissionsSummaryRequest)(nil),                 // 0: determined.api.v1.GetPermissionsSummaryRequest
 	(*GetPermissionsSummaryResponse)(nil),                // 1: determined.api.v1.GetPermissionsSummaryResponse
@@ -1189,42 +1304,46 @@ var file_determined_api_v1_rbac_proto_goTypes = []interface{}{
 	(*ListRolesResponse)(nil),                            // 13: determined.api.v1.ListRolesResponse
 	(*AssignRolesRequest)(nil),                           // 14: determined.api.v1.AssignRolesRequest
 	(*AssignRolesResponse)(nil),                          // 15: determined.api.v1.AssignRolesResponse
-	(*RemoveAssignmentsRequest)(nil),                     // 16: determined.api.v1.RemoveAssignmentsRequest
-	(*RemoveAssignmentsResponse)(nil),                    // 17: determined.api.v1.RemoveAssignmentsResponse
-	(*rbacv1.Role)(nil),                                  // 18: determined.rbac.v1.Role
-	(*rbacv1.RoleAssignmentSummary)(nil),                 // 19: determined.rbac.v1.RoleAssignmentSummary
-	(*groupv1.GroupDetails)(nil),                         // 20: determined.group.v1.GroupDetails
-	(*userv1.User)(nil),                                  // 21: determined.user.v1.User
-	(*rbacv1.RoleWithAssignments)(nil),                   // 22: determined.rbac.v1.RoleWithAssignments
-	(*wrappers.Int32Value)(nil),                          // 23: google.protobuf.Int32Value
-	(*Pagination)(nil),                                   // 24: determined.api.v1.Pagination
-	(*rbacv1.GroupRoleAssignment)(nil),                   // 25: determined.rbac.v1.GroupRoleAssignment
-	(*rbacv1.UserRoleAssignment)(nil),                    // 26: determined.rbac.v1.UserRoleAssignment
+	(*TransferRolesRequest)(nil),                         // 16: determined.api.v1.TransferRolesRequest
+	(*TransferRolesResponse)(nil),                        // 17: determined.api.v1.TransferRolesResponse
+	(*RemoveAssignmentsRequest)(nil),                     // 18: determined.api.v1.RemoveAssignmentsRequest
+	(*RemoveAssignmentsResponse)(nil),                    // 19: determined.api.v1.RemoveAssignmentsResponse
+	(*rbacv1.Role)(nil),                                  // 20: determined.rbac.v1.Role
+	(*rbacv1.RoleAssignmentSummary)(nil),                 // 21: determined.rbac.v1.RoleAssignmentSummary
+	(*groupv1.GroupDetails)(nil),                         // 22: determined.group.v1.GroupDetails
+	(*userv1.User)(nil),                                  // 23: determined.user.v1.User
+	(*rbacv1.RoleWithAssignments)(nil),                   // 24: determined.rbac.v1.RoleWithAssignments
+	(*wrappers.Int32Value)(nil),                          // 25: google.protobuf.Int32Value
+	(*Pagination)(nil),                                   // 26: determined.api.v1.Pagination
+	(*rbacv1.GroupRoleAssignment)(nil),                   // 27: determined.rbac.v1.GroupRoleAssignment
+	(*rbacv1.UserRoleAssignment)(nil),                    // 28: determined.rbac.v1.UserRoleAssignment
 }
 var file_determined_api_v1_rbac_proto_depIdxs = []int32{
-	18, // 0: determined.api.v1.GetPermissionsSummaryResponse.roles:type_name -> determined.rbac.v1.Role
-	19, // 1: determined.api.v1.GetPermissionsSummaryResponse.assignments:type_name -> determined.rbac.v1.RoleAssignmentSummary
-	20, // 2: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.groups:type_name -> determined.group.v1.GroupDetails
-	21, // 3: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.users_assigned_directly:type_name -> determined.user.v1.User
-	22, // 4: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.assignments:type_name -> determined.rbac.v1.RoleWithAssignments
-	22, // 5: determined.api.v1.GetRolesByIDResponse.roles:type_name -> determined.rbac.v1.RoleWithAssignments
-	22, // 6: determined.api.v1.GetRolesAssignedToUserResponse.roles:type_name -> determined.rbac.v1.RoleWithAssignments
-	18, // 7: determined.api.v1.GetRolesAssignedToGroupResponse.roles:type_name -> determined.rbac.v1.Role
-	19, // 8: determined.api.v1.GetRolesAssignedToGroupResponse.assignments:type_name -> determined.rbac.v1.RoleAssignmentSummary
-	23, // 9: determined.api.v1.SearchRolesAssignableToScopeRequest.workspace_id:type_name -> google.protobuf.Int32Value
-	24, // 10: determined.api.v1.SearchRolesAssignableToScopeResponse.pagination:type_name -> determined.api.v1.Pagination
-	18, // 11: determined.api.v1.SearchRolesAssignableToScopeResponse.roles:type_name -> determined.rbac.v1.Role
-	18, // 12: determined.api.v1.ListRolesResponse.roles:type_name -> determined.rbac.v1.Role
-	24, // 13: determined.api.v1.ListRolesResponse.pagination:type_name -> determined.api.v1.Pagination
-	25, // 14: determined.api.v1.AssignRolesRequest.group_role_assignments:type_name -> determined.rbac.v1.GroupRoleAssignment
-	26, // 15: determined.api.v1.AssignRolesRequest.user_role_assignments:type_name -> determined.rbac.v1.UserRoleAssignment
-	25, // 16: determined.api.v1.RemoveAssignmentsRequest.group_role_assignments:type_name -> determined.rbac.v1.GroupRoleAssignment
-	26, // 17: determined.api.v1.RemoveAssignmentsRequest.user_role_assignments:type_name -> determined.rbac.v1.UserRoleAssignment
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	20, // 0: determined.api.v1.GetPermissionsSummaryResponse.roles:type_name -> determined.rbac.v1.Role
+	21, // 1: determined.api.v1.GetPermissionsSummaryResponse.assignments:type_name -> determined.rbac.v1.RoleAssignmentSummary
+	22, // 2: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.groups:type_name -> determined.group.v1.GroupDetails
+	23, // 3: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.users_assigned_directly:type_name -> determined.user.v1.User
+	24, // 4: determined.api.v1.GetGroupsAndUsersAssignedToWorkspaceResponse.assignments:type_name -> determined.rbac.v1.RoleWithAssignments
+	24, // 5: determined.api.v1.GetRolesByIDResponse.roles:type_name -> determined.rbac.v1.RoleWithAssignments
+	24, // 6: determined.api.v1.GetRolesAssignedToUserResponse.roles:type_name -> determined.rbac.v1.RoleWithAssignments
+	20, // 7: determined.api.v1.GetRolesAssignedToGroupResponse.roles:type_name -> determined.rbac.v1.Role
+	21, // 8: determined.api.v1.GetRolesAssignedToGroupResponse.assignments:type_name -> determined.rbac.v1.RoleAssignmentSummary
+	25, // 9: determined.api.v1.SearchRolesAssignableToScopeRequest.workspace_id:type_name -> google.protobuf.Int32Value
+	26, // 10: determined.api.v1.SearchRolesAssignableToScopeResponse.pagination:type_name -> determined.api.v1.Pagination
+	20, // 11: determined.api.v1.SearchRolesAssignableToScopeResponse.roles:type_name -> determined.rbac.v1.Role
+	20, // 12: determined.api.v1.ListRolesResponse.roles:type_name -> determined.rbac.v1.Role
+	26, // 13: determined.api.v1.ListRolesResponse.pagination:type_name -> determined.api.v1.Pagination
+	27, // 14: determined.api.v1.AssignRolesRequest.group_role_assignments:type_name -> determined.rbac.v1.GroupRoleAssignment
+	28, // 15: determined.api.v1.AssignRolesRequest.user_role_assignments:type_name -> determined.rbac.v1.UserRoleAssignment
+	27, // 16: determined.api.v1.TransferRolesRequest.group_role_assignments:type_name -> determined.rbac.v1.GroupRoleAssignment
+	28, // 17: determined.api.v1.TransferRolesRequest.user_role_assignments:type_name -> determined.rbac.v1.UserRoleAssignment
+	27, // 18: determined.api.v1.RemoveAssignmentsRequest.group_role_assignments:type_name -> determined.rbac.v1.GroupRoleAssignment
+	28, // 19: determined.api.v1.RemoveAssignmentsRequest.user_role_assignments:type_name -> determined.rbac.v1.UserRoleAssignment
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_rbac_proto_init() }
@@ -1427,7 +1546,7 @@ func file_determined_api_v1_rbac_proto_init() {
 			}
 		}
 		file_determined_api_v1_rbac_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemoveAssignmentsRequest); i {
+			switch v := v.(*TransferRolesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1439,6 +1558,30 @@ func file_determined_api_v1_rbac_proto_init() {
 			}
 		}
 		file_determined_api_v1_rbac_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TransferRolesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_rbac_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RemoveAssignmentsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_rbac_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RemoveAssignmentsResponse); i {
 			case 0:
 				return &v.state
@@ -1457,7 +1600,7 @@ func file_determined_api_v1_rbac_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_rbac_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

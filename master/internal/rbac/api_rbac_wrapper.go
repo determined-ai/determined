@@ -69,6 +69,13 @@ func (s *RBACAPIServerWrapper) AssignRoles(ctx context.Context, req *apiv1.Assig
 	return rbacAPIServer.AssignRoles(ctx, req)
 }
 
+// TransferRoles is a wrapper the same function the RBACAPIServer interface.
+func (s *RBACAPIServerWrapper) TransferRoles(ctx context.Context, req *apiv1.TransferRolesRequest) (
+	*apiv1.TransferRolesResponse, error,
+) {
+	return rbacAPIServer.TransferRoles(ctx, req)
+}
+
 // RemoveAssignments is a wrapper the same function the RBACAPIServer interface.
 func (s *RBACAPIServerWrapper) RemoveAssignments(ctx context.Context,
 	req *apiv1.RemoveAssignmentsRequest,

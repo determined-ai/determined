@@ -1940,6 +1940,17 @@ service Determined {
     };
   }
 
+  // TransferRoles changes a set of role assignments to the system.
+  rpc TransferRoles(TransferRolesRequest) returns (TransferRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/transfer-assignments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
   // RemoveAssignments removes a set of role assignments from the system.
   rpc RemoveAssignments(RemoveAssignmentsRequest)
       returns (RemoveAssignmentsResponse) {
