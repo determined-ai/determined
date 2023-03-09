@@ -333,6 +333,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           try {
             const commandResponse = await openOrCreateTensorBoard({
               experimentIds: [experiment.id],
+              workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
             setIsRunningTensorBoard(false);

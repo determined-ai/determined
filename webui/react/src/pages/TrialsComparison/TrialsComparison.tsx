@@ -28,9 +28,10 @@ import LearningCurveChart from './TrialsComparisonChart';
 
 interface Props {
   projectId: string;
+  workspaceId: number;
 }
 
-const TrialsComparison: React.FC<Props> = ({ projectId }) => {
+const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
   const config = useMemo(() => trialsTableSettingsConfig(projectId), [projectId]);
   const tableSettingsHook = useSettings<InteractiveTableSettings>(config);
 
@@ -51,6 +52,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     openCreateModal: collections.openCreateModal,
     refetch,
     sorter: collections.sorter,
+    workspaceId,
   });
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);
