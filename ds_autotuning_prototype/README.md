@@ -16,7 +16,7 @@ The basic steps:
 In the same directory as this `README`, run the following, for instance:
 
 ```bash
-python3 -m dsat.autotune examples/minimal_example/autotune_config.yaml examples/minimal_example
+python3 -m dsat.autotune examples/ffn_example/autotune_config.yaml examples/ffn_example
 ```
 
 (the config may need to be altered for your cluster.)
@@ -43,4 +43,4 @@ TODOs:
 - Not all native DS AT code paths are currently supported, e.g. providing explicit batch sizes to use,
   fast mode.
 - Benchmark against native DS AT. The 0.8.1 update which fixed the DS AT units issues might have also
-broken the `--autotuning run` flag?
+  broken the `--autotuning run` flag?
