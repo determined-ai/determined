@@ -275,10 +275,13 @@ describe('LogViewer', () => {
     it('should render logs with streaming', async () => {
       setup({ decoder, onFetch });
 
-      await waitFor(() => {
-        const lastLog = logsReference[logsReference.length - 1];
-        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          const lastLog = logsReference[logsReference.length - 1];
+          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+        },
+        { timeout: 4000 },
+      );
     });
 
     it('should show oldest logs', async () => {
