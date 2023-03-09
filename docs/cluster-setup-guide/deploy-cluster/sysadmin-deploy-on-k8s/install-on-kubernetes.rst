@@ -381,7 +381,7 @@ the following:
               apiVersion: v1
               kind: Pod
               spec:
-                  tolerations:
+                tolerations:
                   - key: "pool_taint"
                     operator: "Equal"
                     value: "prod"
