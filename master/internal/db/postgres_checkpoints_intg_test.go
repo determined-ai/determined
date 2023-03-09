@@ -302,7 +302,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 func BenchmarkUpdateCheckpointSize(b *testing.B) {
 	ctx := context.Background()
-	t := (*testing.T)(unsafe.Pointer(b)) //nolint: gosec // forgive me.
+	t := (*testing.T)(unsafe.Pointer(b)) //nolint: gosec // Hack to still use methods that take t.
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)

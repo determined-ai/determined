@@ -32,7 +32,6 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
-
 	return checkpoints, nil
 }
 
@@ -155,9 +154,9 @@ func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid
 	err := idb.NewRaw(`
 UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id,
-    SUM(size) FILTER (WHERE state != 'DELETED') AS size,
-    COUNT(*) FILTER (WHERE state != 'DELETED') AS count
-    FROM checkpoints_view
+	SUM(size) FILTER (WHERE state != 'DELETED') AS size,
+	COUNT(*) FILTER (WHERE state != 'DELETED') AS count
+	FROM checkpoints_view
 	WHERE trial_id IN (
 		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
 	)

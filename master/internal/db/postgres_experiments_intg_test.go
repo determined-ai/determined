@@ -54,7 +54,6 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		0,
 	)
 	require.NoError(t, err)
-
 	require.Equal(t, expectedCheckpoints, checkpoints)
 }
 
