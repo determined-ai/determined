@@ -25880,10 +25880,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25912,6 +25913,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -26257,11 +26262,12 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, options);
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26441,11 +26447,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
         },
         /**
          * 
@@ -26571,12 +26578,13 @@ export class UsersApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {string} [name] Filter by username or display name.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath);
     }
 
     /**
