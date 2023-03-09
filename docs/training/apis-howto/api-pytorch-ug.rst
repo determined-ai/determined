@@ -678,9 +678,8 @@ trial and context.
        main()
 
 Training is configured with a call to ``.fit()`` with training loop arguments, such as checkpointing
-periods, validation periods, and checkpointing policy. See the :doc:`Pytorch API reference
-document </reference/reference-training/training/api-pytorch-reference>` for the full list
-of arguments.
+periods, validation periods, and checkpointing policy. See the :doc:`Pytorch API reference document
+</reference/reference-training/training/api-pytorch-reference>` for the full list of arguments.
 
 .. code:: python
 
