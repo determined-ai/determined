@@ -11,8 +11,20 @@
   }
   .row {
     align-items: center;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+  }
+  .displayInfo {
+    align-items: center;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: 8fr 1fr;
+  }
+  .form {
+    align-items: center;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: 6fr 1fr 1fr;
   }
   label {
     color: var(--theme-surface-on-weak);

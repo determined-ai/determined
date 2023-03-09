@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.12`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.19.12`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -296,7 +296,9 @@ The master supports the following configuration settings:
 
       -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
          something other than ``root``. The user must have a home directory with read permissions
-         for all users to enable access to generated ``sbatch`` scripts and job log files.
+         for all users to enable access to generated ``sbatch`` scripts and job log files. It must
+         have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
+         ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
@@ -372,6 +374,8 @@ The master supports the following configuration settings:
             so it is recommended that ``prefix`` is configured to match a single label to enable use
             of the workload manager reporting tools that summarize usage by each WCKey/Project
             value.
+
+.. _cluster-resource-pools:
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when

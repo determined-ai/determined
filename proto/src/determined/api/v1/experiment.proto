@@ -33,7 +33,7 @@ message DataPointTime {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "time", "value" ] }
   };
-  // Total batches processed by the time this measurement is taken.
+  // The time the measurement is taken.
   google.protobuf.Timestamp time = 1;
   // Value of the requested metric at this point in the trial.
   double value = 2;
@@ -382,25 +382,6 @@ message MetricNamesResponse {
   repeated string validation_metrics = 3;
 }
 
-// Request for the set of metrics recorded by an experiment.
-message ExpCompareMetricNamesRequest {
-  // The id of the experiment.
-  repeated int32 trial_id = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["trial_id"];
-      }];
-  // Seconds to wait when polling for updates.
-  int32 period_seconds = 2;
-}
-
-// Response to MetricNamesRequest.
-message ExpCompareMetricNamesResponse {
-  // List of training metric names.
-  repeated string training_metrics = 1;
-  // List of validation metric names.
-  repeated string validation_metrics = 2;
-}
 // To distinguish the 2 different categories of metrics.
 enum MetricType {
   // Zero-value (not allowed).
@@ -443,7 +424,7 @@ message MetricBatchesResponse {
   repeated int32 batches = 1;
 }
 
-// Request metrics from all trials at a progress point of progress.
+// Request metrics from all trials at a point of progress.
 message TrialsSnapshotRequest {
   // The id of the experiment.
   int32 experiment_id = 1
@@ -552,73 +533,6 @@ message TrialsSampleResponse {
   }
   // A historical or incremental series of data points for the trials.
   repeated Trial trials = 1;
-  // IDs of trials that are newly included in the data.
-  repeated int32 promoted_trials = 2;
-  // IDs of trials that are no loger included in the top N trials.
-  repeated int32 demoted_trials = 3;
-}
-
-// Request a sample of metrics over time for a sample of trials.
-message ExpCompareTrialsSampleRequest {
-  // The id of the experiment.
-  repeated int32 experiment_ids = 1
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["experiment_ids"];
-      }];
-  // A metric name.
-  string metric_name = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_name"];
-      }];
-  // The type of metric.
-  MetricType metric_type = 3
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["metric_type"];
-      }];
-  // Maximum number of trials to fetch data for.
-  int32 max_trials = 4;
-  // Maximum number of initial / historical data points.
-  int32 max_datapoints = 5;
-  // Beginning of window (inclusive) to fetch data for.
-  int32 start_batches = 6;
-  // Ending of window (inclusive) to fetch data for.
-  int32 end_batches = 7;
-  // Seconds to wait when polling for updates.
-  int32 period_seconds = 8;
-}
-
-// Response to ExpCompareTrialsSampleRequest
-message ExpCompareTrialsSampleResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
-  };
-  // Series of data points for an experiment trial.
-  message ExpTrial {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-        required: [ "trial_id", "hparams", "data", "experiment_id" ]
-      }
-    };
-    // The id of the trial.
-    int32 trial_id = 1;
-    // Hyperparamters values for this specific trial.
-    google.protobuf.Struct hparams = 2;
-    // A possibly down-sampled series of metric readings through the progress of
-    // the trial.
-
-    // Data related to a trial.
-    repeated DataPoint data = 3;
-    // The id of the experiment for the trial
-    int32 experiment_id = 4;
-  }
-
-  // Metadata and metrics stream from a trial.
-
-  // A historical or incremental series of data points for the trials.
-  repeated ExpTrial trials = 1;
   // IDs of trials that are newly included in the data.
   repeated int32 promoted_trials = 2;
   // IDs of trials that are no loger included in the top N trials.

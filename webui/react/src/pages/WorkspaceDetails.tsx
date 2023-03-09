@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -21,10 +22,11 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
-import { User, Workspace } from 'types';
+import usersStore from 'stores/users';
+import { DetailedUser, User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
@@ -49,12 +51,13 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();
-  const [workspace, setWorkspace] = useState<Workspace>();
+  const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
   const [usersAssignedDirectly, setUsersAssignedDirectly] = useState<User[]>([]);
   const [groupsAssignedDirectly, setGroupsAssignedDirectly] = useState<V1Group[]>([]);
@@ -75,9 +78,9 @@ const WorkspaceDetails: React.FC = () => {
   );
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = workspaceID ?? '';
-  const id = parseInt(workspaceId);
+  const id = Number(workspaceId);
   const navigate = useNavigate();
-  const { canViewWorkspace, canViewModelRegistry } = usePermissions();
+  const { canViewWorkspace, canViewModelRegistry, loading: rbacLoading } = usePermissions();
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -87,8 +90,6 @@ const WorkspaceDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [canceler.signal, id, pageError]);
-
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -222,7 +223,7 @@ const WorkspaceDetails: React.FC = () => {
     if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
-      fetchUsers(),
+      usersStore.ensureUsersFetched(canceler),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
@@ -230,8 +231,8 @@ const WorkspaceDetails: React.FC = () => {
   }, [
     canViewWorkspaceFlag,
     fetchWorkspace,
+    canceler,
     fetchGroups,
-    fetchUsers,
     fetchGroupsAndUsersAssignedToWorkspace,
     fetchRolesAssignableToScope,
   ]);
@@ -263,8 +264,10 @@ const WorkspaceDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
+  } else if ((!rbacLoading && !canViewWorkspaceFlag) || (pageError && isNotFound(pageError))) {
+    return <PageNotFound />;
   } else if (!workspace) {
-    return <Spinner tip={`Loading workspace ${workspaceId} details...`} />;
+    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   }
 
   return (
@@ -280,8 +283,7 @@ const WorkspaceDetails: React.FC = () => {
         />
       }
       id="workspaceDetails"
-      key={workspaceId}
-      notFound={(pageError && isNotFound(pageError)) || !canViewWorkspaceFlag}>
+      key={workspaceId}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane

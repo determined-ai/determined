@@ -1,0 +1,13 @@
+.base {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+
+  :global(.ant-select-selection-overflow) {
+    overflow: hidden;
+  }
+  :global(.ant-select-selection-search-input),
+  :global(.ant-select-multiple .ant-select-selection-search-input) {
+    width: auto;
+  }
+}

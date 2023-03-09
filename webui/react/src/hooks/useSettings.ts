@@ -8,9 +8,10 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
@@ -22,7 +23,6 @@ export interface SettingsConfigProp<A> {
 }
 
 export interface SettingsConfig<T> {
-  applicableRoutespace?: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
   storagePath: string;
 }
@@ -135,22 +135,17 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
-  const pathname = window.location.pathname;
-  const shouldSkipUpdates = useMemo(
-    () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
-    [config.applicableRoutespace, pathname],
-  );
 
   // parse navigation url to state
   useEffect(() => {
-    if (!querySettings || shouldSkipUpdates) return;
+    if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
     const stateSettings = state.get(config.storagePath) ?? {};
@@ -162,7 +157,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     });
 
     update(config.storagePath, stateSettings, true);
-  }, [config, querySettings, state, update, shouldSkipUpdates]);
+  }, [config, querySettings, state, update]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -181,8 +176,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   }
 
   useEffect(() => {
-    if (shouldSkipUpdates) return;
-
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
 
@@ -291,7 +284,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateSettings = useCallback(
     async (updates: Settings, shouldPush = false) => {
-      if (!settings || shouldSkipUpdates) return;
+      if (!settings) return;
 
       const newSettings = { ...settings, ...updates };
 
@@ -314,7 +307,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       shouldPush ? navigate(url) : navigate(url, { replace: true });
     },
-    [config, settings, navigate, update, updateDB, shouldSkipUpdates],
+    [config, settings, navigate, update, updateDB],
   );
 
   return {

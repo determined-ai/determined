@@ -203,8 +203,13 @@ func (a *apiServer) LaunchShell(
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minSshdPort, maxSshdPort)
-	spec.Port = &port
-	spec.Config.Environment.Ports = map[string]int{"shell": port}
+	// Shell authentication happens through SSH keys, instead.
+	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
+		RawProxyPort:        port,
+		RawProxyTCP:         ptrs.Ptr(true),
+		RawUnauthenticated:  ptrs.Ptr(true),
+		RawDefaultServiceID: ptrs.Ptr(true),
+	})
 
 	spec.Config.Entrypoint = []string{
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
@@ -251,10 +256,6 @@ func (a *apiServer) LaunchShell(
 	spec.Metadata.PrivateKey = ptrs.Ptr(string(keys.PrivateKey))
 	spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))
 	spec.Keys = &keys
-
-	spec.ProxyTCP = true
-	// Shell authentication happens through SSH keys, instead.
-	spec.Unauthenticated = true
 
 	// Launch a Shell actor.
 	var shellID model.TaskID

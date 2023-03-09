@@ -2,9 +2,9 @@ import { ModalFuncProps, Select } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import EditableTagList from 'components/TagList';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
@@ -310,7 +310,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
                     <h2>
                       Tags <span>(optional)</span>
                     </h2>
-                    <EditableTagList tags={tags} onChange={updateTags} />
+                    <Tags tags={tags} onAction={tagsActionHelper(tags, updateTags)} />
                   </div>
                 </>
               ) : (
