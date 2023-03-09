@@ -1218,11 +1218,16 @@ func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
 
 	result := []k8sV1.ResourceQuota{}
 	for _, q := range quotas.Items {
+		foundRelevant := false
 		for resourceName := range q.Spec.Hard {
 			switch resourceName {
 			case k8sV1.ResourceCPU, ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
-				result = append(result, q)
+				foundRelevant = true
 			}
+		}
+
+		if foundRelevant {
+			result = append(result, q)
 		}
 	}
 
