@@ -525,7 +525,7 @@ const (
 // CheckpointV1 represents a row from the `raw_checkpoints` table.
 type CheckpointV1 struct {
 	bun.BaseModel     `bun:"table:raw_checkpoints"`
-	ID                int        `db:"id" json:"id"`
+	ID                int        `db:"id" json:"id" bun:"id,pk,autoincrement"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
@@ -543,7 +543,7 @@ type CheckpointV1 struct {
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
 	bun.BaseModel `bun:"table:checkpoints_v2"`
-	ID            int                    `db:"id"`
+	ID            int                    `db:"id" bun:"id,pk,autoincrement"`
 	UUID          uuid.UUID              `db:"uuid"`
 	TaskID        TaskID                 `db:"task_id"`
 	AllocationID  AllocationID           `db:"allocation_id"`
