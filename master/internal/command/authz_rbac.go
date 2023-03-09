@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -259,7 +262,13 @@ func (a *NSCAuthZRBAC) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	experimentIDs []int32, trialIDs []int32,
 ) (canGetTensorboards bool, serverError error) {
-	var workspaceIDs []model.AccessScopeID
+	accessDenied, err := a.checkForPermission(ctx, curUser, workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
+	if accessDenied != nil {
+		return false, status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	} else if err != nil {
+		return false, err
+	}
 
 	expToWorkspaceIDs, err := db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
 	if err != nil {
@@ -270,6 +279,8 @@ func (a *NSCAuthZRBAC) CanGetTensorboard(
 	if err != nil {
 		return false, errors.Wrapf(err, "error getting workspaceIDs from trial IDs")
 	}
+
+	var workspaceIDs []model.AccessScopeID
 	workspaceIDs = append(workspaceIDs, expToWorkspaceIDs...)
 	workspaceIDs = append(workspaceIDs, trialsToWorkspaceIDs...)
 
@@ -277,7 +288,7 @@ func (a *NSCAuthZRBAC) CanGetTensorboard(
 		return true, nil
 	}
 
-	accessDenied, err := a.checkForPermissions(ctx, curUser,
+	accessDenied, err = a.checkForPermissions(ctx, curUser,
 		workspaceIDs, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
 
 	if accessDenied != nil {
