@@ -1,7 +1,7 @@
-import pytest
-import torch
 import pathlib
 
+import pytest
+import torch
 from _pytest import monkeypatch
 
 import determined as det
@@ -60,8 +60,9 @@ class TestPyTorchContext:
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
 
-    def test_context_method(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
-
+    def test_context_method(
+        self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
+    ) -> None:
         def mock_get_tensorboard_path() -> pathlib.Path:
             return tmp_path
 
@@ -78,4 +79,4 @@ class TestPyTorchContext:
         writer.close()
 
         files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) ==  1
+        assert len(files) == 1
