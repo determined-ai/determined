@@ -117,9 +117,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
-  const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
-    openCommandResponse(await openOrCreateTensorBoard({ trialIds: [trial.id] }));
-  }, []);
+  const handleOpenTensorBoard = useCallback(
+    async (trial: TrialItem) => {
+      openCommandResponse(
+        await openOrCreateTensorBoard({ trialIds: [trial.id], workspaceId: workspace.id }),
+      );
+    },
+    [workspace.id],
+  );
 
   const handleViewLogs = useCallback(
     (trial: TrialItem) => {
@@ -309,12 +314,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       if (!settings.row) return;
 
       if (action === Action.OpenTensorBoard) {
-        return await openOrCreateTensorBoard({ trialIds: settings.row });
+        return await openOrCreateTensorBoard({ trialIds: settings.row, workspaceId: workspace.id });
       } else if (action === Action.CompareTrials) {
         return updateSettings({ compare: true });
       }
     },
-    [settings.row, updateSettings],
+    [settings.row, updateSettings, workspace.id],
   );
 
   const submitBatchAction = useCallback(
