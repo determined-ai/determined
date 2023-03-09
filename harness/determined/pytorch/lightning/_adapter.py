@@ -90,7 +90,7 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
             )
         for metric, value in a_dict.items():
             if type(value) == int or type(value) == float:
-                writer.add_scalar(metric, value, context.current_train_batch())  # type: ignore
+                writer.add_scalar(metric, value, context.current_train_batch())
 
     def lm_log(name: str, value: Any, *args: Any, **kwargs: Any) -> None:
         lm_log_dict({name: value}, *args, **kwargs)

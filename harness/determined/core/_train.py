@@ -227,7 +227,7 @@ class TrainContext:
 
 class DummyTrainContext(TrainContext):
     def __init__(self, tensorboard_path: Optional[pathlib.Path] = None) -> None:
-        self._tbd_directory = tensorboard_path  # type: Optional[pathlib.Path]
+        self._tbd_directory = tensorboard_path
 
     def set_status(self, status: str) -> None:
         logger.info(f"status: {status}")
@@ -269,5 +269,5 @@ class DummyTrainContext(TrainContext):
     def get_experiment_best_validation(self) -> Optional[float]:
         return None
 
-    def get_tensorboard_path(self) -> Optional[pathlib.Path]:
-        return self._tbd_directory
+    def get_tensorboard_path(self) -> pathlib.Path:
+        return self._tbd_directory  # type: ignore

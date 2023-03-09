@@ -1,5 +1,8 @@
 import pytest
 import torch
+import pathlib
+
+from _pytest import monkeypatch
 
 import determined as det
 from determined import errors, pytorch
@@ -57,10 +60,16 @@ class TestPyTorchContext:
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
 
-    def test_context_method(self) -> None:
+    def test_context_method(self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+
+        def mock_get_tensorboard_path() -> pathlib.Path:
+            return tmp_path
+
+        monkeypatch.setattr(self.context, "get_tensorboard_path", mock_get_tensorboard_path)
 
         assert self.context._tbd_writer is None
-        num_files = len(list(self.context.get_tensorboard_path().iterdir()))
+        files = list(self.context.get_tensorboard_path().iterdir())
+        assert len(files) == 0
 
         writer = self.context.get_tensorboard_writer()
 
@@ -69,4 +78,4 @@ class TestPyTorchContext:
         writer.close()
 
         files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) == num_files + 1
+        assert len(files) ==  1

@@ -37,7 +37,7 @@ class _TorchWriter(tensorboard.MetricWriter):
     """
 
     def __init__(self) -> None:
-        super.__init__()
+        super().__init__()
 
         self.writer: Any = SummaryWriter(log_dir=tensorboard.get_base_path({}))  # type: ignore
 
@@ -50,10 +50,10 @@ class _TorchWriter(tensorboard.MetricWriter):
 
 
 class TorchWriter(_TorchWriter):
-    def __init__(self, *args, **kwargs):
+    def __init__(self) -> None:
         warnings.warn(
             "This object is deprecated in favor of the PyTorch SummaryWriter object",
             FutureWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        super().__init__()
