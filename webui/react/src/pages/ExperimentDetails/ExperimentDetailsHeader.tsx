@@ -235,7 +235,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleMoveClick = useCallback(
     () =>
       openModalMove({
-        experimentIds: isMovable ? [experiment.id] : undefined,
+        experimentIds: isMovable ? [experiment.id] : [],
         sourceProjectId: experiment.projectId,
         sourceWorkspaceId: experiment.workspaceId,
       }),
