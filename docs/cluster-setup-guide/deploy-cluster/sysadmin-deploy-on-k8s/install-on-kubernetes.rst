@@ -360,7 +360,7 @@ the following:
    each resource pool. The default namespace can also be mapped to a resource pool.
 
 #. As Determined ensures that tasks in a given resource pool get launched in its linked namespace,
-   the cluster admin needs to ensure that pods in a given namespace have the right nodeSelector /
+   the cluster admin needs to ensure that pods in a given namespace have the right nodeSelector or
    toleration automatically added to their podSpec so that they can be forced to be scheduled on the
    nodes that we want to be part of a given resource pool. This can be done using an admissions
    controller like a `PodNodeSelector
