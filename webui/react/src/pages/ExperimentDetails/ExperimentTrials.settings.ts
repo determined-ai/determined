@@ -47,7 +47,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
 };
 
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {
-  return Object.values(V1GetExperimentTrialsRequestSortBy).includes(String(sortKey));
+  return Object.values<string>(V1GetExperimentTrialsRequestSortBy).includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
@@ -61,8 +61,7 @@ export interface Settings extends InteractiveTableSettings {
   tableOffset: number;
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: '/trials',
+export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -119,6 +118,7 @@ const config: SettingsConfig<Settings> = {
         literal(V1GetExperimentTrialsRequestSortBy.STARTTIME),
         literal(V1GetExperimentTrialsRequestSortBy.STATE),
         literal(V1GetExperimentTrialsRequestSortBy.UNSPECIFIED),
+        literal(V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE),
       ]),
     },
     state: {
@@ -160,7 +160,5 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'experiment-trials-list',
-};
-
-export default config;
+  storagePath: `${id}-experiment-trials-list`,
+});

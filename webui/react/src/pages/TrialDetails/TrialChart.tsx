@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import Empty from 'components/kit/Empty';
-import MetricSelectFilter from 'components/MetricSelectFilter';
+import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import ScaleSelect from 'components/ScaleSelect';
 import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
@@ -124,14 +124,14 @@ const TrialChart: React.FC<Props> = ({
 
   const options = (
     <ResponsiveFilters>
-      <MetricSelectFilter
+      <MetricSelect
         defaultMetrics={defaultMetricNames}
         metrics={metricNames}
         multiple
         value={metrics}
         onChange={onMetricChange}
       />
-      <ScaleSelectFilter value={scale} onChange={setScale} />
+      <ScaleSelect value={scale} onChange={setScale} />
     </ResponsiveFilters>
   );
 

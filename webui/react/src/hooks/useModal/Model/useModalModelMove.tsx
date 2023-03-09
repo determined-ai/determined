@@ -1,10 +1,11 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
+import { LabeledValue } from 'antd/es/select';
 import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
+import Select from 'components/kit/Select';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -77,16 +78,20 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
               label="Workspace"
               name="workspaceId"
               rules={[{ message: 'Please select a workspace', required: true }]}>
-              <SelectFilter
+              <Select
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
+                filterSort={(a: LabeledValue, b: LabeledValue) =>
+                  (a?.label ?? '') < (b?.label ?? '') ? 1 : -1
+                }
                 options={workspaces
-                  .filter((ws) => canMoveModel({ destination: { id: ws.id } }))
+                  .filter(
+                    (ws) =>
+                      ws.id !== model.workspaceId && canMoveModel({ destination: { id: ws.id } }),
+                  )
                   .map((ws) => ({ label: ws.name, value: ws.id }))}
                 placeholder="Select a workspace"
-                showSearch
               />
             </Form.Item>
           </Form>

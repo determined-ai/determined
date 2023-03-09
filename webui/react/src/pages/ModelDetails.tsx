@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -19,7 +20,6 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -38,11 +38,12 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { Metadata, ModelVersion, ModelVersions } from 'types';
+import { DetailedUser, Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -65,10 +66,11 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.match(useUsers(), {
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
     Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
-  });
+  }); // TODO: handle loading state
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
   const lodableWorkspaces = useWorkspaces();
   const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
@@ -179,14 +181,16 @@ const ModelDetails: React.FC = () => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels ?? []} />,
+            tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                saveModelVersionTags(record.model.name, record.version, tags),
+              )}
             />
           </div>
         </Typography.Text>

@@ -172,59 +172,6 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 	return training, validation, sEndTime, vEndTime, err
 }
 
-// ExpCompareMetricNames returns the set of training and validation metric names
-// that have been recorded for a list of trials.
-func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
-	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
-	vEndTime time.Time, err error,
-) {
-	type namesWrapper struct {
-		Name    string    `db:"name"`
-		EndTime time.Time `db:"end_time"`
-	}
-	var rows []namesWrapper
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
-  max(s.end_time) AS end_time
-FROM trials t
-JOIN steps s ON t.id=s.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND s.end_time > $2
-GROUP BY name`, &rows, trialIDs, sStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying training metric names fort rials")
-	}
-	for _, row := range rows {
-		training = append(training, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
-
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
-  max(v.end_time) AS end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id IN (SELECT unnest($1::int [])::int)
-  AND v.end_time > $2
-GROUP BY name`, &rows, trialIDs, vStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
-			"error querying validation metric names for trials")
-	}
-	for _, row := range rows {
-		validation = append(validation, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
-	return training, validation, sEndTime, vEndTime, err
-}
-
 type batchesWrapper struct {
 	Batches int32     `db:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
@@ -241,7 +188,6 @@ SELECT s.total_batches AS batches_processed,
   max(s.end_time) as end_time
 FROM trials t INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$1
-  AND s.state = 'COMPLETED'
   AND s.metrics->'avg_metrics' ? $2
   AND s.end_time > $3
 GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
@@ -271,7 +217,6 @@ SELECT
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 WHERE t.experiment_id=$1
-  AND v.state = 'COMPLETED'
   AND v.metrics->'validation_metrics' ? $2
   AND v.end_time > $3
 GROUP BY batches_processed`, &rows, experimentID, metricName, startTime)
@@ -412,37 +357,10 @@ SELECT t.id FROM (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id
   ORDER BY best_metric %s
   LIMIT $3
 ) t;`, aggregate, order), metric, experimentID, maxTrials)
-	return trials, err
-}
-
-// ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
-// that recorded the best values for the specified metric at any point during the trial.
-func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
-	smallerIsBetter bool,
-) (trials []int32, err error) {
-	order := desc
-	aggregate := max
-	if smallerIsBetter {
-		order = asc
-		aggregate = min
-	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id in (SELECT unnest($2::int [])::int)
-    AND v.state = 'COMPLETED'
-  GROUP BY t.id
-  ORDER BY best_metric %s
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentIDs, maxTrials)
 	return trials, err
 }
 
@@ -466,7 +384,6 @@ SELECT t.id FROM (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id
   ORDER BY progress DESC, best_metric %s
   LIMIT $3
@@ -552,10 +469,8 @@ SELECT
   total_batches AS batches,
   s.end_time as end_time,
   s.metrics->>'avg_metrics' AS metrics
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-WHERE t.id=$2
-  AND s.state = 'COMPLETED'
+FROM steps s
+WHERE s.trial_id=$2
   AND total_batches >= $3
   AND ($4 <= 0 OR total_batches <= $4)
   AND s.end_time > $5
@@ -581,10 +496,8 @@ SELECT
   v.total_batches AS batches,
   v.end_time as end_time,
   v.metrics->>'validation_metrics' AS metrics
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.id=$2
-  AND v.state = 'COMPLETED'
+FROM validations v
+WHERE v.trial_id=$2
   AND v.total_batches >= $3
   AND ($4 <= 0 OR v.total_batches <= $4)
   AND v.end_time > $5
@@ -641,7 +554,6 @@ FROM trials t
     FROM trials t
   	INNER JOIN steps s ON t.id=s.trial_id
     WHERE t.experiment_id=$2
-	  AND s.state = 'COMPLETED'
     GROUP BY t.id, s.total_batches
   ) filter
 	ON s.total_batches = filter.total_batches
@@ -683,7 +595,6 @@ JOIN (
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
-    AND v.state = 'COMPLETED'
   GROUP BY t.id, v.total_batches
 ) filter
 ON v.total_batches = filter.total_batches
@@ -809,7 +720,6 @@ SELECT (v.metrics->'validation_metrics'->>$2)::float8
 FROM validations v, trials t
 WHERE v.trial_id = t.id
   AND t.experiment_id = $1
-  AND v.state = 'COMPLETED'
 ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
 LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
 	case errors.Is(err, sql.ErrNoRows):
@@ -1417,12 +1327,12 @@ WITH const AS (
                    c.report_time as end_time, c.uuid, c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
-                        SELECT s.end_time, s.id, s.state, s.trial_id,
+                        SELECT s.end_time, s.id, s.trial_id,
                             s.total_batches,
                             (SELECT row_to_json(v)
                             FROM (
                                 SELECT v.end_time, v.id, v.metrics,
-                                    v.state, v.total_batches, v.trial_id
+                                    v.total_batches, v.trial_id
                                     FROM validations v
                                     WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                 ) v

@@ -364,29 +364,37 @@ func (a *apiServer) GetProjectsByUserActivity(
 	}
 
 	err = db.Bun().NewSelect().Model(p).NewRaw(`
-	WITH p as (
-		SELECT  pr.*, activity_time FROM projects pr 
-		JOIN activity a ON pr.id = a.entity_id WHERE a.user_id = ? ORDER BY a.activity_time DESC LIMIT ?
-	),
-	pe AS (
-	  SELECT project_id, state, start_time
-	  FROM experiments
-	)
-	SELECT w.name as workspace_name, u.username, p.id, p.name, 
-	p.workspace_id, p.description, p.immutable, p.notes, p.user_id,
-			'WORKSPACE_STATE_' || p.state AS state, p.error_message,
-	  SUM(case when pe.project_id = p.id then 1 else 0 end) AS num_experiments,
-	  SUM(case when pe.project_id = p.id 
-		AND pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
-	  MAX(case when pe.project_id = p.id then pe.start_time else NULL end) 
-	  AS last_experiment_started_at
-	FROM p
-	  LEFT JOIN users as u ON u.id = p.user_id
-	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
-	  LEFT JOIN pe on pe.project_id = p.id 
-	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, 
-	p.immutable, p.notes, p.state, p.error_message,  u.username, w.name, p.activity_time
-	ORDER BY p.activity_time DESC;`, curUser.ID, limit).
+	SELECT
+		w.name AS workspace_name,
+		u.username,
+		p.id,
+		p.name,
+		p.archived,
+		p.workspace_id,
+		p.description,
+		p.immutable,
+		p.notes,
+		p.user_id,
+		'WORKSPACE_STATE_' || p.state AS state,
+		p.error_message,
+		COUNT(*) FILTER (WHERE e.project_id = p.id) AS num_experiments,
+		COUNT(*) FILTER (WHERE e.project_id = p.id AND e.state = 'ACTIVE') AS num_active_experiments,
+		MAX(e.start_time) FILTER (WHERE e.project_id = p.id) AS last_experiment_started_at
+	FROM
+		projects AS p
+		INNER JOIN activity AS a ON p.id = a.entity_id AND a.user_id = ?
+		LEFT JOIN users AS u ON u.id = p.user_id
+		LEFT JOIN workspaces AS w ON w.id = p.workspace_id
+		LEFT JOIN experiments AS e ON e.project_id = p.id
+	GROUP BY
+		p.id,
+		u.username,
+		w.name,
+		a.activity_time
+	ORDER BY
+		a.activity_time DESC NULLS LAST
+	LIMIT ?;
+	`, curUser.ID, limit).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err

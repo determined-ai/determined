@@ -1460,17 +1460,6 @@ service Determined {
     };
   }
 
-  // Get the set of metric names recorded for a trial.
-  rpc ExpCompareMetricNames(ExpCompareMetricNamesRequest)
-      returns (stream ExpCompareMetricNamesResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trials/metrics-stream/metric-names"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
   // Get the milestones (in batches processed) at which a metric is recorded by
   // an experiment.
   rpc MetricBatches(MetricBatchesRequest)
@@ -1499,17 +1488,6 @@ service Determined {
   rpc TrialsSample(TrialsSampleRequest) returns (stream TrialsSampleResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-sample"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Get a sample of the metrics over time for a sample of the trials.
-  rpc ExpCompareTrialsSample(ExpCompareTrialsSampleRequest)
-      returns (stream ExpCompareTrialsSampleResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/experiments-compare"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

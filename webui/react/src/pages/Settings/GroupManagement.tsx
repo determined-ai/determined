@@ -166,7 +166,7 @@ const GroupManagement: React.FC = () => {
     if (rbacEnabled) {
       RolesStore.fetchRoles(canceler);
     }
-  }, [rbacEnabled]);
+  }, [canceler, rbacEnabled]);
 
   const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
     useModalCreateGroup({ onClose: fetchGroups, users: users });

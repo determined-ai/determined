@@ -921,6 +921,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    slot limit of an active experiment can be changed using ``det experiment set max-slots <id>
    <slots>``. By default, there is no limit on the number of slots an experiment can use.
 
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
+
    .. warning::
 
       ``max_slots`` is only considered when scheduling jobs; it is not currently used when
@@ -933,6 +936,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    weight. The weight of an active experiment can be changed using ``det experiment set weight <id>
    <weight>``. The default weight is ``1``.
 
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
+
 ``shm_size``
    The size of ``/dev/shm`` for task containers. The value can be a number in bytes or a number with
    a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to ``4294967296`` (4GiB).
@@ -944,6 +950,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    Experiments with smaller priority values are scheduled before experiments with higher priority
    values. If using Kubernetes, the opposite is true; experiments with higher priorities are
    scheduled before those with lower priorities. Refer to :ref:`scheduling` for more information.
+
+   When the cluster is deployed with an :ref:`HPC workload manager <sysadmin-deploy-on-hpc>`, this
+   value is ignored and instead managed by the configured workload manager.
 
 ``resource_pool``
    The resource pool where this experiment will be scheduled. If no resource pool is specified,
@@ -1035,9 +1044,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12`` for NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.19.12`` for CPUs.
-   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.12`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1`` for CPUs.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
@@ -1114,6 +1123,9 @@ workloads for this experiment. For more information on customizing the trial env
 ``drop_capabilities``
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
+
+``proxy_ports``: Expose configured network ports on the chief task container. See :ref:`proxy-ports`
+for details.
 
 ***************
  Optimizations

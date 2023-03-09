@@ -17,11 +17,11 @@ node_modules/done.stamp: package-lock.json
 	touch $@
 
 .PHONY: get-deps
-get-deps: check-requirements node_modules/done.stamp
+get-deps: node_modules/done.stamp
 	git submodule update --init
 
 .PHONY: build
-build: check-requirements build/done.stamp
+build: build/done.stamp
 
 build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js vite.config.ts
 	npm run build
@@ -32,7 +32,7 @@ clean:
 	rm -rf build build-storybook node_modules/
 
 .PHONY: live
-live: check-requirements start
+live: start
 .PHONY: start
 start:
 	npm start
@@ -62,9 +62,6 @@ check-prettier-misc:
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
-.PHONY: check-requirements
-check-requirements:
-	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
 .PHONY: check-prettier
 check-prettier: check-prettier-js check-prettier-css check-prettier-misc
 .PHONY: check
