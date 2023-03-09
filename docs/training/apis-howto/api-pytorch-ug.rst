@@ -751,7 +751,7 @@ code.
    +     os.environ["USE_TORCH_DISTRIBUTED"] = "true"
    +     # Initialize DistributedContext specifying chief IP
          with det.pytorch.init(
-   +       distributed=core.DistributedContext.from_torch_distributed(chief_ip="localhost")
+   +       distributed=core.DistributedContext.from_torch_distributed()
          ) as train_context:
              trial = MyTrial(train_context)
              trainer = det.pytorch.Trainer(trial, train_context)
