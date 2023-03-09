@@ -9,8 +9,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { currentUser } from 'stores/users';
-import { DetailedUser } from 'types';
+import { useCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -144,10 +143,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     state: stateOb,
     clearQuerySettings,
   } = useContext(UserSettings);
-  const isLoading = useObservable(isLoadingOb);
+  const initialLoading = useObservable(isLoadingOb);
   const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
+  const [isLoading, setIsLoading] = useState(false);
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
+  const loadableUser = useCurrentUser();
 
   // parse navigation url to state
   useEffect(() => {
@@ -213,7 +214,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateDB = useCallback(
     async (newSettings: Settings) => {
-      const user = Loadable.match(currentUser.get(), {
+      setIsLoading(true);
+      const user = Loadable.match(loadableUser, {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
@@ -255,12 +257,17 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           });
         }
       }
+      setIsLoading(false);
     },
-    [config.storagePath, settings],
+    [config.storagePath, settings, setIsLoading, loadableUser],
   );
 
   const resetSettings = useCallback(
     (settingsArray?: string[]) => {
+      const user = Loadable.match(loadableUser, {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
       if (!settings || !user) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
@@ -287,7 +294,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return s.set(config.storagePath, news ?? {});
       });
     },
-    [config, settings, user, stateOb],
+    [config, settings, stateOb, loadableUser],
   );
 
   const updateSettings = useCallback(
@@ -307,9 +314,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     return derivedOb.subscribe(async (cur, prev) => {
+      const user = Loadable.match(loadableUser, {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
       if (!cur || !user || cur === prev) return;
-      // check default value, check isLoading
-      await updateDB(cur, user);
+
+      if (!initialLoading && !isLoading) await updateDB(cur);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
@@ -322,11 +333,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [derivedOb, navigate, config, updateDB]);
+  }, [derivedOb, navigate, config, updateDB, initialLoading, isLoading, loadableUser]);
 
   return {
     activeSettings,
-    isLoading,
+    isLoading: initialLoading || isLoading,
     resetSettings,
     settings,
     updateSettings,
