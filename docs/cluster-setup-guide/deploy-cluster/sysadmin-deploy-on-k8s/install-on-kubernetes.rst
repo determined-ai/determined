@@ -364,7 +364,7 @@ the following:
    toleration automatically added to their podSpec so that they can be forced to be scheduled on the
    nodes that we want to be part of a given resource pool. This can be done using an admissions
    controller like a `PodNodeSelector
-   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podnodeselector>`
+   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podnodeselector>`__
    or `PodTolerationRestriction.
    <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podtolerationrestriction>`.
    Alternatively, the cluster admin can also add a resource pool (and hence namespace) specific
