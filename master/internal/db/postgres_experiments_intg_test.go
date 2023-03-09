@@ -55,9 +55,6 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	sortUUIDSlice(expectedCheckpoints)
-	sortUUIDSlice(checkpoints)
-
 	require.Equal(t, expectedCheckpoints, checkpoints)
 }
 
