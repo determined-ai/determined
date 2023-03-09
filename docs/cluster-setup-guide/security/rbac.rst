@@ -288,7 +288,7 @@ UI:
 .. attention::
 
    Only users with the ClusterAdmin role can add/edit global role assignments for users and groups
-   from the "Admin" menu as described immediately below
+   from the "Admin" menu as described immediately below.
 
 #. Click on your username in the upper left corner.
 #. Click "Admin".
