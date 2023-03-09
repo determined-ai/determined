@@ -387,7 +387,7 @@ the following:
                     value: "prod"
                     effect: "NoSchedule"
 
-#. Label / Taint the appropriate nodes you want to include as part of each resource pool. For
+#. Label/taint the appropriate nodes you want to include as part of each resource pool. For
    instance you may add a taint like ``kubectl taint nodes prod_node_name
    pool_taint=prod:NoSchedule`` and the appropriate toleration to the PodTolerationRestriction
    admissions controller or in the ``resourcePools. pool_name.task_container_defaults.gpu_pod_spec``
