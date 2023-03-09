@@ -98,7 +98,7 @@ convert_to_gpu_numbers() {
 }
 
 # Set DET_CONTAINER_ID as the SLURM_PROCID. Usually it would be a Docker container ID.
-export DET_CONTAINER_ID="$SLURM_PROCID"
+export DET_CONTAINER_ID="[cont=$SLURM_PROCID]"
 
 # Container-local directory to host determined directory and links (default to /)
 LOCALTMP=${DET_LOCALTMP:-/}
