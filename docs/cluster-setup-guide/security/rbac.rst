@@ -239,7 +239,7 @@ WebUI
 
 .. attention::
 
-   Only users with the ClusterAdmin role can add/remove users and groups
+   Only users with the ClusterAdmin role can add/remove users and groups.
 
 To see user group management UI,
 
