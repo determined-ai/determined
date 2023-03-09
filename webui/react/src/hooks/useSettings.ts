@@ -135,8 +135,6 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  // const loadableCurrentUser = currentUser();
-  // const user = currentUser();
   const {
     isLoading: isLoadingOb,
     querySettings,
@@ -145,7 +143,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
   const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
-  const [isLoading, setIsLoading] = useState(false);
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
   const loadableUser = usersStore.getCurrentUser().get();
@@ -214,7 +211,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateDB = useCallback(
     async (newSettings: Settings) => {
-      setIsLoading(true);
       const user = Loadable.match(loadableUser, {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
@@ -257,9 +253,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           });
         }
       }
-      setIsLoading(false);
     },
-    [config.storagePath, settings, setIsLoading, loadableUser],
+    [config.storagePath, settings, loadableUser],
   );
 
   const resetSettings = useCallback(
@@ -320,7 +315,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       });
       if (!cur || !user || cur === prev) return;
 
-      if (!initialLoading && !isLoading) await updateDB(cur);
+      if (!initialLoading) await updateDB(cur);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
@@ -333,11 +328,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [derivedOb, navigate, config, updateDB, initialLoading, isLoading, loadableUser]);
+  }, [derivedOb, navigate, config, updateDB, initialLoading, loadableUser]);
 
   return {
     activeSettings,
-    isLoading: initialLoading || isLoading,
+    isLoading: initialLoading,
     resetSettings,
     settings,
     updateSettings,
