@@ -218,4 +218,4 @@
 
 -  ``resourcePools``: This section contains the names of the resource pools and their linked
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
-   <master-config-reference>`
+   <master-config-reference>`.
