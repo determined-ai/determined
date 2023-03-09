@@ -137,12 +137,5 @@
     "vite-tsconfig-paths": "^4.0.5",
     "vitest": "^0.28.5",
     "whatwg-fetch": "^3.6.2"
-  },
-  "jest": {
-    "coveragePathIgnorePatterns": [
-      "/src/services/api-ts-sdk/",
-      ".stories.tsx"
-    ],
-    "resetMocks": false
   }
 }
