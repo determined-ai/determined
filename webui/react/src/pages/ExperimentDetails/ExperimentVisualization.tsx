@@ -209,7 +209,11 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   ]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    return [
+    /**
+     * In the case of Custom Searchers, all the tabs besides
+     * "Learning Curve" aren't helpful or relevant, so we are hiding them
+     */
+    const tabs: TabsProps['items'] = [
       {
         children: (
           <LearningCurve
@@ -224,56 +228,61 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         key: ExperimentVisualizationType.LearningCurve,
         label: 'Learning Curve',
       },
-      {
-        children: (
-          <HpParallelCoordinates
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpParallelCoordinates,
-        label: 'HP Parallel Coordinates',
-      },
-      {
-        children: (
-          <HpScatterPlots
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpScatterPlots,
-        label: 'HP Scatter Plots',
-      },
-      {
-        children: (
-          <HpHeatMaps
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-            selectedView={filters.view}
-          />
-        ),
-        key: ExperimentVisualizationType.HpHeatMap,
-        label: 'HP Heat Map',
-      },
     ];
+    if (experiment.config.searcher.name !== ExperimentSearcherName.Custom) {
+      tabs.push(
+        {
+          children: (
+            <HpParallelCoordinates
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpParallelCoordinates,
+          label: 'HP Parallel Coordinates',
+        },
+        {
+          children: (
+            <HpScatterPlots
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpScatterPlots,
+          label: 'HP Scatter Plots',
+        },
+        {
+          children: (
+            <HpHeatMaps
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+              selectedView={filters.view}
+            />
+          ),
+          key: ExperimentVisualizationType.HpHeatMap,
+          label: 'HP Heat Map',
+        },
+      );
+    }
+    return tabs;
   }, [
     experiment,
     filters.batch,
@@ -427,7 +436,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         activeKey={typeKey}
         destroyInactiveTabPane
         items={tabItems}
-        type="card"
+        type="secondary"
         onChange={handleTabChange}
       />
     </div>

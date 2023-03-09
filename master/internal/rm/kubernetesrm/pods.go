@@ -398,12 +398,12 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	if err != nil {
 		return errors.Wrap(err, "error listing config maps checking if they can be restored")
 	}
-	existingConfigMaps := make(map[string]bool)
+	existingConfigMaps := make(set.Set[string])
 	for _, cm := range configMaps.Items {
 		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
 			continue
 		}
-		existingConfigMaps[cm.Name] = true
+		existingConfigMaps.Insert(cm.Name)
 	}
 
 	var containerIDs []string
@@ -421,7 +421,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 			for _, env := range container.Env {
 				switch env.Name {
 				case "DET_CONTAINER_ID":
-					if !existingConfigMaps[pod.Name] {
+					if !existingConfigMaps.Contains(pod.Name) {
 						p.deleteKubernetesResources(ctx, pods, configMaps)
 						ctx.Respond(fmt.Errorf("pod missing config map %s", pod.Name))
 						return nil
@@ -588,9 +588,9 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		Scan(context.TODO()); err != nil {
 		return errors.Wrap(err, "error querying the database for open allocations")
 	}
-	openAllocationIDs := make(map[model.AllocationID]bool)
+	openAllocationIDs := make(set.Set[model.AllocationID])
 	for _, alloc := range openAllocations {
-		openAllocationIDs[alloc.AllocationID] = true
+		openAllocationIDs.Insert(alloc.AllocationID)
 	}
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
@@ -599,7 +599,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		return errors.Wrap(err, "error listing existing pods")
 	}
 	toKillPods := &k8sV1.PodList{}
-	savedPodNames := make(map[string]bool)
+	savedPodNames := make(set.Set[string])
 	for _, pod := range pods.Items {
 		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
@@ -629,13 +629,13 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		if !openAllocationIDs[model.AllocationID(pod.Labels[determinedLabel])] {
+		if !openAllocationIDs.Contains(model.AllocationID(pod.Labels[determinedLabel])) {
 			ctx.Log().Warnf("deleting pod '%s', did not find open allocation '%s'",
 				pod.Name, pod.Labels[determinedLabel])
 			toKillPods.Items = append(toKillPods.Items, pod)
 			continue
 		}
-		savedPodNames[pod.Name] = true
+		savedPodNames.Insert(pod.Name)
 	}
 
 	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
@@ -648,7 +648,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		if savedPodNames[cm.Name] { // PodName is same as config map name.
+		if savedPodNames.Contains(cm.Name) { // PodName is same as config map name.
 			continue
 		}
 
@@ -933,14 +933,22 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	// Look up quotas for our resource pools' namespaces.
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
-		if k8serrors.IsNotFound(err) || quotaList == nil || len(quotaList.Items) != 1 {
-			// TODO: figure out how we want to handle multiple quotas per namespace?
-			continue
-		} else if err != nil {
+		if err != nil && !k8serrors.IsNotFound(err) {
 			return nil, err
+		} else if k8serrors.IsNotFound(err) || quotaList == nil {
+			continue
 		}
 
-		namespaceToQuota[namespace] = quotaList.Items[0]
+		relevantQuotas := cpuAndGpuQuotas(quotaList)
+		if len(relevantQuotas) != 1 {
+			// TODO: figure out how we want to handle multiple quotas per namespace?
+			// When there's multiple conflicting quotas, k8s seems to use the most
+			// restrictive of them—i.e. if there's a quota limiting to 100 CPUs and one
+			// limiting to 10, only 10 CPUs will be allowed.
+			continue
+		}
+
+		namespaceToQuota[namespace] = relevantQuotas[0]
 	}
 
 	// If there's only one resource pool configured and it doesn't have a quota, summarize using the
@@ -972,7 +980,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 				switch resourceName {
 				case k8sV1.ResourceCPU:
 					deviceType = device.CPU
-				case ResourceTypeNvidia:
+				case ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
 					deviceType = device.CUDA
 				default:
 					// We only care about CPU and GPU quotas for the slots summary
@@ -1201,4 +1209,27 @@ func numSlots(slots model.SlotsSummary) int {
 	}
 
 	return slotCountsByType[device.CPU]
+}
+
+func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
+	if quotas == nil || len(quotas.Items) == 0 {
+		return nil
+	}
+
+	result := []k8sV1.ResourceQuota{}
+	for _, q := range quotas.Items {
+		foundRelevant := false
+		for resourceName := range q.Spec.Hard {
+			switch resourceName {
+			case k8sV1.ResourceCPU, ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
+				foundRelevant = true
+			}
+		}
+
+		if foundRelevant {
+			result = append(result, q)
+		}
+	}
+
+	return result
 }

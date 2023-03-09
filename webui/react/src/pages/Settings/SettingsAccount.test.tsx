@@ -7,7 +7,7 @@ import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPassword
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import SettingsAccount, { CHANGE_PASSWORD_TEXT } from './SettingsAccount';
@@ -54,18 +54,16 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(() => {
-    updateCurrentUser(currentUser.id);
-  }, [updateCurrentUser]);
+    usersStore.updateCurrentUser(currentUser.id);
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
+    usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
-  }, [fetchUsers]);
+  }, [canceler]);
 
   useEffect(() => {
     loadUsers();
@@ -77,9 +75,7 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <UIProvider>
-      <UsersProvider>
-        <Container />
-      </UsersProvider>
+      <Container />
     </UIProvider>,
   );
 
@@ -90,18 +86,15 @@ describe('SettingsAccount', () => {
   });
 
   it('should render with correct values', async () => {
-    const { container } = await setup();
-    await waitFor(() => expect(screen.getByDisplayValue(USERNAME)).toBeInTheDocument());
+    setup();
+    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
-
-    // Fetching element by specific attribute is not natively supported.
-    const editor = container.querySelector(`[data-value="${DISPLAY_NAME}"]`);
-    expect(editor).toBeInTheDocument();
   });
   it('should be able to change display name', async () => {
     act(() => {
       setup();
     });
+    await user.click(screen.getByTestId('edit-displayname'));
     await user.type(screen.getByPlaceholderText('Add display name'), 'a');
     await user.keyboard('{enter}');
     expect(mockPatchUser).toHaveBeenCalledWith({

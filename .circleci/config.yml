@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.20.0-dev0
+    default: 0.20.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ad0591c
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0e4beb5
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0e4beb5
 
   login-docker:
     parameters:
@@ -214,7 +214,7 @@ commands:
 
   install-protoc:
     steps:
-      - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
+      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   setup-go-intg-deps:
@@ -801,7 +801,21 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
+                command: |
+                  gcloud container node-pools create accel \
+                    --cluster ${CLUSTER_ID} \
+                    --region '<<parameters.region>>' \
+                    --num-nodes '<<parameters.num-machines>>' \
+                    --accelerator 'type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>>' \
+                    --machine-type='<<parameters.machine-type>>' \
+                    --scopes cloud-platform \
+                    --node-taints='<<parameters.accel-node-taints>>' \
+                    || (
+                      curl "$SLACK_WEBHOOK" \
+                        -H 'Content-Type: application/json' \
+                        -d "{\"text\":\"GKE node pool creation failed! $CIRCLE_BUILD_URL\"}"
+                      circleci-agent step halt
+                    )
                 name: Create GPU node pool
       - unless:
           condition: <<parameters.gpus-per-machine>>
@@ -1217,14 +1231,18 @@ jobs:
 
   check-ts-bindings:
     docker:
-      - image: cimg/openjdk:14.0.2
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - skip-if-docs-only
+      - setup-python-venv:
+          install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
-      - run: make -C bindings get-deps
-      - run: make -C bindings check/typescript-fetch
+      - run: make -C bindings force-gen
+      - run: make -C bindings check/typescript
 
   check-py-bindings:
     docker:
@@ -1235,6 +1253,7 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
@@ -1950,7 +1969,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1
         type: string
       accel-node-taints:
         type: string
@@ -1970,6 +1989,11 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
+      - queue/until_front_of_line:
+          only-on-branch: master
+          # Basically wait forever -- we would prefer not to fail tests, and
+          # we'll likely never be this backed up.
+          time: "10000"
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           labels: test-mark=<<parameters.mark>>
@@ -2422,6 +2446,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-32"]
+              gpu-type: ["nvidia-tesla-t4"]
               gpus-per-machine: [4]
               num-machines: [2]
 
@@ -2622,6 +2647,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-32"]
+              gpu-type: ["nvidia-tesla-t4"]
               gpus-per-machine: [4]
               num-machines: [2]
 

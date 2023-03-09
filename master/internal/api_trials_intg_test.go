@@ -170,11 +170,6 @@ func TestTrialAuthZ(t *testing.T) {
 			return err
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			return api.ExpCompareMetricNames(&apiv1.ExpCompareMetricNamesRequest{
-				TrialId: []int32{int32(id)},
-			}, mockStream[*apiv1.ExpCompareMetricNamesResponse]{ctx})
-		}, false},
-		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				TrialIds: []int32{int32(id)},
 			})

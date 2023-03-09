@@ -99,4 +99,41 @@ describe('Number Utilities', () => {
       expect(utils.roundToPrecision(0.523843984)).toBe(0.523844);
     });
   });
+
+  describe('nearestCardinalNumber', () => {
+    it('should change numbers under 1,000 to strings', () => {
+      expect(utils.nearestCardinalNumber(1)).toBe('1');
+      expect(utils.nearestCardinalNumber(500)).toBe('500');
+      expect(utils.nearestCardinalNumber(999)).toBe('999');
+    });
+
+    it('should handle thousands, millions, billions, and trillions', () => {
+      expect(utils.nearestCardinalNumber(1000)).toBe('1.0k');
+      expect(utils.nearestCardinalNumber(999999)).toBe('999k');
+      expect(utils.nearestCardinalNumber(1000000)).toBe('1.0M');
+      expect(utils.nearestCardinalNumber(999999999)).toBe('999M');
+      expect(utils.nearestCardinalNumber(1000000000)).toBe('1.0B');
+      expect(utils.nearestCardinalNumber(999999999999)).toBe('999B');
+      expect(utils.nearestCardinalNumber(1000000000000)).toBe('1.0T');
+      expect(utils.nearestCardinalNumber(999999999999999)).toBe('999T');
+    });
+
+    it('should handle numbers bigger than trillions with multiple suffixes', () => {
+      expect(utils.nearestCardinalNumber(1000000000000000)).toBe('1.0kT');
+      expect(utils.nearestCardinalNumber(1000000000000000000)).toBe('1.0MT');
+      expect(utils.nearestCardinalNumber(1000000000000000000000)).toBe('1.0BT');
+    });
+
+    it('should have one decimal place from 1,000 to 9,999', () => {
+      expect(utils.nearestCardinalNumber(1000)).toBe('1.0k');
+      expect(utils.nearestCardinalNumber(1500)).toBe('1.5k');
+      expect(utils.nearestCardinalNumber(9999)).toBe('9.9k');
+    });
+
+    it('should handle negative numbers', () => {
+      expect(utils.nearestCardinalNumber(-1)).toBe('-1');
+      expect(utils.nearestCardinalNumber(-1000)).toBe('-1.0k');
+      expect(utils.nearestCardinalNumber(-999999999999)).toBe('-999B');
+    });
+  });
 });

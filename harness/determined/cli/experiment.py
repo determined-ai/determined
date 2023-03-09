@@ -17,7 +17,7 @@ import determined as det
 import determined.experimental
 import determined.load
 from determined import cli
-from determined.cli import checkpoint, render
+from determined.cli import checkpoint, proxy, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
 from determined.common import api, context, set_logger, util, yaml
@@ -274,7 +274,12 @@ def submit_experiment(args: Namespace) -> None:
             cli.print_warnings(resp.warnings)
 
         if not args.paused and args.follow_first_trial:
-            _follow_experiment_logs(sess, resp.experiment.id)
+            if args.publish:
+                port_map = proxy.parse_port_map_flag(args.publish)
+                with proxy.tunnel_experiment(sess, resp.experiment.id, port_map):
+                    _follow_experiment_logs(sess, resp.experiment.id)
+            else:
+                _follow_experiment_logs(sess, resp.experiment.id)
 
 
 def local_experiment(args: Namespace) -> None:
@@ -486,6 +491,7 @@ def describe(args: Namespace) -> None:
                     wl_detail = workload.checkpoint
 
                 if workload.checkpoint and wl_detail:
+                    assert isinstance(wl_detail, bindings.v1CheckpointWorkload)
                     checkpoint_state = wl_detail.state.value
                     checkpoint_end_time = wl_detail.endTime
                 else:
@@ -495,7 +501,7 @@ def describe(args: Namespace) -> None:
                 v_metrics_fields = []
                 if workload.validation:
                     wl_detail = workload.validation
-                    validation_state = wl_detail.state.value
+                    validation_state = "STATE_COMPLETED"
                     validation_end_time = wl_detail.endTime
                     for name in v_metrics_names:
                         if (
@@ -540,7 +546,7 @@ def describe(args: Namespace) -> None:
                             [
                                 trial.id,
                                 wl_detail.totalBatches,
-                                wl_detail.state.value.replace("STATE_", ""),
+                                (checkpoint_state or validation_state).replace("STATE_", ""),
                                 render.format_time(wl_detail.endTime),
                             ]
                             + t_metrics_fields
@@ -1065,6 +1071,14 @@ main_cmd = Cmd(
                         "checkpoints can be saved. The test experiment will "
                         "be archived on creation.",
                     ),
+                ),
+                Arg(
+                    "-p",
+                    "--publish",
+                    action="append",
+                    default=[],
+                    type=str,
+                    help="publish task ports to the host",
                 ),
             ],
         ),

@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GetWorkspaceParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { UsersProvider } from 'stores/users';
 
 import useFeature from './useFeature';
 import usePermissions from './usePermissions';
@@ -49,9 +48,7 @@ const PermissionRenderer: React.FC<Props> = () => {
 const setup = async () => {
   return await render(
     <UIProvider>
-      <UsersProvider>
-        <PermissionRenderer workspaceId={1} />
-      </UsersProvider>
+      <PermissionRenderer workspaceId={1} />
     </UIProvider>,
   );
 };

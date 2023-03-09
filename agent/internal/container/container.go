@@ -176,7 +176,6 @@ func (c *Container) run(parent context.Context) (err error) {
 				switch signal {
 				case syscall.SIGKILL:
 					c.log.Tracef("signal %s, canceling run-scoped context", signal)
-					launchgroup.Cancel()
 					return ErrKilledBeforeRun
 				default:
 					c.log.Warnf("ignoring signal other than SIGKILL %s before running", signal)
@@ -219,6 +218,7 @@ func (c *Container) run(parent context.Context) (err error) {
 			if err != nil {
 				c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
 				if remove {
+					// TODO this context could be canceled between CreateContainer and this.
 					if rErr := c.docker.RemoveContainer(ctx, dockerID, true); rErr != nil {
 						c.log.WithError(rErr).Debug("couldn't cleanup container")
 					}

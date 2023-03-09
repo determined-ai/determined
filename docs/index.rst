@@ -1,17 +1,39 @@
 .. toctree::
-   :caption: Get Started
    :hidden:
 
+   Welcome <self>
+
+.. toctree::
+   :caption: Getting Started
+   :maxdepth: 2
+   :hidden:
+
+   Try Determined <tutorials/index>
+   How It Works <architecture/index>
    quickstart-mdldev
-   Tutorials <tutorials/index>
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
-   System Architecture <architecture/index>
+
+.. toctree::
+   :caption: Set Up Determined
+   :hidden:
+
+   Set Up Guide <cluster-setup-guide/deploy-cluster/index>
+   Basic Setup <cluster-setup-guide/basic>
+   Security <cluster-setup-guide/security/overview>
+   User Accounts <cluster-setup-guide/users>
+   Workspaces and Projects <cluster-setup-guide/workspaces>
+   Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
+   Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Monitor Experiment Through Webhooks  <integrations/notification/index>
+   Upgrade <cluster-setup-guide/upgrade>
+   Troubleshooting <cluster-setup-guide/troubleshooting>
 
 .. toctree::
    :caption: Model Developer Guide
    :hidden:
 
+   Overview <training/index>
    Distributed Training <training/dtrain-introduction>
    Prepare Container Environment <training/setup-guide/overview>
    Prepare Data <training/load-model-data>
@@ -23,24 +45,10 @@
    Best Practices <training/best-practices/overview>
 
 .. toctree::
-   :caption: Administrator Guide
-   :hidden:
-
-   Basic Setup <cluster-setup-guide/basic>
-   Cluster Deployment <cluster-setup-guide/deploy-cluster/index>
-   Security <cluster-setup-guide/security/overview>
-   User Accounts <cluster-setup-guide/users>
-   Workspaces and Projects <cluster-setup-guide/workspaces>
-   Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
-   Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
-   Monitor Experiment Through Webhooks  <integrations/notification/index>
-   Upgrade <cluster-setup-guide/upgrade>
-   Troubleshooting <cluster-setup-guide/troubleshooting>
-
-.. toctree::
    :caption: Reference
    :hidden:
 
+   Overview <reference/overview>
    Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
    Training Reference <reference/reference-training/index>
@@ -57,6 +65,7 @@
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
+   Exposing Custom Ports <interfaces/proxy-ports>
 
 .. toctree::
    :caption: Integrations
@@ -67,13 +76,66 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
+.. raw:: html
+
+    <table border-style=hidden>
+   <tr>
+     <th><a href="cluster-setup-guide/deploy-cluster/index.html"><h4>Set Up</h4></a></th>
+     <th><h4>|</h4></th>
+     <th><a href="reference/overview.html"><h4>Reference</h4></a></th>
+   </tr>
+   </table>
+
 ##########################
- Determined Documentation
+ *Welcome to Determined!*
 ##########################
 
-**************************
- *Welcome to Determined!*
-**************************
+You can quickly train almost any deep learning model using Determined.
+
+.. raw:: html
+
+   <div class="landing">
+      <div class="tiles-flex">
+         <div class="tile-container">
+             <a class="tile" href="tutorials/index.html">
+                 <h2 class="tile-title">Try It</h2>
+                 <p class="tile-description">Learn the basics of working with Determined and how to port your existing code to the Determined environment.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="architecture/index.html">
+                 <h2 class="tile-title">How It Works</h2>
+                 <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="cluster-setup-guide/deploy-cluster/index.html">
+                 <h2 class="tile-title">Set Up Determined</h2>
+                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+            <a class="tile" href="quickstart-mdldev.html">
+                <h2 class="tile-title">Model Developer Quickstart</h2>
+                <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="training/index.html">
+                 <h2 class="tile-title">Model Developer Guide</h2>
+                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="reference/overview.html">
+                 <h2 class="tile-title">Reference</h2>
+                 <p class="tile-description">Explore API libraries and configuration settings.</p>
+             </a>
+         </div>
+      </div>
+   </div>
+
+|
 
 .. raw:: html
 
@@ -82,68 +144,4 @@
          New features, upgrades, deprecation notices, known issues, and bug fixes:
          <a href=release-notes.html>Release Notes</a>
       </p>
-   </div>
-
-|
-
-Determined is an open-source deep learning training platform that makes building models fast and
-easy.
-
-With Determined you can:
-
--  Use state-of-the-art distributed training to train models faster without changing model code.
--  Automatically find high-quality models using advanced hyperparameter tuning.
--  Get more from your GPUs and reduce cloud GPU costs with preemptible instances and smart
-   scheduling.
--  Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code
-   versions, metrics, checkpoints, and hyperparameters.
--  Continue using popular deep learning libraries, such as TensorFlow, Keras, and PyTorch by simply
-   integrating the Determined API with your existing model code.
-
-Determined integrates these features into an easy-to-use, high-performance deep learning environment
-so you can spend your time building models instead of managing infrastructure.
-
-|
-
-.. raw:: html
-
-   <div class="landing">
-      <div class="tiles-flex">
-         <div class="tile-container">
-            <a class="tile" href="quickstart-mdldev.html">
-                <h2 class="tile-title">Start here ...</h2>
-                <p class="tile-description">Learn the basics steps needed to set up a Determined environment and train models.</p>
-            </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="introduction.html">
-                 <h2 class="tile-title">Introducing Determined</h2>
-                 <p class="tile-description">Learn about core concepts and key features before diving into more detailed information.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="cluster-setup-guide/basic.html">
-                 <h2 class="tile-title">Administrator Guide</h2>
-                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="training/dtrain-introduction.html">
-                 <h2 class="tile-title">Model Developer Guide</h2>
-                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="tutorials/index.html">
-                 <h2 class="tile-title">Tutorials</h2>
-                 <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
-             </a>
-         </div>
-         <div class="tile-container">
-             <a class="tile" href="reference/python-sdk.html">
-                 <h2 class="tile-title">Reference</h2>
-                 <p class="tile-description">Explore API libraries and configuration settings.</p>
-             </a>
-         </div>
-      </div>
    </div>

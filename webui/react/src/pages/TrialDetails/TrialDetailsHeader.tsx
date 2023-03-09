@@ -74,7 +74,10 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         label: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorBoard(true);
-          const commandResponse = await openOrCreateTensorBoard({ trialIds: [trial.id] });
+          const commandResponse = await openOrCreateTensorBoard({
+            trialIds: [trial.id],
+            workspaceId: experiment.workspaceId,
+          });
           openCommandResponse(commandResponse);
           await fetchTrialDetails();
           setIsRunningTensorBoard(false);

@@ -224,12 +224,18 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
       slurm_job_name_suffix=$(echo ${SLURM_JOB_NAME} | sed 's/^\S\+-\([a-z0-9]\+-[a-z0-9]\+\)$/\1/')
 
-      podman_container_stop_command="podman container stop \
-         --filter name='.+-${slurm_job_name_suffix}'"
+      if ps -fe | grep -E "[p]odman run .*-name ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}" > /dev/null
+      then
+         timeout -k 15s 15s bash -c "while ps -fe | grep -E \"[c]onmon .*-n ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}\" > /dev/null 2>&1; do sleep 1; done"
 
-      echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+         podman_container_stop_command="podman container stop --filter name='.+-${slurm_job_name_suffix}'"
 
-      eval ${podman_container_stop_command}
+         echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+
+         eval ${podman_container_stop_command}
+      fi
+
+      exit 0
 
    Restart the ``slurmd`` daemon on all compute nodes.
 

@@ -9,7 +9,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -148,7 +148,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const [isLoading, setIsLoading] = useState(false);
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
-  const loadableUser = useCurrentUser();
+  const loadableUser = usersStore.getCurrentUser().get();
 
   // parse navigation url to state
   useEffect(() => {

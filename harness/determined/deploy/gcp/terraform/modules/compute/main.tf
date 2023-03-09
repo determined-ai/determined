@@ -9,6 +9,7 @@ resource "google_compute_instance" "master_instance" {
   machine_type = var.master_instance_type
   zone = var.zone
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
+  labels = var.labels
 
   boot_disk {
     initialize_params {
