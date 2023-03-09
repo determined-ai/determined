@@ -28,6 +28,7 @@ import transformers
 from datasets import load_dataset
 from det_callback import DetCallback
 from PIL import Image
+from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (
     CenterCrop,
     Compose,
@@ -51,7 +52,6 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-from torch.utils.tensorboard import SummaryWriter
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -407,7 +407,9 @@ def main(det_callback, core_context, model_args, data_args, training_args):
     )
 
     trainer.add_callback(det_callback)
-    trainer.add_callback(TensorBoardCallback(tb_writer=SummaryWriter(core_context.train.get_tensorboard_path())))
+    trainer.add_callback(
+        TensorBoardCallback(tb_writer=SummaryWriter(core_context.train.get_tensorboard_path()))
+    )
 
     # Training
     if training_args.do_train:
