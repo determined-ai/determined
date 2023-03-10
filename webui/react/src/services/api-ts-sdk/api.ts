@@ -2330,13 +2330,13 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    checkpointSize?: string;
+    checkpointSize: string;
     /**
      * The count of checkpoints.
      * @type {number}
      * @memberof V1Experiment
      */
-    checkpointCount?: number;
+    checkpointCount: number;
     /**
      * The metrics and hyperparameters associated with the best trial by searcher metric.
      * @type {number}

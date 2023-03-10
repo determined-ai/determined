@@ -76,7 +76,9 @@ message Experiment {
         "project_id",
         "original_config",
         "project_owner_id",
-        "config"
+        "config",
+        "checkpoint_size",
+        "checkpoint_count"
       ]
     }
   };

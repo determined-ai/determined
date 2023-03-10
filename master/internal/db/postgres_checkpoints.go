@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -155,7 +156,7 @@ func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid
 	err := idb.NewRaw(`
 UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id,
-	SUM(size) FILTER (WHERE state != 'DELETED') AS size,
+	COALESCE(SUM(size) FILTER (WHERE state != 'DELETED'), 0) AS size,
 	COUNT(*) FILTER (WHERE state != 'DELETED') AS count
 	FROM checkpoints_view
 	WHERE trial_id IN (
@@ -164,7 +165,7 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	GROUP BY trial_id
 ) sub
 WHERE trials.id = sub.trial_id
-RETURNING experiment_id`, bun.In(experimentIDs)).Scan(ctx, &experimentIDs)
+RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
 	if err != nil {
 		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
 	}
@@ -172,8 +173,7 @@ RETURNING experiment_id`, bun.In(experimentIDs)).Scan(ctx, &experimentIDs)
 		return nil
 	}
 
-	uniqueExpIDs := set.New(experimentIDs)
-
+	uniqueExpIDs := maps.Keys(set.New(experimentIDs))
 	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
 	err = idb.NewRaw(`
 UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (

@@ -1,3 +1,15 @@
+ALTER TABLE public.experiments
+    ALTER COLUMN checkpoint_size DROP NOT NULL,
+    ALTER COLUMN checkpoint_size SET DEFAULT NULL,
+    ALTER COLUMN checkpoint_count DROP NOT NULL,
+    ALTER COLUMN checkpoint_count SET DEFAULT NULL;
+
+ALTER TABLE public.trials
+    ALTER COLUMN checkpoint_size DROP NOT NULL,
+    ALTER COLUMN checkpoint_size SET DEFAULT NULL,
+    ALTER COLUMN checkpoint_count DROP NOT NULL,
+    ALTER COLUMN checkpoint_count SET DEFAULT NULL;
+
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
 DROP VIEW public.checkpoints_old_view;

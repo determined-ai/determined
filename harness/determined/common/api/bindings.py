@@ -2347,8 +2347,6 @@ class v1EntityType(enum.Enum):
 
 class v1Experiment:
     bestTrialSearcherMetric: "typing.Optional[float]" = None
-    checkpointCount: "typing.Optional[int]" = None
-    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
@@ -2368,6 +2366,8 @@ class v1Experiment:
         self,
         *,
         archived: bool,
+        checkpointCount: int,
+        checkpointSize: str,
         config: "typing.Dict[str, typing.Any]",
         id: int,
         jobId: str,
@@ -2381,8 +2381,6 @@ class v1Experiment:
         state: "experimentv1State",
         username: str,
         bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
-        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
-        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -2399,6 +2397,8 @@ class v1Experiment:
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
+        self.checkpointCount = checkpointCount
+        self.checkpointSize = checkpointSize
         self.config = config
         self.id = id
         self.jobId = jobId
@@ -2413,10 +2413,6 @@ class v1Experiment:
         self.username = username
         if not isinstance(bestTrialSearcherMetric, Unset):
             self.bestTrialSearcherMetric = bestTrialSearcherMetric
-        if not isinstance(checkpointCount, Unset):
-            self.checkpointCount = checkpointCount
-        if not isinstance(checkpointSize, Unset):
-            self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -2450,6 +2446,8 @@ class v1Experiment:
     def from_json(cls, obj: Json) -> "v1Experiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "archived": obj["archived"],
+            "checkpointCount": obj["checkpointCount"],
+            "checkpointSize": obj["checkpointSize"],
             "config": obj["config"],
             "id": obj["id"],
             "jobId": obj["jobId"],
@@ -2465,10 +2463,6 @@ class v1Experiment:
         }
         if "bestTrialSearcherMetric" in obj:
             kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
-        if "checkpointCount" in obj:
-            kwargs["checkpointCount"] = obj["checkpointCount"]
-        if "checkpointSize" in obj:
-            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -2502,6 +2496,8 @@ class v1Experiment:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "archived": self.archived,
+            "checkpointCount": self.checkpointCount,
+            "checkpointSize": self.checkpointSize,
             "config": self.config,
             "id": self.id,
             "jobId": self.jobId,
@@ -2517,10 +2513,6 @@ class v1Experiment:
         }
         if not omit_unset or "bestTrialSearcherMetric" in vars(self):
             out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
-        if not omit_unset or "checkpointCount" in vars(self):
-            out["checkpointCount"] = self.checkpointCount
-        if not omit_unset or "checkpointSize" in vars(self):
-            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):

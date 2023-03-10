@@ -1,3 +1,20 @@
+UPDATE public.experiments SET checkpoint_size = 0 WHERE checkpoint_size IS NULL;
+UPDATE public.experiments SET checkpoint_count = 0 WHERE checkpoint_count IS NULL;
+UPDATE public.trials SET checkpoint_size = 0 WHERE checkpoint_size IS NULL;
+UPDATE public.trials SET checkpoint_count = 0 WHERE checkpoint_count IS NULL;
+
+ALTER TABLE public.experiments
+    ALTER COLUMN checkpoint_size SET NOT NULL,
+    ALTER COLUMN checkpoint_size SET DEFAULT 0,
+    ALTER COLUMN checkpoint_count SET NOT NULL,
+    ALTER COLUMN checkpoint_count SET DEFAULT 0;
+
+ALTER TABLE public.trials
+    ALTER COLUMN checkpoint_size SET NOT NULL,
+    ALTER COLUMN checkpoint_size SET DEFAULT 0,
+    ALTER COLUMN checkpoint_count SET NOT NULL,
+    ALTER COLUMN checkpoint_count SET DEFAULT 0;
+
 ALTER TABLE public.checkpoints_v2
    ADD COLUMN size bigint NOT NULL DEFAULT 0;
 
