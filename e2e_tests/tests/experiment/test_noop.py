@@ -350,12 +350,20 @@ def test_estimator_rng_restore() -> None:
 
 @pytest.mark.e2e_cpu
 def test_pytorch_cpu_rng_restore() -> None:
-    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand"])
+    # Disable rand_rand test because tensorboard async uploading can mess with random state
+    # in unexpected way.
+    # We should reenable this test when the upcoming feature flag to enable/disable async
+    # tensorboard uploading is released.
+    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand"])
 
 
 @pytest.mark.e2e_gpu
 def test_pytorch_gpu_rng_restore() -> None:
-    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
+    # Disable rand_rand test because tensorboard async uploading can mess with random state
+    # in unexpected way.
+    # We should reenable this test when the upcoming feature flag to enable/disable async
+    # tensorboard uploading is released.
+    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand", "gpu_rand"])
 
 
 @pytest.mark.e2e_cpu
