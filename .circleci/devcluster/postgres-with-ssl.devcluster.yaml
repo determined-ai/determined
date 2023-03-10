@@ -48,6 +48,7 @@ stages:
         - hba_file=/tmp/pg/pg_hba.conf
 
   - master:
+      kill_signal: SIGUSR1
       pre:
         - sh: make -C tools prep-root
       config_file:
@@ -69,6 +70,7 @@ stages:
           cache_dir: /tmp/determined-cache
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent
       config_file:
         master_host: 127.0.0.1

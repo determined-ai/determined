@@ -3,6 +3,7 @@ stages:
       name: db
 
   - master:
+      kill_signal: SIGUSR1
       pre:
         - sh: make -C tools prep-root
       config_file:
@@ -40,6 +41,7 @@ stages:
             port: 8081
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent1
       config_file:
         master_host: 127.0.0.1
@@ -51,6 +53,7 @@ stages:
           on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent2
       config_file:
         master_host: 127.0.0.1

@@ -1,6 +1,7 @@
 stages:
   - agent:
       name: agent
+      kill_signal: SIGUSR1
       config_file:
         master_host: 127.0.0.1
         master_port: 8080

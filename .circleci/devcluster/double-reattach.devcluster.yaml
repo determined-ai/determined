@@ -3,6 +3,7 @@ stages:
       name: db
 
   - master:
+      kill_signal: SIGUSR1
       pre:
         - sh: make -C tools prep-root
       config_file:
@@ -45,6 +46,7 @@ stages:
             port: 8081
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent1
       config_file:
         master_host: 127.0.0.1
@@ -59,6 +61,7 @@ stages:
 
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent2
       config_file:
         master_host: 127.0.0.1
@@ -73,6 +76,7 @@ stages:
         container_auto_remove_disabled: true
 
   - agent:
+      kill_signal: SIGUSR1
       name: agent10  # Copy of agent1, but with different slots.
       config_file:
         master_host: 127.0.0.1

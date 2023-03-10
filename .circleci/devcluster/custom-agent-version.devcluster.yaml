@@ -3,6 +3,7 @@ stages:
       name: db
 
   - master:
+      kill_signal: SIGUSR1
       pre:
         - sh: make -C tools prep-root
       config_file:

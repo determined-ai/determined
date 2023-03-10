@@ -1806,8 +1806,7 @@ jobs:
             - run:
                 name: "Shutting down master and agent for test coverage"
                 command: |
-                  (ps aux | grep -ie "[d]etermined-agent" | awk '{print $2}' | xargs kill -10) || true
-                  (ps aux | grep -ie "[d]etermined-master" | awk '{print $2}' | xargs kill -10) || true
+                  ps aux | grep -ie "[d]evcluster --oneshot" | awk '{print $2}' | xargs kill -10
                   cd agent
                   go tool covdata textfmt -i=/tmp/gocover/ -o=/tmp/gocover/coverage.out
                   go tool cover -html /tmp/gocover/coverage.out -o /tmp/gocover/coverage.html
