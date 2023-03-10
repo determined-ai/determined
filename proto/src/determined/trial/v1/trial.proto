@@ -83,7 +83,9 @@ message Trial {
         "state",
         "restarts",
         "hparams",
-        "totalBatchesProcessed"
+        "totalBatchesProcessed",
+        "total_checkpoint_size",
+        "checkpoint_count"
       ]
     }
   };
