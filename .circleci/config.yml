@@ -976,7 +976,7 @@ commands:
 
   install-devcluster:
     steps:
-      - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+      - run: pip install git+https://github.com/nicholasblaskey/devcluster.git@v1.3.0#egg=devcluster
       - run:
           command: |
             if ! [ -x "$(command -v socat)" ]; then
