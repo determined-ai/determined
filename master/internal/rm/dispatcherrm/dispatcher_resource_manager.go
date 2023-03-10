@@ -1660,7 +1660,7 @@ func (m *dispatcherResourceManager) handleServiceQueryError(
 			m.authToken = loadAuthToken(m.rmConfig)
 			m.jobWatcher.ReloadAuthToken()
 		} else {
-			ctx.Log().Errorf("Failed to retrieve HPC resources from launcher due to error: "+
+			ctx.Log().Errorf("Failed to retrieve HPC resources or queue data from launcher due to error: "+
 				"{%v}, response: {%v}. ", err, r.Body)
 		}
 	} else {
