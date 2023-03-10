@@ -15,7 +15,7 @@ import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspa
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
-import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -172,11 +172,9 @@ const WorkspaceMembers: React.FC<Props> = ({
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
-        const member = record as User;
-        return <UserBadge user={member} />;
+        return <UserBadge user={record} />;
       }
-      const group = record as V1GroupDetails;
-      return <GroupAvatar groupName={group.name} />;
+      return <GroupAvatar groupName={record.name} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (

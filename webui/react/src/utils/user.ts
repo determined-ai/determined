@@ -1,4 +1,4 @@
-import { V1Group, V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
 
 export interface UserNameFields {
@@ -10,23 +10,23 @@ export function getDisplayName(user: DetailedUser | User | UserNameFields | unde
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isUser(userOrGroup: UserOrGroup): string | undefined {
-  const user = userOrGroup as User;
-  return user?.username || user?.displayName;
+export function isUser(userOrGroup: Readonly<UserOrGroup>): userOrGroup is User {
+  return 'username' in userOrGroup || 'displayName' in userOrGroup;
 }
 
 export function getName(userOrGroup: UserOrGroup): string {
-  const user = userOrGroup as User;
-  const group = userOrGroup as V1Group;
-  return isUser(userOrGroup) ? getDisplayName(user) : group.name ? group.name : '';
+  if (isUser(userOrGroup)) {
+    return getDisplayName(userOrGroup);
+  }
+  return userOrGroup?.name ?? '';
 }
 
 export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
   if (isUser(userOrGroup)) {
-    const user = userOrGroup as User;
+    const user = userOrGroup;
     return user.id;
   }
-  const group = userOrGroup as V1Group;
+  const group = userOrGroup;
 
   // The groupId should always exist
   return group.groupId || 0;

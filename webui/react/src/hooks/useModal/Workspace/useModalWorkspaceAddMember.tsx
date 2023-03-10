@@ -6,7 +6,7 @@ import GroupAvatar from 'components/GroupAvatar';
 import Form from 'components/kit/Form';
 import UserBadge from 'components/kit/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group, V1Role } from 'services/api-ts-sdk';
+import { V1Role } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
@@ -61,10 +61,10 @@ const useModalWorkspaceAddMember = ({
     (value: string) => {
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u) && value.substring(0, 2) === 'u_') {
-          const user = u as User;
+          const user = u;
           return user.id === Number(value.substring(2));
         } else if (!isUser(u) && value.substring(0, 2) === 'g_') {
-          const group = u as V1Group;
+          const group = u;
           return group.groupId === Number(value.substring(2));
         }
       });
