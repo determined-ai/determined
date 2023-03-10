@@ -15,7 +15,7 @@ interface NodeProps {
 }
 
 class ErrorBoundary extends React.Component<NodeProps, State> {
-  constructor (props: NodeProps, state: State) {
+  constructor(props: NodeProps, state: State) {
     super(props, state);
   }
 

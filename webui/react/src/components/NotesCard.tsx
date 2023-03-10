@@ -42,10 +42,7 @@ const NotesCard: React.FC<Props> = ({
   const [editedNotes, setEditedNotes] = useState(notes);
   const currentLocation = useLocation();
   const blocker = (nextLocation: Location) => {
-    if (
-      isEditing &&
-      nextLocation.pathname !== currentLocation.pathname.split('?')[0]
-    ) {
+    if (isEditing && nextLocation.pathname !== currentLocation.pathname.split('?')[0]) {
       const answer = window.confirm(
         'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
       );
