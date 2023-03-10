@@ -49,11 +49,12 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { ModelItem, Workspace } from 'types';
+import { DetailedUser, ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -71,8 +72,9 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -105,8 +107,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   } = useSettings<Settings>(settingConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
-
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchModels = useCallback(async () => {
     if (!settings) return;
@@ -157,8 +157,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);
-  }, [fetchModels, fetchTags, fetchUsers, fetchWorkspaces]);
+    await Promise.allSettled([
+      fetchModels(),
+      fetchTags(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchWorkspaces(),
+    ]);
+  }, [canceler, fetchModels, fetchTags, fetchWorkspaces]);
 
   const workspaces = Loadable.match(useWorkspaces(), {
     Loaded: (ws) => ws,

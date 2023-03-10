@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.20.0-dev0
+    default: 0.20.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-7aa5364
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0e4beb5
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-7aa5364
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0e4beb5
 
   login-docker:
     parameters:
@@ -1231,14 +1231,18 @@ jobs:
 
   check-ts-bindings:
     docker:
-      - image: cimg/openjdk:14.0.2
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - skip-if-docs-only
+      - setup-python-venv:
+          install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
-      - run: make -C bindings get-deps
-      - run: make -C bindings check/typescript-fetch
+      - run: make -C bindings force-gen
+      - run: make -C bindings check/typescript
 
   check-py-bindings:
     docker:
@@ -1249,6 +1253,7 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
+          extra-requirements-file: "bindings/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .

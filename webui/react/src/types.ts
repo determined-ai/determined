@@ -430,6 +430,14 @@ export const TrialWorkloadFilter = {
 
 export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
 
+// This is to support the steps table in trial details and shouldn't be used
+// elsewhere so we can remove it with a redesign.
+export interface Step extends WorkloadGroup, StartEndTimes {
+  batchNum: number;
+  key: string;
+  training: MetricsWorkload;
+}
+
 type MetricStruct = Record<string, number>;
 export interface Metrics extends Api.V1Metrics {
   // these two fields are present in the protos

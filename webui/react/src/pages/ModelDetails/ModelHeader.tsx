@@ -20,9 +20,10 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
-import { useUsers } from 'stores/users';
-import { ModelItem, Workspace } from 'types';
+import usersStore from 'stores/users';
+import { DetailedUser, ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
@@ -44,8 +45,9 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();

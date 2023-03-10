@@ -235,7 +235,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleMoveClick = useCallback(
     () =>
       openModalMove({
-        experimentIds: isMovable ? [experiment.id] : undefined,
+        experimentIds: isMovable ? [experiment.id] : [],
         sourceProjectId: experiment.projectId,
         sourceWorkspaceId: experiment.workspaceId,
       }),
@@ -333,6 +333,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           try {
             const commandResponse = await openOrCreateTensorBoard({
               experimentIds: [experiment.id],
+              workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
             setIsRunningTensorBoard(false);

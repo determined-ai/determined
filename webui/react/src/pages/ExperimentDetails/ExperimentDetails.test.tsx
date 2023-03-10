@@ -15,7 +15,6 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
-import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -71,15 +70,13 @@ const setup = () => {
     <UIProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <UsersProvider>
-            <ClusterProvider>
-              <ProjectsProvider>
-                <HistoryRouter history={history}>
-                  <ExperimentDetails />
-                </HistoryRouter>
-              </ProjectsProvider>
-            </ClusterProvider>
-          </UsersProvider>
+          <ClusterProvider>
+            <ProjectsProvider>
+              <HistoryRouter history={history}>
+                <ExperimentDetails />
+              </HistoryRouter>
+            </ProjectsProvider>
+          </ClusterProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </UIProvider>,

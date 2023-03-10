@@ -69,7 +69,7 @@ const RESPONSES = {
           image: {
             cpu: 'determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1',
             cuda: 'determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1',
-            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364',
+            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0e4beb5',
           },
           pod_spec: null,
           ports: {},
@@ -751,7 +751,7 @@ const RESPONSES = {
           image: {
             cpu: 'determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1',
             cuda: 'determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1',
-            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364',
+            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0e4beb5',
           },
           pod_spec: null,
           ports: {},
@@ -998,13 +998,6 @@ const RESPONSES = {
           test1: { test2: { test3: { test4: { optimizer_fake: { lr: 0.0001, momentum: 0.9 } } } } },
         },
         id: 3521,
-        latestTraining: {
-          endTime: '2022-08-01T16:17:50.142291Z',
-          metrics: { loss: 0.0822979062795639 },
-          numInputs: 0,
-          state: 'STATE_COMPLETED',
-          totalBatches: 937,
-        },
         latestValidation: {
           endTime: '2022-08-01T16:17:55.711568Z',
           metrics: { accuracy: 0.9800955414012739, validation_loss: 0.05823593354751697 },

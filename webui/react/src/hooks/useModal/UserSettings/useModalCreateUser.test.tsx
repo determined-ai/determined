@@ -7,7 +7,6 @@ import Button from 'components/kit/Button';
 import { PostUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -47,11 +46,9 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <HistoryRouter history={history}>
-          <Container />
-        </HistoryRouter>
-      </UsersProvider>
+      <HistoryRouter history={history}>
+        <Container />
+      </HistoryRouter>
     </UIProvider>,
   );
 

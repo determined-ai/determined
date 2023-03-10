@@ -254,6 +254,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
+  workspaceId?: number;
 }
 
 export interface LaunchJupyterLabParams {
