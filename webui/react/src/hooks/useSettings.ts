@@ -145,7 +145,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
-  const loadableUser = useObservable(usersStore.getCurrentUser());
+  const loadableUser = usersStore.getCurrentUser();
 
   // parse navigation url to state
   useEffect(() => {
@@ -211,7 +211,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateDB = useCallback(
     async (newSettings: Settings, oldSettings: SettingsRecord<T>) => {
-      const user = Loadable.match(loadableUser, {
+      const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
@@ -258,7 +258,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const resetSettings = useCallback(
     (settingsArray?: string[]) => {
-      const user = Loadable.match(loadableUser, {
+      const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
@@ -308,7 +308,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     return derivedOb.subscribe(async (cur, prev) => {
-      const user = Loadable.match(loadableUser, {
+      const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
