@@ -163,7 +163,7 @@ func (a *apiServer) GetUsers(
 		WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
 	`
 	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
-	err := db.Bun().NewRaw(query, 
+	err := db.Bun().NewRaw(query,
 		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
 	if err != nil {
 		return nil, err
