@@ -15,8 +15,13 @@ interface NodeProps {
 }
 
 class ErrorBoundary extends React.Component<NodeProps, State> {
+  constructor (props: NodeProps, state: State) {
+    super(props, state);
+  }
+
   // Error, React.ErrorInfo
   componentDidCatch(e: Error): void {
+    console.log('in componentDidCatch');
     if (isAuthFailure(e)) {
       router.navigate(paths.logout());
     }
