@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter, useParams } from 'react-router-dom';
 
 import {
   getExperimentDetails,
@@ -27,7 +26,7 @@ vi.useFakeTimers();
  * mock the module and replace the function(s) with vi.fn(),
  * then override the implementation or return value
  */
-const { unstable_HistoryRouter: HistoryRouter, useParams } = await import('react-router-dom');
+const { BrowserRouter, useParams } = await import('react-router-dom');
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useParams: vi.fn(),
