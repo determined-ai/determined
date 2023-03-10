@@ -384,6 +384,16 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 	resources := launcher.NewResourceRequirementsWithDefaults()
 	switch {
 	case slotType == device.CPU:
+		// Checkpoint GC tasks will always request zero slots and have a device
+		// type of CPU. While we could simply check for a "t.TaskType" equal to
+		// "CHECKPOINT_GC", there may be other use cases where the number of
+		// requested slots is zero, so we check for that instead.
+		if numSlots == 0 {
+			numNodes = 1
+			effectiveSlotsPerNode = 1
+			haveSlotsPerNode = false
+		}
+
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
 
 		if haveSlotsPerNode {
