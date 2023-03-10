@@ -1,11 +1,5 @@
 import * as utils from './browser';
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 describe('Browser Utilities', () => {
   describe('cookies', () => {
     const cookieKeyValues = [

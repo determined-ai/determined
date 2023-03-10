@@ -17,12 +17,6 @@ interface TestLog {
   time: string;
 }
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 const DEFAULT_MIN_WORD_COUNT = 5;
 const DEFAULT_MAX_WORD_COUNT = 8;
 const DEFAULT_MIN_WORD_LENGTH = 3;

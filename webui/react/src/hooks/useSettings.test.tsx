@@ -15,12 +15,6 @@ vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 interface Settings {
   boolean: boolean;
   booleanArray?: boolean[];

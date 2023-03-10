@@ -67,12 +67,6 @@ const setup = async () => {
   return { user, view };
 };
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 describe('useModalCustomizeColumns', () => {
   it('should open modal', async () => {
     const { view } = await setup();

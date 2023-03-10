@@ -22,12 +22,6 @@ vi.mock('react-router-dom', () => ({
   useRouteMatch: () => ({ url: '/company/company-id1/team/team-id1' }),
 }));
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 const InteractiveTaskPageContainer: React.FC = () => {
   useEffect(() => {
     setAuth({ isAuthenticated: true });

@@ -1,17 +1,10 @@
 import React from 'react';
 
+import router from 'router';
 import { reactHostAddress } from 'routes/utils';
-
-import router from '../../router';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
-
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
 
 const setup = (url = '/', base = 'http://www.example.com') => {
   const newUrl = new URL(url, base);

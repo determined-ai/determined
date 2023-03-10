@@ -2,12 +2,6 @@ import { findReactRoute, reactHostAddress } from './utils';
 
 const initEnv = process.env;
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 describe('Routing Utilities', () => {
   beforeEach(() => {
     vi.resetModules();

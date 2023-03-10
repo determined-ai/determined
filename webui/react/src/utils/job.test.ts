@@ -3,12 +3,6 @@ import { CommandType, Job, JobType } from 'types';
 
 import * as utils from './job';
 
-jest.mock('router', () => ({
-  navigate: (path: string) => {
-    global.window.history.pushState({}, '', path);
-  },
-}));
-
 describe('Job Utilities', () => {
   describe('jobTypeIconName', () => {
     it('should support experiment and command types', () => {
