@@ -307,7 +307,7 @@ describe('Routes Utilities', () => {
 
   describe('routeToReactUrl', () => {
     beforeEach(() => {
-      router.navigate = vi.fn();
+      vi.spyOn(router, 'navigate');
     });
 
     it('should route to react URL', () => {
