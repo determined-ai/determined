@@ -420,17 +420,18 @@ class trialv1State(enum.Enum):
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
+    totalCheckpointSize: "typing.Optional[str]" = None
     wallClockTime: "typing.Optional[float]" = None
     warmStartCheckpointUuid: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        checkpointCount: int,
         experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
         id: int,
@@ -438,17 +439,17 @@ class trialv1Trial:
         startTime: str,
         state: "experimentv1State",
         totalBatchesProcessed: int,
-        totalCheckpointSize: str,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
+        totalCheckpointSize: "typing.Union[str, None, Unset]" = _unset,
         wallClockTime: "typing.Union[float, None, Unset]" = _unset,
         warmStartCheckpointUuid: "typing.Union[str, None, Unset]" = _unset,
     ):
-        self.checkpointCount = checkpointCount
         self.experimentId = experimentId
         self.hparams = hparams
         self.id = id
@@ -456,11 +457,12 @@ class trialv1Trial:
         self.startTime = startTime
         self.state = state
         self.totalBatchesProcessed = totalBatchesProcessed
-        self.totalCheckpointSize = totalCheckpointSize
         if not isinstance(bestCheckpoint, Unset):
             self.bestCheckpoint = bestCheckpoint
         if not isinstance(bestValidation, Unset):
             self.bestValidation = bestValidation
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(latestValidation, Unset):
@@ -469,6 +471,8 @@ class trialv1Trial:
             self.runnerState = runnerState
         if not isinstance(taskId, Unset):
             self.taskId = taskId
+        if not isinstance(totalCheckpointSize, Unset):
+            self.totalCheckpointSize = totalCheckpointSize
         if not isinstance(wallClockTime, Unset):
             self.wallClockTime = wallClockTime
         if not isinstance(warmStartCheckpointUuid, Unset):
@@ -477,7 +481,6 @@ class trialv1Trial:
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "checkpointCount": obj["checkpointCount"],
             "experimentId": obj["experimentId"],
             "hparams": obj["hparams"],
             "id": obj["id"],
@@ -485,12 +488,13 @@ class trialv1Trial:
             "startTime": obj["startTime"],
             "state": experimentv1State(obj["state"]),
             "totalBatchesProcessed": obj["totalBatchesProcessed"],
-            "totalCheckpointSize": obj["totalCheckpointSize"],
         }
         if "bestCheckpoint" in obj:
             kwargs["bestCheckpoint"] = v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj["bestCheckpoint"] is not None else None
         if "bestValidation" in obj:
             kwargs["bestValidation"] = v1MetricsWorkload.from_json(obj["bestValidation"]) if obj["bestValidation"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "latestValidation" in obj:
@@ -499,6 +503,8 @@ class trialv1Trial:
             kwargs["runnerState"] = obj["runnerState"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
+        if "totalCheckpointSize" in obj:
+            kwargs["totalCheckpointSize"] = obj["totalCheckpointSize"]
         if "wallClockTime" in obj:
             kwargs["wallClockTime"] = float(obj["wallClockTime"]) if obj["wallClockTime"] is not None else None
         if "warmStartCheckpointUuid" in obj:
@@ -507,7 +513,6 @@ class trialv1Trial:
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "checkpointCount": self.checkpointCount,
             "experimentId": self.experimentId,
             "hparams": self.hparams,
             "id": self.id,
@@ -515,12 +520,13 @@ class trialv1Trial:
             "startTime": self.startTime,
             "state": self.state.value,
             "totalBatchesProcessed": self.totalBatchesProcessed,
-            "totalCheckpointSize": self.totalCheckpointSize,
         }
         if not omit_unset or "bestCheckpoint" in vars(self):
             out["bestCheckpoint"] = None if self.bestCheckpoint is None else self.bestCheckpoint.to_json(omit_unset)
         if not omit_unset or "bestValidation" in vars(self):
             out["bestValidation"] = None if self.bestValidation is None else self.bestValidation.to_json(omit_unset)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "latestValidation" in vars(self):
@@ -529,6 +535,8 @@ class trialv1Trial:
             out["runnerState"] = self.runnerState
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
+        if not omit_unset or "totalCheckpointSize" in vars(self):
+            out["totalCheckpointSize"] = self.totalCheckpointSize
         if not omit_unset or "wallClockTime" in vars(self):
             out["wallClockTime"] = None if self.wallClockTime is None else dump_float(self.wallClockTime)
         if not omit_unset or "warmStartCheckpointUuid" in vars(self):
@@ -2339,6 +2347,8 @@ class v1EntityType(enum.Enum):
 
 class v1Experiment:
     bestTrialSearcherMetric: "typing.Optional[float]" = None
+    checkpointCount: "typing.Optional[int]" = None
+    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
@@ -2358,8 +2368,6 @@ class v1Experiment:
         self,
         *,
         archived: bool,
-        checkpointCount: int,
-        checkpointSize: str,
         config: "typing.Dict[str, typing.Any]",
         id: int,
         jobId: str,
@@ -2373,6 +2381,8 @@ class v1Experiment:
         state: "experimentv1State",
         username: str,
         bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
+        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -2389,8 +2399,6 @@ class v1Experiment:
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
-        self.checkpointCount = checkpointCount
-        self.checkpointSize = checkpointSize
         self.config = config
         self.id = id
         self.jobId = jobId
@@ -2405,6 +2413,10 @@ class v1Experiment:
         self.username = username
         if not isinstance(bestTrialSearcherMetric, Unset):
             self.bestTrialSearcherMetric = bestTrialSearcherMetric
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
+        if not isinstance(checkpointSize, Unset):
+            self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -2438,8 +2450,6 @@ class v1Experiment:
     def from_json(cls, obj: Json) -> "v1Experiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "archived": obj["archived"],
-            "checkpointCount": obj["checkpointCount"],
-            "checkpointSize": obj["checkpointSize"],
             "config": obj["config"],
             "id": obj["id"],
             "jobId": obj["jobId"],
@@ -2455,6 +2465,10 @@ class v1Experiment:
         }
         if "bestTrialSearcherMetric" in obj:
             kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
+        if "checkpointSize" in obj:
+            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -2488,8 +2502,6 @@ class v1Experiment:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "archived": self.archived,
-            "checkpointCount": self.checkpointCount,
-            "checkpointSize": self.checkpointSize,
             "config": self.config,
             "id": self.id,
             "jobId": self.jobId,
@@ -2505,6 +2517,10 @@ class v1Experiment:
         }
         if not omit_unset or "bestTrialSearcherMetric" in vars(self):
             out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
+        if not omit_unset or "checkpointSize" in vars(self):
+            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):

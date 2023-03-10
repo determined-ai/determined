@@ -728,13 +728,13 @@ export interface Trialv1Trial {
      * @type {string}
      * @memberof Trialv1Trial
      */
-    totalCheckpointSize: string;
+    totalCheckpointSize?: string;
     /**
      * The count of checkpoints.
      * @type {number}
      * @memberof Trialv1Trial
      */
-    checkpointCount: number;
+    checkpointCount?: number;
 }
 /**
  * struct for the ids parameter.
@@ -2330,13 +2330,13 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    checkpointSize: string;
+    checkpointSize?: string;
     /**
      * The count of checkpoints.
      * @type {number}
      * @memberof V1Experiment
      */
-    checkpointCount: number;
+    checkpointCount?: number;
     /**
      * The metrics and hyperparameters associated with the best trial by searcher metric.
      * @type {number}
