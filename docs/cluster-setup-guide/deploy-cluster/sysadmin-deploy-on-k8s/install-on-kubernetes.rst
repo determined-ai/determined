@@ -361,15 +361,15 @@ the following:
 
 #. As Determined ensures that tasks in a given resource pool get launched in its linked namespace,
    the cluster admin needs to ensure that pods in a given namespace have the right nodeSelector or
-   toleration automatically added to their pod spec so that they can be forced to be scheduled on the
-   nodes that we want to be part of a given resource pool. This can be done using an admissions
+   toleration automatically added to their pod spec so that they can be forced to be scheduled on
+   the nodes that we want to be part of a given resource pool. This can be done using an admissions
    controller like a `PodNodeSelector
    <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podnodeselector>`__
    or `PodTolerationRestriction
    <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podtolerationrestriction>`__.
-   Alternatively, the cluster admin can also add a resource pool (and hence namespace) specific
-   pod spec to the ``task_container_defaults`` sub-section of the ``resourcePools`` section of the
-   Helm ``values.yaml``:
+   Alternatively, the cluster admin can also add a resource pool (and hence namespace) specific pod
+   spec to the ``task_container_defaults`` sub-section of the ``resourcePools`` section of the Helm
+   ``values.yaml``:
 
    .. code:: yaml
 
@@ -387,12 +387,11 @@ the following:
                     value: "prod"
                     effect: "NoSchedule"
 
-#. Label/taint the appropriate nodes you want to include as part of each resource pool. For
-   instance you may add a taint like ``kubectl taint nodes prod_node_name
-   pool_taint=prod:NoSchedule`` and the appropriate toleration to the PodTolerationRestriction
-   admissions controller or in ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec``
-   as above so it is automatically added to the pod spec based on which namespace (and hence resource
-   pool) a task runs in.
+#. Label/taint the appropriate nodes you want to include as part of each resource pool. For instance
+   you may add a taint like ``kubectl taint nodes prod_node_name pool_taint=prod:NoSchedule`` and
+   the appropriate toleration to the PodTolerationRestriction admissions controller or in
+   ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as above so it is automatically
+   added to the pod spec based on which namespace (and hence resource pool) a task runs in.
 
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
    the ``values.yaml`` file in the Helm chart.
