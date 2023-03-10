@@ -469,15 +469,15 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 	if len(m.monitoredJobs) == 0 {
 		return result // Nothing to get of interest in this case
 	}
-	if m.rm.wlmType == pbsSchedulerType {
-		return result // No support for PBS yet -- FOUNDENG-449
-	}
 	ctx.Log().Debugf("Fetching HPC queue state")
 	payload := launcher.NewPayloadWithDefaults()
 	payload.SetName("DAI-HPC-Queues")
 	payload.SetId("com.cray.analytics.capsules.hpc.queue")
 	payload.SetVersion("latest")
-	payload.SetCarriers([]string{"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmQueue"})
+	payload.SetCarriers([]string{
+		"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmQueue",
+		"com.cray.analytics.capsules.carriers.hpc.pbs.PbsQueue",
+	})
 
 	launchParameters := launcher.NewLaunchParameters()
 	launchParameters.SetMode("batch")
