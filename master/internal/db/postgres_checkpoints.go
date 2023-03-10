@@ -9,6 +9,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
@@ -150,7 +151,7 @@ func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid
 		idb = Bun()
 	}
 
-	var res bool
+	var experimentIDs []int
 	err := idb.NewRaw(`
 UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT trial_id,
@@ -163,21 +164,25 @@ UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	GROUP BY trial_id
 ) sub
 WHERE trials.id = sub.trial_id
-RETURNING true`, bun.In(checkpoints)).Scan(ctx, &res)
+RETURNING experiment_id`, bun.In(experimentIDs)).Scan(ctx, &experimentIDs)
 	if err != nil {
 		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
 	}
+	if len(experimentIDs) == 0 { // Checkpoint potentially to non experiment.
+		return nil
+	}
 
+	uniqueExpIDs := set.New(experimentIDs)
+
+	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
 	err = idb.NewRaw(`
 UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
-	WHERE experiment_id IN (
-		SELECT experiment_id FROM checkpoints_view WHERE uuid IN (?)
-	)
+	WHERE experiment_id IN (?)
 	GROUP BY experiment_id
 ) sub
 WHERE experiments.id = sub.experiment_id
-RETURNING true`, bun.In(checkpoints)).Scan(ctx, &res)
+RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
 	if err != nil {
 		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
 	}

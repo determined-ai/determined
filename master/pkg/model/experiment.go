@@ -537,7 +537,7 @@ type CheckpointV1 struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
-	Size              int        `db:"size"`
+	Size              int64      `db:"size"`
 }
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
