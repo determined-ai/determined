@@ -104,9 +104,9 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
     featureSwitches: data.featureSwitches || [],
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
-    product: data.product,
     rbacEnabled: !!data.rbacEnabled,
     ssoProviders: data.ssoProviders,
+    userManagementEnabled: !!data.userManagementEnabled,
     version: data.version,
   };
 };

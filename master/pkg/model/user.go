@@ -142,6 +142,11 @@ type ExternalSessions struct {
 	JwtKey    string `json:"jwt_key"`
 }
 
+// Enabled returns whether or not external sessions are enabled.
+func (e ExternalSessions) Enabled() bool {
+	return len(e.LoginURI) > 1
+}
+
 // UserWebSetting is a record of user web setting.
 type UserWebSetting struct {
 	UserID      UserID

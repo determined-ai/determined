@@ -1,5 +1,4 @@
 import { getInfo } from 'services/api';
-import { GetMasterResponseProduct } from 'services/api-ts-sdk';
 import { DeterminedInfo } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -13,9 +12,9 @@ export const initInfo: DeterminedInfo = {
   featureSwitches: [],
   isTelemetryEnabled: false,
   masterId: '',
-  product: GetMasterResponseProduct.UNSPECIFIED,
   rbacEnabled: false,
   ssoProviders: [],
+  userManagementEnabled: true,
   version: process.env.VERSION || '',
 };
 

@@ -24,7 +24,6 @@ import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigur
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useModalManageGroups from 'hooks/useModal/UserSettings/useModalManageGroups';
 import usePermissions from 'hooks/usePermissions';
-import useProduct from 'hooks/useProduct';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
@@ -33,6 +32,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { RolesStore } from 'stores/roles';
 import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -56,11 +56,11 @@ export const CREATE_USER_LABEL = 'add_user';
 interface DropdownProps {
   fetchUsers: () => void;
   groups: V1GroupSearchResult[];
-  isCommunity: boolean;
   user: DetailedUser;
+  userManagementEnabled: boolean;
 }
 
-const UserActionDropdown = ({ fetchUsers, user, groups, isCommunity }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers, user });
   const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
@@ -107,7 +107,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, isCommunity }: DropdownP
   };
 
   const menuItems: MenuProps['items'] =
-    canModifyUsers && !isCommunity
+    userManagementEnabled && canModifyUsers
       ? [
           { key: MenuKey.Edit, label: 'Edit User' },
           { key: MenuKey.Groups, label: 'Manage Groups' },
@@ -158,7 +158,7 @@ const UserManagement: React.FC = () => {
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
-  const { isCommunity } = useProduct();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
 
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
@@ -230,8 +230,8 @@ const UserManagement: React.FC = () => {
         <UserActionDropdown
           fetchUsers={fetchUsers}
           groups={groups}
-          isCommunity={isCommunity}
           user={record}
+          userManagementEnabled={info.userManagementEnabled}
         />
       );
     };
@@ -286,7 +286,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, groups, nameFilterSearch, rbacEnabled]);
+  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, nameFilterSearch, rbacEnabled]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -328,7 +328,7 @@ const UserManagement: React.FC = () => {
           <Space>
             <Button
               aria-label={CREATE_USER_LABEL}
-              disabled={!canModifyUsers || isCommunity}
+              disabled={!info.userManagementEnabled || !canModifyUsers}
               onClick={onClickCreateUser}>
               {CREATE_USER}
             </Button>

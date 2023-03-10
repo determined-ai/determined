@@ -1,6 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
 import {
-  GetMasterResponseProduct,
   V1AgentUserGroup,
   V1Group,
   V1LaunchWarning,
@@ -58,9 +57,9 @@ export interface DeterminedInfo {
   featureSwitches: string[];
   isTelemetryEnabled: boolean;
   masterId: string;
-  product?: GetMasterResponseProduct;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
   version: string;
 }
 

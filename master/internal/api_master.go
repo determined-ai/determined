@@ -24,22 +24,18 @@ var masterLogsBatchMissWaitTime = time.Second
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
-	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
-	if a.m.config.IsCommunityEdition() {
-		product = apiv1.GetMasterResponse_PRODUCT_COMMUNITY
-	}
 	masterResp := &apiv1.GetMasterResponse{
-		Version:           version.Version,
-		MasterId:          a.m.MasterID,
-		ClusterId:         a.m.ClusterID,
-		ClusterName:       a.m.config.ClusterName,
-		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
-		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
-		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
-		Branding:          "determined",
-		RbacEnabled:       config.GetAuthZConfig().IsRBACUIEnabled(),
-		Product:           product,
-		FeatureSwitches:   a.m.config.FeatureSwitches,
+		Version:               version.Version,
+		MasterId:              a.m.MasterID,
+		ClusterId:             a.m.ClusterID,
+		ClusterName:           a.m.config.ClusterName,
+		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
+		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
+		Branding:              "determined",
+		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
+		FeatureSwitches:       a.m.config.FeatureSwitches,
 	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
