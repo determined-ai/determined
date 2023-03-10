@@ -6,7 +6,6 @@ import pathlib
 import pickle
 import random
 import time
-import uuid
 import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
@@ -17,7 +16,6 @@ from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
-from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
