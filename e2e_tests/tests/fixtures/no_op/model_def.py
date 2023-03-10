@@ -7,7 +7,7 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -109,8 +109,7 @@ class NoOpTrialController(det.TrialController):
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
 
-    @classmethod
-    def create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         return tensorboard.get_metric_writer()
 
     def run(self) -> None:

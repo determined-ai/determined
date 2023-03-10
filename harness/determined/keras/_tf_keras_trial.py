@@ -163,10 +163,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 
 class TFKerasTrialController(det.TrialController):
-    @classmethod
-    def create_metric_writer(
-        cls: Type["TFKerasTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
+    def _create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
@@ -321,7 +318,7 @@ class TFKerasTrialController(det.TrialController):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        self.metric_writer = self.create_metric_writer()
+        self.metric_writer = self._create_metric_writer()
 
         self.model = model
         self.session = session

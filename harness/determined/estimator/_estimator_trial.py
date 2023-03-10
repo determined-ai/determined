@@ -389,7 +389,7 @@ class EstimatorTrialController(det.TrialController):
     ) -> None:
         super().__init__(context, *args, **kwargs)
 
-        self.metric_writer = self.create_metric_writer()
+        self.metric_writer = self._create_metric_writer()
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
@@ -479,10 +479,7 @@ class EstimatorTrialController(det.TrialController):
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
 
-    @classmethod
-    def create_metric_writer(
-        cls: Type["EstimatorTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
+    def _create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
