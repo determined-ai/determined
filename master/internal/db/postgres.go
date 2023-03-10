@@ -22,6 +22,7 @@ import (
 var (
 	bunMutex         sync.Mutex
 	theOneBun        *bun.DB
+	theOneDB         *PgDB
 	modelsToRegister []interface{} // TODO (eliu): currently allows duplicate models
 	tokenKeys        *model.AuthTokenKeypair
 )
@@ -41,7 +42,7 @@ func RegisterModel(m interface{}) {
 	modelsToRegister = append(modelsToRegister, m)
 }
 
-func initTheOneBun(db *sql.DB) {
+func initTheOneBun(db *PgDB) {
 	bunMutex.Lock()
 	defer bunMutex.Unlock()
 	if theOneBun != nil {
@@ -49,7 +50,8 @@ func initTheOneBun(db *sql.DB) {
 			"detected re-initialization of Bun that should never occur outside of tests",
 		)
 	}
-	theOneBun = bun.NewDB(db, pgdialect.New())
+	theOneBun = bun.NewDB(db.sql.DB, pgdialect.New())
+	theOneDB = db
 
 	for _, m := range modelsToRegister {
 		theOneBun.RegisterModel(m)
@@ -83,6 +85,15 @@ func Bun() *bun.DB {
 		panic("Bun is not yet initialized!  Did you use the database before initializing it?")
 	}
 	return theOneBun
+}
+
+// SingleDB returns a singleton database client. Bun() should be preferred over this for all new
+// queries.
+func SingleDB() *PgDB {
+	if theOneDB == nil {
+		panic("DB is not yet initialized!  Did you use the database before initializing it?")
+	}
+	return theOneDB
 }
 
 // SortDirection represents the order by in a query.
@@ -169,8 +180,9 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			initTheOneBun(sql.DB)
-			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}, err
+			db := &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}
+			initTheOneBun(db)
+			return db, nil
 		}
 		numTries++
 		if numTries >= 15 {
