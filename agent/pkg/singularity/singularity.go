@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -47,6 +46,8 @@ const (
 	agentTmp         = "/tmp/determined/agent"
 	hostNetworking   = "host"
 	bridgeNetworking = "bridge"
+	envFileName      = "envfile"
+	archivesName     = "archives"
 )
 
 // SingularityContainer captures the state of a container.
@@ -231,37 +232,66 @@ func (s *SingularityClient) RunContainer(
 		)
 	}
 
+	tmpdir, err := os.MkdirTemp(agentTmp, fmt.Sprintf("*-%s", id))
+	if err != nil {
+		return nil, fmt.Errorf("making tmp dir for archives: %w", err)
+	}
+
 	var args []string
 	args = append(args, "run")
 	args = append(args, "--writable-tmpfs")
 	args = append(args, "--pwd", req.ContainerConfig.WorkingDir)
-	args = append(args, "--env", "DET_NO_FLUENT=true")
+
+	envFilePath := path.Join(tmpdir, envFileName)
+	envFile, err := os.OpenFile(
+		envFilePath,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0o600,
+	) // #nosec G304 // We made this filepath, and it is randomized.
+	if err != nil {
+		return nil, fmt.Errorf("creating envfile %s: %w", envFilePath, err)
+	}
+	args = append(args, "--env-file", envFilePath)
+
+	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_NO_FLUENT=true")
 
 	var b64EnvVars []string
 	for _, env := range req.ContainerConfig.Env {
 		parts := strings.SplitN(env, "=", 2)
 
-		// If it isn't JSON, just pass it as is.
-		var unused map[string]interface{}
-		if err = json.Unmarshal([]byte(parts[1]), &unused); err != nil {
-			args = append(args, "--env", env)
-			continue
+		var formattedEnv string
+		switch len(parts) {
+		case 0:
+			continue // Must be empty envvar.
+		case 1:
+			formattedEnv = env
+		case 2:
+			// Don't even attempt to escape quotes, strconv.Quote doesn't work - singularity seems
+			// to unescape it multiple times.
+			if strings.Contains(parts[1], "\"") {
+				b64EnvVars = append(b64EnvVars, parts[0])
+				formattedEnv = fmt.Sprintf(
+					"%s=\"%s\"",
+					parts[0], base64.StdEncoding.EncodeToString([]byte(parts[1])),
+				)
+			} else {
+				formattedEnv = fmt.Sprintf("%s=%s", parts[0], strconv.Quote(parts[1]))
+			}
 		}
 
-		if err = p.Publish(ctx, docker.NewLogEvent(
-			model.LogLevelDebug,
-			fmt.Sprintf("encoding %s to avoid issues with env containing JSON", parts[0]),
-		)); err != nil {
-			return nil, err
+		_, err = envFile.WriteString(formattedEnv + "\n")
+		if err != nil {
+			return nil, fmt.Errorf("writing to envfile: %w", err)
 		}
-		enc := base64.StdEncoding.EncodeToString([]byte(parts[1]))
-		args = append(args, "--env", fmt.Sprintf("%s=%s", parts[0], enc))
-		b64EnvVars = append(b64EnvVars, parts[0])
 	}
-	args = append(args, "--env", fmt.Sprintf(
+
+	_, err = envFile.WriteString(fmt.Sprintf(
 		"DET_B64_ENCODED_ENVVARS=%s",
 		strings.Join(b64EnvVars, ","),
 	))
+	if err != nil {
+		return nil, fmt.Errorf("writing to envfile: %w", err)
+	}
 
 	switch {
 	case req.HostConfig.NetworkMode == bridgeNetworking && s.opts.AllowNetworkCreation:
@@ -288,14 +318,9 @@ func (s *SingularityClient) RunContainer(
 		return nil, fmt.Errorf("unsupported network mode %s", req.HostConfig.NetworkMode)
 	}
 
-	tmpdir, err := os.MkdirTemp(agentTmp, fmt.Sprintf("*-%s", id))
-	if err != nil {
-		return nil, fmt.Errorf("making tmp dir for archives: %w", err)
-	}
-	cont.TmpDir = tmpdir
-
+	archivesPath := filepath.Join(tmpdir, archivesName)
 	for _, a := range req.Archives {
-		src := filepath.Join(tmpdir, a.Path)
+		src := filepath.Join(archivesPath, a.Path)
 		if wErr := archive.Write(src, a.Archive, func(level, log string) error {
 			return p.Publish(ctx, docker.NewLogEvent(level, log))
 		}); wErr != nil {
@@ -308,8 +333,8 @@ func (s *SingularityClient) RunContainer(
 	ignoredPathPrefixes := []string{"/", "/etc", "/opt", "/run", "/etc/ssh"}
 	var mountPoints []string
 	// This depends on walkdir walking in lexical order, which is documented.
-	if wErr := filepath.WalkDir(tmpdir, func(src string, d fs.DirEntry, err error) error {
-		p := strings.TrimPrefix(src, tmpdir)
+	if wErr := filepath.WalkDir(archivesPath, func(src string, d fs.DirEntry, err error) error {
+		p := strings.TrimPrefix(src, archivesPath)
 
 		// If an existing mount point covers this path, nothing to add
 		for _, m := range mountPoints {
@@ -337,7 +362,7 @@ func (s *SingularityClient) RunContainer(
 		return nil, fmt.Errorf("determining mount points: %w", err)
 	}
 	for _, m := range mountPoints {
-		args = append(args, "--bind", fmt.Sprintf("%s:%s", path.Join(tmpdir, m), m))
+		args = append(args, "--bind", fmt.Sprintf("%s:%s", path.Join(archivesPath, m), m))
 	}
 
 	for _, m := range req.HostConfig.Mounts {
@@ -446,6 +471,7 @@ func (s *SingularityClient) RunContainer(
 
 	cont.PID = cmd.Process.Pid
 	cont.Proc = cmd.Process
+	cont.TmpDir = tmpdir
 	cont.Started.Store(true)
 	at := time.Now().String()
 	s.log.Infof("started container %s with pid %d", id, cont.PID)
