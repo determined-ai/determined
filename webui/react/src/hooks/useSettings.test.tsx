@@ -151,7 +151,9 @@ describe('useSettings', () => {
   };
   const newExtraSettings = { extra: 'fancy' };
 
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('should have default settings', async () => {
     const { result } = await setup();

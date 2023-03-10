@@ -1,0 +1,12 @@
+diff --git a/node_modules/@types/testing-library__jest-dom/index.d.ts b/node_modules/@types/testing-library__jest-dom/index.d.ts
+index 43ba6b7..f899cca 100755
+--- a/node_modules/@types/testing-library__jest-dom/index.d.ts
++++ b/node_modules/@types/testing-library__jest-dom/index.d.ts
+@@ -7,7 +7,6 @@
+ // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+ // Minimum TypeScript Version: 4.3
+ 
+-/// <reference types="jest" />
+ 
+ import { TestingLibraryMatchers } from './matchers';
+ 
