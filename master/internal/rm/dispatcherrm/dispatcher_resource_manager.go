@@ -927,17 +927,26 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	ctx *actor.Context,
 	msg StartDispatcherResources,
 ) {
+	var err error
+
 	req, ok := m.reqList.TaskByHandler(msg.TaskActor)
 	if !ok {
 		sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
 			"task not found in the task list")
 	}
 
-	slotType, err := m.resolveSlotType(ctx, req.ResourcePool)
-	if err != nil {
-		sendResourceStateChangedErrorResponse(ctx, err, msg,
-			"unable to access resource pool configuration")
-		return
+	slotType := device.CPU
+
+	// Only resolve the slot type if the number of slots requested is non-zero.
+	// Checkpoint GC tasks will always request zero slots and they should
+	// remain with a slot type of "CPU".
+	if req.SlotsNeeded > 0 {
+		slotType, err = m.resolveSlotType(ctx, req.ResourcePool)
+		if err != nil {
+			sendResourceStateChangedErrorResponse(ctx, err, msg,
+				"unable to access resource pool configuration")
+			return
+		}
 	}
 
 	// Make sure we explicitly choose a partition.  Use default if unspecified.

@@ -1106,6 +1106,7 @@ func TestTaskSpec_computeResources(t *testing.T) {
 	type fields struct {
 		SlurmConfig expconf.SlurmConfig
 		PbsConfig   expconf.PbsConfig
+		TaskType    model.TaskType
 	}
 	type args struct {
 		tresSupported bool
@@ -1405,12 +1406,49 @@ func TestTaskSpec_computeResources(t *testing.T) {
 				Instances: &map[string]int32{"nodes": int32(100)},
 			},
 		},
+		{
+			name: "Task Type CHECKPOINT_GC, Slot type CPU, gres supported, Slurm",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+				TaskType:    "CHECKPOINT_GC",
+			},
+			args: args{
+				tresSupported: false,
+				slotType:      device.CPU,
+				numSlots:      0,
+				gresSupported: true,
+				isPbsLauncher: false,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 1},
+				Cores:     &map[string]float32{"per-node": 1},
+			},
+		},
+		{
+			name: "Task Type CHECKPOINT_GC, Slot type CPU, gres supported, PBS",
+			fields: fields{
+				SlurmConfig: slurmConfig,
+				TaskType:    "CHECKPOINT_GC",
+			},
+			args: args{
+				tresSupported: false,
+				slotType:      device.CPU,
+				numSlots:      0,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"nodes": 1},
+				Cores:     &map[string]float32{"per-node": 1},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tr := &TaskSpec{
 				SlurmConfig: tt.fields.SlurmConfig,
 				PbsConfig:   tt.fields.PbsConfig,
+				TaskType:    tt.fields.TaskType,
 			}
 			got := tr.computeResources(tt.args.tresSupported, tt.args.numSlots, tt.args.slotType,
 				tt.args.gresSupported, tt.args.isPbsLauncher)
