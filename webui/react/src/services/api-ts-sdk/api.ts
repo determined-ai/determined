@@ -700,12 +700,6 @@ export interface Trialv1Trial {
      */
     bestCheckpoint?: V1CheckpointWorkload;
     /**
-     * Latest training step.
-     * @type {V1MetricsWorkload}
-     * @memberof Trialv1Trial
-     */
-    latestTraining?: V1MetricsWorkload;
-    /**
      * The last reported state of the trial runner (harness code).
      * @type {string}
      * @memberof Trialv1Trial
