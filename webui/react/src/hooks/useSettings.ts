@@ -145,7 +145,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
-  const loadableUser = usersStore.getCurrentUser().get();
+  const loadableUser = useObservable(usersStore.getCurrentUser());
 
   // parse navigation url to state
   useEffect(() => {
@@ -210,16 +210,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateDB = useCallback(
-    async (newSettings: Settings) => {
+    async (newSettings: Settings, oldSettings: SettingsRecord<T>) => {
       const user = Loadable.match(loadableUser, {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
-      if (!settings) return;
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
-        const stateSetting = settings[setting as keyof T];
+        const stateSetting = oldSettings[setting as keyof T];
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
             setting: {
@@ -254,7 +253,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [config.storagePath, settings, loadableUser],
+    [config.storagePath, loadableUser],
   );
 
   const resetSettings = useCallback(
@@ -263,7 +262,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
-      if (!settings || !user) return;
+      if (!user) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
 
@@ -289,7 +288,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return s.set(config.storagePath, news ?? {});
       });
     },
-    [config, settings, stateOb, loadableUser],
+    [config, stateOb, loadableUser],
   );
 
   const updateSettings = useCallback(
@@ -315,7 +314,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       });
       if (!cur || !user || cur === prev) return;
 
-      if (!initialLoading) await updateDB(cur);
+      if (!initialLoading) await updateDB(cur, prev as SettingsRecord<T>);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
