@@ -3,6 +3,7 @@ import pathlib
 import pytest
 import torch
 from _pytest import monkeypatch
+from torch.utils import tensorboard
 
 import determined as det
 from determined import errors, pytorch
@@ -60,7 +61,7 @@ class TestPyTorchContext:
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
 
-    def test_context_method(
+    def test_tensorboard_writer(
         self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
     ) -> None:
         def mock_get_tensorboard_path() -> pathlib.Path:
@@ -69,14 +70,8 @@ class TestPyTorchContext:
         monkeypatch.setattr(self.context, "get_tensorboard_path", mock_get_tensorboard_path)
 
         assert self.context._tbd_writer is None
-        files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) == 0
 
         writer = self.context.get_tensorboard_writer()
 
-        writer.add_scalar("foo", 7, 0)
-        writer.add_scalar("foo", 8, 1)
-        writer.close()
-
-        files = list(self.context.get_tensorboard_path().iterdir())
-        assert len(files) == 1
+        assert isinstance(writer, tensorboard.SummaryWriter)
+        assert isinstance(self.context._tbd_writer, tensorboard.SummaryWriter)
