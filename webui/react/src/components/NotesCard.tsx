@@ -51,33 +51,6 @@ const NotesCard: React.FC<Props> = ({
     setEditedNotes(existingNotes.current);
   }, [noteChangeSignal]);
 
-  /*
-  useEffect(() => {
-    // TODO: This is an alternative of Prompt from react-router-dom
-    // As soon as react-router-domv6 supports Prompt, replace this with Promt
-    const unblock = isEditing
-      ? history.block((tx) => {
-          const pathnames = ['notes', 'models', 'projects'];
-          let isAllowedNavigation = true;
-
-          // check pathname if one of these names is included
-          if (pathnames.some((name) => location.pathname.includes(name)) && notes !== editedNotes) {
-            isAllowedNavigation = window.confirm(
-              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
-            );
-          }
-          if (isAllowedNavigation) {
-            unblock();
-            tx.retry();
-          }
-          return isAllowedNavigation;
-        })
-      : () => undefined;
-
-    return () => unblock();
-  }, [editedNotes, isEditing, location.pathname, notes]);
-  */
-
   const editNotes = useCallback(() => {
     if (disabled) return;
     setIsEditing(true);
