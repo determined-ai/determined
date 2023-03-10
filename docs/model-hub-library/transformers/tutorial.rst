@@ -148,7 +148,7 @@ no prescription for how you should process your data but all the provided exampl
 
 .. note::
 
-   The Huggingface **transformers** and **datasets** library have optimized routiens for
+   The Huggingface **transformers** and **datasets** library have optimized routines for
    tokenization that caches results for reuse if possible. We have taken special care to make sure
    all our examples make use of this functionality. As you start implementing your own Trials, one
    pitfall to watch out for that prevents efficient caching is passing a function to ``Dataset.map``
