@@ -74,8 +74,8 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 			taskLogBackend:  pgdb,
 			rm:              mockRM,
 			config: &config.Config{
-				InternalConfig:        config.InternalConfig{
-					ExternalSessions: model.ExternalSessions{}
+				InternalConfig: config.InternalConfig{
+					ExternalSessions: model.ExternalSessions{},
 				},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
 				ResourceConfig: &config.ResourceConfig{
