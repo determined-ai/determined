@@ -219,7 +219,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       <RoleRenderer
         rolesAssignableToScope={rolesAssignableToScope}
         userCanAssignRoles={userCanAssignRoles}
-        userOrGroup={record}
+        userOrGroupWithRoleInfo={record}
         workspaceId={workspace.id}
       />
     );

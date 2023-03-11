@@ -19,53 +19,56 @@ import css from './RoleRenderer.module.scss';
 interface Props {
   rolesAssignableToScope: V1Role[];
   userCanAssignRoles: boolean;
-  userOrGroup: UserOrGroupWithRoleInfo;
+  userOrGroupWithRoleInfo: UserOrGroupWithRoleInfo;
   workspaceId: number;
 }
 
 const RoleRenderer: React.FC<Props> = ({
   rolesAssignableToScope,
-  userOrGroup,
+  userOrGroupWithRoleInfo,
   userCanAssignRoles,
   workspaceId,
 }) => {
-  // const roleAssignment = getAssignedRole(userOrGroup, assignments);
-  const [memberRoleId, setMemberRole] = useState(userOrGroup.roleAssignment?.role?.roleId);
+  const [memberRoleId, setMemberRole] = useState(
+    userOrGroupWithRoleInfo.roleAssignment?.role?.roleId,
+  );
 
   return (
     <Select
       className={css.base}
-      disabled={!userCanAssignRoles || !userOrGroup.roleAssignment.scopeWorkspaceId}
+      disabled={!userCanAssignRoles || !userOrGroupWithRoleInfo.roleAssignment.scopeWorkspaceId}
       value={memberRoleId}
       onSelect={async (value: RawValueType | LabelInValueType) => {
         const roleIdValue = value as number;
-        const userOrGroupId = isUserWithRoleInfo(userOrGroup)
-          ? userOrGroup.userId
-          : userOrGroup.groupId ?? 0;
+        const userOrGroupId = isUserWithRoleInfo(userOrGroupWithRoleInfo)
+          ? userOrGroupWithRoleInfo.userId
+          : userOrGroupWithRoleInfo.groupId ?? 0;
         const oldRoleIds = memberRoleId ? [memberRoleId] : [];
         try {
-          // Try to remove the old role and then add the new role
-          isUserWithRoleInfo(userOrGroup)
-            ? await removeRolesFromUser({
-                roleIds: oldRoleIds,
+          // Try to add the new role and then remove the old role
+          // to keep the permission
+          isUserWithRoleInfo(userOrGroupWithRoleInfo)
+            ? await assignRolesToUser({
+                roleIds: [roleIdValue],
                 scopeWorkspaceId: workspaceId,
                 userId: userOrGroupId,
               })
-            : await removeRolesFromGroup({
+            : await assignRolesToGroup({
                 groupId: userOrGroupId,
-                roleIds: oldRoleIds,
+                roleIds: [roleIdValue],
                 scopeWorkspaceId: workspaceId,
               });
+
           try {
-            isUserWithRoleInfo(userOrGroup)
-              ? await assignRolesToUser({
-                  roleIds: [roleIdValue],
+            isUserWithRoleInfo(userOrGroupWithRoleInfo)
+              ? await removeRolesFromUser({
+                  roleIds: oldRoleIds,
                   scopeWorkspaceId: workspaceId,
                   userId: userOrGroupId,
                 })
-              : await assignRolesToGroup({
+              : await removeRolesFromGroup({
                   groupId: userOrGroupId,
-                  roleIds: [roleIdValue],
+                  roleIds: oldRoleIds,
                   scopeWorkspaceId: workspaceId,
                 });
             setMemberRole(roleIdValue);
