@@ -123,7 +123,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
-  const UserOrGroupWithRoles: UserOrGroupWithRoleInfo[] = ((): UserOrGroupWithRoleInfo[] => {
+  const userOrGroupWithRoles: UserOrGroupWithRoleInfo[] = ((): UserOrGroupWithRoleInfo[] => {
     const groupsAndUsers: [
       V1RoleWithAssignments['groupRoleAssignments'],
       V1RoleWithAssignments['userRoleAssignments'],
@@ -244,24 +244,26 @@ const WorkspaceMembers: React.FC<Props> = ({
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
+        key: 'name',
         render: nameRenderer,
         sorter: (a: UserOrGroupWithRoleInfo, b: UserOrGroupWithRoleInfo) => {
-          if (isUserWithRoleInfo(a) && isUserWithRoleInfo(b)) {
-            return alphaNumericSorter(a.username, b.username);
-          }
-          return 0;
+          const aName = isUserWithRoleInfo(a) ? a.displayName || a.username : a.groupName ?? '';
+          const bName = isUserWithRoleInfo(b) ? b.displayName || b.username : b.groupName ?? '';
+          return alphaNumericSorter(aName, bName);
         },
         title: 'Name',
       },
       {
         dataIndex: 'role',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['role'],
+        key: 'role',
         render: roleRenderer,
         title: 'Role',
       },
       {
         dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        key: 'action',
         render: actionRenderer,
         title: '',
       },
@@ -287,10 +289,10 @@ const WorkspaceMembers: React.FC<Props> = ({
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
-          dataSource={UserOrGroupWithRoles}
+          dataSource={userOrGroupWithRoles}
           pagination={getFullPaginationConfig(
             { limit: settings.tableLimit, offset: settings.tableOffset },
-            UserOrGroupWithRoles.length,
+            userOrGroupWithRoles.length,
           )}
           rowKey={generateTableKey}
           settings={settings}
