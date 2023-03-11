@@ -10715,22 +10715,22 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @summary Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
+        getResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
             // verify required parameter 'timestampAfter' is not null or undefined
             if (timestampAfter === null || timestampAfter === undefined) {
-                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getRawResourceTaskAllocationCsv.');
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getResourceAllocationCsv.');
             }
             // verify required parameter 'timestampBefore' is not null or undefined
             if (timestampBefore === null || timestampBefore === undefined) {
-                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling getRawResourceTaskAllocationCsv.');
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling getResourceAllocationCsv.');
             }
-            const localVarPath = `/allocations/tasks-raw`;
+            const localVarPath = `/allocations/allocations-csv`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11184,14 +11184,14 @@ export const ClusterApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @summary Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options);
+        getResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getResourceAllocationCsv(timestampAfter, timestampBefore, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11422,14 +11422,14 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         },
         /**
          * 
-         * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+         * @summary Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
-            return ClusterApiFp(configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
+        getResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+            return ClusterApiFp(configuration).getResourceAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
         /**
          * 
@@ -11627,15 +11627,15 @@ export class ClusterApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get a detailed view of resource allocation at a task-level during the given time period (CSV).
+     * @summary Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
      * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
      * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getRawResourceTaskAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
-        return ClusterApiFp(this.configuration).getRawResourceTaskAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    public getResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+        return ClusterApiFp(this.configuration).getResourceAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
     }
 
     /**
