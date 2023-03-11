@@ -9,43 +9,43 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { UserOrGroup } from 'types';
+import { V1Role } from 'services/api-ts-sdk';
+import { UserOrGroupWithRoleInfo } from 'types';
 import handleError from 'utils/error';
-import { getAssignedRole, getIdFromUserOrGroup, isUser } from 'utils/user';
+import { isUserWithRoleInfo } from 'utils/user';
 
 import css from './RoleRenderer.module.scss';
 
 interface Props {
-  assignments: V1RoleWithAssignments[];
   rolesAssignableToScope: V1Role[];
   userCanAssignRoles: boolean;
-  userOrGroup: UserOrGroup;
+  userOrGroup: UserOrGroupWithRoleInfo;
   workspaceId: number;
 }
 
 const RoleRenderer: React.FC<Props> = ({
-  assignments,
   rolesAssignableToScope,
   userOrGroup,
   userCanAssignRoles,
   workspaceId,
 }) => {
-  const roleAssignment = getAssignedRole(userOrGroup, assignments);
-  const [memberRoleId, setMemberRole] = useState(roleAssignment?.role?.roleId);
+  // const roleAssignment = getAssignedRole(userOrGroup, assignments);
+  const [memberRoleId, setMemberRole] = useState(userOrGroup.roleAssignment?.role?.roleId);
 
   return (
     <Select
       className={css.base}
-      disabled={!userCanAssignRoles || !roleAssignment?.scopeWorkspaceId}
+      disabled={!userCanAssignRoles || !userOrGroup.roleAssignment.scopeWorkspaceId}
       value={memberRoleId}
       onSelect={async (value: RawValueType | LabelInValueType) => {
         const roleIdValue = value as number;
-        const userOrGroupId = getIdFromUserOrGroup(userOrGroup);
+        const userOrGroupId = isUserWithRoleInfo(userOrGroup)
+          ? userOrGroup.userId
+          : userOrGroup.groupId ?? 0;
         const oldRoleIds = memberRoleId ? [memberRoleId] : [];
         try {
           // Try to remove the old role and then add the new role
-          isUser(userOrGroup)
+          isUserWithRoleInfo(userOrGroup)
             ? await removeRolesFromUser({
                 roleIds: oldRoleIds,
                 scopeWorkspaceId: workspaceId,
@@ -57,7 +57,7 @@ const RoleRenderer: React.FC<Props> = ({
                 scopeWorkspaceId: workspaceId,
               });
           try {
-            isUser(userOrGroup)
+            isUserWithRoleInfo(userOrGroup)
               ? await assignRolesToUser({
                   roleIds: [roleIdValue],
                   scopeWorkspaceId: workspaceId,

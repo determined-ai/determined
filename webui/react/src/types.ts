@@ -922,3 +922,18 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
+
+export type GroupWithRoleInfo = {
+  groupId: Api.V1Group['groupId'];
+  groupName: Api.V1Group['name'];
+  roleAssignment: Api.V1RoleAssignment;
+};
+
+export type UserWithRoleInfo = {
+  displayName: User['displayName'];
+  roleAssignment: Api.V1RoleAssignment;
+  userId: User['id'];
+  username: User['username'];
+};
+
+export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
