@@ -122,9 +122,9 @@ func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
 			if assign.Group.OwnerID != 0 { // Personal group.
 				u := idsToUser[assign.Group.OwnerID]
 				if req.Name != "" &&
-					((!u.DisplayName.IsZero() && !strings.Contains(
+					!((strings.Contains(
 						u.DisplayName.ValueOrZero(), req.Name)) ||
-						(u.DisplayName.IsZero() && !strings.Contains(u.Username, req.Name))) {
+						strings.Contains(u.Username, req.Name)) {
 					continue
 				}
 				usersAssignedDirectly = append(usersAssignedDirectly, u)
