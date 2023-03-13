@@ -2,17 +2,18 @@ import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Form from 'components/kit/Form';
-import UserBadge from 'components/kit/UserBadge';
+import Nameplate from 'components/kit/Nameplate';
+import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser, UserNameFields } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -126,9 +127,9 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserBadge compact user={option as UserNameFields} />
+                  <UserBadge compact user={option as User} />
                 ) : (
-                  <GroupAvatar groupName={getName(option)} />
+                  <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
