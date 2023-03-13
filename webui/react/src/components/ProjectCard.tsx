@@ -78,6 +78,10 @@ const ProjectCard: React.FC<Props> = ({
           </div>
         </div>
       </Card>
+      {/*
+        contextHolders must be outside of Card component to prevent unexpected action
+        for more info, refer PR #6185
+      */}
       {contextHolders}
     </>
   );
