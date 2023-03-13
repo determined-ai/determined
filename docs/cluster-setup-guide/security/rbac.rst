@@ -372,7 +372,6 @@ behind RBAC. These currently include:
 -  RBAC is not currently applied to Master logs which can contain information about jobs that the
    user is not authorized to see.
 -  Historical usage shows cluster-wide usage related to other users and workspaces.
--  Cluster utilization information is not gated behind RBAC.
 
 *****************
  Usage Reference
