@@ -748,7 +748,7 @@ code.
    +     dist.init_process_group(backend="gloo|nccl")
    +     # Set flag used by internal PyTorch training loop
    +     os.environ["USE_TORCH_DISTRIBUTED"] = "true"
-   +     # Initialize DistributedContext specifying chief IP
+   +     # Initialize DistributedContext
          with det.pytorch.init(
    +       distributed=core.DistributedContext.from_torch_distributed()
          ) as train_context:
@@ -804,7 +804,7 @@ Example workflow of frequent iterations between local debugging and cluster depl
    +       # Local: configure local distributed training.
    +       dist.init_process_group(backend="gloo|nccl")
    +       os.environ["USE_TORCH_DISTRIBUTED"] = "true"
-   +       distributed_context = core.DistributedContext.from_torch_distributed (chief_ip="localhost")
+   +       distributed_context = core.DistributedContext.from_torch_distributed()
    +       latest_checkpoint = None
    +   else:
    +       # On-cluster: Determined will automatically detect distributed context.
