@@ -19,15 +19,8 @@ import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import {
-  GroupWithRoleInfo,
-  User,
-  UserOrGroup,
-  UserOrGroupWithRoleInfo,
-  UserWithRoleInfo,
-  Workspace,
-} from 'types';
-import { isUserWithRoleInfo } from 'utils/user';
+import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';
+import { getUserOrGroupWithRoleInfo, isUserWithRoleInfo } from 'utils/user';
 
 import RoleRenderer from './RoleRenderer';
 import css from './WorkspaceMembers.module.scss';
@@ -123,40 +116,11 @@ const WorkspaceMembers: React.FC<Props> = ({
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
-  const userOrGroupWithRoles: UserOrGroupWithRoleInfo[] = ((): UserOrGroupWithRoleInfo[] => {
-    const groupsAndUsers: [
-      V1RoleWithAssignments['groupRoleAssignments'],
-      V1RoleWithAssignments['userRoleAssignments'],
-    ][] = assignments.map((assignment: V1RoleWithAssignments) => {
-      return [assignment.groupRoleAssignments, assignment.userRoleAssignments];
-    });
-    const groups: GroupWithRoleInfo[] = groupsAndUsers
-      .flatMap((data) => data?.[0] ?? [])
-      .map((d) => {
-        const groupnfo = groupsAssignedDirectly.find((g) => g.groupId === d.groupId);
-        const groupWithRole: GroupWithRoleInfo = {
-          groupId: groupnfo?.groupId,
-          groupName: groupnfo?.name,
-          roleAssignment: d.roleAssignment,
-        };
-        return groupWithRole;
-      })
-      .filter((d) => d.groupId);
-    const users: UserWithRoleInfo[] = groupsAndUsers
-      .flatMap((data) => data?.[1] ?? [])
-      .map((d) => {
-        const userInfo = usersAssignedDirectly.find((u) => u.id === d.userId);
-        const groupWithRole: UserWithRoleInfo = {
-          displayName: userInfo?.displayName,
-          roleAssignment: d.roleAssignment,
-          userId: userInfo?.id ?? -1,
-          username: userInfo?.username ?? '',
-        };
-        return groupWithRole;
-      })
-      .filter((d) => d.userId !== -1);
-    return [...groups, ...users];
-  })();
+  const userOrGroupWithRoles: UserOrGroupWithRoleInfo[] = getUserOrGroupWithRoleInfo(
+    assignments,
+    groupsAssignedDirectly,
+    usersAssignedDirectly,
+  );
 
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
