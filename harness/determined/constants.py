@@ -1,5 +1,6 @@
 import os
 
+MAX_SLOTS_PER_AGENT = 16
 # The default configs to use in when running test experiments.
 #
 # TODO: Unify the defaults used here with the defaults used in master.
@@ -24,10 +25,7 @@ DEFAULT_EXP_CFG = {
 # allowing ports to be changed using envionment variables for the rare case that
 # the default ports are already in use by other processes.
 
-DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350"))) + int(
-    str(os.getenv("DET_UNIQUE_PORT_OFFSET", "0"))
-)
-
+DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350")))
 
 # GLOO port used by Horovod for the Gloo controller.
 HOROVOD_GLOO_RENDEZVOUS_PORT = int(str(os.getenv("HOROVOD_GLOO_RENDEZVOUS_PORT", "12355")))
@@ -36,7 +34,13 @@ HOROVOD_GLOO_RENDEZVOUS_PORT = int(str(os.getenv("HOROVOD_GLOO_RENDEZVOUS_PORT",
 # validation metrics.
 INTER_TRAIN_PROCESS_COMM_PORT_1 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_1", "12360")))
 
-INTER_TRAIN_PROCESS_COMM_PORT_2 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_2", "12365")))
+INTER_TRAIN_PROCESS_COMM_PORT_2 = int(
+    str(
+        os.getenv(
+            "INTER_TRAIN_PROCESS_COMM_PORT_2", INTER_TRAIN_PROCESS_COMM_PORT_1 + MAX_SLOTS_PER_AGENT
+        )
+    )
+)
 #  both of the above ports will be offset
 #  (value that we get from the port offset registry) in distributed context.
 

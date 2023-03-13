@@ -78,26 +78,30 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// And an allocation.
+	ports := map[string]int{}
+	ports["dtrain_port"] = 0
+	ports["inter_train_process_comm_port1"] = 0
+	ports["inter_train_process_comm_port2"] = 0
+	ports["c10d_port"] = 0
+
 	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
-		AllocationID:               aID,
-		TaskID:                     tID,
-		Slots:                      8,
-		ResourcePool:               "somethingelse",
-		StartTime:                  ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
-		DTrainPort:                 0,
-		InterTrainProcessCommPort1: 0,
-		InterTrainProcessCommPort2: 0,
-		C10DPort:                   0,
+		AllocationID: aID,
+		TaskID:       tID,
+		Slots:        8,
+		ResourcePool: "somethingelse",
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
+		Ports:        ports,
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
 
 	// Update ports
-	aIn.DTrainPort = 3
-	aIn.InterTrainProcessCommPort1 = 4
-	aIn.InterTrainProcessCommPort2 = 5
-	aIn.C10DPort = 6
+	ports["dtrain_port"] = 0
+	ports["inter_train_process_comm_port1"] = 0
+	ports["inter_train_process_comm_port2"] = 0
+	ports["c10d_port"] = 0
+	aIn.Ports = ports
 	err = UpdateAllocationPorts(*aIn)
 	require.NoError(t, err, "failed to update port offset")
 

@@ -157,6 +157,7 @@ func NewAllocation(
 			TaskID:       req.TaskID,
 			Slots:        req.SlotsNeeded,
 			ResourcePool: req.ResourcePool,
+			Ports:        map[string]int{},
 		},
 
 		resources: resourcesList{},
@@ -228,10 +229,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		// This is to avoid the race condition of a failed restored
 		// allocation releasing another allocation's port(s).
 		if a.req.Restore == a.restored { // XNOR
-			portregistry.ReleasePort(a.model.DTrainPort)
-			portregistry.ReleasePort(a.model.InterTrainProcessCommPort1)
-			portregistry.ReleasePort(a.model.InterTrainProcessCommPort2)
-			portregistry.ReleasePort(a.model.C10DPort)
+			portregistry.ReleasePort(a.model.Ports["dtrain_port"])
+			portregistry.ReleasePort(a.model.Ports["inter_train_process_comm_port1"])
+			portregistry.ReleasePort(a.model.Ports["inter_train_process_comm_port2"])
+			portregistry.ReleasePort(a.model.Ports["c10d_port"])
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -506,10 +507,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Restore {
-		portregistry.RestorePort(a.model.DTrainPort)
-		portregistry.RestorePort(a.model.InterTrainProcessCommPort1)
-		portregistry.RestorePort(a.model.InterTrainProcessCommPort2)
-		portregistry.RestorePort(a.model.C10DPort)
+		portregistry.RestorePort(a.model.Ports["dtrain_port"])
+		portregistry.RestorePort(a.model.Ports["inter_train_process_comm_port1"])
+		portregistry.RestorePort(a.model.Ports["inter_train_process_comm_port2"])
+		portregistry.RestorePort(a.model.Ports["c10d_port"])
 
 		if a.getModelState() == model.AllocationStateRunning {
 			// Restore proxies.
@@ -532,10 +533,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "getting ports")
 		}
 
-		a.model.DTrainPort = dTrainPort
-		a.model.InterTrainProcessCommPort1 = intercommTrainport1
-		a.model.InterTrainProcessCommPort2 = intercommTrainport2
-		a.model.C10DPort = c10DPort
+		a.model.Ports["dtrain_port"] = dTrainPort
+		a.model.Ports["inter_train_process_comm_port1"] = intercommTrainport1
+		a.model.Ports["inter_train_process_comm_port2"] = intercommTrainport2
+		a.model.Ports["c10d_port"] = c10DPort
 
 		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {
@@ -544,13 +545,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 		for cID, r := range a.resources {
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
-				Token:                      token,
-				AgentRank:                  a.resources[cID].Rank,
-				IsMultiAgent:               len(a.resources) > 1,
-				DTrainPort:                 dTrainPort,
-				InterTrainProcessCommPort1: intercommTrainport1,
-				InterTrainProcessCommPort2: intercommTrainport2,
-				C10DPort:                   c10DPort,
+				Token:        token,
+				AgentRank:    a.resources[cID].Rank,
+				IsMultiAgent: len(a.resources) > 1,
+				Ports:        a.model.Ports,
 			}); err != nil {
 				return fmt.Errorf("starting resources (%v): %w", r, err)
 			}

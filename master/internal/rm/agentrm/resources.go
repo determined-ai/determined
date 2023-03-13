@@ -59,11 +59,11 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
-	// Set ports from the port registry.
-	spec.ExtraEnvVars["DTRAIN_SSH_PORT"] = strconv.Itoa(rri.DTrainPort)
-	spec.ExtraEnvVars["INTER_TRAIN_PROCESS_COMM_PORT_1"] = strconv.Itoa(rri.InterTrainProcessCommPort1)
-	spec.ExtraEnvVars["INTER_TRAIN_PROCESS_COMM_PORT_2"] = strconv.Itoa(rri.InterTrainProcessCommPort2)
-	spec.ExtraEnvVars["C10D_PORT"] = strconv.Itoa(rri.C10DPort)
+
+	spec.ExtraEnvVars["DTRAIN_SSH_PORT"] = strconv.Itoa(rri.Ports["dtrain_port"])
+	spec.ExtraEnvVars["INTER_TRAIN_PROCESS_COMM_PORT_1"] = strconv.Itoa(rri.Ports["inter_train_process_comm_port1"]) //nolint:lll
+	spec.ExtraEnvVars["INTER_TRAIN_PROCESS_COMM_PORT_2"] = strconv.Itoa(rri.Ports["inter_train_process_comm_port2"]) //nolint:lll
+	spec.ExtraEnvVars["C10D_PORT"] = strconv.Itoa(rri.Ports["c10d_port"])
 
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,

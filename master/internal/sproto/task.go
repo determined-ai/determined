@@ -174,13 +174,10 @@ type (
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
-		Token                      string
-		AgentRank                  int
-		IsMultiAgent               bool
-		DTrainPort                 int
-		InterTrainProcessCommPort1 int
-		InterTrainProcessCommPort2 int
-		C10DPort                   int
+		Token        string
+		AgentRank    int
+		IsMultiAgent bool
+		Ports        map[string]int
 	}
 )
 
