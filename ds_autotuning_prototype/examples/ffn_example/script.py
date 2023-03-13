@@ -68,10 +68,10 @@ def main(
     steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
-            # A potential gotcha: steps_completed must not be altered within the below context.
-            # Probably obvious from the usage, but should be noted in docs.
-            with dsat.dsat_reporting_context(core_context, op, steps_completed):
-                for batch in train_loader:
+            for batch in train_loader:
+                # A potential gotcha: steps_completed must not be altered within the below context.
+                # Should be noted in docs.
+                with dsat.dsat_reporting_context(core_context, op, steps_completed):
                     if fp16:
                         batch = batch.half()
                     batch = batch.to(device)
@@ -84,17 +84,18 @@ def main(
                     print("backward complete")
                     model_engine.step()
                     print("stepped optimizer")
-                    if model_engine.is_gradient_accumulation_boundary():
-                        steps_completed += 1
-                        if steps_completed == op.length:
-                            break
-                        if is_chief:
-                            metrics_dict = {"loss": loss.item()}
-                            core_context.train.report_validation_metrics(
-                                steps_completed=steps_completed, metrics=metrics_dict
-                            )
-                    if core_context.preempt.should_preempt():
-                        return
+                # Another gotcha is with the possibility of doubled report_validation_metrics.
+                if is_chief:
+                    metrics_dict = {"loss": loss.item()}
+                    core_context.train.report_validation_metrics(
+                        steps_completed=steps_completed, metrics=metrics_dict
+                    )
+                if model_engine.is_gradient_accumulation_boundary():
+                    steps_completed += 1
+                    if steps_completed == op.length:
+                        break
+                if core_context.preempt.should_preempt():
+                    return
         if is_chief:
             op.report_completed(metrics_dict)
 

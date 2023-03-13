@@ -144,6 +144,18 @@ class DSATTrialTracker:
         self.all_trials_dict[trial.request_id] = trial
         return trial
 
+    def get_root_trial_set(self) -> Set[DSATTrial]:
+        """
+        Returns the set of all non-model-profiling-info DSATTrials which were the root element
+        in their lineage.
+        """
+        root_trial_set = {
+            trial
+            for trial in self.all_trials_dict.values()
+            if trial.parent is None and not trial.is_model_profiling_info_run
+        }
+        return root_trial_set
+
     def get_closed_trials_dict(
         self, searcher_state: searcher.SearcherState, zero_stage: Optional[int] = None
     ) -> Dict[str, DSATTrial]:
@@ -440,8 +452,12 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
+        # Using searcher_state.trials_created led to intermittent errors where the MIP trial seemed
+        # to get registered as closed before its follow on trials were created.
         running_trial_ids = (
-            searcher_state.trials_created - searcher_state.trials_closed - searcher_state.failures
+            set(self.trial_tracker.all_trials_dict)
+            - searcher_state.trials_closed
+            - searcher_state.failures
         )
         if not running_trial_ids:
             logging.info("**** Shutting down DeepSpeed Autotune: No Remaining Trials ****")
@@ -485,7 +501,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             return new_ops_list
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
-        progress = len(searcher_state.trials_created) / self.tuner_num_trials
+        progress = len(searcher_state.trials_closed) / self.tuner_num_trials
         return progress
 
     def save_method_state(self, path: pathlib.Path) -> None:
@@ -596,7 +612,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             # A +1 is required to align DS step/DET max_length conventions.
             end_profile_step = self.autotuning_config["end_profile_step"] + 1
             new_ops_list = self.trial_tracker.get_ops_list_from_trial(
-                trial=new_trial, length=end_profile_step + 1
+                trial=new_trial, length=end_profile_step
             )
         return new_ops_list
 
@@ -629,6 +645,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return new_hparams, {"lo": lo, "hi": hi}
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        # TODO: verify that we are not repeating a previously attempted config.
         random_zero_stage = random.choice(tuple(self.model_profile_info.viable_zero_stages))
         new_hparams = copy.deepcopy(self.submitted_hps)
         zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)

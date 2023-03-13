@@ -23,7 +23,7 @@ def parse_args():
 def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     config_path_absolute = os.path.abspath(args.config_path)
     model_dir_absolute = os.path.abspath(args.model_dir)
-    
+
     # Build the SearchRunner's config from the submitted config. The original config yaml file
     # is added as an include and is reimported by the SearchRunner later.
     # TODO: Revisit this choice. Might be worth giving the user the ability to specify some parts of
@@ -40,9 +40,9 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     # e.g. on Grenoble.
     search_runner_config_dict["resources"] = {"slots_per_trial": 0}
     # TODO: remove this Grenoble specific code.
-    # config_dict["resources"] = {
-    #     "resource_pool": "misc_cpus"
-    # }  # Will need to get original resources later.
+    config_dict["resources"] = {
+        "resource_pool": "misc_cpus"
+    }  # will need to get original resources later.
     search_runner_config_dict[
         "entrypoint"
     ] = f"python3 -m dsat._run_dsat -c {config_path_absolute} -md {model_dir_absolute}"

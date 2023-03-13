@@ -1,0 +1,7 @@
+name: double_report_recovery
+max_restarts: 0
+searcher:
+  name: single
+  metric: irrelevant
+  max_length: 1
+entrypoint: python -m determined.launch.torch_distributed -- python3 main.py

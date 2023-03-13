@@ -112,10 +112,10 @@ def main(
     steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
-            # A potential gotcha: steps_completed must not be altered within the below context.
-            # Probably obvious from the usage, but should be noted in docs.
-            with dsat.dsat_reporting_context(core_context, op, steps_completed):
-                for data in trainloader:
+            for data in trainloader:
+                # A potential gotcha: steps_completed must not be altered within the below context.
+                # Should be noted in docs.
+                with dsat.dsat_reporting_context(core_context, op, steps_completed):
                     # get the inputs; data is a list of [inputs, labels]
                     inputs, labels = data[0].to(model_engine.local_rank), data[1].to(
                         model_engine.local_rank
@@ -123,18 +123,16 @@ def main(
                     logging.info(f"ACTUAL BATCH SIZE: {inputs.shape[0]}")  # Sanity checking.
                     if fp16:
                         inputs = inputs.half()
-
                     outputs = model_engine(inputs)
                     loss = criterion(outputs, labels)
-
                     model_engine.backward(loss)
                     model_engine.step()
-                    if model_engine.is_gradient_accumulation_boundary():
-                        steps_completed += 1
-                        if steps_completed == op.length:
-                            break
-                    if core_context.preempt.should_preempt():
-                        return
+                if model_engine.is_gradient_accumulation_boundary():
+                    steps_completed += 1
+                    if steps_completed == op.length:
+                        break
+                if core_context.preempt.should_preempt():
+                    return
         if is_chief:
             op.report_completed(loss.item())
 

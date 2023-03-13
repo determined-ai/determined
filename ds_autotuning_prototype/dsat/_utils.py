@@ -76,34 +76,40 @@ def dsat_reporting_context(
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
 ) -> None:
+    """
+    Call the DeepSpeed model engine's `forward` method within this context to intercept the `exit`
+    call utilized by DS when autotuning and report the results back to Determined.  All other pieces
+    of code which can potentially result in a GPU out-of-memory error should also be wrapped in
+    the same context manager.
+
+    TODO: the `report_validation_metrics` calls are needed for Web UI rendering, but they can also
+    generate `duplicate key value` errors due to calling this method twice on the same
+    `steps_completed`. Not sure if the solution should lie in code or documentation.
+    """
     try:
         yield
     except RuntimeError as rte:
         oom_error_string = str(rte)
         if "out of memory" in oom_error_string:
             report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
+        else:
+            raise rte
     except SystemExit as se:
-        if file_or_dir_exists(_defaults.MODEL_INFO_PROFILING_PATH):
+        possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
+        existing_paths = [path for path in possible_paths if file_or_dir_exists(path)]
+        # Exactly one of these files should be generated for each properly exited DS AT Trial.
+        if len(existing_paths) == 1:
+            path = existing_paths[0]
+            add_gpu_info = path == _defaults.MODEL_INFO_PROFILING_PATH
             report_json_results_and_exit(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
-                add_gpu_info=True,
-                path=_defaults.MODEL_INFO_PROFILING_PATH,
-            )
-        elif file_or_dir_exists(_defaults.AUTOTUNING_RESULTS_PATH):
-            report_json_results_and_exit(
-                core_context=core_context,
-                op=op,
-                steps_completed=steps_completed,
-                add_gpu_info=False,
-                path=_defaults.AUTOTUNING_RESULTS_PATH,
+                add_gpu_info=add_gpu_info,
+                path=path,
             )
         else:
             raise se
-    finally:
-        # TODO: also catch and report ds profiling here?
-        pass
 
 
 def report_oom_and_exit(
@@ -141,6 +147,7 @@ def report_json_results_and_exit(
         if add_gpu_info:
             gpu_mem = torch.cuda.get_device_properties(0).total_memory
             results_dict["gpu_mem"] = gpu_mem
+        # TODO: solve potential problems with double reporting on the same time step.
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=results_dict
         )
