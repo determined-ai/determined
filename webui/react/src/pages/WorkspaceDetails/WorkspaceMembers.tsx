@@ -133,26 +133,28 @@ const WorkspaceMembers: React.FC<Props> = ({
     const groups: GroupWithRoleInfo[] = groupsAndUsers
       .flatMap((data) => data?.[0] ?? [])
       .map((d) => {
-        const groupnfo = groupsAssignedDirectly.find((g) => g.groupId === d?.groupId) as V1Group;
+        const groupnfo = groupsAssignedDirectly.find((g) => g.groupId === d.groupId);
         const groupWithRole: GroupWithRoleInfo = {
-          groupId: groupnfo.groupId,
-          groupName: groupnfo.name,
+          groupId: groupnfo?.groupId,
+          groupName: groupnfo?.name,
           roleAssignment: d.roleAssignment,
         };
         return groupWithRole;
-      });
+      })
+      .filter((d) => d.groupId);
     const users: UserWithRoleInfo[] = groupsAndUsers
       .flatMap((data) => data?.[1] ?? [])
       .map((d) => {
-        const userInfo = usersAssignedDirectly.find((u) => u.id === d?.userId) as User;
+        const userInfo = usersAssignedDirectly.find((u) => u.id === d.userId);
         const groupWithRole: UserWithRoleInfo = {
-          displayName: userInfo.displayName,
+          displayName: userInfo?.displayName,
           roleAssignment: d.roleAssignment,
-          userId: userInfo.id,
-          username: userInfo.username,
+          userId: userInfo?.id ?? -1,
+          username: userInfo?.username ?? '',
         };
         return groupWithRole;
-      });
+      })
+      .filter((d) => d.userId !== -1);
     return [...groups, ...users];
   })();
 
