@@ -421,6 +421,17 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Pause multiple experiments.
+  rpc PauseExperiments(PauseExperimentsRequest)
+      returns (PauseExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/pause"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Cancel an experiment.
   rpc CancelExperiment(CancelExperimentRequest)
       returns (CancelExperimentResponse) {
@@ -450,11 +461,33 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Archive multiple experiments.
+  rpc ArchiveExperiments(ArchiveExperimentsRequest)
+      returns (ArchiveExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/archive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Unarchive an experiment.
   rpc UnarchiveExperiment(UnarchiveExperimentRequest)
       returns (UnarchiveExperimentResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+  // Unarchive multiple experiments.
+  rpc UnarchiveExperiments(UnarchiveExperimentsRequest)
+      returns (UnarchiveExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/unarchive"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
@@ -1745,6 +1778,17 @@ service Determined {
   rpc MoveExperiment(MoveExperimentRequest) returns (MoveExperimentResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{experiment_id}/move"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+  // Move multiple experiments into a project.
+  rpc MoveExperiments(MoveExperimentsRequest)
+      returns (MoveExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/move"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

@@ -211,6 +211,25 @@ message PauseExperimentRequest {
 // Response to PauseExperimentRequest.
 message PauseExperimentResponse {}
 
+// Pause multiple experiments.
+message PauseExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to PauseExperimentsRequest.
+message PauseExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were successfully paused, by ID.
+  repeated int32 experiment_ids = 1;
+}
+
 // Cancel an experiment.
 message CancelExperimentRequest {
   // The experiment id.
@@ -235,6 +254,25 @@ message ArchiveExperimentRequest {
 // Response to ArchiveExperimentRequest.
 message ArchiveExperimentResponse {}
 
+// Archive multiple experiments.
+message ArchiveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to ArchiveExperimentsRequest.
+message ArchiveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were successfully archived, by ID.
+  repeated int32 experiment_ids = 1;
+}
+
 // Unarchive an experiment.
 message UnarchiveExperimentRequest {
   // The experiment id.
@@ -242,6 +280,25 @@ message UnarchiveExperimentRequest {
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
+
+// Unarchive multiple experiments.
+message UnarchiveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to UnarchiveExperimentsRequest.
+message UnarchiveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were successfully unarchived, by ID.
+  repeated int32 experiment_ids = 1;
+}
 
 // Patch an experiment by providing the updated attributes. Only description,
 // label, name, and notes fields will be updated through this endpoint, and
@@ -625,6 +682,28 @@ message MoveExperimentRequest {
 
 // Response to MoveExperimentRequest.
 message MoveExperimentResponse {}
+
+// Request to move an experiment into a project.
+message MoveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "destination_project_id", "experiment_ids" ] }
+  };
+
+  // The ids of the experiments being moved.
+  repeated int32 experiment_ids = 1;
+  // The id of the new parent project.
+  int32 destination_project_id = 2;
+}
+
+// Response to MoveExperimentsRequest.
+message MoveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // The ids of experiments which successfully moved.
+  repeated int32 experiment_ids = 1;
+}
 
 // Request to get model definition file tree of an experiment.
 message GetModelDefTreeRequest {

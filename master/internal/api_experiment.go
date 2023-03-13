@@ -48,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -585,7 +586,9 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("project_id = ?", req.ProjectId)
 	}
 	if query, err = expauth.AuthZProvider.Get().
-		FilterExperimentsQuery(ctx, *curUser, proj, query); err != nil {
+		FilterExperimentsQuery(ctx, *curUser, proj, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+		); err != nil {
 		return nil, err
 	}
 
@@ -858,6 +861,12 @@ func (a *apiServer) PauseExperiment(
 	}
 }
 
+func (a *apiServer) PauseExperiments(
+	ctx context.Context, req *apiv1.PauseExperimentsRequest,
+) (*apiv1.PauseExperimentsResponse, error) {
+	return &apiv1.PauseExperimentsResponse{}, nil
+}
+
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
@@ -918,6 +927,39 @@ func (a *apiServer) ArchiveExperiment(
 	}
 }
 
+func (a *apiServer) ArchiveExperiments(
+	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
+) (*apiv1.ArchiveExperimentsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Bun().NewUpdate().
+		ModelTableExpr("experiments as e").
+		Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Where("NOT archived").
+		Where("state IN (?)", bun.In([]string{
+			"CANCELED",
+			"COMPLETED",
+			"ERROR",
+		}))
+
+	if query, err = expauth.AuthZProvider.Get().
+		FilterExperimentsUpdateQuery(ctx, *curUser, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}); err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.ArchiveExperimentsResponse{}
+	_, err = query.Set("archived = true").
+		Returning("e.id").
+		Model(&resp.ExperimentIds).
+		Exec(ctx)
+
+	return resp, err
+}
+
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
@@ -942,9 +984,42 @@ func (a *apiServer) UnarchiveExperiment(
 	case nil:
 		return &apiv1.UnarchiveExperimentResponse{}, nil
 	default:
-		return nil, errors.Wrapf(err, "failed to archive experiment %d",
+		return nil, errors.Wrapf(err, "failed to unarchive experiment %d",
 			req.Id)
 	}
+}
+
+func (a *apiServer) UnarchiveExperiments(
+	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
+) (*apiv1.UnarchiveExperimentsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Bun().NewUpdate().
+		ModelTableExpr("experiments as e").
+		Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Where("archived").
+		Where("state IN (?)", bun.In([]string{
+			"CANCELED",
+			"COMPLETED",
+			"ERROR",
+		}))
+
+	if query, err = expauth.AuthZProvider.Get().
+		FilterExperimentsUpdateQuery(ctx, *curUser, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}); err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.UnarchiveExperimentsResponse{}
+	_, err = query.Set("archived = false").
+		Returning("e.id").
+		Model(&resp.ExperimentIds).
+		Exec(ctx)
+
+	return resp, err
 }
 
 func (a *apiServer) PatchExperiment(
@@ -1889,6 +1964,59 @@ func (a *apiServer) MoveExperiment(
 
 	return &apiv1.MoveExperimentResponse{},
 		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
+}
+
+func (a *apiServer) MoveExperiments(
+	ctx context.Context, req *apiv1.MoveExperimentsRequest,
+) (*apiv1.MoveExperimentsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// check suitable destination project
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if destProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+			req.DestinationProjectId)
+	}
+	// need to update CanCreateExperiment to check project when experiment is nil
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
+		nil); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	subQ := db.Bun().NewSelect().
+		ModelTableExpr("experiments AS exp").
+		Column("exp.id").
+		Join("JOIN projects p ON exp.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("exp.id IN (?)", bun.In(req.ExperimentIds)).
+		Where("NOT exp.archived").
+		Where("NOT p.archived").
+		Where("NOT w.archived")
+
+	if subQ, err = expauth.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, subQ,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}); err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.MoveExperimentsResponse{}
+	_, err = db.Bun().NewUpdate().
+		TableExpr("experiments AS e").
+		Where("e.id IN (?)", subQ).
+		Set("project_id = ?", destProject.Id).
+		Returning("e.id").
+		Model(&resp.ExperimentIds).
+		Exec(ctx)
+
+	return resp, err
 }
 
 func (a *apiServer) GetModelDefTree(

@@ -48,8 +48,12 @@ def activate(args: Namespace) -> None:
 
 @authentication.required
 def archive(args: Namespace) -> None:
-    bindings.post_ArchiveExperiment(cli.setup_session(args), id=args.experiment_id)
-    print(f"Archived experiment {args.experiment_id}")
+    body = bindings.v1ArchiveExperimentsRequest(experimentIds=[args.experiment_id])
+    resp = bindings.post_ArchiveExperiments(cli.setup_session(args), body=body)
+    if args.experiment_id in resp.experimentIds:
+        print(f"Archived experiment {args.experiment_id}")
+    else:
+        print("Error in archiving")
 
 
 @authentication.required
@@ -901,21 +905,27 @@ def set_gc_policy(args: Namespace) -> None:
 
 @authentication.required
 def unarchive(args: Namespace) -> None:
-    bindings.post_UnarchiveExperiment(cli.setup_session(args), id=args.experiment_id)
-    print(f"Unarchived experiment {args.experiment_id}")
+    body = bindings.v1UnarchiveExperimentsRequest(experimentIds=[args.experiment_id])
+    resp = bindings.post_UnarchiveExperiments(cli.setup_session(args), body=body)
+    if args.experiment_id in resp.experimentIds:
+        print(f"Unarchived experiment {args.experiment_id}")
+    else:
+        print("Error in unarchiving")
 
 
 @authentication.required
 def move_experiment(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    req = bindings.v1MoveExperimentRequest(
+    body = bindings.v1MoveExperimentsRequest(
         destinationProjectId=p.id,
-        experimentId=args.experiment_id,
+        experimentIds=[args.experiment_id],
     )
-    bindings.post_MoveExperiment(sess, body=req, experimentId=args.experiment_id)
-    print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
-
+    resp = bindings.post_MoveExperiments(cli.setup_session(args), body=body)
+    if args.experiment_id in resp.experimentIds:
+        print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
+    else:
+        print("Error in moving experiment")
 
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):
