@@ -69,7 +69,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
-  const projects = useWorkspaceProjects(workspaceId);
+  const projects = useWorkspaceProjects(workspaceId ?? 1);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
@@ -82,7 +82,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [workspaceId, fetchWorkspaces]);
 
   useEffect(() => {
-    ensureProjectsFetched(workspaceId);
+    if (workspaceId !== undefined) ensureProjectsFetched(workspaceId);
   }, [workspaceId, ensureProjectsFetched]);
 
   const handleWorkspaceSelect = useCallback(
