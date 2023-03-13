@@ -358,6 +358,18 @@ action on an entity type, for example:
    scope.
 -  ``PERMISSION_TYPE_ASSIGN_ROLES``: assign roles.
 
+Existing Caveats
+================
+
+As we're progressively rolling out RBAC there various parts of Determined that are not yet gated
+behind RBAC. These are:
+
+-  The jobs queue APIs: This means that any user can see high level metadata about all active jobs
+   in the queue.
+-  Master logs could contain information about jobs that the user is not authorized to see.
+-  Historical allocations show usage related to other users and workspaces.
+-  Cluster utilization information is not gated behind RBAC.
+
 *****************
  Usage Reference
 *****************
