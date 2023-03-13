@@ -998,9 +998,10 @@ const NameplateSection: React.FC = () => {
     <ComponentSection id="Nameplate" title="Nameplate">
       <AntDCard>
         <p>
-          A (<code>{'<Nameplate>'}</code>) displays identifying information for a user or group. It
-          has an icon on the left, and up to two lines of text on the right. A &apos;compact&apos;
-          option reduces the size of the name for use in a smaller form or modal.
+          A (<code>{'<Nameplate>'}</code>) displays an icon, a name, and an optional alias. The icon
+          is displayed on the left, and the text fields are displayed on the right. If an alias is
+          provided, it is displayed above the name in larger font. A &apos;compact&apos; option
+          reduces the size of the name for use in a smaller form or modal.
         </p>
       </AntDCard>
       <AntDCard title="Usage">

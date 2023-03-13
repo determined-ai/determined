@@ -20,8 +20,8 @@ import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import UserBadge from './kit/UserBadge';
 import css from './NavigationTabbar.module.scss';
+import UserBadge from './UserBadge';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;

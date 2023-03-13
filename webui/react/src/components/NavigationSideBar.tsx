@@ -27,9 +27,9 @@ import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import UserBadge from './kit/UserBadge';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
+import UserBadge from './UserBadge';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
