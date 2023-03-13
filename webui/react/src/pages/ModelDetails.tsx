@@ -40,7 +40,7 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { DetailedUser, Metadata, ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';

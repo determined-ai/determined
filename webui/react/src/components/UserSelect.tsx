@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import usersStore from 'stores/users';
-import { ALL_VALUE, DetailedUser, User } from 'types';
+import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';

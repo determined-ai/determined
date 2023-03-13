@@ -22,7 +22,7 @@ import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import usersStore from 'stores/users';
-import { DetailedUser, ModelItem, Workspace } from 'types';
+import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';

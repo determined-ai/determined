@@ -23,7 +23,7 @@ import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import usersStore from 'stores/users';
-import { DetailedUser, ModelVersion, Workspace } from 'types';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';

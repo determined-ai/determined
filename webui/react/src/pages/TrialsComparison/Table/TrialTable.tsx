@@ -27,7 +27,7 @@ import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
 import usersStore from 'stores/users';
 import { StateOfUnion } from 'themes';
-import { DetailedUser, MetricType } from 'types';
+import { MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
