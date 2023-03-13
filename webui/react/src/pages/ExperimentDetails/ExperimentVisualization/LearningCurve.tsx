@@ -17,7 +17,6 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { Primitive, RecordKey } from 'shared/types';
 import { glasbeyColor } from 'shared/utils/color';
 import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -67,12 +66,10 @@ export const getCustomSearchVaryingHPs = (
    * such as HpParallelCoordinates, HpScatterPlots, and HpHeatMaps, we will need to
    * generalize this logic a bit.
    */
-  const uniq = new Set<RecordKey>();
-  const check_dict = {} as Record<RecordKey, Primitive>;
-  // const uniq = trialHps.reduce((check_dict, d) => {
+  const uniq = new Set<string>();
+  const check_dict = {} as Record<string, unknown>;
   trialHps.forEach((d) => {
-    // let ret = new Set<RecordKey>();
-    Object.keys(d.hparams).forEach((key: RecordKey) => {
+    Object.keys(d.hparams).forEach((key: string) => {
       const value = d.hparams[key];
       if (!(isPrimitive(value) || Array.isArray(value))) {
         /**
@@ -89,25 +86,19 @@ export const getCustomSearchVaryingHPs = (
         return;
       }
       if (!(key in check_dict)) {
-        // check_dict[key] = new Set<Primitive>();
         check_dict[key] = value;
       } else if (!isEqual(check_dict[key], value)) {
         uniq.add(key);
       }
-      // check_dict[key].add(value);
     });
-    // return ret;
-  }); //, {} as Record<RecordKey, Primitive>);
+  });
 
+  // If there's only one result, don't filter by unique results
   const all_keys = trialHps.length === 1 ? Object.keys(check_dict) : Array.from(uniq);
-
   return all_keys.reduce((acc, key) => {
-    // If there's only one result, don't filter by unique results
-    // if (uniq[key].size > 1 || trialHps.length === 1) {
     acc[key] = {
       type: HyperparameterType.Constant,
     };
-    // }
     return acc;
   }, {} as Record<string, Hyperparameter>);
 };
