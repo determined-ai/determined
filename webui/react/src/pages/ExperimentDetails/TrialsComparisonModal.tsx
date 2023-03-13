@@ -1,14 +1,13 @@
-import { Modal, Select, Tag } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { Modal, Tag } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import MetricSelectFilter from 'components/MetricSelectFilter';
-import SelectFilter from 'components/SelectFilter';
+import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
@@ -21,8 +20,6 @@ import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFil
 import handleError from 'utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
-
-const { Option } = Select;
 
 interface ModalProps {
   experiment: ExperimentBase;
@@ -253,7 +250,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
           <div className={[css.row, css.spanAll].join(' ')}>
             <div className={[css.cell, css.spanAll].join(' ')}>
               Metrics
-              <MetricSelectFilter
+              <MetricSelect
                 defaultMetrics={metrics}
                 label=""
                 metrics={metrics}
@@ -284,12 +281,10 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
           <div className={[css.row, css.spanAll].join(' ')}>
             <div className={[css.cell, css.spanAll].join(' ')}>
               Hyperparameters
-              <SelectFilter
+              <Select
                 disableTags
-                dropdownMatchSelectWidth={200}
                 label=""
                 mode="multiple"
-                showArrow
                 value={selectedHyperparameters}
                 onChange={onHyperparameterSelect}>
                 {hyperparameterNames.map((hp) => (
@@ -297,7 +292,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
                     {hp}
                   </Option>
                 ))}
-              </SelectFilter>
+              </Select>
             </div>
           </div>
           {selectedHyperparameters.map((hp) => (

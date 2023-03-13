@@ -63,8 +63,11 @@ class LogCollector(threading.Thread):
 
                     m = rank.match(line)
                     if m:
-                        parsed_metadata["rank"] = m.group("rank_id")
-                        line = m.group("log")
+                        try:
+                            parsed_metadata["rank_id"] = int(m.group("rank_id"))
+                            line = m.group("log")
+                        except ValueError:
+                            pass
 
                     m = level.match(line)
                     if m:

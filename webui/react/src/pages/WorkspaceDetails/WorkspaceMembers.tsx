@@ -24,7 +24,8 @@ import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/us
 
 import RoleRenderer from './RoleRenderer';
 import css from './WorkspaceMembers.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
@@ -111,7 +112,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   fetchMembers,
 }: Props) => {
   const { canAssignRoles } = usePermissions();
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
+  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];

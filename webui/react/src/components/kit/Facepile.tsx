@@ -1,7 +1,7 @@
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import { Select as AntdSelect } from 'antd';
 import React, { useMemo, useState } from 'react';
 
-import SelectFilter from 'components/SelectFilter';
 import { DetailedUser } from 'types';
 
 import Button from './Button';
@@ -54,15 +54,13 @@ const Facepile: React.FC<Props> = ({
         <UserAvatar className={css.spacing} key={avatar.id} user={avatar} />
       ))}
       {showDropdown && (
-        <SelectFilter
-          className={css.spacing}
+        <AntdSelect
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
           }
           options={usersItems}
           placeholder="Select a user"
           placement="bottomRight"
-          showSearch={true}
           onChange={(value) => {
             // we know that it will find a user since the options are based on that variable
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -63,8 +63,6 @@ message MetricsWorkload {
   };
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
-  // The current validation state.
-  determined.experiment.v1.State state = 3;
   // Metrics.
   determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.
@@ -111,8 +109,6 @@ message Trial {
   MetricsWorkload latest_validation = 9;
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
-  // Latest training step.
-  MetricsWorkload latest_training = 16;
   // The last reported state of the trial runner (harness code).
   string runner_state = 11;
   // The wall clock time is all active time of the cluster for the trial,

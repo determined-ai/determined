@@ -5,35 +5,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-0c7cb70d3eb61492b
-      Agent: ami-0efbc837b3c729df1
+      Agent: ami-07ff017fdcb873d21
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-003bb1772f36a39a3
-    #   Agent: ami-0934d35fc17d76abc
+    #   Agent: ami-0f4325d6bb0693ea8
     # ap-southeast-1:
     #   Master: ami-09f03fa5572692399
-    #   Agent: ami-05068dcfa829e229e
+    #   Agent: ami-08e217c995685b256
     # ap-southeast-2:
     #   Master: ami-06139e5e22cc2f7b1
-    #   Agent: ami-0e62ea531c3969a65
+    #   Agent: ami-032ab618bc592a2f3
     eu-central-1:
       Master: ami-0b81e95bb0a06ea8c
-      Agent: ami-051a91b2829200200
+      Agent: ami-0108d2301feb1d1a6
     eu-west-1:
       Master: ami-029cfca952b331b52
-      Agent: ami-04eab4dc55258e621
+      Agent: ami-051b575f3d38c142f
     # eu-west-2:
     #   Master: ami-035469b606478d63d
-    #   Agent: ami-08aa94155b641d19d
+    #   Agent: ami-086a85853ca268f19
     us-east-1:
       Master: ami-0b93ce03dcbcb10f6
-      Agent: ami-0b4cc2ed4ecd07a2d
+      Agent: ami-03ec29f0d7c14e20c
     us-east-2:
       Master: ami-0cbea92f2377277a4
-      Agent: ami-0ba898a163ad80bf9
+      Agent: ami-06332e9495a7eebda
     us-west-2:
       Master: ami-0d31d7c9fc9503726
-      Agent: ami-0a483013f2e53ed60
+      Agent: ami-016612711ba734ade
 
 Parameters:
   Keypair:
@@ -93,7 +93,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.20.0-dev0
+    Default: 0.20.1-dev0
 
   DBPassword:
     Type: String

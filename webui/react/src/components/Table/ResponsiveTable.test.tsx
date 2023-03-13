@@ -113,9 +113,9 @@ const generateTableData = (entries: number): TableItem[] => {
 };
 
 const setup = (options?: { pagination?: Pagination }) => {
-  const onChange = jest.fn();
-  const onIdFilter = jest.fn();
-  const onIdReset = jest.fn();
+  const onChange = vi.fn();
+  const onIdFilter = vi.fn();
+  const onIdReset = vi.fn();
 
   const data = generateTableData(DATA_ENTRY_COUNT);
   const idList = data.map((row) => row.id);

@@ -126,15 +126,15 @@ describe('TimeAgo', () => {
   });
 
   it('should not render updates', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     render(<TimeAgo datetime={shared.now - 59 * DURATION_SECOND} noUpdate />);
     expect(screen.getByText(/just now/i)).toBeInTheDocument();
 
-    await jest.advanceTimersByTime(2000);
+    await vi.advanceTimersByTime(2000);
     expect(screen.getByText(/just now/i)).toBeInTheDocument();
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should render lower case', () => {

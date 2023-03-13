@@ -1,14 +1,14 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -32,9 +32,10 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useCurrentUser, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
@@ -46,14 +47,12 @@ import settingsConfig, {
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
-const { Option } = Select;
-
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -344,25 +343,17 @@ const WorkspaceList: React.FC = () => {
       }
       title="Workspaces">
       <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={160}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>

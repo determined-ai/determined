@@ -22,10 +22,11 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
-import { User, Workspace } from 'types';
+import usersStore from 'stores/users';
+import { DetailedUser, User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import ModelRegistry from './ModelRegistry';
 import css from './WorkspaceDetails.module.scss';
@@ -50,8 +51,9 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();
@@ -88,8 +90,6 @@ const WorkspaceDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [canceler.signal, id, pageError]);
-
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -223,7 +223,7 @@ const WorkspaceDetails: React.FC = () => {
     if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
-      fetchUsers(),
+      usersStore.ensureUsersFetched(canceler),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
@@ -231,8 +231,8 @@ const WorkspaceDetails: React.FC = () => {
   }, [
     canViewWorkspaceFlag,
     fetchWorkspace,
+    canceler,
     fetchGroups,
-    fetchUsers,
     fetchGroupsAndUsersAssignedToWorkspace,
     fetchRolesAssignableToScope,
   ]);

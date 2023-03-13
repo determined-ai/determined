@@ -15,7 +15,16 @@ from . import render
 
 FullUser = namedtuple(
     "FullUser",
-    ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
+    [
+        "user_id",
+        "username",
+        "admin",
+        "active",
+        "agent_uid",
+        "agent_gid",
+        "agent_user",
+        "agent_group",
+    ],
 )
 
 

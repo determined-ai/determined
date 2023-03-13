@@ -56,7 +56,6 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
 - protobuf-compiler (>= 3.15)
-- Java (>= 7)
 - cURL (>= 7)
 - jq (>= 1.6)
 - socat (>= 1.7)
@@ -96,13 +95,13 @@ eval "$($HOME/.linuxbrew/bin/brew shellenv)"
 Install the Determined prerequisites:
 
 ```sh
-brew install go@1.18 python@3.7 node@16 openjdk@11 protobuf docker helm curl jq socat
+brew install go@1.18 python@3.7 node@16 protobuf docker helm curl jq socat
 ```
 
-Add Python, Node, and openJDK to your PATH:
+Add Python and Node to your PATH:
 
 ```sh
-echo 'export PATH="$HOME/.linuxbrew/opt/python@3.7/bin:$HOME/.linuxbrew/opt/node@16/bin:$HOME/.linuxbrew/opt/openjdk@11/bin:$PATH"' >> $HOME/.profile
+echo 'export PATH="$HOME/.linuxbrew/opt/python@3.7/bin:$HOME/.linuxbrew/opt/node@16/bin:$PATH"' >> $HOME/.profile
 source $HOME/.profile
 ```
 

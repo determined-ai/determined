@@ -158,6 +158,7 @@ export const jobStateToLabel: { [key in JobState]: string } = {
   [JobState.SCHEDULED]: 'Scheduled',
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
+  [JobState.UNSPECIFIED]: 'Unspecified',
 };
 
 export const slotStateToLabel: { [key in SlotState]: string } = {
@@ -177,6 +178,7 @@ export const trialStateTolabel: { [key in Trialv1State]: string } = {
   [Trialv1State.CANCELED]: 'Canceled',
   [Trialv1State.COMPLETED]: 'Completed',
   [Trialv1State.ERROR]: 'Error',
+  [Trialv1State.UNSPECIFIED]: 'Unspecified',
 };
 export function stateToLabel(state: StateOfUnion): string {
   return (
