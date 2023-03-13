@@ -1113,7 +1113,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 		// Files that receive a unique hash when bundled and deployed can be cached forever
 		// Other static files should only be cached for a short period of time
-		cacheFileLongTerm := regexp.MustCompile(`(-[0-9]{1,}\.(js|css))$|(woff2|woff)$`)
+		cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-z]{1,}\.(js|css))$|(woff2|woff)$`)
 		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
 
 		if cacheFileLongTerm.MatchString(requestedFile) {
