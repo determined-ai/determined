@@ -165,7 +165,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
-  const generateTableKey = useCallback((record: UserOrGroupWithRoleInfo) => {
+  const generateTableKey = useCallback((record: Readonly<UserOrGroupWithRoleInfo>) => {
     const roleId = record.roleAssignment.role.roleId;
     return isUserWithRoleInfo(record)
       ? `user-${record.userId}-${roleId}`
@@ -173,7 +173,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: UserOrGroupWithRoleInfo) => {
+    const nameRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
       return isUserWithRoleInfo(record) ? (
         <UserBadge user={record} />
       ) : (
@@ -181,7 +181,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       );
     };
 
-    const roleRenderer = (value: string, record: UserOrGroupWithRoleInfo) => (
+    const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (
       <RoleRenderer
         rolesAssignableToScope={rolesAssignableToScope}
         userCanAssignRoles={userCanAssignRoles}
