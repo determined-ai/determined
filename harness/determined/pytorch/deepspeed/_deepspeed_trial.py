@@ -544,14 +544,6 @@ class DeepSpeedTrialController(det.TrialController):
         step_start_time = time.time()
 
         for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_start is now deprecated, "
-                    "please use on_validation_start instead"
-                )
-                callback.on_validation_step_start()
-
-        for callback in self.callbacks.values():
             callback.on_validation_start()
 
         num_inputs = 0
@@ -612,7 +604,6 @@ class DeepSpeedTrialController(det.TrialController):
 
         if self.context.distributed.size > 1 and any(
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-            or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
         ):
             logging.debug(
@@ -620,13 +611,6 @@ class DeepSpeedTrialController(det.TrialController):
                 "validation step end callback"
             )
             metrics = self.context.distributed.broadcast(metrics)
-
-        for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_end is now deprecated, please use on_validation_end instead"
-                )
-                callback.on_validation_step_end(metrics)
 
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
