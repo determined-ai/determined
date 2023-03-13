@@ -6,7 +6,7 @@ from tests import experiment as exp
 from tests.cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
 
-@pytest.mark.port_offset_registry
+@pytest.mark.port_registry
 def test_multi_trial_exp_port_registry() -> None:
     logged_in_user(ADMIN_CREDENTIALS)
     experiment_id = exp.create_experiment(

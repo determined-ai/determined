@@ -2307,12 +2307,12 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
       
       - test-e2e:
-          name: test-e2e-port-offset-registry
+          name: test-e2e-port-registry
           requires: 
             - build-go
           parallelism: 1 
-          devcluster-config: port-offset-registry.devcluster.yaml
-          mark: port_offset_registry
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
           target-stage: agent
 
       - test-e2e:
