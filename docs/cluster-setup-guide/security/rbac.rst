@@ -358,7 +358,7 @@ action on an entity type, for example:
    scope.
 -  ``PERMISSION_TYPE_ASSIGN_ROLES``: assign roles.
 
-Existing Caveats
+Caveats
 ================
 
 As RBAC is progressively rolled out there are various parts of Determined that are not yet gated
