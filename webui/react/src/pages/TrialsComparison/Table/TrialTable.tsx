@@ -25,10 +25,11 @@ import { paths } from 'routes/utils';
 import { Trialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { StateOfUnion } from 'themes';
-import { MetricType } from 'types';
+import { DetailedUser, MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
@@ -74,7 +75,8 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const users = Loadable.map(useUsers(), ({ users }) => users);
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
 
   const { filters, setFilters } = collectionsInterface;
 

@@ -14,7 +14,7 @@ const OPTION_TITLE = 'option';
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = () => {
-  const handleOpen = jest.fn();
+  const handleOpen = vi.fn();
   const view = render(
     <Select label={LABEL} placeholder={PLACEHOLDER}>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (

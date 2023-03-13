@@ -8,9 +8,10 @@ import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
-import { useUsers } from 'stores/users';
-import { DetailedUser, Workspace } from 'types';
+import usersStore from 'stores/users';
+import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
@@ -25,13 +26,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     onComplete: fetchWorkspaces,
     workspace,
   });
-
-  const users = Loadable.map(useUsers(), ({ users }) => users);
-  let user: DetailedUser | undefined = undefined;
-
-  if (Loadable.isLoaded(users)) {
-    user = users.data.find((user) => user.id === workspace.userId);
-  }
+  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
+  const user = Loadable.map(useUsers(), (user) => user);
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);

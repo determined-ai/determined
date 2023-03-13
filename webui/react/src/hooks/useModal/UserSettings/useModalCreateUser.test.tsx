@@ -4,10 +4,9 @@ import React from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
-import { PostUserParams } from 'services/types';
+import { postUser as mockCreateUser } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -18,14 +17,9 @@ import useModalCreateUser, {
   USER_NAME_LABEL,
 } from './useModalCreateUser';
 
-const mockCreateUser = jest.fn();
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),
-  postUser: (params: PostUserParams) => {
-    mockCreateUser(params);
-    return Promise.resolve({ user: { id: 1 } });
-  },
+  postUser: vi.fn().mockReturnValue({ user: { id: 1 } }),
 }));
 
 const OPEN_MODAL_TEXT = 'Open Modal';
@@ -47,11 +41,9 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <HistoryRouter history={history}>
-          <Container />
-        </HistoryRouter>
-      </UsersProvider>
+      <HistoryRouter history={history}>
+        <Container />
+      </HistoryRouter>
     </UIProvider>,
   );
 

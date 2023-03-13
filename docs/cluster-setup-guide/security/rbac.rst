@@ -237,13 +237,17 @@ To list existing groups, or a particular group membership:
 WebUI
 -----
 
+.. attention::
+
+   Only users with the ClusterAdmin role can add/remove users and groups.
+
 To see user group management UI,
 
 #. Click on your username in the upper left corner.
-#. Click "Settings"
-#. Click "Group Management" tabs up at the top.
+#. Click "Admin".
+#. Click the "Groups" tab at the top.
 
-To create new groups, use "New Group" button at the "Group Management" screen.
+To create new groups, use "New Group" button at the "Groups" screen.
 
 To delete a group,
 
@@ -281,9 +285,14 @@ WebUI
 To assign or unassign a role for a user or a group globally, first go to user or group management
 UI:
 
+.. attention::
+
+   Only users with the ClusterAdmin role can add/edit global role assignments for users and groups
+   from the "Admin" menu as described immediately below.
+
 #. Click on your username in the upper left corner.
-#. Click "Settings"
-#. See "User Management" and "Group Management" tabs up at the top.
+#. Click "Admin".
+#. See "Users" and "Groups" tabs at the top.
 
 Then, for users:
 
@@ -297,11 +306,18 @@ For groups:
 
 To assign or unassign a role for a user or a group on a particular workspace,
 
+.. attention::
+
+   Only users with the WorkspaceAdmin role can add/edit workspaced-scoped role assignments for users
+   and groups.
+
 #. Go to the workspaces page, select the target workspace.
 #. Click "Members" tab at the top.
-
-To create new role assignments, use "Add Members" button at the top To remove existing role
-assignments, click triple-dot menu and select "Remove" option.
+#. To create new role assignments, click the "Add Members" button at the top right.
+#. To remove existing role assignments, click the triple-dot menu for a user/group and select
+   "Remove".
+#. To edit the role, click on the dropdown in the role column for a user/group and make your
+   selection.
 
 .. _rbac-concepts:
 

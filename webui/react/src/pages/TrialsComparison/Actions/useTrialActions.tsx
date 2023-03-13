@@ -46,8 +46,10 @@ interface Props {
   availableIds: number[];
   filters: TrialFilters;
   openCreateModal: (p: CollectionModalProps) => void;
+
   refetch: () => void;
   sorter: TrialSorter;
+  workspaceId: number;
 }
 
 export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
@@ -68,6 +70,7 @@ const useTrialActions = ({
   sorter,
   openCreateModal,
   refetch,
+  workspaceId,
 }: Props): TrialActionsInterface => {
   const { settings, updateSettings } = useSettings<{ ids: number[] }>(settingsConfig);
 
@@ -110,7 +113,7 @@ const useTrialActions = ({
         : ({ sorter: sorter, trialIds: selectedTrials } as TrialsSelection);
 
       const handle = async (handler: TrialsActionHandler) =>
-        await dispatchTrialAction(action as TrialAction, trials, handler);
+        await dispatchTrialAction(action as TrialAction, trials, handler, workspaceId);
 
       await (action === TrialAction.AddTags
         ? handle(modalOpen)
@@ -120,7 +123,7 @@ const useTrialActions = ({
         ? handle(openTensorBoard)
         : Promise.resolve());
     },
-    [selectedTrials, modalOpen, selectAllMatching, sorter, filters, openCreateModal],
+    [selectedTrials, modalOpen, selectAllMatching, sorter, filters, openCreateModal, workspaceId],
   );
 
   const dispatcher = (
@@ -156,6 +159,7 @@ const useTrialActions = ({
             : action === TrialAction.AddTags
             ? modalOpen
             : noOp,
+          workspaceId,
         );
       },
     };
