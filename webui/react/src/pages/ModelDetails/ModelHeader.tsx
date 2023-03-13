@@ -58,16 +58,22 @@ const ModelHeader: React.FC<Props> = ({
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === model.userId);
 
-    const user = users.data.find((user) => user.id === model.userId);
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {`${getDisplayName(user)} on
-          ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {`${getDisplayName(user)} on
+                ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',
@@ -230,9 +236,7 @@ const ModelHeader: React.FC<Props> = ({
             </Dropdown>
           </Space>
         </div>
-        <Spinner spinning={Loadable.isLoading(users)}>
-          <InfoBox rows={infoRows} separator={false} />
-        </Spinner>
+        <InfoBox rows={infoRows} separator={false} />
       </div>
       {modalModelDeleteContextHolder}
       {modalModelMoveContextHolder}

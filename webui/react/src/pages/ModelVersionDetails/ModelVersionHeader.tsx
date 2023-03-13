@@ -73,16 +73,22 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === modelVersion.userId);
 
-    const user = users.data.find((user) => user.id === modelVersion.userId);
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {getDisplayName(user)}
-            on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {getDisplayName(user)}
+                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',

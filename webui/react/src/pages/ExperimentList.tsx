@@ -402,8 +402,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
-
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -602,10 +604,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },
@@ -974,7 +976,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           containerRef={pageRef}
           ContextMenu={ContextMenu}
           dataSource={experiments}
-          loading={isLoading || Loadable.isLoading(users)}
+          loading={isLoading}
           numOfPinned={(settings.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {

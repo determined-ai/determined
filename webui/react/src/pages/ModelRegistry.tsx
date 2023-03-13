@@ -105,8 +105,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
   const isTableLoading = useMemo(
-    () => isLoading || isLoadingSettings || Loadable.isLoading(users),
-    [isLoading, isLoadingSettings, users],
+    () => isLoading || isLoadingSettings,
+    [isLoading, isLoadingSettings],
   );
 
   const fetchModels = useCallback(async () => {
@@ -457,7 +457,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
 
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
@@ -590,10 +593,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

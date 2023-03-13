@@ -174,7 +174,10 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
 
     const tagsRenderer = (value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
@@ -255,7 +258,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -280,8 +283,8 @@ const ModelDetails: React.FC = () => {
     canModifyModelVersion,
   ]);
   const tableIsLoading = useMemo(
-    () => isLoading || isLoadingSettings || Loadable.isLoading(users),
-    [isLoading, isLoadingSettings, users],
+    () => isLoading || isLoadingSettings,
+    [isLoading, isLoadingSettings],
   );
 
   const handleTableChange = useCallback(

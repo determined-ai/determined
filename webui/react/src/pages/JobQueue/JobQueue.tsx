@@ -51,7 +51,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
   useRefetchClusterData();
   const resourcePools = useObservable(useClusterStore().resourcePools);
-  const hasLoadingObservables = Loadable.isLoading(users) || Loadable.isLoading(resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(() => {
     if (Loadable.isLoading(resourcePools)) return [];
@@ -219,7 +218,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
 
     return defaultColumns
       .map((col) => {
@@ -301,7 +303,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.data.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId));
             break;
         }
         return col;
@@ -350,7 +352,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
-            loading={pageState.isLoading || hasLoadingObservables}
+            loading={pageState.isLoading}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

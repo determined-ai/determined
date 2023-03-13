@@ -407,7 +407,10 @@ const TrialTable: React.FC<Props> = ({
   );
 
   const userColumn = useMemo(() => {
-    if (Loadable.isLoading(users)) return;
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
 
     return {
       defaultWidth: 100,
@@ -421,11 +424,11 @@ const TrialTable: React.FC<Props> = ({
           onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
         />
       ),
-      filters: users.data.map((user) => ({ text: getDisplayName(user), value: user.id })),
+      filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
       render: (_: number, r: V1AugmentedTrial) =>
-        userRenderer(users.data.find((u) => u.id === r.userId)),
+        userRenderer(matchUsers.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
     };

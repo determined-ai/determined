@@ -116,8 +116,6 @@ const ClusterHistoricalUsage: React.FC = () => {
     );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 
-  const isLoading = useMemo(() => !chartSeries || Loadable.isLoaded(users), [users, chartSeries]);
-
   useEffect(() => {
     fetchResourceAllocationAggregated();
   }, [fetchResourceAllocationAggregated]);
@@ -129,7 +127,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
         </Space>
-        <Section bodyBorder loading={isLoading} title="Compute Hours Allocated">
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -138,7 +136,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={isLoading} title="Compute Hours by User">
+        <Section bodyBorder loading={Loadable.isLoading(users)} title="Compute Hours by User">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -148,7 +146,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={isLoading} title="Compute Hours by Label">
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
@@ -158,7 +156,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={isLoading} title="Compute Hours by Resource Pool">
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
