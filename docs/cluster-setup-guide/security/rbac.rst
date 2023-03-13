@@ -361,12 +361,12 @@ action on an entity type, for example:
 Existing Caveats
 ================
 
-As we're progressively rolling out RBAC there various parts of Determined that are not yet gated
-behind RBAC. These are:
+As RBAC is progressively rolled out there are various parts of Determined that are not yet gated
+behind RBAC. These currently include:
 
--  The jobs queue APIs: This means that any user can see high level metadata about all active jobs
-   in the queue.
--  Master logs could contain information about jobs that the user is not authorized to see.
+-  The job queue APIs: Any logged-in user user can see high level metadata about all active jobs in
+   the queue.
+-  Master logs can contain information about jobs that the user is not authorized to see.
 -  Historical allocations show usage related to other users and workspaces.
 -  Cluster utilization information is not gated behind RBAC.
 
