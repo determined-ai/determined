@@ -2,13 +2,15 @@
  PyTorch API
 #############
 
-In this guide, you'll learn how to use the PyTorch API including the PyTorch Trial and Trainer.
+In this guide, you'll learn how to use :ref:`pytorch_trial_ug` and :ref:`pytorch_trainer_ug`.
 
 +---------------------------------------------------------------------+
 | Visit the API reference                                             |
 +=====================================================================+
 | :doc:`/reference/reference-training/training/api-pytorch-reference` |
 +---------------------------------------------------------------------+
+
+.. _pytorch_trial_ug:
 
 ***************
  PyTorch Trial
@@ -641,9 +643,11 @@ trial by either calling ``self.context.get_hparams()`` if you submitted your tri
 ``entrypoint: model_def:Trial`` or passing in hyperparameters directly into the Trial ``__init__``
 if using PyTorch Trainer API.
 
-*********
- Trainer
-*********
+.. _pytorch_trainer_ug:
+
+*****************
+ PyTorch Trainer
+*****************
 
 With the PyTorch Trainer API, you can implement and iterate on model training code locally before
 running on cluster. When you are satisfied with your model code, you configure and submit the code
