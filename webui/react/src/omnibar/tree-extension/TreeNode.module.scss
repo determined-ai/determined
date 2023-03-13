@@ -2,12 +2,9 @@
 
 .base {
   background-color: var(--theme-stage);
-  border-bottom-width: 1px;
   border-color: var(--theme-stage-border);
-  border-left-width: 1px;
-  border-right-width: 1px;
   border-style: solid;
-  border-top-width: 0;
+  border-width: 0 1px 1px;
   box-sizing: border-box;
   color: var(--theme-stage-on-strong);
   display: flex;
@@ -22,7 +19,6 @@
   padding-right: 15px;
   text-decoration: none;
   word-break: break-word;
-  word-wrap: break-all;
 }
 .selected {
   background-color: var(--theme-stage-on);

@@ -10,7 +10,8 @@
   display: table-row;
 }
 .loader .row span {
-  animation: flicker 0.5985999999999999s ease-out infinite alternate;
+  animation: 0.5986 infinite alternate ease-out;
+  animation-name: flicker;
   background: var(--theme-float-on);
   display: table-cell;
   opacity: 0;
@@ -18,12 +19,11 @@
 }
 
 @keyframes flicker {
-  from,
+  0%,
   20% {
     opacity: 0;
   }
-  100%,
-  to {
+  100% {
     opacity: 1;
   }
 }
