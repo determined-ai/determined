@@ -232,7 +232,9 @@ const NavigationSideBar: React.FC = () => {
             content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            {currentUser ? <UserBadge className={css.user} compact user={currentUser} /> : null}
+            <div className={css.user}>
+              <UserBadge compact hideAvatarTooltip user={currentUser} />
+            </div>
           </Dropdown>
         </header>
         <main>

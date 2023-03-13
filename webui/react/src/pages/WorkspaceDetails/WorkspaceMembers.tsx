@@ -174,7 +174,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         return <UserBadge user={member} />;
       }
       const group = record as V1GroupDetails;
-      return <Nameplate icon={<Icon name="group" />} name={group.name} />;
+      return <Nameplate icon={<Icon name="group" />} name={group.name ?? ''} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (

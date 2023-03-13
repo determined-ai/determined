@@ -269,7 +269,7 @@ const GroupManagement: React.FC = () => {
         key: 'name',
         onCell: onRightClickableCell,
         render: (_: string, r: V1GroupSearchResult) => (
-          <Nameplate icon={<Icon name="group" />} name={r.group.name} />
+          <Nameplate icon={<Icon name="group" />} name={r.group.name ?? ''} />
         ),
         title: 'Group',
       },

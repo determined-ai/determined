@@ -19,7 +19,6 @@ import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { UserNameFields } from 'utils/user';
 
 import UserBadge from './kit/UserBadge';
 import css from './NavigationTabbar.module.scss';
@@ -98,7 +97,9 @@ const NavigationTabbar: React.FC = () => {
   const overflowActionsTop = [
     {
       render: () => (
-        <UserBadge className={css.user} compact key="avatar" user={authUser as UserNameFields} />
+        <div className={css.user}>
+          <UserBadge compact key="avatar" user={authUser} />
+        </div>
       ),
     },
     {

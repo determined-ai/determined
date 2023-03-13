@@ -1,24 +1,23 @@
 import React from 'react';
 
-import { UserNameFields } from 'utils/user';
+import { User } from 'types';
 
 import Nameplate from './Nameplate';
 import UserAvatar from './UserAvatar';
 
 export interface Props {
-  className?: string;
   compact?: boolean;
-  user: UserNameFields;
+  hideAvatarTooltip?: boolean;
+  user?: User;
 }
 
-const UserBadge: React.FC<Props> = ({ user, compact, className }) => {
+const UserBadge: React.FC<Props> = ({ user, compact, hideAvatarTooltip }) => {
   return (
     <Nameplate
       alias={user?.displayName}
-      className={className}
       compact={compact}
-      icon={<UserAvatar user={user} />}
-      name={user?.username}
+      icon={<UserAvatar hideTooltip={hideAvatarTooltip} user={user} />}
+      name={user?.username ?? ''}
     />
   );
 };

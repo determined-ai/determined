@@ -13,7 +13,7 @@ import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser, UserNameFields } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -127,7 +127,7 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserBadge compact user={option as UserNameFields} />
+                  <UserBadge compact user={option as User} />
                 ) : (
                   <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),

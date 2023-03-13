@@ -4,16 +4,14 @@ import css from './Nameplate.module.scss';
 
 export interface Props {
   alias?: string;
-  className?: string;
   compact?: boolean;
   icon: ReactNode;
-  name?: string;
+  name: string;
 }
 
-const Nameplate: React.FC<Props> = ({ alias, className, compact, icon, name }) => {
+const Nameplate: React.FC<Props> = ({ alias, compact, icon, name }) => {
   const classnames = [css.avatarCard];
   if (compact) classnames.push(css.compact);
-  if (className) classnames.push(className);
 
   return (
     <div className={classnames.join(' ')}>
