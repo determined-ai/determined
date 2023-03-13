@@ -5,7 +5,6 @@ import socket
 import tempfile
 from typing import Any, List, Optional
 
-import determined as det
 from determined import constants, ipc
 
 
@@ -190,7 +189,6 @@ class DistributedContext:
             cross_rank=hvd.cross_rank(),
             cross_size=hvd.cross_size(),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -211,7 +209,6 @@ class DistributedContext:
             cross_rank=int(os.environ["CROSS_RANK"]),
             cross_size=int(os.environ["CROSS_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -232,7 +229,6 @@ class DistributedContext:
             cross_rank=int(os.environ["GROUP_RANK"]),
             cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     def close(self) -> None:
