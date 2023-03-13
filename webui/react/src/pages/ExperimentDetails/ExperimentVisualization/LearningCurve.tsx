@@ -19,7 +19,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive, RecordKey } from 'shared/types';
 import { glasbeyColor } from 'shared/utils/color';
-import { flattenObject, isNumber } from 'shared/utils/data';
+import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
@@ -53,6 +53,65 @@ interface Props {
 
 const MAX_DATAPOINTS = 5000;
 
+export const getCustomSearchVaryingHPs = (
+  trialHps: TrialHParams[],
+): Record<string, Hyperparameter> => {
+  /**
+   * For Custom Searchers, add a hyperparameter's column for params that
+   * 1) Have more than one unique value (it isn't the same in all trials)
+   * 2) Isn't a dictionary of other metrics
+   * This is to bypass the need to rely the on the experiment config's
+   * definition of hyperparameters and determine what should be shown more dynamically.
+   *
+   * Note: If we support the other tabs in the future for Custom Searchers
+   * such as HpParallelCoordinates, HpScatterPlots, and HpHeatMaps, we will need to
+   * generalize this logic a bit.
+   */
+  const uniq = new Set<RecordKey>();
+  const check_dict = {} as Record<RecordKey, Primitive>;
+  // const uniq = trialHps.reduce((check_dict, d) => {
+  trialHps.forEach((d) => {
+    // let ret = new Set<RecordKey>();
+    Object.keys(d.hparams).forEach((key: RecordKey) => {
+      const value = d.hparams[key];
+      if (!(isPrimitive(value) || Array.isArray(value))) {
+        /**
+         * We have both the flattened and unflattened values in this TrialHParams
+         * From `const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };`
+         * below in the file. Skip the non flattened dictionaries.
+         * Example: {
+         *  "dict": { # This is skipped
+         *    "key": "value"
+         *  },
+         *  "dict.key": "value", # This is allowed
+         * }
+         */
+        return;
+      }
+      if (!(key in check_dict)) {
+        // check_dict[key] = new Set<Primitive>();
+        check_dict[key] = value;
+      } else if (!isEqual(check_dict[key], value)) {
+        uniq.add(key);
+      }
+      // check_dict[key].add(value);
+    });
+    // return ret;
+  }); //, {} as Record<RecordKey, Primitive>);
+
+  const all_keys = trialHps.length === 1 ? Object.keys(check_dict) : Array.from(uniq);
+
+  return all_keys.reduce((acc, key) => {
+    // If there's only one result, don't filter by unique results
+    // if (uniq[key].size > 1 || trialHps.length === 1) {
+    acc[key] = {
+      type: HyperparameterType.Constant,
+    };
+    // }
+    return acc;
+  }, {} as Record<string, Hyperparameter>);
+};
+
 const LearningCurve: React.FC<Props> = ({
   experiment,
   filters,
@@ -77,51 +136,9 @@ const LearningCurve: React.FC<Props> = ({
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
-  const get_custom_search_varying_hps = (trialHps: TrialHParams[]) => {
-    /**
-     * For Custom Searchers, add a hyperparameter's column for params that
-     * 1) Have more than one unique value (it isn't the same in all trials)
-     * 2) Isn't a dictionary of other metrics
-     * This is to bypass the need to rely the on the experiment config's
-     * definition of hyperparameters and determine what should be shown more dynamically.
-     *
-     * Note: If we support the other tabs in the future for Custom Searchers
-     * such as HpParallelCoordinates, HpScatterPlots, and HpHeatMaps, we will need to
-     * generalize this logic a bit.
-     */
-    const uniq = trialHps.reduce((acc, d) => {
-      Object.keys(d.hparams).forEach((key: RecordKey) => {
-        const value = d.hparams[key];
-        if (!isNumber(value)) {
-          /**
-           * We have both the flattened and unflattened values in this TrialHParams
-           * From `const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };`
-           * below in the file. Skip the non flattened dictionaries.
-           */
-          return;
-        }
-        if (!(key in acc)) {
-          acc[key] = new Set<Primitive>();
-        }
-        acc[key].add(value);
-      });
-      return acc;
-    }, {} as Record<RecordKey, Set<Primitive>>);
-
-    return Object.keys(uniq).reduce((acc, key) => {
-      // If there's only one result, don't filter by unique results
-      if (uniq[key].size > 1 || trialHps.length === 1) {
-        acc[key] = {
-          type: HyperparameterType.Constant,
-        };
-      }
-      return acc;
-    }, {} as Record<string, Hyperparameter>);
-  };
-
   const hyperparameters = useMemo(() => {
     if (experiment.config.searcher.name === ExperimentSearcherName.Custom && trialHps.length > 0) {
-      return get_custom_search_varying_hps(trialHps);
+      return getCustomSearchVaryingHPs(trialHps);
     } else {
       return fullHParams.reduce((acc, key) => {
         acc[key] = experiment.hyperparameters[key];
