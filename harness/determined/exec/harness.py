@@ -64,7 +64,6 @@ def main(train_entrypoint: str) -> int:
         container_gpus=info.gpu_uuids,
         slot_ids=info.slot_ids,
         debug=info.trial._debug,
-        det_trial_unique_port_offset=info.trial._unique_port_offset,
         det_trial_id=str(info.trial.trial_id),
         det_experiment_id=str(info.trial.experiment_id),
         det_agent_id=info.agent_id,

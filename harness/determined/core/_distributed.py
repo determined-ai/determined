@@ -420,10 +420,3 @@ class DummyDistributedContext(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
-
-
-def _get_training_port_offset() -> int:
-    info = det.get_cluster_info()
-    if info and info.task_type == "TRIAL":
-        return info.trial._unique_port_offset
-    return 0

@@ -21,7 +21,6 @@ def make_mock_cluster_info(
         steps_completed=0,
         trial_run_id=0,
         debug=False,
-        unique_port_offset=0,
         inter_node_network_interface=None,
     )
     rendezvous_info_mock = det.RendezvousInfo(

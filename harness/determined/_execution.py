@@ -187,7 +187,6 @@ def _make_local_execution_env(
         container_gpus=container_gpus,
         slot_ids=slot_ids,
         debug=config.debug_enabled(),
-        det_trial_unique_port_offset=0,
         det_trial_id="",
         det_agent_id="",
         det_experiment_id="",
