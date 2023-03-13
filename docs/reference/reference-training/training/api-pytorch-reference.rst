@@ -101,4 +101,5 @@
 
 ``determined.pytorch.init()``
 =============================
+
 .. autofunction:: determined.pytorch.init
