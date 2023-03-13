@@ -371,7 +371,7 @@ behind RBAC. These currently include:
    the queue though RBAC is enforced when clicking on a task to access its details and artifacts.
 -  RBAC is not currently applied to Master logs which can contain information about jobs that the
    user is not authorized to see.
--  Historical allocations shows cluster-wide usage related to other users and workspaces.
+-  Historical usage shows cluster-wide usage related to other users and workspaces.
 -  Cluster utilization information is not gated behind RBAC.
 
 *****************
