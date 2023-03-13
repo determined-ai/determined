@@ -27,7 +27,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     workspace,
   });
   const loadableUser = useObservable(usersStore.getUser(workspace.userId));
-  const user = Loadable.map(useUsers(), (user) => user);
+  const user = Loadable.map(loadableUser, (user) => user);
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);
@@ -53,8 +53,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
           </p>
           <div className={css.avatarRow}>
             <div className={css.avatar}>
-              <Spinner spinning={!user}>
-                <Avatar user={user} />
+              <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
+                {Loadable.isLoaded(user) && <Avatar user={user.data} />}
               </Spinner>
             </div>
             {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
