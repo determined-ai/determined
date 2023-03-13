@@ -6,7 +6,8 @@
 
 .. attention::
 
-   RBAC feature applies only to Determined Enterprise Edition.
+   RBAC feature applies only to Determined Enterprise Edition. Please see RBAC's current limitations
+   :ref:`here <rbac-limitations>`
 
 *****************
  Getting Started
@@ -358,16 +359,19 @@ action on an entity type, for example:
    scope.
 -  ``PERMISSION_TYPE_ASSIGN_ROLES``: assign roles.
 
-Caveats
-================
+Current Limitations
+===================
+
+.. _rbac-limitations:
 
 As RBAC is progressively rolled out there are various parts of Determined that are not yet gated
 behind RBAC. These currently include:
 
 -  The job queue APIs: Any logged-in user user can see high level metadata about all active jobs in
-   the queue.
--  Master logs can contain information about jobs that the user is not authorized to see.
--  Historical allocations show usage related to other users and workspaces.
+   the queue though RBAC is enforced when clicking on a task to access its details and artifacts.
+-  RBAC is not currently applied to Master logs which can contain information about jobs that the
+   user is not authorized to see.
+-  Historical allocations shows cluster-wide usage related to other users and workspaces.
 -  Cluster utilization information is not gated behind RBAC.
 
 *****************
