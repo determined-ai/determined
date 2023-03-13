@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/internal/webhooks"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -44,10 +45,13 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 	}
 
 	masterConfig := config.GetMasterConfig()
-	database, err := db.Connect(&masterConfig.DB)
+	database, err := db.Setup(&masterConfig.DB)
 	if err != nil {
 		return err
 	}
+
+	err = etc.SetRootPath("./master/static/srv")
+
 	defer func() {
 		if errd := database.Close(); errd != nil {
 			log.Errorf("error closing pg connection: %s", errd)
