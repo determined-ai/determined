@@ -122,7 +122,6 @@
     "magic-string": "^0.27.0",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
-    "postcss": "^8.4.21",
     "prettier": "^2.8.0",
     "resize-observer-polyfill": "^1.5.1",
     "sass": "^1.35.2",
