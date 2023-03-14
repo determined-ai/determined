@@ -422,7 +422,6 @@ class trialv1Trial:
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
-    latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
@@ -444,7 +443,6 @@ class trialv1Trial:
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
@@ -467,8 +465,6 @@ class trialv1Trial:
             self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(latestTraining, Unset):
-            self.latestTraining = latestTraining
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
@@ -501,8 +497,6 @@ class trialv1Trial:
             kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "latestTraining" in obj:
-            kwargs["latestTraining"] = v1MetricsWorkload.from_json(obj["latestTraining"]) if obj["latestTraining"] is not None else None
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
@@ -535,8 +529,6 @@ class trialv1Trial:
             out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "latestTraining" in vars(self):
-            out["latestTraining"] = None if self.latestTraining is None else self.latestTraining.to_json(omit_unset)
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
@@ -14005,12 +13997,14 @@ def get_GetUsers(
     session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
         "limit": limit,
+        "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
