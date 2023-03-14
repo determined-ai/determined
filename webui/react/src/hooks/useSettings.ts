@@ -31,7 +31,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
+export type UpdateSettings = (updates: Settings) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -293,7 +293,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateSettings = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (updates: Settings, shouldPush = false) => {
+    (updates: Settings) => {
       stateOb.update((s) =>
         s.set(
           config.storagePath,

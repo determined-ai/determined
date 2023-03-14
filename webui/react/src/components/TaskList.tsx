@@ -585,10 +585,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         tableLimit: tablePagination.pageSize,
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
-      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-      updateSettings(newSettings, shouldPush);
+      updateSettings(newSettings);
     },
-    [columns, settings, updateSettings],
+    [columns, updateSettings],
   );
 
   const handleTableRowSelect = useCallback(

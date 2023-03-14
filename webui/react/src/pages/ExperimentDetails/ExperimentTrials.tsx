@@ -271,8 +271,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         tableLimit: tablePagination.pageSize,
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
-      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-      updateSettings(newSettings, shouldPush);
+      updateSettings(newSettings);
     },
     [columns, settings, updateSettings],
   );

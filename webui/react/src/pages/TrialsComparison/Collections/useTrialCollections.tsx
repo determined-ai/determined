@@ -184,13 +184,13 @@ export const useTrialCollections = (
         if (refetchBefore) _collections = (await fetchCollections()) ?? _collections;
         const targetCollection = _collections.find((c) => c.name === targetCollectionName);
         if (targetCollection) {
-          updateSettings({ collection: targetCollection.name }, true);
+          updateSettings({ collection: targetCollection.name });
         } else {
-          updateSettings({ collection: undefined }, true);
+          updateSettings({ collection: undefined });
         }
       } else {
         _collections = (await fetchCollections()) ?? [];
-        updateSettings({ collection: _collections?.[0]?.name }, true);
+        updateSettings({ collection: _collections?.[0]?.name });
       }
     },
     [collections, fetchCollections, updateSettings],

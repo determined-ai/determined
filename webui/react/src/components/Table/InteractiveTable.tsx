@@ -440,11 +440,9 @@ const InteractiveTable = <T extends object>({
         newSettings.sortKey = columnKey;
       }
 
-      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-
       if (isEqual(newSettings, settings)) return;
 
-      updateSettings(newSettings, shouldPush);
+      updateSettings(newSettings);
     },
     [settings, updateSettings, columnDefs, settingsColumns],
   );
