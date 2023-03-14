@@ -788,6 +788,7 @@ def pause(args: Namespace) -> None:
     else:
         print("Error in pausing")
 
+
 @authentication.required
 def set_description(args: Namespace) -> None:
     session = cli.setup_session(args)
