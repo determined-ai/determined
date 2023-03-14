@@ -3,13 +3,13 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
-import UserBadge from 'components/kit/UserBadge';
+import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
@@ -173,12 +173,16 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
-      return isUserWithRoleInfo(record) ? (
-        <UserBadge user={record} />
-      ) : (
-        <GroupAvatar groupName={record.groupName} />
-      );
+    const nameRenderer = (value: string, record: UserOrGroupWithRoleInfo) => {
+      if (isUserWithRoleInfo(record)) {
+        const member: User = {
+          displayName: record.displayName,
+          id: record.userId,
+          username: record.username,
+        };
+        return <UserBadge user={member} />;
+      }
+      return <Nameplate icon={<Icon name="group" />} name={record.groupName ?? ''} />;
     };
 
     const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (

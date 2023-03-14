@@ -8,7 +8,7 @@ import {
   UserWithRoleInfo,
 } from 'types';
 
-export interface UserNameFields {
+interface UserNameFields {
   displayName?: string;
   username?: string;
 }
