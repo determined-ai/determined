@@ -1,7 +1,7 @@
 import React from 'react';
 
 import router from 'router';
-import { reactHostAddress } from 'routes/utils';
+import { reactHostAddress } from 'shared/utils/routes';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';

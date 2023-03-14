@@ -7,6 +7,13 @@ import rootLogger from './Logger';
 
 const logger = rootLogger.extend('utils', 'routes');
 
+export const isFullPath = (url: string): boolean => {
+  try {
+    return url.startsWith('http') && !!new URL(url);
+  } catch (e) {
+    return false;
+  }
+};
 // whether the input is pathed from / or not.
 export const isAbsolutePath = (url: string): boolean => {
   const regex = /^\/(\w+\/)*\w*$/i;
@@ -30,6 +37,11 @@ export const isMouseEvent = (ev: AnyMouseEvent | React.KeyboardEvent): ev is Any
 export const isNewTabClickEvent = (event: AnyMouseEvent): boolean => {
   return event.button === 1 || event.metaKey || event.ctrlKey;
 };
+// Returns the address to the server hosting react assets
+// excluding the path to the subdirectory if any.
+export const reactHostAddress = (): string => {
+  return `${window.location.protocol}//${window.location.host}`;
+};
 
 export const ensureAbsolutePath = (url: string): string => (isAbsolutePath(url) ? url : '/' + url);
 export const filterOutLoginLocation = (location: {
@@ -38,13 +50,6 @@ export const filterOutLoginLocation = (location: {
   return location.pathname.includes('login') ? undefined : clone(location);
 };
 
-export const isFullPath = (url: string): boolean => {
-  try {
-    return url.startsWith('http') && !!new URL(url);
-  } catch (e) {
-    return false;
-  }
-};
 export const parseUrl = (url: string): URL => {
   let cleanUrl = url;
   if (!isFullPath(url)) {

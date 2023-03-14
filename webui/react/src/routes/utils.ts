@@ -8,8 +8,10 @@ import {
   AnyMouseEvent,
   AnyMouseEventHandler,
   isAbsolutePath,
+  isFullPath,
   isNewTabClickEvent,
   openBlank,
+  reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
 } from 'shared/utils/routes';
@@ -17,20 +19,6 @@ import { BrandingType, CommandTask } from 'types';
 import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';
-
-// Returns the address to the server hosting react assets
-// excluding the path to the subdirectory if any.
-export const reactHostAddress = (): string => {
-  return `${window.location.protocol}//${window.location.host}`;
-};
-
-const isFullPath = (url: string): boolean => {
-  try {
-    return url.startsWith('http') && !!new URL(url);
-  } catch (e) {
-    return false;
-  }
-};
 
 // serverAddress returns determined cluster (master) address.
 export const serverAddress = (path = ''): string => {

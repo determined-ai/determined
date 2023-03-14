@@ -1,4 +1,6 @@
-import { findReactRoute, reactHostAddress } from './utils';
+import { reactHostAddress } from 'shared/utils/routes';
+
+import { findReactRoute } from './utils';
 
 const initEnv = process.env;
 

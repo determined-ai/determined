@@ -76,7 +76,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
-      router.navigate(paths.logout());
+      router.navigate(`/det${paths.logout()}`);
     }
   }
 

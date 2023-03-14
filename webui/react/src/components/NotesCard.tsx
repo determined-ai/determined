@@ -1,7 +1,7 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Location, unstable_useBlocker as useBlocker, useLocation } from 'react-router-dom';
+import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
@@ -39,9 +39,9 @@ const NotesCard: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedNotes, setEditedNotes] = useState(notes);
-  const currentLocation = useLocation();
-  const blocker = (nextLocation: Location) => {
-    if (isEditing && nextLocation.pathname !== currentLocation.pathname.split('?')[0]) {
+
+  const blocker = () => {
+    if (isEditing && notes !== editedNotes) {
       const answer = window.confirm(
         'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
       );
@@ -49,7 +49,7 @@ const NotesCard: React.FC<Props> = ({
     }
     return false;
   };
-  useBlocker((history) => blocker(history.nextLocation));
+  useBlocker(() => blocker());
 
   const existingNotes = useRef(notes);
 
