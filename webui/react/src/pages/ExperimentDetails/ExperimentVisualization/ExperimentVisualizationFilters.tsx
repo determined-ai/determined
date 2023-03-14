@@ -20,7 +20,7 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: Metric;
+  metric: Metric | null;
   scale: Scale;
   view: ViewType;
 }
@@ -251,7 +251,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           label="Metric"
           metrics={metrics}
           multiple={false}
-          value={localFilters.metric}
+          value={localFilters.metric || undefined}
           width={250}
           onChange={handleMetricChange}
         />

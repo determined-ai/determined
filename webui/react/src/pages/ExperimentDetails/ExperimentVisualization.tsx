@@ -101,10 +101,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
-  const searcherMetric = useRef<Metric>({
-    name: experiment.config.searcher.metric,
-    type: MetricType.Validation,
-  });
 
   const { viz: type } = useParams<{ viz: ExperimentVisualizationType }>();
   const fullHParams = useRef<string[]>(
@@ -118,7 +114,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: searcherMetric.current,
+    metric: null,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -130,7 +126,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric>(initFilters.metric);
+  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
   const [batches, setBatches] = useState<number[]>();
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
@@ -155,9 +151,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, [batches, experiment, metrics]);
 
   const hpImportance = useMemo(() => {
-    if (!hpImportanceMap) return {};
-    return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
-  }, [filters.metric, hpImportanceMap]);
+    if (!hpImportanceMap || !activeMetric) return {};
+    return hpImportanceMap[activeMetric.type][activeMetric.name] || {};
+  }, [activeMetric, hpImportanceMap]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
@@ -187,7 +183,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return (
       <ExperimentVisualizationFilters
         batches={batches || []}
-        filters={filters}
+        filters={{ ...filters, metric: activeMetric }}
         fullHParams={fullHParams.current}
         hpImportance={hpImportance}
         metrics={metrics}
@@ -206,7 +202,19 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     hpImportance,
     metrics,
     typeKey,
+    activeMetric,
   ]);
+
+  // Validate active metric against metrics.
+  useEffect(() => {
+    setActiveMetric((prev) => {
+      const activeMetricFound = metrics.reduce((acc, metric) => {
+        return acc || (metric.type === prev?.type && metric.name === prev?.name);
+      }, false);
+
+      return activeMetricFound ? prev : metrics.length ? metrics[0] : null;
+    });
+  }, [metrics]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     /**
@@ -221,7 +229,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
+            selectedMetric={activeMetric}
             selectedScale={filters.scale}
           />
         ),
@@ -240,7 +248,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
             />
           ),
@@ -256,7 +264,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
             />
           ),
@@ -272,7 +280,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
               selectedView={filters.view}
             />
@@ -289,7 +297,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     filters.batchMargin,
     filters.hParams,
     filters.maxTrial,
-    filters.metric,
+    activeMetric,
     filters.scale,
     filters.view,
     visualizationFilters,
@@ -327,7 +335,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
+    if (!isSupported || ui.isPageHidden || !activeMetric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
@@ -363,23 +371,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     });
   }, [batches]);
 
-  // Validate active metric against metrics.
-  useEffect(() => {
-    setActiveMetric((prev) => {
-      const activeMetricFound = metrics.reduce((acc, metric) => {
-        return acc || (metric.type === prev.type && metric.name === prev.name);
-      }, false);
-      return activeMetricFound ? prev : searcherMetric.current;
-    });
-  }, [metrics]);
-
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
 
     setFilters((prev) => {
       if (prev.hParams.length !== 0) return prev;
-      const map = hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {};
+      const map = prev.metric ? hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {} : {};
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));

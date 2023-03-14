@@ -46,7 +46,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: Metric;
+  selectedMetric: Metric | null;
   selectedScale: Scale;
 }
 
@@ -180,7 +180,7 @@ const LearningCurve: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -333,7 +333,7 @@ const LearningCurve: React.FC<Props> = ({
 
   if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (hasLoaded && !hasTrials) {
+  } else if ((hasLoaded && !hasTrials) || !selectedMetric) {
     return isExperimentTerminal ? (
       <Message title="No learning curve data to show." type={MessageType.Empty} />
     ) : (
