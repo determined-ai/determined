@@ -80,6 +80,20 @@ func (_m *DB) AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error {
 	return r0
 }
 
+// AddCheckpointMetadata provides a mock function with given fields: ctx, m
+func (_m *DB) AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+	ret := _m.Called(ctx, m)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *model.CheckpointV2) error); ok {
+		r0 = rf(ctx, m)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddExperiment provides a mock function with given fields: experiment, activeConfig
 func (_m *DB) AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfigV0) error {
 	ret := _m.Called(experiment, activeConfig)

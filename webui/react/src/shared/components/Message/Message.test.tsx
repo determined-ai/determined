@@ -7,7 +7,7 @@ import { MessageType } from './Message';
 import Message, { Props } from './Message';
 
 const setup = (props: Props) => {
-  const handleOnChange = vi.fn();
+  const handleOnChange = jest.fn();
   const view = render(
     <UIProvider>
       <Message {...props} />

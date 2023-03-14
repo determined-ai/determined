@@ -31,6 +31,8 @@ const NOW = Date.now();
  * the log entries don't wrap with the given window width.
  */
 const VISIBLE_LINES = 57;
+const DEFAULT_SIZE = { height: 1024, width: 1280, x: 0, y: 0 };
+const DEFAULT_CHAR_SIZE = { height: 18, width: 7 };
 
 const user = userEvent.setup();
 
@@ -135,18 +137,16 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('hooks/useResize', () => ({
+jest.mock('hooks/useResize', () => ({ __esModule: true, default: () => DEFAULT_SIZE }));
+
+jest.mock('hooks/useGetCharMeasureInContainer', () => ({
   __esModule: true,
-  default: () => ({ height: 1024, width: 1280, x: 0, y: 0 }),
+  default: () => DEFAULT_CHAR_SIZE,
 }));
 
-vi.mock('hooks/useGetCharMeasureInContainer', () => ({
+jest.mock('services/utils', () => ({
   __esModule: true,
-  default: () => ({ height: 18, width: 7 }),
-}));
-
-vi.mock('services/utils', () => ({
-  __esModule: true,
+  ...jest.requireActual('services/utils'),
   readStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
     // Default mocking options.
     const existingLogs = options.existingLogs ?? [];
@@ -275,13 +275,10 @@ describe('LogViewer', () => {
     it('should render logs with streaming', async () => {
       setup({ decoder, onFetch });
 
-      await waitFor(
-        () => {
-          const lastLog = logsReference[logsReference.length - 1];
-          expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
-        },
-        { timeout: 4000 },
-      );
+      await waitFor(() => {
+        const lastLog = logsReference[logsReference.length - 1];
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+      });
     });
 
     it('should show oldest logs', async () => {

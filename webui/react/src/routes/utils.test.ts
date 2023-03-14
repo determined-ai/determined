@@ -6,7 +6,7 @@ const initEnv = process.env;
 
 describe('Routing Utilities', () => {
   beforeEach(() => {
-    vi.resetModules();
+    jest.resetModules();
     process.env = { ...initEnv };
   });
 

@@ -3,7 +3,7 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 
 import Button from 'components/kit/Button';
-import { createExperiment as mockCreateExperiment } from 'services/api';
+import { CreateExperimentParams } from 'services/types';
 import { ClusterProvider } from 'stores/cluster';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
@@ -11,11 +11,17 @@ import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
-vi.mock('stores/cluster', async (importOriginal) => {
-  const types = await import('types');
-  const sdkTypes = await import('services/api-ts-sdk');
-  const loadable = await import('utils/loadable');
-  const observable = await import('utils/observable');
+const mockCreateExperiment = jest.fn();
+
+jest.mock('stores/cluster', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const types = require('types');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const sdkTypes = require('services/api-ts-sdk');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const loadable = require('utils/loadable');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const observable = require('utils/observable');
 
   const store = {
     resourcePools: observable.observable(
@@ -58,18 +64,16 @@ vi.mock('stores/cluster', async (importOriginal) => {
   };
 
   return {
-    ...(await importOriginal<typeof import('stores/cluster')>()),
+    __esModule: true,
+    ...jest.requireActual('stores/cluster'),
     useClusterStore: () => store,
   };
 });
 
-vi.mock('services/api', () => ({
-  createExperiment: vi.fn().mockReturnValue(
-    Promise.resolve({
-      experiment: { id: 1 },
-      maxSlotsExceeded: false,
-    }),
-  ),
+jest.mock('services/api', () => ({
+  createExperiment: (params: CreateExperimentParams) => {
+    return mockCreateExperiment(params);
+  },
   getResourcePools: () => Promise.resolve([]),
 }));
 
@@ -125,6 +129,7 @@ describe('useModalHyperparameterSearch', () => {
     const { view } = await setup();
 
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+    mockCreateExperiment.mockReturnValue({ experiment: { id: 1 }, maxSlotsExceeded: false });
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
 
     expect(mockCreateExperiment).toHaveBeenCalled();

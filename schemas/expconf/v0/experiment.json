@@ -276,6 +276,29 @@
                     }
                 }
             }
+        },
+        {
+            "if": {
+                "$comment": "when records per epoch not set, forbid epoch lengths",
+                "properties": {
+                    "records_per_epoch": {
+                        "maximum": 0
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "min_validation_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "min_checkpoint_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "searcher": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    }
+                }
+            }
         }
     ]
 }

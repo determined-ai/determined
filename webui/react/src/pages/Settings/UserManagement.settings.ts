@@ -23,7 +23,6 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
 };
 
 export interface UserManagementSettings extends InteractiveTableSettings {
-  name?: string;
   sortDesc: boolean;
   sortKey: V1GetUsersRequestSortBy;
 }
@@ -41,11 +40,6 @@ const config: SettingsConfig<UserManagementSettings> = {
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
       type: array(number),
-    },
-    name: {
-      defaultValue: undefined,
-      storageKey: 'name',
-      type: union([string, undefinedType]),
     },
     row: {
       defaultValue: undefined,

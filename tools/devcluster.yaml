@@ -49,8 +49,6 @@ stages:
         log:
           level: debug
         enable_cors: true
-        observability:
-          enable_prometheus: true
 
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.

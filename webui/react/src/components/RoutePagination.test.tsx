@@ -1,10 +1,33 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
 import RoutePagination from './RoutePagination';
 
-vi.mock('components/kit/Tooltip');
+jest.mock('antd', () => {
+  const antd = jest.requireActual('antd');
+
+  /**
+   * We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
+   * sets the DOM container and if this prop is set, the popup div may not be available in the body
+   */
+  const Tooltip = (props: TooltipProps) => {
+    return (
+      <antd.Tooltip
+        {...props}
+        getPopupContainer={(trigger: HTMLElement) => trigger}
+        mouseEnterDelay={0}
+      />
+    );
+  };
+
+  return {
+    __esModule: true,
+    ...antd,
+    Tooltip,
+  };
+});
 
 const FIRST_ID = 6;
 const MIDDLE_ID = 66;
@@ -21,7 +44,7 @@ const BUTTON_NEXT = 'right';
 const user = userEvent.setup();
 
 const setup = (initialId: number) => {
-  const navigateToId = vi.fn();
+  const navigateToId = jest.fn();
 
   render(
     <RoutePagination

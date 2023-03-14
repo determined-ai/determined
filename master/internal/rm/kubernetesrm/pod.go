@@ -18,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -75,7 +74,7 @@ type pod struct {
 	ports            []int
 	resourcesDeleted bool
 	testLogStreamer  bool
-	containerNames   set.Set[string]
+	containerNames   map[string]bool
 
 	logCtx logger.Context
 
@@ -119,8 +118,8 @@ func newPod(
 	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
 	// The lifecycle of the containers specified in this map will be monitored.
-	// As soon as one or more of them exits, the pod will be terminated.
-	containerNames := set.New([]string{model.DeterminedK8ContainerName})
+	// As soon as one or more of them exits outs, the pod will be terminated.
+	containerNames := map[string]bool{model.DeterminedK8ContainerName: true}
 
 	return &pod{
 		submissionInfo: &podSubmissionInfo{
@@ -494,7 +493,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 func getPodState(
 	ctx *actor.Context,
 	pod *k8sV1.Pod,
-	containerNames set.Set[string],
+	containerNames map[string]bool,
 ) (cproto.State, error) {
 	switch pod.Status.Phase {
 	case k8sV1.PodPending:
@@ -548,7 +547,7 @@ func getPodState(
 	}
 }
 
-func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int, string, error) {
+func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int, string, error) {
 	if len(pod.Status.InitContainerStatuses) == 0 {
 		return 0, "", errors.Errorf(
 			"unexpected number of init containers when processing exit code for pod %s", pod.Name)
@@ -616,11 +615,11 @@ func getResourcesStartedForPod(pod *k8sV1.Pod, ports []int) sproto.ResourcesStar
 
 func getDeterminedContainersStatus(
 	statuses []k8sV1.ContainerStatus,
-	containerNames set.Set[string],
+	containerNames map[string]bool,
 ) ([]*k8sV1.ContainerStatus, error) {
 	containerStatuses := make([]*k8sV1.ContainerStatus, 0, len(statuses))
 	for idx, containerStatus := range statuses {
-		if !containerNames.Contains(containerStatus.Name) {
+		if _, match := containerNames[containerStatus.Name]; !match {
 			continue
 		}
 		containerStatuses = append(containerStatuses, &statuses[idx])

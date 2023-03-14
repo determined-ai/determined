@@ -108,30 +108,6 @@ def get_onevar_model(n=1) -> torch.nn.Module:
     return model
 
 
-class MetricsCallback(pytorch.PyTorchCallback):
-    def __init__(self):
-        self.validation_metrics = []
-        self.training_metrics = []
-        self.batch_metrics = []
-
-    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
-        self.validation_metrics.append(metrics)
-
-    def on_training_workload_end(
-        self, avg_metrics: Dict[str, Any], batch_metrics: Dict[str, Any]
-    ) -> None:
-        self.training_metrics.append(avg_metrics)
-        self.batch_metrics += batch_metrics
-
-
-class CheckpointCallback(pytorch.PyTorchCallback):
-    def __init__(self):
-        self.uuids = []
-
-    def on_checkpoint_upload_end(self, uuid: str) -> None:
-        self.uuids.append(uuid)
-
-
 class BaseOneVarTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
@@ -152,8 +128,6 @@ class BaseOneVarTrial(pytorch.PyTorchTrial):
         self.fn_reducer = context.wrap_reducer(triangle_label_sum, name="fn_reducer")
 
         self.hparams = self.context.get_hparams()
-        self.metrics_callback = MetricsCallback()
-        self.checkpoint_callback = CheckpointCallback()
         if self.hparams.get("disable_dataset_reproducibility_checks"):
             self.context.experimental.disable_dataset_reproducibility_checks()
 
@@ -252,9 +226,6 @@ class BaseOneVarTrial(pytorch.PyTorchTrial):
             return torch.utils.data.DataLoader(dataset, batch_sampler=batch_sampler)
         else:
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
-
-    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
-        return {"metrics": self.metrics_callback, "checkpoint": self.checkpoint_callback}
 
 
 class OneVarTrial(BaseOneVarTrial):

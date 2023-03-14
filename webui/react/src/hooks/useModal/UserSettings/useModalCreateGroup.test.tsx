@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
-import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { GetGroupParams } from 'services/types';
+import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { DetailedUser } from 'types';
 
@@ -23,6 +22,8 @@ const GROUPNAME = 'test_groupname1';
 
 const user = userEvent.setup();
 
+const mockCreateGroup = jest.fn();
+
 const users: Array<DetailedUser> = [
   {
     id: 1,
@@ -38,8 +39,10 @@ const users: Array<DetailedUser> = [
   },
 ];
 
-vi.mock('services/api', () => ({
-  createGroup: vi.fn(),
+jest.mock('services/api', () => ({
+  createGroup: (params: CreateGroupsParams) => {
+    return mockCreateGroup(params);
+  },
   getGroup: (params: GetGroupParams) => {
     return Promise.resolve({
       group: {

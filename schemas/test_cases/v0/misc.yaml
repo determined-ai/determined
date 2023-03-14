@@ -7,6 +7,17 @@
     host_path: asdf
     container_path: .
 
+- name: epoch length in use (invalid)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json:
+      - "<config>.a\\[0\\].b.c: must specify the top-level records_per_epoch"
+  case:
+    a:
+      - b:
+          c:
+            epochs:
+              10
+
 - name: check counts for grid (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json

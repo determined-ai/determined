@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -136,7 +135,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("error converting string list to uuid")
 			return err
 		}
-		if err := db.MarkCheckpointsDeleted(context.TODO(), deleteCheckpoints); err != nil {
+		if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
 			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 			return err
 		}

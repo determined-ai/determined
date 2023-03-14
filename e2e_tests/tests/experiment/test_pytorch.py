@@ -272,15 +272,16 @@ def test_pytorch_parallel() -> None:
 
     # Check on record/batch counts we emitted in logs.
     validation_size = 10000
+    global_batch_size = config["hyperparameters"]["global_batch_size"]
     num_workers = config.get("resources", {}).get("slots_per_trial", 1)
     global_batch_size = config["hyperparameters"]["global_batch_size"]
     scheduling_unit = config.get("scheduling_unit", 100)
     per_slot_batch_size = global_batch_size // num_workers
     exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
     patterns = [
-        # Expect two training reports.
-        f"report_training_metrics.*steps_completed={scheduling_unit * 1}",
-        f"report_training_metrics.*steps_completed={scheduling_unit * 2}",
+        # Expect two copies of matching training reports.
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
     trial_id = exp.experiment_trials(exp_id)[0].trial.id

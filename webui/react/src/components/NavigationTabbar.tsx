@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
+import AvatarCard from 'components/UserAvatarCard';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
@@ -21,7 +22,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
-import UserBadge from './UserBadge';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -97,9 +97,7 @@ const NavigationTabbar: React.FC = () => {
   const overflowActionsTop = [
     {
       render: () => (
-        <div className={css.user}>
-          <UserBadge compact key="avatar" user={authUser} />
-        </div>
+        <AvatarCard className={css.user} darkLight={ui.darkLight} key="avatar" user={authUser} />
       ),
     },
     {

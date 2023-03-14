@@ -90,13 +90,8 @@ def log_in_user_cli(credentials: authentication.Credentials, expectedStatus: int
 def change_user_password(
     target_username: str,
     target_password: str,
-    own: bool = False,
 ) -> int:
-    cmd = ["user", "change-password"]
-    if not own:
-        cmd.append(target_username)
-
-    child = det_spawn(cmd)
+    child = det_spawn(["user", "change-password", target_username])
     expected_new_pword_prompt = f"New password for user '{target_username}':"
     confirm_pword_prompt = "Confirm password:"
     child.expect(expected_new_pword_prompt, timeout=EXPECT_TIMEOUT)
@@ -319,14 +314,6 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.change_password(new_password=new_password_sdk)
     api_utils.configure_token_store(authentication.Credentials(creds.username, new_password_sdk))
-
-
-@pytest.mark.e2e_cpu
-def test_change_own_password(clean_auth: None, login_admin: None) -> None:
-    # Create a user without a password.
-    creds = api_utils.create_test_user(False)
-    log_in_user_cli(creds)
-    assert change_user_password(creds.username, creds.password, own=True) == 0
 
 
 @pytest.mark.e2e_cpu

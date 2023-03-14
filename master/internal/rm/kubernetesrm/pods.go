@@ -398,12 +398,12 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	if err != nil {
 		return errors.Wrap(err, "error listing config maps checking if they can be restored")
 	}
-	existingConfigMaps := make(set.Set[string])
+	existingConfigMaps := make(map[string]bool)
 	for _, cm := range configMaps.Items {
 		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
 			continue
 		}
-		existingConfigMaps.Insert(cm.Name)
+		existingConfigMaps[cm.Name] = true
 	}
 
 	var containerIDs []string
@@ -421,7 +421,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 			for _, env := range container.Env {
 				switch env.Name {
 				case "DET_CONTAINER_ID":
-					if !existingConfigMaps.Contains(pod.Name) {
+					if !existingConfigMaps[pod.Name] {
 						p.deleteKubernetesResources(ctx, pods, configMaps)
 						ctx.Respond(fmt.Errorf("pod missing config map %s", pod.Name))
 						return nil
@@ -588,9 +588,9 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		Scan(context.TODO()); err != nil {
 		return errors.Wrap(err, "error querying the database for open allocations")
 	}
-	openAllocationIDs := make(set.Set[model.AllocationID])
+	openAllocationIDs := make(map[model.AllocationID]bool)
 	for _, alloc := range openAllocations {
-		openAllocationIDs.Insert(alloc.AllocationID)
+		openAllocationIDs[alloc.AllocationID] = true
 	}
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
@@ -599,7 +599,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		return errors.Wrap(err, "error listing existing pods")
 	}
 	toKillPods := &k8sV1.PodList{}
-	savedPodNames := make(set.Set[string])
+	savedPodNames := make(map[string]bool)
 	for _, pod := range pods.Items {
 		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
@@ -629,13 +629,13 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		if !openAllocationIDs.Contains(model.AllocationID(pod.Labels[determinedLabel])) {
+		if !openAllocationIDs[model.AllocationID(pod.Labels[determinedLabel])] {
 			ctx.Log().Warnf("deleting pod '%s', did not find open allocation '%s'",
 				pod.Name, pod.Labels[determinedLabel])
 			toKillPods.Items = append(toKillPods.Items, pod)
 			continue
 		}
-		savedPodNames.Insert(pod.Name)
+		savedPodNames[pod.Name] = true
 	}
 
 	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
@@ -648,7 +648,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		if savedPodNames.Contains(cm.Name) { // PodName is same as config map name.
+		if savedPodNames[cm.Name] { // PodName is same as config map name.
 			continue
 		}
 
@@ -1218,16 +1218,11 @@ func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
 
 	result := []k8sV1.ResourceQuota{}
 	for _, q := range quotas.Items {
-		foundRelevant := false
 		for resourceName := range q.Spec.Hard {
 			switch resourceName {
 			case k8sV1.ResourceCPU, ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
-				foundRelevant = true
+				result = append(result, q)
 			}
-		}
-
-		if foundRelevant {
-			result = append(result, q)
 		}
 	}
 

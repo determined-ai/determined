@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -17,28 +17,38 @@ import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
-const mockCurrentUser: DetailedUser = {
+const currentUser: DetailedUser = {
   displayName: DISPLAY_NAME,
   id: 1,
   isActive: true,
   isAdmin: true,
   username: USERNAME,
 };
-vi.mock('services/api', () => ({
+
+jest.mock('services/api', () => ({
+  ...jest.requireActual('services/api'),
   getGroups: () => Promise.resolve({ groups: [] }),
   getUserRoles: () => Promise.resolve([]),
   getUsers: () => {
-    const users: Array<DetailedUser> = [mockCurrentUser];
+    const currentUser: DetailedUser = {
+      displayName: DISPLAY_NAME,
+      id: 1,
+      isActive: true,
+      isAdmin: true,
+      username: USERNAME,
+    };
+    const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-vi.mock('hooks/useTelemetry', () => ({
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
   telemetryInstance: {
-    track: vi.fn(),
-    trackPage: vi.fn(),
-    updateTelemetry: vi.fn(),
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
   },
 }));
 
@@ -49,7 +59,7 @@ const Container: React.FC = () => {
     usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-    usersStore.updateCurrentUser(mockCurrentUser.id);
+    usersStore.updateCurrentUser(currentUser.id);
   }, [canceler]);
 
   useEffect(() => {
@@ -77,12 +87,11 @@ const setup = () =>
   );
 
 describe('UserManagement', () => {
-  afterEach(() => {
-    vi.clearAllTimers();
-  });
+  afterEach(() => jest.clearAllTimers());
   it('should render table/button correct values', async () => {
     setup();
 
+    await waitFor(() => jest.setTimeout(300));
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
 
@@ -95,6 +104,7 @@ describe('UserManagement', () => {
   });
 
   // TODO: make this test case work
+  // eslint-disable-next-line jest/no-commented-out-tests
   // it('should render modal for create user when click the button', async () => {
   //   setup();
   //   const user = userEvent.setup();

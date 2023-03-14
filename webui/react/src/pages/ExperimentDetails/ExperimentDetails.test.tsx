@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
+import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
 import {
   getExperimentDetails,
@@ -19,29 +20,39 @@ import { WorkspacesProvider } from 'stores/workspaces';
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
 
-vi.useFakeTimers();
+jest.useFakeTimers();
 /**
  * Setup mock functions in a way that the responses can
  * be overridden dynamically between test sections.
  * The idea is to import the function from the module,
- * mock the module and replace the function(s) with vi.fn(),
+ * mock the module and replace the function(s) with jest.fn(),
  * then override the implementation or return value
  */
-const { unstable_HistoryRouter: HistoryRouter, useParams } = await import('react-router-dom');
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('react-router-dom')>()),
-  useParams: vi.fn(),
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useParams: jest.fn().mockReturnValue({ experimentId: undefined }),
 }));
 
-vi.mock('services/api', () => ({
-  getExperimentDetails: vi.fn(),
-  getExpTrials: vi.fn(),
-  getExpValidationHistory: vi.fn(),
-  getProject: vi.fn(),
-  getTrialDetails: vi.fn(),
-  getWorkspace: vi.fn(),
-  getWorkspaceProjects: vi.fn().mockReturnValue({ projects: [] }),
-  getWorkspaces: vi.fn().mockReturnValue({ workspaces: [] }),
+jest.mock('services/api', () => ({
+  ...jest.requireActual('services/api'),
+  getExperimentDetails: jest.fn(),
+  getExpTrials: jest.fn(),
+  getExpValidationHistory: jest.fn(),
+  getProject: jest.fn(),
+  getTrialDetails: jest.fn(),
+  getWorkspace: jest.fn(),
+  getWorkspaceProjects: jest.fn().mockReturnValue({ projects: [] }),
+  getWorkspaces: jest.fn().mockReturnValue({ workspaces: [] }),
+}));
+
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
+  telemetryInstance: {
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
+  },
 }));
 
 /**
@@ -49,7 +60,7 @@ vi.mock('services/api', () => ({
  * This is a challenging module to test as it has `readStream` calls.
  * For now, simply return a simple placeholder.
  */
-vi.mock('./ExperimentVisualization', () => ({
+jest.mock('./ExperimentVisualization', () => ({
   __esModule: true,
   default: () => <div>Experiment Visualization</div>,
 }));
@@ -78,7 +89,7 @@ describe('Experiment Details Page', () => {
     const INVALID_ID = 'beadbead';
 
     beforeAll(() => {
-      vi.mocked(useParams).mockReturnValue({ experimentId: INVALID_ID });
+      (useParams as jest.Mock).mockReturnValue({ experimentId: INVALID_ID });
     });
 
     it('should show invalid experiment page without id', async () => {
@@ -92,8 +103,8 @@ describe('Experiment Details Page', () => {
     const NON_EXISTING_ID = 9999;
 
     beforeAll(() => {
-      vi.mocked(useParams).mockReturnValue({ experimentId: `${NON_EXISTING_ID}` });
-      vi.mocked(getExperimentDetails).mockRejectedValue(new Error('Fetch Error'));
+      (useParams as jest.Mock).mockReturnValue({ experimentId: NON_EXISTING_ID });
+      (getExperimentDetails as jest.Mock).mockRejectedValue(new Error('Fetch Error'));
     });
 
     it('should show experiment is unfetchable', async () => {
@@ -105,17 +116,17 @@ describe('Experiment Details Page', () => {
 
   describe('Single Trial Experiment', () => {
     beforeAll(() => {
-      vi.mocked(useParams).mockReturnValue({ experimentId: '1241' });
-      vi.mocked(getExperimentDetails).mockResolvedValue(
+      (useParams as jest.Mock).mockReturnValue({ experimentId: 1241 });
+      (getExperimentDetails as jest.Mock).mockResolvedValue(
         RESPONSES.singleTrial.getExperimentsDetails,
       );
-      vi.mocked(getExpValidationHistory).mockResolvedValue(
+      (getExpValidationHistory as jest.Mock).mockResolvedValue(
         RESPONSES.singleTrial.getExpValidationHistory,
       );
-      vi.mocked(getExpTrials).mockResolvedValue(RESPONSES.singleTrial.getExpTrials);
-      vi.mocked(getProject).mockResolvedValue(RESPONSES.singleTrial.getProject);
-      vi.mocked(getTrialDetails).mockResolvedValue(RESPONSES.singleTrial.getTrialDetails);
-      vi.mocked(getWorkspace).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
+      (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getExpTrials);
+      (getProject as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getProject);
+      (getTrialDetails as jest.Mock).mockResolvedValue(RESPONSES.singleTrial.getTrialDetails);
+      (getWorkspace as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
     });
 
     it('should show single trial experiment page with id', async () => {
@@ -136,14 +147,16 @@ describe('Experiment Details Page', () => {
 
   describe('Multi-Trial Experiment', () => {
     beforeAll(() => {
-      vi.mocked(useParams).mockReturnValue({ experimentId: '1249' });
-      vi.mocked(getExperimentDetails).mockResolvedValue(RESPONSES.multiTrial.getExperimentsDetails);
-      vi.mocked(getExpValidationHistory).mockResolvedValue(
+      (useParams as jest.Mock).mockReturnValue({ experimentId: 1249 });
+      (getExperimentDetails as jest.Mock).mockResolvedValue(
+        RESPONSES.multiTrial.getExperimentsDetails,
+      );
+      (getExpValidationHistory as jest.Mock).mockResolvedValue(
         RESPONSES.multiTrial.getExpValidationHistory,
       );
-      vi.mocked(getExpTrials).mockResolvedValue(RESPONSES.multiTrial.getExpTrials);
-      vi.mocked(getProject).mockResolvedValue(RESPONSES.multiTrial.getProject);
-      vi.mocked(getWorkspace).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
+      (getExpTrials as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getExpTrials);
+      (getProject as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getProject);
+      (getWorkspace as jest.Mock).mockResolvedValue(RESPONSES.multiTrial.getWorkspace);
     });
 
     it('should show multi-trial experiment page with id', async () => {

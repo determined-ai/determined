@@ -185,10 +185,6 @@ def update_stack(
 
     tags = [
         {
-            "Key": constants.defaults.STACK_TAG_KEY,
-            "Value": constants.defaults.STACK_TAG_VALUE,
-        },
-        {
             "Key": constants.deployment_types.TYPE_TAG_KEY,
             "Value": deployment_type,
         },

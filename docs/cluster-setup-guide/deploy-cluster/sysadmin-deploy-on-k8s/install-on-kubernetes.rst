@@ -99,7 +99,7 @@ from the `upstream Determined repo <https://github.com/determined-ai/determined>
 ``b13461ed06f2fad339e179af8028d4575db71a81``). You are strongly encouraged to use a released
 version.
 
-Resource Configuration (GPU-based setups)
+Resource configuration (GPU-based setups)
 =========================================
 
 For GPU-based configurations, you must specify the number of GPUs on each node (for GPU-enabled
@@ -112,7 +112,7 @@ greatest common divisor of all the sizes. For example, if you have some nodes wi
 nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so that all distributed experiments will launch
 with 4 GPUs per pod (with two pods on 8-GPU nodes).
 
-Resource Configuration (CPU-based setups)
+Resource configuration (CPU-based setups)
 =========================================
 
 For CPU-only configurations, you need to set ``slotType: cpu`` as well as
@@ -347,61 +347,12 @@ The next example is a toleration for when a node has the ``gpu`` taint type.
          operator: "Exists"
          effect: "NoSchedule"
 
-.. _multi-rp-on-kubernetes:
-
-Setting Up Multiple Resource Pools
-==================================
-
-In order to set up multiple resource pools for Determined on your Kubernetes cluster, you need to do
-the following:
-
-#. `Create a namespace
-   <https://kubernetes.io/docs/tasks/administer-cluster/namespaces/#creating-a-new-namespace>`__ for
-   each resource pool. The default namespace can also be mapped to a resource pool.
-
-#. As Determined ensures that tasks in a given resource pool get launched in its linked namespace,
-   the cluster admin needs to ensure that pods in a given namespace have the right nodeSelector or
-   toleration automatically added to their pod spec so that they can be forced to be scheduled on
-   the nodes that we want to be part of a given resource pool. This can be done using an admissions
-   controller like a `PodNodeSelector
-   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podnodeselector>`__
-   or `PodTolerationRestriction
-   <https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podtolerationrestriction>`__.
-   Alternatively, the cluster admin can also add a resource pool (and hence namespace) specific pod
-   spec to the ``task_container_defaults`` sub-section of the ``resourcePools`` section of the Helm
-   ``values.yaml``:
-
-   .. code:: yaml
-
-      resourcePools:
-        - pool_name: prod_pool
-          kubernetes_namespace: default
-          task_container_defaults:
-            gpu_pod_spec:
-              apiVersion: v1
-              kind: Pod
-              spec:
-                tolerations:
-                  - key: "pool_taint"
-                    operator: "Equal"
-                    value: "prod"
-                    effect: "NoSchedule"
-
-#. Label/taint the appropriate nodes you want to include as part of each resource pool. For instance
-   you may add a taint like ``kubectl taint nodes prod_node_name pool_taint=prod:NoSchedule`` and
-   the appropriate toleration to the PodTolerationRestriction admissions controller or in
-   ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as above so it is automatically
-   added to the pod spec based on which namespace (and hence resource pool) a task runs in.
-
-#. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
-   the ``values.yaml`` file in the Helm chart.
-
 ********************
  Install Determined
 ********************
 
 Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml``, Determined is
-ready to be installed. To install Determined, run:
+ready to be installed. To install Determined run:
 
 .. code::
 

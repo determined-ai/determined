@@ -11,7 +11,8 @@ import InteractiveTask from './InteractiveTask';
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
 
-vi.mock('react-router-dom', () => ({
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
   useParams: () => ({
     taskId: 'task-id',
     taskName: TASK_NAME,

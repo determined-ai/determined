@@ -126,7 +126,7 @@ const SettingsAccount: React.FC = () => {
         <label>Display Name</label>
         {!isDisplaynameEditable ? (
           <div className={css.displayInfo}>
-            <span data-testid="text-displayname">
+            <span>
               {currentUser?.displayName || <Typography.Text disabled>N/A</Typography.Text>}
             </span>
             <Button

@@ -254,9 +254,9 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
 
         for param in params_by_location.get("query", []):
             null_check = (
-                ""
+                " !== undefined"
                 if isinstance(param.type, (swagger_parser.Sequence, swagger_parser.DateTime))
-                else " !== undefined"
+                else ""
             )
             code += f"if ({param.name}{null_check}) {{"
             code.indent()

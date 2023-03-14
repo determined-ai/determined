@@ -9,6 +9,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
+import AvatarCard from 'components/UserAvatarCard';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -29,7 +30,6 @@ import { useObservable } from 'utils/observable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
-import UserBadge from './UserBadge';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -232,9 +232,9 @@ const NavigationSideBar: React.FC = () => {
             content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <div className={css.user}>
-              <UserBadge compact hideAvatarTooltip user={currentUser} />
-            </div>
+            {currentUser ? (
+              <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
+            ) : null}
           </Dropdown>
         </header>
         <main>

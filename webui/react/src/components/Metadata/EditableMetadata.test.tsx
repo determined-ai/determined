@@ -16,7 +16,7 @@ const initMetadata = { hello: 'world', testing: 'metadata' };
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = (metadata: Metadata = {}, editing = false) => {
-  const handleOnChange = vi.fn();
+  const handleOnChange = jest.fn();
   const view = render(
     <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
   );

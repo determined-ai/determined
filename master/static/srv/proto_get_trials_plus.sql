@@ -124,11 +124,29 @@ best_checkpoint AS (
     ) c
     WHERE c.rank = 1
   ) c
+),
+latest_training AS (
+  SELECT s.trial_id,
+    s.total_batches,
+    s.end_time,
+    json_build_object('avg_metrics', s.metrics->'avg_metrics') as metrics
+  FROM (
+      SELECT s.*,
+        ROW_NUMBER() OVER(
+          PARTITION BY s.trial_id
+          ORDER BY s.end_time DESC
+        ) AS rank
+      FROM steps s
+      INNER JOIN searcher_info ON s.trial_id = searcher_info.trial_id
+    ) s
+  JOIN searcher_info ON searcher_info.trial_id = s.trial_id
+  WHERE s.rank = 1
 )
 SELECT
   row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
   row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
+  row_to_json(lt)::jsonb - 'trial_id' AS latest_training,
   t.id AS id,
   t.experiment_id,
   'STATE_' || t.state AS state,
@@ -165,4 +183,5 @@ FROM searcher_info
   -- additionally, it joins a lot of stuff we don't need, so just fallback to the actual tables.
   LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
   ORDER BY searcher_info.ordering

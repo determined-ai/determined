@@ -5,6 +5,7 @@ from typing import Any, Optional, Type
 
 import determined as det
 from determined import profiler, tensorboard, workload
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class _DistributedBackend:
@@ -112,5 +113,5 @@ class TrialController(metaclass=abc.ABCMeta):
     def upload_tb_files(self) -> None:
         self.context._core.train.upload_tensorboard_files(
             (lambda _: True) if self.is_chief else (lambda p: not p.match("*tfevents*")),
-            tensorboard.util.get_rank_aware_path,
+            get_rank_aware_path,
         )

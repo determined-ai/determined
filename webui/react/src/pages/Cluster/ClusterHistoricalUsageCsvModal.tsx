@@ -9,7 +9,7 @@ import { ValueOf } from 'shared/types';
 const { Option } = Select;
 
 export const CSVGroupBy = {
-  Allocations: '/resources/allocation/allocations-csv?',
+  Tasks: '/resources/allocation/tasks-raw?',
   Workloads: '/resources/allocation/raw?',
 } as const;
 
@@ -83,7 +83,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
             style={{ maxWidth: '150px' }}
             suffixIcon={<Icon name="arrow-down" size="tiny" />}>
             <Option value={CSVGroupBy.Workloads}>Workloads</Option>
-            <Option value={CSVGroupBy.Allocations}>Allocations</Option>
+            <Option value={CSVGroupBy.Tasks}>Tasks</Option>
           </Select>
         </Form.Item>
       </Form>

@@ -128,5 +128,6 @@ describe('Icon', () => {
   // TODO: test `title`. cannot display title in test-library probably due to <ToolTip>
   // screen.debug() doesnt show tooltip element somehow
 
+  // eslint-disable-next-line jest/no-commented-out-tests
   // describe('Tooltip Title', () => {});
 });

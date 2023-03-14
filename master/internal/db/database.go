@@ -72,6 +72,9 @@ type DB interface {
 	AddValidationMetrics(
 		ctx context.Context, m *trialv1.TrialMetrics,
 	) error
+	AddCheckpointMetadata(
+		ctx context.Context, m *model.CheckpointV2,
+	) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)

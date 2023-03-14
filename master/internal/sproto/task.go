@@ -255,7 +255,7 @@ type Event struct {
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *AllocatedEvent `json:"assigned_event"`
+	AssignedEvent *ResourcesAllocated `json:"assigned_event"`
 	// ResourcesStartedEvent is triggered when the resources started on an agent.
 	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
@@ -332,9 +332,4 @@ func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*
 	}
 
 	return out
-}
-
-// AllocatedEvent is sent the allocation's resources are granted.
-type AllocatedEvent struct {
-	Recovered bool
 }

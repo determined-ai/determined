@@ -167,7 +167,6 @@ const LogViewerSelect: React.FC<Props> = ({
           mode="multiple"
           placeholder={`All ${LABELS.levels}`}
           value={values.levels}
-          width={150}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
             <Option key={level.value} value={level.value}>

@@ -34,28 +34,8 @@ def test_one_batch(
 ) -> Any:
     # Override the scheduling_unit value to 1.
     config = {**(config or {}), "scheduling_unit": 1}
+
     logging.info("Running a minimal test experiment locally")
-
-    try:
-        from determined import pytorch
-
-        if issubclass(trial_class, pytorch.PyTorchTrial):
-            with pytorch.init(hparams=config.get("hyperparameters", {})) as pytorch_trial_context:
-                pytorch_trial_context._exp_conf = config
-                pytorch_trial_inst = trial_class(pytorch_trial_context)
-                trainer = pytorch.Trainer(pytorch_trial_inst, pytorch_trial_context)
-                trainer.fit(
-                    max_length=pytorch.Batch(1),
-                    test_mode=True,
-                )
-                logging.info("The test experiment passed.")
-                logging.info(
-                    "Note: to submit an experiment to the cluster, change local parameter to False"
-                )
-            return
-    except ImportError:
-        pass
-
     with tempfile.TemporaryDirectory() as checkpoint_dir:
         core_context, env = det._make_local_execution_env(
             managed_training=True,
@@ -76,7 +56,6 @@ def test_one_batch(
 
         trial_context = trial_class.trial_context_class(core_context, env)
         logging.info(f"Creating {trial_class.__name__}.")
-
         trial_inst = trial_class(trial_context)
 
         controller = controller_class.from_trial(

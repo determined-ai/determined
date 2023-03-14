@@ -1,10 +1,9 @@
 import { waitFor } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPasswordChange';
-import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
@@ -13,7 +12,10 @@ import { DetailedUser } from 'types';
 
 import SettingsAccount, { CHANGE_PASSWORD_TEXT } from './SettingsAccount';
 
-vi.mock('services/api', () => ({
+const mockPatchUser = jest.fn();
+
+jest.mock('services/api', () => ({
+  ...jest.requireActual('services/api'),
   getUsers: () =>
     Promise.resolve({
       users: [
@@ -26,13 +28,16 @@ vi.mock('services/api', () => ({
         },
       ],
     }),
-  patchUser: vi.fn((params: PatchUserParams) =>
-    Promise.resolve({
+  patchUser: (params: PatchUserParams) => {
+    mockPatchUser(params);
+    return Promise.resolve({
       displayName: params.userParams.displayName,
       id: 1,
       isActive: true,
-    }),
-  ),
+      isAdmin: false,
+      username: params.userParams.username,
+    });
+  },
 }));
 
 const user = userEvent.setup();
@@ -76,8 +81,8 @@ const setup = () =>
 
 describe('SettingsAccount', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.clearAllTimers();
+    jest.clearAllMocks();
+    jest.clearAllTimers();
   });
 
   it('should render with correct values', async () => {
@@ -86,7 +91,9 @@ describe('SettingsAccount', () => {
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
   });
   it('should be able to change display name', async () => {
-    setup();
+    act(() => {
+      setup();
+    });
     await user.click(screen.getByTestId('edit-displayname'));
     await user.type(screen.getByPlaceholderText('Add display name'), 'a');
     await user.keyboard('{enter}');
@@ -94,12 +101,9 @@ describe('SettingsAccount', () => {
       userId: 1,
       userParams: { displayName: `${DISPLAY_NAME}a` },
     });
-    await waitFor(() =>
-      expect(screen.getByTestId('text-displayname')).toHaveTextContent(`${DISPLAY_NAME}a`),
-    );
   });
   it('should be able to view change password modal when click', async () => {
-    setup();
+    await waitFor(() => setup());
     await user.click(screen.getByText(CHANGE_PASSWORD_TEXT));
     expect(screen.getByText(NEW_PASSWORD_LABEL)).toBeInTheDocument();
   });

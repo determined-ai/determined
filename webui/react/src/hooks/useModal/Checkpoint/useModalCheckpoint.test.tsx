@@ -13,7 +13,7 @@ const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const MODAL_TRIGGER_TEXT = 'Open Checkpoint Modal';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
-vi.mock('services/api', () => ({
+jest.mock('services/api', () => ({
   getModels: () => {
     return Promise.resolve({ models: [] });
   },
@@ -57,7 +57,7 @@ describe('useModalCheckpoint', () => {
   });
 
   it('should close modal', async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);
@@ -72,7 +72,7 @@ describe('useModalCheckpoint', () => {
   });
 
   it('should call `onClose` handler with Okay', async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);

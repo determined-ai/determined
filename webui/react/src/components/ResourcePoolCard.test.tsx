@@ -10,7 +10,7 @@ import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
 
 const rps = resourcePools as unknown as ResourcePool[];
 
-vi.mock('services/api', () => ({
+jest.mock('services/api', () => ({
   getAgents: () => Promise.resolve([]),
   getResourcePools: () => Promise.resolve({}),
 }));

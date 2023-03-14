@@ -23,7 +23,7 @@ get-deps: node_modules/done.stamp
 .PHONY: build
 build: build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json vite.config.ts
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js vite.config.ts
 	npm run build
 	touch $@
 
@@ -100,11 +100,11 @@ fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 
 .PHONY: test
 test:
-	npm run test -- run
+	npm run test -- --watchAll=false
 
 .PHONY: test-ci
 test-ci:
-	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
+	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --reporters=jest-junit
 
 # shared-web helpers
 

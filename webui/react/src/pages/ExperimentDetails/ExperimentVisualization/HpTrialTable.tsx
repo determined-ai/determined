@@ -12,7 +12,7 @@ import {
   MINIMUM_PAGE_SIZE,
 } from 'components/Table/Table';
 import { paths } from 'routes/utils';
-import { Primitive, UnknownRecord } from 'shared/types';
+import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
@@ -36,7 +36,7 @@ interface Props {
 }
 
 export interface TrialHParams {
-  hparams: UnknownRecord; // With Custom Searchers, our Record could be anything
+  hparams: Record<RecordKey, Primitive>;
   id: number;
   metric: number | null;
 }

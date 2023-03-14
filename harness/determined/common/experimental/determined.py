@@ -102,11 +102,6 @@ class Determined:
         resp = bindings.get_GetMe(self._session)
         return self._from_bindings(resp.user)
 
-    def get_session_username(self) -> str:
-        auth = self._session._auth
-        assert auth
-        return auth.get_session_user()
-
     def logout(self) -> None:
         auth = self._session._auth
         # auth should only be None in the special login Session, which must not be used in a

@@ -215,7 +215,3 @@
    <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
    the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
    as ``coscheduler``, Determined will use the default Kubernetes scheduler.
-
--  ``resourcePools``: This section contains the names of the resource pools and their linked
-   namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
-   <master-config-reference>`.

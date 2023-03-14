@@ -1297,7 +1297,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14.2
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1310,7 +1310,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14.2
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1329,7 +1329,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14.2
         environment:
           CI: "true"
     resource_class: xlarge
@@ -1344,11 +1344,11 @@ jobs:
       - store_test_results:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
-          path: webui/react/coverage
+          path: webui/react/coverage/lcov-report
 
   test-intg-downstream:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14
     steps:
       - checkout-with-sm
       - skip-if-not-shared

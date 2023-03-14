@@ -109,6 +109,8 @@ message Trial {
   MetricsWorkload latest_validation = 9;
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
+  // Latest training step.
+  MetricsWorkload latest_training = 16;
   // The last reported state of the trial runner (harness code).
   string runner_state = 11;
   // The wall clock time is all active time of the cluster for the trial,

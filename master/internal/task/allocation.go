@@ -490,6 +490,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 	a.restored = a.req.Restore
 	a.resourcesStarted = true
+	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
 }
 
@@ -555,7 +556,6 @@ func (a *Allocation) ResourcesStateChanged(
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
 		a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
-		a.sendEvent(ctx, sproto.Event{AssignedEvent: &sproto.AllocatedEvent{Recovered: a.restored}})
 		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 			ctx.Log().
 				WithError(err).

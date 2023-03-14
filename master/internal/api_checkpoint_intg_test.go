@@ -79,7 +79,7 @@ func createVersionTwoCheckpoint(
 			"steps_completed":    5,
 		},
 	}
-	require.NoError(t, db.AddCheckpointMetadata(ctx, checkpoint))
+	require.NoError(t, api.m.db.AddCheckpointMetadata(ctx, checkpoint))
 
 	return checkpoint.UUID.String()
 }

@@ -36,9 +36,6 @@ message GetUsersRequest {
   int32 offset = 3;
   // Limit the number of projects. A value of 0 denotes no limit.
   int32 limit = 4;
-
-  // Filter by username or display name.
-  string name = 5;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {

@@ -171,6 +171,29 @@ var (
     }
 }
 `)
+	textCheckEpochNotUsedV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json",
+    "title": "CheckEpochNotUsed",
+    "additionalProperties": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+    },
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+    },
+    "checks": {
+        "must specify the top-level records_per_epoch when this field is in terms of epochs": {
+            "properties": {
+                "epochs": {
+                    "not": {
+                        "type": "number"
+                    }
+                }
+            }
+        }
+    }
+}
+`)
 	textCheckGridHyperparameterV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json",
@@ -942,6 +965,29 @@ var (
                         "additionalProperties": {
                             "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "$comment": "when records per epoch not set, forbid epoch lengths",
+                "properties": {
+                    "records_per_epoch": {
+                        "maximum": 0
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "min_validation_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "min_checkpoint_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "searcher": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }
@@ -3072,6 +3118,8 @@ var (
 
 	schemaBindMountsConfigV0 interface{}
 
+	schemaCheckEpochNotUsedV0 interface{}
+
 	schemaCheckGridHyperparameterV0 interface{}
 
 	schemaCheckPositiveLengthV0 interface{}
@@ -3239,6 +3287,26 @@ func ParsedBindMountsConfigV0() interface{} {
 		panic("invalid embedded json for BindMountsConfigV0")
 	}
 	return schemaBindMountsConfigV0
+}
+
+func ParsedCheckEpochNotUsedV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckEpochNotUsedV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckEpochNotUsedV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaCheckEpochNotUsedV0 != nil {
+		return schemaCheckEpochNotUsedV0
+	}
+	err := json.Unmarshal(textCheckEpochNotUsedV0, &schemaCheckEpochNotUsedV0)
+	if err != nil {
+		panic("invalid embedded json for CheckEpochNotUsedV0")
+	}
+	return schemaCheckEpochNotUsedV0
 }
 
 func ParsedCheckGridHyperparameterV0() interface{} {
@@ -4282,6 +4350,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textBindMountV0
 	url = "http://determined.ai/schemas/expconf/v0/bind-mounts.json"
 	cachedSchemaBytesMap[url] = textBindMountsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+	cachedSchemaBytesMap[url] = textCheckEpochNotUsedV0
 	url = "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
 	cachedSchemaBytesMap[url] = textCheckGridHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/check-positive-length.json"

@@ -3,7 +3,7 @@ import contextlib
 import faulthandler
 import logging
 import sys
-from typing import Iterator, Optional, Type
+from typing import Iterator
 
 import determined as det
 from determined import core, horovod, load
@@ -28,19 +28,6 @@ def main(train_entrypoint: str) -> int:
 
     # TODO: refactor profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
-
-    trial_class = load.trial_class_from_entrypoint(train_entrypoint)
-
-    if info.container_rank == 0:
-        try:
-            analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
-        except Exception as e:
-            logging.debug(f"Cannot send analytics: {e}")
-
-    # We can't import pytorch directly because if running TfKerasTrials with an image that contains
-    # both torch and keras, keras will throw exceptions due to unexpected CUDNN library versions.
-    if hasattr(det, "pytorch") and issubclass(trial_class, det.pytorch.PyTorchTrial):
-        return _run_pytorch_trial(trial_class, info)
 
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
     # It was natural to create this big-blob-of-config object, but it was a mistake to pass it into
@@ -85,7 +72,13 @@ def main(train_entrypoint: str) -> int:
         # We can't build a core.Context without rank information, and we can't gather rank
         # information until the distributed backend is initialized, and we can't initialize the
         # correct distributed backend until we know which Trial class the user implemented.
+        trial_class = load.trial_class_from_entrypoint(train_entrypoint)
         controller_class = load.get_trial_controller_class(trial_class)
+        if info.container_rank == 0:
+            try:
+                analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
+            except Exception as e:
+                logging.debug(f"Cannot send analytics: {e}")
 
         # Step 2: Initialize framework-specific details (dtrain framework, random seeds, etc).
         distributed_backend = det._DistributedBackend()
@@ -128,75 +121,6 @@ def main(train_entrypoint: str) -> int:
             )
 
             controller.run()
-
-    return 0
-
-
-def _run_pytorch_trial(
-    trial_class: "Type[det.pytorch.PyTorchTrial]",
-    info: det.ClusterInfo,
-) -> int:
-    from determined import pytorch
-
-    det.common.set_logger(info.trial._debug)
-
-    logging.debug("Starting harness.")
-
-    with maybe_periodic_stacktraces(info.trial._debug):
-        with pytorch.init(
-            hparams=info.trial.hparams,
-            exp_conf=info.trial._config,
-            aggregation_frequency=int(info.trial._config["optimizations"]["aggregation_frequency"]),
-        ) as train_context:
-            fp16_compression = bool(info.trial._config["optimizations"]["gradient_compression"])
-            average_aggregated_gradients = bool(
-                info.trial._config["optimizations"]["average_aggregated_gradients"]
-            )
-
-            train_context._set_default_gradient_compression(fp16_compression)
-            train_context._set_default_average_aggregated_gradients(average_aggregated_gradients)
-
-            trial_inst = trial_class(train_context)
-
-            if train_context.distributed.size > 1 and not train_context.distributed.rank == 0:
-                log_level = logging.DEBUG if info.trial._debug else logging.WARNING
-                logging.getLogger().setLevel(log_level)
-
-            logging.info(
-                f"Creating {pytorch._PyTorchTrialController.__name__} with {trial_class.__name__}."
-            )
-
-            trainer = pytorch.Trainer(trial_inst, train_context)
-
-            trainer.configure_profiler(
-                sync_timings=bool(info.trial._config["profiling"]["sync_timings"]),
-                enabled=bool(info.trial._config["profiling"]["enabled"]),
-                begin_on_batch=info.trial._config["profiling"]["begin_on_batch"],
-                end_after_batch=info.trial._config["profiling"]["end_after_batch"],
-            )
-
-            if "global_batch_size" in info.trial.hparams:
-                global_batch_size = int(
-                    info.trial.hparams["global_batch_size"]
-                )  # type: Optional[int]
-            else:
-                global_batch_size = None
-
-            trainer.fit(
-                checkpoint_period=pytorch.TrainUnit._from_values(
-                    **info.trial._config["min_checkpoint_period"],
-                    global_batch_size=global_batch_size,
-                ),
-                validation_period=pytorch.TrainUnit._from_values(
-                    **info.trial._config["min_validation_period"],
-                    global_batch_size=global_batch_size,
-                ),
-                reporting_period=pytorch.Batch(info.trial._config["scheduling_unit"]),
-                checkpoint_policy=info.trial._config["checkpoint_policy"],
-                latest_checkpoint=info.latest_checkpoint,
-                step_zero_validation=info.trial._config["perform_initial_validation"],
-                test_mode=False,
-            )
 
     return 0
 

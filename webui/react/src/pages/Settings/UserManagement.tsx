@@ -1,9 +1,9 @@
 import { Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import UserBadge from 'components/kit/UserBadge';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -17,8 +17,6 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
-import TableFilterSearch from 'components/Table/TableFilterSearch';
-import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
@@ -136,7 +134,6 @@ const UserManagement: React.FC = () => {
   const apiConfig = useMemo<FetchUsersConfig>(
     () => ({
       limit: settings.tableLimit,
-      name: settings.name,
       offset: settings.tableOffset,
       orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
       sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
@@ -195,31 +192,6 @@ const UserManagement: React.FC = () => {
     openCreateUserModal();
   }, [openCreateUserModal]);
 
-  const handleNameSearchApply = useCallback(
-    (name: string) => {
-      updateSettings({ name: name || undefined, row: undefined });
-    },
-    [updateSettings],
-  );
-
-  const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined, row: undefined });
-  }, [updateSettings]);
-
-  const nameFilterSearch = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterSearch
-        {...filterProps}
-        value={settings.name || ''}
-        onReset={handleNameSearchReset}
-        onSearch={handleNameSearchApply}
-      />
-    ),
-    [handleNameSearchApply, handleNameSearchReset, settings.name],
-  );
-
-  const filterIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
-
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
       return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
@@ -228,8 +200,6 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'displayName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
-        filterDropdown: nameFilterSearch,
-        filterIcon: filterIcon,
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -275,7 +245,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, groups, nameFilterSearch, rbacEnabled]);
+  }, [fetchUsers, groups, rbacEnabled]);
 
   const table = useMemo(() => {
     return settings ? (

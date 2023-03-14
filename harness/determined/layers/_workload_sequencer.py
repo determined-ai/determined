@@ -119,19 +119,6 @@ class WorkloadSequencer(workload.Source):
         # precalculated periods, in batches
         self.records_per_epoch = env.experiment_config.get_records_per_epoch()
         self.global_batch_size = global_batch_size
-        if env.experiment_config.get_min_checkpoint_period().get("epochs") is not None:
-            if self.records_per_epoch is None:
-                raise ValueError(
-                    "records_per_epoch must be specified if min_checkpoint_period is configured "
-                    "in epoch units."
-                )
-
-        if env.experiment_config.get_min_validation_period().get("epochs") is not None:
-            if self.records_per_epoch is None:
-                raise ValueError(
-                    "records_per_epoch must be specified if min_validation_period is configured "
-                    "in epoch units."
-                )
         self.min_val_period_batches = self.as_batches(
             **env.experiment_config.get_min_validation_period()
         )
@@ -177,8 +164,8 @@ class WorkloadSequencer(workload.Source):
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
             return max(records // self.global_batch_size, 1)
         if epochs is not None:
-            assert self.records_per_epoch is not None
             check.is_instance(self.records_per_epoch, int, "length must be an integer")
+            assert self.records_per_epoch is not None
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
             return max((epochs * self.records_per_epoch) // self.global_batch_size, 1)
         # Make mypy happy.

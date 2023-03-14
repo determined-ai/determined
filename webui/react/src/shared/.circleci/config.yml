@@ -20,7 +20,7 @@ commands:
 jobs:
   test-repo-integration-local:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14
     resource_class: xlarge
     steps:
       - checkout
@@ -29,7 +29,7 @@ jobs:
 
   test-repo-integration-gitsubtree:
     docker:
-      - image: cimg/node:16.19.0
+      - image: cimg/node:16.14
     resource_class: xlarge
     environment:
       - GIT_AUTHOR_NAME: "Tester"

@@ -16,39 +16,38 @@ const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
-vi.mock('services/api', () => ({
-  getCurrentUser: () => Promise.resolve({ id: 1 }),
+const MonacoEditorMock: React.FC = () => <></>;
+
+jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
-  previewJupyterLab: () =>
-    Promise.resolve({
-      description: 'JupyterLab (freely-distinct-mustang)',
-    }),
 }));
 
-vi.mock('stores/cluster', async (importOriginal) => {
-  const loadable = await import('utils/loadable');
-  const observable = await import('utils/observable');
+jest.mock('stores/cluster', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const loadable = require('utils/loadable');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const observable = require('utils/observable');
 
   const store = { resourcePools: observable.observable(loadable.Loaded([])) };
   return {
     __esModule: true,
-    ...(await importOriginal<typeof import('stores/cluster')>()),
+    ...jest.requireActual('stores/cluster'),
     useClusterStore: () => store,
   };
 });
 
-vi.mock('utils/wait', () => ({
+jest.mock('utils/wait', () => ({
   openCommand: () => null,
   waitPageUrl: () => '',
 }));
 
-vi.mock('components/MonacoEditor', () => ({
+jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => <></>,
+  default: () => MonacoEditorMock,
 }));
 
 const ModalTrigger: React.FC = () => {
@@ -94,7 +93,8 @@ const setup = async () => {
     </BrowserRouter>,
   );
 
-  await user.click(await screen.findByRole('button'));
+  const button = await waitFor(() => screen.findByRole('button'));
+  user.click(button);
 
   return user;
 };
@@ -109,8 +109,9 @@ describe('useModalJupyterLab', () => {
   it('should close modal', async () => {
     const user = await setup();
 
+    await screen.findByText(MODAL_TITLE);
     const button = await screen.findByRole('button', { name: /Launch/i });
-    await user.click(button);
+    user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
@@ -126,8 +127,9 @@ describe('useModalJupyterLab', () => {
   it('should switch modal to full config', async () => {
     const user = await setup();
 
+    await screen.findByText(MODAL_TITLE);
     const button = await screen.findByRole('button', { name: /Show Full Config/i });
-    await user.click(button);
+    user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();

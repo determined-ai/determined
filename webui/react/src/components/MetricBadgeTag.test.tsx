@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
@@ -6,10 +7,29 @@ import { Metric } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
 
-vi.mock('components/kit/Tooltip');
+jest.mock('antd', () => {
+  const antd = jest.requireActual('antd');
+
+  /** mocking Tooltip based on Avatar test */
+  const Tooltip = (props: TooltipProps) => {
+    return (
+      <antd.Tooltip
+        {...props}
+        getPopupContainer={(trigger: HTMLElement) => trigger}
+        mouseEnterDelay={0}
+      />
+    );
+  };
+
+  return {
+    __esModule: true,
+    ...antd,
+    Tooltip,
+  };
+});
 
 const setup = (metric: Metric) => {
-  const handleOnChange = vi.fn();
+  const handleOnChange = jest.fn();
   const view = render(
     <UIProvider>
       <MetricBadgeTag metric={metric} />,

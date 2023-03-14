@@ -1,39 +1,34 @@
 import pytest
 import torch
 
-import determined as det
 from determined import errors, pytorch
+from tests.experiment.fixtures import pytorch_onevar_model
 
 
 class TestPyTorchContext:
     def setup_method(self) -> None:
         self.config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
-        core_context, env = det._make_local_execution_env(
-            managed_training=False,
-            test_mode=False,
-            config=self.config,
-            checkpoint_dir="/tmp",
-            limit_gpus=1,
-        )
-
-        context = pytorch.PyTorchTrialContext(
-            core_context=core_context,
-            trial_seed=env.trial_seed,
-            hparams=self.config["hyperparameters"],
-            slots_per_trial=1,
-            num_gpus=1,
-            exp_conf=self.config,
-            aggregation_frequency=1,
-            steps_completed=0,
-            managed_training=False,
-            debug_enabled=False,
-        )
-
-        context._set_default_gradient_compression(False)
-        context._set_default_average_aggregated_gradients(True)
-
+        context = pytorch.PyTorchTrialContext.from_config(self.config)
         assert isinstance(context, pytorch.PyTorchTrialContext)
         self.context = context
+
+    def test_from_config(self) -> None:
+        trial = pytorch_onevar_model.OneVarTrial(self.context)
+
+        train_ds = trial.build_training_data_loader()
+        for epoch_idx in range(3):
+            for batch_idx, batch in enumerate(train_ds):
+                metrics = trial.train_batch(batch, epoch_idx, batch_idx)
+                # Verify the training is correct.
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    metrics,
+                    batch_idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
+
+        eval_ds = trial.build_validation_data_loader()
+        for batch_idx, batch in enumerate(eval_ds):
+            _ = trial.evaluate_batch(batch, batch_idx)
 
     def test_average_gradients(self) -> None:
         assert self.context._average_gradients(None, 1) is None
@@ -47,7 +42,7 @@ class TestPyTorchContext:
             self.context.current_train_batch()
         with pytest.raises(errors.InternalException):
             self.context.current_train_epoch()
-        self.context._managed_training = True
+        self.context.env.managed_training = True
         with pytest.raises(errors.InternalException):
             self.context._should_communicate_and_update()
 

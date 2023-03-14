@@ -133,7 +133,7 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID) {
 	allocation := db.RequireMockAllocation(t, pgDB, tr.TaskID)
 	// Create checkpoints
 	checkpoint := db.MockModelCheckpoint(id, tr, allocation)
-	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+	err := pgDB.AddCheckpointMetadata(context.TODO(), &checkpoint)
 	require.NoError(t, err)
 }
 

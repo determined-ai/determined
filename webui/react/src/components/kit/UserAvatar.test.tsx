@@ -1,7 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect, useState } from 'react';
+import { TooltipProps } from 'antd/es/tooltip';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import usersStore from 'stores/users';
@@ -19,20 +20,45 @@ const testUsers: DetailedUser[] = [
   },
 ];
 
-vi.mock('services/api', () => ({
+jest.mock('services/api', () => ({
   getUsers: () => Promise.resolve({ users: testUsers }),
 }));
 
-vi.mock('components/kit/Tooltip');
+jest.mock('antd', () => {
+  const antd = jest.requireActual('antd');
+
+  /**
+   * We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
+   * sets the DOM container and if this prop is set, the popup div may not be available in the body
+   */
+  const Tooltip = (props: TooltipProps) => {
+    return (
+      <antd.Tooltip
+        {...props}
+        getPopupContainer={(trigger: HTMLElement) => trigger}
+        mouseEnterDelay={0}
+      />
+    );
+  };
+
+  return {
+    __esModule: true,
+    ...antd,
+    Tooltip,
+  };
+});
 
 const Component = ({ user }: Partial<Props> = {}) => {
   const [canceler] = useState(new AbortController());
+  const asyncFetch = useCallback(async () => {
+    await usersStore.ensureUsersFetched(canceler);
+  }, [canceler]);
 
   useEffect(() => {
-    usersStore.ensureUsersFetched(canceler);
+    asyncFetch();
     usersStore.updateCurrentUser(44);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canceler]);
+  }, []);
 
   return <UserAvatar hideTooltip={false} user={user} />;
 };

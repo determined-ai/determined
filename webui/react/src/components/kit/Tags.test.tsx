@@ -7,7 +7,7 @@ import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER, tagsActionHelper } f
 const initTags = ['hello', 'world', 'space gap'].sort();
 
 const setup = (tags: string[] = []) => {
-  const handleOnChange = vi.fn();
+  const handleOnChange = jest.fn();
   const view = render(<TagList tags={tags} onAction={tagsActionHelper(tags, handleOnChange)} />);
   const user = userEvent.setup();
   return { handleOnChange, user, view };

@@ -6,7 +6,7 @@ import { ClusterProvider } from 'stores/cluster';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
-vi.mock('services/api', () => ({
+jest.mock('services/api', () => ({
   getActiveTasks: () => Promise.resolve({ commands: 0, notebooks: 0, shells: 0, tensorboards: 0 }),
   getAgents: () => Promise.resolve([]),
   getExperiments: () => Promise.resolve({ experiments: [], pagination: { total: 0 } }),

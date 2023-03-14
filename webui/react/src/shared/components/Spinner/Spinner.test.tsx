@@ -2,17 +2,16 @@ import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
-import { Mock } from 'vitest';
 
 import Spinner from './Spinner';
 
-// vi.useRealTimers(); // This should solve the flakyness around timming out
+jest.useRealTimers(); // This should solve the flakyness around timming out
 
 const spinnerTextContent = 'Spinner Text Content';
 
 const user = userEvent.setup();
 interface Props {
-  handleButtonClick: Mock;
+  handleButtonClick: jest.Mock<unknown, unknown[]>;
   spinning: boolean;
 }
 
@@ -40,7 +39,7 @@ const SpinnerComponent = ({ spinning, handleButtonClick }: Props) => {
 };
 
 const setup = async (spinning: boolean) => {
-  const handleButtonClick = vi.fn();
+  const handleButtonClick = jest.fn();
   const { container } = render(
     // apply css-in-js styles without the :when selector
     <StyleProvider container={document.body} hashPriority="high">

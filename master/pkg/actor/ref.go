@@ -205,8 +205,6 @@ func (r *Ref) processMessage() bool {
 	ctx := r.inbox.get()
 
 	r.log.Tracef("get %T, inbox length: %v", ctx.message, r.inbox.len())
-	defer r.time(ctx)()
-	defer r.recordErr(ctx)(r.err)
 
 	if traceEnabled {
 		defer traceReceive(ctx, r)()
@@ -263,12 +261,7 @@ func (r *Ref) processMessage() bool {
 
 func (r *Ref) run() {
 	defer r.close()
-
-	end := r.time(nil)
-	r.err = r.sendInternalMessage(PreStart{})
-	end()
-	if r.err != nil {
-		r.recordErr(nil)(r.err)
+	if r.err = r.sendInternalMessage(PreStart{}); r.err != nil {
 		return
 	}
 	for {

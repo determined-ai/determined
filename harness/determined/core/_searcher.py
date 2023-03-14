@@ -305,7 +305,7 @@ class DummySearcherOperation(SearcherOperation):
             raise RuntimeError("you must only call op.report_progress() from the chief worker")
         if self._completed and length != self._length:
             raise RuntimeError("you must not call op.report_progress() after op.report_completed()")
-        logger.info(f"progress report: {length}/{self._length}")
+        logger.info("progress report: {length}/{self._length}")
 
     def report_completed(self, searcher_metric: float) -> None:
         if not self._is_chief:

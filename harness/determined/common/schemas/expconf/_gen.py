@@ -178,6 +178,33 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json",
+    "title": "CheckEpochNotUsed",
+    "additionalProperties": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+    },
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+    },
+    "checks": {
+        "must specify the top-level records_per_epoch when this field is in terms of epochs": {
+            "properties": {
+                "epochs": {
+                    "not": {
+                        "type": "number"
+                    }
+                }
+            }
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json": json.loads(
         r"""
 {
@@ -991,6 +1018,29 @@ schemas = {
                         "additionalProperties": {
                             "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "$comment": "when records per epoch not set, forbid epoch lengths",
+                "properties": {
+                    "records_per_epoch": {
+                        "maximum": 0
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "min_validation_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "min_checkpoint_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "searcher": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }

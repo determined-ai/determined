@@ -700,6 +700,12 @@ export interface Trialv1Trial {
      */
     bestCheckpoint?: V1CheckpointWorkload;
     /**
+     * Latest training step.
+     * @type {V1MetricsWorkload}
+     * @memberof Trialv1Trial
+     */
+    latestTraining?: V1MetricsWorkload;
+    /**
      * The last reported state of the trial runner (harness code).
      * @type {string}
      * @memberof Trialv1Trial
@@ -10074,23 +10080,23 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (label !== undefined) {
+            if (label) {
                 localVarQueryParameter['label'] = label
             }
             
@@ -10262,15 +10268,15 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -10308,15 +10314,15 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (startDate !== undefined) {
+            if (startDate) {
                 localVarQueryParameter['startDate'] = startDate
             }
             
-            if (endDate !== undefined) {
+            if (endDate) {
                 localVarQueryParameter['endDate'] = endDate
             }
             
-            if (period !== undefined) {
+            if (period) {
                 localVarQueryParameter['period'] = period
             }
             
@@ -10353,11 +10359,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (timestampAfter) {
+            if (timestampAfter !== undefined) {
                 localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
-            if (timestampBefore) {
+            if (timestampBefore !== undefined) {
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
@@ -11038,31 +11044,31 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (workspaceId !== undefined) {
+            if (workspaceId) {
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
@@ -11599,35 +11605,35 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (trialIds) {
+            if (trialIds !== undefined) {
                 localVarQueryParameter['trialIds'] = trialIds
             }
             
-            if (maxDatapoints !== undefined) {
+            if (maxDatapoints) {
                 localVarQueryParameter['maxDatapoints'] = maxDatapoints
             }
             
-            if (metricNames) {
+            if (metricNames !== undefined) {
                 localVarQueryParameter['metricNames'] = metricNames
             }
             
-            if (startBatches !== undefined) {
+            if (startBatches) {
                 localVarQueryParameter['startBatches'] = startBatches
             }
             
-            if (endBatches !== undefined) {
+            if (endBatches) {
                 localVarQueryParameter['endBatches'] = endBatches
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (scale !== undefined) {
+            if (scale) {
                 localVarQueryParameter['scale'] = scale
             }
             
-            if (xAxis !== undefined) {
+            if (xAxis) {
                 localVarQueryParameter['xAxis'] = xAxis
             }
             
@@ -11747,23 +11753,23 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
@@ -11799,7 +11805,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (projectId !== undefined) {
+            if (projectId) {
                 localVarQueryParameter['projectId'] = projectId
             }
             
@@ -11853,79 +11859,79 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (description !== undefined) {
+            if (description) {
                 localVarQueryParameter['description'] = description
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
-            if (labels) {
+            if (labels !== undefined) {
                 localVarQueryParameter['labels'] = labels
             }
             
-            if (archived !== undefined) {
+            if (archived) {
                 localVarQueryParameter['archived'] = archived
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (projectId !== undefined) {
+            if (projectId) {
                 localVarQueryParameter['projectId'] = projectId
             }
             
-            if (experimentIdFilterLt !== undefined) {
+            if (experimentIdFilterLt) {
                 localVarQueryParameter['experimentIdFilter.lt'] = experimentIdFilterLt
             }
             
-            if (experimentIdFilterLte !== undefined) {
+            if (experimentIdFilterLte) {
                 localVarQueryParameter['experimentIdFilter.lte'] = experimentIdFilterLte
             }
             
-            if (experimentIdFilterGt !== undefined) {
+            if (experimentIdFilterGt) {
                 localVarQueryParameter['experimentIdFilter.gt'] = experimentIdFilterGt
             }
             
-            if (experimentIdFilterGte !== undefined) {
+            if (experimentIdFilterGte) {
                 localVarQueryParameter['experimentIdFilter.gte'] = experimentIdFilterGte
             }
             
-            if (experimentIdFilterIncl) {
+            if (experimentIdFilterIncl !== undefined) {
                 localVarQueryParameter['experimentIdFilter.incl'] = experimentIdFilterIncl
             }
             
-            if (experimentIdFilterNotIn) {
+            if (experimentIdFilterNotIn !== undefined) {
                 localVarQueryParameter['experimentIdFilter.notIn'] = experimentIdFilterNotIn
             }
             
-            if (showTrialData !== undefined) {
+            if (showTrialData) {
                 localVarQueryParameter['showTrialData'] = showTrialData
             }
             
@@ -11971,23 +11977,23 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
@@ -12263,23 +12269,23 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
@@ -12611,27 +12617,27 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (maxDatapoints !== undefined) {
+            if (maxDatapoints) {
                 localVarQueryParameter['maxDatapoints'] = maxDatapoints
             }
             
-            if (metricNames) {
+            if (metricNames !== undefined) {
                 localVarQueryParameter['metricNames'] = metricNames
             }
             
-            if (startBatches !== undefined) {
+            if (startBatches) {
                 localVarQueryParameter['startBatches'] = startBatches
             }
             
-            if (endBatches !== undefined) {
+            if (endBatches) {
                 localVarQueryParameter['endBatches'] = endBatches
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (scale !== undefined) {
+            if (scale) {
                 localVarQueryParameter['scale'] = scale
             }
             
@@ -12684,51 +12690,51 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
-            if (agentIds) {
+            if (agentIds !== undefined) {
                 localVarQueryParameter['agentIds'] = agentIds
             }
             
-            if (containerIds) {
+            if (containerIds !== undefined) {
                 localVarQueryParameter['containerIds'] = containerIds
             }
             
-            if (rankIds) {
+            if (rankIds !== undefined) {
                 localVarQueryParameter['rankIds'] = rankIds
             }
             
-            if (levels) {
+            if (levels !== undefined) {
                 localVarQueryParameter['levels'] = levels
             }
             
-            if (stdtypes) {
+            if (stdtypes !== undefined) {
                 localVarQueryParameter['stdtypes'] = stdtypes
             }
             
-            if (sources) {
+            if (sources !== undefined) {
                 localVarQueryParameter['sources'] = sources
             }
             
-            if (timestampBefore) {
+            if (timestampBefore !== undefined) {
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
-            if (timestampAfter) {
+            if (timestampAfter !== undefined) {
                 localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (searchText !== undefined) {
+            if (searchText) {
                 localVarQueryParameter['searchText'] = searchText
             }
             
@@ -12770,7 +12776,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -14357,7 +14363,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (timeoutSeconds !== undefined) {
+            if (timeoutSeconds) {
                 localVarQueryParameter['timeoutSeconds'] = timeoutSeconds
             }
             
@@ -14879,7 +14885,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (periodSeconds !== undefined) {
+            if (periodSeconds) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
@@ -14915,7 +14921,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (resourcePools) {
+            if (resourcePools !== undefined) {
                 localVarQueryParameter['resourcePools'] = resourcePools
             }
             
@@ -14955,23 +14961,23 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (resourcePool !== undefined) {
+            if (resourcePool) {
                 localVarQueryParameter['resourcePool'] = resourcePool
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
@@ -15008,11 +15014,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
@@ -15083,31 +15089,31 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (sortKey !== undefined) {
+            if (sortKey) {
                 localVarQueryParameter['sortKey'] = sortKey
             }
             
-            if (filter !== undefined) {
+            if (filter) {
                 localVarQueryParameter['filter'] = filter
             }
             
-            if (includeBatchMetrics !== undefined) {
+            if (includeBatchMetrics) {
                 localVarQueryParameter['includeBatchMetrics'] = includeBatchMetrics
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
@@ -15255,15 +15261,15 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (metricName !== undefined) {
+            if (metricName) {
                 localVarQueryParameter['metricName'] = metricName
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (periodSeconds !== undefined) {
+            if (periodSeconds) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
@@ -15305,7 +15311,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (periodSeconds !== undefined) {
+            if (periodSeconds) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
@@ -15754,31 +15760,31 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (metricName !== undefined) {
+            if (metricName) {
                 localVarQueryParameter['metricName'] = metricName
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (maxTrials !== undefined) {
+            if (maxTrials) {
                 localVarQueryParameter['maxTrials'] = maxTrials
             }
             
-            if (maxDatapoints !== undefined) {
+            if (maxDatapoints) {
                 localVarQueryParameter['maxDatapoints'] = maxDatapoints
             }
             
-            if (startBatches !== undefined) {
+            if (startBatches) {
                 localVarQueryParameter['startBatches'] = startBatches
             }
             
-            if (endBatches !== undefined) {
+            if (endBatches) {
                 localVarQueryParameter['endBatches'] = endBatches
             }
             
-            if (periodSeconds !== undefined) {
+            if (periodSeconds) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
@@ -15836,23 +15842,23 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (metricName !== undefined) {
+            if (metricName) {
                 localVarQueryParameter['metricName'] = metricName
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (batchesProcessed !== undefined) {
+            if (batchesProcessed) {
                 localVarQueryParameter['batchesProcessed'] = batchesProcessed
             }
             
-            if (batchesMargin !== undefined) {
+            if (batchesMargin) {
                 localVarQueryParameter['batchesMargin'] = batchesMargin
             }
             
-            if (periodSeconds !== undefined) {
+            if (periodSeconds) {
                 localVarQueryParameter['periodSeconds'] = periodSeconds
             }
             
@@ -17766,55 +17772,55 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
-            if (allocationIds) {
+            if (allocationIds !== undefined) {
                 localVarQueryParameter['allocationIds'] = allocationIds
             }
             
-            if (agentIds) {
+            if (agentIds !== undefined) {
                 localVarQueryParameter['agentIds'] = agentIds
             }
             
-            if (containerIds) {
+            if (containerIds !== undefined) {
                 localVarQueryParameter['containerIds'] = containerIds
             }
             
-            if (rankIds) {
+            if (rankIds !== undefined) {
                 localVarQueryParameter['rankIds'] = rankIds
             }
             
-            if (levels) {
+            if (levels !== undefined) {
                 localVarQueryParameter['levels'] = levels
             }
             
-            if (stdtypes) {
+            if (stdtypes !== undefined) {
                 localVarQueryParameter['stdtypes'] = stdtypes
             }
             
-            if (sources) {
+            if (sources !== undefined) {
                 localVarQueryParameter['sources'] = sources
             }
             
-            if (timestampBefore) {
+            if (timestampBefore !== undefined) {
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
-            if (timestampAfter) {
+            if (timestampAfter !== undefined) {
                 localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (searchText !== undefined) {
+            if (searchText) {
                 localVarQueryParameter['searchText'] = searchText
             }
             
@@ -17856,7 +17862,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -18206,7 +18212,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (workspaceId !== undefined) {
+            if (workspaceId) {
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
@@ -18254,55 +18260,55 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
-            if (description !== undefined) {
+            if (description) {
                 localVarQueryParameter['description'] = description
             }
             
-            if (labels) {
+            if (labels !== undefined) {
                 localVarQueryParameter['labels'] = labels
             }
             
-            if (archived !== undefined) {
+            if (archived) {
                 localVarQueryParameter['archived'] = archived
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (workspaceNames) {
+            if (workspaceNames !== undefined) {
                 localVarQueryParameter['workspaceNames'] = workspaceNames
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (id !== undefined) {
+            if (id) {
                 localVarQueryParameter['id'] = id
             }
             
-            if (workspaceIds) {
+            if (workspaceIds !== undefined) {
                 localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
@@ -18390,19 +18396,19 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
@@ -19422,31 +19428,31 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (workspaceId !== undefined) {
+            if (workspaceId) {
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
@@ -19871,7 +19877,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -19917,23 +19923,23 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (labelsName !== undefined) {
+            if (labelsName) {
                 localVarQueryParameter['labels.name'] = labelsName
             }
             
-            if (labelsAgentId !== undefined) {
+            if (labelsAgentId) {
                 localVarQueryParameter['labels.agentId'] = labelsAgentId
             }
             
-            if (labelsGpuUuid !== undefined) {
+            if (labelsGpuUuid) {
                 localVarQueryParameter['labels.gpuUuid'] = labelsGpuUuid
             }
             
-            if (labelsMetricType !== undefined) {
+            if (labelsMetricType) {
                 localVarQueryParameter['labels.metricType'] = labelsMetricType
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -20261,7 +20267,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
@@ -21020,7 +21026,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
@@ -21765,31 +21771,31 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (workspaceId !== undefined) {
+            if (workspaceId) {
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
@@ -22294,55 +22300,55 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
-            if (allocationIds) {
+            if (allocationIds !== undefined) {
                 localVarQueryParameter['allocationIds'] = allocationIds
             }
             
-            if (agentIds) {
+            if (agentIds !== undefined) {
                 localVarQueryParameter['agentIds'] = agentIds
             }
             
-            if (containerIds) {
+            if (containerIds !== undefined) {
                 localVarQueryParameter['containerIds'] = containerIds
             }
             
-            if (rankIds) {
+            if (rankIds !== undefined) {
                 localVarQueryParameter['rankIds'] = rankIds
             }
             
-            if (levels) {
+            if (levels !== undefined) {
                 localVarQueryParameter['levels'] = levels
             }
             
-            if (stdtypes) {
+            if (stdtypes !== undefined) {
                 localVarQueryParameter['stdtypes'] = stdtypes
             }
             
-            if (sources) {
+            if (sources !== undefined) {
                 localVarQueryParameter['sources'] = sources
             }
             
-            if (timestampBefore) {
+            if (timestampBefore !== undefined) {
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
-            if (timestampAfter) {
+            if (timestampAfter !== undefined) {
                 localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (searchText !== undefined) {
+            if (searchText) {
                 localVarQueryParameter['searchText'] = searchText
             }
             
@@ -22384,7 +22390,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -22737,23 +22743,23 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
@@ -23092,31 +23098,31 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (workspaceId !== undefined) {
+            if (workspaceId) {
                 localVarQueryParameter['workspaceId'] = workspaceId
             }
             
@@ -23574,7 +23580,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (id !== undefined) {
+            if (id) {
                 localVarQueryParameter['id'] = id
             }
             
@@ -23610,7 +23616,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (projectId !== undefined) {
+            if (projectId) {
                 localVarQueryParameter['projectId'] = projectId
             }
             
@@ -24055,23 +24061,23 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (states) {
+            if (states !== undefined) {
                 localVarQueryParameter['states'] = states
             }
             
@@ -24156,31 +24162,31 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (sortKey !== undefined) {
+            if (sortKey) {
                 localVarQueryParameter['sortKey'] = sortKey
             }
             
-            if (filter !== undefined) {
+            if (filter) {
                 localVarQueryParameter['filter'] = filter
             }
             
-            if (includeBatchMetrics !== undefined) {
+            if (includeBatchMetrics) {
                 localVarQueryParameter['includeBatchMetrics'] = includeBatchMetrics
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
@@ -24264,27 +24270,27 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (maxDatapoints !== undefined) {
+            if (maxDatapoints) {
                 localVarQueryParameter['maxDatapoints'] = maxDatapoints
             }
             
-            if (metricNames) {
+            if (metricNames !== undefined) {
                 localVarQueryParameter['metricNames'] = metricNames
             }
             
-            if (startBatches !== undefined) {
+            if (startBatches) {
                 localVarQueryParameter['startBatches'] = startBatches
             }
             
-            if (endBatches !== undefined) {
+            if (endBatches) {
                 localVarQueryParameter['endBatches'] = endBatches
             }
             
-            if (metricType !== undefined) {
+            if (metricType) {
                 localVarQueryParameter['metricType'] = metricType
             }
             
-            if (scale !== undefined) {
+            if (scale) {
                 localVarQueryParameter['scale'] = scale
             }
             
@@ -24337,51 +24343,51 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
-            if (agentIds) {
+            if (agentIds !== undefined) {
                 localVarQueryParameter['agentIds'] = agentIds
             }
             
-            if (containerIds) {
+            if (containerIds !== undefined) {
                 localVarQueryParameter['containerIds'] = containerIds
             }
             
-            if (rankIds) {
+            if (rankIds !== undefined) {
                 localVarQueryParameter['rankIds'] = rankIds
             }
             
-            if (levels) {
+            if (levels !== undefined) {
                 localVarQueryParameter['levels'] = levels
             }
             
-            if (stdtypes) {
+            if (stdtypes !== undefined) {
                 localVarQueryParameter['stdtypes'] = stdtypes
             }
             
-            if (sources) {
+            if (sources !== undefined) {
                 localVarQueryParameter['sources'] = sources
             }
             
-            if (timestampBefore) {
+            if (timestampBefore !== undefined) {
                 localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
             }
             
-            if (timestampAfter) {
+            if (timestampAfter !== undefined) {
                 localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (searchText !== undefined) {
+            if (searchText) {
                 localVarQueryParameter['searchText'] = searchText
             }
             
@@ -24423,7 +24429,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (follow !== undefined) {
+            if (follow) {
                 localVarQueryParameter['follow'] = follow
             }
             
@@ -24965,11 +24971,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -24984,24 +24989,20 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
-            }
-            
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -25356,12 +25357,11 @@ export const UsersApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, name, options);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25550,12 +25550,11 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -25679,13 +25678,12 @@ export class UsersApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order users in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-     * @param {string} [name] Filter by username or display name.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath)
+    public getUsers(sortBy?: V1GetUsersRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26267,35 +26265,35 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
-            if (archived !== undefined) {
+            if (archived) {
                 localVarQueryParameter['archived'] = archived
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
@@ -26339,39 +26337,39 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
+            if (sortBy) {
                 localVarQueryParameter['sortBy'] = sortBy
             }
             
-            if (orderBy !== undefined) {
+            if (orderBy) {
                 localVarQueryParameter['orderBy'] = orderBy
             }
             
-            if (offset !== undefined) {
+            if (offset) {
                 localVarQueryParameter['offset'] = offset
             }
             
-            if (limit !== undefined) {
+            if (limit) {
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (name !== undefined) {
+            if (name) {
                 localVarQueryParameter['name'] = name
             }
             
-            if (archived !== undefined) {
+            if (archived) {
                 localVarQueryParameter['archived'] = archived
             }
             
-            if (users) {
+            if (users !== undefined) {
                 localVarQueryParameter['users'] = users
             }
             
-            if (userIds) {
+            if (userIds !== undefined) {
                 localVarQueryParameter['userIds'] = userIds
             }
             
-            if (pinned !== undefined) {
+            if (pinned) {
                 localVarQueryParameter['pinned'] = pinned
             }
             

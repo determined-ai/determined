@@ -3,14 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
+import { SetUserPasswordParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
-
-vi.useFakeTimers();
 
 import useModalPasswordChange, {
   API_SUCCESS_MESSAGE,
@@ -21,6 +19,8 @@ import useModalPasswordChange, {
   OK_BUTTON_LABEL,
   OLD_PASSWORD_LABEL,
 } from './useModalPasswordChange';
+
+const mockSetUserPassword = jest.fn();
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
@@ -35,7 +35,9 @@ const CURRENT_USER: DetailedUser = {
   username: USERNAME,
 };
 
-vi.mock('services/api', () => ({
+jest.setTimeout(10000);
+
+jest.mock('services/api', () => ({
   getUsers: () =>
     Promise.resolve({
       users: [
@@ -55,10 +57,12 @@ vi.mock('services/api', () => ({
       return Promise.reject();
     }
   },
-  setUserPassword: vi.fn(),
+  setUserPassword: (params: SetUserPasswordParams) => {
+    return mockSetUserPassword(params);
+  },
 }));
 
-const user = userEvent.setup({ delay: null });
+const user = userEvent.setup();
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
@@ -135,7 +139,7 @@ describe('useModalPasswordChange', () => {
     await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
 
-    vi.advanceTimersToNextTimer();
+    jest.advanceTimersToNextTimer();
 
     // Check for successful toast message.
     await waitFor(() => {
@@ -153,4 +157,4 @@ describe('useModalPasswordChange', () => {
       userId: USER_ID,
     });
   });
-} /* { timeout: 10000 } */);
+});

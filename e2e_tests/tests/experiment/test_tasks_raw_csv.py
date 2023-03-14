@@ -13,8 +13,6 @@ from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
 
-API_URL = "/resources/allocation/allocations-csv?"
-
 
 # Create a No_Op experiment and Check training/validation times
 @pytest.mark.e2e_cpu
@@ -29,11 +27,11 @@ def test_experiment_capture() -> None:
     end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
         conf.make_master_url(),
-        f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}",
+        f"/resources/allocation/tasks-raw?timestamp_after={start_time}&timestamp_before={end_time}",
     )
     assert r.status_code == requests.codes.ok, r.text
 
-    # Check if an entry exists for experiment that just ran
+    # Check if a trial entry exists for experiment that just ran
     reader = csv.DictReader(StringIO(r.text))
     matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
     assert len(matches) >= 1
@@ -55,7 +53,7 @@ def test_notebook_capture() -> None:
     end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
         conf.make_master_url(),
-        f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}",
+        f"/resources/allocation/tasks-raw?timestamp_after={start_time}&timestamp_before={end_time}",
     )
     assert r.status_code == requests.codes.ok, r.text
 
@@ -87,7 +85,7 @@ def test_tensorboard_experiment_capture() -> None:
     end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = api.get(
         conf.make_master_url(),
-        f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}",
+        f"/resources/allocation/tasks-raw?timestamp_after={start_time}&timestamp_before={end_time}",
     )
     assert r.status_code == requests.codes.ok, r.text
 
@@ -97,4 +95,4 @@ def test_tensorboard_experiment_capture() -> None:
     assert len(matches) >= 1
 
     # Confirm Tensorboard task is captured
-    assert re.search(f"{task_id}.*,TENSORBOARD", r.text) is not None
+    assert re.search(f"{task_id},TENSORBOARD", r.text) is not None

@@ -118,7 +118,7 @@ describe('Routes Utilities', () => {
 
   describe('openBlank', () => {
     beforeEach(() => {
-      window.open = vi.fn();
+      window.open = jest.fn();
     });
 
     it('should direct to https://localhost:3000', () => {
@@ -284,7 +284,7 @@ describe('Routes Utilities', () => {
 
   describe('routeToExternalUrl', () => {
     beforeEach(() => {
-      window.location.assign = vi.fn();
+      window.location.assign = jest.fn();
     });
 
     it('should route to external URL', () => {
@@ -306,7 +306,7 @@ describe('Routes Utilities', () => {
 
   describe('routeToReactUrl', () => {
     beforeEach(() => {
-      history.push = vi.fn();
+      history.push = jest.fn();
     });
 
     it('should route to react URL', () => {

@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -342,7 +341,7 @@ func TestMultipleContainerTerminate(t *testing.T) {
 			},
 		},
 	}
-	newPod.containerNames = set.New([]string{"test-pod-1", "test-pod-2"})
+	newPod.containerNames = map[string]bool{"test-pod-1": false, "test-pod-2": false}
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
@@ -553,11 +552,11 @@ func TestMultipleContainersRunning(t *testing.T) {
 		ObjectMeta: objectMeta,
 		Status:     status,
 	}
-	newPod.containerNames = set.New([]string{
-		"determined-container",
-		"determined-fluent-container",
-		"test-pod",
-	})
+	newPod.containerNames = map[string]bool{
+		"determined-container":        false,
+		"determined-fluent-container": false,
+		"test-pod":                    false,
+	}
 	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
 	system.Ask(ref, statusUpdate)

@@ -114,7 +114,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		Metrics:        &commonv1.Metrics{AvgMetrics: trainMetrics},
 	}))
 
-	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         uuid.New(),
 		TaskID:       task.TaskID,
 		AllocationID: a.AllocationID,
@@ -156,7 +156,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		StepsCompleted: 400,
 		Metrics:        &commonv1.Metrics{AvgMetrics: valMetrics2},
 	}))
-	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         checkpoint2UUID,
 		TaskID:       task.TaskID,
 		AllocationID: a.AllocationID,

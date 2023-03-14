@@ -218,15 +218,6 @@ def get_user_by_name(user_name: str) -> User:
 
 
 @_require_singleton
-def get_session_username() -> str:
-    """
-    Get the username of the currently signed in user.
-    """
-    assert _determined is not None
-    return _determined.get_session_username()
-
-
-@_require_singleton
 def whoami() -> User:
     """
     Get the :class:`~determined.experimental.client.User` representing the

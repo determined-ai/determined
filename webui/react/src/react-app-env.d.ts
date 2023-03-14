@@ -1,8 +1,8 @@
 /* eslint-disable */
 /// <reference types="vite/client" />
 /// <reference path="types.ts" />
-/// <reference types="vitest/globals" />
-import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
+
+export {};
 
 declare global {
   interface Window {
@@ -25,12 +25,5 @@ declare global {
       SERVER_ADDRESS?: string;
       PUBLIC_URL: string;
     }
-  }
-}
-
-declare global {
-  namespace jest {
-    interface Matchers<R = void>
-      extends TestingLibraryMatchers<typeof expect.stringContaining, R> {}
   }
 }

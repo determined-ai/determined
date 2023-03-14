@@ -1274,7 +1274,7 @@ func (a *apiServer) ReportCheckpoint(
 	default:
 	}
 
-	if err := db.AddCheckpointMetadata(ctx, c); err != nil {
+	if err := a.m.db.AddCheckpointMetadata(ctx, c); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportCheckpointResponse{}, nil

@@ -7,7 +7,7 @@ import RadioGroup, { RadioGroupOption } from './RadioGroup';
 const user = userEvent.setup();
 
 const setup = (options: RadioGroupOption[], iconOnly = false) => {
-  const handleOnChange = vi.fn();
+  const handleOnChange = jest.fn();
   const view = render(
     <RadioGroup iconOnly={iconOnly} options={options} onChange={handleOnChange} />,
   );

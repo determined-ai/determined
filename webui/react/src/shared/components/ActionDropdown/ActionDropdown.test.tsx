@@ -17,8 +17,8 @@ const TestAction = {
 
 type TestAction = ValueOf<typeof TestAction>;
 
-const handleActionOne = vi.fn();
-const handleActionTwo = vi.fn();
+const handleActionOne = jest.fn();
+const handleActionTwo = jest.fn();
 
 const DropDownContainer = () => {
   const dropDownOnTrigger = () => {

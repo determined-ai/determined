@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/set"
 
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -103,7 +102,7 @@ type requestQueue struct {
 	pendingResourceCreations map[*actor.Ref]*queuedResourceRequest
 	availableWorkers         []*actor.Ref
 
-	creationInProgress       set.Set[*actor.Ref]
+	creationInProgress       map[*actor.Ref]bool
 	blockedResourceDeletions map[*actor.Ref]*queuedResourceRequest
 }
 
@@ -119,7 +118,7 @@ func newRequestQueue(
 		pendingResourceCreations: make(map[*actor.Ref]*queuedResourceRequest),
 		availableWorkers:         make([]*actor.Ref, 0, numKubernetesWorkers),
 
-		creationInProgress:       make(set.Set[*actor.Ref]),
+		creationInProgress:       make(map[*actor.Ref]bool),
 		blockedResourceDeletions: make(map[*actor.Ref]*queuedResourceRequest),
 	}
 }
@@ -172,7 +171,7 @@ func (r *requestQueue) receiveCreateKubernetesResources(
 	}
 
 	if len(r.availableWorkers) > 0 {
-		r.creationInProgress.Insert(msg.handler)
+		r.creationInProgress[msg.handler] = true
 		ctx.Tell(r.availableWorkers[0], msg)
 		r.availableWorkers = r.availableWorkers[1:]
 		return
@@ -198,7 +197,7 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 	// We do not want to trigger resource deletion concurrently with resource creation.
 	// If the creation request is currently being processed, we delay processing the
 	// deletion request.
-	if r.creationInProgress.Contains(msg.handler) {
+	if _, creationInProgress := r.creationInProgress[msg.handler]; creationInProgress {
 		r.blockedResourceDeletions[msg.handler] = &queuedResourceRequest{deleteResources: &msg}
 		return
 	}
@@ -214,7 +213,7 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 
 func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context, msg workerAvailable) {
 	if msg.resourceHandler != nil {
-		r.creationInProgress.Remove(msg.resourceHandler)
+		delete(r.creationInProgress, msg.resourceHandler)
 
 		// Check if any deletions were blocked by this creation.
 		queuedMsg, resourceDeletionWasBlocked := r.blockedResourceDeletions[msg.resourceHandler]
@@ -232,7 +231,7 @@ func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context, msg workerAvai
 		// request was canceled.
 		if nextRequest.createResources != nil {
 			delete(r.pendingResourceCreations, nextRequest.createResources.handler)
-			r.creationInProgress.Insert(nextRequest.createResources.handler)
+			r.creationInProgress[nextRequest.createResources.handler] = true
 			ctx.Tell(ctx.Sender(), *nextRequest.createResources)
 			return
 		} else if nextRequest.deleteResources != nil {

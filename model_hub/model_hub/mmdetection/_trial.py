@@ -99,7 +99,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         # mmdet sets loggers in the package that interrupt with Determined logging.
         # We reset the root logger after mmdet models are initialized.
-        set_logger(bool(self.context.get_experiment_config().get("debug", False)))
+        set_logger(bool(self.context.env.experiment_config.get("debug", False)))
 
     def build_mmdet_config(self) -> mmcv.Config:
         """

@@ -411,7 +411,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	var sidecars []k8sV1.Container
 	var fluentFiles map[string][]byte
 
-	p.containerNames.Insert(model.DeterminedK8FluentContainerName)
+	p.containerNames[model.DeterminedK8FluentContainerName] = true
 	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
 
 	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)

@@ -84,30 +84,6 @@ class OneDatasetLDM(pl.LightningDataModule):
         return torch.utils.data.DataLoader(OnesDataset(), batch_size=self.batch_size)
 
 
-class CheckpointCallback(pytorch.PyTorchCallback):
-    def __init__(self):
-        self.uuids = []
-
-    def on_checkpoint_upload_end(self, uuid: str) -> None:
-        self.uuids.append(uuid)
-
-
-class MetricsCallback(pytorch.PyTorchCallback):
-    def __init__(self):
-        self.validation_metrics = []
-        self.training_metrics = []
-        self.batch_metrics = []
-
-    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
-        self.validation_metrics.append(metrics)
-
-    def on_training_workload_end(
-        self, avg_metrics: Dict[str, Any], batch_metrics: Dict[str, Any]
-    ) -> None:
-        self.training_metrics.append(avg_metrics)
-        self.batch_metrics += batch_metrics
-
-
 class OneVarTrial(LightningAdapter):
     _searcher_metric = "val_loss"
 
@@ -116,8 +92,6 @@ class OneVarTrial(LightningAdapter):
         lm = lm_class(**context.get_hparams())
         self.dm = OneDatasetLDM()
         super().__init__(context, lm)
-        self.metrics_callback = MetricsCallback()
-        self.checkpoint_callback = CheckpointCallback()
 
     @staticmethod
     def check_batch_metrics(metrics: Dict[str, Any], batch_idx: int) -> None:
@@ -144,13 +118,6 @@ class OneVarTrial(LightningAdapter):
         return pytorch.DataLoader(
             self.dm.val_dataloader().dataset, batch_size=self.context.get_per_slot_batch_size()
         )
-
-    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
-        lightning_callbacks = super().build_callbacks()
-        lightning_callbacks.update(
-            {"metrics": self.metrics_callback, "checkpoint": self.checkpoint_callback}
-        )
-        return lightning_callbacks
 
 
 class OneVarTrialLRScheduler(OneVarTrial):
