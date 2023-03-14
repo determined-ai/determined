@@ -17,6 +17,14 @@ ignored.
 -  ``resources.priority``
 -  ``resources.weight``
 
+******************************************
+ Slurm and PBS Job Exit Code Report Issue
+******************************************
+
+When using the HPC Launcher, if a job failed with this message ``resources failed with non-zero exit
+code``, Determined reported the exit code in the experiment logs. For example, the experiment logs
+contain ``srun: error: node002: task 0: Exited with exit code 7``.
+
 .. _slurm-and-docker-differences:
 
 ************************************
