@@ -122,6 +122,10 @@ enum PermissionType {
   // Ability to delete model registry
   PERMISSION_TYPE_DELETE_MODEL_REGISTRY = 7004;
 
+  // Ability to view master logs.
+  PERMISSION_TYPE_VIEW_MASTER_LOGS = 8001;
+  // Ability to view detailed cluster usage info.
+  PERMISSION_TYPE_VIEW_CLUSTER_USAGE = 8002;
   // Ability to update agents.
   PERMISSION_TYPE_UPDATE_AGENTS = 8003;
 

@@ -100,6 +100,28 @@ func EchoErrToGRPC(err error) (bool, error) {
 	return false, err
 }
 
+// GrpcErrToEcho converts grpc status.Errors into internal api error categories.
+func GrpcErrToEcho(err error) (bool, error) { // CHECK: shouldn't this be error, bool?
+	status, ok := status.FromError(err)
+	if !ok {
+		return false, err
+	}
+	switch status.Code() {
+	case codes.NotFound:
+		return true, echo.NewHTTPError(http.StatusNotFound, status.Message())
+	case codes.Unauthenticated:
+		return true, echo.NewHTTPError(http.StatusUnauthorized, status.Message())
+	case codes.InvalidArgument:
+		return true, echo.NewHTTPError(http.StatusBadRequest, status.Message())
+	case codes.OK:
+		return true, nil
+	case codes.PermissionDenied:
+		return true, echo.NewHTTPError(http.StatusForbidden, status.Message())
+	default:
+		return false, err
+	}
+}
+
 func codeFromHTTPStatus(code int) codes.Code {
 	switch {
 	case code == 404:

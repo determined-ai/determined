@@ -175,6 +175,16 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 		return err
 	}
 
+	user := c.(*detContext.DetContext).MustGetUser()
+
+	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
+		ok, echoErr := api.GrpcErrToEcho(err)
+		if !ok {
+			return err
+		}
+		return echoErr
+	}
+
 	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
 		return errors.Wrap(err, "invalid start time")
@@ -297,6 +307,18 @@ type AllocationMetadata struct {
 	ImagepullingTime float64
 }
 
+// canGetUsageDetails checks if the user has permission to get cluster usage details.
+func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error {
+	permErr, err := cluster.AuthZProvider.Get().CanGetUsageDetails(ctx, user)
+	if err != nil {
+		return err
+	}
+	if permErr != nil {
+		return status.Error(codes.PermissionDenied, permErr.Error())
+	}
+	return nil
+}
+
 //	@Summary	Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-resource-allocation-csv
@@ -323,6 +345,15 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
+	}
+
+	user := c.(*detContext.DetContext).MustGetUser()
+	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
+		ok, echoErr := api.GrpcErrToEcho(err)
+		if !ok {
+			return err
+		}
+		return echoErr
 	}
 
 	// Parse start & end timestamps
@@ -494,6 +525,15 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
+	}
+
+	user := c.(*detContext.DetContext).MustGetUser()
+	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
+		ok, echoErr := api.GrpcErrToEcho(err)
+		if !ok {
+			return err
+		}
+		return echoErr
 	}
 
 	resp, err := m.fetchAggregatedResourceAllocation(&apiv1.ResourceAllocationAggregatedRequest{
@@ -1125,7 +1165,8 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources")
-	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
+	// TODO secure these.
+	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation) // TODO add middleware
 	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 

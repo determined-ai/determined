@@ -8,6 +8,7 @@ from dateutil import parser
 
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
+from tests import api_utils
 from tests import config as conf
 
 ADD_KEY = "adding"
@@ -91,21 +92,20 @@ def fetch_master_log() -> bool:
     return True
 
 
-def create_test_session() -> api.Session:
-    murl = conf.make_master_url()
-    certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(murl)
-    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
-
-
 def compare_stats() -> None:
     if not fetch_master_log():
         print("Skip compare stats because error at fetch master")
         return
     gpu_from_log, global_start, global_end = parse_log_for_gpu_stats(log_path)
-    res = bindings.get_ResourceAllocationRaw(
-        create_test_session(), timestampAfter=global_start, timestampBefore=global_end
-    )
+    try:
+        res = bindings.get_ResourceAllocationRaw(
+            api_utils.determined_test_session(),
+            timestampAfter=global_start,
+            timestampBefore=global_end,
+        )
+    except api.errors.ForbiddenException:
+        print("Skip compare stats because missing access to resource allocations")
+        return
     gpu_from_api = 0
     gpu_from_api_map = {}
     instance_from_api = 0
