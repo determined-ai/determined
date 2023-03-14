@@ -42,8 +42,12 @@ def patch_experiment(args: Namespace, patch_doc: Dict[str, Any]) -> None:
 
 @authentication.required
 def activate(args: Namespace) -> None:
-    bindings.post_ActivateExperiment(cli.setup_session(args), id=args.experiment_id)
-    print(f"Activated experiment {args.experiment_id}")
+    body = bindings.v1ActivateExperimentsRequest(experimentIds=[args.experiment_id])
+    resp = bindings.post_ActivateExperiments(cli.setup_session(args), body=body)
+    if args.experiment_id in resp.experimentIds:
+        print(f"Activated experiment {args.experiment_id}")
+    else:
+        print("Error in activating")
 
 
 @authentication.required
@@ -926,6 +930,7 @@ def move_experiment(args: Namespace) -> None:
         print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
     else:
         print("Error in moving experiment")
+
 
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):

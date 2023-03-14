@@ -203,6 +203,25 @@ message ActivateExperimentRequest {
 // Response to ActivateExperimentRequest.
 message ActivateExperimentResponse {}
 
+// Activate multiple experiments.
+message ActivateExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Select experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to ActivateExperimentsRequest.
+message ActivateExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were sent the activate command.
+  repeated int32 experiment_ids = 1;
+}
+
 // Pause an experiment.
 message PauseExperimentRequest {
   // The experiment id.
@@ -238,6 +257,25 @@ message CancelExperimentRequest {
 // Response to CancelExperimentRequest.
 message CancelExperimentResponse {}
 
+// Cancel multiple experiments.
+message CancelExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to CancelExperimentsRequest.
+message CancelExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were successfully cancelled, by ID.
+  repeated int32 experiment_ids = 1;
+}
+
 // Kill an experiment.
 message KillExperimentRequest {
   // The experiment id.
@@ -245,6 +283,25 @@ message KillExperimentRequest {
 }
 // Response to KillExperimentRequest.
 message KillExperimentResponse {}
+
+// Kill multiple experiments.
+message KillExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to KillExperimentsRequest.
+message KillExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Experiments which were successfully killed, by ID.
+  repeated int32 experiment_ids = 1;
+}
 
 // Archive an experiment.
 message ArchiveExperimentRequest {

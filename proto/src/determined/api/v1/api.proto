@@ -411,6 +411,17 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Activate multiple experiments.
+  rpc ActivateExperiments(ActivateExperimentsRequest)
+      returns (ActivateExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/activate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Pause an experiment.
   rpc PauseExperiment(PauseExperimentRequest)
       returns (PauseExperimentResponse) {
@@ -442,10 +453,32 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Cancel multiple experiments.
+  rpc CancelExperiments(CancelExperimentsRequest)
+      returns (CancelExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Kill an experiment.
   rpc KillExperiment(KillExperimentRequest) returns (KillExperimentResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{id}/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+  // Kill multiple experiments.
+  rpc KillExperiments(KillExperimentsRequest)
+      returns (KillExperimentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/kill"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"

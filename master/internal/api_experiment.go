@@ -191,6 +191,26 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
+// Shorthand for a Bun query which includes editable experiments.
+func (a *apiServer) editableExperimentIds(ctx context.Context) (*bun.SelectQuery, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments AS e").
+		Column("e.id")
+
+	if query, err = expauth.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
+		return nil, err
+	}
+
+	return query, nil
+}
+
 func (a *apiServer) GetSearcherEvents(
 	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
 ) (*apiv1.GetSearcherEventsResponse, error) {
@@ -842,6 +862,35 @@ func (a *apiServer) ActivateExperiment(
 	}
 }
 
+func (a *apiServer) ActivateExperiments(
+	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
+) (*apiv1.ActivateExperimentsResponse, error) {
+	query, err := a.editableExperimentIds(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIDs := []int32{}
+	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Model(&expIDs).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.ActivateExperimentsResponse{ExperimentIds: []int32{}}
+	mockResp := &apiv1.ActivateExperimentResponse{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		err = a.ask(addr, &apiv1.ActivateExperimentRequest{Id: expID}, mockResp)
+		if err == nil {
+			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		}
+	}
+
+	return resp, nil
+}
+
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
@@ -864,7 +913,30 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	return &apiv1.PauseExperimentsResponse{}, nil
+	query, err := a.editableExperimentIds(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIDs := []int32{}
+	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Model(&expIDs).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.PauseExperimentsResponse{ExperimentIds: []int32{}}
+	mockResp := &apiv1.PauseExperimentResponse{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		err = a.ask(addr, &apiv1.PauseExperimentRequest{Id: expID}, mockResp)
+		if err == nil {
+			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		}
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) CancelExperiment(
@@ -883,6 +955,35 @@ func (a *apiServer) CancelExperiment(
 	return resp, err
 }
 
+func (a *apiServer) CancelExperiments(
+	ctx context.Context, req *apiv1.CancelExperimentsRequest,
+) (*apiv1.CancelExperimentsResponse, error) {
+	query, err := a.editableExperimentIds(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIDs := []int32{}
+	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Model(&expIDs).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.CancelExperimentsResponse{ExperimentIds: []int32{}}
+	mockResp := &apiv1.CancelExperimentResponse{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		err = a.ask(addr, &apiv1.CancelExperimentRequest{Id: expID}, mockResp)
+		if err == nil {
+			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		}
+	}
+
+	return resp, nil
+}
+
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
@@ -897,6 +998,35 @@ func (a *apiServer) KillExperiment(
 		return &apiv1.KillExperimentResponse{}, nil
 	}
 	return resp, err
+}
+
+func (a *apiServer) KillExperiments(
+	ctx context.Context, req *apiv1.KillExperimentsRequest,
+) (*apiv1.KillExperimentsResponse, error) {
+	query, err := a.editableExperimentIds(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	expIDs := []int32{}
+	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
+		Model(&expIDs).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.KillExperimentsResponse{ExperimentIds: []int32{}}
+	mockResp := &apiv1.KillExperimentResponse{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		err = a.ask(addr, &apiv1.KillExperimentRequest{Id: expID}, mockResp)
+		if err == nil {
+			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		}
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) ArchiveExperiment(

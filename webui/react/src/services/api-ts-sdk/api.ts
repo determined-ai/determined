@@ -777,6 +777,32 @@ export interface V1AckAllocationPreemptionSignalResponse {
 export interface V1ActivateExperimentResponse {
 }
 /**
+ * Activate multiple experiments.
+ * @export
+ * @interface V1ActivateExperimentsRequest
+ */
+export interface V1ActivateExperimentsRequest {
+    /**
+     * Select experiments by id.
+     * @type {Array<number>}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    experimentIds: Array<number>;
+}
+/**
+ * Response to ActivateExperimentsRequest.
+ * @export
+ * @interface V1ActivateExperimentsResponse
+ */
+export interface V1ActivateExperimentsResponse {
+    /**
+     * Experiments which were sent the activate command.
+     * @type {Array<number>}
+     * @memberof V1ActivateExperimentsResponse
+     */
+    experimentIds: Array<number>;
+}
+/**
  * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
  * @export
  * @enum {string}
@@ -1327,6 +1353,32 @@ export interface V1AwsCustomTag {
  * @interface V1CancelExperimentResponse
  */
 export interface V1CancelExperimentResponse {
+}
+/**
+ * Cancel multiple experiments.
+ * @export
+ * @interface V1CancelExperimentsRequest
+ */
+export interface V1CancelExperimentsRequest {
+    /**
+     * Selecting experiments by id.
+     * @type {Array<number>}
+     * @memberof V1CancelExperimentsRequest
+     */
+    experimentIds: Array<number>;
+}
+/**
+ * Response to CancelExperimentsRequest.
+ * @export
+ * @interface V1CancelExperimentsResponse
+ */
+export interface V1CancelExperimentsResponse {
+    /**
+     * Experiments which were successfully cancelled, by ID.
+     * @type {Array<number>}
+     * @memberof V1CancelExperimentsResponse
+     */
+    experimentIds: Array<number>;
 }
 /**
  * Checkpoint a collection of files saved by a task.
@@ -4263,6 +4315,32 @@ export interface V1KillCommandResponse {
  * @interface V1KillExperimentResponse
  */
 export interface V1KillExperimentResponse {
+}
+/**
+ * Kill multiple experiments.
+ * @export
+ * @interface V1KillExperimentsRequest
+ */
+export interface V1KillExperimentsRequest {
+    /**
+     * Selecting experiments by id.
+     * @type {Array<number>}
+     * @memberof V1KillExperimentsRequest
+     */
+    experimentIds: Array<number>;
+}
+/**
+ * Response to KillExperimentsRequest.
+ * @export
+ * @interface V1KillExperimentsResponse
+ */
+export interface V1KillExperimentsResponse {
+    /**
+     * Experiments which were successfully killed, by ID.
+     * @type {Array<number>}
+     * @memberof V1KillExperimentsResponse
+     */
+    experimentIds: Array<number>;
 }
 /**
  * Response to KillNotebookRequest.
@@ -11709,6 +11787,45 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Activate multiple experiments.
+         * @param {V1ActivateExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        activateExperiments(body: V1ActivateExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling activateExperiments.');
+            }
+            const localVarPath = `/api/v1/experiments/activate`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -11814,6 +11931,45 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Cancel multiple experiments.
+         * @param {V1CancelExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelExperiments(body: V1CancelExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling cancelExperiments.');
+            }
+            const localVarPath = `/api/v1/experiments/cancel`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: url.format(localVarUrlObj),
@@ -12582,6 +12738,45 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Kill multiple experiments.
+         * @param {V1KillExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killExperiments(body: V1KillExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killExperiments.');
+            }
+            const localVarPath = `/api/v1/experiments/kill`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -13264,6 +13459,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Activate multiple experiments.
+         * @param {V1ActivateExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        activateExperiments(body: V1ActivateExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiments(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -13309,6 +13523,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         cancelExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiment(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Cancel multiple experiments.
+         * @param {V1CancelExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelExperiments(body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13647,6 +13880,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Kill multiple experiments.
+         * @param {V1KillExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killExperiments(body: V1KillExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiments(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -13956,6 +14208,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Activate multiple experiments.
+         * @param {V1ActivateExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        activateExperiments(body: V1ActivateExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).activateExperiments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -13983,6 +14245,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         cancelExperiment(id: number, options?: any) {
             return ExperimentsApiFp(configuration).cancelExperiment(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Cancel multiple experiments.
+         * @param {V1CancelExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).cancelExperiments(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14177,6 +14449,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Kill multiple experiments.
+         * @param {V1KillExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killExperiments(body: V1KillExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).killExperiments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -14363,6 +14645,18 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
+     * @summary Activate multiple experiments.
+     * @param {V1ActivateExperimentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public activateExperiments(body: V1ActivateExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).activateExperiments(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Archive an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -14395,6 +14689,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public cancelExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).cancelExperiment(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Cancel multiple experiments.
+     * @param {V1CancelExperimentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).cancelExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -14616,6 +14922,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public killExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).killExperiment(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Kill multiple experiments.
+     * @param {V1KillExperimentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public killExperiments(body: V1KillExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).killExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
