@@ -292,7 +292,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateSettings = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (updates: Settings) => {
       stateOb.update((s) =>
         s.set(
