@@ -82,9 +82,9 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
     height: $size;
     left: 0;
     top: 0;
-    -webkit-transform-origin: $size / 2 $size / 2;
-    transform-origin: $size / 2 $size / 2;
-    width: $size / 2;
+    -webkit-transform-origin: math.div($size, 2) math.div($size, 2);
+    transform-origin: math.div($size, 2) math.div($size, 2);
+    width: math.div($size, 2);
   }
   &::after {
     -webkit-animation: load2 2s infinite ease;
@@ -92,11 +92,11 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
     background: white;
     border-radius: 0;
     height: $size;
-    left: $size / 2;
+    left: math.div($size, 2);
     top: 0;
     -webkit-transform-origin: 0 9px;
-    transform-origin: 0 9px;
-    width: $size / 2;
+    transform-origin: 0 math.div($size, 2);
+    width: math.div($size, 2);
   }
 }
 

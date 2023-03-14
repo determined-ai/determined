@@ -1,11 +1,18 @@
 module.exports = {
-  extends: ['stylelint-config-standard', 'stylelint-config-standard-scss'],
+  extends: ['stylelint-config-standard-scss'],
   plugins: ['stylelint-order', 'stylelint-scss'],
   rules: {
     'at-rule-no-unknown': null,
     'custom-property-empty-line-before': 'never',
     'declaration-empty-line-before': 'never',
-    'declaration-property-value-no-unknown': true,
+    'declaration-property-value-no-unknown': [
+      true,
+      {
+        ignoreProperties: {
+          '/.+/': '/math\\.div\\((.+), (.+)\\)/', // ignore sasss math.div()
+        },
+      },
+    ],
     'function-name-case': 'lower',
     'keyframes-name-pattern': null,
     'order/order': [
