@@ -20,25 +20,33 @@ import (
 
 const (
 	// DefaultWorkDir is the default workdir.
-	DefaultWorkDir                 = "/run/determined/workdir"
-	userPythonBaseDir              = "/run/determined/pythonuserbase"
-	runDir                         = "/run/determined"
-	infoDir                        = "/run/determined/info"
-	trainDir                       = "/run/determined/train"
-	modelCopy                      = "/run/determined/train/model"
-	rootDir                        = "/"
-	passwdPath                     = "/run/determined/etc/passwd"
-	shadowPath                     = "/run/determined/etc/shadow"
-	groupPath                      = "/run/determined/etc/group"
-	certPath                       = "/run/determined/etc/ssl/master.crt"
-	DtrainSSHPortBase              = 12350
+	DefaultWorkDir    = "/run/determined/workdir"
+	userPythonBaseDir = "/run/determined/pythonuserbase"
+	runDir            = "/run/determined"
+	infoDir           = "/run/determined/info"
+	trainDir          = "/run/determined/train"
+	modelCopy         = "/run/determined/train/model"
+	rootDir           = "/"
+	passwdPath        = "/run/determined/etc/passwd"
+	shadowPath        = "/run/determined/etc/shadow"
+	groupPath         = "/run/determined/etc/group"
+	certPath          = "/run/determined/etc/ssl/master.crt"
+	// DtrainSSHPortBase is starting range for Dtrain ports.
+	DtrainSSHPortBase = 12350
+	// InterTrainProcessCommPort1Base is starting range for intertraincomm1 ports.
 	InterTrainProcessCommPort1Base = 12360
+	// InterTrainProcessCommPort2Base is starting range for intertraincomm2 ports.
 	InterTrainProcessCommPort2Base = 12365
-	C10DPortBase                   = 29400
-	DTrainSSHPort                  = "DTRAIN_SSH_PORT"
-	InterTrainProcessCommPort1     = "INTER_TRAIN_PROCESS_COMM_PORT_1"
-	InterTrainProcessCommPort2     = "INTER_TRAIN_PROCESS_COMM_PORT_2"
-	C10DPort                       = "C10D_PORT"
+	// C10DPortBase is starting range for c10D ports.
+	C10DPortBase = 29400
+	// DTrainSSHPort is the name of a port.
+	DTrainSSHPort = "DTRAIN_SSH_PORT"
+	// InterTrainProcessCommPort1 is the name of a port.
+	InterTrainProcessCommPort1 = "INTER_TRAIN_PROCESS_COMM_PORT_1"
+	// InterTrainProcessCommPort2 is the name of a port.
+	InterTrainProcessCommPort2 = "INTER_TRAIN_PROCESS_COMM_PORT_2"
+	// C10DPort is the name of a port.
+	C10DPort = "C10D_PORT"
 )
 
 // TaskSpec defines the spec of a task.

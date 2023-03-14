@@ -424,10 +424,9 @@ func (a *Allocation) getPorts(spec tasks.TaskSpec, ctx *actor.Context) (map[stri
 		port, err := portregistry.GetPort(base)
 		if err != nil {
 			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
-		} else {
-			ports[portName] = port
-			ctx.Log().Debugf("%v port : %v", portName, port)
 		}
+		ports[portName] = port
+		ctx.Log().Debugf("%v port : %v", portName, port)
 	}
 
 	return ports, nil
