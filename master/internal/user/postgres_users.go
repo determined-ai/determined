@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"database/sql"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -43,7 +42,6 @@ WHERE u.id = ?`
 // UserByUsername looks up a user by name in the database.
 func UserByUsername(username string) (*model.User, error) {
 	var user model.User
-	username = strings.ToLower(username)
 	err := db.Bun().NewSelect().Model(&user).
 		Where("username = ?", username).Scan(context.Background())
 	if err != nil {
