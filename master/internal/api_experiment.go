@@ -1058,9 +1058,10 @@ func (a *apiServer) ArchiveExperiments(
 			"ERROR",
 		}))
 
-	if query, err = expauth.AuthZProvider.Get().
+	query, err = expauth.AuthZProvider.Get().
 		FilterExperimentsUpdateQuery(ctx, *curUser, query,
-			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}); err != nil {
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
+	if err != nil {
 		return nil, err
 	}
 
@@ -1120,9 +1121,10 @@ func (a *apiServer) UnarchiveExperiments(
 			"ERROR",
 		}))
 
-	if query, err = expauth.AuthZProvider.Get().
+	query, err = expauth.AuthZProvider.Get().
 		FilterExperimentsUpdateQuery(ctx, *curUser, query,
-			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}); err != nil {
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
+	if err != nil {
 		return nil, err
 	}
 
