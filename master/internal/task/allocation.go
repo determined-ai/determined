@@ -28,13 +28,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-var (
-	dtrainSSHPortBase              = 12350
-	interTrainProcessCommPort1Base = 12360
-	interTrainProcessCommPort2Base = 12365
-	c10DPortBase                   = 29400
-)
-
 type (
 	// Allocation encapsulates all the state of a single allocation.
 	Allocation struct {
@@ -425,29 +418,19 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	}
 }
 
-func (a *Allocation) getPorts(ctx *actor.Context) (int, int, int, int, error) {
-	dTrainport, err := portregistry.GetPort(dtrainSSHPortBase)
-	if err != nil {
-		return -1, -1, -1, -1, fmt.Errorf("getting dtrain port from the registry for an allocation")
-	}
-	ctx.Log().Debugf(" dTrainPort : %v", dTrainport)
-
-	intertrainport1, err := portregistry.GetPort(interTrainProcessCommPort1Base)
-	if err != nil {
-		return -1, -1, -1, -1, fmt.Errorf("getting intertrain port1 from the registry for an allocation")
-	}
-
-	intertrainport2, err := portregistry.GetPort(interTrainProcessCommPort2Base)
-	if err != nil {
-		return -1, -1, -1, -1, fmt.Errorf("getting intertrain port2 from the registry for an allocation")
+func (a *Allocation) getPorts(spec tasks.TaskSpec, ctx *actor.Context) (map[string]int, error) {
+	ports := make(map[string]int)
+	for portName, base := range spec.ReqPortsBaseMap {
+		port, err := portregistry.GetPort(base)
+		if err != nil {
+			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
+		} else {
+			ports[portName] = port
+			ctx.Log().Debugf("%v port : %v", portName, port)
+		}
 	}
 
-	c10Dport, err := portregistry.GetPort(c10DPortBase)
-	if err != nil {
-		return -1, -1, -1, -1, fmt.Errorf("getting c10D port from the registry for an allocation")
-	}
-
-	return dTrainport, intertrainport1, intertrainport2, c10Dport, nil
+	return ports, nil
 }
 
 // ResourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
@@ -528,15 +511,12 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
-		dTrainPort, intercommTrainport1, intercommTrainport2, c10DPort, err := a.getPorts(ctx)
+		ports, err := a.getPorts(spec, ctx)
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
 
-		a.model.Ports["dtrain_port"] = dTrainPort
-		a.model.Ports["inter_train_process_comm_port1"] = intercommTrainport1
-		a.model.Ports["inter_train_process_comm_port2"] = intercommTrainport2
-		a.model.Ports["c10d_port"] = c10DPort
+		a.model.Ports = ports
 
 		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {

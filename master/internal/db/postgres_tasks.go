@@ -141,8 +141,8 @@ WHERE a.allocation_id = $1;
 // AllocationByID retrieves an allocation by its ID.
 func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
 	var a model.Allocation
-	if err := Bun().NewRaw(`
-	SELECT * from allocations where allocation_id = ?`, aID).Scan(context.TODO(), &a); err != nil {
+	if err := Bun().NewSelect().Model(&a).Where("allocation_id = ?", aID).
+		Scan(context.TODO()); err != nil {
 		return nil, err
 	}
 	return &a, nil
