@@ -23,7 +23,7 @@ import css from './useModalExperimentMove.module.scss';
 
 type FormInputs = {
   projectId?: number;
-  workspaceId: number;
+  workspaceId?: number;
 };
 
 interface Props {
@@ -72,7 +72,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
-  const projects = useWorkspaceProjects(workspaceId);
+  const projects = useWorkspaceProjects(workspaceId ?? 1);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
@@ -85,7 +85,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [fetchWorkspaces]);
 
   useEffect(() => {
-    ensureProjectsFetched(workspaceId);
+    if (workspaceId !== undefined) ensureProjectsFetched(workspaceId);
   }, [workspaceId, ensureProjectsFetched]);
 
   const modalContent = useMemo(() => {

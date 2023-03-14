@@ -4,34 +4,14 @@ import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
-import { StateOfUnion } from 'themes';
 
-import { BadgeType } from './Badge';
 import BadgeTag, { Props } from './BadgeTag';
 
 const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
 
-jest.mock('antd', () => {
-  const antd = jest.requireActual('antd');
-
-  // We need to mock Tooltip in order to set mouseEnterDelay to 0.
-  const Tooltip = (props: {
-    label?: React.ReactNode;
-    preLabel?: React.ReactNode;
-    state?: StateOfUnion | undefined;
-    type?: BadgeType | undefined;
-  }) => {
-    return <antd.Tooltip {...props} mouseEnterDelay={0} />;
-  };
-
-  return {
-    __esModule: true,
-    ...antd,
-    Tooltip,
-  };
-});
+vi.mock('components/kit/Tooltip');
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
