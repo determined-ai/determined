@@ -4,7 +4,6 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import UserBadge from 'components/kit/UserBadge';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -19,6 +18,7 @@ import {
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';

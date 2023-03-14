@@ -12,6 +12,7 @@ from determined.core._train import (
 )
 from determined.core._searcher import (
     DummySearcherContext,
+    DummySearcherOperation,
     SearcherMode,
     SearcherContext,
     SearcherOperation,

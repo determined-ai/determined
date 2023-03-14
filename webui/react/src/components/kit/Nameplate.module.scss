@@ -2,14 +2,15 @@
   align-items: center;
   display: flex;
 
-  .names {
+  .text {
     display: flex;
     flex-direction: column;
-    margin-left: 12px;
+    margin-left: 16px;
     max-width: 60px;
 
-    .displayName {
+    .alias {
       font-size: larger;
+      white-space: nowrap;
     }
   }
 }

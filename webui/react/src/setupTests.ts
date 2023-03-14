@@ -7,6 +7,7 @@
 import '@testing-library/jest-dom/extend-expect';
 import 'micro-observables/batchingForReactDom';
 import 'shared/prototypes';
+import 'whatwg-fetch';
 
 import Schema from 'async-validator';
 
@@ -20,13 +21,13 @@ Schema.warning = noOp;
 
 Object.defineProperty(window, 'matchMedia', {
   value: () => ({
-    addEventListener: jest.fn(),
-    addListener: jest.fn(), // deprecated
-    dispatchEvent: jest.fn(),
+    addEventListener: vi.fn(),
+    addListener: vi.fn(), // deprecated
+    dispatchEvent: vi.fn(),
     matches: false,
     onchange: null,
-    removeEventListener: jest.fn(),
-    removeListener: jest.fn(), // deprecated
+    removeEventListener: vi.fn(),
+    removeListener: vi.fn(), // deprecated
   }),
 });
 
