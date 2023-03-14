@@ -6,7 +6,6 @@ import { Location, unstable_useBlocker as useBlocker, useLocation } from 'react-
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
-import router from 'router';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

@@ -1,6 +1,7 @@
 import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
+import router from 'router';
 import { paths } from 'routes/utils';
 import {
   DetError,
@@ -75,7 +76,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
-      throw e;
+      router.navigate(paths.logout());
     }
   }
 
