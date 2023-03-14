@@ -7,7 +7,8 @@ connect to Determined's db and repliacte various metrics for perf testing purpos
 import psycopg  # pip install "psycopg[binary]"
 import os
 import contextlib
-from typing import Generator, Set
+from typing import Generator, Set, Union
+from psycopg.abc import Query
 
 from psycopg.sql import SQL, Identifier, Literal
 
@@ -37,6 +38,19 @@ TODO:
 - we'd probably want to only pick trials that belong to multi trial experiments
 """
 
+# a class extending psycopg.Cursor that adds logging around each query execute.
+class LoggingCursor(psycopg.Cursor):
+    def execute(self, query: Union[Query, str], *args, **kwargs) -> None:
+        print(
+            f"""====QUERY START====
+{query.strip() if isinstance(query, str) else query}
+====QUERY END===="""
+        )
+        start = time.time()
+        super().execute(query, *args, **kwargs)
+        end = time.time()
+        print("query took (ms):", (end - start) * 1000)
+
 
 @contextlib.contextmanager
 def db_cursor() -> Generator[psycopg.Cursor, None, None]:
@@ -47,6 +61,7 @@ def db_cursor() -> Generator[psycopg.Cursor, None, None]:
         host=DB_HOST,
         port=DB_PORT,
     )
+    conn.cursor_factory = LoggingCursor
     yield conn.cursor()
     conn.close()
 
@@ -122,7 +137,7 @@ JOIN raw_validations rv ON rv.trial_id = %s;
         cur.execute("COMMIT")
 
 
-def copy_trials(multiplier=1, suffix="") -> None:
+def copy_trials(multiplier=1, suffix="") -> dict:
     table = "trials"
     assert multiplier == 1  # disable this for now
     cols = get_table_col_names(table) - {"id"}
@@ -156,8 +171,8 @@ FROM {table}
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
 SELECT {prefixed_steps_cols}, trials.id
 FROM raw_steps rs
-INNER JOIN trials ON trials.og_id = rs.trial_id   -- also limits the steps to target trials. CHECK: which join type?
-WHERE trials.og_id IS NOT NULL;
+INNER JOIN trials ON trials.og_id = rs.trial_id
+WHERE trials.og_id IS NOT NULL; -- all trials with og_id are target trials.
 """
         cur.execute(query)  # type: ignore
         replicated_steps = cur.rowcount
@@ -182,11 +197,12 @@ WHERE trials.og_id IS NOT NULL;
 ALTER TABLE {table} DROP COLUMN og_id;
 """
         cur.execute(query)  # type: ignore
-        print(
-            f"added rows: {replicated_trials} trials, {replicated_steps} steps, {replicated_validations} validations"
-        )
-
         cur.execute("COMMIT")
+        return {
+            "trials": replicated_trials,
+            "steps": replicated_steps,
+            "validations": replicated_validations,
+        }
 
 
 def copy_trials2() -> None:
@@ -251,9 +267,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start = time.time()
 
-    copy_trials(
+    row_counts = copy_trials(
         suffix=args.suffix,
     )
+    # copy_trial(120450)
 
     end = time.time()
-    print("it took time (ms):", (end - start) * 1000)
+    print("rows affected:", row_counts)
+    print("overall time (ms):", (end - start) * 1000)
