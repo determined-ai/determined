@@ -23,7 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-// TODO(singularity): Get coverage to 70-80%.
+// TODO(DET-9077): Get coverage to 70-80%.
 func TestSingularity(t *testing.T) {
 	logrus.SetLevel(logrus.TraceLevel)
 	ctx, cancel := context.WithCancel(context.Background())

@@ -30,7 +30,7 @@ type (
 )
 
 // NewLogEvent initializes a new Event that is of kind 'LogEvent'.
-// TODO(singularity): Logs need agent IDs.
+// TODO(DET-9076): Logs need agent IDs.
 func NewLogEvent(level, message string) Event {
 	return NewTypedLogEvent(level, message, stdcopy.Stdout)
 }
