@@ -61,10 +61,10 @@ export const getUserOrGroupWithRoleInfo = (
   const groups: GroupWithRoleInfo[] = groupsAndUsers
     .flatMap((data) => data?.[0] ?? [])
     .map((d) => {
-      const groupnfo = groupsAssignedDirectly.find((g) => g.groupId === d.groupId);
+      const group = groupsAssignedDirectly.find((g) => g.groupId === d.groupId);
       const groupWithRole: GroupWithRoleInfo = {
-        groupId: groupnfo?.groupId,
-        groupName: groupnfo?.name,
+        groupId: group?.groupId,
+        groupName: group?.name,
         roleAssignment: d.roleAssignment,
       };
       return groupWithRole;
@@ -73,14 +73,14 @@ export const getUserOrGroupWithRoleInfo = (
   const users: UserWithRoleInfo[] = groupsAndUsers
     .flatMap((data) => data?.[1] ?? [])
     .map((d) => {
-      const userInfo = usersAssignedDirectly.find((u) => u.id === d.userId);
-      const groupWithRole: UserWithRoleInfo = {
-        displayName: userInfo?.displayName,
+      const user = usersAssignedDirectly.find((u) => u.id === d.userId);
+      const userWithRole: UserWithRoleInfo = {
+        displayName: user?.displayName,
         roleAssignment: d.roleAssignment,
-        userId: userInfo?.id ?? -1,
-        username: userInfo?.username ?? '',
+        userId: user?.id ?? -1,
+        username: user?.username ?? '',
       };
-      return groupWithRole;
+      return userWithRole;
     })
     .filter((d) => d.userId !== -1);
   return [...groups, ...users];
