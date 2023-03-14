@@ -942,17 +942,9 @@ func (a *apiServer) PauseExperiments(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-
-	addr := experimentsAddr.Child(req.Id)
-	err = a.ask(addr, req, &resp)
-	if status.Code(err) == codes.NotFound {
-		return &apiv1.CancelExperimentResponse{}, nil
-	}
-	return resp, err
+	_, err = a.CancelExperiments(ctx,
+		&apiv1.CancelExperimentsRequest{ExperimentIds: []int32{req.Id}})
+	return &apiv1.CancelExperimentResponse{}, err
 }
 
 func (a *apiServer) CancelExperiments(
@@ -987,17 +979,8 @@ func (a *apiServer) CancelExperiments(
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-
-	addr := experimentsAddr.Child(req.Id)
-	err = a.ask(addr, req, &resp)
-	if status.Code(err) == codes.NotFound {
-		return &apiv1.KillExperimentResponse{}, nil
-	}
-	return resp, err
+	_, err = a.KillExperiments(ctx, &apiv1.KillExperimentsRequest{ExperimentIds: []int32{req.Id}})
+	return &apiv1.KillExperimentResponse{}, err
 }
 
 func (a *apiServer) KillExperiments(
