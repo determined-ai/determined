@@ -114,3 +114,6 @@ $OPT_PARTITIONOVERRIDES
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
         root: tools/build
+
+        observability:
+          enable_prometheus: true

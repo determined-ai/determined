@@ -1529,8 +1529,10 @@ func (m *dispatcherResourceManager) resolveSlotType(
 
 // retrieves the launcher version and log error if not meeting minimum required version.
 func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Context) {
+	start := time.Now()
 	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).
 		Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("get_version").Observe(time.Since(start).Seconds())
 	if err == nil {
 		if checkMinimumLauncherVersion(resp) {
 			if !m.launcherVersionIsOK {
@@ -1539,7 +1541,10 @@ func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Contex
 					resp, m.rmConfig.LauncherHost, m.rmConfig.LauncherPort)
 			}
 		}
+	} else {
+		dispatcherErrors.WithLabelValues("get_version").Inc()
 	}
+
 	if !m.launcherVersionIsOK {
 		ctx.Log().Errorf("Launcher version %s does not meet the required minimum. "+
 			"Upgrade to hpe-hpc-launcher version %s",
@@ -1581,12 +1586,15 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	// Launch the HPC Resources manifest. Launch() method will ensure
 	// the manifest is in the RUNNING state on successful completion.
+	start := time.Now()
 	dispatchInfo, r, err := m.apiClient.LaunchApi.
 		Launch(m.authContext(ctx)).
 		Manifest(*m.hpcResourcesManifest).
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
 	if err != nil {
+		dispatcherErrors.WithLabelValues("launch").Inc()
 		m.handleServiceQueryError(r, ctx, err)
 		return
 	}
@@ -1617,10 +1625,13 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	// to get the partition info and does not create a job, so no job ID is ever
 	// generated.  Eventually it will timeout waiting and return, but that's too
 	// long of a delay for us to deal with.
+	start = time.Now()
 	resp, _, err := m.apiClient.MonitoringApi.
 		LoadEnvironmentLog(m.authContext(ctx), owner, dispatchID, logFileName).
 		Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("load_log").Observe(time.Since(start).Seconds())
 	if err != nil {
+		dispatcherErrors.WithLabelValues("load_log").Inc()
 		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details. response: {%v}", resp)
 		return
 	}
@@ -1766,12 +1777,16 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 
 	var err error
 	var response *http.Response
-	if _, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
-		owner, dispatchID).Force(true).Execute(); err != nil { //nolint:bodyclose
+	start := time.Now()
+	_, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
+		owner, dispatchID).Force(true).Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("terminate").Observe(time.Since(start).Seconds())
+	if err != nil {
 		if response == nil || response.StatusCode != 404 {
 			ctx.Log().WithError(err).Errorf("Failed to terminate job with Dispatch ID %s, response: {%v}",
 				dispatchID, response)
 			// We failed to delete, and not 404/notfound so leave in DB.
+			dispatcherErrors.WithLabelValues("terminate").Inc()
 			return false
 		}
 	}
@@ -1803,12 +1818,15 @@ func (m *dispatcherResourceManager) removeDispatchEnvironment(
 	ctx *actor.Context, owner string, dispatchID string,
 ) {
 	ctx.Log().Debugf("Deleting environment with DispatchID %s", dispatchID)
-
-	if response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
-		owner, dispatchID).Execute(); err != nil { //nolint:bodyclose
+	start := time.Now()
+	response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
+		owner, dispatchID).Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("delete_env").Observe(time.Since(start).Seconds())
+	if err != nil {
 		if response == nil || response.StatusCode != 404 {
 			ctx.Log().WithError(err).Errorf("Failed to remove environment for Dispatch ID %s, response:{%v}",
 				dispatchID, response)
+			dispatcherErrors.WithLabelValues("delete_env").Inc()
 			// We failed to delete, and not 404/notfound so leave in DB for later retry
 			return
 		}
@@ -1842,12 +1860,15 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	 * Of course, that user must be known to the cluster as either a local Linux user
 	 * (e.g. "/etc/passwd"), LDAP, or some other authentication mechanism.
 	 */
+	start := time.Now()
 	dispatchInfo, response, err := m.apiClient.LaunchApi.
 		LaunchAsync(m.authContext(ctx)).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
+	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
 	if err != nil {
+		dispatcherErrors.WithLabelValues("launch").Inc()
 		httpStatus := ""
 		if response != nil {
 			// So we can show the HTTP status code, if available.
