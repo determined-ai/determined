@@ -6,6 +6,10 @@ import (
 	"math/rand"
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/shopspring/decimal"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
@@ -19,12 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc/metadata"
 )
 
 func makeMetrics() *structpb.Struct {
@@ -44,8 +43,7 @@ func makeMetrics() *structpb.Struct {
 	}
 }
 
-func reportMetrics(api *apiServer, ctx context.Context, trialID int32) error {
-
+func reportMetrics(ctx context.Context, api *apiServer, trialID int32) error {
 	trainingbBatchMetrics := []*structpb.Struct{}
 	const stepSize = 500
 	for j := 0; j < stepSize; j++ {
@@ -65,7 +63,6 @@ func reportMetrics(api *apiServer, ctx context.Context, trialID int32) error {
 		&apiv1.ReportTrialTrainingMetricsRequest{
 			TrainingMetrics: &trainingMetrics,
 		})
-
 	if err != nil {
 		return err
 	}
@@ -81,7 +78,7 @@ func reportMetrics(api *apiServer, ctx context.Context, trialID int32) error {
 		StepsCompleted: stepSize,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics:   makeMetrics(),
-			BatchMetrics: trainingbBatchMetrics,
+			BatchMetrics: validationBatchMetrics,
 		},
 	}
 
@@ -97,27 +94,7 @@ func reportMetrics(api *apiServer, ctx context.Context, trialID int32) error {
 	return nil
 }
 
-func waitForExperimentToComplete(api *apiServer, ctx context.Context, expId int32, maxWaitSecs int) (bool, experimentv1.State) {
-	targetState := experimentv1.State_STATE_COMPLETED
-	var expState experimentv1.State
-	for i := 0; i < maxWaitSecs; i++ {
-		expReq := apiv1.GetExperimentRequest{
-			ExperimentId: expId,
-		}
-		resp, err := api.GetExperiment(ctx, &expReq)
-		log.Debugf("Get experiment: %v", err)
-		expState = resp.Experiment.State
-		if expState == targetState {
-			return true, expState
-		} else if expState == experimentv1.State_STATE_CANCELED ||
-			expState == experimentv1.State_STATE_ERROR {
-			return false, expState
-		}
-	}
-
-	return false, expState
-}
-
+// PopulateExpTrialsMetrics adds metrics for a trial and exp to db.
 func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error {
 	system := actor.NewSystem("mock")
 	ref, _ := system.ActorOf(sproto.AgentRMAddr, actor.ActorFunc(
@@ -157,22 +134,22 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 	// create exp and config
 	maxLength := expconf.NewLengthInBatches(100)
 	maxRestarts := 0
-	activeConfig := expconf.ExperimentConfig{
-		RawSearcher: &expconf.SearcherConfig{
+	activeConfig := expconf.ExperimentConfig{ //nolint:exhaustivestruct
+		RawSearcher: &expconf.SearcherConfig{ //nolint:exhaustivestruct
 			RawMetric: ptrs.Ptr("loss"),
-			RawSingleConfig: &expconf.SingleConfig{
+			RawSingleConfig: &expconf.SingleConfig{ //nolint:exhaustivestruct
 				RawMaxLength: &maxLength,
 			},
 		},
 		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{},
-		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
-			RawSharedFSConfig: &expconf.SharedFSConfig{
+		RawCheckpointStorage: &expconf.CheckpointStorageConfig{ //nolint:exhaustivestruct
+			RawSharedFSConfig: &expconf.SharedFSConfig{ //nolint:exhaustivestruct
 				RawHostPath: ptrs.Ptr("/"),
 			},
 		},
 		RawMaxRestarts: &maxRestarts,
-	}
+	} //nolint:exhaustivestruct
 	activeConfig = schemas.WithDefaults(activeConfig)
 	model.DefaultTaskContainerDefaults().MergeIntoExpConfig(&activeConfig)
 
@@ -209,7 +186,9 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	err = pgdb.AddTask(tIn)
+	if err = pgdb.AddTask(tIn); err != nil {
+		return err
+	}
 
 	// create trial
 
@@ -220,7 +199,9 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
 	}
-	err = pgdb.AddTrial(&tr)
+	if err = pgdb.AddTrial(&tr); err != nil {
+		return err
+	}
 
-	return reportMetrics(api, ctx, int32(tr.ID)) // single searcher so there's only one trial
+	return reportMetrics(ctx, api, int32(tr.ID)) // single searcher so there's only one trial
 }
