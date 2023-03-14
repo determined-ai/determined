@@ -781,9 +781,12 @@ def list_trials(args: Namespace) -> None:
 
 @authentication.required
 def pause(args: Namespace) -> None:
-    bindings.post_PauseExperiment(cli.setup_session(args), id=args.experiment_id)
-    print(f"Paused experiment {args.experiment_id}")
-
+    body = bindings.v1PauseExperimentsRequest(experimentIds=[args.experiment_id])
+    resp = bindings.post_PauseExperiments(cli.setup_session(args), body=body)
+    if args.experiment_id in resp.experimentIds:
+        print(f"Paused experiment {args.experiment_id}")
+    else:
+        print("Error in pausing")
 
 @authentication.required
 def set_description(args: Namespace) -> None:

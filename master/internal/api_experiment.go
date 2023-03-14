@@ -878,17 +878,28 @@ func (a *apiServer) ActivateExperiments(
 		return nil, err
 	}
 
-	resp := &apiv1.ActivateExperimentsResponse{ExperimentIds: []int32{}}
-	mockResp := &apiv1.ActivateExperimentResponse{}
+	refs := []*actor.Ref{}
 	for _, expID := range expIDs {
 		addr := experimentsAddr.Child(expID)
-		err = a.ask(addr, &apiv1.ActivateExperimentRequest{Id: expID}, mockResp)
-		if err == nil {
-			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		ref := a.m.system.Get(addr)
+		if ref != nil {
+			refs = append(refs, ref)
 		}
 	}
 
-	return resp, nil
+	// id in the request message doesn't really have to contain experiment id.
+	resps := a.m.system.AskAll(&apiv1.ActivateExperimentRequest{}, refs...)
+	// process resps
+	for msg := range resps {
+		switch msg.(type) {
+		case error:
+			logrus.Infof("failed to activate experiment")
+		default:
+			logrus.Infof("succeeded to activate experiment")
+		}
+	}
+
+	return &apiv1.ActivateExperimentsResponse{ ExperimentIds: expIDs }, nil
 }
 
 func (a *apiServer) PauseExperiment(
@@ -926,17 +937,26 @@ func (a *apiServer) PauseExperiments(
 		return nil, err
 	}
 
-	resp := &apiv1.PauseExperimentsResponse{ExperimentIds: []int32{}}
-	mockResp := &apiv1.PauseExperimentResponse{}
+	refs := []*actor.Ref{}
 	for _, expID := range expIDs {
 		addr := experimentsAddr.Child(expID)
-		err = a.ask(addr, &apiv1.PauseExperimentRequest{Id: expID}, mockResp)
-		if err == nil {
-			resp.ExperimentIds = append(resp.ExperimentIds, expID)
+		ref := a.m.system.Get(addr)
+		if ref != nil {
+			refs = append(refs, ref)
 		}
 	}
 
-	return resp, nil
+	resps := a.m.system.AskAll(&apiv1.PauseExperimentRequest{}, refs...)
+	for msg := range resps {
+		switch msg.(type) {
+		case error:
+			return nil, msg.(error)
+		default:
+			logrus.Infof("succeeded to pause experiment")
+		}
+	}
+
+	return &apiv1.PauseExperimentsResponse{ ExperimentIds: expIDs }, nil
 }
 
 func (a *apiServer) CancelExperiment(
