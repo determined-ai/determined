@@ -22,7 +22,7 @@ type ContainerRuntime interface {
 
 	PullImage(ctx context.Context, req docker.PullImage, p events.Publisher[docker.Event]) error
 
-	// TODO(singularity): Refactor Create and Run to not be separate calls.
+	// TODO(DET-9075): Refactor Create and Run to not be separate calls.
 	CreateContainer(
 		ctx context.Context,
 		id cproto.ID,
@@ -30,7 +30,7 @@ type ContainerRuntime interface {
 		p events.Publisher[docker.Event],
 	) (string, error)
 
-	// TODO(singularity): Make a custom return type rather than just reusing the Docker type.
+	// TODO(DET-9075): Make a custom return type rather than just reusing the Docker type.
 	RunContainer(
 		ctx context.Context,
 		waitCtx context.Context,

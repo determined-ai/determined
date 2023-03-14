@@ -43,6 +43,7 @@ import (
 var singularityWrapperEntrypoint = path.Join(tasks.RunDir, tasks.SingularityEntrypointWrapperScript)
 
 const (
+	// TODO(DET-9111): Parameterize this by agent ID.
 	agentTmp         = "/tmp/determined/agent"
 	hostNetworking   = "host"
 	bridgeNetworking = "bridge"
@@ -115,23 +116,25 @@ func (s *SingularityClient) PullImage(
 		}
 	}()
 
-	uri, err := url.Parse(req.Name)
+	image := s.canonicalizeImage(req.Name)
+
+	uri, err := url.Parse(image)
 	if err != nil || uri.Scheme == "" {
 		if err = p.Publish(ctx, docker.NewLogEvent(
 			model.LogLevelInfo,
-			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", req.Name),
+			fmt.Sprintf("image %s isn't a pullable URI; skipping pull", image),
 		)); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	// TODO(singularity): Support registry auth.
+	// TODO(DET-9078): Support registry auth. Investigate other auth mechanisms with singularity.
 	args := []string{"pull"}
 	if req.ForcePull {
 		args = append(args, "--force")
 	}
-	args = append(args, req.Name)
+	args = append(args, image)
 
 	if err = s.pprintSingularityCommand(ctx, args, p); err != nil {
 		return err
@@ -176,7 +179,7 @@ func (s *SingularityClient) PullImage(
 	}
 
 	if err = cmd.Wait(); err != nil && !ignoreErrors {
-		return fmt.Errorf("running pull command: %w", err)
+		return fmt.Errorf("pulling %s: %w", image, err)
 	}
 	return nil
 }
@@ -254,6 +257,7 @@ func (s *SingularityClient) RunContainer(
 	args = append(args, "--env-file", envFilePath)
 
 	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_NO_FLUENT=true")
+	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
 
 	var b64EnvVars []string
 	for _, env := range req.ContainerConfig.Env {
@@ -366,7 +370,7 @@ func (s *SingularityClient) RunContainer(
 	}
 
 	for _, m := range req.HostConfig.Mounts {
-		// TODO(singularity): Investigate handling these options.
+		// TODO(DET-9079): Investigate handling these options.
 		if m.ReadOnly {
 			if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 				"mount %s:%s was requested as readonly but singularity does not support this; "+
@@ -398,9 +402,9 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	// TODO(singularity): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
+	// TODO(DET-9075): Un-dockerize the RunContainer API so we can know to pass `--rocm` without
 	// regexing on devices.
-	// TODO(singularity): Test this on ROCM devices.
+	// TODO(DET-9080): Test this on ROCM devices.
 	rocmDevice := regexp.MustCompile("/dev/dri/by-path/pci-.*-card")
 	for _, d := range req.HostConfig.Devices {
 		if rocmDevice.MatchString(d.PathOnHost) {
@@ -417,12 +421,12 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 	if len(cudaVisibleDevices) > 0 {
-		// TODO(singularity): We need to move to --nvccli --nv, because --nv does not provide
+		// TODO(DET-9081): We need to move to --nvccli --nv, because --nv does not provide
 		// sufficient isolation (e.g., nvidia-smi see all GPUs on the machine, not just ours).
 		args = append(args, "--nv")
 	}
 
-	// TODO(singularity): It is unlikely we can handle this, but we should do better at documenting.
+	// TODO(DET-9079): It is unlikely we can handle this, but we should do better at documenting.
 	if len(req.HostConfig.CapAdd) != 0 || len(req.HostConfig.CapDrop) != 0 {
 		if err = p.Publish(ctx, docker.NewLogEvent(model.LogLevelWarning, fmt.Sprintf(
 			"cap add or drop was requested but singularity does not support this; "+
@@ -433,7 +437,8 @@ func (s *SingularityClient) RunContainer(
 		}
 	}
 
-	args = append(args, req.ContainerConfig.Image)
+	image := s.canonicalizeImage(req.ContainerConfig.Image)
+	args = append(args, image)
 	args = append(args, singularityWrapperEntrypoint)
 	args = append(args, req.ContainerConfig.Cmd...)
 
@@ -460,9 +465,10 @@ func (s *SingularityClient) RunContainer(
 		fmt.Sprintf("APPTAINERENV_CUDA_VISIBLE_DEVICES=%s", cudaVisibleDevicesVar),
 	)
 
-	// TODO(singularity): without this, --nv doesn't work right. Not entirely clear why.
-	s.log.Error("PATH: ", os.Getenv("PATH"))
-
+	// HACK(singularity): without this, --nv doesn't work right. If the singularity run command
+	// cannot find nvidia-smi, the --nv fails to make it available inside the container, e.g.,
+	// env -i /usr/bin/singularity run --nv \\
+	//   docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0 nvidia-smi
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 
 	if err := cmd.Start(); err != nil {
@@ -489,7 +495,7 @@ func (s *SingularityClient) RunContainer(
 					Pid:       cont.Proc.Pid,
 					StartedAt: at,
 				},
-				Image: req.ContainerConfig.Image,
+				Image: image,
 				HostConfig: &dcontainer.HostConfig{
 					NetworkMode: req.HostConfig.NetworkMode,
 				},
@@ -503,7 +509,7 @@ func (s *SingularityClient) RunContainer(
 }
 
 // ReattachContainer implements container.ContainerRuntime.
-// TODO(singularity): Ensure orphaned processes are cleaned up on reattach.
+// TODO(DET-9082): Ensure orphaned processes are cleaned up on reattach.
 func (s *SingularityClient) ReattachContainer(
 	ctx context.Context,
 	reattachID cproto.ID,
@@ -679,12 +685,11 @@ func (s *SingularityClient) pprintSingularityCommand(
 	return nil
 }
 
-// TODO(singularity): should we do this conversion for the user, or no? No for now.
 func (s *SingularityClient) canonicalizeImage(image string) string {
-	_, err := url.Parse(image)
+	url, err := url.Parse(image)
 	isURIForm := err == nil
 	isFSForm := path.IsAbs(image)
-	if isFSForm || isURIForm {
+	if isFSForm || (isURIForm && url.Scheme != "") {
 		return image
 	}
 	return fmt.Sprintf("docker://%s", image)

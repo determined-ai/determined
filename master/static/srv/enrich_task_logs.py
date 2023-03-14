@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import distutils.util
 import json
 import os
 import queue
@@ -49,15 +50,18 @@ class LogCollector(threading.Thread):
         self,
         ship_queue: queue.Queue,
         task_logging_metadata: Dict[str, Any],
+        emit_stdout_logs: bool,
     ):
         self.ship_queue = ship_queue
         self.task_logging_metadata = task_logging_metadata
+        self.emit_stdout_logs = emit_stdout_logs
         super().__init__()
 
     def run(self) -> None:
         try:
             for line in sys.stdin:
-                print(line, flush=True, end="")
+                if self.emit_stdout_logs:
+                    print(line, flush=True, end="")
                 try:
                     parsed_metadata = {}
 
@@ -147,9 +151,10 @@ def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
 def main(
     master_url: str,
     task_logging_metadata: Dict[str, Any],
+    emit_stdout_logs: bool,
 ) -> None:
     ship_queue = queue.Queue(maxsize=SHIP_QUEUE_MAX_SIZE)
-    collector = LogCollector(ship_queue, task_logging_metadata)
+    collector = LogCollector(ship_queue, task_logging_metadata, emit_stdout_logs)
     shipper = LogShipper(ship_queue, master_url)
 
     collector.start()
@@ -182,5 +187,8 @@ if __name__ == "__main__":
         task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
+    emit_stdout_logs = distutils.util.strtobool(
+        os.environ.get("DET_SHIPPER_EMIT_STDOUT_LOGS", "True"),
+    )
 
-    main(master_url, task_logging_metadata)
+    main(master_url, task_logging_metadata, emit_stdout_logs)

@@ -277,9 +277,9 @@ func Write(dst string, a Archive, p func(level, log string) error) error {
 	}
 
 	for _, i := range a {
-		// TODO(singularity): Do something better than this.
+		// TODO(DET-9072): Do something better than this.
 		if strconv.Itoa(i.UserID) != cu.Uid || strconv.Itoa(i.GroupID) != cu.Gid {
-			// TODO(singularity): Cannot import model levels due to import cycle.
+			// TODO(DET-9073): Cannot import model levels due to import cycle.
 			if err := p("WARNING", fmt.Sprintf(
 				"archive file %s has user %d:%d but agent can only write as %s:%s, writing anyway",
 				i.Path, i.UserID, i.GroupID, cu.Uid, cu.Gid,

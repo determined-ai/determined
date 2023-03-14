@@ -7,7 +7,7 @@ trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container 
 # Controls debug logging for this method
 DEBUG=0
 
-# TODO(singularity): Turn this only iff DET_DEBUG == true.
+# TODO(DET-9074): Turn this only iff DET_DEBUG == true.
 set -x
 
 # Clear all exported functions.  They are inherited into singularity containers
@@ -30,8 +30,8 @@ log() {
     echo -e "$*" >&2
 }
 
-for encoded_env_var_name in `echo $DET_B64_ENCODED_ENVVARS | tr "," "\n"`; do
-    decoded_env_var=`echo ${!encoded_env_var_name} | base64 --decode`
+for encoded_env_var_name in $(echo $DET_B64_ENCODED_ENVVARS | tr "," "\n"); do
+    decoded_env_var=$(echo ${!encoded_env_var_name} | base64 --decode)
     export ${encoded_env_var_name}="$decoded_env_var"
 done
 
