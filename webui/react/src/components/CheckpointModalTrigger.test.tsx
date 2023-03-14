@@ -13,7 +13,7 @@ import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getModels: () => {
     return Promise.resolve({ models: [] });
   },

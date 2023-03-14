@@ -3,18 +3,14 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { DeleteGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import useModalDeleteGroup, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './useModalDeleteGroup';
 
-const mockDeleteGroup = jest.fn();
-
-jest.mock('services/api', () => ({
-  deleteGroup: (params: DeleteGroupParams) => {
-    return mockDeleteGroup(params);
-  },
+vi.mock('services/api', () => ({
+  deleteGroup: vi.fn(),
 }));
 
 const OPEN_MODAL_TEXT = 'Open Modal';

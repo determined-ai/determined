@@ -11,17 +11,15 @@ import useModalExperimentCreate, { CreateExperimentType } from './useModalExperi
 const MODAL_TITLE = 'Fork';
 const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';
 
-const MonacoEditorMock: React.FC = () => <></>;
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
-jest.mock('components/MonacoEditor', () => ({
+vi.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => MonacoEditorMock,
+  default: () => <></>,
 }));
 
 const ModalTrigger: React.FC = () => {
