@@ -47,7 +47,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   const [settingsState] = useState(() => observable(Map<string, Settings>()));
 
   useEffect(() => {
-    if (!user?.id || !checked) return;
+    if (!checked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
@@ -80,7 +80,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, checked, settingsState, isLoading]);
+  }, [canceler, checked, settingsState, isLoading]);
 
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);

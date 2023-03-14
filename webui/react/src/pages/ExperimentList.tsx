@@ -120,11 +120,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -685,7 +680,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleActionComplete, user });
+    useModalExperimentMove({ onClose: handleActionComplete });
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
