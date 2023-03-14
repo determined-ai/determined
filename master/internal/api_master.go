@@ -39,7 +39,7 @@ func (a *apiServer) GetMaster(
 		Branding:              "determined",
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
 		Product:               product,
-		UserManagementEnabled: false,
+		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
 	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
