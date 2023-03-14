@@ -751,8 +751,8 @@ computed more frequently.
    (minimize).
 
 ``max_concurrent_trials``
-   The maximum number of trials that can be worked on simultaneously. The default value is ``0``, in
-   which case we will try to work on as many trials as possible.
+   The maximum number of trials that can be worked on simultaneously. The default value is ``16``.
+   When the value is ``0`` we will work on as many trials as possible.
 
 ``source_trial_id``
    If specified, the weights of *every* trial in the search will be initialized to the most recent
@@ -797,8 +797,8 @@ specified via the ``hyperparameters`` field. For more details see the
    (minimize).
 
 ``max_concurrent_trials``
-   The maximum number of trials that can be worked on simultaneously. The default value is ``0``, in
-   which case we will try to work on as many trials as possible.
+   The maximum number of trials that can be worked on simultaneously. The default value is ``16``.
+   When the value is ``0`` we will work on as many trials as possible.
 
 ``source_trial_id``
    If specified, the weights of this trial will be initialized to the most recent checkpoint of the
@@ -878,7 +878,7 @@ experiments with hundreds or thousands of trials.
    value.
 
 ``max_concurrent_trials``
-   The maximum number of trials that can be worked on simultaneously. The default value is ``0``,
+   The maximum number of trials that can be worked on simultaneously. The default value is ``16``,
    and we set reasonable values depending on ``max_trials`` and the number of rungs in the brackets.
    This is akin to controlling the degree of parallelism of the experiment. If this value is less
    than the number of brackets produced by the adaptive algorithm, it will be rounded up.
