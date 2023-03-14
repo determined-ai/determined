@@ -66,7 +66,7 @@ Parameters:
   ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of agents in the compute resource pool
-    Default: p2.8xlarge
+    Default: g4dn.metal
 
   InboundCIDRRange:
     Type: String

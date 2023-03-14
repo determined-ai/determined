@@ -67,7 +67,7 @@
 #        public_ip: true
 #        security_group_id: <security group id>
 #        subnet_id: <subnet id>
-#      instance_type: p3.8xlarge
+#      instance_type: g4dn.metal
 #      max_instances: 5
 
 ## Configure GCP dynamic agents. The `provider`, `boot_disk_source_image`,
@@ -91,7 +91,7 @@
 #        scopes: ["https://www.googleapis.com/auth/cloud-platform"]
 #      instance_type:
 #        machine_type: n1-standard-32
-#        gpu_type: nvidia-tesla-v100
+#        gpu_type: nvidia-tesla-t4
 #        gpu_num: 4
 #      max_instances: 5
 #      operation_timeout_period: 5m

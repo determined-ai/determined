@@ -136,8 +136,8 @@ GPU node group for workers. To fill in the template, insert the cluster name and
          k8s.io/cluster-autoscaler/node-template/label/nodegroup-role: cpu-worker
 
    nodeGroups:
-     - name: p2-8xlarge-us-west-2b
-       instanceType: p2.8xlarge # 8 GPUs per machine
+     - name: g4dn-metal-us-west-2b
+       instanceType: g4dn.metal # 8 GPUs per machine
        # Restrict to a single AZ to optimize data transfer between instances
        availabilityZones:
          - us-west-2b
@@ -152,17 +152,17 @@ GPU node group for workers. To fill in the template, insert the cluster name and
        ssh:
          allow: true # This will use ~/.ssh/id_rsa.pub as the default ssh key.
        labels:
-         nodegroup-type: p2.8xlarge-us-west-2b
+         nodegroup-type: g4dn.metal-us-west-2b
          nodegroup-role: gpu-worker
          # https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws#special-note-on-gpu-instances
-         k8s.amazonaws.com/accelerator: nvidia-tesla-k80
+         k8s.amazonaws.com/accelerator: nvidia-tesla-t4
        tags:
          k8s.io/cluster-autoscaler/enabled: "true"
          k8s.io/cluster-autoscaler/user-eks: "owned"
-         k8s.io/cluster-autoscaler/node-template/label/nodegroup-type: p2.8xlarge-us-west-2b
+         k8s.io/cluster-autoscaler/node-template/label/nodegroup-type: g4dn.metal-us-west-2b
          k8s.io/cluster-autoscaler/node-template/label/nodegroup-role: gpu-worker
 
-The cluster specified above allows users to run experiments on an untainted p2.8xlarge instances
+The cluster specified above allows users to run experiments on an untainted g4dn.metal instances
 with minor additions to their experiment configs. To create a cluster with tainted instances, see
 the `Tainting Nodes` section below.
 
@@ -310,7 +310,7 @@ necessary changes is shown here:
          serviceAccountName: checkpoint-storage-s3-bucket
          # Tolerations should only be included if nodes are tainted
          tolerations:
-           - key: <tainted-group-key, e.g p2.8xlarge-us-west-2b>
+           - key: <tainted-group-key, e.g g4dn.metal-us-west-2b>
              operator: "Equal"
              value: "true"
              effect: "NoSchedule"
@@ -383,18 +383,18 @@ node.
 
 To taint nodes, users will need to add a taint type and a tag to the node group specified in the
 cluster config from :ref:`cluster-creation`. An example of the modifications is shown for a
-p2.8xlarge node group:
+g4dn.metal node group:
 
 .. code:: yaml
 
-   - name: p2-8xlarge-us-west-2b
+   - name: g4dn-metal-us-west-2b
      ...
      taints:
-       p2.8xlarge-us-west-2b: "true:NoSchedule"
+       g4dn.metal-us-west-2b: "true:NoSchedule"
      ...
      tags:
        ...
-       k8s.io/cluster-autoscaler/node-template/taint/p2.8xlarge-us-west-2b: "true:NoSchedule"
+       k8s.io/cluster-autoscaler/node-template/taint/g4dn.metal-us-west-2b: "true:NoSchedule"
 
 Furthermore, tainting requires changes to be made to the GPU enabling DaemonSet and more additions
 to the experiment config. First, to change the DaemonSet, save a copy of the `official version
@@ -406,7 +406,7 @@ make the following additions to its tolerations:
    spec:
      tolerations:
      ...
-     - key: p2.8xlarge-us-west-2b
+     - key: g4dn.metal-us-west-2b
        operator: Exists
        effect: NoSchedule
 

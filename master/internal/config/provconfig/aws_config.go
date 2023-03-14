@@ -68,7 +68,7 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType:    "p3.8xlarge",
+	InstanceType:    "g4dn.metal",
 	SpotEnabled:     false,
 	CPUSlotsAllowed: false,
 }
