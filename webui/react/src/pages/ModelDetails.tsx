@@ -45,7 +45,6 @@ import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import css from './ModelDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
@@ -53,6 +52,7 @@ import settingsConfig, {
 } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
+import css from './ModelDetails.module.scss';
 
 type Params = {
   modelId: string;

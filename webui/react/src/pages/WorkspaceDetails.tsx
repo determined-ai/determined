@@ -29,10 +29,10 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ModelRegistry from './ModelRegistry';
-import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import css from './WorkspaceDetails.module.scss';
 
 type Params = {
   tab: string;

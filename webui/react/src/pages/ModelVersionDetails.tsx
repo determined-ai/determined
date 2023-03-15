@@ -27,8 +27,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
 
-import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
+import css from './ModelVersionDetails.module.scss';
 
 const TabType = {
   Model: 'model',
