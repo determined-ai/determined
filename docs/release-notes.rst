@@ -17,39 +17,12 @@ Version 0.20.1
 
 **Breaking Changes**
 
--  Cluster: ``resources.agent_label`` task option and agent config ``label`` option are no longer
-   supported and will be ignored. If you are not explicitly using these options, or only use single
-   empty or non-empty label value per resource pool, no changes are necessary. Otherwise, cluster
-   admins should create a resource pool for each existing ``resource_pool`` + ``agent_label``
-   combination, and reconfigure agents to use these new pools. Cluster users should update their
-   tasks to use the new resource pool names.
-
 -  Database: Several unused columns have been dropped from ``raw_steps``, ``raw_validations``,
    ``raw_checkpoints`` database tables. The database migration will involve a sequential scan for
    these tables, and it may take significant amount of time, depending on the database size and
    performance.
 
-**Improvements**
-
--  Agents: The master configuration ``agent_reattach_enabled`` is always enabled and agents now will
-   always reattach containers on restarts.
-
 **New Features**
-
--  RBAC: Following on the initial RBAC support added in 0.19.7 the enterprise edition of Determined
-   (`HPE Machine Learning Development Environment
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-   has added support for Role-Based Access Control over new entities:
-
-   -  JupyterLab Notebooks, Tensorboards, Shells, and Commands are now housed under workspaces.
-      Access to these tasks can now be restricted by role. Launching Tensorboards from WebUI
-      launches at the experiment worspace by default.
-
-   -  Model Registry: models are now associated with workspaces. Models can be moved between
-      workspaces and access to them can be restricted by role.
-
-   These changes allow for more granular control over who can access what resources. See :ref:`rbac`
-   for more information.
 
 -  Added an ability for tasks or experiments to expose arbitrary ports that can be tunneled to the
    using the CLI. See :ref:`proxy-ports` for more details or an example at
