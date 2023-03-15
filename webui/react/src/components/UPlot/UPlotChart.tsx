@@ -25,7 +25,6 @@ interface Props {
   allowDownload?: boolean;
   data?: AlignedData | FacetedData;
   experimentId?: number;
-  focusIndex?: number;
   noDataMessage?: string;
   options?: Partial<Options>;
   style?: React.CSSProperties;
@@ -84,7 +83,6 @@ type ChartType = 'Line' | 'Scatter';
 const UPlotChart: React.FC<Props> = ({
   allowDownload,
   data,
-  focusIndex,
   options,
   style,
   noDataMessage,
@@ -199,15 +197,6 @@ const UPlotChart: React.FC<Props> = ({
       }
     }
   }, [data, hasData, extendedOptions, previousOptions, chartType]);
-
-  /**
-   * When a focus index is provided, highlight applicable series.
-   */
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
-  }, [focusIndex]);
 
   useEffect(() => {
     extendedOptions.series.forEach((ser, i) => {
