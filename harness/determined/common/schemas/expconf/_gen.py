@@ -2107,7 +2107,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2425,7 +2425,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "stop_once": {
             "type": [
@@ -2538,7 +2538,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2632,7 +2632,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_trials": {
             "type": [
