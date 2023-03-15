@@ -9,8 +9,7 @@ import os
 import contextlib
 from typing import Generator, Set, Union
 from psycopg.abc import Query
-
-from psycopg.sql import SQL, Identifier, Literal
+import time
 
 DB_NAME = os.environ.get("DET_DB_NAME", "determined")
 DB_USERNAME = os.environ.get("DET_DB_USERNAME", "postgres")
@@ -47,7 +46,7 @@ class LoggingCursor(psycopg.Cursor):
 ====QUERY END===="""
         )
         start = time.time()
-        super().execute(query, *args, **kwargs)
+        super().execute(query, *args, **kwargs)  # type: ignore
         end = time.time()
         print("query took (ms):", (end - start) * 1000)
 
@@ -90,12 +89,6 @@ CROSS JOIN generate_series(1, {multiplier}) AS g
 {suffix};
         """
         cur.execute(query)  # type: ignore
-        # commit
-        # cur.execute(SQL("""
-        #     INSERT INTO {}( {} )
-        #     SELECT {} FROM {} WHERE state = 'COMPLETED'
-        # """).format(Identifier(table), SQL(cols), cols, Identifier(table)))
-
         print("added rows:", cur.rowcount)
         cur.execute("COMMIT")
 
@@ -205,57 +198,8 @@ ALTER TABLE {table} DROP COLUMN og_id;
         }
 
 
-def copy_trials2() -> None:
-    trial_cols = get_table_col_names("trials") - {"id"}
-    trial_cols_str = ", ".join(trial_cols)
-    steps_cols = get_table_col_names("raw_steps") - {"id", "trial_id"}
-    steps_cols_str = ", ".join(steps_cols)
-    prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
-    validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
-    validations_cols_str = ", ".join(validations_cols)
-    prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
-
-    with db_cursor() as cur:
-        query = f"""
-WITH target_trials AS (
-SELECT *
-FROM trials
-WHERE state = 'COMPLETED' AND experiment_id = 277
-LIMIT 1
-), replicated_trials AS ( -- want a pair of ids for each trial: og_id and id
-INSERT INTO trials ({trial_cols_str})
-SELECT {trial_cols_str}
-FROM target_trials
-RETURNING trials.id as id -- , target_trials.id as og_trial_id -- FIXME. no OUTPUT in PG
-), replicated_steps AS (
-INSERT INTO raw_steps (trial_id, {steps_cols_str})
-SELECT rt.id, {prefixed_steps_cols}
-FROM replicated_trials rt
-JOIN raw_steps rs ON rs.trial_id = rt.og_trial_id
-RETURNING trial_id, id AS new_step_id
-)
-INSERT INTO raw_validations (trial_id, {validations_cols_str})
-SELECT rt.id, {prefixed_validations_cols}
-FROM replicated_trials rt
-JOIN raw_validations rv ON rv.trial_id = rt.og_trial_id
-        """
-        cur.execute(query)  # type: ignore
-        cur.execute("COMMIT")
-
-
-def copy_trials3() -> None:
-    replicate_rows("trials", {"id"}, suffix="WHERE state = 'COMPLETED'", multiplier=3)
-    # TODO replicate raw_valiations and raw_steps
-    """
-    TODO map and bulk update the associated trial ids
-    - save a mapping of old to new trial ids 1 to many
-    - each replicated metrics row needs to pick a new trial id.
-    """
-
-
 if __name__ == "__main__":
     import argparse
-    import time
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
