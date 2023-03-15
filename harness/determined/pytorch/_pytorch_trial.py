@@ -328,7 +328,7 @@ class _PyTorchTrialController:
             )
 
         if not self.is_chief:
-            self.context.maybe_reset_tbd_writer()
+            self.context._maybe_reset_tbd_writer()
             return {}
 
         # Only report on the chief worker
@@ -336,13 +336,13 @@ class _PyTorchTrialController:
         batch_metrics = metrics.get("batch_metrics", [])
 
         self._log_tb_metrics(
-            'train',
+            "train",
             self.state.batches_trained,
             avg_metrics,
             batch_metrics,
         )
 
-        self.context.maybe_reset_tbd_writer()
+        self.context._maybe_reset_tbd_writer()
 
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
@@ -894,16 +894,17 @@ class _PyTorchTrialController:
             )
         return training_metrics
 
-    def _log_tb_metrics(self,
+    def _log_tb_metrics(
+        self,
         metric_type: str,
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
 
-        if metric_type == 'val':
+        if metric_type == "val":
             logging.debug("Write validation metrics for TensorBoard")
-        elif metric_type == 'train':
+        elif metric_type == "train":
             logging.debug("Write training metrics for TensorBoard")
         else:
             logging.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
@@ -925,7 +926,7 @@ class _PyTorchTrialController:
         for name, value in metrics.items():
             if name in metrics_seen:
                 continue
-            if metric_type == 'val' and not name.startswith("val"):
+            if metric_type == "val" and not name.startswith("val"):
                 name = "val_" + name
             if is_numerical_scalar(value):
                 writer.add_scalar("Determined/" + name, value, steps_completed)
@@ -1071,10 +1072,10 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            self._log_tb_metrics('val', self.state.batches_trained, metrics)
+            self._log_tb_metrics("val", self.state.batches_trained, metrics)
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
-        self.context.maybe_reset_tbd_writer()
+        self.context._maybe_reset_tbd_writer()
         searcher_metric = None
 
         # Report searcher status.

@@ -9,7 +9,6 @@ import determined as det
 from determined import errors, pytorch
 
 
-
 class TestPyTorchContext:
     def setup_method(self) -> None:
         self.config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
