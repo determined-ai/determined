@@ -6,6 +6,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
@@ -26,6 +27,7 @@ interface Props {
   data?: AlignedData | FacetedData;
   experimentId?: number;
   focusIndex?: number;
+  isLoading?: boolean;
   noDataMessage?: string;
   options?: Partial<Options>;
   style?: React.CSSProperties;
@@ -85,6 +87,7 @@ const UPlotChart: React.FC<Props> = ({
   allowDownload,
   data,
   focusIndex,
+  isLoading,
   options,
   style,
   noDataMessage,
@@ -256,13 +259,14 @@ const UPlotChart: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
       {allowDownload && <DownloadButton containerRef={chartDivRef} experimentId={experimentId} />}
-      {!hasData && (
+      {!hasData && !isLoading && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
-          title={noDataMessage || 'No Data to plot.'}
+          title={noDataMessage || 'No data to plot.'}
           type={MessageType.Empty}
         />
       )}
+      {isLoading && <Spinner spinning tip="Loading chart data..." />}
     </div>
   );
 };

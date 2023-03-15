@@ -10,9 +10,11 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import useResize from 'hooks/useResize';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
 import { getTimeTickValues } from 'utils/chart';
+import { Loadable } from 'utils/loadable';
 
 import css from './LineChart.module.scss';
 
@@ -37,7 +39,7 @@ export interface Serie {
 }
 
 /**
- * @typedef Props {object}
+ * @typedef ChartProps {object}
  * Config for a single LineChart component.
  * @param {number} [focusedSeries] - Highlight one Serie's line and fade the others, given an index in the given series.
  * @param {number} [height=350] - Height in pixels.
@@ -49,7 +51,7 @@ export interface Serie {
  * @param {string} [xLabel] - Directly set label below the x-axis.
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
-interface Props {
+interface ChartProps {
   experimentId?: number;
   focusedSeries?: number;
   height?: number;
@@ -66,7 +68,11 @@ interface Props {
   yTickValues?: uPlot.Axis.Values;
 }
 
-export const LineChart: React.FC<Props> = ({
+interface LineChartProps extends Omit<ChartProps, 'series'> {
+  series: Serie[] | Loadable<Serie[]>;
+}
+
+export const LineChart: React.FC<LineChartProps> = ({
   experimentId,
   focusedSeries,
   height = 350,
@@ -74,14 +80,17 @@ export const LineChart: React.FC<Props> = ({
   onPointFocus,
   scale = Scale.Linear,
   plugins: propPlugins,
-  series,
+  series: propSeries,
   showLegend = false,
   title,
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
   yTickValues,
-}: Props) => {
+}: LineChartProps) => {
+  const series = Loadable.isLoadable(propSeries) ? Loadable.getOrElse([], propSeries) : propSeries;
+  const isLoading = Loadable.isLoadable(propSeries) && Loadable.isLoading(propSeries);
+
   const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
@@ -98,8 +107,8 @@ export const LineChart: React.FC<Props> = ({
         (s.metricType === MetricType.Training
           ? '[T] '
           : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
+            ? '[V] '
+            : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -128,9 +137,9 @@ export const LineChart: React.FC<Props> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
@@ -227,6 +236,7 @@ export const LineChart: React.FC<Props> = ({
         data={chartData}
         experimentId={experimentId}
         focusIndex={focusedSeries}
+        isLoading={isLoading}
         options={chartOptions}
       />
       {showLegend && (
@@ -249,7 +259,7 @@ export const LineChart: React.FC<Props> = ({
   );
 };
 
-export type ChartsProps = Props[];
+export type ChartsProps = ChartProps[];
 
 /**
  * @typedef GroupProps {object}
@@ -259,7 +269,7 @@ export type ChartsProps = Props[];
  * @param {Scale} scale - Scale of chart, can be linear or log
  */
 export interface GroupProps {
-  chartsProps: ChartsProps;
+  chartsProps: ChartsProps | Loadable<ChartsProps>;
   onXAxisChange: (ax: XAxisDomain) => void;
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
@@ -295,10 +305,14 @@ const VirtualChartRenderer: React.FC<
 };
 
 export const ChartGrid: React.FC<GroupProps> = React.memo(
-  ({ chartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
+  ({ chartsProps: propChartsProps, xAxis, onXAxisChange, scale, setScale }: GroupProps) => {
     const chartGridRef = useRef<HTMLDivElement | null>(null);
     const { width, height } = useResize(chartGridRef);
     const columnCount = Math.max(1, Math.floor(width / 540));
+    const chartsProps = Loadable.isLoadable(propChartsProps)
+      ? Loadable.getOrElse([], propChartsProps)
+      : propChartsProps;
+    const isLoading = Loadable.isLoadable(propChartsProps) && Loadable.isLoading(propChartsProps);
 
     // X-Axis control
     const xAxisOptions = useMemo(() => {
@@ -323,18 +337,34 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
             <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
           )}
         </div>
-        <SyncProvider>
-          <FixedSizeGrid
-            columnCount={columnCount}
-            columnWidth={Math.floor(width / columnCount)}
-            height={Math.min(height - 40, (chartsProps.length > columnCount ? 2.1 : 1.05) * 480)}
-            itemData={{ chartsProps, columnCount, scale, xAxis }}
-            rowCount={Math.ceil(chartsProps.length / columnCount)}
-            rowHeight={480}
-            width={width}>
-            {VirtualChartRenderer}
-          </FixedSizeGrid>
-        </SyncProvider>
+        <Spinner
+          center
+          className={css.chartgridLoading}
+          spinning={isLoading}
+          tip="Loading chart data...">
+          {chartsProps.length > 0 && (
+            <SyncProvider>
+              <FixedSizeGrid
+                columnCount={columnCount}
+                columnWidth={Math.floor(width / columnCount)}
+                height={Math.min(
+                  height - 40,
+                  (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+                )}
+                itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
+                rowCount={Math.ceil(chartsProps.length / columnCount)}
+                rowHeight={480}
+                width={width}>
+                {VirtualChartRenderer}
+              </FixedSizeGrid>
+            </SyncProvider>
+          )}
+          {chartsProps.length === 0 && !isLoading && (
+            <div className={css.chartgridEmpty}>
+              <span>No data to plot.</span>
+            </div>
+          )}
+        </Spinner>
       </div>
     );
   },

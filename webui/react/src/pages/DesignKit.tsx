@@ -47,6 +47,7 @@ import {
   generateTestWorkspaceData,
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
+import { NotLoaded } from 'utils/loadable';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -483,6 +484,12 @@ const ChartsSection: React.FC = () => {
         <p>Highlight a specific metric in the chart.</p>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </AntDCard>
+      <AntDCard title="States without data">
+        <strong>Loading</strong>
+        <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <strong>Empty</strong>
+        <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
+      </AntDCard>
       <AntDCard title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
@@ -522,6 +529,18 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ],
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <strong>Loading</strong>
+        {createChartGrid({
+          chartsProps: NotLoaded,
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <strong>Empty</strong>
+        {createChartGrid({
+          chartsProps: [],
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
