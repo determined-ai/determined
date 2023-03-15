@@ -175,7 +175,10 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const columns = useMemo(() => {
-    if (Loadable.isLoading(users)) return [];
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
 
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
@@ -242,7 +245,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

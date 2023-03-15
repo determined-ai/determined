@@ -491,8 +491,6 @@ const TrialTable: React.FC<Props> = ({
   );
 
   const columns = useMemo(() => {
-    if (userColumn === undefined) return [];
-
     return [
       experimentNameColumn,
       experimentIdColumn,
