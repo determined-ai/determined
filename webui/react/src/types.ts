@@ -54,6 +54,7 @@ export interface DeterminedInfo {
   masterId: string;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
   version: string;
 }
 
