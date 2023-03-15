@@ -1,5 +1,6 @@
 import { Dropdown, Space } from 'antd';
 import type { MenuProps } from 'antd';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -16,6 +17,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
@@ -31,11 +33,12 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { RolesStore } from 'stores/roles';
-import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
+import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -57,7 +60,7 @@ interface DropdownProps {
 
 const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
-    useModalCreateUser({ onClose: fetchUsers, user });
+    useModalCreateUser({ onOk: fetchUsers, user });
   const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
     useModalManageGroups({ groups, user });
   const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
@@ -129,23 +132,23 @@ const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const fetchUsersHook = useFetchUsers(canceler);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
   const apiConfig = useMemo<FetchUsersConfig>(
     () => ({
       limit: settings.tableLimit,
+      name: settings.name,
       offset: settings.tableOffset,
       orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
       sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
     }),
     [settings],
   );
-  const loadableUser = useUsers(apiConfig);
-  const users = Loadable.match(loadableUser, {
-    Loaded: (users) => users.users,
+  const loadableUsers = useObservable(usersStore.getUsers(apiConfig));
+  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
+    Loaded: (usersPagination) => usersPagination.users,
     NotLoaded: () => [],
   });
-  const total = Loadable.match(loadableUser, {
+  const total = Loadable.match(loadableUsers, {
     Loaded: (users) => users.pagination.total ?? 0,
     NotLoaded: () => 0,
   });
@@ -156,8 +159,8 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    fetchUsersHook(apiConfig);
-  }, [settings, apiConfig, fetchUsersHook]);
+    usersStore.ensureUsersFetched(canceler, apiConfig, true);
+  }, [settings, canceler, apiConfig]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -184,13 +187,38 @@ const UserManagement: React.FC = () => {
     if (rbacEnabled) {
       RolesStore.fetchRoles(canceler);
     }
-  }, [rbacEnabled]);
+  }, [canceler, rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
-    useModalCreateUser({ onClose: fetchUsers });
+    useModalCreateUser({ onOk: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
   }, [openCreateUserModal]);
+
+  const handleNameSearchApply = useCallback(
+    (name: string) => {
+      updateSettings({ name: name || undefined, row: undefined });
+    },
+    [updateSettings],
+  );
+
+  const handleNameSearchReset = useCallback(() => {
+    updateSettings({ name: undefined, row: undefined });
+  }, [updateSettings]);
+
+  const nameFilterSearch = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterSearch
+        {...filterProps}
+        value={settings.name || ''}
+        onReset={handleNameSearchReset}
+        onSearch={handleNameSearchApply}
+      />
+    ),
+    [handleNameSearchApply, handleNameSearchReset, settings.name],
+  );
+
+  const filterIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
@@ -200,6 +228,8 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'displayName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
+        filterDropdown: nameFilterSearch,
+        filterIcon: filterIcon,
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -245,7 +275,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, groups, rbacEnabled]);
+  }, [fetchUsers, filterIcon, groups, nameFilterSearch, rbacEnabled]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -254,7 +284,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={loadableUser === NotLoaded}
+        loading={loadableUsers === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
@@ -278,7 +308,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUser, settings, columns, total, updateSettings]);
+  }, [users, loadableUsers, settings, columns, total, updateSettings]);
   return (
     <Page bodyNoPadding containerRef={pageRef}>
       <Section

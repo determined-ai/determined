@@ -314,12 +314,201 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	}
 }
 
+// AllocationMetadata captures the historic allocation information for a given task.
+type AllocationMetadata struct {
+	AllocationID     model.AllocationID
+	TaskType         model.TaskType
+	Username         string
+	WorkspaceName    string
+	ExperimentID     int
+	Slots            int
+	StartTime        time.Time
+	EndTime          time.Time
+	ImagepullingTime float64
+}
+
+//	@Summary	Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
+//	@Tags		Cluster
+//	@ID			get-resource-allocation-csv
+//	@Accept		json
+//	@Produce	text/csv
+//
+// nolint:lll
+//
+//	@Param		timestamp_after		query	string	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//
+// nolint:lll
+//
+//	@Success	200					{}		string	"A CSV file containing the fields allocation_id, task_type, username, workspace_name, experiment_id, slots, start_time, end_time, checkpointing_time, imagepulling_time"
+//	@Router		/allocations/allocations-csv [get]
+func (m *Master) getResourceAllocations(c echo.Context) error {
+	// Get start and end times from context
+	args := struct {
+		Start string `query:"timestamp_after"`
+		End   string `query:"timestamp_before"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	// Parse start & end timestamps
+	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
+	if err != nil {
+		return errors.Wrap(err, "invalid start time")
+	}
+	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
+	if err != nil {
+		return errors.Wrap(err, "invalid end time")
+	}
+	if start.After(end) {
+		return errors.New("start time cannot be after end time")
+	}
+
+	// Get task info for tasks in time range
+	tasksInRange := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("t.task_type").
+		ColumnExpr("t.job_id").
+		TableExpr("tasks t").
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+
+	// Get allocation info for allocations in time range
+	allocationsInRange := db.Bun().NewSelect().
+		ColumnExpr("a.task_id").
+		ColumnExpr("a.allocation_id").
+		ColumnExpr("a.start_time").
+		ColumnExpr("a.end_time").
+		ColumnExpr("a.slots").
+		TableExpr("allocations a").
+		Where("tstzrange(start_time - interval '1 minute', greatest(start_time, end_time)) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
+
+	// Get task owner names
+	taskOwners := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("u.username").
+		TableExpr("tasks_in_range t").
+		Join("INNER JOIN jobs j ON t.job_id = j.job_id").
+		Join("INNER JOIN users u ON j.owner_id = u.id")
+
+	// Get imagepull times for tasks within time range
+	imagePullTimes := db.Bun().NewSelect().
+		ColumnExpr("a.allocation_id").
+		ColumnExpr("SUM(EXTRACT(EPOCH FROM (ts.end_time - ts.start_time))) imagepulling_time").
+		TableExpr("allocations_in_range a").
+		Join("INNER JOIN task_stats ts ON a.allocation_id = ts.allocation_id").
+		Where("ts.event_type = 'IMAGEPULL'").
+		Group("a.allocation_id")
+
+	// Get experiment info for tasks within time range
+	taskExperimentInfo := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("e.id as experiment_id").
+		ColumnExpr("w.name as workspace_name").
+		TableExpr("tasks_in_range t").
+		Join("INNER JOIN experiments e ON t.job_id = e.job_id").
+		Join("INNER JOIN projects p ON e.project_id = p.id").
+		Join("INNER JOIN workspaces w ON p.workspace_id = w.id")
+
+	// Get task information row-by-row for all tasks in time range
+	rows, err := db.Bun().NewSelect().
+		ColumnExpr("a.allocation_id").
+		ColumnExpr("t.task_type").
+		ColumnExpr("t_o.username").
+		ColumnExpr("tei.workspace_name").
+		ColumnExpr("tei.experiment_id").
+		ColumnExpr("a.slots").
+		ColumnExpr("a.start_time").
+		ColumnExpr("a.end_time").
+		ColumnExpr("ip.imagepulling_time").
+		With("tasks_in_range", tasksInRange).
+		With("allocations_in_range", allocationsInRange).
+		With("task_owners", taskOwners).
+		With("image_pull_times", imagePullTimes).
+		With("task_experiment_info", taskExperimentInfo).
+		With("task_in_range", tasksInRange).
+		TableExpr("allocations_in_range a").
+		Join("LEFT JOIN task_in_range t ON a.task_id = t.task_id").
+		Join("LEFT JOIN task_owners t_o ON a.task_id = t_o.task_id").
+		Join("LEFT JOIN task_experiment_info tei ON a.task_id = tei.task_id").
+		Join("LEFT JOIN image_pull_times ip ON a.allocation_id = ip.allocation_id").
+		Order("a.start_time").
+		Rows(c.Request().Context())
+
+	if err != nil && rows.Err() != nil {
+		return err
+	}
+	defer rows.Close()
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+	header := []string{
+		"allocation_id",
+		"task_type",
+		"username",
+		"workspace_name",
+		"experiment_id",
+		"slots",
+		"start_time",
+		"end_time",
+		"imagepulling_time",
+	}
+
+	formatTimestamp := func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
+		return t.Format(time.RFC3339Nano)
+	}
+
+	formatDuration := func(duration float64) string {
+		if duration == 0 {
+			return "0.0"
+		}
+		return fmt.Sprintf("%f", duration)
+	}
+
+	csvWriter := csv.NewWriter(c.Response())
+	if err = csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	// Write each entry to the output CSV
+	for rows.Next() {
+		allocationMetadata := new(AllocationMetadata)
+		if err := db.Bun().ScanRow(c.Request().Context(), rows, allocationMetadata); err != nil {
+			return err
+		}
+		fields := []string{
+			allocationMetadata.AllocationID.String(),
+			string(allocationMetadata.TaskType),
+			allocationMetadata.Username,
+			allocationMetadata.WorkspaceName,
+			strconv.Itoa(allocationMetadata.ExperimentID),
+			strconv.Itoa(allocationMetadata.Slots),
+			formatTimestamp(allocationMetadata.StartTime),
+			formatTimestamp(allocationMetadata.EndTime),
+			formatDuration(allocationMetadata.ImagepullingTime),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
+}
+
 //	@Summary	Get an aggregated view of resource allocation during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-aggregated-resource-allocation-csv
 //	@Produce	text/csv
 //	@Param		start_date	query	string	true	"Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
 //	@Param		end_date	query	string	true	"End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)"
+//
+// nolint:lll
+//
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
 //	@Router		/allocation/aggregated [get]
@@ -924,7 +1113,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 		// Files that receive a unique hash when bundled and deployed can be cached forever
 		// Other static files should only be cached for a short period of time
-		cacheFileLongTerm := regexp.MustCompile(`.(chunk\.(css|js)|woff2|woff)$`)
+		cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-z]{1,}\.(js|css))$|(woff2|woff)$`)
 		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
 
 		if cacheFileLongTerm.MatchString(requestedFile) {
@@ -966,6 +1155,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
+	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))

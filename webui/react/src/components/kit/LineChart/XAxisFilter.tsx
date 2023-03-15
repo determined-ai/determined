@@ -1,11 +1,7 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
-import SelectFilter from 'components/SelectFilter';
+import Select, { Option, SelectValue } from 'components/kit/Select';
 import { ValueOf } from 'shared/types';
-
-const { Option } = Select;
 
 export const XAxisDomain = {
   Batches: 'Batches',
@@ -23,10 +19,9 @@ interface Props {
 
 export const XAxisFilter: React.FC<Props> = ({ options, onChange, value }: Props) => {
   return (
-    <SelectFilter
-      enableSearchFilter={false}
+    <Select
       label="X-Axis"
-      showSearch={false}
+      searchable={false}
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as XAxisDomain)}>
       {Object.values(XAxisDomain)
@@ -36,6 +31,6 @@ export const XAxisFilter: React.FC<Props> = ({ options, onChange, value }: Props
             {opt}
           </Option>
         ))}
-    </SelectFilter>
+    </Select>
   );
 };

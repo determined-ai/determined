@@ -11,6 +11,8 @@ import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import Tags from 'components/kit/Tags';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -33,8 +35,6 @@ import {
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import TagList from 'components/TagList';
-import Toggle from 'components/Toggle';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
@@ -65,7 +65,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -84,6 +84,7 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -115,11 +116,11 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(useObservable(usersStore.getUsers()), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -234,11 +235,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
-
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);
-  }, [fetchExperiments, fetchUsers, fetchLabels]);
+    await Promise.allSettled([
+      fetchExperiments(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchLabels(),
+    ]);
+  }, [fetchExperiments, canceler, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -406,14 +409,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels} />,
+            tooltip: <Tags disabled tags={record.labels} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.archived || project?.archived || !canEditExperiment}
               tags={record.labels}
-              onChange={experimentTags.handleTagListChange(record.id)}
+              onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
           </div>
         </Typography.Text>
@@ -688,7 +691,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
-        return openOrCreateTensorBoard({ experimentIds: settings.row });
+        return openOrCreateTensorBoard({
+          experimentIds: settings.row,
+          workspaceId: project?.workspaceId,
+        });
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;
@@ -923,11 +929,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>

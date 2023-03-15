@@ -9,7 +9,6 @@ import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import AvatarCard from 'components/UserAvatarCard';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
@@ -22,7 +21,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { selectIsAuthenticated } from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -30,6 +29,7 @@ import { useObservable } from 'utils/observable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
+import UserBadge from './UserBadge';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -118,7 +118,7 @@ const NavigationSideBar: React.FC = () => {
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const isAuthenticated = useObservable(selectIsAuthenticated);
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -232,9 +232,9 @@ const NavigationSideBar: React.FC = () => {
             content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            {currentUser ? (
-              <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
-            ) : null}
+            <div className={css.user}>
+              <UserBadge compact hideAvatarTooltip user={currentUser} />
+            </div>
           </Dropdown>
         </header>
         <main>

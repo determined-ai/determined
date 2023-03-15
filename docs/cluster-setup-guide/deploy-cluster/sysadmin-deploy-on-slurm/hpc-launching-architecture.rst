@@ -190,6 +190,9 @@ provided that they do not conflict with Determined-controlled settings.
 +------------------------+-------------------------------------------------------------------------------------------+
 | ``--wckey``            | A value identified by the ``resource_manager.job_project_source`` configuration.          |
 +------------------------+-------------------------------------------------------------------------------------------+
+| ``--no-requeue``       | Disable any potential automatic requeue of the job by SLURM. Determined will handle the   |
+|                        | checkpoint and restart for its experiments.                                               |
++------------------------+-------------------------------------------------------------------------------------------+
 
 Slurm Resource Calculations
 ---------------------------

@@ -55,40 +55,6 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class ExpCompareTrialsSampleResponseExpTrial:
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1DataPoint]",
-        experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
-    ):
-        self.data = data
-        self.experimentId = experimentId
-        self.hparams = hparams
-        self.trialId = trialId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "experimentId": obj["experimentId"],
-            "hparams": obj["hparams"],
-            "trialId": obj["trialId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
-            "experimentId": self.experimentId,
-            "hparams": self.hparams,
-            "trialId": self.trialId,
-        }
-        return out
-
 class GetHPImportanceResponseMetricHPImportance:
     error: "typing.Optional[str]" = None
     experimentProgress: "typing.Optional[float]" = None
@@ -456,7 +422,6 @@ class trialv1Trial:
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
-    latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
@@ -478,7 +443,6 @@ class trialv1Trial:
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
@@ -501,8 +465,6 @@ class trialv1Trial:
             self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(latestTraining, Unset):
-            self.latestTraining = latestTraining
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
@@ -535,8 +497,6 @@ class trialv1Trial:
             kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "latestTraining" in obj:
-            kwargs["latestTraining"] = v1MetricsWorkload.from_json(obj["latestTraining"]) if obj["latestTraining"] is not None else None
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
@@ -569,8 +529,6 @@ class trialv1Trial:
             out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "latestTraining" in vars(self):
-            out["latestTraining"] = None if self.latestTraining is None else self.latestTraining.to_json(omit_unset)
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
@@ -2386,70 +2344,6 @@ class v1EnableSlotResponse:
 class v1EntityType(enum.Enum):
     ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
-
-class v1ExpCompareMetricNamesResponse:
-    trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
-    validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
-
-    def __init__(
-        self,
-        *,
-        trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-    ):
-        if not isinstance(trainingMetrics, Unset):
-            self.trainingMetrics = trainingMetrics
-        if not isinstance(validationMetrics, Unset):
-            self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "trainingMetrics" in obj:
-            kwargs["trainingMetrics"] = obj["trainingMetrics"]
-        if "validationMetrics" in obj:
-            kwargs["validationMetrics"] = obj["validationMetrics"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "trainingMetrics" in vars(self):
-            out["trainingMetrics"] = self.trainingMetrics
-        if not omit_unset or "validationMetrics" in vars(self):
-            out["validationMetrics"] = self.validationMetrics
-        return out
-
-class v1ExpCompareTrialsSampleResponse:
-
-    def __init__(
-        self,
-        *,
-        demotedTrials: "typing.Sequence[int]",
-        promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
-    ):
-        self.demotedTrials = demotedTrials
-        self.promotedTrials = promotedTrials
-        self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": obj["demotedTrials"],
-            "promotedTrials": obj["promotedTrials"],
-            "trials": [ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": self.demotedTrials,
-            "promotedTrials": self.promotedTrials,
-            "trials": [x.to_json(omit_unset) for x in self.trials],
-        }
-        return out
 
 class v1Experiment:
     bestTrialSearcherMetric: "typing.Optional[float]" = None
@@ -6075,13 +5969,11 @@ class v1MetricsWorkload:
         *,
         metrics: "v1Metrics",
         numInputs: int,
-        state: "experimentv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.metrics = metrics
         self.numInputs = numInputs
-        self.state = state
         self.totalBatches = totalBatches
         if not isinstance(endTime, Unset):
             self.endTime = endTime
@@ -6091,7 +5983,6 @@ class v1MetricsWorkload:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
             "numInputs": obj["numInputs"],
-            "state": experimentv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -6102,7 +5993,6 @@ class v1MetricsWorkload:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
             "numInputs": self.numInputs,
-            "state": self.state.value,
             "totalBatches": self.totalBatches,
         }
         if not omit_unset or "endTime" in vars(self):
@@ -12649,82 +12539,6 @@ def post_EnableSlot(
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
-def get_ExpCompareMetricNames(
-    session: "api.Session",
-    *,
-    trialId: "typing.Sequence[int]",
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareMetricNamesResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-        "trialId": trialId,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/trials/metrics-stream/metric-names",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareMetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareMetricNamesResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareMetricNames", _resp)
-
-def get_ExpCompareTrialsSample(
-    session: "api.Session",
-    *,
-    experimentIds: "typing.Sequence[int]",
-    metricName: str,
-    metricType: "v1MetricType",
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    maxTrials: "typing.Optional[int]" = None,
-    periodSeconds: "typing.Optional[int]" = None,
-    startBatches: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareTrialsSampleResponse]":
-    _params = {
-        "endBatches": endBatches,
-        "experimentIds": experimentIds,
-        "maxDatapoints": maxDatapoints,
-        "maxTrials": maxTrials,
-        "metricName": metricName,
-        "metricType": metricType.value,
-        "periodSeconds": periodSeconds,
-        "startBatches": startBatches,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/experiments-compare",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareTrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareTrialsSampleResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareTrialsSample", _resp)
-
 def get_GetActiveTasksCount(
     session: "api.Session",
 ) -> "v1GetActiveTasksCountResponse":
@@ -14183,12 +13997,14 @@ def get_GetUsers(
     session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
         "limit": limit,
+        "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,

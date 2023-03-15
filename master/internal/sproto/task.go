@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"golang.org/x/exp/maps"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -42,7 +44,7 @@ type (
 		// Behavioral configuration.
 		Preemptible  bool
 		IdleTimeout  *IdleTimeoutConfig
-		ProxyPort    *ProxyPortConfig
+		ProxyPorts   []*ProxyPortConfig
 		StreamEvents *EventStreamConfig
 		Restore      bool
 
@@ -61,10 +63,10 @@ type (
 
 	// ProxyPortConfig configures a proxy the allocation should start.
 	ProxyPortConfig struct {
-		ServiceID       string
-		Port            int
-		ProxyTCP        bool
-		Unauthenticated bool
+		ServiceID       string `json:"service_id"`
+		Port            int    `json:"port"`
+		ProxyTCP        bool   `json:"proxy_tcp"`
+		Unauthenticated bool   `json:"unauthenticated"`
 	}
 
 	// EventStreamConfig configures an event stream.
@@ -94,6 +96,7 @@ type (
 		Resources      []ResourcesSummary `json:"resources"`
 		SchedulerType  string             `json:"scheduler_type"`
 		Priority       *int               `json:"priority"`
+		ProxyPorts     []*ProxyPortConfig `json:"proxy_ports,omitempty"`
 	}
 	// SetAllocationName sets the name of the task.
 	SetAllocationName struct {
@@ -252,7 +255,7 @@ type Event struct {
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *ResourcesAllocated `json:"assigned_event"`
+	AssignedEvent *AllocatedEvent `json:"assigned_event"`
 	// ResourcesStartedEvent is triggered when the resources started on an agent.
 	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
@@ -311,3 +314,27 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 
 // ResourceList is a wrapper for a list of resources.
 type ResourceList map[ResourcesID]Resources
+
+// NewProxyPortConfig converts expconf proxy configs into internal representation.
+func NewProxyPortConfig(input expconf.ProxyPortsConfig, taskID model.TaskID) []*ProxyPortConfig {
+	out := []*ProxyPortConfig{}
+	for _, epp := range input {
+		serviceID := string(taskID)
+		if !epp.DefaultServiceID() {
+			serviceID = string(taskID) + ":" + strconv.Itoa(epp.ProxyPort())
+		}
+		out = append(out, &ProxyPortConfig{
+			Port:            epp.ProxyPort(),
+			ProxyTCP:        epp.ProxyTCP(),
+			Unauthenticated: epp.Unauthenticated(),
+			ServiceID:       serviceID,
+		})
+	}
+
+	return out
+}
+
+// AllocatedEvent is sent the allocation's resources are granted.
+type AllocatedEvent struct {
+	Recovered bool
+}

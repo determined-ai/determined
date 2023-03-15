@@ -3,11 +3,10 @@ import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ClusterProvider } from 'stores/cluster';
-import { UsersProvider } from 'stores/users';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getActiveTasks: () => Promise.resolve({ commands: 0, notebooks: 0, shells: 0, tensorboards: 0 }),
   getAgents: () => Promise.resolve([]),
   getExperiments: () => Promise.resolve({ experiments: [], pagination: { total: 0 } }),
@@ -17,11 +16,9 @@ jest.mock('services/api', () => ({
 const setup = () => {
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <ClusterProvider>
-          <ClusterOverallStats />
-        </ClusterProvider>
-      </UsersProvider>
+      <ClusterProvider>
+        <ClusterOverallStats />
+      </ClusterProvider>
     </UIProvider>,
   );
   return { view };

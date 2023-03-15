@@ -1,20 +1,16 @@
-###########
- Tutorials
-###########
+################
+ Try Determined
+################
 
 Learn the basics of working with Determined and how to port your existing code to the Determined
 environment.
 
-**************************
- Get Started in 5 Minutes
-**************************
+************
+ Quickstart
+************
 
-+---------------------------------+--------------------------------------------------------------+
-| Title                           | Description                                                  |
-+=================================+==============================================================+
-| :doc:`pytorch-mnist-local-qs`   | In a few steps, learn how to run your first experiment in    |
-|                                 | Determined using only a single CPU or GPU.                   |
-+---------------------------------+--------------------------------------------------------------+
+To get started with your first experiment, visit the :doc:`Quickstart for Model Developers
+<../quickstart-mdldev>`.
 
 ******************************
  Get Started with a Trial API
@@ -35,14 +31,16 @@ environment.
 |                                 | port a ``tf.keras`` model to Determined.                     |
 +---------------------------------+--------------------------------------------------------------+
 
-Go Further
-==========
+**********************************************
+ Want to Learn About a Specific Training API?
+**********************************************
 
-Visit the :doc:`Training API Guides </training/apis-howto/overview>` for in-depth guides that
-describe how to take your existing model code and train your model in Determined.
+:doc:`Training API Guides </training/apis-howto/overview>` describe how to take your existing model
+code and train your model in Determined.
 
-Looking for Examples?
-=====================
+***********************
+ Looking for Examples?
+***********************
 
 Examples let you build off of an existing model that already runs on Determined. Visit our
 :doc:`Examples </example-solutions/examples>` to see if the model you'd like to train is already

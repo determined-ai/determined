@@ -325,14 +325,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
         }>
         <Form.Item
           className={css.spacedLine}
+          initialValue={currentWorkspace?.id}
           label="Workspace"
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-          <Select
-            allowClear
-            defaultValue={currentWorkspace?.id}
-            disabled={!!currentWorkspace}
-            placeholder="Workspace (required)">
+          <Select allowClear disabled={!!currentWorkspace} placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
                 {workspace.name}
@@ -443,17 +440,14 @@ const JupyterLabForm: React.FC<{
   }, [currentWorkspace, form]);
 
   return (
-    <Form className={css.form} form={form} initialValues={defaults}>
+    <Form className={css.form} form={form}>
       <Form.Item
         className={css.line}
+        initialValue={currentWorkspace?.id}
         label="Workspace"
         name="workspaceId"
         rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-        <Select
-          allowClear
-          defaultValue={currentWorkspace?.id}
-          disabled={!!currentWorkspace}
-          placeholder="Workspace (required)">
+        <Select allowClear disabled={!!currentWorkspace} placeholder="Workspace (required)">
           {workspaces.map((workspace: Workspace) => (
             <Option key={workspace.id} value={workspace.id}>
               {workspace.name}
@@ -461,7 +455,11 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item className={css.line} label="Template" name="template">
+      <Form.Item
+        className={css.line}
+        initialValue={defaults?.template}
+        label="Template"
+        name="template">
         <Select allowClear placeholder="No template (optional)">
           {templates.map((temp) => (
             <Option key={temp.name} value={temp.name}>
@@ -470,10 +468,14 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item className={css.line} label="Name" name="name">
+      <Form.Item className={css.line} initialValue={defaults?.name} label="Name" name="name">
         <Input placeholder="Name (optional)" />
       </Form.Item>
-      <Form.Item className={css.line} label="Resource Pool" name="pool">
+      <Form.Item
+        className={css.line}
+        initialValue={defaults?.pool}
+        label="Resource Pool"
+        name="pool">
         <Select allowClear placeholder="Pick the best option">
           {resourcePools.map((pool) => (
             <Option key={pool.name} value={pool.name}>
@@ -482,7 +484,12 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item className={css.line} hidden={!resourceInfo.hasCompute} label="Slots" name="slots">
+      <Form.Item
+        className={css.line}
+        hidden={!resourceInfo.hasCompute}
+        initialValue={defaults?.slots}
+        label="Slots"
+        name="slots">
         <InputNumber
           max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
           min={0}

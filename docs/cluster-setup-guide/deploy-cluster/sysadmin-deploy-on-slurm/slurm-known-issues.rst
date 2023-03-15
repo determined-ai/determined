@@ -4,6 +4,19 @@
  Known Issues
 ##############
 
+***********************************************
+ Agent-specific Scheduling Options are Ignored
+***********************************************
+
+When using the HPC Launcher, Determined delegates all job scheduling and prioritization to the HPC
+workload manager (either Slurm or PBS) and the following experiment configuration options are
+ignored.
+
+-  ``resources.agent_label``
+-  ``resources.max_slots``
+-  ``resources.priority``
+-  ``resources.weight``
+
 .. _slurm-and-docker-differences:
 
 ************************************
@@ -63,23 +76,16 @@ Some constraints are due to differences in behavior between Docker and Singulari
       :ref:`slurm-image-config` or configure ``SINGULARITY_CACHEDIR`` to point to a shared
       directory.
 
--  Some Docker features do not have an exact replacement in Singularity.
+-  Some Docker features do not have an exact replacement in Singularity, and therefore the
+   associated Determined features are not supported.
 
    +--------------------------------------+------------------------------------------------------+
    | Feature                              | Description                                          |
    +======================================+======================================================+
-   | ``resources.agent_label``            | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
    | ``resources.devices``                | By default ``/dev`` is mounted from the compute      |
    |                                      | host, so all devices are available. This can be      |
    |                                      | overridden by the ``singularity.conf`` ``mount dev`` |
    |                                      | option.                                              |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.max_slots``              | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.priority``               | Scheduling is managed by the Slurm workload manager. |
-   +--------------------------------------+------------------------------------------------------+
-   | ``resources.weight``                 | Scheduling is managed by the Slurm workload manager. |
    +--------------------------------------+------------------------------------------------------+
    | ``resources.shm_size``               | By default ``/dev/shm`` is mounted from the compute  |
    |                                      | host. This can be overridden by the                  |
@@ -96,9 +102,18 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Singularity Known Issues
 **************************
 
-Launching a PBS jobs with an experiment configuration which includes an embedded double quote
-character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
-Singularity 3.10 or greater or Apptainer 1.1 or greater.
+Launching a PBS job with an experiment configuration that includes an embedded double quote
+character (") may cause the job to fail unless you have Singularity 3.10 or greater or Apptainer 1.1
+or greater. For example, the error might be the json.decoder.JSONDecodeError or the experiment log
+may contain ``source: /.inject-singularity-env.sh:224:1563: "export" must be followed by names or
+assignments`` and ``RuntimeError: missing environment keys [DET_MASTER, DET_CLUSTER_ID,
+DET_AGENT_ID, DET_SLOT_IDS, DET_TASK_ID, DET_ALLOCATION_ID, DET_SESSION_TOKEN, DET_TASK_TYPE], is
+this running on-cluster?``
+
+The version of Singularity is detected by the HPC Launcher invoking the singularity command and
+checking for the ``--no-eval`` option. If the singularity command is not on the path for the HPC
+launcher or is of an inconsistent version with the compute nodes, embedded double quote characters
+may still not work.
 
 ************************
  Apptainer Known Issues
@@ -209,12 +224,18 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
       slurm_job_name_suffix=$(echo ${SLURM_JOB_NAME} | sed 's/^\S\+-\([a-z0-9]\+-[a-z0-9]\+\)$/\1/')
 
-      podman_container_stop_command="podman container stop \
-         --filter name='.+-${slurm_job_name_suffix}'"
+      if ps -fe | grep -E "[p]odman run .*-name ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}" > /dev/null
+      then
+         timeout -k 15s 15s bash -c "while ps -fe | grep -E \"[c]onmon .*-n ${SLURM_JOB_USER}-\S+-${slurm_job_name_suffix}\" > /dev/null 2>&1; do sleep 1; done"
 
-      echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+         podman_container_stop_command="podman container stop --filter name='.+-${slurm_job_name_suffix}'"
 
-      eval ${podman_container_stop_command}
+         echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+
+         eval ${podman_container_stop_command}
+      fi
+
+      exit 0
 
    Restart the ``slurmd`` daemon on all compute nodes.
 
@@ -237,6 +258,21 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 -  Enroot does not provide a mechanism for sharing containers. Each user must create any containers
    needed by their Determined experiments prior to creating the experiment.
+
+-  Some Docker features do not have an exact replacement in Enroot, and therefore the associated
+   Determined features are not supported.
+
+   +--------------------------------------+------------------------------------------------------+
+   | Feature                              | Description                                          |
+   +======================================+======================================================+
+   | ``resources.devices``                | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``resources.shm_size``               | Managed via Enroot configuration files.              |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.server`` | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
+   | ``environment.registry_auth.email``  | No equivalent setting in Enroot.                     |
+   +--------------------------------------+------------------------------------------------------+
 
 .. _slurm-known-issues:
 

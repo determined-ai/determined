@@ -1,4 +1,4 @@
-import React, { MouseEvent, useCallback } from 'react';
+import React, { CSSProperties, MouseEvent, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
 import { handlePath, linkPath } from 'routes/utils';
@@ -18,8 +18,8 @@ export interface Props {
   onClick?: AnyMouseEventHandler;
   path?: string;
   popout?: boolean;
-  rawLink?: boolean;
   size?: 'tiny' | 'small' | 'medium' | 'large';
+  style?: CSSProperties;
 }
 
 const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) => {
@@ -44,7 +44,9 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
     return props.isButton ? (
       <Button disabled>{props.children}</Button>
     ) : (
-      <span className={classes.join(' ')}>{props.children}</span>
+      <span className={classes.join(' ')} style={props.style}>
+        {props.children}
+      </span>
     );
   }
 
@@ -54,7 +56,8 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
       className={classes.join(' ')}
       href={href}
       rel={rel}
-      onClick={!props.rawLink ? handleClick : undefined}>
+      style={props.style}
+      onClick={handleClick}>
       {props.children}
     </a>
   );

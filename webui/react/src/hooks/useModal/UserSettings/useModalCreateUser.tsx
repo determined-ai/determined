@@ -15,14 +15,15 @@ import {
   removeRolesFromUser,
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
@@ -100,13 +101,14 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
           <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
+              loading={Loadable.isLoading(knownRoles)}
               mode="multiple"
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.match(knownRoles, {
-                Loaded: (knownRoles) =>
-                  knownRoles.map((r: UserRole) => (
+              {Loadable.isLoaded(knownRoles) ? (
+                <>
+                  {knownRoles.data.map((r: UserRole) => (
                     <Select.Option
                       disabled={
                         roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
@@ -116,9 +118,9 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
                       value={r.id}>
                       {r.name}
                     </Select.Option>
-                  )),
-                NotLoaded: () => undefined, // TODO show spinner when this is loading
-              })}
+                  ))}
+                </>
+              ) : undefined}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
@@ -131,7 +133,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
 };
 
 interface ModalProps {
-  onClose?: () => void;
+  onOk?: () => void;
   user?: DetailedUser;
 }
 
@@ -139,15 +141,21 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (viewOnly?: boolean) => void;
 }
 
-const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
+const useModalCreateUser = ({ onOk, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+  const onClose = useCallback(
+    (reason?: ModalCloseReason) => {
+      if (reason === ModalCloseReason.Ok) onOk?.();
+    },
+    [onOk],
+  );
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
   const rbacEnabled = useFeature().isOn('rbac');
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const canAssignRolesFlag: boolean = canAssignRoles({});
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -211,7 +219,6 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
           message.success(API_SUCCESS_MESSAGE_CREATE);
           form.resetFields();
         }
-        onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');
         handleError(e, { silent: true, type: ErrorType.Input });
@@ -222,7 +229,6 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
     },
     [
       form,
-      onClose,
       user,
       handleCancel,
       userRoles,

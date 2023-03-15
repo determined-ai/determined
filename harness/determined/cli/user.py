@@ -15,7 +15,16 @@ from . import render
 
 FullUser = namedtuple(
     "FullUser",
-    ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
+    [
+        "user_id",
+        "username",
+        "admin",
+        "active",
+        "agent_uid",
+        "agent_gid",
+        "agent_user",
+        "agent_group",
+    ],
 )
 
 
@@ -69,7 +78,7 @@ def change_password(parsed_args: Namespace) -> None:
     elif parsed_args.user:
         username = parsed_args.user
     else:
-        username = authentication.must_cli_auth().get_session_user()
+        username = client.get_session_username()
 
     if not username:
         # The default user should have been set by now by autologin.
@@ -165,7 +174,7 @@ args_description = [
             Arg("det_username", help="name of Determined user to link"),
             *AGENT_USER_GROUP_ARGS,
         ]),
-        Cmd("whoami", whoami, "print the active user", [])
+        Cmd("whoami", whoami, "print the active user", []),
     ])
 ]  # type: List[Any]
 

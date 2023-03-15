@@ -171,29 +171,6 @@ var (
     }
 }
 `)
-	textCheckEpochNotUsedV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json",
-    "title": "CheckEpochNotUsed",
-    "additionalProperties": {
-        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-    },
-    "items": {
-        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-    },
-    "checks": {
-        "must specify the top-level records_per_epoch when this field is in terms of epochs": {
-            "properties": {
-                "epochs": {
-                    "not": {
-                        "type": "number"
-                    }
-                }
-            }
-        }
-    }
-}
-`)
 	textCheckGridHyperparameterV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json",
@@ -587,6 +564,14 @@ var (
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
+        "proxy_ports": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+        },
         "ports": {
             "type": [
                 "object",
@@ -957,29 +942,6 @@ var (
                         "additionalProperties": {
                             "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "$comment": "when records per epoch not set, forbid epoch lengths",
-                "properties": {
-                    "records_per_epoch": {
-                        "maximum": 0
-                    }
-                }
-            },
-            "then": {
-                "properties": {
-                    "min_validation_period": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                    },
-                    "min_checkpoint_period": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                    },
-                    "searcher": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }
@@ -1616,6 +1578,53 @@ var (
         "type": "a<=b",
         "a": "begin_on_batch",
         "b": "end_after_batch"
+    }
+}
+`)
+	textProxyPortV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-port.json",
+    "title": "ProxyPort",
+    "additionalProperties": false,
+    "required": [
+        "proxy_port"
+    ],
+    "type": "object",
+    "properties": {
+        "proxy_port": {
+            "type": "number"
+        },
+        "proxy_tcp": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "unauthenticated": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "default_service_id": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
+`)
+	textProxyPortsConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-ports.json",
+    "title": "ProxyPortsConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/proxy-port.json"
     }
 }
 `)
@@ -3063,8 +3072,6 @@ var (
 
 	schemaBindMountsConfigV0 interface{}
 
-	schemaCheckEpochNotUsedV0 interface{}
-
 	schemaCheckGridHyperparameterV0 interface{}
 
 	schemaCheckPositiveLengthV0 interface{}
@@ -3116,6 +3123,10 @@ var (
 	schemaOptimizationsConfigV0 interface{}
 
 	schemaProfilingConfigV0 interface{}
+
+	schemaProxyPortV0 interface{}
+
+	schemaProxyPortsConfigV0 interface{}
 
 	schemaRegistryAuthV0 interface{}
 
@@ -3228,26 +3239,6 @@ func ParsedBindMountsConfigV0() interface{} {
 		panic("invalid embedded json for BindMountsConfigV0")
 	}
 	return schemaBindMountsConfigV0
-}
-
-func ParsedCheckEpochNotUsedV0() interface{} {
-	cacheLock.RLock()
-	if schemaCheckEpochNotUsedV0 != nil {
-		cacheLock.RUnlock()
-		return schemaCheckEpochNotUsedV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaCheckEpochNotUsedV0 != nil {
-		return schemaCheckEpochNotUsedV0
-	}
-	err := json.Unmarshal(textCheckEpochNotUsedV0, &schemaCheckEpochNotUsedV0)
-	if err != nil {
-		panic("invalid embedded json for CheckEpochNotUsedV0")
-	}
-	return schemaCheckEpochNotUsedV0
 }
 
 func ParsedCheckGridHyperparameterV0() interface{} {
@@ -3770,6 +3761,46 @@ func ParsedProfilingConfigV0() interface{} {
 	return schemaProfilingConfigV0
 }
 
+func ParsedProxyPortV0() interface{} {
+	cacheLock.RLock()
+	if schemaProxyPortV0 != nil {
+		cacheLock.RUnlock()
+		return schemaProxyPortV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaProxyPortV0 != nil {
+		return schemaProxyPortV0
+	}
+	err := json.Unmarshal(textProxyPortV0, &schemaProxyPortV0)
+	if err != nil {
+		panic("invalid embedded json for ProxyPortV0")
+	}
+	return schemaProxyPortV0
+}
+
+func ParsedProxyPortsConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaProxyPortsConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaProxyPortsConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaProxyPortsConfigV0 != nil {
+		return schemaProxyPortsConfigV0
+	}
+	err := json.Unmarshal(textProxyPortsConfigV0, &schemaProxyPortsConfigV0)
+	if err != nil {
+		panic("invalid embedded json for ProxyPortsConfigV0")
+	}
+	return schemaProxyPortsConfigV0
+}
+
 func ParsedRegistryAuthV0() interface{} {
 	cacheLock.RLock()
 	if schemaRegistryAuthV0 != nil {
@@ -4251,8 +4282,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textBindMountV0
 	url = "http://determined.ai/schemas/expconf/v0/bind-mounts.json"
 	cachedSchemaBytesMap[url] = textBindMountsConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-	cachedSchemaBytesMap[url] = textCheckEpochNotUsedV0
 	url = "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
 	cachedSchemaBytesMap[url] = textCheckGridHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
@@ -4305,6 +4334,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
 	cachedSchemaBytesMap[url] = textProfilingConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+	cachedSchemaBytesMap[url] = textProxyPortV0
+	url = "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+	cachedSchemaBytesMap[url] = textProxyPortsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
 	cachedSchemaBytesMap[url] = textRegistryAuthV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"

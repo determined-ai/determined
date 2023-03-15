@@ -32,9 +32,9 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c
-        cuda: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c
-        rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c
+        cpu: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0e4beb5
+        cuda: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0e4beb5
+        rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0e4beb5
       pod_spec: null
       ports:
         qwer: 1234
@@ -174,6 +174,7 @@
         rocm: '*'
       pod_spec:
       ports: {}
+      proxy_ports: []
       registry_auth: null
       add_capabilities: []
       drop_capabilities: []
@@ -226,59 +227,6 @@
     slurm: {}
     workspace: ''
     project: ''
-
-- name: records_per_epoch conditional (valid)
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/experiment.json
-  case:
-    hyperparameters: {}
-    entrypoint: model_def:MyTrial
-    searcher:
-      name: single
-      metric: loss
-      max_length:
-        epochs: 10
-    min_validation_period:
-      epochs: 10
-    min_checkpoint_period:
-      epochs: 10
-    records_per_epoch: 10
-
-- name: records_per_epoch conditional (invalid, zero)
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/experiment.json:
-      - "<config>.searcher.max_length: must specify the top-level records_per_epoch"
-      - "<config>.min_validation_period: must specify the top-level records_per_epoch"
-      - "<config>.min_checkpoint_period: must specify the top-level records_per_epoch"
-  case:
-    searcher:
-      name: single
-      metric: loss
-      max_length:
-        epochs: 10
-    min_validation_period:
-      epochs: 10
-    min_checkpoint_period:
-      epochs: 10
-    records_per_epoch: 0
-
-- name: records_per_epoch conditional (invalid, missing)
-  sanity_errors:
-    http://determined.ai/schemas/expconf/v0/experiment.json:
-      - "<config>.searcher.max_length: must specify the top-level records_per_epoch"
-      - "<config>.min_validation_period: must specify the top-level records_per_epoch"
-      - "<config>.min_checkpoint_period: must specify the top-level records_per_epoch"
-  case:
-    searcher:
-      name: single
-      metric: loss
-      max_length:
-        epochs: 10
-    min_validation_period:
-      epochs: 10
-    min_checkpoint_period:
-      epochs: 10
-    entrypoint: model_def:MyTrial
 
 - name: check grid conditional (valid)
   sane_as:

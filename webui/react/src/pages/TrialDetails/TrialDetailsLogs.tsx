@@ -6,11 +6,11 @@ import LogViewer, {
   FetchDirection,
   FetchType,
 } from 'components/kit/LogViewer/LogViewer';
-import LogViewerFilters, { Filters } from 'components/kit/LogViewer/LogViewerFilters';
+import LogViewerSelect, { Filters } from 'components/kit/LogViewer/LogViewerSelect';
 import {
   Settings,
   settingsConfigForTrial,
-} from 'components/kit/LogViewer/LogViewerFilters.settings';
+} from 'components/kit/LogViewer/LogViewerSelect.settings';
 import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -172,7 +172,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const logFilters = (
     <div className={css.filters}>
-      <LogViewerFilters
+      <LogViewerSelect
         options={filterOptions}
         showSearch={true}
         values={filterValues}

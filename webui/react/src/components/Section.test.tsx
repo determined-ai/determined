@@ -14,7 +14,7 @@ const setup = ({
   bodyNoPadding = false,
   divider = false,
 }) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
     <Section
       bodyBorder={bodyBorder}

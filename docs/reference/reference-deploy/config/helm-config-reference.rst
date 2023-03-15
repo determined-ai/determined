@@ -173,11 +173,11 @@
 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.19.12``.
+      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.19.12``.
+      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 
@@ -215,3 +215,7 @@
    <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
    the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
    as ``coscheduler``, Determined will use the default Kubernetes scheduler.
+
+-  ``resourcePools``: This section contains the names of the resource pools and their linked
+   namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
+   <master-config-reference>`.

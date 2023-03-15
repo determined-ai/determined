@@ -8,8 +8,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
-    'plugin:jest/recommended',
-    'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
     'plugin:react-hooks/recommended',
     'prettier', // prettier should be the last
@@ -30,17 +28,10 @@ module.exports = {
     // Can disagree with @typescript-eslint/member-ordering.
     '@typescript-eslint/adjacent-overload-signatures': 'off',
     '@typescript-eslint/explicit-module-boundary-types': [
-      'warn',
+      'error',
       { allowArgumentsExplicitlyTypedAsAny: true },
     ],
-    '@typescript-eslint/member-ordering': [
-      'error',
-      {
-        interfaces: { order: 'alphabetically' },
-        typeLiterals: { order: 'alphabetically' },
-      },
-    ],
-    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': [
       'error',
       { args: 'after-used', ignoreRestSiblings: true },
@@ -70,7 +61,6 @@ module.exports = {
       },
     ],
     'indent': 'off',
-    'jest/valid-title': 'off',
     'jsdoc/check-access': 1,
     'jsdoc/check-alignment': 1,
     'jsdoc/check-param-names': 1,
@@ -103,7 +93,7 @@ module.exports = {
       },
     ],
     'keyword-spacing': ['error'],
-    'no-console': ['error', { allow: ['warn'] }],
+    'no-console': ['error', { allow: ['error'] }],
     'no-empty': ['error', { allowEmptyCatch: false }],
     'no-multi-spaces': ['error', { ignoreEOLComments: true }],
     'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
@@ -154,6 +144,7 @@ module.exports = {
         html: true,
       },
     ],
+    'react-hooks/exhaustive-deps': 'error',
     'require-await': 'error',
     'semi': ['error', 'always'],
     'sort-imports': [
@@ -177,7 +168,6 @@ module.exports = {
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
-    'jest': { version: 'detect' },
     'react': { version: 'detect' },
   },
 };

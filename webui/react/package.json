@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=16.13 <17",
+    "node": ">=16.19 <20",
     "npm": ">=8.0.0"
   },
   "scripts": {
@@ -24,9 +24,8 @@
     "format-check:js": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",
     "format-check:css": "prettier --check \"src/**/*.{css,less,scss}\"",
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
-    "test": "craco test --config jest.config.js",
-    "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
-    "eject": "react-scripts eject",
+    "test": "vitest",
+    "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'"
   },
   "dependencies": {
@@ -35,6 +34,7 @@
     "antd": "^5.1.7",
     "dayjs": "^1.10.7",
     "debug": "^4.3.4",
+    "events": "^3.3.0",
     "fp-ts": "^2.11.2",
     "fuse.js": "^6.4.6",
     "history": "^5.3.0",
@@ -65,7 +65,8 @@
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
     "throttle-debounce": "^5.0.0",
-    "uplot": "^1.6.18"
+    "uplot": "^1.6.18",
+    "url": "^0.11.0"
   },
   "browserslist": {
     "production": [
@@ -80,7 +81,6 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^6.4.5",
     "@testing-library/dom": "^8.19.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -89,7 +89,6 @@
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.14",
     "@types/humanize-duration": "^3.27.1",
-    "@types/jest": "^29.2.2",
     "@types/js-yaml": "^4.0.5",
     "@types/morgan": "^1.9.3",
     "@types/node": "^18.11.9",
@@ -103,57 +102,40 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/sprintf-js": "^1.1.2",
     "@types/throttle-debounce": "^5.0.0",
-    "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.0",
     "@vitejs/plugin-react-swc": "^3.1.0",
+    "@vitest/coverage-c8": "^0.28.5",
     "browserslist": "^4.21.4",
     "cheerio": "^1.0.0-rc.12",
-    "craco-sass-resources-loader": "^1.1.0",
-    "csp-html-webpack-plugin": "^5.1.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-config-react": "^1.1.7",
     "eslint-import-resolver-typescript": "^2.7.1",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^24.7.0",
     "eslint-plugin-jsdoc": "^39.6.8",
     "eslint-plugin-react": "^7.31.11",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-sort-keys-fix": "^1.1.2",
     "express": "^4.17.1",
-    "jest-junit": "^13.0.0",
-    "less": "^4.1.1",
-    "less-loader": "^7.0.2",
+    "jsdom": "^16.7.0",
     "magic-string": "^0.27.0",
-    "monaco-editor-webpack-plugin": "^3.0.1",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
     "prettier": "^2.8.0",
-    "react-app-rewired": "^2.1.6",
-    "react-docgen-typescript-loader": "^3.7.2",
-    "react-scripts": "^4.0.3",
     "resize-observer-polyfill": "^1.5.1",
     "sass": "^1.35.2",
-    "sass-loader": "^10.1.1",
     "source-map-explorer": "^2.5.0",
     "stylelint": "^13.13.1",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-standard": "^22.0.0",
     "stylelint-order": "^4.1.0",
     "stylelint-scss": "^3.18.0",
-    "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
     "typescript": "^4.8.4",
     "vite": "^4.1.1",
     "vite-plugin-checker": "^0.5.5",
-    "vite-tsconfig-paths": "^4.0.5"
-  },
-  "jest": {
-    "coveragePathIgnorePatterns": [
-      "/src/services/api-ts-sdk/",
-      ".stories.tsx"
-    ],
-    "resetMocks": false
+    "vite-tsconfig-paths": "^4.0.5",
+    "vitest": "^0.28.5",
+    "whatwg-fetch": "^3.6.2"
   }
 }

@@ -3,8 +3,8 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
+import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -24,7 +24,8 @@ import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/us
 
 import RoleRenderer from './RoleRenderer';
 import css from './WorkspaceMembers.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
@@ -111,7 +112,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   fetchMembers,
 }: Props) => {
   const { canAssignRoles } = usePermissions();
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
+  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];
@@ -174,7 +176,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         return <UserBadge user={member} />;
       }
       const group = record as V1GroupDetails;
-      return <GroupAvatar groupName={group.name} />;
+      return <Nameplate icon={<Icon name="group" />} name={group.name ?? ''} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (

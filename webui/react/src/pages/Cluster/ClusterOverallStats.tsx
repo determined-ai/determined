@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
+import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
@@ -12,7 +12,6 @@ import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
 import { TasksStore } from 'stores/tasks';
-import { ShirtSize } from 'themes';
 import { ResourceType, TaskCounts } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -25,7 +24,7 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 };
 
 export const ClusterOverallStats: React.FC = () => {
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const resourcePools = useObservable(useClusterStore().resourcePools);
   const agents = useObservable(useClusterStore().agents);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
@@ -52,41 +51,49 @@ export const ClusterOverallStats: React.FC = () => {
       running: 0,
       total: 0,
     };
-    resourcePools.forEach((rp) => {
-      tally.total += rp.auxContainerCapacity;
-      tally.running += rp.auxContainersRunning;
-    });
+    Loadable.isLoaded(resourcePools) &&
+      resourcePools.data.forEach((rp) => {
+        tally.total += rp.auxContainerCapacity;
+        tally.running += rp.auxContainersRunning;
+      });
     return tally;
   }, [resourcePools]);
 
   const maxTotalSlots = useMemo(() => {
-    return Loadable.map(agents, (agents) => maxClusterSlotCapacity(resourcePools, agents));
+    return Loadable.map(agents, (agents) =>
+      maxClusterSlotCapacity(
+        (Loadable.isLoaded(resourcePools) && resourcePools.data) || [],
+        agents,
+      ),
+    );
   }, [resourcePools, agents]);
 
   return (
     <Section hideTitle title="Overview Stats">
-      <Grid gap={ShirtSize.Medium} minItemWidth={150} mode={GridMode.AutoFill}>
+      <Card.Group size="small">
         <OverviewStats title="Connected Agents">
           {Loadable.match(agents, {
             Loaded: (agents) => (agents ? agents.length : '?'),
             NotLoaded: (): ReactNode => <Spinner />,
           })}
         </OverviewStats>
-        {[ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
-          Loadable.match(Loadable.all([clusterOverview, maxTotalSlots]), {
-            Loaded: ([overview, maxTotalSlots]) =>
-              maxTotalSlots[resType] > 0 ? (
-                <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-                  {overview[resType].total - overview[resType].available}
-                  <small>/ {maxTotalSlots[resType]}</small>
-                </OverviewStats>
-              ) : null,
-            NotLoaded: () => undefined,
-          }),
-        )}
+        <Spinner
+          conditionalRender
+          spinning={Loadable.isLoading(maxTotalSlots) || Loadable.isLoading(clusterOverview)}>
+          {Loadable.isLoaded(maxTotalSlots) && Loadable.isLoaded(clusterOverview) // This is ok as the Spinner has conditionalRender active
+            ? [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
+                maxTotalSlots.data[resType] > 0 ? (
+                  <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
+                    {clusterOverview.data[resType].total - clusterOverview.data[resType].available}
+                    <small> / {maxTotalSlots.data[resType]}</small>
+                  </OverviewStats>
+                ) : null,
+              )
+            : undefined}
+        </Spinner>
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
-            {auxContainers.running} <small>/ {auxContainers.total}</small>
+            {auxContainers.running} <small> / {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
         {usePermissions().canAdministrateUsers || !rbacEnabled ? (
@@ -123,7 +130,7 @@ export const ClusterOverallStats: React.FC = () => {
             </OverviewStats>
           </>
         ) : null}
-      </Grid>
+      </Card.Group>
     </Section>
   );
 };

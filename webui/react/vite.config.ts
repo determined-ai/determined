@@ -4,7 +4,8 @@ import path from 'path';
 
 import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
-import { defineConfig, Plugin, UserConfig } from 'vite';
+import { Plugin, UserConfig } from 'vite';
+import { defineConfig } from 'vitest/config'
 import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -14,16 +15,15 @@ import { cspHtml } from './src/shared/configs/vite-plugin-csp';
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
 
 // https://github.com/swagger-api/swagger-codegen/issues/10027
-const portableFetchFix = () => ({
+const portableFetchFix = (): Plugin => ({
   name: 'fix-portable-fetch',
   transform: (source: string, id: string) => {
     if (id.endsWith('api-ts-sdk/api.ts')) {
-      const newSource = new MagicString(
-        source.replace(
-          'import * as portableFetch from "portable-fetch"',
-          'import portableFetch from "portable-fetch"',
-        ),
-      );
+      const newSource = new MagicString(source)
+      newSource.replace(
+        'import * as portableFetch from "portable-fetch"',
+        'import portableFetch from "portable-fetch"',
+      )
       return {
         code: newSource.toString(),
         map: newSource.generateMap(),
@@ -97,9 +97,9 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
-    'process.env.PUBLIC_URL': JSON.stringify(publicUrl || ''),
+    'process.env.PUBLIC_URL': JSON.stringify(mode !== 'test' && publicUrl || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.19.11-dev0"',
+    'process.env.VERSION': '"0.20.1-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
@@ -109,9 +109,9 @@ export default defineConfig(({ mode }) => ({
     react(),
     portableFetchFix(),
     publicUrlBaseHref(),
-    checker({
+    (mode !== 'test' && checker({
       typescript: true,
-    }),
+    })),
     cspHtml({
       cspRules: {
         'frame-src': ["'self'", 'netlify.determined.ai'],
@@ -139,5 +139,19 @@ export default defineConfig(({ mode }) => ({
       '/proxy': { target: webpackProxyUrl },
     },
     strictPort: true,
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/setupTests.ts'],
+    css: {
+      modules: {
+        classNameStrategy: 'non-scoped'
+      }
+    },
+    deps: {
+      // necessary to fix react-dnd jsx runtime issue
+      registerNodeLoader: true
+    },
   },
 }));

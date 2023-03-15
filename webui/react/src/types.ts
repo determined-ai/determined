@@ -197,12 +197,12 @@ export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
   id: string;
-  kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
   registeredTime: string;
   resourcePool: string;
   serviceAddress?: string;
   state: CommandState;
+  type: CommandType;
   user: User;
 }
 
@@ -319,6 +319,7 @@ export const ExperimentAction = {
   ContinueTrial: 'Continue Trial',
   Delete: 'Delete',
   DownloadCode: 'Download Experiment Code',
+  Edit: 'Edit',
   Fork: 'Fork',
   HyperparameterSearch: 'Hyperparameter Search',
   Kill: 'Kill',
@@ -589,14 +590,6 @@ export interface ExperimentBase extends ProjectExperiment {
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   originalConfig: string;
-}
-
-// TODO we should be able to remove ExperimentOld but leaving this off.
-export interface ExperimentOld extends ExperimentItem {
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
-  url: string;
 }
 
 interface Allocation {

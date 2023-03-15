@@ -189,6 +189,8 @@ func (a *Agent) run(ctx context.Context) error {
 				}
 			case msg.SignalContainer != nil:
 				manager.SignalContainer(ctx, *msg.SignalContainer)
+			case msg.AgentShutdown != nil:
+				return errors.New(msg.AgentShutdown.ErrMsg)
 			default:
 				panic(fmt.Sprintf("unknown message received: %+v", msg))
 			}

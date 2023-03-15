@@ -128,6 +128,13 @@ recommended to optimize how Determined interacts with Slurm:
       default using the :ref:`slurm section <cluster-configuration-slurm>`
       ``default_compute_resource_pool`` or ``default_aux_resource_pool`` option.
 
+   -  If a Slurm partition is not homogeneous, you may create a resource pool that provides
+      homogenous resources out of that partition using a custom resource pool. Configure a
+      :ref:`resource pool <cluster-resource-pools>` with ``provider_type: hpc``, specify the
+      underlying Slurm partition name to receive the job and include a :ref:`task_container_defaults
+      <master-task-container-defaults>` section with the necessary ``slurm`` options to select the
+      desired homogenous set of resources from that partition.
+
 -  Ensure the ``MaxNodes`` value for each partition is not less than the number of GPUs in the
    partition.
 
@@ -187,6 +194,13 @@ to optimize how Determined interacts with PBS:
    -  The Determined default resource pool is set to the PBS default queue. Override this default
       using the :ref:`pbs section <cluster-configuration-slurm>` ``default_compute_resource_pool``
       or ``default_aux_resource_pool`` option.
+
+   -  If a PBS queue is not homogeneous, you may create a resource pool that provides homogenous
+      resources out of that queue using a custom resource pool. Configure a :ref:`resource pool
+      <cluster-resource-pools>` with ``provider_type: hpc``, specify the underlying PBS queue name
+      to receive the job and include a :ref:`task_container_defaults
+      <master-task-container-defaults>` section with the necessary `pbs`` options to select the
+      desired homogenous set of resources from that queue.
 
 -  Tune the PBS configuration for Determined job preemption.
 
@@ -335,7 +349,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0e4beb5
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh
