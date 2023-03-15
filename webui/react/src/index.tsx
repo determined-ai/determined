@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
 /* Import the styles first to allow components to override styles. */
-import 'shared/styles/index.scss';
 import 'uplot/dist/uPlot.min.css';
 
 import router from './router';
