@@ -342,7 +342,7 @@ func TestMultipleContainerTerminate(t *testing.T) {
 			},
 		},
 	}
-	newPod.containerNames = set.New([]string{"test-pod-1", "test-pod-2"})
+	newPod.containerNames = set.FromSlice([]string{"test-pod-1", "test-pod-2"})
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
@@ -553,7 +553,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 		ObjectMeta: objectMeta,
 		Status:     status,
 	}
-	newPod.containerNames = set.New([]string{
+	newPod.containerNames = set.FromSlice([]string{
 		"determined-container",
 		"determined-fluent-container",
 		"test-pod",
