@@ -878,11 +878,11 @@ export interface Permission {
 }
 
 export interface UserRole {
-  fromGroup?: number[];
-  fromWorkspace?: number[];
+  fromUser?: boolean;
   id: number;
   name: string;
   permissions: Permission[];
+  scopeCluster?: boolean;
 }
 
 export interface UserAssignment {
