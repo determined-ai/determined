@@ -83,13 +83,19 @@ data:
         image: {{ .Values.fluent.image }}
         {{- end }}
       {{- end }}
-      default_aux_resource_pool: {{ .Values.resources.resourcePool }}
+      default_aux_resource_pool: cpu_pool
       default_compute_resource_pool: {{ .Values.resources.resourcePool }}
 
     {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea")._1 -}}
     
     resource_pools:
+      - pool_name: cpu_pool
+        description: "Resource Pool for Shells & Commands."
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
       - pool_name: RTX_A4000
         description: "Resource Pool for RTX_A4000"
         task_container_defaults:
@@ -105,7 +111,7 @@ data:
             gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
           gpu_pod_spec: {{ include "determined.gpuPodSpecRTX_A5000" . | fromYaml | toJson }}
       - pool_name: A40
-        description: "Resource Pool for RTX_A5000"
+        description: "Resource Pool for A40"
         task_container_defaults:
           image:
             cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
