@@ -361,7 +361,8 @@ class Checkpoint:
 
     def delete(self) -> None:
         """
-        Deletes checkpoint and all associated data in the checkpoint storage.
+        Notifies the master of a checkpoint deletion request, which will be handled asynchronously.
+        Master will delete checkpoint and all associated data in the checkpoint storage.
         """
 
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])

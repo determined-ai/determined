@@ -26,7 +26,6 @@ class CheckpointSortBy(enum.Enum):
     Specifies the field to sort a list of checkpoints on.
     """
 
-    UNSPECIFIED = _csb.SORT_BY_UNSPECIFIED.value
     END_TIME = _csb.SORT_BY_END_TIME.value
     STATE = _csb.SORT_BY_STATE.value
     SORT_BY_UUID = _csb.SORT_BY_UUID.value
@@ -206,7 +205,9 @@ class TrialReference:
 
         checkpoints = self.get_checkpoints(sort_by=sort_by, order_by=order_by)
 
-        return checkpoints[0] if checkpoints else []
+        if not checkpoints:
+            raise ValueError("No checkpoints found for criteria.")
+        return checkpoints[0]
 
     def get_checkpoints(
         self,
@@ -221,7 +222,7 @@ class TrialReference:
 
         Arguments:
             sort_by (string, :class:`~determined.experimental.CheckpointSortBy`): Which field to
-                sort by. Strings are assumed to be searcher metric names.
+                sort by. Strings are assumed to be validation metric names.
             order_by (:class:`~determined.experimental.CheckpointOrderBy`): Whether to sort in
                 ascending or descending order.
         """
@@ -266,12 +267,20 @@ class TrialReference:
 
         assert sort_by is not None and order_by is not None, "sort_by and order_by not defined."
 
+        reverse = order_by == CheckpointOrderBy.DESC
+
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training
             assert training
-            return training.validation_metrics["avgMetrics"][sort_by]
+            metric = training.validation_metrics.get("avgMetrics", {}).get(sort_by)
 
-        checkpoints.sort(reverse=order_by == CheckpointOrderBy.DESC, key=key)
+            # Return a bool here to sort checkpoints that may have no validation metrics.
+            if reverse:
+                return metric is not None, metric
+            else:
+                return metric is None, metric
+
+        checkpoints.sort(reverse=reverse, key=key)
 
         return checkpoints
 

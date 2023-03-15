@@ -66,6 +66,9 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
         ).uuid
         == ckpt.uuid
     )
+    assert len(trial.get_checkpoints()) == 1
+    assert trial.get_checkpoints()[0].uuid == ckpt.uuid
+
     assert exp.top_checkpoint().uuid == ckpt.uuid
     assert ckpt.uuid in (c.uuid for c in exp.top_n_checkpoints(100))
     assert client.get_checkpoint(ckpt.uuid).uuid == ckpt.uuid
