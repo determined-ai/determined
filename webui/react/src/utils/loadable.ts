@@ -1,5 +1,9 @@
 export type Loadable<T> =
   | {
+      _tag: 'Errored';
+      error: Error;
+    }
+  | {
       _tag: 'Loaded';
       data: T;
     }
@@ -9,6 +13,7 @@ export type Loadable<T> =
 
 const exhaustive = (v: never): never => v;
 
+const Errored = <T>(error: Error): Loadable<T> => ({ _tag: 'Errored', error });
 const Loaded = <T>(data: T): Loadable<T> => ({ _tag: 'Loaded', data });
 const NotLoaded: Loadable<never> = { _tag: 'NotLoaded' };
 
@@ -20,6 +25,8 @@ const NotLoaded: Loadable<never> = { _tag: 'NotLoaded' };
  */
 const map = <T, U>(l: Loadable<T>, fn: (_: T) => U): Loadable<U> => {
   switch (l._tag) {
+    case 'Errored':
+      return Errored(l.error);
     case 'Loaded':
       return Loaded(fn(l.data));
     case 'NotLoaded':
@@ -49,6 +56,8 @@ const flatMap = <T, U>(l: Loadable<T>, fn: (_: T) => Loadable<U>): Loadable<U> =
  */
 const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
   switch (l._tag) {
+    case 'Errored':
+      return;
     case 'Loaded': {
       fn(l.data);
       return;
@@ -66,6 +75,8 @@ const forEach = <T, U>(l: Loadable<T>, fn: (_: T) => U): void => {
  */
 const getOrElse = <T>(def: T, l: Loadable<T>): T => {
   switch (l._tag) {
+    case 'Errored':
+      return def;
     case 'Loaded':
       return l.data;
     case 'NotLoaded':
@@ -81,6 +92,15 @@ type MatchArgs<T, U> =
       NotLoaded: () => U;
     }
   | {
+      Errored: (error: Error) => U;
+      Loaded: (data: T) => U;
+      NotLoaded: () => U;
+    }
+  | {
+      Errored: (error: Error) => U;
+      _: () => U;
+    }
+  | {
       Loaded: (data: T) => U;
       _: () => U;
     }
@@ -94,6 +114,12 @@ type MatchArgs<T, U> =
  */
 const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
   switch (l._tag) {
+    case 'Errored':
+      return 'Errored' in cases
+        ? cases.Errored(l.error)
+        : 'NotLoaded' in cases
+        ? cases.NotLoaded()
+        : cases._();
     case 'Loaded':
       return 'Loaded' in cases ? cases.Loaded(l.data) : cases._();
     case 'NotLoaded':
@@ -106,6 +132,8 @@ const match = <T, U>(l: Loadable<T>, cases: MatchArgs<T, U>): U => {
 /** Like `match` but without argument names */
 const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
   switch (l._tag) {
+    case 'Errored':
+      return def;
     case 'Loaded':
       return f(l.data);
     case 'NotLoaded':
@@ -117,7 +145,7 @@ const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
 
 /** Returns true if the passed object is a Loadable */
 const isLoadable = <T, Z>(l: Loadable<T> | Z): l is Loadable<T> => {
-  return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
+  return ['Errored', 'Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
 };
 
 const isLoading = <T>(l: Loadable<T>): l is { _tag: 'NotLoaded' } => {
@@ -126,6 +154,10 @@ const isLoading = <T>(l: Loadable<T>): l is { _tag: 'NotLoaded' } => {
 
 const isLoaded = <T>(l: Loadable<T>): l is { _tag: 'Loaded'; data: T } => {
   return l !== NotLoaded;
+};
+
+const isErrored = <T>(l: Loadable<T>): l is { _tag: 'Errored'; error: Error } => {
+  return l._tag === 'Errored';
 };
 
 /**
@@ -146,6 +178,8 @@ function all(ls: Array<Loadable<unknown>>): Loadable<Array<unknown>> {
   for (const l of ls) {
     if (l._tag === 'NotLoaded') {
       return NotLoaded;
+    } else if (l._tag === 'Errored') {
+      return Errored(l.error);
     }
     res.push(l.data);
   }
@@ -155,6 +189,8 @@ function all(ls: Array<Loadable<unknown>>): Loadable<Array<unknown>> {
 /** Allows you to use Loadables with React's Suspense component */
 const waitFor = <T>(l: Loadable<T>): T => {
   switch (l._tag) {
+    case 'Errored':
+      throw Promise.reject(l.error);
     case 'Loaded':
       return l.data;
     case 'NotLoaded':
@@ -170,6 +206,7 @@ export const Loadable = {
   flatMap,
   forEach,
   getOrElse,
+  isErrored,
   isLoadable,
   isLoaded,
   isLoading,
@@ -179,4 +216,4 @@ export const Loadable = {
   waitFor,
 };
 
-export { Loaded, NotLoaded };
+export { Errored, Loaded, NotLoaded };
