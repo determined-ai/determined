@@ -119,7 +119,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
-            Groups may have additional inherited workspace roles not reflected here. &nbsp;
+            Users may have additional inherited global or workspace roles not reflected here. &nbsp;
             <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
               Learn more
             </Link>
