@@ -3,7 +3,6 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
-import UserBadge from 'components/kit/UserBadge';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -17,6 +16,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
@@ -31,12 +31,11 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { RolesStore } from 'stores/roles';
-import usersStore, { FetchUsersConfig } from 'stores/users';
+import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -130,6 +129,7 @@ const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const fetchUsersHook = useFetchUsers(canceler);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
   const apiConfig = useMemo<FetchUsersConfig>(
     () => ({
@@ -140,12 +140,12 @@ const UserManagement: React.FC = () => {
     }),
     [settings],
   );
-  const loadableUsers = useObservable(usersStore.getUsers(apiConfig));
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
+  const loadableUser = useUsers(apiConfig);
+  const users = Loadable.match(loadableUser, {
+    Loaded: (users) => users.users,
     NotLoaded: () => [],
   });
-  const total = Loadable.match(loadableUsers, {
+  const total = Loadable.match(loadableUser, {
     Loaded: (users) => users.pagination.total ?? 0,
     NotLoaded: () => 0,
   });
@@ -156,8 +156,8 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    usersStore.ensureUsersFetched(canceler, apiConfig);
-  }, [settings, canceler, apiConfig]);
+    fetchUsersHook(apiConfig);
+  }, [settings, apiConfig, fetchUsersHook]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -184,7 +184,7 @@ const UserManagement: React.FC = () => {
     if (rbacEnabled) {
       RolesStore.fetchRoles(canceler);
     }
-  }, [canceler, rbacEnabled]);
+  }, [rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers });
 
@@ -254,7 +254,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={loadableUsers === NotLoaded}
+        loading={loadableUser === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
@@ -278,7 +278,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, loadableUsers, settings, columns, total, updateSettings]);
+  }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
     <Page bodyNoPadding containerRef={pageRef}>
       <Section

@@ -299,7 +299,11 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
     for t in trials:
         for s in t.workloads:
-            if s.training is not None or s.validation is not None:
+            if (
+                s.training is not None and s.training.state == experimentv1State.STATE_COMPLETED
+            ) or (
+                s.validation is not None and s.validation.state == experimentv1State.STATE_COMPLETED
+            ):
                 return True
     return False
 
@@ -502,6 +506,7 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     zeroth_step = workloads_with_validation(workloads)[0]
 
     assert zeroth_step.totalBatches == 0
+    assert zeroth_step.state == experimentv1State.STATE_COMPLETED
 
 
 def last_workload_matches_last_checkpoint(
@@ -519,6 +524,7 @@ def last_workload_matches_last_checkpoint(
         last_workload_detail = last_workload.training or last_workload.validation
         assert last_workload_detail is not None
         assert last_workload_detail.totalBatches == last_checkpoint.totalBatches
+        assert last_workload_detail.state == experimentv1State.STATE_COMPLETED
     elif last_workload.checkpoint:
         last_checkpoint_detail = last_workload.checkpoint
         assert last_checkpoint_detail is not None
@@ -738,8 +744,10 @@ def verify_completed_experiment_metadata(
         for s in t.workloads:
             if s.training:
                 batch_ids.append(s.training.totalBatches)
+                assert s.training.state == experimentv1State.STATE_COMPLETED
             if s.validation:
                 batch_ids.append(s.validation.totalBatches)
+                assert s.validation.state == experimentv1State.STATE_COMPLETED
             if s.checkpoint:
                 batch_ids.append(s.checkpoint.totalBatches)
                 assert s.checkpoint.state in {

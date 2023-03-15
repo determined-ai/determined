@@ -7,7 +7,7 @@ import { V1LoginRequest } from 'services/api-ts-sdk';
 import { SetUserPasswordParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
-import usersStore from 'stores/users';
+import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalPasswordChange, {
@@ -66,13 +66,15 @@ const user = userEvent.setup();
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
+  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
+  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(async () => {
-    await usersStore.ensureUsersFetched(canceler);
+    await fetchUsers();
     setAuth({ isAuthenticated: true });
-    usersStore.updateCurrentUser(CURRENT_USER.id);
-  }, [canceler]);
+    updateCurrentUser(CURRENT_USER.id);
+  }, [fetchUsers, updateCurrentUser]);
 
   useEffect(() => {
     loadUsers();
@@ -90,7 +92,9 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <UIProvider>
-      <Container />
+      <UsersProvider>
+        <Container />
+      </UsersProvider>
     </UIProvider>,
   );
 

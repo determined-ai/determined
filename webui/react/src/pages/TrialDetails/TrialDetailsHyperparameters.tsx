@@ -12,7 +12,7 @@ import { isObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { TrialDetails } from 'types';
 
-import { configForTrial, Settings } from './TrialDetailsHyperparameters.settings';
+import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';
 
 export interface Props {
   pageRef: React.RefObject<HTMLElement>;
@@ -25,8 +25,7 @@ interface HyperParameter {
 }
 
 const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props) => {
-  const config = useMemo(() => configForTrial(trial?.id), [trial?.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const columns: ColumnDef<HyperParameter>[] = useMemo(
     () => [

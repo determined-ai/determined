@@ -52,7 +52,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import usersStore from 'stores/users';
+import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import {
@@ -66,7 +66,6 @@ import {
 import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
@@ -99,11 +98,11 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useObservable(usersStore.getUsers()), {
+  const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -121,6 +120,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canModifyWorkspaceNSC } = usePermissions();
 
@@ -194,8 +194,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([usersStore.ensureUsersFetched(canceler), fetchTasks()]);
-  }, [canceler, fetchTasks]);
+    await Promise.allSettled([fetchUsers(), fetchTasks()]);
+  }, [fetchTasks, fetchUsers]);
 
   useEffect(() => {
     fetchWorkspaces();

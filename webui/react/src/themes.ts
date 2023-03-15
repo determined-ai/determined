@@ -69,7 +69,6 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
-  [JobState.UNSPECIFIED]: 'inactive',
   [Trialv1State.ACTIVE]: 'active',
   [Trialv1State.PAUSED]: 'warning',
   [Trialv1State.STOPPINGCANCELED]: 'inactive',
@@ -79,7 +78,6 @@ const stateColorMapping = {
   [Trialv1State.CANCELED]: 'inactive',
   [Trialv1State.COMPLETED]: 'success',
   [Trialv1State.ERROR]: 'critical',
-  [Trialv1State.UNSPECIFIED]: 'inactive',
 };
 
 export type StateOfUnion =

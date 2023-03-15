@@ -1,5 +1,3 @@
-.. _sysadmin-deploy-on-hpc:
-
 #####################
  Deploy on Slurm/PBS
 #####################

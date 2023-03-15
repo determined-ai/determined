@@ -5,11 +5,11 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
-import UserBadge from 'components/kit/UserBadge';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
@@ -24,8 +24,7 @@ import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/us
 
 import RoleRenderer from './RoleRenderer';
 import css from './WorkspaceMembers.module.scss';
-import {
-  configForWorkspace,
+import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
 } from './WorkspaceMembers.settings';
@@ -112,8 +111,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   fetchMembers,
 }: Props) => {
   const { canAssignRoles } = usePermissions();
-  const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
+  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];

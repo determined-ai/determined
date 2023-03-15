@@ -5,7 +5,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
-import usersStore from 'stores/users';
+import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';
@@ -14,6 +14,8 @@ const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
 const Container: React.FC = () => {
+  const updateCurrentUser = useUpdateCurrentUser();
+
   const currentUser: DetailedUser = useMemo(
     () => ({
       displayName: DISPLAY_NAME,
@@ -26,8 +28,8 @@ const Container: React.FC = () => {
   );
 
   const loadUser = useCallback(() => {
-    usersStore.updateCurrentUser(currentUser.id);
-  }, [currentUser]);
+    updateCurrentUser(currentUser.id);
+  }, [updateCurrentUser, currentUser]);
 
   useEffect(() => loadUser(), [loadUser]);
 
@@ -37,11 +39,13 @@ const Container: React.FC = () => {
 const setup = () => {
   return render(
     <UIProvider>
-      <HelmetProvider>
-        <HistoryRouter history={history}>
-          <Container />
-        </HistoryRouter>
-      </HelmetProvider>
+      <UsersProvider>
+        <HelmetProvider>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
+        </HelmetProvider>
+      </UsersProvider>
     </UIProvider>,
   );
 };

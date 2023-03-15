@@ -1,4 +1,5 @@
-from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
+import sys
+from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
 from typing import Any, List
@@ -16,7 +17,8 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 @authentication.required
 def start_tensorboard(args: Namespace) -> None:
     if not (args.trial_ids or args.experiment_ids):
-        raise ArgumentError(None, "Either experiment_ids or trial_ids must be specified.")
+        print("Either experiment_ids or trial_ids must be specified.")
+        sys.exit(1)
 
     config = command.parse_config(args.config_file, None, args.config, [])
 

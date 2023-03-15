@@ -312,15 +312,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const sendBatchActions = useCallback(
     async (action: Action) => {
       if (action === Action.OpenTensorBoard) {
-        return await openOrCreateTensorBoard({
-          trialIds: selectedRowKeys,
-          workspaceId: experiment.workspaceId,
-        });
+        return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
       } else if (action === Action.CompareTrials) {
         return setShowCompareTrials(true);
       }
     },
-    [selectedRowKeys, experiment],
+    [selectedRowKeys],
   );
 
   const submitBatchAction = useCallback(

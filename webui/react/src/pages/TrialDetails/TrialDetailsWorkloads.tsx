@@ -1,13 +1,14 @@
-// import { SelectValue } from 'antd/es/select';
+import { Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
+import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import { getTrialWorkloads } from 'services/api';
@@ -34,6 +35,8 @@ import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/worklo
 
 import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
+
+const { Option } = Select;
 
 export interface Props {
   defaultMetrics: Metric[];
@@ -216,13 +219,17 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
 
   const options = (
     <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
-      <Select label="Show" value={settings.filter} onSelect={handleHasCheckpointOrValidationSelect}>
+      <SelectFilter
+        dropdownMatchSelectWidth={300}
+        label="Show"
+        value={settings.filter}
+        onSelect={handleHasCheckpointOrValidationSelect}>
         {Object.values(TrialWorkloadFilter).map((key) => (
           <Option key={key} value={key}>
             {key}
           </Option>
         ))}
-      </Select>
+      </SelectFilter>
     </ResponsiveFilters>
   );
 

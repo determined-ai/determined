@@ -1,7 +1,7 @@
 import base64
 import json
 import re
-from argparse import ArgumentError, Namespace
+from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -199,7 +199,7 @@ def list_tasks(args: Namespace) -> None:
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found.')
+            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found.')
 
         params["workspaceId"] = workspace.id
 

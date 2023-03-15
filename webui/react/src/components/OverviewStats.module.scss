@@ -1,24 +1,35 @@
 .base {
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  padding: 8px;
 
   .title {
-    font-size: 12px;
-    font-weight: normal;
+    color: var(--theme-suface-on-strong);
+    font-size: 11px;
+    word-break: break-word;
   }
   .info {
-    font-size: 13px;
+    color: var(--theme-surface-on);
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
-    & > :global(.ant-typography) {
-      margin: 0;
+    & > small {
+      font-size: 14px;
+    }
+  }
+}
+.base.focused {
+  background-color: var(--theme-surface-strong);
+}
+.clickable {
+  cursor: pointer;
 
-      & small {
-        font-size: 12px;
-      }
-    }
-    &.clickable > :global(.ant-typography) {
-      color: var(--theme-ix-on-active);
-    }
+  .info {
+    color: var(--theme-status-active);
   }
 }

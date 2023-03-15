@@ -1,9 +1,11 @@
+import { Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
-import DatePicker from 'components/DatePicker';
-import Select, { Option, SelectValue } from 'components/kit/Select';
+import DatePickerFilter from 'components/DatePickerFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
+import SelectFilter from 'components/SelectFilter';
 import {
   DEFAULT_RANGE_DAY,
   DEFAULT_RANGE_MONTH,
@@ -12,6 +14,8 @@ import {
 } from 'pages/Cluster/ClusterHistoricalUsage';
 import { ValueOf } from 'shared/types';
 import { capitalize } from 'shared/utils/string';
+
+const { Option } = Select;
 
 const GroupBy = {
   Day: 'day',
@@ -93,7 +97,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   if (value.groupBy === GroupBy.Day) {
     periodFilters = (
       <>
-        <DatePicker
+        <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
           label="From"
@@ -101,7 +105,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           value={value.afterDate}
           onChange={handleAfterDateSelect}
         />
-        <DatePicker
+        <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
           label="To"
@@ -115,7 +119,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   if (value.groupBy === GroupBy.Month) {
     periodFilters = (
       <>
-        <DatePicker
+        <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
           label="From"
@@ -124,7 +128,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
           value={value.afterDate}
           onChange={handleAfterDateSelect}
         />
-        <DatePicker
+        <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
           label="To"
@@ -140,18 +144,19 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   return (
     <ResponsiveFilters>
       {periodFilters}
-      <Select
+      <SelectFilter
+        enableSearchFilter={false}
         label="Group by"
-        searchable={false}
+        showSearch={false}
+        style={{ width: 130 }}
         value={value.groupBy}
-        width={90}
         onSelect={handleGroupBySelect}>
         {Object.values(GroupBy).map((value) => (
           <Option key={value} value={value}>
             {capitalize(value)}
           </Option>
         ))}
-      </Select>
+      </SelectFilter>
     </ResponsiveFilters>
   );
 };

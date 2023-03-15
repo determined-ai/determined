@@ -9,6 +9,3 @@ variable "network_name" {
 
 variable "unique_id" {
 }
-
-variable "labels" {
-}

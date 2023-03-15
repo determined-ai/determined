@@ -182,12 +182,15 @@ WHERE trial_id = $1
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, trial_run_id, end_time, metrics, total_batches)
+	(trial_id, trial_run_id, state,
+	 end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
+	(:trial_id, :trial_run_id, :state,
+	 now(), :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
+			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
 				"avg_metrics":   m.Metrics.AvgMetrics,
 				"batch_metrics": m.Metrics.BatchMetrics,
@@ -228,12 +231,15 @@ WHERE trial_id = $1
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
-	(trial_id, trial_run_id, end_time, metrics, total_batches)
+	(trial_id, trial_run_id, state, end_time,
+	 metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
+	(:trial_id, :trial_run_id, :state, now(),
+	 :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
+			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
 				"validation_metrics": m.Metrics.AvgMetrics,
 			},
@@ -271,16 +277,17 @@ SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
 
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, trial_run_id,
+	(trial_id, trial_run_id, state,
 	 end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id,
+	(:trial_id, :trial_run_id, :state,
 	 :end_time, :metrics, :total_batches)
 ON CONFLICT (trial_id, trial_run_id, total_batches)
 DO NOTHING
 `, model.TrialMetrics{
 		TrialID:    trialID,
 		TrialRunID: trialRunID,
+		State:      model.CompletedState,
 		EndTime:    ptrs.Ptr(time.Now().UTC()),
 		Metrics: map[string]interface{}{
 			"avg_metrics":   struct{}{},
@@ -335,7 +342,7 @@ WHERE id = $1
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
 	if err := db.query(`
-SELECT id, trial_id, total_batches, end_time, metrics
+SELECT id, trial_id, total_batches, state, end_time, metrics
 FROM validations
 WHERE trial_id = $1
 AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
@@ -430,7 +437,7 @@ WITH const AS (
 	FROM (
 		SELECT * FROM validations where id = (select best_validation_id from trials where id = $1)
 		UNION ALL
-		SELECT * FROM validations
+		SELECT * FROM validations 
 			where trial_id = $1
 			and trial_run_id = $2
 			and total_batches = $3

@@ -18,7 +18,7 @@ export const initInfo: DeterminedInfo = {
 
 const info = observable<Loadable<DeterminedInfo>>(NotLoaded);
 
-export const fetchDeterminedInfo = async (canceler: AbortController): Promise<void> => {
+export const fetchDeterminedInfo = async (canceler: AbortController) => {
   try {
     const response = await getInfo({ signal: canceler.signal });
     info.set(Loaded(response));
@@ -31,6 +31,6 @@ export const fetchDeterminedInfo = async (canceler: AbortController): Promise<vo
   }
 };
 
-export const useDeterminedInfo = (): Loadable<DeterminedInfo> => {
+export const useDeterminedInfo = () => {
   return useObservable(info.readOnly());
 };

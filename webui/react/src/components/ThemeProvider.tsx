@@ -33,9 +33,6 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       InputNumber: {
         colorBgContainer: 'transparent',
       },
-      Modal: {
-        colorBgElevated: 'var(--theme-stage)',
-      },
       Pagination: {
         colorBgContainer: 'transparent',
       },

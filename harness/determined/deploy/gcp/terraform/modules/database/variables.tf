@@ -23,6 +23,3 @@ variable "unique_id" {
 
 variable "service_networking_connection" {
 }
-
-variable "user_labels" {
-}

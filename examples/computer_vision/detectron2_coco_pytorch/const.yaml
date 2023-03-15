@@ -1,6 +1,6 @@
 name: detectron2_const
 environment:
-    image: "determinedai/example-detectron2:0.6-cuda-10.2-pytorch-1.10"
+    image: "katport/detectron2:cuda-10.1"
     environment_variables:
       - DETECTRON2_DATASETS=/mnt/dtrain-fsx/detectron2
 hyperparameters:

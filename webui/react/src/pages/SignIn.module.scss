@@ -40,16 +40,4 @@
     margin: 0 6px;
     width: 20px;
   }
-  .ssoProviderInfo {
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-
-    & > span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
 }

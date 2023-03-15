@@ -15,16 +15,7 @@ from . import render
 
 FullUser = namedtuple(
     "FullUser",
-    [
-        "user_id",
-        "username",
-        "admin",
-        "active",
-        "agent_uid",
-        "agent_gid",
-        "agent_user",
-        "agent_group",
-    ],
+    ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
 )
 
 
@@ -174,7 +165,7 @@ args_description = [
             Arg("det_username", help="name of Determined user to link"),
             *AGENT_USER_GROUP_ARGS,
         ]),
-        Cmd("whoami", whoami, "print the active user", []),
+        Cmd("whoami", whoami, "print the active user", [])
     ])
 ]  # type: List[Any]
 

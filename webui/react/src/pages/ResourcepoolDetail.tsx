@@ -50,13 +50,11 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const resourcePools = useObservable(useClusterStore().resourcePools);
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const agents = Loadable.getOrElse([], useObservable(useClusterStore().agents));
 
   const pool = useMemo(() => {
-    if (Loadable.isLoading(resourcePools)) return;
-
-    return resourcePools.data.find((pool) => pool.name === poolname);
+    return resourcePools.find((pool) => pool.name === poolname);
   }, [poolname, resourcePools]);
 
   const usage = useMemo(() => {
@@ -174,7 +172,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     ];
   }, [pool, poolStats, renderPoolConfig]);
 
-  if (!pool || Loadable.isLoading(resourcePools)) return <Spinner spinning />;
+  if (!pool) return <div />;
 
   return (
     <Page className={css.poolDetailPage}>

@@ -53,7 +53,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   whose: WhoseProjects;
 }
 
-export const configForWorkspace = (id: number): SettingsConfig<WorkspaceDetailsSettings> => ({
+const config: SettingsConfig<WorkspaceDetailsSettings> = {
   settings: {
     archived: {
       defaultValue: false,
@@ -137,5 +137,7 @@ export const configForWorkspace = (id: number): SettingsConfig<WorkspaceDetailsS
       ]),
     },
   },
-  storagePath: `workspace-${id}-details`,
-});
+  storagePath: 'workspace-details',
+};
+
+export default config;

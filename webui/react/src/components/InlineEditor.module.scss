@@ -1,0 +1,130 @@
+/* stylelint-disable no-descending-specificity */
+
+/*
+ * The approach of a dynamic textarea was inspired by article:
+ * https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+ */
+
+.base {
+  .growWrap {
+    /*
+     * Easy way to plot the elements on top of each other and
+     * have them both sized based on the tallest one's height.
+     */
+    display: grid;
+    position: relative;
+    word-break: break-word;
+  }
+  .growWrap::after {
+    /* Extra space needed to prevent jumpy behavior. */
+    content: attr(data-value) ' ';
+
+    /* Hide from view, clicks and screen readers. */
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+  .growWrap > textarea {
+    background: transparent;
+    cursor: text;
+    outline: 0;
+
+    /* To prevent scrollbar on Firefox on growth. */
+    overflow: hidden;
+
+    /* Prevent user resizing, which ruins auto sizing. */
+    resize: none;
+  }
+  .growWrap > textarea,
+  .growWrap::after {
+    /* Styling must match between textarea and ::after. */
+    border-color: transparent;
+    border-radius: 2px;
+    border-style: solid;
+    border-width: var(--theme-stroke-width);
+    font: inherit;
+
+    /* Place on top of each other. */
+    grid-area: 1 / 1 / 2 / 2;
+    line-height: 1.6;
+    padding: 6px;
+  }
+  .growWrap:hover > textarea {
+    border-color: var(--theme-float-border);
+  }
+  .growWrap > .spinner {
+    display: none;
+    left: 50%;
+    position: absolute;
+    top: 45%;
+    transform: translate(-50%, -50%);
+  }
+  .growWrap > .backdrop {
+    background-color: var(--theme-overlay-weak);
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 100%;
+  }
+}
+.base.editable {
+  .growWrap > textarea,
+  .growWrap::after {
+    border-color: var(--theme-float-border-strong);
+  }
+  .growWrap > textarea:focus {
+    box-shadow: var(--theme-outline);
+  }
+}
+.base.editable.maxLength {
+  .growWrap > textarea {
+    border-color: var(--theme-status-warning);
+  }
+}
+.base.loading {
+  .growWrap > textarea,
+  .growWrap > .spinner {
+    display: block;
+  }
+  .growWrap > .backdrop {
+    display: block;
+  }
+}
+.base.disabled .growWrap:hover > textarea {
+  border-color: transparent;
+}
+.shakeAnimation {
+  animation: shake 0.8s cubic-bezier(0.36, 0.07, 0.2, 0.95) both;
+
+  .growWrap > textarea {
+    animation: criticalBorder 0.8s;
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+@keyframes criticalBorder {
+  from {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
+  }
+  to {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
+  }
+}

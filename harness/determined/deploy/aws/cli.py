@@ -2,6 +2,7 @@ import argparse
 import base64
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Callable, Dict, Tuple, Type
 
@@ -9,7 +10,6 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
-from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
 
@@ -55,10 +55,11 @@ def error_no_credentials() -> None:
         colored("Unable to locate AWS credentials.", "red"),
         "Did you run %s?" % colored("aws configure", "yellow"),
     )
-    raise CliError(
-        "See the AWS Documentation for information on how to use AWS credentials: "
+    print(
+        "See the AWS Documentation for information on how to use AWS credentials:",
         "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
     )
+    sys.exit(1)
 
 
 def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment]:
@@ -83,7 +84,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             f"`det deploy` is only supported in {constants.misc.SUPPORTED_REGIONS} - "
             f"tried to deploy to {boto3_session.region_name}"
         )
-        raise CliError("use the --region argument to deploy to a supported region")
+        print("use the --region argument to deploy to a supported region")
+        sys.exit(1)
 
     if command == "list":
         try:
@@ -91,10 +93,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         except NoCredentialsError:
             error_no_credentials()
         except Exception as e:
-            raise CliError(
-                "Listing stacks failed. Check the AWS CloudFormation Console for details.",
-                e_stack=e,
-            )
+            print(e)
+            print("Listing stacks failed. Check the AWS CloudFormation Console for details.")
+            sys.exit(1)
         for item in output:
             print(item["StackName"])
         return
@@ -108,7 +109,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     #     sys.exit(1)
 
     if not re.match(constants.misc.CLOUDFORMATION_REGEX, args.cluster_id):
-        raise CliError("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
+        print("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
+        sys.exit(1)
 
     if command == "down":
         if not args.yes:
@@ -126,10 +128,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         except NoCredentialsError:
             error_no_credentials()
         except Exception as e:
-            raise CliError(
-                "Stack Deletion Failed. Check the AWS CloudFormation Console for details.",
-                e_stack=e,
-            )
+            print(e)
+            print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
+            sys.exit(1)
 
         print("Delete Successful")
         return
@@ -137,7 +138,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if (args.cpu_env_image and not args.gpu_env_image) or (
         args.gpu_env_image and not args.cpu_env_image
     ):
-        raise CliError("If a CPU or GPU environment image is specified, both should be.")
+        print("If a CPU or GPU environment image is specified, both should be.")
+        sys.exit(1)
 
     if args.deployment_type != constants.deployment_types.SIMPLE:
         if args.agent_subnet_id is not None:
@@ -245,9 +247,13 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
-        raise CliError(
-            "Stack Deployment Failed. Check the AWS CloudFormation Console for details.", e_stack=e
+        print(e)
+        print(
+            colored(
+                "Stack Deployment Failed. Check the AWS CloudFormation Console for details.", "red"
+            )
         )
+        sys.exit(1)
 
     if not args.no_wait_for_master:
         try:
@@ -259,9 +265,8 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                     "red",
                 )
             )
-            raise CliError(
-                "For details, SSH to master instance and check /var/log/cloud-init-output.log."
-            )
+            print("For details, SSH to master instance and check /var/log/cloud-init-output.log.")
+            sys.exit(1)
 
     print("Determined Deployment Successful")
 

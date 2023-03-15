@@ -5,11 +5,10 @@ import Input from 'components/kit/Input';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 interface Props {
   form: FormInstance;
@@ -100,7 +99,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const loadableUser = useObservable(usersStore.getCurrentUser());
+  const loadableUser = useCurrentUser();
   const authUser = Loadable.match(loadableUser, {
     Loaded: (user) => user,
     NotLoaded: () => undefined,

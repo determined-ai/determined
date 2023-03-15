@@ -1,5 +1,5 @@
 import { Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
@@ -25,37 +25,22 @@ interface Props {
   workspace: Workspace;
 }
 
-const stopPropagation = (e: React.UIEvent): void => e.stopPropagation();
+const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-interface WorkspaceMenuPropsIn {
-  onComplete?: () => void;
-  returnIndexOnDelete?: boolean;
-  workspace: Workspace;
-}
-
-interface WorkspaceMenuPropsOut {
-  contextHolders: React.ReactElement;
-  menuProps: MenuProps;
-}
-
-export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceMenuPropsOut = ({
-  onComplete,
+const WorkspaceActionDropdown: React.FC<Props> = ({
+  children,
+  className,
+  direction = 'vertical',
   returnIndexOnDelete = true,
   workspace,
-}: WorkspaceMenuPropsIn) => {
+  onComplete,
+  trigger,
+  onVisibleChange,
+}: Props) => {
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
     useModalWorkspaceDelete({ onClose: onComplete, returnIndexOnDelete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
     useModalWorkspaceCreate({ onClose: onComplete, workspaceID: workspace.id });
-
-  const contextHolders = useMemo(() => {
-    return (
-      <>
-        {modalWorkspaceDeleteContextHolder}
-        {modalWorkspaceEditContextHolder}
-      </>
-    );
-  }, [modalWorkspaceDeleteContextHolder, modalWorkspaceEditContextHolder]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -107,92 +92,86 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     openWorkspaceDelete();
   }, [openWorkspaceDelete]);
 
-  const MenuKey = {
-    Delete: 'delete',
-    Edit: 'edit',
-    SwitchArchived: 'switchArchive',
-    SwitchPin: 'switchPin',
-  } as const;
+  const WorkspaceActionMenu: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Delete: 'delete',
+      Edit: 'edit',
+      SwitchArchived: 'switchArchive',
+      SwitchPin: 'switchPin',
+    } as const;
 
-  const funcs = {
-    [MenuKey.SwitchPin]: () => {
-      handlePinClick();
-    },
-    [MenuKey.Edit]: () => {
-      handleEditClick();
-    },
-    [MenuKey.SwitchArchived]: () => {
-      handleArchiveClick();
-    },
-    [MenuKey.Delete]: () => {
-      handleDeleteClick();
-    },
-  };
+    const funcs = {
+      [MenuKey.SwitchPin]: () => {
+        handlePinClick();
+      },
+      [MenuKey.Edit]: () => {
+        handleEditClick();
+      },
+      [MenuKey.SwitchArchived]: () => {
+        handleArchiveClick();
+      },
+      [MenuKey.Delete]: () => {
+        handleDeleteClick();
+      },
+    };
 
-  const onItemClick: MenuProps['onClick'] = (e) => {
-    funcs[e.key as ValueOf<typeof MenuKey>]();
-    stopPropagation(e.domEvent);
-  };
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
 
-  const menuItems: MenuProps['items'] = [
-    {
-      key: MenuKey.SwitchPin,
-      label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
-    },
-  ];
+    const menuItems: MenuProps['items'] = [
+      {
+        key: MenuKey.SwitchPin,
+        label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
+      },
+    ];
 
-  if (canModifyWorkspace({ workspace })) {
-    if (!workspace.archived) {
-      menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
+    if (canModifyWorkspace({ workspace })) {
+      if (!workspace.archived) {
+        menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
+      }
+      menuItems.push({
+        key: MenuKey.SwitchArchived,
+        label: workspace.archived ? 'Unarchive' : 'Archive',
+      });
     }
-    menuItems.push({
-      key: MenuKey.SwitchArchived,
-      label: workspace.archived ? 'Unarchive' : 'Archive',
-    });
-  }
-  if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
-    menuItems.push({ type: 'divider' });
-    menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
-  }
-  return { contextHolders, menuProps: { items: menuItems, onClick: onItemClick } };
-};
-
-const WorkspaceActionDropdown: React.FC<Props> = ({
-  children,
-  className,
-  direction = 'vertical',
-  returnIndexOnDelete = true,
-  workspace,
-  onComplete,
-  trigger,
-  onVisibleChange,
-}: Props) => {
-  const { menuProps, contextHolders } = useWorkspaceActionMenu({
-    onComplete,
-    returnIndexOnDelete,
+    if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
+      menuItems.push({ type: 'divider' });
+      menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
+    }
+    return { items: menuItems, onClick: onItemClick };
+  }, [
+    canDeleteWorkspace,
+    canModifyWorkspace,
+    handlePinClick,
     workspace,
-  });
+    handleEditClick,
+    handleArchiveClick,
+    handleDeleteClick,
+  ]);
 
   return children ? (
     <>
       <Dropdown
-        menu={menuProps}
+        menu={WorkspaceActionMenu}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
-      {contextHolders}
+      {modalWorkspaceDeleteContextHolder}
+      {modalWorkspaceEditContextHolder}
     </>
   ) : (
     <div
       className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
-      <Dropdown menu={menuProps} placement="bottomRight" trigger={trigger ?? ['click']}>
+      <Dropdown menu={WorkspaceActionMenu} placement="bottomRight" trigger={trigger ?? ['click']}>
         <Button ghost icon={<Icon name={`overflow-${direction}`} />} onClick={stopPropagation} />
       </Dropdown>
-      {contextHolders}
+      {modalWorkspaceDeleteContextHolder}
+      {modalWorkspaceEditContextHolder}
     </div>
   );
 };

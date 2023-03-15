@@ -34,7 +34,6 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
         "Agent",
         "Priority",
         "Resource Pool",
-        "Ports",
     ]
     values = [
         [
@@ -46,7 +45,6 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
             agent_info(task),
             task["priority"] if task["scheduler_type"] == "priority" else "N/A",
             task["resource_pool"],
-            ",".join(map(str, sorted(pp["port"] for pp in task.get("proxy_ports", [])))),
         ]
         for task_id, task in sorted(
             tasks.items(),

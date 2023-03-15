@@ -124,12 +124,10 @@ describe('Service Utilities', () => {
   describe('validateDetApiEnum', () => {
     it('returns valid enum values', () => {
       expect(service.validateDetApiEnum(V1OrderBy, V1OrderBy.ASC)).toBe(V1OrderBy.ASC);
-      expect(service.validateDetApiEnum(V1OrderBy, V1OrderBy.DESC)).toBe(V1OrderBy.DESC);
     });
 
     it('returns valid string values', () => {
       expect(service.validateDetApiEnum(V1OrderBy, 'ORDER_BY_ASC')).toBe(V1OrderBy.ASC);
-      expect(service.validateDetApiEnum(V1OrderBy, 'ORDER_BY_DESC')).toBe(V1OrderBy.DESC);
     });
 
     it('returns default for invalid values', () => {

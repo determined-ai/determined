@@ -63,11 +63,8 @@ class LogCollector(threading.Thread):
 
                     m = rank.match(line)
                     if m:
-                        try:
-                            parsed_metadata["rank_id"] = int(m.group("rank_id"))
-                            line = m.group("log")
-                        except ValueError:
-                            pass
+                        parsed_metadata["rank"] = m.group("rank_id")
+                        line = m.group("log")
 
                     m = level.match(line)
                     if m:
@@ -77,7 +74,7 @@ class LogCollector(threading.Thread):
                     self.ship_queue.put(
                         {
                             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                            "log": line if line.endswith("\n") else line + "\n",
+                            "log": line + "\n",
                             **self.task_logging_metadata,
                             **parsed_metadata,
                         }
@@ -176,10 +173,6 @@ if __name__ == "__main__":
     task_logging_metadata = json.loads(task_logging_metadata_json)
     task_logging_metadata["stdtype"] = args.stdtype
     task_logging_metadata["agent_id"] = socket.gethostname()
-    task_logging_metadata["source"] = "task"
-    container_id = os.environ.get("DET_CONTAINER_ID")
-    if container_id is not None:
-        task_logging_metadata["container_id"] = container_id
     # If trial exists, just drop it since it could mess with de-ser on the API end.
     task_logging_metadata.pop("trial_id", None)
 

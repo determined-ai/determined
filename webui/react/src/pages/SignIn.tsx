@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import { Divider, Typography } from 'antd';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -150,12 +150,9 @@ const SignIn: React.FC = () => {
                         <a
                           className={css.ssoButton}
                           href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
-                          <div className={css.ssoProviderInfo}>
-                            {logo}
-                            <span>
-                              {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
-                            </span>
-                          </div>
+                          <Typography.Text ellipsis>
+                            {logo} {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
+                          </Typography.Text>
                         </a>
                       </Button>
                     </Form.Item>

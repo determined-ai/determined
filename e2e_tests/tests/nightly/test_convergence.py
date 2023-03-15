@@ -304,7 +304,7 @@ def test_hf_trainer_api_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.82
+    target_accuracy = 0.83
     assert max(validation_accuracies) > target_accuracy, (
         "hf_trainer_api did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(

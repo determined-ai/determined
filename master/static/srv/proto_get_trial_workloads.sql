@@ -1,7 +1,7 @@
 WITH validations_vt AS (
   SELECT row_to_json(r1) AS validation, total_batches, end_time, metrics
   FROM (
-      SELECT
+      SELECT 'STATE_' || v.state as state,
         v.end_time,
         v.total_batches,
         v.metrics->'num_inputs' as num_inputs,
@@ -14,6 +14,7 @@ trainings_vt AS (
   SELECT row_to_json(r1) AS training, total_batches, end_time, metrics
   FROM (
       SELECT s.end_time,
+        'STATE_' || s.state as state,
         CASE
           WHEN $5 = true THEN
             s.metrics

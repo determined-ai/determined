@@ -245,10 +245,8 @@ func (a *apiServer) LaunchTensorboard(
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minTensorBoardPort, maxTensorBoardPort)
-	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
-		RawProxyPort:        port,
-		RawDefaultServiceID: ptrs.Ptr(true),
-	})
+	spec.Port = &port
+	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
 
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds

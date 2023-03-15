@@ -12,7 +12,6 @@ resource "google_storage_bucket" "checkpoint_store" {
   name = "det-checkpoints-${var.unique_id}-${random_integer.naming_int.result}"
   force_destroy = true
 
-  labels = var.labels
 }
 
 resource "google_storage_bucket_iam_binding" "checkpoint_editor" {

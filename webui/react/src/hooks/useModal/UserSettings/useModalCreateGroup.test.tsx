@@ -6,6 +6,7 @@ import Button from 'components/kit/Button';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalCreateGroup, {
@@ -72,7 +73,9 @@ const Container: React.FC<Props> = ({ group }) => {
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
     <UIProvider>
-      <Container group={group} />
+      <UsersProvider>
+        <Container group={group} />
+      </UsersProvider>
     </UIProvider>,
   );
 

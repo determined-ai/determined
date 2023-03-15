@@ -96,12 +96,13 @@ def do_request(
     if cert is None:
         cert = certs.cli_cert
 
-    # set the token and username based on this order:
-    # - argument `auth`
-    # - header `Authorization`
-    # - existing cli_auth
-    # - allocation_token
-
+    """
+    set the token and username based on this order:
+    - argument `auth`
+    - header `Authorization`
+    - existing cli_auth
+    - allocation_token
+    """
     username = ""
     if auth is not None:
         if authenticated:

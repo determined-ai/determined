@@ -218,15 +218,3 @@ func (b *BindMount) UnmarshalJSON(data []byte) error {
 	type DefaultParser *BindMount
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(b)), "failed to parse bind mounts")
 }
-
-// ProxyPort is a legacy-style clone of expconf.ProxyPort.
-// TODO(ilia): migrate command config to expconf.
-type ProxyPort struct {
-	ProxyPort        int  `json:"proxy_port"`
-	ProxyTCP         bool `json:"proxy_tcp"`
-	Unauthenticated  bool `json:"unauthenticated"`
-	DefaultServiceID bool `json:"default_service_id"`
-}
-
-// ProxyPortsConfig is a legacy-style clone of expconf.ProxyPortsConfig.
-type ProxyPortsConfig []ProxyPort

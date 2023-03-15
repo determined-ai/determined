@@ -21,7 +21,6 @@ resource "google_sql_database_instance" "db_instance" {
 
   settings {
     tier = var.db_tier
-    user_labels = var.user_labels
     ip_configuration {
       ipv4_enabled = false
       private_network = var.network_self_link

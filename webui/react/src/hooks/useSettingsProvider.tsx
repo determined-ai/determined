@@ -1,14 +1,14 @@
 import { Map } from 'immutable';
+import { useObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { authChecked } from 'stores/auth';
-import usersStore from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 /*
  * UserSettingsState contains all the settings for a user
@@ -35,7 +35,7 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

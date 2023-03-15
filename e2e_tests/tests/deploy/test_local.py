@@ -26,10 +26,8 @@ def det_deploy(subcommand: List) -> None:
     subprocess.run(command)
 
 
-def cluster_up(arguments: List, delete_db: bool = True) -> None:
+def cluster_up(arguments: List) -> None:
     command = ["cluster-up", "--no-gpu"]
-    if delete_db:
-        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
@@ -43,10 +41,8 @@ def cluster_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def master_up(arguments: List, delete_db: bool = True) -> None:
+def master_up(arguments: List) -> None:
     command = ["master-up"]
-    if delete_db:
-        command += ["--delete-db"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
@@ -287,8 +283,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
         agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
     time.sleep(10)
 
-    for step in range(steps):
-        print("================ step", step)
+    for _ in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
@@ -307,7 +302,6 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 else:
                     agent_enable([f"agent-{agent_id}"])
                     agents_are_up[agent_id] = True
-        print("agents_are_up:", agents_are_up)
         time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
@@ -321,10 +315,8 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 ]
             ).decode()
         )
-        print("agent_list:", agent_list)
         assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
-            print("agent:", agent)
             agent_id = int(agent["id"].replace("agent-", ""))
             if agents_are_up[agent_id] != agent["enabled"]:
                 p = subprocess.run(

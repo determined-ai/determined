@@ -6,7 +6,7 @@ import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { selectIsAuthenticated } from 'stores/auth';
+import { authChecked as observeAuthChecked, selectIsAuthenticated } from 'stores/auth';
 
 interface Props {
   routes: RouteConfig[];
@@ -14,6 +14,7 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const isAuthenticated = useObservable(selectIsAuthenticated);
+  const authChecked = useObservable(observeAuthChecked);
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();
@@ -34,6 +35,8 @@ const Router: React.FC<Props> = (props: Props) => {
         const { element, ...route } = config;
 
         if (route.needAuth && !isAuthenticated) {
+          // Do not mount login page until auth is checked.
+          if (!authChecked) return <Route {...route} element={element} key={route.id} />;
           return (
             <Route
               {...route}

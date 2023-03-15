@@ -3,6 +3,7 @@ import { array, boolean, number, string } from 'io-ts';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
+import { DEFAULT_POOL_TAB_KEY } from 'pages/ResourcepoolDetail';
 import { Jobv1State } from 'services/api-ts-sdk';
 
 export type JobColumnName =
@@ -47,7 +48,14 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: string;
 }
 
+const routeSpaceForState = (jobState: Jobv1State): string => {
+  if (jobState === Jobv1State.QUEUED) return '/queued';
+  if (jobState === Jobv1State.SCHEDULED) return '/active';
+  return `/${DEFAULT_POOL_TAB_KEY}`;
+};
+
 const config = (jobState: Jobv1State): SettingsConfig<Settings> => ({
+  applicableRoutespace: routeSpaceForState(jobState),
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

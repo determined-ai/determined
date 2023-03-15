@@ -223,12 +223,12 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-7aa5364"
+            self.cpu = "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-ad0591c"
         if self.rocm is None:
-            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364"
+            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c"
 
         if self.cuda is None:
-            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-7aa5364"
+            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-ad0591c"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
@@ -288,24 +288,6 @@ class RegistryAuthConfigV0(schemas.SchemaBase):
         return super().to_dict(explicit_nones=False)
 
 
-class ProxyPortV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/proxy-port.json"
-    proxy_port: Optional[int] = None
-    proxy_tcp: Optional[bool] = None
-    unauthenticated: Optional[bool] = None
-    default_service_id: Optional[bool] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        proxy_port: Optional[int] = None,
-        proxy_tcp: Optional[bool] = None,
-        unauthenticated: Optional[bool] = None,
-        default_service_id: Optional[bool] = None,
-    ) -> None:
-        pass
-
-
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"
     add_capabilities: Optional[List[str]] = None
@@ -316,7 +298,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
-    proxy_ports: Optional[List[ProxyPortV0]] = None
 
     @schemas.auto_init
     def __init__(
@@ -329,7 +310,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
-        proxy_ports: Optional[List[ProxyPortV0]] = None,
     ) -> None:
         pass
 

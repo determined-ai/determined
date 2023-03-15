@@ -10,7 +10,6 @@ resource "random_integer" "naming_int" {
 
 resource "google_filestore_instance" "persistence-filestore" {
   name = "det-filestore-${var.unique_id}-${random_integer.naming_int.result}"
-  labels = var.labels
   zone = var.zone
   tier = "BASIC_HDD"
   file_shares {

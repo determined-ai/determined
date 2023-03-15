@@ -1,31 +1,19 @@
-import { DatePicker, Form, Modal, Select } from 'antd';
+import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import Form from 'components/kit/Form';
 import { handlePath, serverAddress } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import { ValueOf } from 'shared/types';
-
-const { Option } = Select;
-
-export const CSVGroupBy = {
-  Tasks: '/resources/allocation/tasks-raw?',
-  Workloads: '/resources/allocation/raw?',
-} as const;
-
-export type CSVGroupBy = ValueOf<typeof CSVGroupBy>;
 
 interface Props {
   afterDate: Dayjs;
   beforeDate: Dayjs;
-  groupBy: CSVGroupBy;
   onVisibleChange: (visible: boolean) => void;
 }
 
 const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
   afterDate,
   beforeDate,
-  groupBy,
   onVisibleChange,
 }: Props) => {
   const [form] = Form.useForm();
@@ -33,15 +21,16 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
   const handleOk = (event: React.MouseEvent): void => {
     const formAfterDate = form.getFieldValue('afterDate');
     const formBeforeDate = form.getFieldValue('beforeDate');
-    const groupByEndpoint = form.getFieldValue('groupBy');
     const searchParams = new URLSearchParams();
 
     searchParams.append('timestamp_after', formAfterDate.startOf('day').toISOString());
     searchParams.append('timestamp_before', formBeforeDate.endOf('day').toISOString());
+
     handlePath(event, {
       external: true,
-      path: serverAddress(groupByEndpoint + searchParams.toString()),
+      path: serverAddress('/resources/allocation/raw?' + searchParams.toString()),
     });
+
     onVisibleChange(false);
   };
 
@@ -62,7 +51,7 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
       title="Download Resource Usage Data in CSV"
       onCancel={() => onVisibleChange(false)}
       onOk={handleOk}>
-      <Form form={form} initialValues={{ afterDate, beforeDate, groupBy }} labelCol={{ span: 8 }}>
+      <Form form={form} initialValues={{ afterDate, beforeDate }} labelCol={{ span: 8 }}>
         <Form.Item label="Start" name="afterDate">
           <DatePicker
             allowClear={false}
@@ -76,15 +65,6 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
             disabledDate={isBeforeDateDisabled}
             style={{ minWidth: '150px' }}
           />
-        </Form.Item>
-        <Form.Item label="Group by" name="groupBy">
-          <Select
-            showSearch={false}
-            style={{ maxWidth: '150px' }}
-            suffixIcon={<Icon name="arrow-down" size="tiny" />}>
-            <Option value={CSVGroupBy.Workloads}>Workloads</Option>
-            <Option value={CSVGroupBy.Tasks}>Tasks</Option>
-          </Select>
         </Form.Item>
       </Form>
     </Modal>

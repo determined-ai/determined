@@ -9,21 +9,13 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/users';
+import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
-
-const currentUser: DetailedUser = {
-  displayName: DISPLAY_NAME,
-  id: 1,
-  isActive: true,
-  isAdmin: true,
-  username: USERNAME,
-};
 
 jest.mock('services/api', () => ({
   ...jest.requireActual('services/api'),
@@ -52,15 +44,25 @@ jest.mock('hooks/useTelemetry', () => ({
   },
 }));
 
+const currentUser: DetailedUser = {
+  displayName: DISPLAY_NAME,
+  id: 1,
+  isActive: true,
+  isAdmin: true,
+  username: USERNAME,
+};
+
 const Container: React.FC = () => {
+  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
+  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(() => {
-    usersStore.ensureUsersFetched(canceler);
+    fetchUsers();
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-    usersStore.updateCurrentUser(currentUser.id);
-  }, [canceler]);
+    updateCurrentUser(currentUser.id);
+  }, [fetchUsers, updateCurrentUser]);
 
   useEffect(() => {
     loadUsers();
@@ -80,9 +82,11 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <StoreProvider>
-      <DndProvider backend={HTML5Backend}>
-        <Container />
-      </DndProvider>
+      <UsersProvider>
+        <DndProvider backend={HTML5Backend}>
+          <Container />
+        </DndProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 
@@ -94,13 +98,10 @@ describe('UserManagement', () => {
     await waitFor(() => jest.setTimeout(300));
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
-
-    expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
-    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
-    // await waitFor(() => {
-    //   expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
-    //   expect(screen.getByText(USERNAME)).toBeInTheDocument();
-    // });
+    await waitFor(() => {
+      expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(USERNAME)).toBeInTheDocument();
+    });
   });
 
   // TODO: make this test case work

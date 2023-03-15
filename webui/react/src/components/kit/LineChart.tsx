@@ -3,7 +3,7 @@ import { FixedSizeGrid, GridChildComponentProps } from 'react-window';
 import uPlot, { AlignedData, Plugin } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
-import ScaleSelect from 'components/ScaleSelect';
+import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { UPlotPoint } from 'components/UPlot/types';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
@@ -12,7 +12,6 @@ import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import useResize from 'hooks/useResize';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
-import { getTimeTickValues } from 'utils/chart';
 
 import css from './LineChart.module.scss';
 
@@ -50,7 +49,6 @@ export interface Serie {
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
 interface Props {
-  experimentId?: number;
   focusedSeries?: number;
   height?: number;
   onPointClick?: (event: MouseEvent, point: UPlotPoint) => void;
@@ -62,12 +60,12 @@ interface Props {
   title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
+  xTickValues?: uPlot.Axis.Values;
   yLabel?: string;
   yTickValues?: uPlot.Axis.Values;
 }
 
 export const LineChart: React.FC<Props> = ({
-  experimentId,
   focusedSeries,
   height = 350,
   onPointClick,
@@ -80,6 +78,7 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
+  xTickValues,
   yTickValues,
 }: Props) => {
   const hasPopulatedSeries: boolean = useMemo(
@@ -124,17 +123,6 @@ export const LineChart: React.FC<Props> = ({
 
     return [xValues, ...yValuesArray];
   }, [series, xAxis]);
-
-  const xTickValues: uPlot.Axis.Values | undefined = useMemo(
-    () =>
-      xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
-        ? getTimeTickValues
-        : undefined,
-    [chartData, xAxis],
-  );
 
   const chartOptions: Options = useMemo(() => {
     const plugins: Plugin[] = propPlugins ?? [
@@ -225,7 +213,6 @@ export const LineChart: React.FC<Props> = ({
       <UPlotChart
         allowDownload={hasPopulatedSeries}
         data={chartData}
-        experimentId={experimentId}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
@@ -271,14 +258,9 @@ export interface GroupProps {
  * `data` comes from the itemData prop that is passed to FixedSizeGrid.
  */
 const VirtualChartRenderer: React.FC<
-  GridChildComponentProps<{
-    chartsProps: ChartsProps;
-    columnCount: number;
-    scale: Scale;
-    xAxis: XAxisDomain;
-  }>
+  GridChildComponentProps<{ chartsProps: ChartsProps; columnCount: number }>
 > = ({ columnIndex, rowIndex, style, data }) => {
-  const { chartsProps, columnCount, scale, xAxis } = data;
+  const { chartsProps, columnCount } = data;
 
   const cellIndex = rowIndex * columnCount + columnIndex;
 
@@ -288,7 +270,7 @@ const VirtualChartRenderer: React.FC<
   return (
     <div className={css.chartgridCell} key={`${rowIndex}, ${columnIndex}`} style={style}>
       <div className={css.chartgridCellCard}>
-        <LineChart {...chartProps} scale={scale} xAxis={xAxis} />
+        <LineChart {...chartProps} scale={Scale.Linear} xAxis={XAxisDomain.Batches} />
       </div>
     </div>
   );
@@ -318,7 +300,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
     return (
       <div className={css.chartgridContainer} ref={chartGridRef}>
         <div className={css.filterContainer}>
-          <ScaleSelect value={scale} onChange={setScale} />
+          <ScaleSelectFilter value={scale} onChange={setScale} />
           {xAxisOptions && xAxisOptions.length > 1 && (
             <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
           )}
@@ -328,7 +310,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
             columnCount={columnCount}
             columnWidth={Math.floor(width / columnCount)}
             height={Math.min(height - 40, (chartsProps.length > columnCount ? 2.1 : 1.05) * 480)}
-            itemData={{ chartsProps, columnCount, scale, xAxis }}
+            itemData={{ chartsProps, columnCount }}
             rowCount={Math.ceil(chartsProps.length / columnCount)}
             rowHeight={480}
             width={width}>

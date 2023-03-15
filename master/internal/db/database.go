@@ -106,6 +106,8 @@ type DB interface {
 		err error)
 	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
 		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
+	ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) (
+		training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error)
 	TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
 		batches []int32, endTime time.Time, err error)
 	ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
@@ -117,6 +119,8 @@ type DB interface {
 		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
 		endTime time.Time, err error)
 	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
+		smallerIsBetter bool) (trials []int32, err error)
+	ExpCompareTopTrialsByMetric(experimentID []int32, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)

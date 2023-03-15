@@ -18,10 +18,9 @@ $border-color: var(--theme-surface-border);
     grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
     justify-content: space-between;
     min-width: fit-content;
-
-    & > div:first-child {
-      background-color: var(--theme-stage);
-    }
+  }
+  .row.header {
+    background-color: var(--theme-stage);
   }
   .row.sticky {
     position: sticky;
@@ -35,6 +34,7 @@ $border-color: var(--theme-surface-border);
   }
   .cell {
     align-items: center;
+    background-color: var(--theme-stage);
     display: flex;
     overflow: hidden;
     padding: 8px;
@@ -48,6 +48,9 @@ $border-color: var(--theme-surface-border);
   .cell.blank {
     height: 100%;
   }
+  .cell.header {
+    background-color: var(--theme-stage);
+  }
   .cell.sticky {
     border-right: 1px solid $border-color;
     left: 0;
@@ -60,6 +63,9 @@ $border-color: var(--theme-surface-border);
     border-right: 0;
     left: 0;
     position: sticky;
+  }
+  .row.header > .cell {
+    background-color: var(--theme-stage);
   }
   .trialTag {
     font-size: 14px;

@@ -8,7 +8,6 @@ from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.modeling import build_model
 from detectron2.solver import build_lr_scheduler, build_optimizer
-from detectron2.utils.events import EventStorage
 from detectron2_files.common import *
 from detectron2_files.data import *
 from detectron2_files.evaluator import *
@@ -74,8 +73,8 @@ class DetectronTrial(PyTorchTrial):
         return data_loader
 
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-        with EventStorage():
-            loss_dict = self.model(batch)
+
+        loss_dict = self.model(batch)
         losses = sum(loss_dict.values())
         losses_reduced = sum(loss for loss in loss_dict.values())
 

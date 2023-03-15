@@ -3,7 +3,6 @@ import React, { Suspense, useMemo } from 'react';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
-import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
@@ -23,7 +22,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import Json from './Json';
-import Card from './kit/Card';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
@@ -119,28 +117,26 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   }, [processedPool, isAux, pool]);
 
   return (
-    <Card href={paths.resourcePool(pool.name)} size="medium">
-      <div className={css.base}>
-        <div className={css.header}>
-          <div className={css.info}>
-            <div className={css.name}>{pool.name}</div>
-          </div>
-          <div className={css.default}>
-            {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
-            {pool.description && <Icon name="info" title={pool.description} />}
-          </div>
+    <div className={css.base}>
+      <div className={css.header}>
+        <div className={css.info}>
+          <div className={css.name}>{pool.name}</div>
         </div>
-        <Suspense fallback={<Spinner center />}>
-          <div className={css.body}>
-            <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-            <section className={css.details}>
-              <Json hideDivider json={shortDetails} />
-            </section>
-            <div />
-          </div>
-        </Suspense>
+        <div className={css.default}>
+          {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+          {pool.description && <Icon name="info" title={pool.description} />}
+        </div>
       </div>
-    </Card>
+      <Suspense fallback={<Spinner center />}>
+        <div className={css.body}>
+          <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+          <section className={css.details}>
+            <Json hideDivider json={shortDetails} />
+          </section>
+          <div />
+        </div>
+      </Suspense>
+    </div>
   );
 };
 

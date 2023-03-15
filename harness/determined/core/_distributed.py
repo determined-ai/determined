@@ -111,6 +111,10 @@ class DistributedContext:
             )
             self._worker_zmq.safe_start()
 
+        if self.local_size < 2:
+            # No local broadcasting necessary.
+            return
+
         # Local broadcast server.
         self.tempdir = None
         if self.local_size < 2:

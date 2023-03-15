@@ -2,7 +2,6 @@ import {
   Form as AntdForm,
   FormInstance as AntdFormInstance,
   FormItemProps as AntdFormItemProps,
-  FormProps as AntdFormProps,
 } from 'antd';
 import { FormListFieldData as AntdFormListFieldData } from 'antd/lib/form/FormList';
 import { FieldData as AntdFieldData, NamePath as AntdNamePath } from 'rc-field-form/lib/interface';
@@ -72,16 +71,16 @@ interface FormProps {
   children?: ReactNode;
   className?: string;
   fields?: AntdFieldData[];
-  form?: AntdFormProps['form'];
+  form?: AntdFormInstance;
   hidden?: boolean;
   id?: string;
   initialValues?: object;
   labelCol?: GridCol;
   layout?: 'horizontal' | 'vertical' | 'inline';
   name?: string;
-  onFieldsChange?: AntdFormProps['onFieldsChange'];
-  onFinish?: AntdFormProps['onFinish'];
-  onValuesChange?: AntdFormProps['onValuesChange'];
+  onFieldsChange?: (changedFields: any, allFields: any) => void;
+  onFinish?: (values: any) => void;
+  onValuesChange?: (changedValues: any, allValues: any) => void;
   ref?: Ref<AntdFormInstance>;
   wrapperCol?: GridCol;
 }
@@ -101,7 +100,6 @@ Form.List = AntdForm.List;
 Form.useForm = AntdForm.useForm;
 Form.useWatch = AntdForm.useWatch;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormInstance<Values = any> = AntdFormInstance<Values>;
 
 export type FormListFieldData = AntdFormListFieldData;

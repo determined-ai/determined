@@ -50,7 +50,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [trial],
   );
 
-  const { contextHolders, openCheckpoint } = useCheckpointFlow({
+  const { contextHolder, openCheckpoint } = useCheckpointFlow({
     checkpoint,
     config: experiment.config,
     title: `Best checkpoint for Trial ${trial?.id}`,
@@ -59,29 +59,26 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const { metrics, data, scale, setScale } = useTrialMetrics(trial);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {
-    const checkpointXHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
-    if (data && checkpoint?.totalBatches) {
+    const timeHelpers: Record<XAxisVal, CheckpointWorkloadExtended> = {};
+    if (data && xAxis === XAxisDomain.Time && checkpoint?.totalBatches) {
       Object.values(data).forEach((metric) => {
         const matchIndex = metric.data[XAxisDomain.Batches]?.findIndex(
-          (pt) => pt[0] >= checkpoint.totalBatches,
+          (pt) => pt[0] === checkpoint.totalBatches,
         );
-
         if (matchIndex !== undefined && matchIndex >= 0) {
-          if (xAxis === XAxisDomain.Time) {
-            const timeVals = metric.data[XAxisDomain.Time];
-            if (timeVals && timeVals.length > matchIndex) {
-              checkpointXHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
-            }
-          } else if (xAxis === XAxisDomain.Batches) {
-            const batchX = metric.data[XAxisDomain.Batches]?.[matchIndex][0];
-            if (batchX) {
-              checkpointXHelpers[batchX] = checkpoint;
-            }
+          const timeVals = metric.data[XAxisDomain.Time];
+          if (timeVals && timeVals.length > matchIndex) {
+            timeHelpers[Math.floor(timeVals[matchIndex][0])] = checkpoint;
           }
         }
       });
     }
-    return checkpoint?.totalBatches ? checkpointXHelpers : {};
+    return checkpoint?.totalBatches
+      ? {
+          [checkpoint.totalBatches]: checkpoint,
+          ...timeHelpers,
+        }
+      : {};
   }, [data, checkpoint, xAxis]);
 
   const pairedMetrics: ([Metric] | [Metric, Metric])[] | undefined = useMemo(() => {
@@ -124,7 +121,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           xValSet.add(pt[0]);
         });
       });
-      const xVals = Array.from(xValSet).sort((a, b) => a - b);
+      const xVals = Array.from(xValSet).sort();
 
       const onPointClick = (event: MouseEvent, point: UPlotPoint) => {
         const xVal = xVals[point.idx];
@@ -177,7 +174,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           onXAxisChange={setXAxis}
         />
       ) : null}
-      {contextHolders}
+      {contextHolder}
     </>
   );
 };

@@ -1,4 +1,3 @@
-import warnings
 from typing import Callable, List
 
 import pytest
@@ -10,23 +9,12 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_gpu
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
 def test_pytorch_11_const(
-    aggregation_frequency: int,
-    image_type: str,
-    using_k8s: bool,
-    collect_trial_profiles: Callable[[int], None],
+    aggregation_frequency: int, using_k8s: bool, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
 
     if using_k8s:
         pod_spec = {
@@ -51,17 +39,9 @@ def test_pytorch_11_const(
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_load(image_type: str, collect_trial_profiles: Callable[[int], None]) -> None:
+def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
@@ -78,21 +58,13 @@ def test_pytorch_load(image_type: str, collect_trial_profiles: Callable[[int], N
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_const_warm_start(image_type: str) -> None:
+def test_pytorch_const_warm_start() -> None:
     """
     Test that specifying an earlier trial checkpoint to warm-start from
     correctly populates the later trials' `warm_start_checkpoint_id` fields.
     """
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
@@ -146,21 +118,11 @@ def test_pytorch_const_with_amp(
 
 
 @pytest.mark.parallel
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_cifar10_parallel(
-    image_type: str, collect_trial_profiles: Callable[[int], None]
-) -> None:
+def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch"), 1
@@ -177,21 +139,11 @@ def test_pytorch_cifar10_parallel(
 
 
 @pytest.mark.parallel
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_gan_parallel(
-    image_type: str, collect_trial_profiles: Callable[[int], None]
-) -> None:
+def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("gan_mnist_pytorch"), 1

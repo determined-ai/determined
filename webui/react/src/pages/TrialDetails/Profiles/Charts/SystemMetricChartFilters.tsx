@@ -1,6 +1,9 @@
+import { Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import Select, { Option, SelectValue } from 'components/kit/Select';
+import SelectFilter from 'components/SelectFilter';
+const { Option } = Select;
 import { UpdateSettings } from 'hooks/useSettings';
 
 import { AvailableSeriesType } from '../types';
@@ -53,11 +56,12 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
 
   return (
     <>
-      <Select
+      <SelectFilter
+        enableSearchFilter={false}
         label="Metric Name"
-        searchable={false}
+        showSearch={false}
+        style={{ width: 220 }}
         value={settings.name}
-        width={220}
         onChange={handleChangeName}>
         {systemSeries &&
           Object.keys(systemSeries).map((name) => (
@@ -65,34 +69,36 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
               {name}
             </Option>
           ))}
-      </Select>
-      <Select
+      </SelectFilter>
+      <SelectFilter
+        enableSearchFilter={false}
         label="Agent Name"
-        searchable={false}
+        showSearch={false}
+        style={{ width: 220 }}
         value={validAgentIds.includes(settings.agentId as string) ? settings.agentId : undefined}
-        width={220}
         onChange={handleChangeAgentId}>
         {validAgentIds.map((agentId) => (
           <Option key={agentId} value={agentId}>
             {agentId}
           </Option>
         ))}
-      </Select>
+      </SelectFilter>
       {uuidOptions.length !== 0 && (
-        <Select
+        <SelectFilter
           allowClear={true}
+          enableSearchFilter={false}
           label="GPU"
           placeholder="All"
-          searchable={false}
+          showSearch={false}
+          style={{ width: 220 }}
           value={settings.gpuUuid}
-          width={220}
           onChange={handleChangeGpuUuid}>
           {uuidOptions.map((gpuUuid) => (
             <Option key={gpuUuid} value={gpuUuid}>
               {gpuUuid}
             </Option>
           ))}
-        </Select>
+        </SelectFilter>
       )}
     </>
   );

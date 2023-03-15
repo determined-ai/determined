@@ -80,6 +80,7 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   user?: string[];
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentListSettings> => ({
+  applicableRoutespace: `projects/${id}/experiments`,
   settings: {
     archived: {
       defaultValue: false,
@@ -162,9 +163,6 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
         literal(V1GetExperimentsRequestSortBy.STATE),
         literal(V1GetExperimentsRequestSortBy.UNSPECIFIED),
         literal(V1GetExperimentsRequestSortBy.USER),
-        literal(V1GetExperimentsRequestSortBy.CHECKPOINTSIZE),
-        literal(V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT),
-        literal(V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL),
       ]),
     },
     state: {

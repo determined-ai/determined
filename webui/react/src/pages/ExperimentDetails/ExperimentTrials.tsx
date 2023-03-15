@@ -42,8 +42,7 @@ import { getMetricValue } from 'utils/metric';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import {
-  configForExperiment,
+import settingsConfig, {
   DEFAULT_COLUMNS,
   isOfSortKey,
   Settings,
@@ -70,8 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
 
-  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
@@ -117,14 +115,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
-  const handleOpenTensorBoard = useCallback(
-    async (trial: TrialItem) => {
-      openCommandResponse(
-        await openOrCreateTensorBoard({ trialIds: [trial.id], workspaceId: workspace.id }),
-      );
-    },
-    [workspace.id],
-  );
+  const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
+    openCommandResponse(await openOrCreateTensorBoard({ trialIds: [trial.id] }));
+  }, []);
 
   const handleViewLogs = useCallback(
     (trial: TrialItem) => {
@@ -314,12 +307,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       if (!settings.row) return;
 
       if (action === Action.OpenTensorBoard) {
-        return await openOrCreateTensorBoard({ trialIds: settings.row, workspaceId: workspace.id });
+        return await openOrCreateTensorBoard({ trialIds: settings.row });
       } else if (action === Action.CompareTrials) {
         return updateSettings({ compare: true });
       }
     },
-    [settings.row, updateSettings, workspace.id],
+    [settings.row, updateSettings],
   );
 
   const submitBatchAction = useCallback(

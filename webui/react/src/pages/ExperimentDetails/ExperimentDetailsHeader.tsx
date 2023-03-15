@@ -1,11 +1,12 @@
-import { Button, Space, Typography } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
-import Tags from 'components/kit/Tags';
+import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
@@ -14,7 +15,6 @@ import useModalExperimentCreate, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
-import useModalExperimentEdit from 'hooks/useModal/Experiment/useModalExperimentEdit';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
@@ -25,6 +25,7 @@ import {
   activateExperiment,
   archiveExperiment,
   openOrCreateTensorBoard,
+  patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -113,7 +114,6 @@ const headerActions = [
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
   Action.DownloadCode,
-  Action.Edit,
   Action.Archive,
   Action.Unarchive,
   Action.Delete,
@@ -166,14 +166,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const { contextHolder: modalExperimentCreateContextHolder, modalOpen: openModalCreate } =
     useModalExperimentCreate();
 
-  const { contextHolder: modalExperimentEditContextHolder, modalOpen: openModalEdit } =
-    useModalExperimentEdit({
-      description: experiment.description ?? '',
-      experimentId: experiment.id,
-      experimentName: experiment.name,
-      fetchExperimentDetails,
-    });
-
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -186,7 +178,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }),
     [experiment.state],
   );
-
   const disabled =
     experiment?.parentArchived ||
     experiment?.archived ||
@@ -235,7 +226,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleMoveClick = useCallback(
     () =>
       openModalMove({
-        experimentIds: isMovable ? [experiment.id] : [],
+        experimentIds: isMovable ? [experiment.id] : undefined,
         sourceProjectId: experiment.projectId,
         sourceWorkspaceId: experiment.workspaceId,
       }),
@@ -266,6 +257,44 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   useEffect(() => {
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
+
+  const handleDescriptionUpdate = useCallback(
+    async (newValue: string) => {
+      try {
+        await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
+        await fetchExperimentDetails();
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to update experiment description.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+        return e as Error;
+      }
+    },
+    [experiment.id, fetchExperimentDetails],
+  );
+
+  const handleNameUpdate = useCallback(
+    async (newValue: string) => {
+      try {
+        await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
+        await fetchExperimentDetails();
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to update experiment name.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+        return e as Error;
+      }
+    },
+    [experiment.id, fetchExperimentDetails],
+  );
 
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
@@ -313,11 +342,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Fork',
         onClick: handleForkClick,
       },
-      [Action.Edit]: {
-        key: 'edit',
-        label: 'Edit',
-        onClick: openModalEdit,
-      },
       [Action.Move]: {
         key: 'move',
         label: 'Move',
@@ -333,7 +357,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           try {
             const commandResponse = await openOrCreateTensorBoard({
               experimentIds: [experiment.id],
-              workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
             setIsRunningTensorBoard(false);
@@ -369,7 +392,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     handleDeleteClick,
     handleHyperparameterSearch,
     handleForkClick,
-    openModalEdit,
     handleMoveClick,
     isRunningTensorBoard,
     isRunningUnarchive,
@@ -426,9 +448,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
-              <div className={css.description}>
-                {experiment.description || <Typography.Text disabled>N/A</Typography.Text>}
-              </div>
+              <InlineEditor
+                allowNewline
+                disabled={disabled}
+                maxLength={500}
+                placeholder={disabled ? 'Archived' : 'Add description...'}
+                style={{ minWidth: 120 }}
+                value={experiment.description || ''}
+                onSave={handleDescriptionUpdate}
+              />
             </div>
             {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
               <div className={css.foldableItem}>
@@ -473,14 +501,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {maxRestarts ? `/${maxRestarts}` : ''}
               </span>
             </div>
-            <Tags
+            <TagList
               disabled={disabled}
               ghost={true}
               tags={experiment.config.labels || []}
-              onAction={experimentTags.handleTagListChange(
-                experiment.id,
-                experiment.config.labels || [],
-              )}
+              onChange={experimentTags.handleTagListChange(experiment.id)}
             />
           </div>
         }
@@ -533,8 +558,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name} role="experimentName">
-              {experiment.name}
+            <div className={css.name}>
+              <InlineEditor
+                disabled={disabled}
+                maxLength={128}
+                placeholder="experiment name"
+                value={experiment.name}
+                onSave={handleNameUpdate}
+              />
             </div>
             {trial ? (
               <>
@@ -551,7 +582,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
-      {modalExperimentEditContextHolder}
       {modalHyperparameterSearchContextHolder}
     </>
   );

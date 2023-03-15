@@ -11,14 +11,17 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import { ClusterProvider } from './cluster';
 import { ProjectsProvider } from './projects';
+import { UsersProvider } from './users';
 import { WorkspacesProvider } from './workspaces';
 
 export const StoreProvider = ({ children }: { children: ReactNode }): ReactElement => (
   <UIProvider>
     <ClusterProvider>
-      <WorkspacesProvider>
-        <ProjectsProvider>{children}</ProjectsProvider>
-      </WorkspacesProvider>
+      <UsersProvider>
+        <WorkspacesProvider>
+          <ProjectsProvider>{children}</ProjectsProvider>
+        </WorkspacesProvider>
+      </UsersProvider>
     </ClusterProvider>
   </UIProvider>
 );

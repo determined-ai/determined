@@ -36,7 +36,7 @@ import {
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import handleError from 'utils/error';
 
-import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
+import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
 
 interface Props {
@@ -52,8 +52,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [canceler] = useState(new AbortController());
 
-  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const {
     contextHolder: modalCheckpointRegisterContextHolder,

@@ -1,8 +1,8 @@
 import { List, Modal, Select, Typography } from 'antd';
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Form from 'components/kit/Form';
+import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
@@ -82,7 +82,7 @@ const ManageJob: React.FC<Props> = ({
   initialPool,
   jobCount,
 }) => {
-  const [form] = Form.useForm();
+  const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   useRefetchClusterData();
   const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
@@ -99,7 +99,7 @@ const ManageJob: React.FC<Props> = ({
     tableKeys.forEach((td) => {
       const col = columns.find((col) => col.key === td);
       if (!col?.render) return;
-      tableDetails[td] = { label: <>{col.title}</>, value: <>{col.render(undefined, job, 0)}</> };
+      tableDetails[td] = { label: <>{col.title}</>, value: <>col.render(undefined, job, 0)</> };
     });
 
     const items = [
@@ -159,7 +159,8 @@ const ManageJob: React.FC<Props> = ({
 
   const onOk = useCallback(async () => {
     try {
-      const update = form && (await formValuesToUpdate(form.getFieldsValue(), job));
+      const update =
+        formRef.current && (await formValuesToUpdate(formRef.current.getFieldsValue(), job));
       if (update) await updateJobQueue({ updates: [update] });
     } catch (e) {
       handleError(e, {
@@ -170,7 +171,7 @@ const ManageJob: React.FC<Props> = ({
       });
     }
     onFinish?.();
-  }, [form, onFinish, job]);
+  }, [formRef, onFinish, job]);
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
 
@@ -189,7 +190,6 @@ const ManageJob: React.FC<Props> = ({
       )}
       <h6>Queue Settings</h6>
       <Form
-        form={form}
         initialValues={{
           position: job.summary.jobsAhead + 1,
           priority: job.priority,
@@ -198,6 +198,7 @@ const ManageJob: React.FC<Props> = ({
         }}
         labelCol={{ span: 6 }}
         name="form basic"
+        ref={formRef}
         onValuesChange={handleUpdateResourcePool}>
         <Form.Item
           extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."

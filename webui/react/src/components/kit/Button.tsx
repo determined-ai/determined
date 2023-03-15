@@ -22,15 +22,7 @@ const Button: React.FC<ButtonProps> = ({
   type = 'default',
   ...props
 }: ButtonProps) => {
-  return (
-    <AntdButton
-      shape={shape}
-      size={size}
-      tabIndex={props.disabled ? -1 : 0}
-      type={type}
-      {...props}
-    />
-  );
+  return <AntdButton shape={shape} size={size} type={type} {...props} />;
 };
 
 export default Button;

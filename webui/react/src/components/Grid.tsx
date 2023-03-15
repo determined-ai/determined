@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { ValueOf } from 'shared/types';
-import { isNumber } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
 
 import css from './Grid.module.scss';
@@ -19,7 +18,7 @@ interface Props {
   children: React.ReactNode;
   className?: string;
   count?: number;
-  gap?: ShirtSize | number;
+  gap?: ShirtSize;
   minItemWidth?: number;
   mode?: GridMode | number;
 }
@@ -40,7 +39,7 @@ const Grid: React.FC<Props> = ({
   count,
 }: Props) => {
   const style = {
-    gridGap: isNumber(gap) ? `${gap}px` : `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
+    gridGap: `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
     gridTemplateColumns: '',
   };
   const classes = [css.base];

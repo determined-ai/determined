@@ -9,17 +9,15 @@ import (
 // Group is a thin wrapper around golang.org/x/sync/errgroup.Group that helps not leak its context
 // past the lifetime of the group.
 type Group struct {
-	inner  *errgroup.Group
+	inner  errgroup.Group
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
 // WithContext creates a Group as a child of the given context.
 func WithContext(ctx context.Context) Group {
-	intermediateContext, cancel := context.WithCancel(ctx)
-	g, groupContext := errgroup.WithContext(intermediateContext)
-
-	return Group{inner: g, ctx: groupContext, cancel: cancel}
+	ctx, cancel := context.WithCancel(ctx)
+	return Group{ctx: ctx, cancel: cancel}
 }
 
 // Go launch the given function in a goroutine as a member of the group. If the function returns an

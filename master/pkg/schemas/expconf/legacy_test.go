@@ -111,10 +111,9 @@ func TestLegacyConfig(t *testing.T) {
 					RawImage: &EnvironmentImageMap{
 						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750"),
 						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364"),
+						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c"),
 					},
 					RawPorts:            map[string]int{},
-					RawProxyPorts:       &ProxyPortsConfigV0{},
 					RawForcePullImage:   ptrs.Ptr(false),
 					RawAddCapabilities:  []string{},
 					RawDropCapabilities: []string{},
@@ -245,7 +244,7 @@ func TestLegacyConfig(t *testing.T) {
 					RawImage: &EnvironmentImageMap{
 						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b"),
 						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364"),
+						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c"),
 					},
 					RawPodSpec: &PodSpec{
 						TypeMeta: metaV1.TypeMeta{
@@ -281,7 +280,6 @@ func TestLegacyConfig(t *testing.T) {
 						Status: k8sV1.PodStatus{},
 					},
 					RawPorts:            map[string]int{},
-					RawProxyPorts:       &ProxyPortsConfigV0{},
 					RawForcePullImage:   ptrs.Ptr(false),
 					RawAddCapabilities:  []string{},
 					RawDropCapabilities: []string{},
@@ -332,8 +330,8 @@ func TestLegacyConfig(t *testing.T) {
                     gpu: []
                   force_pull_image: false
                   image:
-                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-7aa5364
-                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-7aa5364
+                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ad0591c
+                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-ad0591c
                   ports: {}
                   registry_auth: null
                 hyperparameters:
@@ -410,12 +408,11 @@ func TestLegacyConfig(t *testing.T) {
 						RawROCM: []string{},
 					},
 					RawImage: &EnvironmentImageMap{
-						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-7aa5364"),
-						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-7aa5364"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364"),
+						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ad0591c"),
+						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-ad0591c"),
+						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-ad0591c"),
 					},
 					RawPorts:            map[string]int{},
-					RawProxyPorts:       &ProxyPortsConfigV0{},
 					RawForcePullImage:   ptrs.Ptr(false),
 					RawAddCapabilities:  []string{},
 					RawDropCapabilities: []string{},

@@ -1,14 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Select as AntdSelect,
-  ModalFuncProps,
-  Radio,
-  RadioChangeEvent,
-  Space,
-  Typography,
-} from 'antd';
-import { RefSelectProps } from 'antd/lib/select';
+import { Alert, ModalFuncProps, Radio, RadioChangeEvent, Select, Space, Typography } from 'antd';
+import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -17,9 +9,9 @@ import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import SelectFilter from 'components/SelectFilter';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -472,13 +464,13 @@ const useModalHyperparameterSearch = ({
             label="Resource pool"
             name="pool"
             rules={[{ required: true }]}>
-            <Select onChange={handleSelectPool}>
+            <SelectFilter showSearch={false} onChange={handleSelectPool}>
               {resourcePools.map((pool) => (
-                <Option key={pool.name} value={pool.name}>
+                <Select.Option key={pool.name} value={pool.name}>
                   {pool.name}
-                </Option>
+                </Select.Option>
               ))}
-            </Select>
+            </SelectFilter>
           </Form.Item>
           <p>{maxSlots} max slots</p>
         </div>
@@ -496,13 +488,13 @@ const useModalHyperparameterSearch = ({
             label="Units"
             name="length_units"
             rules={[{ required: true }]}>
-            <Select>
-              <Option value="records">records</Option>
-              <Option value="batches">batches</Option>
+            <SelectFilter showSearch={false}>
+              <Select.Option value="records">records</Select.Option>
+              <Select.Option value="batches">batches</Select.Option>
               {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
-                <Option value="epochs">epochs</Option>
+                <Select.Option value="epochs">epochs</Select.Option>
               )}
-            </Select>
+            </SelectFilter>
           </Form.Item>
           <Form.Item
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
@@ -530,11 +522,11 @@ const useModalHyperparameterSearch = ({
             }
             name="mode"
             rules={[{ required: true }]}>
-            <Select>
-              <Option value="aggressive">Aggressive</Option>
-              <Option value="standard">Standard</Option>
-              <Option value="conservative">Conservative</Option>
-            </Select>
+            <SelectFilter showSearch={false}>
+              <Select.Option value="aggressive">Aggressive</Select.Option>
+              <Select.Option value="standard">Standard</Select.Option>
+              <Select.Option value="conservative">Conservative</Select.Option>
+            </SelectFilter>
           </Form.Item>
         )}
         {searcher.name === 'adaptive_asha' && (
@@ -734,23 +726,23 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
         </Typography.Title>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
-        <AntdSelect
+        <Select
           aria-labelledby="type"
           getPopupContainer={(triggerNode) => triggerNode}
           ref={typeRef}
           onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>).map(
             (type) => (
-              <Option
+              <Select.Option
                 disabled={HyperparameterType[type] === HyperparameterType.Categorical}
                 key={HyperparameterType[type]}
                 value={HyperparameterType[type]}>
                 {type}
                 {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
-              </Option>
+              </Select.Option>
             ),
           )}
-        </AntdSelect>
+        </Select>
       </Form.Item>
       <Form.Item
         initialValue={hyperparameter.val}

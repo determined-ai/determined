@@ -3,10 +3,8 @@ package internal
 import (
 	"context"
 	"crypto/sha512"
-	"database/sql"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,7 +14,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -126,7 +123,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		return true, redirectToLogin(c)
 	}
 
-	taskID := model.TaskID(strings.SplitN(c.Param("service"), ":", 2)[0])
+	taskID := model.TaskID(c.Param("service"))
 	var ctx context.Context
 
 	if c.Request() == nil || c.Request().Context() == nil {
@@ -136,31 +133,10 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	}
 
 	spec, err := db.IdentifyTask(ctx, taskID)
-	if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
-		// Check if it's an experiment.
-		e, err := db.ExperimentByTaskID(ctx, taskID)
-		if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
-			return true, err
-		}
-
-		if err != nil {
-			return true, fmt.Errorf("error looking up task experiment: %w", err)
-		}
-
-		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, *user, e); err != nil {
-			return true, err
-		} else if !ok {
-			return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
-		}
-
-		return false, nil
-	}
-
 	if err != nil {
-		return true, fmt.Errorf("error fetching task metadata: %w", err)
+		return true, err
 	}
 
-	// Continue NTSC task checks.
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
 		ok, err = command.AuthZProvider.Get().CanGetTensorboard(

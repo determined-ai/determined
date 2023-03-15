@@ -264,10 +264,8 @@ func (a *apiServer) LaunchNotebook(
 		"NOTEBOOK_IDLE_TYPE": spec.Config.NotebookIdleType,
 		"DET_TASK_TYPE":      string(model.TaskTypeNotebook),
 	}
-	spec.Base.ExtraProxyPorts = append(spec.Base.ExtraProxyPorts, expconf.ProxyPort{
-		RawProxyPort:        port,
-		RawDefaultServiceID: ptrs.Ptr(true),
-	})
+	spec.Port = &port
+	spec.Config.Environment.Ports = map[string]int{"notebook": port}
 
 	spec.Config.Entrypoint = []string{jupyterEntrypoint}
 

@@ -6,6 +6,11 @@
     justify-content: space-between;
     margin-bottom: 16px;
   }
+  .grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
   .descriptionRenderer {
     border: 1px solid transparent;
 

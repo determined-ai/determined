@@ -4,13 +4,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
 import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
+import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
 
@@ -154,19 +154,15 @@ const NotesCard: React.FC<Props> = ({
           )
         )
       }
-      headStyle={{ marginTop: '16px', minHeight: 'fit-content', paddingInline: '16px' }}
+      headStyle={{ minHeight: 'fit-content', paddingInline: '16px' }}
       style={{ ...style }}
       title={
-        <Input
-          defaultValue={title}
+        <InlineEditor
           disabled={!onSaveTitle || disabled}
-          onBlur={(e) => {
-            const newValue = e.currentTarget.value;
-            onSaveTitle?.(newValue);
-          }}
-          onPressEnter={(e) => {
-            e.currentTarget.blur();
-          }}
+          focusSignal={noteChangeSignal}
+          style={{ paddingLeft: '5px', paddingRight: '5px' }}
+          value={title}
+          onSave={onSaveTitle}
         />
       }>
       <Spinner spinning={isLoading}>

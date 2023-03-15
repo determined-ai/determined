@@ -81,12 +81,6 @@ type TaskSpec struct {
 	TaskType         model.TaskType
 	SlurmConfig      expconf.SlurmConfig
 	PbsConfig        expconf.PbsConfig
-
-	ExtraProxyPorts expconf.ProxyPortsConfig
-
-	Workspace string
-	Project   string
-	Labels    []string
 }
 
 // ResolveWorkDir resolves the work dir.

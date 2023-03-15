@@ -1,17 +1,20 @@
 import { CheckOutlined } from '@ant-design/icons';
-import type { DropDownProps, MenuProps } from 'antd';
 import { Dropdown, Modal } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
+import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
-import Select, { Option, SelectValue } from 'components/kit/Select';
 import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
+import SelectFilter from './SelectFilter';
+
+const { Option } = Select;
 
 interface Props {
   disabled?: boolean;
@@ -207,7 +210,11 @@ const PaginatedNotesCard: React.FC<Props> = ({
         </div>
       )}
       <div className={css.pageSelectRow}>
-        <Select value={currentPage} onSelect={handleSwitchPage}>
+        <SelectFilter
+          className={css.pageSelect}
+          size="large"
+          value={currentPage}
+          onSelect={handleSwitchPage}>
           {notes.map((note, idx) => {
             return (
               <Option className={css.selectOption} key={idx} value={idx}>
@@ -222,7 +229,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
               </Option>
             );
           })}
-        </Select>
+        </SelectFilter>
       </div>
       <div className={css.notesContainer}>
         <NotesCard

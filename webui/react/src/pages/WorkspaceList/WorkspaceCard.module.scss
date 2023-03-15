@@ -1,27 +1,36 @@
 .base {
-  display: flex;
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
+  border-radius: var(--theme-border-radius-strong);
+  color: var(--theme-surface-on);
+  cursor: pointer;
+  display: grid;
   font-size: 11px;
-  gap: 8px;
+  grid-template-columns: 100px auto 25px;
+  height: 100px;
+  padding: 16px;
 
   .info {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    width: 100%;
 
     .nameRow {
       align-items: center;
       display: flex;
       gap: 6px;
+      grid-column: 1/3;
       height: min-content;
-      justify-content: space-between;
       min-width: 0;
 
       .name {
         color: var(--theme-surface-on-strong);
         font-size: 14px;
         margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         & * {
           margin: 0;
@@ -32,29 +41,47 @@
       margin: 0;
     }
   }
-  .pinned {
-    color: var(--theme-colors-monochrome-9);
-    font-size: 20px;
+  .action {
+    display: none;
+    grid-column: 3/4;
+    grid-row: 1/2;
     height: min-content;
     justify-self: end;
     width: min-content;
   }
-  .avatarRow {
-    display: flex;
-    justify-content: space-between;
+  &:hover {
+    background-color: var(--theme-surface-weak);
 
-    .archivedBadge {
-      background-color: var(--theme-status-inactive);
-      border-radius: var(--theme-border-radius);
-      color: var(--theme-status-warning-on);
-      opacity: 1;
-      padding: 2px 4px;
+    .action {
+      background-color: var(--theme-surface);
+      border-radius: 4px;
+      display: flex;
+      padding: 2px;
     }
   }
-  &.archived .icon,
-  &.archived .nameRow,
-  &.archived .projects,
-  &.archived .avatar {
-    opacity: 55%;
+  .pinned {
+    color: var(--theme-colors-monochrome-9);
+    font-size: 20px;
+    grid-column: 3/4;
+    grid-row: 1/2;
+    height: min-content;
+    justify-self: end;
+    width: min-content;
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    grid-template-columns: 74px auto 10px;
+    max-width: 100%;
+
+    .projects {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .info {
+      margin-left: 20px;
+    }
   }
 }

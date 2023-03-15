@@ -295,8 +295,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 			Preemptible: true,
 			Restore:     true,
-			ProxyPorts: sproto.NewProxyPortConfig(
-				tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 		}
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
@@ -330,7 +328,6 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		},
 
 		Preemptible: true,
-		ProxyPorts:  sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 	}
 
 	ctx.Log().

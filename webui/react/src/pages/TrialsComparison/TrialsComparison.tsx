@@ -28,12 +28,10 @@ import css from './TrialsComparison.module.scss';
 
 interface Props {
   projectId: string;
-  workspaceId: number;
 }
 
-const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
-  const config = useMemo(() => trialsTableSettingsConfig(projectId), [projectId]);
-  const tableSettingsHook = useSettings<InteractiveTableSettings>(config);
+const TrialsComparison: React.FC<Props> = ({ projectId }) => {
+  const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
 
   const collections = useTrialCollections(projectId, tableSettingsHook);
 
@@ -52,7 +50,6 @@ const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
     openCreateModal: collections.openCreateModal,
     refetch,
     sorter: collections.sorter,
-    workspaceId,
   });
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);

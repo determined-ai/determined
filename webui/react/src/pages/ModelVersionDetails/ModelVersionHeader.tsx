@@ -4,15 +4,14 @@ import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import InlineEditor from 'components/InlineEditor';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
-import Tags, { tagsActionHelper } from 'components/kit/Tags';
-import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
+import Avatar from 'components/UserAvatar';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -21,10 +20,9 @@ import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import usersStore from 'stores/users';
-import { DetailedUser, ModelVersion, Workspace } from 'types';
+import { useUsers } from 'stores/users';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -52,9 +50,8 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
@@ -64,9 +61,6 @@ const ModelVersionHeader: React.FC<Props> = ({
 
   const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
     useModalModelVersionDelete();
-
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ modelName: modelVersion.name ?? '', onSaveName });
 
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
@@ -95,28 +89,22 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <Input
-            defaultValue={modelVersion.comment ?? ''}
+          <InlineEditor
             disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-            onBlur={(e) => {
-              const newValue = e.currentTarget.value;
-              onSaveDescription(newValue);
-            }}
-            onPressEnter={(e) => {
-              e.currentTarget.blur();
-            }}
+            value={modelVersion.comment ?? ''}
+            onSave={onSaveDescription}
           />
         ),
         label: 'Description',
       },
       {
         content: (
-          <Tags
+          <TagList
             disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}
-            onAction={tagsActionHelper(modelVersion.labels ?? [], onUpdateTags)}
+            onChange={onUpdateTags}
           />
         ),
         label: 'Tags',
@@ -144,13 +132,6 @@ const ModelVersionHeader: React.FC<Props> = ({
         onClick: () => setShowUseInNotebook(true),
         text: 'Use in Notebook',
       },
-      {
-        danger: false,
-        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
-        key: 'edit-model-version-name',
-        onClick: openModelNameEdit,
-        text: 'Edit',
-      },
     ];
     if (canDeleteModelVersion({ modelVersion })) {
       items.push({
@@ -162,14 +143,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       });
     }
     return items;
-  }, [
-    modelVersion,
-    canModifyModelVersion,
-    openModelNameEdit,
-    handleDownloadModel,
-    canDeleteModelVersion,
-    handleDelete,
-  ]);
+  }, [handleDelete, handleDownloadModel, canDeleteModelVersion, modelVersion]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -251,7 +225,13 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
           <div className={css.title}>
             <div className={css.versionBox}>V{modelVersion.version}</div>
             <h1 className={css.versionName}>
-              {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
+              <InlineEditor
+                allowClear={false}
+                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
+                placeholder="Add name..."
+                value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
+                onSave={onSaveName}
+              />
             </h1>
           </div>
           <div className={css.buttons}>
@@ -275,7 +255,6 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}
-      {modalModelNameEditContextHolder}
       <Modal
         className={css.useNotebookModal}
         footer={null}

@@ -113,8 +113,6 @@ const config = (id: string): SettingsConfig<Settings> => {
           literal(V1GetModelsRequestSortBy.NAME),
           literal(V1GetModelsRequestSortBy.NUMVERSIONS),
           literal(V1GetModelsRequestSortBy.UNSPECIFIED),
-          literal(V1GetModelsRequestSortBy.DESCRIPTION),
-          literal(V1GetModelsRequestSortBy.WORKSPACE),
         ]),
       },
       tableLimit: {

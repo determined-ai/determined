@@ -26,7 +26,7 @@ export interface WorkspaceMembersSettings extends InteractiveTableSettings {
   sortKey: string;
 }
 
-export const configForWorkspace = (id: number): SettingsConfig<WorkspaceMembersSettings> => ({
+const config: SettingsConfig<WorkspaceMembersSettings> = {
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -66,5 +66,7 @@ export const configForWorkspace = (id: number): SettingsConfig<WorkspaceMembersS
       type: number,
     },
   },
-  storagePath: `workspace-${id}-members`,
-});
+  storagePath: 'workspace-members',
+};
+
+export default config;

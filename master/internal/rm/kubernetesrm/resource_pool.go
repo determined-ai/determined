@@ -651,7 +651,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeK8sPod,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID(p.podsActor.Address().Local()): make([]device.Device, p.slots),
+			aproto.ID(p.podsActor.Address().Local()): nil,
 		},
 
 		ContainerID: &p.containerID,

@@ -1,11 +1,23 @@
+$padding: 12px;
+$line-height: 22px;
+
 .base {
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
+  border-radius: var(--theme-border-radius-strong);
+  color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  line-height: 22px;
+  height: 100%;
+  line-height: $line-height;
   overflow: hidden;
+  padding: $padding;
   text-overflow: ellipsis;
 
+  &:hover {
+    background-color: var(--theme-surface-weak);
+  }
   .body {
     display: flex;
     flex-direction: column;
@@ -16,7 +28,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding-top: 8px;
+    padding: $padding;
 
     .info {
       margin: auto 0;
@@ -41,6 +53,9 @@
   }
   .empty {
     color: var(--theme-surface-on-weak);
+  }
+  section {
+    padding: 0 $padding;
   }
 }
 section.details {

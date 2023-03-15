@@ -15,6 +15,7 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
+import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -70,13 +71,15 @@ const setup = () => {
     <UIProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <ClusterProvider>
-            <ProjectsProvider>
-              <HistoryRouter history={history}>
-                <ExperimentDetails />
-              </HistoryRouter>
-            </ProjectsProvider>
-          </ClusterProvider>
+          <UsersProvider>
+            <ClusterProvider>
+              <ProjectsProvider>
+                <HistoryRouter history={history}>
+                  <ExperimentDetails />
+                </HistoryRouter>
+              </ProjectsProvider>
+            </ClusterProvider>
+          </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </UIProvider>,
@@ -130,13 +133,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      setup();
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
+        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
       });
 
       expect(screen.getByText('Overview')).toBeInTheDocument();
@@ -160,13 +163,13 @@ describe('Experiment Details Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      setup();
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;
       await waitFor(() => {
         expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
-        expect(screen.getByRole('experimentName')).toHaveTextContent(experimentName);
+        expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
       });
 
       expect(screen.getByText('Visualization')).toBeInTheDocument();

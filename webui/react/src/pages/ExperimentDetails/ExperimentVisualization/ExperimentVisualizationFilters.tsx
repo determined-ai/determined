@@ -1,12 +1,13 @@
-import { Tooltip } from 'antd';
+import { Select, Tooltip } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
-import HpSelect from 'components/HpSelect';
+import HpSelectFilter from 'components/HpSelectFilter';
 import Button from 'components/kit/Button';
-import Select, { Option, SelectValue } from 'components/kit/Select';
-import MetricSelect from 'components/MetricSelect';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
-import ScaleSelect from 'components/ScaleSelect';
+import ScaleSelectFilter from 'components/ScaleSelectFilter';
+import SelectFilter from 'components/SelectFilter';
 import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';
@@ -14,6 +15,8 @@ import { HpImportance, Metric, Scale } from 'types';
 import { ExperimentVisualizationType } from '../ExperimentVisualization';
 
 import css from './ExperimentVisualizationFilters.module.scss';
+
+const { Option } = Select;
 
 export interface VisualizationFilters {
   batch: number;
@@ -198,9 +201,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   return (
     <>
       {showMaxTrials && (
-        <Select
+        <SelectFilter
+          enableSearchFilter={false}
           label="Top Trials"
-          searchable={false}
+          showSearch={false}
+          style={{ width: 70 }}
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
           {TOP_TRIALS_OPTIONS.map((option) => (
@@ -208,13 +213,14 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
               {option}
             </Option>
           ))}
-        </Select>
+        </SelectFilter>
       )}
       {showBatches && (
         <>
-          <Select
+          <SelectFilter
+            enableSearchFilter={false}
             label="Batches Processed"
-            searchable={false}
+            showSearch={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
             {batches.map((batch) => (
@@ -222,10 +228,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {batch}
               </Option>
             ))}
-          </Select>
-          <Select
+          </SelectFilter>
+          <SelectFilter
+            enableSearchFilter={false}
             label="Batch Margin"
-            searchable={false}
+            showSearch={false}
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
             {BATCH_MARGIN_OPTIONS.map((option) => (
@@ -233,11 +240,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
                 {option}
               </Option>
             ))}
-          </Select>
+          </SelectFilter>
         </>
       )}
       {showHParams && (
-        <HpSelect
+        <HpSelectFilter
           fullHParams={fullHParams}
           hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
@@ -246,17 +253,17 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       {showMetrics && (
-        <MetricSelect
+        <MetricSelectFilter
           defaultMetrics={metrics}
           label="Metric"
           metrics={metrics}
           multiple={false}
           value={localFilters.metric}
-          width={250}
+          width={'100%'}
           onChange={handleMetricChange}
         />
       )}
-      {showScales && <ScaleSelect value={localFilters.scale} onChange={handleScaleChange} />}
+      {showScales && <ScaleSelectFilter value={localFilters.scale} onChange={handleScaleChange} />}
       {showViews && (
         <RadioGroup
           iconOnly

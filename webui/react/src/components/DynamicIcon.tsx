@@ -39,11 +39,17 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     return 10;
   }, [size]);
 
+  const borderRadius = useMemo(() => {
+    if (size > 50) return 'var(--theme-border-radius-strong)';
+    return 'var(--theme-border-radius)';
+  }, [size]);
+
   return (
     <div
       className={css.base}
       style={{
         backgroundColor,
+        borderRadius,
         color: 'black',
         fontSize,
         height: size,

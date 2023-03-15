@@ -1,18 +1,19 @@
 import { PushpinOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Card from 'components/kit/Card';
-import Avatar from 'components/kit/UserAvatar';
+import Tooltip from 'components/kit/Tooltip';
+import Link from 'components/Link';
+import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
-import { pluralizer } from 'shared/utils/string';
-import usersStore from 'stores/users';
+import Icon from 'shared/components/Icon/Icon';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { useUsers } from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
-import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
+import WorkspaceActionDropdown from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
 
 interface Props {
@@ -21,49 +22,53 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
-  const { menuProps, contextHolders } = useWorkspaceActionMenu({
-    onComplete: fetchWorkspaces,
-    workspace,
+  const handleCardClick = useCallback(() => {
+    routeToReactUrl(paths.workspaceDetails(workspace.id));
+  }, [workspace.id]);
+
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
   });
-
-  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
-  const user = Loadable.match(loadableUser, {
-    Loaded: (user) => user,
-    NotLoaded: () => undefined,
-  }); // TODO: handle loading state
-
-  const classnames = [css.base];
-  if (workspace.archived) classnames.push(css.archived);
+  const user = users.find((user) => user.id === workspace.userId);
 
   return (
-    <Card
-      actionMenu={!workspace.immutable ? menuProps : undefined}
-      href={paths.workspaceDetails(workspace.id)}
-      size="medium">
-      <div className={classnames.join(' ')}>
-        <div className={css.icon}>
-          <DynamicIcon name={workspace.name} size={78} />
-        </div>
+    <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspaces}>
+      <div className={css.base} onClick={handleCardClick}>
+        <DynamicIcon name={workspace.name} size={70} />
         <div className={css.info}>
           <div className={css.nameRow}>
-            <Typography.Title className={css.name} ellipsis={{ rows: 1, tooltip: true }} level={5}>
-              {workspace.name}
-            </Typography.Title>
-            {workspace.pinned && <PushpinOutlined className={css.pinned} />}
+            <h6 className={css.name}>
+              <Link inherit path={paths.workspaceDetails(workspace.id)}>
+                <Typography.Paragraph ellipsis={true}>{workspace.name}</Typography.Paragraph>
+              </Link>
+            </h6>
+            {workspace.archived && (
+              <Tooltip title="Archived">
+                <div>
+                  <Icon name="archive" size="small" />
+                </div>
+              </Tooltip>
+            )}
           </div>
           <p className={css.projects}>
-            {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
+            {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
-          <div className={css.avatarRow}>
-            <div className={css.avatar}>
-              <Avatar user={user} />
-            </div>
-            {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+          <div className={css.avatar}>
+            <Avatar user={user} />
           </div>
         </div>
+        {workspace.pinned && <PushpinOutlined className={css.pinned} />}
+        {!workspace.immutable && (
+          <WorkspaceActionDropdown
+            className={css.action}
+            direction="horizontal"
+            workspace={workspace}
+            onComplete={fetchWorkspaces}
+          />
+        )}
       </div>
-      {contextHolders}
-    </Card>
+    </WorkspaceActionDropdown>
   );
 };
 

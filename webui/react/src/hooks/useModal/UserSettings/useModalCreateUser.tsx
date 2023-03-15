@@ -18,12 +18,11 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
-import usersStore from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
@@ -101,14 +100,13 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
           <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
-              loading={Loadable.isLoading(knownRoles)}
               mode="multiple"
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {Loadable.isLoaded(knownRoles) ? (
-                <>
-                  {knownRoles.data.map((r: UserRole) => (
+              {Loadable.match(knownRoles, {
+                Loaded: (knownRoles) =>
+                  knownRoles.map((r: UserRole) => (
                     <Select.Option
                       disabled={
                         roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
@@ -118,9 +116,9 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
                       value={r.id}>
                       {r.name}
                     </Select.Option>
-                  ))}
-                </>
-              ) : undefined}
+                  )),
+                NotLoaded: () => undefined, // TODO show spinner when this is loading
+              })}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
@@ -149,7 +147,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const canAssignRolesFlag: boolean = canAssignRoles({});
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

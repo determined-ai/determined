@@ -7,8 +7,11 @@ import LogViewer, {
   FetchDirection,
   FetchType,
 } from 'components/kit/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'components/kit/LogViewer/LogViewerSelect';
-import { Settings, settingsConfigForTask } from 'components/kit/LogViewer/LogViewerSelect.settings';
+import LogViewerFilters, { Filters } from 'components/kit/LogViewer/LogViewerFilters';
+import {
+  Settings,
+  settingsConfigForTask,
+} from 'components/kit/LogViewer/LogViewerFilters.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
@@ -134,7 +137,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
 
   const logFilters = (
     <div className={css.filters}>
-      <LogViewerSelect
+      <LogViewerFilters
         options={filterOptions}
         showSearch={true}
         values={filterValues}

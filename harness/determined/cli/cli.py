@@ -3,13 +3,7 @@ import os
 import socket
 import ssl
 import sys
-from argparse import (
-    ArgumentDefaultsHelpFormatter,
-    ArgumentError,
-    ArgumentParser,
-    FileType,
-    Namespace,
-)
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType, Namespace
 from typing import List, Sequence, Union, cast
 
 import argcomplete
@@ -24,7 +18,6 @@ import determined.cli
 from determined.cli import render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.checkpoint import args_description as checkpoint_args_description
-from determined.cli.dev import args_description as dev_args_description
 from determined.cli.experiment import args_description as experiment_args_description
 from determined.cli.job import args_description as job_args_description
 from determined.cli.master import args_description as master_args_description
@@ -59,7 +52,7 @@ from determined.common.util import (
 )
 from determined.errors import EnterpriseOnlyError
 
-from .errors import CliError, FeatureFlagDisabled
+from .errors import FeatureFlagDisabled
 
 
 @authentication.required
@@ -166,7 +159,6 @@ all_args_description = (
     + workspace_args_description
     + auth_args_description
     + oauth_args_description
-    + dev_args_description
 )
 
 
@@ -200,13 +192,13 @@ def main(
 
         parsed_args = parser.parse_args(args)
 
-        def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
+        def die(message: str, always_print_traceback: bool = False) -> None:
             if always_print_traceback or debug_mode():
                 import traceback
 
                 traceback.print_exc(file=sys.stderr)
 
-            parser.exit(exit_code, colored(message + "\n", "red"))
+            parser.exit(1, colored(message + "\n", "red"))
 
         v = vars(parsed_args)
         if not v.get("func"):
@@ -288,10 +280,6 @@ def main(
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
         except FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
-        except CliError as e:
-            die(e.message, exit_code=e.exit_code)
-        except ArgumentError as e:
-            die(e.message, exit_code=2)
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:

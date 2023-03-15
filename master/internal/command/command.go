@@ -265,6 +265,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
+		var proxyPortConf *sproto.ProxyPortConfig
+		if c.GenericCommandSpec.Port != nil {
+			proxyPortConf = &sproto.ProxyPortConfig{
+				ServiceID:       string(c.taskID),
+				Port:            *c.GenericCommandSpec.Port,
+				ProxyTCP:        c.ProxyTCP,
+				Unauthenticated: c.Unauthenticated,
+			}
+		}
+
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
 		var eventStreamConfig *sproto.EventStreamConfig
@@ -302,7 +312,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			},
 
 			StreamEvents: eventStreamConfig,
-			ProxyPorts:   sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
+			ProxyPort:    proxyPortConf,
 			IdleTimeout:  idleWatcherConfig,
 			Restore:      c.restored,
 		}, c.db, c.rm, c.taskLogger)

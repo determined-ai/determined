@@ -9,6 +9,3 @@ variable "service_account_email" {
 variable "gcs_bucket" {
   type = string
 }
-
-variable "labels" {
-}

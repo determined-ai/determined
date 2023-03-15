@@ -5,6 +5,7 @@ from determined.cli._util import (
     setup_session,
     require_feature_flag,
     login_sdk_client,
+    report_cli_error,
     print_warnings,
 )
 from determined.cli import (

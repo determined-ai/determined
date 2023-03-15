@@ -74,7 +74,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: [id],
+      experimentIds: id ? [id] : undefined,
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
@@ -105,10 +105,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.OpenTensorBoard: {
-            const commandResponse = await openOrCreateTensorBoard({
-              experimentIds: [id],
-              workspaceId: experiment.workspaceId,
-            });
+            const commandResponse = await openOrCreateTensorBoard({ experimentIds: [id] });
             openCommandResponse(commandResponse);
             break;
           }
@@ -191,7 +188,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       experiment.projectId,
-      experiment.workspaceId,
       handleExperimentMove,
       handleHyperparameterSearch,
       id,
