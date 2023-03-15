@@ -5,10 +5,8 @@
   border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
   box-sizing: border-box;
   display: flex;
-  flex-basis: var(--nav-side-bar-width-max);
+  flex: 0 0 var(--nav-side-bar-width-max);
   flex-direction: column;
-  flex-grow: 0;
-  flex-shrink: 0;
   max-height: calc(var(--vh, 1vh) * 100);
   overflow: visible;
 
@@ -37,7 +35,8 @@
     overflow: hidden;
 
     .actionButtons {
-      display: none; // action buttons are hidden when the cursor is not hovered on buttons
+      // action buttons are hidden when the cursor is not hovered on buttons
+      display: none;
     }
     .navItemContainer:hover .actionButtons {
       align-items: center;

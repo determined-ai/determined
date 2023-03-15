@@ -2,10 +2,9 @@ import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 
@@ -107,7 +106,7 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   return (
     <SettingsProvider>
-      <HistoryRouter history={history}>{children}</HistoryRouter>
+      <BrowserRouter>{children}</BrowserRouter>
     </SettingsProvider>
   );
 };
@@ -160,7 +159,7 @@ describe('useSettings', () => {
       expect(result.container.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
 
-    expect(history.location.search).toBe('');
+    expect(window.location.search).toBe('');
   });
 
   it('should update settings', async () => {
@@ -177,7 +176,7 @@ describe('useSettings', () => {
     }
 
     await waitFor(() => {
-      expect(history.location.search).toContain(
+      expect(window.location.search).toContain(
         [
           'boolean=false',
           'booleanArray=false&booleanArray=true',

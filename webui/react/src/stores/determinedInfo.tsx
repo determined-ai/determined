@@ -13,6 +13,7 @@ export const initInfo: DeterminedInfo = {
   isTelemetryEnabled: false,
   masterId: '',
   rbacEnabled: false,
+  userManagementEnabled: true,
   version: process.env.VERSION || '',
 };
 

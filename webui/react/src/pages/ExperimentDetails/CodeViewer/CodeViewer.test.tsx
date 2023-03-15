@@ -2,12 +2,11 @@ import { findAllByText, screen, waitFor } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 
@@ -111,11 +110,11 @@ const setup = (
   props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
 ) => {
   render(
-    <HistoryRouter history={history}>
+    <BrowserRouter>
       <UIProvider>
         <Container {...props} />
       </UIProvider>
-    </HistoryRouter>,
+    </BrowserRouter>,
   );
 };
 

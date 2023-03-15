@@ -18,14 +18,16 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { glasbeyColor } from 'shared/utils/color';
-import { flattenObject } from 'shared/utils/data';
+import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandResponse,
   ExperimentBase,
+  ExperimentSearcherName,
   Hyperparameter,
+  HyperparameterType,
   Metric,
   metricTypeParamMap,
   RunState,
@@ -49,6 +51,57 @@ interface Props {
 }
 
 const MAX_DATAPOINTS = 5000;
+
+export const getCustomSearchVaryingHPs = (
+  trialHps: TrialHParams[],
+): Record<string, Hyperparameter> => {
+  /**
+   * For Custom Searchers, add a hyperparameter's column for params that
+   * 1) Have more than one unique value (it isn't the same in all trials)
+   * 2) Isn't a dictionary of other metrics
+   * This is to bypass the need to rely the on the experiment config's
+   * definition of hyperparameters and determine what should be shown more dynamically.
+   *
+   * Note: If we support the other tabs in the future for Custom Searchers
+   * such as HpParallelCoordinates, HpScatterPlots, and HpHeatMaps, we will need to
+   * generalize this logic a bit.
+   */
+  const uniq = new Set<string>();
+  const check_dict = {} as Record<string, unknown>;
+  trialHps.forEach((d) => {
+    Object.keys(d.hparams).forEach((key: string) => {
+      const value = d.hparams[key];
+      if (!(isPrimitive(value) || Array.isArray(value))) {
+        /**
+         * We have both the flattened and unflattened values in this TrialHParams
+         * From `const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };`
+         * below in the file. Skip the non flattened dictionaries.
+         * Example: {
+         *  "dict": { # This is skipped
+         *    "key": "value"
+         *  },
+         *  "dict.key": "value", # This is allowed
+         * }
+         */
+        return;
+      }
+      if (!(key in check_dict)) {
+        check_dict[key] = value;
+      } else if (!isEqual(check_dict[key], value)) {
+        uniq.add(key);
+      }
+    });
+  });
+
+  // If there's only one result, don't filter by unique results
+  const all_keys = trialHps.length === 1 ? Object.keys(check_dict) : Array.from(uniq);
+  return all_keys.reduce((acc, key) => {
+    acc[key] = {
+      type: HyperparameterType.Constant,
+    };
+    return acc;
+  }, {} as Record<string, Hyperparameter>);
+};
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
@@ -75,11 +128,15 @@ const LearningCurve: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const hyperparameters = useMemo(() => {
-    return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.hyperparameters[key];
-      return acc;
-    }, {} as Record<string, Hyperparameter>);
-  }, [experiment.hyperparameters, fullHParams]);
+    if (experiment.config.searcher.name === ExperimentSearcherName.Custom && trialHps.length > 0) {
+      return getCustomSearchVaryingHPs(trialHps);
+    } else {
+      return fullHParams.reduce((acc, key) => {
+        acc[key] = experiment.hyperparameters[key];
+        return acc;
+      }, {} as Record<string, Hyperparameter>);
+    }
+  }, [experiment.hyperparameters, fullHParams, trialHps, experiment.config]);
 
   const handleTrialClick = useCallback(
     (event: MouseEvent, trialId: number) => {

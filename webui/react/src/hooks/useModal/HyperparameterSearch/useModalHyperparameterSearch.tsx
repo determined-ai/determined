@@ -158,7 +158,7 @@ const useModalHyperparameterSearch = ({
       fields.searcher === SEARCH_METHODS.Grid.name ? undefined : fields.max_trials;
     baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
-    baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
+    baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 16;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.slots_per_trial = fields.slots_per_trial;
 
@@ -560,7 +560,7 @@ const useModalHyperparameterSearch = ({
             <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
-            initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 0}
+            initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 16}
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials

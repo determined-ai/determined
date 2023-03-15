@@ -50,7 +50,8 @@ func setup(t *testing.T) (*Service, *mocks.UserAuthZ, echo.Context) {
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../static/migrations")
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 
-	InitService(pgDB, nil, nil)
+	externalSessions := &model.ExternalSessions{}
+	InitService(pgDB, nil, externalSessions)
 	return GetService(), userAuthzSingleton, ctx
 }
 

@@ -32,6 +32,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { RolesStore } from 'stores/roles';
 import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -56,9 +57,10 @@ interface DropdownProps {
   fetchUsers: () => void;
   groups: V1GroupSearchResult[];
   user: DetailedUser;
+  userManagementEnabled: boolean;
 }
 
-const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers, user });
   const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
@@ -104,14 +106,15 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     funcs[e.key as ValueOf<typeof MenuKey>]();
   };
 
-  const menuItems: MenuProps['items'] = canModifyUsers
-    ? [
-        { key: MenuKey.Edit, label: 'Edit User' },
-        { key: MenuKey.Groups, label: 'Manage Groups' },
-        { key: MenuKey.Agent, label: 'Configure Agent' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-      ]
-    : [{ key: MenuKey.View, label: 'View User' }];
+  const menuItems: MenuProps['items'] =
+    userManagementEnabled && canModifyUsers
+      ? [
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
+      : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
     <div className={dropdownCss.base}>
@@ -155,6 +158,7 @@ const UserManagement: React.FC = () => {
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
 
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
@@ -222,7 +226,14 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: DetailedUser) => {
-      return <UserActionDropdown fetchUsers={fetchUsers} groups={groups} user={record} />;
+      return (
+        <UserActionDropdown
+          fetchUsers={fetchUsers}
+          groups={groups}
+          user={record}
+          userManagementEnabled={info.userManagementEnabled}
+        />
+      );
     };
     const columns = [
       {
@@ -275,7 +286,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, groups, nameFilterSearch, rbacEnabled]);
+  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, nameFilterSearch, rbacEnabled]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -317,7 +328,7 @@ const UserManagement: React.FC = () => {
           <Space>
             <Button
               aria-label={CREATE_USER_LABEL}
-              disabled={!canModifyUsers}
+              disabled={!info.userManagementEnabled || !canModifyUsers}
               onClick={onClickCreateUser}>
               {CREATE_USER}
             </Button>

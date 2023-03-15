@@ -1970,7 +1970,7 @@ var (
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2276,7 +2276,7 @@ var (
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "stop_once": {
             "type": [
@@ -2381,7 +2381,7 @@ var (
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2467,7 +2467,7 @@ var (
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_trials": {
             "type": [

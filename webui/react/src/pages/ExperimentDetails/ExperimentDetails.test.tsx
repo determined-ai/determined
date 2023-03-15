@@ -11,7 +11,6 @@ import {
   getWorkspace,
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
 import { WorkspacesProvider } from 'stores/workspaces';
@@ -27,7 +26,7 @@ vi.useFakeTimers();
  * mock the module and replace the function(s) with vi.fn(),
  * then override the implementation or return value
  */
-const { unstable_HistoryRouter: HistoryRouter, useParams } = await import('react-router-dom');
+const { BrowserRouter, useParams } = await import('react-router-dom');
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useParams: vi.fn(),
@@ -61,9 +60,9 @@ const setup = () => {
         <WorkspacesProvider>
           <ClusterProvider>
             <ProjectsProvider>
-              <HistoryRouter history={history}>
+              <BrowserRouter>
                 <ExperimentDetails />
-              </HistoryRouter>
+              </BrowserRouter>
             </ProjectsProvider>
           </ClusterProvider>
         </WorkspacesProvider>
