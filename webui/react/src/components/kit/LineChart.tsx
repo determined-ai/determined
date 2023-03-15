@@ -191,6 +191,7 @@ export const LineChart: React.FC<Props> = ({
         { label: xLabel ?? xAxis ?? 'X' },
         ...series.map((serie, idx) => {
           return {
+            alpha: focusedSeries === undefined || focusedSeries === idx ? 1 : 0.4,
             label: seriesNames[idx],
             points: { show: (serie.data[xAxis] || []).length <= 1 },
             scale: 'y',
@@ -217,6 +218,7 @@ export const LineChart: React.FC<Props> = ({
     seriesNames,
     hasPopulatedSeries,
     propPlugins,
+    focusedSeries,
   ]);
 
   return (
@@ -226,7 +228,6 @@ export const LineChart: React.FC<Props> = ({
         allowDownload={hasPopulatedSeries}
         data={chartData}
         experimentId={experimentId}
-        focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
