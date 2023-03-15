@@ -1,6 +1,7 @@
 import React from 'react';
 
-import history from 'shared/routes/history';
+import router from 'router';
+import { reactHostAddress } from 'shared/utils/routes';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
@@ -206,17 +207,17 @@ describe('Routes Utilities', () => {
   describe('reactHostAddress', () => {
     it('should invoke reactHostAddress with example.com', () => {
       setup('/', 'http://www.example.com');
-      expect(routes.reactHostAddress()).toBe('http://www.example.com');
+      expect(reactHostAddress()).toBe('http://www.example.com');
     });
 
     it('should invoke reactHostAddress with determined.com', () => {
       setup('/', 'https://www.determined.ai/');
-      expect(routes.reactHostAddress()).toBe('https://www.determined.ai');
+      expect(reactHostAddress()).toBe('https://www.determined.ai');
     });
 
     it('should invoke reactHostAddress with determined.ai/project', () => {
       setup('/', 'https://www.determined.ai/project');
-      expect(routes.reactHostAddress()).toBe('https://www.determined.ai');
+      expect(reactHostAddress()).toBe('https://www.determined.ai');
     });
   });
 
@@ -306,52 +307,24 @@ describe('Routes Utilities', () => {
 
   describe('routeToReactUrl', () => {
     beforeEach(() => {
-      history.push = vi.fn();
+      vi.spyOn(router, 'navigate');
     });
 
     it('should route to react URL', () => {
       const path = '/clusters';
-      expect(history.push).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.example.com',
-          hostname: 'www.example.com',
-          href: 'http://www.example.com/',
-          origin: 'http://www.example.com',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'http:',
-          search: '',
-          username: '',
-        },
-      });
+      expect(router.navigate).toHaveBeenCalledTimes(1);
+      expect(router.navigate).toHaveBeenCalledWith(path);
     });
 
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
       const path = '/dashboard';
-      expect(history.push).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(path, {
-        loginRedirect: {
-          hash: '',
-          host: 'www.determined.ai',
-          hostname: 'www.determined.ai',
-          href: 'https://www.determined.ai/',
-          origin: 'https://www.determined.ai',
-          password: '',
-          pathname: '/',
-          port: '',
-          protocol: 'https:',
-          search: '',
-          username: '',
-        },
-      });
+      expect(router.navigate).toHaveBeenCalledTimes(1);
+      expect(router.navigate).toHaveBeenCalledWith(path);
     });
   });
 });

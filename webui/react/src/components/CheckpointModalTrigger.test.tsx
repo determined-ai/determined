@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth } from 'stores/auth';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
@@ -39,13 +38,13 @@ const ModalTrigger: React.FC = () => {
 
 const setup = async () => {
   render(
-    <HistoryRouter history={history}>
+    <BrowserRouter>
       <UIProvider>
         <WorkspacesProvider>
           <ModalTrigger />
         </WorkspacesProvider>
       </UIProvider>
-    </HistoryRouter>,
+    </BrowserRouter>,
   );
 
   await user.click(screen.getByRole('button'));
