@@ -48,22 +48,21 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const users = Loadable.match(useObservable(usersStore.getUsers()), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
+  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
   useRefetchClusterData();
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const resourcePools = useObservable(useClusterStore().resourcePools);
   const [managingJob, setManagingJob] = useState<Job>();
-  const [rpStats, setRpStats] = useState<RPStats[]>(
-    resourcePools.map(
+  const [rpStats, setRpStats] = useState<RPStats[]>(() => {
+    if (Loadable.isLoading(resourcePools)) return [];
+
+    return resourcePools.data.map(
       (rp) =>
         ({
           resourcePool: rp.name,
           stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
         } as RPStats),
-    ),
-  );
+    );
+  });
   const [jobs, setJobs] = useState<Job[]>([]);
   const [topJob, setTopJob] = useState<Job>();
   const [total, setTotal] = useState(0);
@@ -219,6 +218,11 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [settings.columns, settingsColumns]);
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     return defaultColumns
       .map((col) => {
         switch (col.key) {
@@ -299,7 +303,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             }
             break;
           case 'user':
-            col.render = (_, r) => userRenderer(users.find((u) => u.id === r.userId));
+            col.render = (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId));
             break;
         }
         return col;
