@@ -7,8 +7,9 @@ import requests_mock as mock
 import determined
 import determined.cli
 from determined.common import constants
-from determined.common.api import bindings, certs
+from determined.common.api import _session, bindings, certs
 from determined.common.api.authentication import Authentication
+from determined.common.experimental import experiment
 from tests.common import api_server
 
 
@@ -18,7 +19,7 @@ class CliArgs:
     experiment_id: int
     user: str = "test"
     password: str = "test"
-    polling_interval: int = 1
+    polling_interval: float = 0.01  # Short polling interval so we can run tests quickly
 
 
 def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888") -> Authentication:
@@ -44,20 +45,48 @@ def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888")
 
 
 @unittest.mock.patch("determined.common.api.authentication.Authentication")
-def test_wait_unstable_network(
+def test_wait_doesnt_throw_exception_on_master_504(
     auth_mock: unittest.mock.MagicMock,
 ) -> None:
     auth_mock.return_value = mock_det_auth()
     user = "user1"
+    experiment_id_flaky = 1
     with api_server.run_api_server(
         credentials=(user, "password1", "token1"), ssl_keys=None
     ) as master_url:
-        args = CliArgs(master=master_url, experiment_id=1)
+        args = CliArgs(master=master_url, experiment_id=experiment_id_flaky)
         determined.cli.experiment.wait(args)
 
 
 @unittest.mock.patch("determined.common.api.authentication.Authentication")
-def test_wait_stable_network(
+def test_wait_waits_until_longrunning_experiment_is_complete(
+    auth_mock: unittest.mock.MagicMock,
+) -> None:
+    auth_mock.return_value = mock_det_auth()
+    user, password, token = "user", "password1", "token1"
+    api_server_session = _session.Session(
+        master=f"{api_server.DEFAULT_HOST}:{api_server.DEFAULT_PORT}",
+        user=user,
+        auth=None,
+        cert=None,
+    )
+    experiment_id_longrunning = 2
+
+    with api_server.run_api_server(
+        credentials=(user, password, token), ssl_keys=None
+    ) as master_url:
+        args = CliArgs(master=master_url, experiment_id=experiment_id_longrunning)
+        determined.cli.experiment.wait(args)
+
+        fetched_experiment = experiment.ExperimentReference(
+            experiment_id_longrunning, api_server_session
+        )._get()
+
+    assert fetched_experiment.state == bindings.experimentv1State.STATE_COMPLETED
+
+
+@unittest.mock.patch("determined.common.api.authentication.Authentication")
+def test_wait_returns_error_code_when_experiment_errors(
     auth_mock: unittest.mock.MagicMock,
     requests_mock: mock.Mocker,
 ) -> None:
@@ -65,14 +94,6 @@ def test_wait_stable_network(
 
     exp = api_server.sample_get_experiment().experiment
     args = CliArgs(master="http://localhost:8888", experiment_id=1)
-
-    exp.state = bindings.experimentv1State.STATE_COMPLETED
-    requests_mock.get(
-        f"/api/v1/experiments/{args.experiment_id}",
-        status_code=200,
-        json={"experiment": exp.to_json()},
-    )
-    determined.cli.experiment.wait(args)
 
     exp.state = bindings.experimentv1State.STATE_ERROR
     requests_mock.get(

@@ -19,6 +19,13 @@ CERTS2 = {
     "keyfile": CERTS_DIR / "key2.pem",
     "certfile": CERTS_DIR / "cert2.pem",
 }
+
+DEFAULT_HOST = "localhost"
+DEFAULT_PORT = 12345
+DEFAULT_USER = "user1"
+DEFAULT_PASSWORD = "password1"
+DEFAULT_TOKEN = "token1"
+
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
@@ -29,8 +36,8 @@ def sample_get_experiment() -> bindings.v1GetExperimentResponse:
 
 @contextlib.contextmanager
 def run_api_server(
-    address: Tuple[str, int] = ("localhost", 12345),
-    credentials: Tuple[str, str, str] = ("user1", "password1", "token1"),
+    address: Tuple[str, int] = (DEFAULT_HOST, DEFAULT_PORT),
+    credentials: Tuple[str, str, str] = (DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_TOKEN),
     ssl_keys: Optional[Dict[str, Path]] = CERTS1,
 ) -> Iterator[str]:
     user, password, token = credentials
@@ -67,17 +74,46 @@ def run_api_server(
                 },
             }
 
-        def flaky_get_experiment(self) -> Any:
+        def get_experiment_longrunning(self) -> Optional[Dict[str, Any]]:
+            """A master response to get_GetExperiment for a long-running experiment.
+
+            This function models an experiment that may take a long time to complete. The first
+            two times get_experiment is called, the experiment state is still in a
+            bindings.experimentv1State.STATE_RUNNING. On the third call, its state is
+            bindings.experimentv1State.STATE_COMPLETED.
+
+            Returns:
+                If successful, a JSON-encoded sample experiment. Else None.
             """
-            fails for FAIL_FOR times before succeeding
-            """
-            key = "flaky_get_experiment_fail_count"
-            FAIL_FOR = 2
+            key = "get_experiment_longrunning_n_calls"
+            n_calls = 2
+            sample_experiment = sample_get_experiment()
+
             with lock:
                 state[key] = state.get(key, 0) + 1
-                if state[key] <= FAIL_FOR:
+                if state[key] <= n_calls:
+                    sample_experiment.experiment.state = bindings.experimentv1State.STATE_RUNNING
+                else:
+                    sample_experiment.experiment.state = bindings.experimentv1State.STATE_COMPLETED
+            return sample_experiment.to_json()
+
+        def get_experiment_flaky(self) -> Optional[Dict[str, Any]]:
+            """A master response to get_GetExperiment for a long-running experiment.
+
+            This function models an experiment where master sometimes cannot be reached. The first
+            two times get_experiment is called, the call to the master returns a 504 HTTP code.
+            The third call is successful.
+
+            Returns:
+                If successful, a JSON-encoded sample experiment. Else None.
+            """
+            key = "get_experiment_flaky_n_calls"
+            fail_for = 2
+            with lock:
+                state[key] = state.get(key, 0) + 1
+                if state[key] <= fail_for:
                     self.send_error(504)
-                    return {}
+                    return None
             return sample_get_experiment().to_json()
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
@@ -93,7 +129,8 @@ def run_api_server(
                 "/info": self._info,
                 "/users/me": self._users_me,
                 "/api/v1/models": self._api_v1_models,
-                "/api/v1/experiments/1": self.flaky_get_experiment,
+                "/api/v1/experiments/1": self.get_experiment_flaky,
+                "/api/v1/experiments/2": self.get_experiment_longrunning,
             }.get(self.path.split("?")[0])
             self.do_core(fn)
 
