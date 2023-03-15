@@ -116,7 +116,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
-  const userOrGroupWithRoles: UserOrGroupWithRoleInfo[] = getUserOrGroupWithRoleInfo(
+  const userOrGroupWithRoles = getUserOrGroupWithRoleInfo(
     assignments,
     groupsAssignedDirectly,
     usersAssignedDirectly,
@@ -173,7 +173,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, []);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: UserOrGroupWithRoleInfo) => {
+    const nameRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => {
       if (isUserWithRoleInfo(record)) {
         const member: User = {
           displayName: record.displayName,
@@ -187,6 +187,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
     const roleRenderer = (value: string, record: Readonly<UserOrGroupWithRoleInfo>) => (
       <RoleRenderer
+        fetchMembers={fetchMembers}
         rolesAssignableToScope={rolesAssignableToScope}
         userCanAssignRoles={userCanAssignRoles}
         userOrGroupWithRoleInfo={record}
@@ -216,7 +217,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         filterIcon: tableSearchIcon,
         key: 'name',
         render: nameRenderer,
-        sorter: (a: UserOrGroupWithRoleInfo, b: UserOrGroupWithRoleInfo) => {
+        sorter: (a: Readonly<UserOrGroupWithRoleInfo>, b: Readonly<UserOrGroupWithRoleInfo>) => {
           const aName = isUserWithRoleInfo(a) ? a.displayName || a.username : a.groupName ?? '';
           const bName = isUserWithRoleInfo(b) ? b.displayName || b.username : b.groupName ?? '';
           return alphaNumericSorter(aName, bName);

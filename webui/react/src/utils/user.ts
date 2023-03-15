@@ -51,7 +51,7 @@ export const getUserOrGroupWithRoleInfo = (
   assignments: Readonly<V1RoleWithAssignments[]>,
   groupsAssignedDirectly: Readonly<V1Group[]>,
   usersAssignedDirectly: Readonly<User[]>,
-): UserOrGroupWithRoleInfo[] => {
+): Readonly<UserOrGroupWithRoleInfo[]> => {
   const groupsAndUsers: [
     V1RoleWithAssignments['groupRoleAssignments'],
     V1RoleWithAssignments['userRoleAssignments'],

@@ -17,6 +17,7 @@ import { isUserWithRoleInfo } from 'utils/user';
 import css from './RoleRenderer.module.scss';
 
 interface Props {
+  fetchMembers: () => void;
   rolesAssignableToScope: V1Role[];
   userCanAssignRoles: boolean;
   userOrGroupWithRoleInfo: UserOrGroupWithRoleInfo;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 const RoleRenderer: React.FC<Props> = ({
+  fetchMembers,
   rolesAssignableToScope,
   userOrGroupWithRoleInfo,
   userCanAssignRoles,
@@ -74,16 +76,18 @@ const RoleRenderer: React.FC<Props> = ({
             setMemberRole(roleIdValue);
           } catch (addRoleError) {
             handleError(addRoleError, {
-              publicSubject: 'Unable to update role for user or group unable to add new role.',
+              publicSubject: 'Unable to update role for user or group unable to remove new role.',
               silent: false,
             });
           }
         } catch (removeRoleError) {
           handleError(removeRoleError, {
             publicSubject:
-              'Unable to update role for user or group could unable to remove current role.',
+              'Unable to update role for user or group could unable to add current role.',
             silent: false,
           });
+        } finally {
+          fetchMembers();
         }
       }}>
       {rolesAssignableToScope.map((role) => (
