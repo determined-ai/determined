@@ -74,7 +74,7 @@ def run_api_server(
                 },
             }
 
-        def get_experiment_longrunning(self) -> Optional[Dict[str, Any]]:
+        def get_experiment_longrunning(self) -> Dict[str, Any]:
             """A master response to get_GetExperiment for a long-running experiment.
 
             This function models an experiment that may take a long time to complete. The first
@@ -97,7 +97,7 @@ def run_api_server(
                     sample_experiment.experiment.state = bindings.experimentv1State.STATE_COMPLETED
             return sample_experiment.to_json()
 
-        def get_experiment_flaky(self) -> Optional[Dict[str, Any]]:
+        def get_experiment_flaky(self) -> Dict[str, Any]:
             """A master response to get_GetExperiment for a long-running experiment.
 
             This function models an experiment where master sometimes cannot be reached. The first
@@ -113,7 +113,7 @@ def run_api_server(
                 state[key] = state.get(key, 0) + 1
                 if state[key] <= fail_for:
                     self.send_error(504)
-                    return None
+                    return {}
             return sample_get_experiment().to_json()
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:

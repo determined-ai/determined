@@ -6,10 +6,10 @@ import requests_mock as mock
 
 import determined
 import determined.cli
-from determined.common import constants
-from determined.common.api import _session, bindings, certs
+from determined.common import api, constants
+from determined.common.api import bindings, certs
 from determined.common.api.authentication import Authentication
-from determined.common.experimental import experiment
+from determined.experimental import client
 from tests.common import api_server
 
 
@@ -64,7 +64,7 @@ def test_wait_waits_until_longrunning_experiment_is_complete(
 ) -> None:
     auth_mock.return_value = mock_det_auth()
     user, password, token = "user", "password1", "token1"
-    api_server_session = _session.Session(
+    api_server_session = api.Session(
         master=f"{api_server.DEFAULT_HOST}:{api_server.DEFAULT_PORT}",
         user=user,
         auth=None,
@@ -78,7 +78,7 @@ def test_wait_waits_until_longrunning_experiment_is_complete(
         args = CliArgs(master=master_url, experiment_id=experiment_id_longrunning)
         determined.cli.experiment.wait(args)
 
-        fetched_experiment = experiment.ExperimentReference(
+        fetched_experiment = client.ExperimentReference(
             experiment_id_longrunning, api_server_session
         )._get()
 
