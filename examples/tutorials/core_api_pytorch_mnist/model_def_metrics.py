@@ -66,11 +66,11 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
                 )
             )
 
-            # NEW: Report training metrics to Determined master via core_context.
+            # NEW: Report epoch-based training metrics to Determined master via core_context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
             core_context.train.report_training_metrics(
                 steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
-                metrics={"train_loss": loss.item()},
+                metrics={"train_loss": loss.item(), "epoch": epoch},
             )
 
             if args.dry_run:
@@ -98,10 +98,10 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
         )
     )
 
-    # NEW: Report validation metrics to Determined master via core_context.
+    # NEW: Report epoch_based validation metrics to Determined master via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
-        metrics={"test_loss": test_loss},
+        metrics={"test_loss": test_loss, "epoch": epoch},
     )
 
 
