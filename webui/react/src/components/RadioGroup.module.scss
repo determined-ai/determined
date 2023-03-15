@@ -21,9 +21,9 @@
     border: solid var(--theme-stroke-width) var(--theme-status-active-weak);
     content: '';
     height: calc(100% + 2 * var(--theme-stroke-width));
-    left: -var(--theme-stroke-width);
+    left: var(--theme-stroke-width);
     position: absolute;
-    top: -var(--theme-stroke-width);
+    top: var(--theme-stroke-width);
     width: calc(100% + 2 * var(--theme-stroke-width));
   }
   .option:focus {

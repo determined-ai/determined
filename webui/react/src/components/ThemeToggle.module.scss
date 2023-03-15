@@ -21,31 +21,21 @@ $transtion-type: ease-in-out 0.6s;
   border-radius: 50%;
   display: inline-block;
   height: 20px;
-  transition: border-radius $transtion-type, border-style $transtion-type,
-    border-width $transtion-type, width $transtion-type, height $transtion-type,
-    background-color $transtion-type, border-top $transtion-type, border-bottom $transtion-type,
-    border-right $transtion-type, border-left $transtion-type, box-shadow $transtion-type;
   vertical-align: middle;
   width: 20px;
 }
 .system {
   background-color: gold;
-  border-bottom-color: gold;
-  border-left-color: black;
+  border-color: black gold gold black;
   border-radius: 10px;
-  border-right-color: gold;
   border-style: solid;
-  border-top-color: black;
   border-width: 10px;
 }
 .light {
   background-color: gold;
-  border-bottom-color: gold;
-  border-left-color: gold;
+  border-color: gold;
   border-radius: 10px;
-  border-right-color: gold;
   border-style: solid;
-  border-top-color: gold;
   border-width: 10px;
 }
 .dark {
