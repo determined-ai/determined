@@ -66,6 +66,8 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialOrderBy,
     TrialReference,
     TrialSortBy,
+    CheckpointSortBy,
+    CheckpointOrderBy,
 )
 from determined.common.experimental.user import User
 

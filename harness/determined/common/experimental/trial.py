@@ -1,5 +1,5 @@
 import enum
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional, Union
 
 from determined.common import api
 from determined.common.api import bindings, logs
@@ -16,6 +16,37 @@ class LogLevel(enum.Enum):
 
     def _to_bindings(self) -> bindings.v1LogLevel:
         return bindings.v1LogLevel(self.value)
+
+
+_csb = bindings.v1GetTrialCheckpointsRequestSortBy
+
+
+class CheckpointSortBy(enum.Enum):
+    """
+    Specifies the field to sort a list of checkpoints on.
+    """
+
+    UNSPECIFIED = _csb.SORT_BY_UNSPECIFIED.value
+    END_TIME = _csb.SORT_BY_END_TIME.value
+    STATE = _csb.SORT_BY_STATE.value
+    SORT_BY_UUID = _csb.SORT_BY_UUID.value
+    SORT_BY_BATCH_NUMBER = _csb.SORT_BY_BATCH_NUMBER.value
+
+    def _to_bindings(self) -> bindings.v1GetTrialCheckpointsRequestSortBy:
+        return _csb(self.value)
+
+
+class CheckpointOrderBy(enum.Enum):
+    """
+    Specifies whether a sorted list of checkpoints should be in ascending or
+    descending order.
+    """
+
+    ASC = bindings.v1OrderBy.ORDER_BY_ASC.value
+    DESC = bindings.v1OrderBy.ORDER_BY_DESC.value
+
+    def _to_bindings(self) -> bindings.v1OrderBy:
+        return bindings.v1OrderBy(self.value)
 
 
 class TrialReference:
@@ -165,16 +196,49 @@ class TrialReference:
             resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=uuid)
             return checkpoint.Checkpoint._from_bindings(resp.checkpoint, self._session)
 
-        def get_one(offset: int) -> bindings.v1GetTrialCheckpointsResponse:
+        order_by = None
+        if latest:
+            sort_by = CheckpointSortBy.SORT_BY_BATCH_NUMBER
+            order_by = CheckpointOrderBy.DESC
+
+        if sort_by:
+            order_by = CheckpointOrderBy.ASC if smaller_is_better else CheckpointOrderBy.DESC
+
+        checkpoints = self.get_checkpoints(sort_by=sort_by, order_by=order_by)
+
+        return checkpoints[0] if checkpoints else []
+
+    def get_checkpoints(
+        self,
+        sort_by: Optional[Union[str, CheckpointSortBy]] = None,
+        order_by: Optional[CheckpointOrderBy] = None,
+    ) -> List[checkpoint.Checkpoint]:
+        """
+        Return a list of :class:`~determined.experimental.Checkpoint` instances for the current
+        trial.
+
+        Either ``sort_by`` and ``order_by`` are both specified or neither are.
+
+        Arguments:
+            sort_by (string, :class:`~determined.experimental.CheckpointSortBy`): Which field to
+                sort by. Strings are assumed to be searcher metric names.
+            order_by (:class:`~determined.experimental.CheckpointOrderBy`): Whether to sort in
+                ascending or descending order.
+        """
+
+        if (sort_by is None) != (order_by is None):
+            raise AssertionError("sort_by and order_by must be set together")
+
+        def get_trial_checkpoints(offset: int) -> bindings.v1GetTrialCheckpointsResponse:
             return bindings.get_GetTrialCheckpoints(
                 self._session,
                 id=self.id,
-                orderBy=bindings.v1OrderBy.ORDER_BY_DESC,
-                sortBy=bindings.v1GetTrialCheckpointsRequestSortBy.SORT_BY_BATCH_NUMBER,
+                orderBy=order_by and order_by._to_bindings(),
+                sortBy=sort_by._to_bindings() if isinstance(sort_by, CheckpointSortBy) else None,
                 offset=offset,
             )
 
-        resps = api.read_paginated(get_one)
+        resps = api.read_paginated(get_trial_checkpoints)
 
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)
@@ -182,42 +246,34 @@ class TrialReference:
             for c in r.checkpoints
         ]
 
-        if not checkpoints:
-            raise AssertionError("No checkpoint found for trial {}".format(self.id))
+        # If sort_by was a defined field, we already sorted and ordered.
+        if isinstance(sort_by, CheckpointSortBy) or not checkpoints:
+            return checkpoints
 
-        if latest:
-            return checkpoints[0]
-
+        # If sort not specified, sort and order default to searcher configs.
         if not sort_by:
             training = checkpoints[0].training
             assert training
             config = training.experiment_config
-            sb = config.get("searcher", {}).get("metric")
-            if not isinstance(sb, str):
+            searcher_metric = config.get("searcher", {}).get("metric")
+            if not isinstance(searcher_metric, str):
                 raise ValueError(
                     "no searcher.metric found in experiment config; please provide a sort_by metric"
                 )
-            sort_by = sb
+            sort_by = searcher_metric
             smaller_is_better = config.get("searcher", {}).get("smaller_is_better", True)
+            order_by = CheckpointOrderBy.ASC if smaller_is_better else CheckpointOrderBy.DESC
 
-        def has_metric(c: checkpoint.Checkpoint) -> bool:
-            if c.training is None:
-                return False
-            return sort_by in c.training.validation_metrics.get("avgMetrics", {})
-
-        checkpoints_with_metric = [c for c in checkpoints if has_metric(c)]
-
-        if not checkpoints_with_metric:
-            raise AssertionError(f"No checkpoint for trial {self.id} has metric {sort_by}")
-
-        best_checkpoint_func = min if smaller_is_better else max
+        assert sort_by is not None and order_by is not None, "sort_by and order_by not defined."
 
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training
             assert training
             return training.validation_metrics["avgMetrics"][sort_by]
 
-        return best_checkpoint_func(checkpoints_with_metric, key=key)
+        checkpoints.sort(reverse=order_by == CheckpointOrderBy.DESC, key=key)
+
+        return checkpoints
 
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
