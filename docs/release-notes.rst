@@ -7,6 +7,94 @@
 ###############
 
 **************
+ Version 0.20
+**************
+
+Version 0.20.1
+==============
+
+**Release Date:** March 15, 2023
+
+**Breaking Changes**
+
+-  Database: Several unused columns have been dropped from the ``raw_steps``, ``raw_validations``,
+   and ``raw_checkpoints`` database tables. The database migration will involve a sequential scan
+   for these tables, and it may take a significant amount of time, depending on the database size
+   and performance.
+
+**New Features**
+
+-  Allow tasks and experiments to expose arbitrary ports that can be tunneled to the using the CLI.
+   See :ref:`proxy-ports` for more details or an example at ``examples/features/ports``.
+
+-  Container Images: Add maintained images for PyTorch-only environments.
+
+      -  Current environment images contain both PyTorch and TensorFlow which results in large image
+         sizes. The new images are appropriate for users who do not require TensorFlow but may still
+         require TensorBoard.
+
+**Removed Features**
+
+-  API: Remove internal ``ExpCompareMetricNames`` and ``ExpCompareTrialsSample`` endpoints, which
+   have been unused and deprecated since 0.19.5.
+
+**Known Issue**
+
+-  For multi-trial experiments, training metrics do not start appearing unless there has been at
+   least one validation.
+
+Version 0.20.0
+==============
+
+**Release Date:** February 28, 2023
+
+**Breaking Changes**
+
+-  Cluster: The ``resources.agent_label`` task option and ``label`` agent config option are no
+   longer supported and will be ignored. If you are not explicitly using these options, or only use
+   a single empty or non-empty label value per resource pool, no changes are necessary. Otherwise,
+   cluster admins should create a resource pool for each existing ``resource_pool``/``agent_label``
+   combination and reconfigure agents to use these new pools. Cluster users should update their
+   tasks to use the new resource pool names.
+
+**Bug Fixes**
+
+-  Model Registry: Fix an issue where a model with versions from multiple workspaces could have its
+   versions modified by a user with edit access to only a single one of those workspaces.
+-  WebUI: Patch an issue where logging out would not properly redirect to the login page.
+-  WebUI: Fix a bug where the cluster's job queue page could crash in certain cases.
+
+**Improvements**
+
+-  Agents: The master configuration ``agent_reattach_enabled`` is always enabled and agents will now
+   always reattach containers on restart.
+
+-  Kubernetes: The cluster information page now takes resource quotas into account if there are any
+   on relevant namespaces.
+
+-  RBAC: Model registry models and commands that are inaccessible to the user will appear as
+   uneditable. Previously, users could attempt the action and would encounter a permission denied
+   error.
+
+-  CLI: When listing TensorBoards, show ``workspaceName`` instead of ``workspaceId`` for better
+   readability and prevent N/A values from appearing.
+
+**New Features**
+
+-  RBAC: Following on the initial RBAC support added in 0.19.7, the enterprise edition of Determined
+   (`HPE Machine Learning Development Environment
+   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+   has added support for role-based access control (RBAC) over new entities:
+
+   -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces. Access to these
+      tasks can now be restricted by role.
+   -  Model Registry: Models are now associated with workspaces. Models can be moved between
+      workspaces and access to them can be restricted by role.
+
+   These changes allow for more granular control over who can access what resources. See :ref:`rbac`
+   for more information.
+
+**************
  Version 0.19
 **************
 
