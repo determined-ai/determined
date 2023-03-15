@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-connect to Determined's db and repliacte various metrics for perf testing purposes.
+connect to Determined's db and replicate various metrics for performance testing purposes.
 """
 
 import psycopg  # pip install "psycopg[binary]"
@@ -205,16 +205,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--suffix",
         type=str,
-        default="WHERE state = 'COMPLETED' LIMIT 2",
-        help="sql suffix to select the trials to replicate",
+        help="sql suffix to select the trials to replicate. eg WHERE state = 'COMPLETED' LIMIT 2",
     )
+    parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
     args = parser.parse_args()
+
+    assert args.suffix is None or args.trial_id is None, "cannot specify both suffix and trial_id"
+
     start = time.time()
 
+    if args.trial_id is not None:
+        copy_trial(args.trial_id)
+        exit(0)
+
     row_counts = copy_trials(
-        suffix=args.suffix,
+        suffix=args.suffix or f"WHERE state = 'COMPLETED' LIMIT 2",
     )
-    # copy_trial(120450)
 
     end = time.time()
     print("rows affected:", row_counts)
