@@ -37,6 +37,8 @@ import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
+import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
+import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -44,8 +46,6 @@ import settingsConfig, {
   WorkspaceColumnName,
   WorkspaceListSettings,
 } from './WorkspaceList.settings';
-import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
-import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);

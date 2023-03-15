@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { Metric } from 'types';

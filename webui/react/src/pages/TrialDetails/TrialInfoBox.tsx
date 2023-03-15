@@ -107,7 +107,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 export default TrialInfoBox;
 
 export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) => {
-  const { searcher } = experiment?.configRaw;
+  const searcher = experiment.config.searcher;
   const checkpointsSize = useMemo(() => {
     const totalBytes = experiment?.checkpointSize;
     if (!totalBytes) return;

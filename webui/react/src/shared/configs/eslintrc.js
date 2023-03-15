@@ -135,8 +135,10 @@ module.exports = {
         closingSlash: 'never',
       },
     ],
+    'react/jsx-uses-react': 'off',
     'react/jsx-wrap-multilines': ['error', { assignment: false, declaration: false }],
     'react/prop-types': 'off',
+    'react/react-in-jsx-scope': 'off',
     'react/self-closing-comp': [
       'error',
       {

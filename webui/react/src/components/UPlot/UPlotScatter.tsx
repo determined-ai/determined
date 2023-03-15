@@ -8,7 +8,6 @@ import { Range } from 'shared/types';
 import { Scale } from '../../types';
 
 import { FacetedData, UPlotData } from './types';
-import css from './UPlotScatter.module.scss';
 import {
   FILL_INDEX,
   getColorFn,
@@ -20,6 +19,7 @@ import {
   STROKE_INDEX,
 } from './UPlotScatter/UPlotScatter.utils';
 import useScatterPointTooltipPlugin from './UPlotScatter/useScatterPointTooltipPlugin';
+import css from './UPlotScatter.module.scss';
 
 interface Props {
   colorScaleDistribution?: Scale;
