@@ -417,13 +417,9 @@ func protoStateDBCaseString(
 	return query + fmt.Sprintf("END AS %s", serializedName)
 }
 
-func (a *apiServer) GetExperiments(
-	ctx context.Context, req *apiv1.GetExperimentsRequest,
-) (*apiv1.GetExperimentsResponse, error) {
-	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
-	query := db.Bun().NewSelect().
-		Model(&resp.Experiments).
-		ModelTableExpr("experiments as e").
+
+func getExperimentColumns(q *bun.SelectQuery) (*bun.SelectQuery) {
+	return q.
 		Column("e.id").
 		ColumnExpr("e.config->>'description' AS description").
 		ColumnExpr("e.config->>'labels' AS labels").
@@ -459,6 +455,17 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
+}
+
+func (a *apiServer) GetExperiments(
+	ctx context.Context, req *apiv1.GetExperimentsRequest,
+) (*apiv1.GetExperimentsResponse, error) {
+	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
+	query := db.Bun().NewSelect().
+		Model(&resp.Experiments).
+		ModelTableExpr("experiments as e")
+
+	query = getExperimentColumns(query)
 
 	if req.ShowTrialData {
 		query.ColumnExpr(`
@@ -1915,4 +1922,23 @@ func (a *apiServer) GetModelDefFile(
 		return nil, err
 	}
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
+}
+
+func (a *apiServer) SearchExperiments(ctx context.Context, req *apiv1.SearchExperimentsRequest) (*apiv1.SearchExperimentsResponse, error) {
+	resp := &apiv1.SearchExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
+	query := db.Bun().NewSelect().
+		Model(&resp.Experiments).
+		ModelTableExpr("experiments as e")
+
+	query = getExperimentColumns(query)
+
+	var err error
+	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
+	if err != nil {
+		return nil, err
+	}
+	if err = a.enrichExperimentState(resp.Experiments...); err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

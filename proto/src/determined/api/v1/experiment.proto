@@ -675,3 +675,24 @@ message PostSearcherOperationsRequest {
 
 // Response to PostSearcherOperationsResponse.
 message PostSearcherOperationsResponse {}
+
+// Request for searching experiments
+message SearchExperimentsRequest {
+  // ID of the project to look at
+  int32 project_id = 1;
+  // How many experiments to skip before including in the results
+  int32 offset = 2;
+  // How many results to show
+  int32 limit = 3;
+}
+
+// Response for searching experiments
+message SearchExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiments", "pagination" ] }
+  };
+  // The list of returned experiments.
+  repeated determined.experiment.v1.Experiment experiments = 1;
+  // Pagination information of the full dataset
+  Pagination pagination = 2;
+}

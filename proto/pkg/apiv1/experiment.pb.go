@@ -3649,6 +3649,131 @@ func (*PostSearcherOperationsResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58}
 }
 
+// Request for searching experiments
+type SearchExperimentsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// ID of the project to look at
+	ProjectId int32 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	// How many experiments to skip before including in the results
+	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	// How many results to show
+	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *SearchExperimentsRequest) Reset() {
+	*x = SearchExperimentsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SearchExperimentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchExperimentsRequest) ProtoMessage() {}
+
+func (x *SearchExperimentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchExperimentsRequest.ProtoReflect.Descriptor instead.
+func (*SearchExperimentsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *SearchExperimentsRequest) GetProjectId() int32 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *SearchExperimentsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *SearchExperimentsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// Response for searching experiments
+type SearchExperimentsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of returned experiments.
+	Experiments []*experimentv1.Experiment `protobuf:"bytes,1,rep,name=experiments,proto3" json:"experiments,omitempty"`
+	// Pagination information of the full dataset
+	Pagination *Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *SearchExperimentsResponse) Reset() {
+	*x = SearchExperimentsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SearchExperimentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchExperimentsResponse) ProtoMessage() {}
+
+func (x *SearchExperimentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchExperimentsResponse.ProtoReflect.Descriptor instead.
+func (*SearchExperimentsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *SearchExperimentsResponse) GetExperiments() []*experimentv1.Experiment {
+	if x != nil {
+		return x.Experiments
+	}
+	return nil
+}
+
+func (x *SearchExperimentsResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
 // Metric value and metadata for a trial that has progress this far.
 type TrialsSnapshotResponse_Trial struct {
 	state         protoimpl.MessageState
@@ -3668,7 +3793,7 @@ type TrialsSnapshotResponse_Trial struct {
 func (x *TrialsSnapshotResponse_Trial) Reset() {
 	*x = TrialsSnapshotResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3681,7 +3806,7 @@ func (x *TrialsSnapshotResponse_Trial) String() string {
 func (*TrialsSnapshotResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSnapshotResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3743,7 +3868,7 @@ type TrialsSampleResponse_Trial struct {
 func (x *TrialsSampleResponse_Trial) Reset() {
 	*x = TrialsSampleResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3756,7 +3881,7 @@ func (x *TrialsSampleResponse_Trial) String() string {
 func (*TrialsSampleResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSampleResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3816,7 +3941,7 @@ type GetHPImportanceResponse_MetricHPImportance struct {
 func (x *GetHPImportanceResponse_MetricHPImportance) Reset() {
 	*x = GetHPImportanceResponse_MetricHPImportance{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3829,7 +3954,7 @@ func (x *GetHPImportanceResponse_MetricHPImportance) String() string {
 func (*GetHPImportanceResponse_MetricHPImportance) ProtoMessage() {}
 
 func (x *GetHPImportanceResponse_MetricHPImportance) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4470,7 +4595,26 @@ var file_determined_api_v1_experiment_proto_rawDesc = []byte{
 	0x76, 0x65, 0x6e, 0x74, 0x52, 0x10, 0x74, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x65, 0x64, 0x42,
 	0x79, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x22, 0x20, 0x0a, 0x1e, 0x50, 0x6f, 0x73, 0x74, 0x53, 0x65,
 	0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2a, 0x5f, 0x0a, 0x0a, 0x4d, 0x65, 0x74, 0x72,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x67, 0x0a, 0x18, 0x53, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63,
+	0x74, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c,
+	0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x22, 0xc4, 0x01, 0x0a, 0x19, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65,
+	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x46, 0x0a, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e,
+	0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0b, 0x65, 0x78, 0x70, 0x65,
+	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
+	0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69,
+	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0xd2, 0x01, 0x0b,
+	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0xd2, 0x01, 0x0a, 0x70, 0x61,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2a, 0x5f, 0x0a, 0x0a, 0x4d, 0x65, 0x74, 0x72,
 	0x69, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x17, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43,
 	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
 	0x44, 0x10, 0x00, 0x12, 0x18, 0x0a, 0x14, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x5f, 0x54, 0x59,
@@ -4496,7 +4640,7 @@ func file_determined_api_v1_experiment_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_experiment_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 65)
+var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 67)
 var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
 	(MetricType)(0),                                    // 0: determined.api.v1.MetricType
 	(GetExperimentsRequest_SortBy)(0),                  // 1: determined.api.v1.GetExperimentsRequest.SortBy
@@ -4560,81 +4704,85 @@ var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
 	(*GetSearcherEventsResponse)(nil),                  // 59: determined.api.v1.GetSearcherEventsResponse
 	(*PostSearcherOperationsRequest)(nil),              // 60: determined.api.v1.PostSearcherOperationsRequest
 	(*PostSearcherOperationsResponse)(nil),             // 61: determined.api.v1.PostSearcherOperationsResponse
-	(*TrialsSnapshotResponse_Trial)(nil),               // 62: determined.api.v1.TrialsSnapshotResponse.Trial
-	(*TrialsSampleResponse_Trial)(nil),                 // 63: determined.api.v1.TrialsSampleResponse.Trial
-	(*GetHPImportanceResponse_MetricHPImportance)(nil), // 64: determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	nil,                               // 65: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
-	nil,                               // 66: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
-	nil,                               // 67: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
-	(*timestamp.Timestamp)(nil),       // 68: google.protobuf.Timestamp
-	(*experimentv1.Experiment)(nil),   // 69: determined.experiment.v1.Experiment
-	(*jobv1.JobSummary)(nil),          // 70: determined.job.v1.JobSummary
-	(OrderBy)(0),                      // 71: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),        // 72: google.protobuf.BoolValue
-	(experimentv1.State)(0),           // 73: determined.experiment.v1.State
-	(*commonv1.Int32FieldFilter)(nil), // 74: determined.common.v1.Int32FieldFilter
-	(*Pagination)(nil),                // 75: determined.api.v1.Pagination
-	(*_struct.Struct)(nil),            // 76: google.protobuf.Struct
-	(*experimentv1.ExperimentSimulation)(nil),   // 77: determined.experiment.v1.ExperimentSimulation
-	(*experimentv1.PatchExperiment)(nil),        // 78: determined.experiment.v1.PatchExperiment
-	(checkpointv1.State)(0),                     // 79: determined.checkpoint.v1.State
-	(*checkpointv1.Checkpoint)(nil),             // 80: determined.checkpoint.v1.Checkpoint
-	(*experimentv1.ValidationHistoryEntry)(nil), // 81: determined.experiment.v1.ValidationHistoryEntry
-	(*utilv1.File)(nil),                         // 82: determined.util.v1.File
-	(LaunchWarning)(0),                          // 83: determined.api.v1.LaunchWarning
-	(*experimentv1.FileNode)(nil),               // 84: determined.experiment.v1.FileNode
-	(*experimentv1.SearcherEvent)(nil),          // 85: determined.experiment.v1.SearcherEvent
-	(*experimentv1.SearcherOperation)(nil),      // 86: determined.experiment.v1.SearcherOperation
+	(*SearchExperimentsRequest)(nil),                   // 62: determined.api.v1.SearchExperimentsRequest
+	(*SearchExperimentsResponse)(nil),                  // 63: determined.api.v1.SearchExperimentsResponse
+	(*TrialsSnapshotResponse_Trial)(nil),               // 64: determined.api.v1.TrialsSnapshotResponse.Trial
+	(*TrialsSampleResponse_Trial)(nil),                 // 65: determined.api.v1.TrialsSampleResponse.Trial
+	(*GetHPImportanceResponse_MetricHPImportance)(nil), // 66: determined.api.v1.GetHPImportanceResponse.MetricHPImportance
+	nil,                               // 67: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
+	nil,                               // 68: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
+	nil,                               // 69: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
+	(*timestamp.Timestamp)(nil),       // 70: google.protobuf.Timestamp
+	(*experimentv1.Experiment)(nil),   // 71: determined.experiment.v1.Experiment
+	(*jobv1.JobSummary)(nil),          // 72: determined.job.v1.JobSummary
+	(OrderBy)(0),                      // 73: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),        // 74: google.protobuf.BoolValue
+	(experimentv1.State)(0),           // 75: determined.experiment.v1.State
+	(*commonv1.Int32FieldFilter)(nil), // 76: determined.common.v1.Int32FieldFilter
+	(*Pagination)(nil),                // 77: determined.api.v1.Pagination
+	(*_struct.Struct)(nil),            // 78: google.protobuf.Struct
+	(*experimentv1.ExperimentSimulation)(nil),   // 79: determined.experiment.v1.ExperimentSimulation
+	(*experimentv1.PatchExperiment)(nil),        // 80: determined.experiment.v1.PatchExperiment
+	(checkpointv1.State)(0),                     // 81: determined.checkpoint.v1.State
+	(*checkpointv1.Checkpoint)(nil),             // 82: determined.checkpoint.v1.Checkpoint
+	(*experimentv1.ValidationHistoryEntry)(nil), // 83: determined.experiment.v1.ValidationHistoryEntry
+	(*utilv1.File)(nil),                         // 84: determined.util.v1.File
+	(LaunchWarning)(0),                          // 85: determined.api.v1.LaunchWarning
+	(*experimentv1.FileNode)(nil),               // 86: determined.experiment.v1.FileNode
+	(*experimentv1.SearcherEvent)(nil),          // 87: determined.experiment.v1.SearcherEvent
+	(*experimentv1.SearcherOperation)(nil),      // 88: determined.experiment.v1.SearcherOperation
 }
 var file_determined_api_v1_experiment_proto_depIdxs = []int32{
-	68, // 0: determined.api.v1.DataPointTime.time:type_name -> google.protobuf.Timestamp
-	69, // 1: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	70, // 2: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
+	70, // 0: determined.api.v1.DataPointTime.time:type_name -> google.protobuf.Timestamp
+	71, // 1: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	72, // 2: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
 	1,  // 3: determined.api.v1.GetExperimentsRequest.sort_by:type_name -> determined.api.v1.GetExperimentsRequest.SortBy
-	71, // 4: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	72, // 5: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
-	73, // 6: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
-	74, // 7: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
-	69, // 8: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
-	75, // 9: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
-	76, // 10: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
-	77, // 11: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
-	78, // 12: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
-	69, // 13: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	73, // 4: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	74, // 5: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
+	75, // 6: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
+	76, // 7: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
+	71, // 8: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
+	77, // 9: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	78, // 10: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
+	79, // 11: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
+	80, // 12: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
+	71, // 13: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
 	2,  // 14: determined.api.v1.GetExperimentCheckpointsRequest.sort_by:type_name -> determined.api.v1.GetExperimentCheckpointsRequest.SortBy
-	71, // 15: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	79, // 16: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
-	80, // 17: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
-	75, // 18: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
-	81, // 19: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
-	82, // 20: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
-	68, // 21: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
-	69, // 22: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	76, // 23: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
-	83, // 24: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	73, // 15: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	81, // 16: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
+	82, // 17: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
+	77, // 18: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
+	83, // 19: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
+	84, // 20: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
+	70, // 21: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
+	71, // 22: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	78, // 23: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
+	85, // 24: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
 	0,  // 25: determined.api.v1.MetricBatchesRequest.metric_type:type_name -> determined.api.v1.MetricType
 	0,  // 26: determined.api.v1.TrialsSnapshotRequest.metric_type:type_name -> determined.api.v1.MetricType
-	62, // 27: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
+	64, // 27: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
 	0,  // 28: determined.api.v1.TrialsSampleRequest.metric_type:type_name -> determined.api.v1.MetricType
-	63, // 29: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
+	65, // 29: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
 	0,  // 30: determined.api.v1.ComputeHPImportanceRequest.metric_type:type_name -> determined.api.v1.MetricType
-	65, // 31: determined.api.v1.GetHPImportanceResponse.training_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
-	66, // 32: determined.api.v1.GetHPImportanceResponse.validation_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
-	84, // 33: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
-	85, // 34: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
-	86, // 35: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
-	85, // 36: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
-	76, // 37: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
-	76, // 38: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
-	3,  // 39: determined.api.v1.TrialsSampleResponse.Trial.data:type_name -> determined.api.v1.DataPoint
-	67, // 40: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.hp_importance:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
-	64, // 41: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	64, // 42: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	43, // [43:43] is the sub-list for method output_type
-	43, // [43:43] is the sub-list for method input_type
-	43, // [43:43] is the sub-list for extension type_name
-	43, // [43:43] is the sub-list for extension extendee
-	0,  // [0:43] is the sub-list for field type_name
+	67, // 31: determined.api.v1.GetHPImportanceResponse.training_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
+	68, // 32: determined.api.v1.GetHPImportanceResponse.validation_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
+	86, // 33: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
+	87, // 34: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
+	88, // 35: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
+	87, // 36: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
+	71, // 37: determined.api.v1.SearchExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
+	77, // 38: determined.api.v1.SearchExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	78, // 39: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	78, // 40: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	3,  // 41: determined.api.v1.TrialsSampleResponse.Trial.data:type_name -> determined.api.v1.DataPoint
+	69, // 42: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.hp_importance:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
+	66, // 43: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
+	66, // 44: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
+	45, // [45:45] is the sub-list for method output_type
+	45, // [45:45] is the sub-list for method input_type
+	45, // [45:45] is the sub-list for extension type_name
+	45, // [45:45] is the sub-list for extension extendee
+	0,  // [0:45] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_experiment_proto_init() }
@@ -5354,7 +5502,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSnapshotResponse_Trial); i {
+			switch v := v.(*SearchExperimentsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5366,7 +5514,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TrialsSampleResponse_Trial); i {
+			switch v := v.(*SearchExperimentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5378,6 +5526,30 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TrialsSnapshotResponse_Trial); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TrialsSampleResponse_Trial); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_experiment_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetHPImportanceResponse_MetricHPImportance); i {
 			case 0:
 				return &v.state
@@ -5397,7 +5569,7 @@ func file_determined_api_v1_experiment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_experiment_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   65,
+			NumMessages:   67,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
