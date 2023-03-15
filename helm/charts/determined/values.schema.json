@@ -31,25 +31,7 @@
         "description": "Experiments will launch with these resource assignments by default. GPU type, CPU and Memory request can be overridden in the experiment configuration.",
         "form": true,
         "properties": {
-          "cpu": {
-            "type": "string",
-            "form":"true",
-            "title": "vCPU Request",
-            "render":"slider",
-            "sliderMin": 1,
-            "sliderMax": 128,
-            "sliderUnit": ""
-          },
-          "memory": {
-              "type": "string",
-              "form":"true",
-              "title": "Memory Request",
-              "render":"slider",
-              "sliderMin": 4,
-              "sliderMax": 1000,
-              "sliderUnit": "Gi"
-          },
-          "gpuType": {
+          "resourcePool": {
             "type": "string",
             "enum": [
               "RTX_A4000",
@@ -57,15 +39,14 @@
               "RTX_A6000",
               "A100_NVLINK",
               "A100_NVLINK_80GB",
-              "A100_PCIE_40GB",
-              "A100_PCIE_80GB",
+              "H100_NVLINK_80GB",
               "A40",
-              "Tesla_V100_NVLINK",
               "Quadro_RTX_5000",
               "Quadro_RTX_4000"
             ],
+            
             "form": true,
-            "title": "GPU Type"
+            "title": "GPU Resource Pool"
           }
         }
       },

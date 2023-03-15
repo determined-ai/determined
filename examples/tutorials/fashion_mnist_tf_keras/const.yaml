@@ -1,4 +1,6 @@
 name: fashion_mnist_tf_keras_const
+resources:
+  resource_pool: A40
 hyperparameters:
   global_batch_size: 32
   dense1: 128
