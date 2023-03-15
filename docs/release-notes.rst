@@ -17,27 +17,26 @@ Version 0.20.1
 
 **Breaking Changes**
 
--  Database: Several unused columns have been dropped from ``raw_steps``, ``raw_validations``,
-   ``raw_checkpoints`` database tables. The database migration will involve a sequential scan for
-   these tables, and it may take significant amount of time, depending on the database size and
-   performance.
+-  Database: Several unused columns have been dropped from the ``raw_steps``, ``raw_validations``,
+   and ``raw_checkpoints`` database tables. The database migration will involve a sequential scan
+   for these tables, and it may take a significant amount of time, depending on the database size
+   and performance.
 
 **New Features**
 
--  Added an ability for tasks or experiments to expose arbitrary ports that can be tunneled to the
-   using the CLI. See :ref:`proxy-ports` for more details or an example at
-   ``examples/features/ports``.
+-  Allow tasks and experiments to expose arbitrary ports that can be tunneled to the using the CLI.
+   See :ref:`proxy-ports` for more details or an example at ``examples/features/ports``.
 
 -  Container Images: Add maintained images for PyTorch-only environments.
 
       -  Current environment images contain both PyTorch and TensorFlow which results in large image
-         sizes. Adding a class of images for users who do not require TensorFlow but may still
+         sizes. The new images are appropriate for users who do not require TensorFlow but may still
          require TensorBoard.
 
 **Removed Features**
 
--  API: Remove internal ``ExpCompareMetricNames``, ``ExpCompareTrialsSample`` endpoints, which have
-   been unused and deprecated since 0.19.5.
+-  API: Remove internal ``ExpCompareMetricNames`` and ``ExpCompareTrialsSample`` endpoints, which
+   have been unused and deprecated since 0.19.5.
 
 **Known Issue**
 
