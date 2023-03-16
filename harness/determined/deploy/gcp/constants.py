@@ -13,7 +13,6 @@ class defaults:
     OPERATION_TIMEOUT_PERIOD = "5m"
     MIN_DYNAMIC_AGENTS = 0
     MAX_DYNAMIC_AGENTS = 5
-    STATIC_AGENTS = 0
     MIN_CPU_PLATFORM_MASTER = "Intel Skylake"
     MIN_CPU_PLATFORM_AGENT = "Intel Broadwell"
     NETWORK = "det-default"
