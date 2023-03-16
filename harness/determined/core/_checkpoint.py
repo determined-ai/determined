@@ -261,7 +261,8 @@ class CheckpointContext:
         selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
         logger.debug(
-            f"Uploading content from checkpoint directory {ckpt_dir} to storage (metadata={metadata})"
+            f"Uploading content from checkpoint directory {ckpt_dir} to storage "
+            f"(metadata={metadata})"
         )
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
@@ -287,7 +288,8 @@ class CheckpointContext:
         selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
         logger.debug(
-            f"Uploading sharded content from checkpoint directory {ckpt_dir} to storage (id: {storage_id}, metadata={metadata})"
+            f"Uploading sharded content from checkpoint directory {ckpt_dir} to storage "
+            f"(id: {storage_id}, metadata={metadata})"
         )
         if selector is not None and ckpt_dir is None:
             raise RuntimeError("ckpt_dir has to be provided if selector is not None")
