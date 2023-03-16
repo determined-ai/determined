@@ -157,7 +157,13 @@ def do_login(
     cert: Optional[certs.Cert] = None,
 ) -> str:
     password = api.salt_and_hash(password)
-    unauth_session = api.Session(user=username, master=master_address, auth=None, cert=cert)
+    unauth_session = api.Session(
+        user=username,
+        master=master_address,
+        auth=None,
+        cert=cert,
+        max_retries=util.get_max_retries_config(),
+    )
     login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
     r = bindings.post_Login(session=unauth_session, body=login)
     token = r.token
