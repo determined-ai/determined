@@ -181,6 +181,7 @@ USERPORT_mandalpa=8087
 USERPORT_alyssa=8088
 USERPORT_jerryharrow=8090
 USERPORT_canmingcobble=8092
+USERPORT_wilsone=8888
 
 USERPORT=$(lookup "USERPORT_$USERNAME")
 if [[ -z $USERPORT ]]; then
@@ -209,6 +210,7 @@ DEV_LAUNCHER_PORT_mandalpa=18087
 DEV_LAUNCHER_PORT_alyssa=18088
 DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
+DEV_LAUNCHER_PORT_wilsone=18888
 DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USERNAME")
 
 # Configuration for atlas

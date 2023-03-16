@@ -81,6 +81,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	containerRunType string,
 	isPbsLauncher bool,
 	labelMode *string,
+	disabledNodes []string,
 ) (*launcher.Manifest, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
@@ -212,6 +213,9 @@ func (t *TaskSpec) ToDispatcherManifest(
 		slotType, gresSupported, isPbsLauncher)
 
 	var slurmArgs []string
+	if !isPbsLauncher && len(disabledNodes) > 0 {
+		slurmArgs = append(slurmArgs, "--exclude="+strings.Join(disabledNodes, ","))
+	}
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 

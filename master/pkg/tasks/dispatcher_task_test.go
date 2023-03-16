@@ -684,7 +684,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
 				"masterHost", 8888, "certName", 16, tt.slotType,
 				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType,
-				tt.isPbsScheduler, nil)
+				tt.isPbsScheduler, nil, nil)
 
 			if tt.wantErr {
 				assert.ErrorContains(t, err, tt.errorContains)
