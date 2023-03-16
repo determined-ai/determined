@@ -1,21 +1,28 @@
 .base {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 9fr 2fr 2fr;
   height: 100%;
-  justify-content: space-between;
 
+  .headerContainer {
+    grid-column: 1 / 3;
+    grid-row: 1 / 2;
+  }
   .name {
-    font-size: 16px;
+    font-size: 13px;
     margin-bottom: 0;
     width: fit-content;
   }
-  .workspace {
-    display: flex;
+  .workspaceContainer {
+    grid-column: 1 / 3;
+    grid-row: 2 / 3;
   }
-  .footer {
+  .footerContainer {
     display: flex;
     font-size: 12px;
+    grid-column: 1 / 3;
+    grid-row: 3 / 4;
     justify-content: space-between;
 
     .experiments {
