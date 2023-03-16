@@ -105,7 +105,6 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
 def load_state(checkpoint_directory, info):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
 
-
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
 
