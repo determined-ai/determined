@@ -101,6 +101,10 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
+  const searcherMetric = useRef<Metric>({
+    name: experiment.config.searcher.metric,
+    type: MetricType.Validation,
+  });
 
   const { viz: type } = useParams<{ viz: ExperimentVisualizationType }>();
   const fullHParams = useRef<string[]>(
@@ -109,6 +113,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
     }),
   );
+
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
     batchMargin: DEFAULT_BATCH_MARGIN,
@@ -127,6 +132,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
   const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
+  const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
@@ -140,7 +146,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
-      hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
+      hasData: !!metrics?.length,
       hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
@@ -171,6 +177,24 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     setActiveMetric(metric);
   }, []);
 
+  useEffect(() => {
+    if (!hasSearcherMetric) {
+      const activeMetricFound = metrics.find(
+        (metric) =>
+          metric.type === searcherMetric.current.type &&
+          metric.name === searcherMetric.current.name,
+      );
+      if (activeMetricFound) {
+        setHasSearcherMetric(true);
+        setActiveMetric(searcherMetric.current);
+        handleFiltersChange({
+          ...filters,
+          metric: searcherMetric.current,
+        });
+      }
+    }
+  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics]);
+
   const handleTabChange = useCallback(
     (type: string) => {
       setTypeKey(type as ExperimentVisualizationType);
@@ -183,7 +207,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return (
       <ExperimentVisualizationFilters
         batches={batches || []}
-        filters={{ ...filters, metric: activeMetric }}
+        filters={filters}
         fullHParams={fullHParams.current}
         hpImportance={hpImportance}
         metrics={metrics}
@@ -202,19 +226,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     hpImportance,
     metrics,
     typeKey,
-    activeMetric,
   ]);
-
-  // Validate active metric against metrics.
-  useEffect(() => {
-    setActiveMetric((prev) => {
-      const activeMetricFound = metrics.reduce((acc, metric) => {
-        return acc || (metric.type === prev?.type && metric.name === prev?.name);
-      }, false);
-
-      return activeMetricFound ? prev : metrics.length ? metrics[0] : null;
-    });
-  }, [metrics]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     /**
