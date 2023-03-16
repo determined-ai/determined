@@ -48,6 +48,7 @@ import {
   generateTestWorkspaceData,
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
+import { NotLoaded } from 'utils/loadable';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -484,6 +485,13 @@ const ChartsSection: React.FC = () => {
         <p>Highlight a specific metric in the chart.</p>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </AntDCard>
+      <AntDCard title="States without data">
+        <strong>Loading</strong>
+        <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <hr />
+        <strong>Empty</strong>
+        <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
+      </AntDCard>
       <AntDCard title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
@@ -523,6 +531,20 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ],
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <hr />
+        <strong>Loading</strong>
+        {createChartGrid({
+          chartsProps: NotLoaded,
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <hr />
+        <strong>Empty</strong>
+        {createChartGrid({
+          chartsProps: [],
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -1243,6 +1265,13 @@ const CardsSection: React.FC = () => {
                 name: 'Project with a very long name that spans many lines and eventually gets cut off',
               }}
             />
+            <ProjectCard
+              project={{
+                ...project,
+                workspaceId: 2,
+              }}
+              showWorkspace
+            />
           </Card.Group>
           <li>
             Workspace card (<code>{'<WorkspaceCard>'}</code>)
@@ -1485,12 +1514,12 @@ const TagsSection: React.FC = () => {
   const moreTags: string[] = ['working', 'TODO', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
   return (
     <ComponentSection id="Tags" title="Tags">
-      <Card>
+      <AntDCard>
         <p>
           The editable tags list (<code>{'<Tags>'}</code>) supports &quot;add&quot;,
           &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
         </p>
-      </Card>
+      </AntDCard>
       <AntDCard title="Best practices">
         <strong>Content</strong>
         <ul>
