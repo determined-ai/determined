@@ -77,26 +77,24 @@ export const ClusterOverallStats: React.FC = () => {
             NotLoaded: (): ReactNode => <Spinner />,
           })}
         </OverviewStats>
-        <Spinner
-          conditionalRender
-          spinning={Loadable.isLoading(maxTotalSlots) || Loadable.isLoading(clusterOverview)}>
-          {Loadable.isLoaded(maxTotalSlots) && Loadable.isLoaded(clusterOverview) // This is ok as the Spinner has conditionalRender active
-            ? [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
-                maxTotalSlots.data[resType] > 0 ? (
-                  <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
-                    {clusterOverview.data[resType].total - clusterOverview.data[resType].available}
-                    <small> / {maxTotalSlots.data[resType]}</small>
-                  </OverviewStats>
-                ) : null,
-              )
-            : undefined}
-        </Spinner>
-        {auxContainers.total ? (
+        {Loadable.match(Loadable.all([maxTotalSlots, clusterOverview]), {
+          Loaded: ([maxTotalSlots, clusterOverview]) =>
+            [ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
+              maxTotalSlots[resType] > 0 ? (
+                <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
+                  {clusterOverview[resType].total - clusterOverview[resType].available}
+                  <small> / {maxTotalSlots[resType]}</small>
+                </OverviewStats>
+              ) : null,
+            ),
+          NotLoaded: () => null,
+        })}
+        {auxContainers.total > 0 && (
           <OverviewStats title="Aux Containers Running">
             {auxContainers.running} <small> / {auxContainers.total}</small>
           </OverviewStats>
-        ) : null}
-        {usePermissions().canAdministrateUsers || !rbacEnabled ? (
+        )}
+        {(usePermissions().canAdministrateUsers || !rbacEnabled) && (
           <>
             <OverviewStats title="Active Experiments">
               {Loadable.match(activeExperiments, {
@@ -129,7 +127,7 @@ export const ClusterOverallStats: React.FC = () => {
               })}
             </OverviewStats>
           </>
-        ) : null}
+        )}
       </Card.Group>
     </Section>
   );
