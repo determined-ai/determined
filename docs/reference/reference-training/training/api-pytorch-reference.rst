@@ -1,6 +1,6 @@
-#######################
- PyTorch API Reference
-#######################
+###############################
+ ``det.pytorch`` API Reference
+###############################
 
 +--------------------------------------------+
 | User Guide                                 |
@@ -78,15 +78,6 @@
 .. autoclass:: determined.pytorch.MetricReducer
    :members: reset, per_slot_reduce, cross_slot_reduce
    :member-order: bysource
-
-.. _pytorch-samplers:
-
-*********************************
- ``determined.pytorch.samplers``
-*********************************
-
-.. automodule:: determined.pytorch.samplers
-   :members:
 
 .. _pytorch-callbacks:
 
