@@ -112,6 +112,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			sampleTime: time.Now(),
 		},
 		poolProviderMap: poolProviderMap,
+		dbState:         *newDispatcherState(),
 	}
 
 	want0 := map[string]*agentv1.Slot{
@@ -195,6 +196,8 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 	wantSlots := []map[string]*agentv1.Slot{want0, want1, want2}
 
+	m.dbState.DisabledAgents = []string{"Node 2"}
+
 	ctx := &actor.Context{}
 	resp := m.generateGetAgentsResponse(ctx)
 	assert.Equal(t, len(resp.Agents), len(nodes))
@@ -204,7 +207,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		assert.DeepEqual(t, agent.ResourcePools, expectedResourcePools[i])
 		assert.DeepEqual(t, agent.Addresses, nodes[i].Addresses)
 		assert.Equal(t, agent.Draining, nodes[i].Draining)
-
+		assert.Equal(t, agent.Enabled, agent.Id != "Node 2")
 		assert.Equal(t, len(agent.Slots), len(wantSlots[i]))
 		for key, value := range agent.Slots {
 			wantValue := wantSlots[i][key]

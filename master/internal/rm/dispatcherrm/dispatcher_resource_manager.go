@@ -14,7 +14,7 @@ import (
 	semvar "github.com/Masterminds/semver/v3"
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	echoV4 "github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
@@ -239,7 +239,7 @@ func (d *DispatcherResourceManager) IsReattachEnabledForRP(
 func New(
 	system *actor.System,
 	db *db.PgDB,
-	echo *echo.Echo,
+	echo *echoV4.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
@@ -261,10 +261,12 @@ func New(
 			config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig, opts.LoggingOptions, db,
 		)
 	}
-	ref, _ := system.ActorOf(
-		sproto.DispatcherRMAddr,
-		rm,
-	)
+
+	ref := system.MustActorOf(sproto.DispatcherRMAddr, rm)
+	dispatcherAgents := newDispatcherAgents(ref)
+	system.MustActorOf(sproto.AgentsAddr, dispatcherAgents)
+	system.MustActorOf(sproto.AgentsAddr.Child("*"), dispatcherAgents)
+
 	system.Ask(ref, actor.Ping{}).Get()
 	return &DispatcherResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
@@ -291,6 +293,7 @@ type dispatcherResourceManager struct {
 	dispatchIDToAllocationIDMutex            sync.RWMutex
 	dispatchIDToHPCJobIDMutex                sync.RWMutex
 	allocationsCanceledBeforeHpcJobIDCreated sync.Map
+	dbState                                  dispatcherState
 }
 
 func newDispatcherResourceManager(
@@ -328,7 +331,12 @@ func newDispatcherResourceManager(
 	authToken := loadAuthToken(rmConfig)
 
 	watcher := newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile)
-	result := dispatcherResourceManager{
+	dbState, err := getDispatcherState(context.TODO())
+	if err != nil {
+		panic(errors.Wrap(err, "failed to create state for dispatcher resource manager"))
+	}
+
+	result := &dispatcherResourceManager{
 		db:       db,
 		rmConfig: rmConfig,
 
@@ -346,9 +354,12 @@ func newDispatcherResourceManager(
 		poolConfig:           poolConfig,
 		poolProviderMap:      makeProvidedPoolsMap(poolConfig),
 		dispatchIDToHPCJobID: make(map[string]string),
+
+		dbState: *dbState,
 	}
-	watcher.rm = &result
-	return &result
+	watcher.rm = result
+
+	return result
 }
 
 // makeProvidedPoolsMap returns a map where the key is the providing partition
@@ -375,6 +386,7 @@ func (m *dispatcherResourceManager) authContext(ctx *actor.Context) context.Cont
 func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.Log().Info("Starting dispatcher resource manager")
 		go m.debugKillAllInactiveDispatches(ctx, ctx.Self())
 		go m.jobWatcher.watch(ctx)
 
@@ -427,13 +439,9 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := m.summarizeResourcePool(ctx)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-		ctx.Respond(&apiv1.GetResourcePoolsResponse{
+		ctx.RespondCheckError(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: resourcePoolSummary,
-		})
+		}, err)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
 		_, _ = m.fetchHpcResourceDetailsCached(ctx)
@@ -478,6 +486,14 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 
 	case taskContainerDefaults:
 		ctx.Respond(m.getTaskContainerDefaults(msg))
+
+	case *apiv1.DisableAgentRequest:
+		response, err := m.disableAgent(msg.AgentId)
+		ctx.RespondCheckError(response, err)
+
+	case *apiv1.EnableAgentRequest:
+		response, err := m.enableAgent(msg.AgentId)
+		ctx.RespondCheckError(response, err)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -562,42 +578,48 @@ func partitionExists(targetPartition string, knowPartitions []hpcPartitionDetail
 func (m *dispatcherResourceManager) generateGetAgentsResponse(
 	ctx *actor.Context,
 ) *apiv1.GetAgentsResponse {
-	response := apiv1.GetAgentsResponse{
+	response := &apiv1.GetAgentsResponse{
 		Agents: []*agentv1.Agent{},
 	}
 	_, _ = m.fetchHpcResourceDetailsCached(ctx)
 	m.resourceDetails.mu.RLock()
 	defer m.resourceDetails.mu.RUnlock()
 	for _, node := range m.resourceDetails.lastSample.Nodes {
-		agent := agentv1.Agent{
-			Id:             node.Name,
-			RegisteredTime: nil,
-			Slots:          map[string]*agentv1.Slot{},
-			ResourcePools:  node.Partitions,
-			Addresses:      node.Addresses,
-			Enabled:        true,
-			Draining:       node.Draining,
+		agent := m.hpcNodeToAgent(node)
+		response.Agents = append(response.Agents, agent)
+	}
+	return response
+}
+
+// hpcNodeToAgent converts a hpcNodeDetails to an agentv1.Agent.
+func (m *dispatcherResourceManager) hpcNodeToAgent(node hpcNodeDetails) *agentv1.Agent {
+	agent := &agentv1.Agent{
+		Id:             node.Name,
+		RegisteredTime: nil,
+		Slots:          map[string]*agentv1.Slot{},
+		ResourcePools:  node.Partitions,
+		Addresses:      node.Addresses,
+		Enabled:        m.dbState.isAgentEnabled(node.Name),
+		Draining:       node.Draining,
+	}
+	m.updateAgentWithAnyProvidedResourcePools(agent)
+	if node.GpuCount == 0 {
+		// Adds a slot ID (e.g., 0, 1, 2, ..., N) to the agent for every
+		// CPU being used on the node. This is needed so that the
+		// "Resource Pools" page on the Determined AI User Interface
+		// correctly shows the "N/M CPU Slots Allocated".
+		for i := 0; i < node.CPUCount; i++ {
+			addSlotToAgent(
+				agent, devicev1.Type_TYPE_CPU, node, i, i < node.CPUInUseCount)
 		}
-		m.updateAgentWithAnyProvidedResourcePools(&agent)
-		response.Agents = append(response.Agents, &agent)
-		if node.GpuCount == 0 {
-			// Adds a slot ID (e.g., 0, 1, 2, ..., N) to the agent for every
-			// CPU being used on the node. This is needed so that the
-			// "Resource Pools" page on the Determined AI User Interface
-			// correctly shows the "N/M CPU Slots Allocated".
-			for i := 0; i < node.CPUCount; i++ {
-				addSlotToAgent(
-					&agent, devicev1.Type_TYPE_CPU, node, i, i < node.CPUInUseCount)
-			}
-		} else {
-			for i := 0; i < node.GpuCount; i++ {
-				slotType := computeSlotType(node, m)
-				addSlotToAgent(
-					&agent, slotType, node, i, i < node.GpuInUseCount) // [1:N] CUDA slots
-			}
+	} else {
+		for i := 0; i < node.GpuCount; i++ {
+			slotType := computeSlotType(node, m)
+			addSlotToAgent(
+				agent, slotType, node, i, i < node.GpuInUseCount) // [1:N] CUDA slots
 		}
 	}
-	return &response
+	return agent
 }
 
 func (m *dispatcherResourceManager) updateAgentWithAnyProvidedResourcePools(
@@ -968,7 +990,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
 		m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
-		m.rmConfig.JobProjectSource,
+		m.rmConfig.JobProjectSource, m.dbState.DisabledAgents,
 	)
 	if err != nil {
 		sendResourceStateChangedErrorResponse(ctx, err, msg,
@@ -2067,6 +2089,53 @@ func (m *dispatcherResourceManager) schedulePendingTasks(ctx *actor.Context) {
 			m.assignResources(ctx, req)
 		}
 	}
+}
+
+func (m *dispatcherResourceManager) disableAgent(
+	agentID string,
+) (*apiv1.DisableAgentResponse, error) {
+	if m.wlmType == pbsSchedulerType {
+		return nil, errors.New("disable agent is not supported for PBS")
+	}
+
+	agent := m.findAgent(agentID)
+	if agent == nil {
+		return nil, errors.Errorf("agent %s not found", agentID)
+	}
+
+	if err := m.dbState.disableAgent(agentID); err != nil {
+		return nil, err
+	}
+	agent.Enabled = false
+
+	return &apiv1.DisableAgentResponse{Agent: agent}, nil
+}
+
+func (m *dispatcherResourceManager) enableAgent(
+	agentID string,
+) (*apiv1.EnableAgentResponse, error) {
+	if err := m.dbState.enableAgent(agentID); err != nil {
+		return nil, err
+	}
+
+	agent := m.findAgent(agentID)
+	if agent != nil {
+		agent.Enabled = true
+	}
+
+	return &apiv1.EnableAgentResponse{Agent: agent}, nil
+}
+
+func (m *dispatcherResourceManager) findAgent(agentID string) *agentv1.Agent {
+	m.resourceDetails.mu.RLock()
+	defer m.resourceDetails.mu.RUnlock()
+
+	for _, node := range m.resourceDetails.lastSample.Nodes {
+		if node.Name == agentID {
+			return m.hpcNodeToAgent(node)
+		}
+	}
+	return nil
 }
 
 // When the launcher returns an error from "terminateDispatcherJob()", this
