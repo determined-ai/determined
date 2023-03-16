@@ -28,8 +28,8 @@ class CheckpointSortBy(enum.Enum):
 
     END_TIME = _csb.SORT_BY_END_TIME.value
     STATE = _csb.SORT_BY_STATE.value
-    SORT_BY_UUID = _csb.SORT_BY_UUID.value
-    SORT_BY_BATCH_NUMBER = _csb.SORT_BY_BATCH_NUMBER.value
+    UUID = _csb.SORT_BY_UUID.value
+    BATCH_NUMBER = _csb.SORT_BY_BATCH_NUMBER.value
 
     def _to_bindings(self) -> bindings.v1GetTrialCheckpointsRequestSortBy:
         return _csb(self.value)
@@ -197,7 +197,7 @@ class TrialReference:
 
         order_by = None
         if latest:
-            sort_by = CheckpointSortBy.SORT_BY_BATCH_NUMBER
+            sort_by = CheckpointSortBy.BATCH_NUMBER
             order_by = CheckpointOrderBy.DESC
 
         if sort_by:
@@ -272,7 +272,8 @@ class TrialReference:
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training
             assert training
-            metric = training.validation_metrics.get("avgMetrics", {}).get(sort_by)
+            metric = training.validation_metrics.get("avgMetrics") or {}
+            metric = metric.get(sort_by)
 
             # Return a bool here to sort checkpoints that may have no validation metrics.
             if reverse:
