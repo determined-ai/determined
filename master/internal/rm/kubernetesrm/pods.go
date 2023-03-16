@@ -666,7 +666,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 
 func (p *pods) startPodInformer(ctx *actor.Context) {
 	for namespace := range p.namespaceToPoolName {
-		i, _ := ctx.ActorOf("pod-informer",
+		i, _ := ctx.ActorOf("pod-informer-"+namespace,
 			newInformer(p.podInterfaces[namespace], ctx.Self()),
 		)
 		p.informers = append(p.informers, i)
@@ -679,7 +679,7 @@ func (p *pods) startNodeInformer(ctx *actor.Context) {
 
 func (p *pods) startEventListeners(ctx *actor.Context) {
 	for namespace := range p.namespaceToPoolName {
-		l, _ := ctx.ActorOf("event-listener",
+		l, _ := ctx.ActorOf("event-listener-"+namespace,
 			newEventListener(p.clientSet, ctx.Self(), namespace))
 		p.eventListeners = append(p.eventListeners, l)
 	}
@@ -687,7 +687,7 @@ func (p *pods) startEventListeners(ctx *actor.Context) {
 
 func (p *pods) startPreemptionListeners(ctx *actor.Context) {
 	for namespace := range p.namespaceToPoolName {
-		l, _ := ctx.ActorOf("preemption-listener",
+		l, _ := ctx.ActorOf("preemption-listener-"+namespace,
 			newPreemptionListener(p.clientSet, ctx.Self(), namespace))
 		p.preemptionListeners = append(p.preemptionListeners, l)
 	}
