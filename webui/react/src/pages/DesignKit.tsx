@@ -488,6 +488,7 @@ const ChartsSection: React.FC = () => {
       <AntDCard title="States without data">
         <strong>Loading</strong>
         <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <hr />
         <strong>Empty</strong>
         <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
       </AntDCard>
@@ -533,12 +534,14 @@ const ChartsSection: React.FC = () => {
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
+        <hr />
         <strong>Loading</strong>
         {createChartGrid({
           chartsProps: NotLoaded,
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
+        <hr />
         <strong>Empty</strong>
         {createChartGrid({
           chartsProps: [],
@@ -1261,6 +1264,13 @@ const CardsSection: React.FC = () => {
                 ...project,
                 name: 'Project with a very long name that spans many lines and eventually gets cut off',
               }}
+            />
+            <ProjectCard
+              project={{
+                ...project,
+                workspaceId: 2,
+              }}
+              showWorkspace
             />
           </Card.Group>
           <li>
