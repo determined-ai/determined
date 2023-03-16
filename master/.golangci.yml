@@ -74,6 +74,7 @@ linters-settings:
   forbidigo:
     forbid:
       - 'fmt\.Print.*'
+      - 'metaV1.NamespaceAll' # Will error if someone has namespace restricted permissions.
 
 linters:
   enable-all: true

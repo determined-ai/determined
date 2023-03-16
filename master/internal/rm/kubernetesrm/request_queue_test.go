@@ -33,8 +33,14 @@ func newMockPodActor(requestQueue *actor.Ref) *mockPodActor {
 func (m *mockPodActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		podSpec := k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{Name: m.name}}
-		cmSpec := k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{Name: m.name}}
+		podSpec := k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{
+			Name:      m.name,
+			Namespace: "default",
+		}}
+		cmSpec := k8sV1.ConfigMap{ObjectMeta: metaV1.ObjectMeta{
+			Name:      m.name,
+			Namespace: "default",
+		}}
 
 		ctx.Tell(m.requestQueue, createKubernetesResources{
 			handler:       ctx.Self(),
@@ -47,6 +53,7 @@ func (m *mockPodActor) Receive(ctx *actor.Context) error {
 			handler:       ctx.Self(),
 			podName:       m.name,
 			configMapName: m.name,
+			namespace:     "default",
 		})
 
 	case resourceCreationCancelled:
@@ -86,8 +93,8 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := newRequestQueue(
-		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
-		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
@@ -117,8 +124,8 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := newRequestQueue(
-		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
-		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
@@ -149,8 +156,8 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := newRequestQueue(
-		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
-		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
@@ -189,8 +196,8 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	k8sRequestQueue := newRequestQueue(
-		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
-		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+		map[string]typedV1.PodInterface{"default": podInterface},
+		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),

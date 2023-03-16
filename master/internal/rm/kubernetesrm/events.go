@@ -12,7 +12,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // Messages that are sent to the event listener.
@@ -30,18 +29,18 @@ type (
 type eventListener struct {
 	clientSet   *k8sClient.Clientset
 	podsHandler *actor.Ref
-	namespaces  set.Set[string]
+	namespace   string
 }
 
 func newEventListener(
 	clientSet *k8sClient.Clientset,
 	podsHandler *actor.Ref,
-	namespaces set.Set[string],
+	namespace string,
 ) *eventListener {
 	return &eventListener{
 		clientSet:   clientSet,
 		podsHandler: podsHandler,
-		namespaces:  namespaces,
+		namespace:   namespace,
 	}
 }
 
@@ -64,7 +63,7 @@ func (e *eventListener) Receive(ctx *actor.Context) error {
 }
 
 func (e *eventListener) startEventListener(ctx *actor.Context) {
-	events, err := e.clientSet.CoreV1().Events(metaV1.NamespaceAll).List(
+	events, err := e.clientSet.CoreV1().Events(e.namespace).List(
 		context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
@@ -74,7 +73,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return e.clientSet.CoreV1().Events(metaV1.NamespaceAll).Watch(
+			return e.clientSet.CoreV1().Events(e.namespace).Watch(
 				context.TODO(), metaV1.ListOptions{})
 		},
 	})
@@ -94,10 +93,6 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 		newEvent, ok := event.Object.(*k8sV1.Event)
 		if !ok {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
-			continue
-		}
-
-		if !e.namespaces.Contains(newEvent.Namespace) {
 			continue
 		}
 
