@@ -3,11 +3,13 @@ from typing import Any, Dict
 
 import deepspeed
 import determined as det
-import dsat
 import torch
 import torch.nn as nn
 from attrdict import AttrDict
-from dsat import _utils  # TODO: Remove import after resolving type key hack
+from determined.pytorch.deepspeed import dsat
+from determined.pytorch.deepspeed.dsat import (
+    _utils,
+)  # TODO: Remove import after resolving type key hack
 from torch.utils.data import Dataset
 from torchvision import models
 

@@ -9,11 +9,12 @@ from contextlib import contextmanager
 from random import choice
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import determined as det
 import numpy as np
 import torch
-from dsat import _defaults
 from ruamel import yaml
+
+import determined as det
+from determined.pytorch.deepspeed.dsat import _defaults
 
 
 def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:

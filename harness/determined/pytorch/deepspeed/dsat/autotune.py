@@ -4,7 +4,7 @@ import tempfile
 from typing import Any, Dict
 
 from determined.experimental import client
-from dsat import _defaults, _utils
+from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
 def parse_args():
@@ -39,13 +39,16 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assump
     # e.g. on Grenoble.
     search_runner_config_dict["resources"] = {"slots_per_trial": 0}
-    # TODO: remove this Grenoble specific code.
-    config_dict["resources"] = {
-        "resource_pool": "misc_cpus"
-    }  # will need to get original resources later.
     search_runner_config_dict[
         "entrypoint"
-    ] = f"python3 -m dsat._run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
+    ] = f"python3 -m determined.pytorch.deepspeed.dsat._run_dsat -c {config_path_absolute} -md {model_dir_absolute}"
+    # TODO: remove the environment section; just needed for GG's GCP cluster.
+    search_runner_config_dict["environment"] = {
+        "image": {
+            "cpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
+            "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
+        }
+    }
 
     # TODO: early sanity check the submitted config. E.g. makesure that searcher.metric and
     # hyperparameters.ds_config.autotuning.metric coincide.
@@ -55,9 +58,6 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     # avoid unwanted double directory explosions.
     with tempfile.TemporaryDirectory() as temp_dir:
         includes = [model_dir_absolute, config_path_absolute]
-        # TODO: need to append dsat here for searcher logic to be available on-cluster, but this
-        # will be removed when the logic lives in determined proper.
-        includes.append("dsat")
         client.create_experiment(
             config=search_runner_config_dict, model_dir=temp_dir, includes=includes
         )

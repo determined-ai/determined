@@ -3,14 +3,16 @@ from typing import Any, Dict, Optional
 
 import deepspeed
 import determined as det
-import dsat
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 from attrdict import AttrDict
-from dsat import _utils  # TODO: Remove Hack
+from determined.pytorch.deepspeed import dsat
+from determined.pytorch.deepspeed.dsat import (
+    _utils,
+)  # TODO: Remove import after resolving type key hack
 from torch.utils.data import Dataset
 
 

@@ -8,8 +8,7 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined import searcher
-from dsat import _defaults, _utils
-from tensorflow.python.ops.array_ops import reverse
+from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
 class DSATTrial:
