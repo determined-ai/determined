@@ -12,7 +12,7 @@ searcher:
   metric: throughput
   smaller_is_better: False
 hyperparameters:
-  dim: 1024
+  dim: 512
   layers: 4 # Total params will be layers * 1024 ** 2
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
   ds_config:

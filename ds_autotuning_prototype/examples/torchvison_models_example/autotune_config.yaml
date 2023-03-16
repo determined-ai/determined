@@ -1,10 +1,11 @@
 name: torchvision_models
 workspace: DS_AT_PROTOTYPING
-project: torchvision_models
+project: torchvision_models_example
+description: resnet152 baseline
 max_restarts: 0
 resources:
   slots_per_trial: 2
-  max_slots: 8
+  # max_slots: 8
   shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
@@ -12,7 +13,7 @@ searcher:
   metric: throughput
   smaller_is_better: False
 hyperparameters:
-  model_name: vgg19
+  model_name: resnet152
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
   ds_config:
     train_micro_batch_size_per_gpu: 128
