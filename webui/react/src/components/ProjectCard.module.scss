@@ -1,10 +1,10 @@
 .base {
   display: grid;
-  gap: 4px;
+  gap: 16px;
   grid-template:
-    'header  header' 9fr
-    'workspace workspace' 2fr
-    'footer footer' 2fr / 1fr 1fr;
+    'header  header' auto
+    'workspace workspace' 20px
+    'footer footer' 20px / auto auto;
   height: 100%;
 
   .headerContainer {
