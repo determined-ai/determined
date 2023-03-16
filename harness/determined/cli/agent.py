@@ -12,6 +12,7 @@ from determined.cli import task as cli_task
 from determined.cli.errors import CliError
 from determined.common import api
 from determined.common.api import authentication, bindings
+from determined.common.api.bindings import devicev1Type, v1Slot
 from determined.common.check import check_false
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -67,9 +68,8 @@ def list_agents(args: argparse.Namespace) -> None:
 @authentication.required
 def list_slots(args: argparse.Namespace) -> None:
     task_res = api.get(args.master, "tasks")
-    agent_res = api.get(args.master, "agents")
+    resp = bindings.get_GetAgents(cli.setup_session(args))
 
-    agents = agent_res.json()
     allocations = task_res.json()
 
     c_names = {
@@ -79,44 +79,60 @@ def list_slots(args: argparse.Namespace) -> None:
         if r["container_id"]
     }
 
-    def get_task_name(containers: Dict[str, Any], slot: Dict[str, Any]) -> str:
-        if not slot["container"]:
+    def device_type_string(deviceType: devicev1Type) -> str:
+        if deviceType == devicev1Type.TYPE_CUDA:
+            return "cuda"
+        if deviceType == devicev1Type.TYPE_ROCM:
+            return "rocm"
+        if deviceType == devicev1Type.TYPE_CPU:
+            return "cpu"
+        return "unknown"
+
+    def get_task_name(containers: Dict[str, Any], slot: v1Slot) -> str:
+        if not slot.container:
             return "FREE"
 
-        container_id = slot["container"]["id"]
+        container_id = slot.container.id
 
-        if slot["container"] and container_id in containers:
+        if slot.container and container_id in containers:
             return str(containers[container_id]["name"])
 
-        if slot["container"] and (
+        if slot.container and (
             "determined-master-deployment" in container_id
             or "determined-db-deployment" in container_id
         ):
             return f"Determined System Task: {container_id}"
+
+        if slot.container and ("cluster" in container_id):
+            return ""  # slot:task relationship not tracked on HPC clusters
 
         return f"Non-Determined Task: {container_id}"
 
     slots = [
         OrderedDict(
             [
-                ("agent_id", local_id(agent_id)),
-                ("resource_pool", agent["resource_pool"]),
+                ("agent_id", local_id(agent.id)),
+                (
+                    "resource_pools",
+                    ", ".join(agent.resourcePools) if agent.resourcePools is not None else "",
+                ),
                 ("slot_id", local_id(slot_id)),
-                ("enabled", slot["enabled"]),
-                ("draining", slot.get("draining", False)),
+                ("enabled", agent.slots[slot_id].enabled),
+                ("draining", agent.slots[slot_id].draining),
                 (
                     "allocation_id",
-                    c_names[slot["container"]["id"]]["allocation_id"]
-                    if slot["container"] and slot["container"]["id"] in c_names
-                    else ("OCCUPIED" if slot["container"] else "FREE"),
+                    c_names[agent.slots[slot_id].container.id]["allocation_id"]
+                    if agent.slots[slot_id].container
+                    and agent.slots[slot_id].container.id in c_names
+                    else ("OCCUPIED" if agent.slots[slot_id].container else "FREE"),
                 ),
-                ("task_name", get_task_name(c_names, slot)),
-                ("type", slot["device"]["type"]),
-                ("device", slot["device"]["brand"]),
+                ("task_name", get_task_name(c_names, agent.slots[slot_id])),
+                ("type", device_type_string(agent.slots[slot_id].device.type)),
+                ("device", agent.slots[slot_id].device.brand),
             ]
         )
-        for agent_id, agent in sorted(agents.items())
-        for slot_id, slot in sorted(agent["slots"].items())
+        for agent in sorted(resp.agents or [], key=attrgetter("id"))
+        for slot_id in sorted(agent.slots or [])
     ]
 
     headers = [
