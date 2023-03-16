@@ -19,7 +19,7 @@ def trigger_preemption(signum: int, frame: types.FrameType) -> None:
     info = det.get_cluster_info()
     if info and info.container_rank == 0:
         # Chief container, requests preemption, others ignore
-        logging.debug(f"[rank={info.container_rank}] SIGTERM: Preemption imminent.")
+        logging.info("SIGTERM: Preemption imminent.")
         # Notify the master that we need to be preempted
         api.post(
             info.master_url, f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption"
@@ -43,14 +43,23 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
     if isinstance(entrypoint, str):
         entrypoint = ["sh", "-c", entrypoint]
 
+    # Signals we want to forward from wrapper process to the child
+    sig_names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGUSR1", "SIGUSR2", "SIGWINCH", "SIGBREAK"]
+
     if os.environ.get("DET_RESOURCES_TYPE") == prep_container.RESOURCES_TYPE_SLURM_JOB:
-        # SLURM sends SIGTERM to notify of pending preemption
+        # SLURM sends SIGTERM to notify of pending preemption, so we register a custom
+        # handler to intercept it in the chief rank, and ignore in others.   We invoke
+        # trigger_preemption to cause a checkpoint and clean exit (given enough time).
         signal.signal(signal.SIGTERM, trigger_preemption)
+        # Drop SIGTERM from forwarding so that we handle it in trigger_preemption
+        sig_names.remove("SIGTERM")
 
     logging.info(f"Launching: {entrypoint}")
 
     p = subprocess.Popen(entrypoint)
-    with det.util.forward_signals(p):
+    # Convert from signal names to Signal enums because SIGBREAK is windows-specific
+    forwaded_signals = [getattr(signal, name) for name in sig_names if hasattr(signal, name)]
+    with det.util.forward_signals(p, *forwaded_signals):
         return p.wait()
 
 
