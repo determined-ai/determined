@@ -227,7 +227,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 				k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
 			}
 
-			// TODO(nick) did we just bug this for multiple namespaces to pools...
 			poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 		}
 
