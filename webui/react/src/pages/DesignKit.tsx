@@ -1514,12 +1514,12 @@ const TagsSection: React.FC = () => {
   const moreTags: string[] = ['working', 'TODO', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
   return (
     <ComponentSection id="Tags" title="Tags">
-      <Card>
+      <AntDCard>
         <p>
           The editable tags list (<code>{'<Tags>'}</code>) supports &quot;add&quot;,
           &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
         </p>
-      </Card>
+      </AntDCard>
       <AntDCard title="Best practices">
         <strong>Content</strong>
         <ul>

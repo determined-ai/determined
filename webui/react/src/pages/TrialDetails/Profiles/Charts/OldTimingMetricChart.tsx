@@ -19,7 +19,6 @@ export const TimingMetricChart: React.FC<OldChartProps> = ({ trial, getOptionsFo
     <Section bodyBorder bodyNoPadding title="Timing Metrics">
       <UPlotChart
         data={timingMetrics.data}
-        noDataMessage="No data found. Timing metrics may not be available for your framework."
         options={options}
       />
     </Section>
