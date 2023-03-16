@@ -10,12 +10,15 @@ export interface Props {
 }
 
 const Nameplate: React.FC<Props> = ({ alias, compact, icon, name }) => {
-  const classnames = [css.avatarCard];
+  const classnames = [css.base];
   if (compact) classnames.push(css.compact);
 
   return (
     <div className={classnames.join(' ')}>
-      {icon}
+      <div>
+        {/* icon needs wrapper to maintain width */}
+        {icon}
+      </div>
       <div className={css.text}>
         {alias && <span className={css.alias}>{alias}</span>}
         {<span>{name}</span>}
