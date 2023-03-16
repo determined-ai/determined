@@ -34,8 +34,8 @@ class UsersService {
     });
   };
 
-  public ensureCurrentUserFetched = (canceler: AbortController, hard = false) => {
-    if (!hard && this.#currentUserId.get() !== NotLoaded) return;
+  public ensureCurrentUserFetched = (canceler: AbortController, refresh = false) => {
+    if (!refresh && this.#currentUserId.get() !== NotLoaded) return;
 
     getCurrentUser({ signal: canceler.signal })
       .then((response) => {
@@ -71,11 +71,15 @@ class UsersService {
     });
   };
 
-  public ensureUsersFetched = (canceler: AbortController, cfg?: FetchUsersConfig, hard = false) => {
+  public ensureUsersFetched = (
+    canceler: AbortController,
+    cfg?: FetchUsersConfig,
+    refresh = false,
+  ) => {
     const config = cfg ?? {};
     const usersPagination = this.#usersByKey.get().get(encodeParams(config));
 
-    if (!hard && usersPagination) return;
+    if (!refresh && usersPagination) return;
 
     getUsers(config, { signal: canceler?.signal })
       .then((response) => {
