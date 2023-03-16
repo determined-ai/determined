@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import argparse
 import pathlib
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -118,6 +119,7 @@ def load_state(checkpoint_directory, info):
     else:
         with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
             return torch.load(saved_model), 0
+
 
 def main(core_context):
     # Training settings

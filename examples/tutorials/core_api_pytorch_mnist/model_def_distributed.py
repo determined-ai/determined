@@ -4,8 +4,8 @@
 from __future__ import print_function
 
 import argparse
-
 import pathlib
+
 # NEW: Import torch distributed libraries.
 import torch
 import torch.distributed as dist

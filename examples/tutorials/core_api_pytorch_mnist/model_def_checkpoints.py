@@ -4,8 +4,10 @@
 from __future__ import print_function
 
 import argparse
+
 # NEW: import pathlib for opening checkpoint directory
 import pathlib
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -99,13 +101,14 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
 
 
 # NEW: Define load_state function for restarting model training from existing checkpoint. Returns (.pt, int).
+# Also update load_state header to take trial info object as an argument.
 def load_state(checkpoint_directory, info):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
 
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
-        
-    # NEW: If the saved trial ID is the same as our current trial ID, we are resuming the trial, so we should return the model weights 
+
+    # NEW: If the saved trial ID is the same as our current trial ID, we are resuming the trial, so we should return the model weights
     # and the number of epochs already completed to resume from.
     if ckpt_trial_id == info.trial.trial_id:
         with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
@@ -224,8 +227,8 @@ def main(core_context):
         # NEW: Save checkpoint.
         checkpoint_metadata_dict = {"steps_completed": steps_completed}
 
-        # NEW: Here we are saving multiple files to our checkpoint directory, a model weights file as well as a file that includes other 
-        # information about the checkpoint, in this case, epochs completed and the trial ID. 
+        # NEW: Here we are saving multiple files to our checkpoint directory, a model weights file as well as a file that includes other
+        # information about the checkpoint, in this case, epochs completed and the trial ID.
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
             torch.save(model.state_dict(), path / "checkpoint.pt")
             with path.joinpath("state").open("w") as f:
