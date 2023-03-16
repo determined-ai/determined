@@ -5,7 +5,7 @@
 +--------------------------------------------+
 | User Guide                                 |
 +============================================+
-| :doc:`/training/apis-howto/api-pytorch-ug` |
+| :ref:`pytorch_trial_ug`                    |
 +--------------------------------------------+
 
 Determined offers a PyTorch-based training loop that is fully integrated with the Determined
