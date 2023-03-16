@@ -1,5 +1,5 @@
 # The image registry to use for main image. Defaults to the determinedai repository in DockerHub.
-imageRegistry: determinedai
+imageRegistry: hub.myenterpriselicense.hpe.com/hpe-mlde/<SKU>
 
 ### Default images used in the configuration
 defaultImages:
@@ -19,11 +19,11 @@ defaultImages:
   
 
 # Install Determined enterprise edition.
-enterpriseEdition: false
+enterpriseEdition: true
 
 # Should be configured if using the master image in the Determined enterprise edition
-# or private registry.
-imagePullSecretName:
+# or private registry. Name of the Secret containing the hub.myenterpriselicense.hpe.com credentials
+imagePullSecretName: 
 
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
@@ -232,7 +232,7 @@ telemetry:
 # notebookTimeout: 1800
 
 # defaultPassword sets the password for the admin and determined user accounts.
-# defaultPassword:
+#defaultPassword:
 
 ## Configure how trial logs are stored.
 # logging:
