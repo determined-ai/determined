@@ -23,7 +23,9 @@ class CheckpointLoadContext(pytorch.PyTorchTrialContext):
     Users who are relying on the legacy `entrypoint: my_model:MyTrainer` way of launching their code
     should continue to use :func:`~determined.pytorch.load_trial_from_checkpoint_path()`.
     Example usage:
+
     .. code:: python
+
        import determined as det
        from determined import pytorch
        from determined.experimental import client

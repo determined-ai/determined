@@ -664,8 +664,9 @@ The PyTorch Trainer API lets you do the following:
 Initializing the Trainer
 ========================
 
-After defining the PyTorch Trial, initialize the trial and the trainer. ``pytorch.init()`` returns a
-``PyTorchTrialContext`` for instantiating ``PyTorchTrial``. Initialize ``pytorch.Trainer`` with the
+After defining the PyTorch Trial, initialize the trial and the trainer.
+:meth:`~determined.pytorch.init` returns a :class:`~determined.pytorch.PyTorchTrialContext` for
+instantiating `~determined.pytorch.PyTorchTrial`. Initialize `~determined.pytorch.Trainer` with the
 trial and context.
 
 .. code:: python
@@ -681,13 +682,14 @@ trial and context.
        logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
        main()
 
-Training is configured with a call to ``.fit()`` with training loop arguments, such as checkpointing
-periods, validation periods, and checkpointing policy. See the :doc:`Pytorch API reference document
-</reference/reference-training/training/api-pytorch-reference>` for the full list of arguments.
+Training is configured with a call to :meth:`~determined.pytorch.Trainer.fit` with training loop
+arguments, such as checkpointing periods, validation periods, and checkpointing policy.
 
-.. code:: python
+.. code:: diff
 
    from determined import pytorch
+
+
    def main():
        with det.pytorch.init() as train_context:
            trial = MyTrial(train_context)
@@ -697,6 +699,7 @@ periods, validation periods, and checkpointing policy. See the :doc:`Pytorch API
    +           validation_period=pytorch.Batch(100),
    +           checkpoint_policy="all"
    +       )
+
 
    if __name__ == "__main__":
        # Configure logging
@@ -720,7 +723,7 @@ to determined the maximum number of steps to train for.
            trial = MyTrial(train_context)
            trainer = det.pytorch.Trainer(trial, train_context)
            trainer.fit(
-               +max_length=pytorch.Epoch(1),
+               max_length=pytorch.Epoch(1),
                checkpoint_period=pytorch.Batch(100),
                validation_period=pytorch.Batch(100),
                checkpoint_policy="all",
@@ -739,11 +742,7 @@ Local Distributed Training
 ==========================
 
 Local training can utilize multiple GPUs on a single node with a few modifications to the above
-code.
-
-.. note::
-
-   Both Horovod and PyTorch Distributed backends are supported.
+code. Both Horovod and PyTorch Distributed backends are supported.
 
 .. code:: diff
 
@@ -775,7 +774,7 @@ Trainer accepts a test_mode parameter which, if true, trains and validates your 
 only one batch, checkpoints, then exits. This is helpful for debugging code or writing automated
 tests around your model code.
 
-.. code:: python
+.. code:: diff
 
     trainer.fit(
                  max_length=pytorch.Epoch(1),
@@ -783,13 +782,6 @@ tests around your model code.
                  validation_period=pytorch.Batch(100),
    +             test_mode=True
              )
-
-This replaces the legacy test mode codepath, which supports this functionality for trials not using
-Trainer API:
-
-.. code:: bash
-
-   det e create det.yaml . --local --test
 
 Prepare Your Training Code for Deploying to a Determined Cluster
 ================================================================
@@ -848,10 +840,6 @@ Submit Your Trial for Training on Cluster
 To run your experiment on cluster, you'll need to create an experiment configuration (YAML) file.
 Your experiment configuration file must contain searcher configuration and entrypoint.
 
-.. note::
-
-   ``hyperparameters.global_batch_size`` is required if ``max_length`` is configured in records
-
 .. code:: python
 
    name: pytorch_trainer_trial
@@ -884,22 +872,31 @@ loaded Trial with a ``CheckpointLoadContext``.
 ``det.import_from_path`` allows you to import from a specific directory and cleans up afterwards.
 Even if you are importing identically-named files, you can import them as separate modules. This is
 intended to help when you have, for example, a current model_def.py, but also import an older
-model_def.py from a checkpoint into the same interpreter, without conflicts (so long as you import
-them as different names, of course).
+``model_def.py`` from a checkpoint into the same interpreter, without conflicts (so long as you
+import them as different names, of course).
 
 ``CheckpointLoadContext`` is a special PyTorchTrialContext that can be used to load Trial classes
 outside of normal training loops. It does not support any training features such as metrics
-reporting or uploading checkpoints and is intended for use with the Trainer directly.
+reporting or uploading checkpoints and provides only the necessary methods to load and extract
+objects from a ``Trial`` class.
 
 .. code:: python
 
    import determined as det
    from determined import pytorch
    from determined.experimental import client
+   import model_def as model_def
+
     # Download checkpoint and load training code from checkpoint.
-       path = client.get_checkpoint(MY_CHECKPOINT_UUID)
-       with det.import_from_path(path + "/code/"):
-           import my_model_def
+   path = client.get_checkpoint(MY_CHECKPOINT_UUID)
+   with det.import_from_path(path + "/code/"):
+       import my_model_def as old_model_def
+       # Load weights from previous model.
+       old_model = old_model_def.load_weights(path + "/code/")
+
+   model = model_def.my_build_model(
+       base_layers=old_model.base_layers
+   )
    # Create CheckpointLoadContext for instantiating trial.
    context = pytorch.CheckpointLoadContext()
    # Instantiate trial with context and any other args.
