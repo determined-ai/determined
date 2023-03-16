@@ -8,6 +8,8 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined import searcher
+
+# from determined.pytorch.deepspeed import get_ds_config_from_hparams
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
@@ -48,11 +50,7 @@ class DSATTrial:
 
     @property
     def zero_stage(self):
-        try:
-            zero_stage = int(self.ds_config["zero_optimization"]["stage"])
-        except KeyError:
-            zero_stage = 0  # The DS Default. TODO: add to _defaults.py
-        return zero_stage
+        return int(self.ds_config.get("zero_optimization", {}).get("stage", _defaults.ZERO_STAGE))
 
     def add_child(self, trial: "DSATTrial") -> None:
         """Register child-parent relationship in lineage tree."""
@@ -357,7 +355,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self.submitted_hps = self.submitted_config_dict["hyperparameters"]
         self.ds_config = self.submitted_hps["ds_config"]
         # Merge the submitted autotuning section with the DS _defaults.
-        self.autotuning_config = {**_defaults.AUTUTONING_DICT, **self.ds_config["autotuning"]}
+        self.autotuning_config = {**_defaults.AUTOTUNING_DICT, **self.ds_config["autotuning"]}
         self.tuner_num_trials = self.autotuning_config["tuner_num_trials"]
         self.num_tuning_micro_batch_sizes = self.autotuning_config["num_tuning_micro_batch_sizes"]
         self.tuner_early_stopping = self.autotuning_config["num_tuning_micro_batch_sizes"]
@@ -414,10 +412,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
 
         if last_trial.is_model_profiling_info_run:
             slots = self.submitted_config_dict["resources"]["slots_per_trial"]
-            if "fp16" in self.ds_config:
-                fp16 = self.ds_config["fp16"]["enabled"]
-            else:
-                fp16 = False
+            fp16 = self.ds_config.get("fp16", {}).get("enabled", False)
             mp_size = self.autotuning_config["mp_size"]
             self.model_profile_info = DSATModelProfilingInfo(
                 request_id=request_id,

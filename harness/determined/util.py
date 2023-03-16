@@ -101,6 +101,19 @@ def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
     return output_list
 
 
+def merge_dicts(base_dict: Dict[str, Any], source_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively replace and merge values from source_dict to overwrite those in base_dict"""
+    for key, value in source_dict.items():
+        if key in base_dict:
+            if isinstance(value, dict):
+                base_dict[key] = merge_dicts(base_dict[key], value)
+            else:
+                base_dict[key] = value
+        else:
+            base_dict[key] = value
+    return base_dict
+
+
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
     metric_dict = _list_to_dict(batch_metrics)
 

@@ -7,5 +7,6 @@ from determined.pytorch.deepspeed._deepspeed_context import (
     DeepSpeedTrialContext,
     ModelInfo,
     overwrite_deepspeed_config,
+    get_ds_config_from_hparams,
 )
 from determined.pytorch.deepspeed._deepspeed_trial import DeepSpeedTrial, DeepSpeedTrialController

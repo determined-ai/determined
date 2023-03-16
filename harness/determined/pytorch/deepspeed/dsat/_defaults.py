@@ -2,6 +2,8 @@ WORKDIR_PATH = "/run/determined/workdir/"
 MODEL_INFO_PROFILING_PATH = WORKDIR_PATH + "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
+ZERO_STAGE = 0
+
 SMALLER_IS_BETTER = True
 
 MODEL_INFO_PROFILING_DS_CONFIG = {
@@ -32,7 +34,7 @@ NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
     },
 }
 
-AUTUTONING_DICT = {
+AUTOTUNING_DICT = {
     "enabled": False,
     "results_dir": "autotuning_results",
     "exps_dir": "autotuning_exps",
