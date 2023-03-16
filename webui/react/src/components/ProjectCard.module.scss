@@ -1,13 +1,14 @@
 .base {
   display: grid;
   gap: 4px;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 9fr 2fr 2fr;
+  grid-template:
+    'header  header' 9fr
+    'workspace workspace' 2fr
+    'footer footer' 2fr / 1fr 1fr;
   height: 100%;
 
   .headerContainer {
-    grid-column: 1 / 3;
-    grid-row: 1 / 2;
+    grid-area: header;
   }
   .name {
     font-size: 13px;
@@ -15,14 +16,13 @@
     width: fit-content;
   }
   .workspaceContainer {
-    grid-column: 1 / 3;
-    grid-row: 2 / 3;
+    grid-area: workspace;
   }
   .footerContainer {
+    align-items: end;
     display: flex;
     font-size: 12px;
-    grid-column: 1 / 3;
-    grid-row: 3 / 4;
+    grid-area: footer;
     justify-content: space-between;
 
     .experiments {
