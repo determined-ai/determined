@@ -260,7 +260,9 @@ class CheckpointContext:
         *,
         selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
-        logger.info(f"Uploading checkpoint to {ckpt_dir} metadata={metadata}")
+        logger.debug(
+            f"Uploading content from checkpoint directory {ckpt_dir} to storage (metadata={metadata})"
+        )
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
 
@@ -284,8 +286,8 @@ class CheckpointContext:
         *,
         selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
-        logger.info(
-            f"Uploading sharded checkpoint to {ckpt_dir} (id: {storage_id}) metadata={metadata}"
+        logger.debug(
+            f"Uploading sharded content from checkpoint directory {ckpt_dir} to storage (id: {storage_id}, metadata={metadata})"
         )
         if selector is not None and ckpt_dir is None:
             raise RuntimeError("ckpt_dir has to be provided if selector is not None")
@@ -496,7 +498,7 @@ class CheckpointContext:
     def _store_path_single(
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
-        logger.info(f"Storing single path metadata={metadata}")
+        logger.debug(f"Getting path for storage (metadata={metadata})")
         if self._dist.rank != 0:
             raise RuntimeError(
                 "cannot call CheckpointContext.store_path(shard=False) from non-chief worker "
@@ -514,7 +516,7 @@ class CheckpointContext:
     def _store_path_sharded(
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
-        logger.info(f"Storing sharded path metadata={metadata}")
+        logger.debug(f"Getting path for sharded storage (metadata={metadata})")
         storage_id = None
         if self._dist.rank == 0:
             storage_id = str(uuid.uuid4())
