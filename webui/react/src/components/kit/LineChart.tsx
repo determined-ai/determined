@@ -331,33 +331,35 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
 
     return (
       <div className={css.chartgridContainer} ref={chartGridRef}>
-        <div className={css.filterContainer}>
-          <ScaleSelect value={scale} onChange={setScale} />
-          {xAxisOptions && xAxisOptions.length > 1 && (
-            <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
-          )}
-        </div>
         <Spinner
           center
           className={css.chartgridLoading}
           spinning={isLoading}
           tip="Loading chart data...">
           {chartsProps.length > 0 && (
-            <SyncProvider>
-              <FixedSizeGrid
-                columnCount={columnCount}
-                columnWidth={Math.floor(width / columnCount)}
-                height={Math.min(
-                  height - 40,
-                  (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+            <>
+              <div className={css.filterContainer}>
+                <ScaleSelect value={scale} onChange={setScale} />
+                {xAxisOptions && xAxisOptions.length > 1 && (
+                  <XAxisFilter options={xAxisOptions} value={xAxis} onChange={onXAxisChange} />
                 )}
-                itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
-                rowCount={Math.ceil(chartsProps.length / columnCount)}
-                rowHeight={480}
-                width={width}>
-                {VirtualChartRenderer}
-              </FixedSizeGrid>
-            </SyncProvider>
+              </div>
+              <SyncProvider>
+                <FixedSizeGrid
+                  columnCount={columnCount}
+                  columnWidth={Math.floor(width / columnCount)}
+                  height={Math.min(
+                    height - 40,
+                    (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+                  )}
+                  itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
+                  rowCount={Math.ceil(chartsProps.length / columnCount)}
+                  rowHeight={480}
+                  width={width}>
+                  {VirtualChartRenderer}
+                </FixedSizeGrid>
+              </SyncProvider>
+            </>
           )}
           {chartsProps.length === 0 && !isLoading && (
             <div className={css.chartgridEmpty}>
