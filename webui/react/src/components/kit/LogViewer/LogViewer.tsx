@@ -1,6 +1,5 @@
 import { Space } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
 import {
   ListChildComponentProps,
   ListOnItemsRenderedProps,
@@ -182,10 +181,8 @@ const LogViewer: React.FC<Props> = ({
   const addLogs = useCallback(
     (newLogs: ViewerLog[], prepend = false): void => {
       if (newLogs.length === 0) return;
-      flushSync(() => {
-        setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
-        resizeLogs();
-      });
+      setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+      resizeLogs();
     },
     [resizeLogs],
   );
@@ -310,10 +307,8 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      flushSync(() => {
-        setLogs([]);
-        setFetchDirection(FetchDirection.Newer);
-      });
+      setLogs([]);
+      setFetchDirection(FetchDirection.Newer);
     }
   }, [fetchDirection]);
 
