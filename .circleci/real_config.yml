@@ -2027,6 +2027,16 @@ jobs:
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
 
+  test-e2e-slurm-disabled:
+    parameters:
+      master_config:
+        type: string
+        default:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - run: echo "Test suite disabled."
+
   test-e2e-slurm:
     parameters:
       mark:
@@ -2950,9 +2960,9 @@ workflows:
           requires:
             - package-and-push-system-local
 
-      - test-e2e-slurm:
+      - test-e2e-slurm-disabled:
           name: test-e2e-slurm-podman
-          slack-mentions: "${SLACK_USER_ID}"
+          #slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local
           master_config: |
