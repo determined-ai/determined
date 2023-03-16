@@ -91,7 +91,7 @@ $arrow-left: 22px;
     }
     .message {
       order: 0;
-      padding: 0 0 8px 0;
+      padding: 0 0 8px;
       width: 100%;
     }
     .clear {
@@ -112,7 +112,7 @@ $arrow-left: 22px;
       height: 120px;
     }
     .clear {
-      padding: 8px 0 0 0;
+      padding: 8px 0 0;
       width: 100%;
     }
     &.show {

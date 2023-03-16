@@ -258,7 +258,7 @@ class ASHASearchMethodState:
         max_trials: int,
         num_rungs: int,
         divisor: int,
-        max_concurrent_trials: int = 0,
+        max_concurrent_trials: int = 16,
     ) -> None:
         # Asha params
         self.max_length = max_length
@@ -297,7 +297,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         num_rungs: int,
         divisor: int,
         test_type: str = "core_api",
-        max_concurrent_trials: int = 0,
+        max_concurrent_trials: int = 16,
         exception_points: Optional[List[str]] = None,
     ) -> None:
         self.asha_search_state = ASHASearchMethodState(

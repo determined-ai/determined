@@ -1,6 +1,6 @@
 import React from 'react';
 
-import history from '../routes/history';
+import router from 'router';
 
 import { clone } from './data';
 import rootLogger from './Logger';
@@ -42,12 +42,14 @@ export const isNewTabClickEvent = (event: AnyMouseEvent): boolean => {
 export const reactHostAddress = (): string => {
   return `${window.location.protocol}//${window.location.host}`;
 };
+
 export const ensureAbsolutePath = (url: string): string => (isAbsolutePath(url) ? url : '/' + url);
 export const filterOutLoginLocation = (location: {
   pathname: string;
 }): { pathname: string } | undefined => {
   return location.pathname.includes('login') ? undefined : clone(location);
 };
+
 export const parseUrl = (url: string): URL => {
   let cleanUrl = url;
   if (!isFullPath(url)) {
@@ -71,7 +73,5 @@ export const routeToExternalUrl = (path: string): void => {
 };
 export const routeToReactUrl = (path: string): void => {
   logger.trace('routing to react url', path);
-  history.push(`${process.env.PUBLIC_URL}${stripUrl(path)}`, {
-    loginRedirect: filterOutLoginLocation(window.location),
-  });
+  router.navigate(`${process.env.PUBLIC_URL}${stripUrl(path)}`);
 };

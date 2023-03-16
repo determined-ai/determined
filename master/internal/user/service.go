@@ -27,6 +27,10 @@ var (
 	userService *Service
 )
 
+var externalSessionsError = echo.NewHTTPError(
+	http.StatusForbidden,
+	"not enabled with external sessions")
+
 var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
@@ -321,6 +325,9 @@ func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr er
 }
 
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
+	if s.extConfig.Enabled() {
+		return nil, externalSessionsError
+	}
 	var ctx context.Context
 	if c.Request() == nil || c.Request().Context() == nil {
 		ctx = context.TODO()
@@ -428,6 +435,9 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
+	if s.extConfig.Enabled() {
+		return nil, externalSessionsError
+	}
 	type (
 		request struct {
 			NewUsername *string `json:"username,omitempty"`
@@ -498,6 +508,9 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) postUser(c echo.Context) (interface{}, error) {
+	if s.extConfig.Enabled() {
+		return nil, externalSessionsError
+	}
 	type (
 		request struct {
 			Username string `json:"username"`

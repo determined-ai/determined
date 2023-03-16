@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
-import React from 'react';
 
 import {
   DURATION_DAY,

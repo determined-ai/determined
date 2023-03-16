@@ -1,12 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
 import { postUser as mockCreateUser } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -41,9 +40,9 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <UIProvider>
-      <HistoryRouter history={history}>
+      <BrowserRouter>
         <Container />
-      </HistoryRouter>
+      </BrowserRouter>
     </UIProvider>,
   );
 

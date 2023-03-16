@@ -3416,6 +3416,7 @@ class v1GetMasterResponse:
     rbacEnabled: "typing.Optional[bool]" = None
     ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None
     telemetryEnabled: "typing.Optional[bool]" = None
+    userManagementEnabled: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -3432,6 +3433,7 @@ class v1GetMasterResponse:
         rbacEnabled: "typing.Union[bool, None, Unset]" = _unset,
         ssoProviders: "typing.Union[typing.Sequence[v1SSOProvider], None, Unset]" = _unset,
         telemetryEnabled: "typing.Union[bool, None, Unset]" = _unset,
+        userManagementEnabled: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
@@ -3453,6 +3455,8 @@ class v1GetMasterResponse:
             self.ssoProviders = ssoProviders
         if not isinstance(telemetryEnabled, Unset):
             self.telemetryEnabled = telemetryEnabled
+        if not isinstance(userManagementEnabled, Unset):
+            self.userManagementEnabled = userManagementEnabled
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -3478,6 +3482,8 @@ class v1GetMasterResponse:
             kwargs["ssoProviders"] = [v1SSOProvider.from_json(x) for x in obj["ssoProviders"]] if obj["ssoProviders"] is not None else None
         if "telemetryEnabled" in obj:
             kwargs["telemetryEnabled"] = obj["telemetryEnabled"]
+        if "userManagementEnabled" in obj:
+            kwargs["userManagementEnabled"] = obj["userManagementEnabled"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -3503,6 +3509,8 @@ class v1GetMasterResponse:
             out["ssoProviders"] = None if self.ssoProviders is None else [x.to_json(omit_unset) for x in self.ssoProviders]
         if not omit_unset or "telemetryEnabled" in vars(self):
             out["telemetryEnabled"] = self.telemetryEnabled
+        if not omit_unset or "userManagementEnabled" in vars(self):
+            out["userManagementEnabled"] = self.userManagementEnabled
         return out
 
 class v1GetMeResponse:
@@ -13997,12 +14005,14 @@ def get_GetUsers(
     session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
         "limit": limit,
+        "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,

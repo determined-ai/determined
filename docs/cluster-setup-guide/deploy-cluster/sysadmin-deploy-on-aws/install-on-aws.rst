@@ -161,7 +161,7 @@ Spinning up or updating the Cluster
          ``p4d.24xlarge``. For CPU-based training or testing, any general purpose instance type may
          be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants).
 
-      -  p2.8xlarge
+      -  g4dn.metal
 
    -  -  ``--deployment-type``
       -  The :ref:`deployment type <determined-deploy-deployment-types>` to use.
@@ -342,7 +342,7 @@ Example workflow:
       - pool_name: compute-pool-solo
         max_aux_containers_per_agent: 0
         provider:
-          instance_type: p2.8xlarge
+          instance_type: g4dn.metal
           {{- toYaml .resource_pools.aws | nindent 6}}
 
 #. Use the new template:

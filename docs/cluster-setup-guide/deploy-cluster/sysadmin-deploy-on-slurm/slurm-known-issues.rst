@@ -494,3 +494,7 @@ the GPUs used for the experiment to be evenly distributed among the compute node
       ERROR: task failed without an associated exit code: sbatch: error: CPU count per node can not
       be satisfied sbatch: error: Batch job submission failed: Requested node configuration is not
       available.
+
+-  A job may fail with the message ``resources failed with non-zero exit code``, Determined reports
+   the exit code in the experiment logs. For example, the experiment logs contain ``srun: error:
+   node002: task 0: Exited with exit code 7``.

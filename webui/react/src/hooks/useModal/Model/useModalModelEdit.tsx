@@ -1,5 +1,4 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';

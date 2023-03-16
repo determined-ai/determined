@@ -1,69 +1,87 @@
-import { V1Group, V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
+import { V1Group, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  DetailedUser,
+  GroupWithRoleInfo,
+  User,
+  UserOrGroup,
+  UserOrGroupWithRoleInfo,
+  UserWithRoleInfo,
+} from 'types';
 
-export interface UserNameFields {
+interface UserNameFields {
   displayName?: string;
   username?: string;
 }
 
-export function getDisplayName(user: DetailedUser | User | UserNameFields | undefined): string {
+export function getDisplayName(
+  user: Readonly<DetailedUser | User | UserNameFields | undefined>,
+): string {
   return user?.displayName || user?.username || 'Unavailable';
 }
 
-export function isUser(userOrGroup: UserOrGroup): string | undefined {
-  const user = userOrGroup as User;
-  return user?.username || user?.displayName;
+export function isUser(userOrGroup: Readonly<UserOrGroup>): userOrGroup is User {
+  return 'username' in userOrGroup || 'displayName' in userOrGroup;
 }
 
-export function getName(userOrGroup: UserOrGroup): string {
-  const user = userOrGroup as User;
-  const group = userOrGroup as V1Group;
-  return isUser(userOrGroup) ? getDisplayName(user) : group.name ? group.name : '';
+export function isUserWithRoleInfo(
+  userOrGroup: Readonly<UserOrGroupWithRoleInfo>,
+): userOrGroup is UserWithRoleInfo {
+  return 'userId' in userOrGroup;
 }
 
-export const getIdFromUserOrGroup = (userOrGroup: UserOrGroup): number => {
+export function getName(userOrGroup: Readonly<UserOrGroup>): string {
   if (isUser(userOrGroup)) {
-    const user = userOrGroup as User;
+    return getDisplayName(userOrGroup);
+  }
+  return userOrGroup?.name ?? '';
+}
+
+export const getIdFromUserOrGroup = (userOrGroup: Readonly<UserOrGroup>): number => {
+  if (isUser(userOrGroup)) {
+    const user = userOrGroup;
     return user.id;
   }
-  const group = userOrGroup as V1Group;
+  const group = userOrGroup;
 
   // The groupId should always exist
   return group.groupId || 0;
 };
 
-export const getAssignedRole = (
-  record: UserOrGroup,
-  assignments: V1RoleWithAssignments[],
-): V1RoleAssignment | null => {
-  const currentAssignment = assignments.find((aGroup) =>
-    isUser(record)
-      ? !!aGroup?.userRoleAssignments &&
-        !!aGroup.userRoleAssignments.find((a) => a.userId === getIdFromUserOrGroup(record))
-      : !!aGroup?.groupRoleAssignments &&
-        !!aGroup.groupRoleAssignments.find((a) => a.groupId === getIdFromUserOrGroup(record)),
-  );
-  if (isUser(record) && !!record) {
-    if (currentAssignment?.userRoleAssignments) {
-      const myAssignment = currentAssignment.userRoleAssignments.find(
-        (a) => a.userId === getIdFromUserOrGroup(record),
-      );
-      return myAssignment?.roleAssignment || null;
-    }
-  } else if (currentAssignment?.groupRoleAssignments) {
-    const myAssignment = currentAssignment.groupRoleAssignments.find(
-      (a) => a.groupId === getIdFromUserOrGroup(record),
-    );
-    return myAssignment?.roleAssignment || null;
-  }
-  return null;
-};
-
-export const getAssignableWorkspaceRoles = (
-  roles: UserRole[],
-  rolesAssignableToScope: V1Role[],
-): UserRole[] => {
-  const validRoleIds = new Set<number>();
-  rolesAssignableToScope.forEach((role) => validRoleIds.add(role.roleId));
-  return roles.filter((role) => validRoleIds.has(role.id));
+export const getUserOrGroupWithRoleInfo = (
+  assignments: Readonly<V1RoleWithAssignments[]>,
+  groupsAssignedDirectly: Readonly<V1Group[]>,
+  usersAssignedDirectly: Readonly<User[]>,
+): Readonly<UserOrGroupWithRoleInfo[]> => {
+  const groupsAndUsers: [
+    V1RoleWithAssignments['groupRoleAssignments'],
+    V1RoleWithAssignments['userRoleAssignments'],
+  ][] = assignments.map((assignment: V1RoleWithAssignments) => {
+    return [assignment.groupRoleAssignments, assignment.userRoleAssignments];
+  });
+  const groups: GroupWithRoleInfo[] = groupsAndUsers
+    .flatMap((data) => data?.[0] ?? [])
+    .map((d) => {
+      const group = groupsAssignedDirectly.find((g) => g.groupId === d.groupId);
+      const groupWithRole: GroupWithRoleInfo = {
+        groupId: group?.groupId,
+        groupName: group?.name,
+        roleAssignment: d.roleAssignment,
+      };
+      return groupWithRole;
+    })
+    .filter((d) => d.groupId);
+  const users: UserWithRoleInfo[] = groupsAndUsers
+    .flatMap((data) => data?.[1] ?? [])
+    .map((d) => {
+      const user = usersAssignedDirectly.find((u) => u.id === d.userId);
+      const userWithRole: UserWithRoleInfo = {
+        displayName: user?.displayName,
+        roleAssignment: d.roleAssignment,
+        userId: user?.id ?? -1,
+        username: user?.username ?? '',
+      };
+      return userWithRole;
+    })
+    .filter((d) => d.userId !== -1);
+  return [...groups, ...users];
 };

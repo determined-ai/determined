@@ -85,7 +85,7 @@ variable "compute_agent_instance_type" {
 
 variable "gpu_type" {
   type = string
-  default = "nvidia-tesla-k80"
+  default = "nvidia-tesla-t4"
 }
 
 variable "gpu_num" {

@@ -1,5 +1,3 @@
-$backgroundColor: rgb(143 143 143);
-
 .base {
   height: 24px;
   margin: auto;
@@ -9,7 +7,7 @@ $backgroundColor: rgb(143 143 143);
 .spinner,
 .innerSpinner {
   animation: pulse 1.75s infinite ease-in-out;
-  background-color: rgba($backgroundColor, 0.2);
+  background-color: rgba(143 143 143 / 20%);
   border-radius: 50%;
   height: 100%;
   left: 0;
@@ -20,7 +18,7 @@ $backgroundColor: rgb(143 143 143);
 }
 .innerSpinner {
   animation: pulseSpinner 1.75s infinite ease-in-out;
-  background-color: rgba($backgroundColor, 0.4);
+  background-color: rgba(143 143 143 / 40%);
 }
 
 @keyframes pulse {

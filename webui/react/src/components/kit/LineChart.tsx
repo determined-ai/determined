@@ -107,8 +107,8 @@ export const LineChart: React.FC<LineChartProps> = ({
         (s.metricType === MetricType.Training
           ? '[T] '
           : s.metricType === MetricType.Validation
-          ? '[V] '
-          : '') + (s.name || `Series ${idx + 1}`),
+            ? '[V] '
+            : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -137,9 +137,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   const xTickValues: uPlot.Axis.Values | undefined = useMemo(
     () =>
       xAxis === XAxisDomain.Time &&
-      chartData.length > 0 &&
-      chartData[0].length > 0 &&
-      chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
+        chartData.length > 0 &&
+        chartData[0].length > 0 &&
+        chartData[0][chartData[0].length - 1] - chartData[0][0] < 43200 // 12 hours
         ? getTimeTickValues
         : undefined,
     [chartData, xAxis],
@@ -200,6 +200,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         { label: xLabel ?? xAxis ?? 'X' },
         ...series.map((serie, idx) => {
           return {
+            alpha: focusedSeries === undefined || focusedSeries === idx ? 1 : 0.4,
             label: seriesNames[idx],
             points: { show: (serie.data[xAxis] || []).length <= 1 },
             scale: 'y',
@@ -226,6 +227,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     seriesNames,
     hasPopulatedSeries,
     propPlugins,
+    focusedSeries,
   ]);
 
   return (
@@ -235,7 +237,6 @@ export const LineChart: React.FC<LineChartProps> = ({
         allowDownload={hasPopulatedSeries}
         data={chartData}
         experimentId={experimentId}
-        focusIndex={focusedSeries}
         isLoading={isLoading}
         options={chartOptions}
       />

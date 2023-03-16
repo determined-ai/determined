@@ -2,18 +2,13 @@ package user
 
 import (
 	"context"
-	"crypto/rsa"
 	"database/sql"
-	"encoding/json"
-	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -43,7 +38,6 @@ WHERE u.id = ?`
 // UserByUsername looks up a user by name in the database.
 func UserByUsername(username string) (*model.User, error) {
 	var user model.User
-	username = strings.ToLower(username)
 	err := db.Bun().NewSelect().Model(&user).
 		Where("username = ?", username).Scan(context.Background())
 	if err != nil {
@@ -114,57 +108,6 @@ func AddUserExec(user *model.User) error {
 	}
 
 	return nil
-}
-
-// UserByExternalToken returns a user session derived from an external authentication token.
-func UserByExternalToken(tokenText string,
-	ext *model.ExternalSessions,
-) (*model.User, *model.UserSession, error) {
-	type externalToken struct {
-		*jwt.StandardClaims
-		Email string
-	}
-
-	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
-		func(token *jwt.Token) (interface{}, error) {
-			var publicKey rsa.PublicKey
-			err := json.Unmarshal([]byte(ext.JwtKey), &publicKey)
-			if err != nil {
-				log.Errorf("error parsing JWT key: %s", err.Error())
-				return nil, err
-			}
-			return &publicKey, nil
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	claims := token.Claims.(*externalToken)
-
-	user, err := UserByUsername(claims.Email)
-	if err != nil {
-		if err != db.ErrNotFound {
-			return nil, nil, err
-		}
-		user = &model.User{
-			Username:     claims.Email,
-			PasswordHash: null.NewString("", false),
-			Admin:        true,
-			Active:       true,
-		}
-		err := AddUserExec(user)
-		if err != nil {
-			return nil, nil, errors.WithStack(err)
-		}
-	}
-
-	session := &model.UserSession{
-		ID:     model.SessionID(user.ID),
-		UserID: user.ID,
-		Expiry: time.Unix(claims.ExpiresAt, 0),
-	}
-
-	return user, session, nil
 }
 
 // UserByToken returns a user session given an authentication token.

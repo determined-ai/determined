@@ -557,7 +557,7 @@ The master supports the following configuration settings:
             ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``,
             ``p3.16xlarge``, ``p3dn.24xlarge``, or ``p4d.24xlarge``. For CPU instances, most general
             purpose instance types are allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
-            variants). Defaults to ``p3.8xlarge``.
+            variants). Defaults to ``g4dn.metal``.
 
          -  ``instance_slots``: The optional number of GPUs for the AWS instance type. This is used
             in conjunction with the ``instance_type`` in order to specify types which are not listed
@@ -649,7 +649,7 @@ The master supports the following configuration settings:
             -  ``machine_type``: Type of machine for the Determined agents. Defaults to
                ``n1-standard-32``.
             -  ``gpu_type``: Type of GPU for the Determined agents. Set it to be an empty string to
-               not use any GPUs. Defaults to ``nvidia-tesla-v100``.
+               not use any GPUs. Defaults to ``nvidia-tesla-t4``.
             -  ``gpu_num``: Number of GPUs for the Determined agents. Defaults to 4.
             -  ``preemptible``: Whether to use preemptible dynamic agent instances. Defaults to
                ``false``.

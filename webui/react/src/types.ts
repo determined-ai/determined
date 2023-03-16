@@ -54,6 +54,7 @@ export interface DeterminedInfo {
   masterId: string;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
   version: string;
 }
 
@@ -877,11 +878,11 @@ export interface Permission {
 }
 
 export interface UserRole {
-  fromGroup?: number[];
-  fromWorkspace?: number[];
+  fromUser?: boolean;
   id: number;
   name: string;
   permissions: Permission[];
+  scopeCluster?: boolean;
 }
 
 export interface UserAssignment {
@@ -922,3 +923,18 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
+
+export type GroupWithRoleInfo = {
+  groupId: Api.V1Group['groupId'];
+  groupName: Api.V1Group['name'];
+  roleAssignment: Api.V1RoleAssignment;
+};
+
+export type UserWithRoleInfo = {
+  displayName: User['displayName'];
+  roleAssignment: Api.V1RoleAssignment;
+  userId: User['id'];
+  username: User['username'];
+};
+
+export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;
