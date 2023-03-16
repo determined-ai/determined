@@ -36,8 +36,6 @@ spec:
         {{- end -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
-        command: ["sleep"]
-        args: ["infinity"]                
         {{- if .Values.enterpriseEdition }}
         {{- if .Values.oidc }}
         env:

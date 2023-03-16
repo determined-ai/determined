@@ -1246,7 +1246,7 @@ func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
 func (p *pods) listPodsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
 ) (*k8sV1.PodList, error) {
-	var res *k8sV1.PodList
+	res := &k8sV1.PodList{}
 	for n, i := range p.podInterfaces {
 		pods, err := i.List(ctx, opts)
 		if err != nil {
@@ -1262,7 +1262,7 @@ func (p *pods) listPodsInAllNamespaces(
 func (p *pods) listConfigMapsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
 ) (*k8sV1.ConfigMapList, error) {
-	var res *k8sV1.ConfigMapList
+	res := &k8sV1.ConfigMapList{}
 	for n, i := range p.configMapInterfaces {
 		cms, err := i.List(ctx, opts)
 		if err != nil {
