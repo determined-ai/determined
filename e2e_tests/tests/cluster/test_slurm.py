@@ -153,3 +153,52 @@ def test_cifar10_pytorch_distributed() -> None:
     config["max_restarts"] = 0
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("cifar10_pytorch"), 1)
+
+
+# Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.
+# Preemption:
+# When users launch a set of experiments requesting different levels of priorities
+# and resources, and when there are a limited set of resources, high priority experiments can
+# cancel or requeue low priority experiments.
+# Preemption is dependent upon the underlying HPC system and the WLM (SLURM/PBS) setup.
+# Nodes in an HPC systems are typically divided into multiple partitions (logical grouping of
+# nodes into possibly overlapping sets) used for different purposes. Using WLMs sysadmins
+# typically assign varying levels of priority for each partition. Also, users can request the
+# WLM to provide specific partition and priority level for their jobs.
+# In the following test case we test an example preemption scenario. We launch the two experiments
+# cifar10_pytorch_cancellable and cifar10_pytorch_high_priority in order. Ensure that the
+# cifar10_pytorch_cancellable experiment is requeued, cifar10_pytorch_high_priority experiment
+# runs to completion. After that, cifar10_pytorch_cancellable experiment is resumed and it runs
+# to completion.
+# NB: The clusters casablanca-login and znode have one node (8-GPUs) being used in two partitions:
+#   1. defq_GPU_cancellable - partition for low priority and jobs are requeued if necessary
+#   2. defq_GPU_hipri - partition for high priority non-cancellable jobs
+@pytest.mark.e2e_slurm_preemption
+def test_slurm_preemption() -> None:
+    # Launch the cifar10_pytorch_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
+    # partition
+    cancelable_exp_id = exp.create_experiment(
+        conf.cv_examples_path("cifar10_pytorch/cifar10_pytorch_cancelable.yaml"),
+        conf.cv_examples_path("cifar10_pytorch"),
+        None,
+    )
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_RUNNING)
+    # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
+    # partition
+    high_priority_exp_id = exp.create_experiment(
+        conf.cv_examples_path("cifar10_pytorch/cifar10_pytorch_high_priority.yaml"),
+        conf.cv_examples_path("cifar10_pytorch"),
+        None,
+    )
+    # In this scenario, cifar10_pytorch_high_priority experiment will cause the
+    # cifar10_pytorch_cancelable experiment to get requeued. The experiment
+    # cifar10_pytorch_high_priority will execute to completion.
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.STATE_COMPLETED)
+    # Now, the experiment cifar10_pytorch_cancelable will resume as soon as the requested
+    # resources are available.
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_RUNNING)
+    # Finally, the experiment cifar10_pytorch_cancelable will complete if there are no other
+    # interruptions.
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_COMPLETED)

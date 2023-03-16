@@ -32,6 +32,7 @@ _INTEG_MARKERS = {
     "e2e_k8s",
     "e2e_slurm",
     "e2e_slurm_restart",
+    "e2e_slurm_preemption",
     "e2e_slurm_internet_connected_cluster",
     "e2e_slurm_misconfigured",
     "det_deploy_local",
