@@ -2,8 +2,12 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/jinzhu/copier"
+	"golang.org/x/exp/slices"
 
 	k8sV1 "k8s.io/api/core/v1"
 
@@ -14,9 +18,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // TaskContainerDefaultsConfig configures docker defaults for all containers.
+// If you add a field to this, you must update the merge impl.
 type TaskContainerDefaultsConfig struct {
 	DtrainNetworkInterface string                `json:"dtrain_network_interface,omitempty"`
 	NCCLPortRange          string                `json:"nccl_port_range,omitempty"`
@@ -130,4 +136,157 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 
 	config.RawSlurmConfig = schemas.Merge(config.RawSlurmConfig, &c.Slurm)
 	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
+}
+
+var mergeCopier = copier.Option{IgnoreEmpty: true, DeepCopy: true}
+
+// Merge merges other into self, preferring other. The result is a deepcopy of self, with deep
+// copies of values taken from other.
+func (c TaskContainerDefaultsConfig) Merge(
+	other TaskContainerDefaultsConfig,
+) (TaskContainerDefaultsConfig, error) {
+	var res TaskContainerDefaultsConfig
+	err := copier.CopyWithOption(&res, c, mergeCopier)
+	if err != nil {
+		return TaskContainerDefaultsConfig{}, fmt.Errorf("cloning task container defaults: %w", err)
+	}
+
+	if other.DtrainNetworkInterface != "" {
+		res.DtrainNetworkInterface = other.DtrainNetworkInterface
+	}
+
+	if other.NCCLPortRange != "" {
+		res.NCCLPortRange = other.NCCLPortRange
+	}
+
+	if other.GLOOPortRange != "" {
+		res.GLOOPortRange = other.GLOOPortRange
+	}
+
+	if other.ShmSizeBytes != 0 {
+		res.ShmSizeBytes = other.ShmSizeBytes
+	}
+
+	if other.NetworkMode != "" {
+		res.NetworkMode = other.NetworkMode
+	}
+
+	if other.CPUPodSpec != nil {
+		res.CPUPodSpec = other.CPUPodSpec.DeepCopy()
+	}
+
+	if other.GPUPodSpec != nil {
+		res.GPUPodSpec = other.GPUPodSpec.DeepCopy()
+	}
+
+	if other.Image != nil {
+		err := copier.CopyWithOption(&res.Image, other.Image, mergeCopier)
+		if err != nil {
+			return TaskContainerDefaultsConfig{}, fmt.Errorf("merge copying image: %w", err)
+		}
+	}
+
+	if other.RegistryAuth != nil {
+		// Total overwrite, since merging auth doesn't make a lot of sense.
+		res.RegistryAuth = other.RegistryAuth
+	}
+
+	if other.ForcePullImage {
+		res.ForcePullImage = other.ForcePullImage
+	}
+
+	if otherEnvVars := other.EnvironmentVariables; otherEnvVars != nil {
+		otherEnvs := other.EnvironmentVariables
+		res.EnvironmentVariables.CPU = mergeEnvVars(res.EnvironmentVariables.CPU, otherEnvs.CPU)
+		res.EnvironmentVariables.CUDA = mergeEnvVars(res.EnvironmentVariables.CUDA, otherEnvs.CUDA)
+		res.EnvironmentVariables.ROCM = mergeEnvVars(res.EnvironmentVariables.ROCM, otherEnvs.ROCM)
+	}
+
+	if other.AddCapabilities != nil {
+		caps := set.FromSlice(append(other.AddCapabilities, res.AddCapabilities...))
+		res.AddCapabilities = caps.ToSlice()
+		slices.Sort(res.AddCapabilities) // Convenience for testing equality.
+	}
+
+	if other.DropCapabilities != nil {
+		caps := set.FromSlice(append(other.DropCapabilities, res.DropCapabilities...))
+		res.DropCapabilities = caps.ToSlice()
+		slices.Sort(res.DropCapabilities) // Convenience for testing equality.
+	}
+
+	if other.Devices != nil {
+		tmp := res.Devices
+		res.Devices = other.Devices
+
+		containerPaths := set.New[string]()
+		for _, d := range res.Devices {
+			containerPaths.Insert(d.ContainerPath)
+		}
+		for _, d := range tmp {
+			if containerPaths.Contains(d.ContainerPath) {
+				continue
+			}
+			res.Devices = append(res.Devices, d)
+		}
+	}
+
+	if other.BindMounts != nil {
+		tmp := res.BindMounts
+		res.BindMounts = other.BindMounts
+
+		containerPaths := set.New[string]()
+		for _, b := range res.BindMounts {
+			containerPaths.Insert(b.ContainerPath)
+		}
+		for _, b := range tmp {
+			if containerPaths.Contains(b.ContainerPath) {
+				continue
+			}
+			res.BindMounts = append(res.BindMounts, b)
+		}
+	}
+
+	if other.WorkDir != nil {
+		tmp := *other.WorkDir
+		res.WorkDir = &tmp
+	}
+
+	if other.Slurm.GpuType() != nil || other.Slurm.SbatchArgs() != nil ||
+		other.Slurm.SlotsPerNode() != nil {
+		err = copier.CopyWithOption(&res.Slurm, other.Slurm, mergeCopier)
+		if err != nil {
+			return TaskContainerDefaultsConfig{}, fmt.Errorf("merge copying slurm opts: %w", err)
+		}
+	}
+
+	if other.Pbs.SlotsPerNode() != nil || other.Pbs.SbatchArgs() != nil {
+		err = copier.CopyWithOption(&res.Pbs, other.Pbs, mergeCopier)
+		if err != nil {
+			return TaskContainerDefaultsConfig{}, fmt.Errorf("merge copying pbs opts: %w", err)
+		}
+	}
+
+	return res, nil
+}
+
+func mergeEnvVars(self, other []string) []string {
+	var result []string
+	uniques := set.New[string]()
+	for _, v := range other {
+		uniques.Insert(envVarName(v))
+		result = append(result, v)
+	}
+
+	for _, v := range self {
+		if uniques.Contains(envVarName(v)) {
+			continue
+		}
+		result = append(result, v)
+	}
+	return result
+}
+
+func envVarName(v string) string {
+	parts := strings.Split(v, "=")
+	return parts[0]
 }

@@ -173,7 +173,7 @@ RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
 		return nil
 	}
 
-	uniqueExpIDs := maps.Keys(set.New(experimentIDs))
+	uniqueExpIDs := maps.Keys(set.FromSlice(experimentIDs))
 	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
 	err = idb.NewRaw(`
 UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
