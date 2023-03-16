@@ -242,6 +242,7 @@ def main(core_context):
             }
 
             epoch += 1
+            
 
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 torch.save(model.state_dict(), path / "checkpoint.pt")
