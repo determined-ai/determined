@@ -796,11 +796,11 @@ export interface V1ActivateExperimentsRequest {
  */
 export interface V1ActivateExperimentsResponse {
     /**
-     * Experiments which were sent the activate command.
-     * @type {Array<number>}
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentResult>}
      * @memberof V1ActivateExperimentsResponse
      */
-    experimentIds: Array<number>;
+    results: Array<V1ExperimentResult>;
 }
 /**
  * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
@@ -1142,11 +1142,11 @@ export interface V1ArchiveExperimentsRequest {
  */
 export interface V1ArchiveExperimentsResponse {
     /**
-     * Experiments which were successfully archived, by ID.
-     * @type {Array<number>}
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentResult>}
      * @memberof V1ArchiveExperimentsResponse
      */
-    experimentIds: Array<number>;
+    results: Array<V1ExperimentResult>;
 }
 /**
  * 
@@ -2459,6 +2459,25 @@ export interface V1ExperimentInactive {
      * @memberof V1ExperimentInactive
      */
     experimentState: Experimentv1State;
+}
+/**
+ * Message for results of individual experiments in a multi-experiment action.
+ * @export
+ * @interface V1ExperimentResult
+ */
+export interface V1ExperimentResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1ExperimentResult
+     */
+    error: string;
+    /**
+     * Experiment ID.
+     * @type {number}
+     * @memberof V1ExperimentResult
+     */
+    id: number;
 }
 /**
  * ExperimentSimulation holds the configuration and results of simulated run of a searcher.
@@ -5784,11 +5803,11 @@ export interface V1PauseExperimentsRequest {
  */
 export interface V1PauseExperimentsResponse {
     /**
-     * Experiments which were successfully paused, by ID.
-     * @type {Array<number>}
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentResult>}
      * @memberof V1PauseExperimentsResponse
      */
-    experimentIds: Array<number>;
+    results: Array<V1ExperimentResult>;
 }
 /**
  * 

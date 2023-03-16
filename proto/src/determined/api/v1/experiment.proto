@@ -203,6 +203,17 @@ message ActivateExperimentRequest {
 // Response to ActivateExperimentRequest.
 message ActivateExperimentResponse {}
 
+// Message for results of individual experiments in a multi-experiment action.
+message ExperimentResult {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "error", "id" ] }
+  };
+  // Optional error message.
+  string error = 1;
+  // Experiment ID.
+  int32 id = 2;
+}
+
 // Activate multiple experiments.
 message ActivateExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -215,11 +226,11 @@ message ActivateExperimentsRequest {
 // Response to ActivateExperimentsRequest.
 message ActivateExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were sent the activate command.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Pause an experiment.
@@ -242,11 +253,11 @@ message PauseExperimentsRequest {
 // Response to PauseExperimentsRequest.
 message PauseExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were successfully paused, by ID.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Cancel an experiment.
@@ -323,11 +334,11 @@ message ArchiveExperimentsRequest {
 // Response to ArchiveExperimentsRequest.
 message ArchiveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were successfully archived, by ID.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Unarchive an experiment.

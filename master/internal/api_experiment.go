@@ -191,16 +191,47 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
-// Shorthand for a Bun query which includes editable experiments.
-func (a *apiServer) editableExperimentIds(ctx context.Context) (*bun.SelectQuery, error) {
+func (a *apiServer) loadMultiExperimentResults(results []*apiv1.ExperimentResult,
+	resps map[*actor.Ref]actor.Message, refExpIDs []int32,
+) []*apiv1.ExperimentResult {
+	idx := 0
+	for _, actorResp := range resps {
+		if actorResp == nil {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.Internal, "actorResp nil.").Error(),
+				Id:    refExpIDs[idx],
+			})
+		} else if typed, ok := actorResp.(error); ok && typed != nil {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: typed.Error(),
+				Id:    refExpIDs[idx],
+			})
+		} else {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: "",
+				Id:    refExpIDs[idx],
+			})
+		}
+		idx++
+	}
+	return results
+}
+
+// A Bun query for editable experiments in multi-experiment actions.
+func (a *apiServer) editableExperimentIds(ctx context.Context, requestedIds []int32) ([]int32,
+	error,
+) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	expIDs := []int32{}
 	query := db.Bun().NewSelect().
 		ModelTableExpr("experiments AS e").
-		Column("e.id")
+		Model(&expIDs).
+		Column("e.id").
+		Where("id IN (?)", bun.In(requestedIds))
 
 	if query, err = expauth.AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -208,7 +239,29 @@ func (a *apiServer) editableExperimentIds(ctx context.Context) (*bun.SelectQuery
 		return nil, err
 	}
 
-	return query, nil
+	query.Scan(ctx)
+	return expIDs, nil
+}
+
+func (a *apiServer) nonTerminalExperiments(expIDs []int32,
+	results []*apiv1.ExperimentResult,
+) ([]*actor.Ref, []int32, []*apiv1.ExperimentResult) {
+	refs := []*actor.Ref{}
+	refExpIDs := []int32{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		ref := a.m.system.Get(addr)
+		if ref == nil {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.FailedPrecondition, "experiment in terminal state").Error(),
+				Id:    expID,
+			})
+		} else {
+			refs = append(refs, ref)
+			refExpIDs = append(refExpIDs, expID)
+		}
+	}
+	return refs, refExpIDs, results
 }
 
 func (a *apiServer) GetSearcherEvents(
@@ -845,118 +898,78 @@ func (a *apiServer) PreviewHPSearch(
 
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
-) (resp *apiv1.ActivateExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
+) (*apiv1.ActivateExperimentResponse, error) {
+	re, err := a.ActivateExperiments(ctx,
+		&apiv1.ActivateExperimentsRequest{ExperimentIds: []int32{req.Id}})
+
+	if err == nil && re.Results[0].Error != "" {
+		return nil, errors.Errorf(re.Results[0].Error)
 	}
 
-	addr := experimentsAddr.Child(req.Id)
-	switch err = a.ask(addr, req, &resp); {
-	case status.Code(err) == codes.NotFound:
-		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
-	default:
-		return resp, nil
-	}
+	return &apiv1.ActivateExperimentResponse{}, err
 }
 
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	query, err := a.editableExperimentIds(ctx)
+	expIDs, err := a.editableExperimentIds(ctx, req.ExperimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	expIDs := []int32{}
-	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
-		Model(&expIDs).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	refs := []*actor.Ref{}
-	for _, expID := range expIDs {
-		addr := experimentsAddr.Child(expID)
-		ref := a.m.system.Get(addr)
-		if ref != nil {
-			refs = append(refs, ref)
+	results := []*apiv1.ExperimentResult{}
+	for _, originalID := range req.ExperimentIds {
+		if !slices.Contains(expIDs, originalID) {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission.").Error(),
+				Id:    originalID,
+			})
 		}
 	}
 
-	// id in the request message doesn't really have to contain experiment id.
-	resps := a.m.system.AskAll(&apiv1.ActivateExperimentRequest{}, refs...)
-	// process resps
-	for msg := range resps {
-		switch msg.(type) {
-		case error:
-			logrus.Infof("failed to activate experiment")
-		default:
-			logrus.Infof("succeeded to activate experiment")
-		}
-	}
+	refs, refExpIDs, results := a.nonTerminalExperiments(expIDs, results)
+	resps := a.m.system.AskAll(&apiv1.ActivateExperimentRequest{}, refs...).GetAll()
+	results = a.loadMultiExperimentResults(results, resps, refExpIDs)
 
-	return &apiv1.ActivateExperimentsResponse{ ExperimentIds: expIDs }, nil
+	return &apiv1.ActivateExperimentsResponse{Results: results}, nil
 }
 
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
+	re, err := a.PauseExperiments(ctx,
+		&apiv1.PauseExperimentsRequest{ExperimentIds: []int32{req.Id}})
+
+	if err == nil && re.Results[0].Error != "" {
+		return nil, errors.Errorf(re.Results[0].Error)
 	}
 
-	addr := experimentsAddr.Child(req.Id)
-	switch err = a.ask(addr, req, &resp); {
-	case status.Code(err) == codes.NotFound:
-		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
-	default:
-		return resp, nil
-	}
+	return &apiv1.PauseExperimentResponse{}, err
 }
 
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	query, err := a.editableExperimentIds(ctx)
+	expIDs, err := a.editableExperimentIds(ctx, req.ExperimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	expIDs := []int32{}
-	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
-		Model(&expIDs).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	refs := []*actor.Ref{}
-	for _, expID := range expIDs {
-		addr := experimentsAddr.Child(expID)
-		ref := a.m.system.Get(addr)
-		if ref != nil {
-			refs = append(refs, ref)
+	results := []*apiv1.ExperimentResult{}
+	for _, originalID := range req.ExperimentIds {
+		if !slices.Contains(expIDs, originalID) {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission.").Error(),
+				Id:    originalID,
+			})
 		}
 	}
 
-	resps := a.m.system.AskAll(&apiv1.PauseExperimentRequest{}, refs...)
-	for msg := range resps {
-		switch msg.(type) {
-		case error:
-			return nil, msg.(error)
-		default:
-			logrus.Infof("succeeded to pause experiment")
-		}
-	}
+	refs, refExpIDs, results := a.nonTerminalExperiments(expIDs, results)
+	resps := a.m.system.AskAll(&apiv1.PauseExperimentRequest{}, refs...).GetAll()
+	results = a.loadMultiExperimentResults(results, resps, refExpIDs)
 
-	return &apiv1.PauseExperimentsResponse{ ExperimentIds: expIDs }, nil
+	return &apiv1.PauseExperimentsResponse{Results: results}, nil
 }
 
 func (a *apiServer) CancelExperiment(
@@ -970,15 +983,7 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	query, err := a.editableExperimentIds(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	expIDs := []int32{}
-	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
-		Model(&expIDs).
-		Scan(ctx)
+	expIDs, err := a.editableExperimentIds(ctx, req.ExperimentIds)
 	if err != nil {
 		return nil, err
 	}
@@ -1006,15 +1011,7 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	query, err := a.editableExperimentIds(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	expIDs := []int32{}
-	err = query.Where("id IN (?)", bun.In(req.ExperimentIds)).
-		Model(&expIDs).
-		Scan(ctx)
+	expIDs, err := a.editableExperimentIds(ctx, req.ExperimentIds)
 	if err != nil {
 		return nil, err
 	}
@@ -1035,29 +1032,20 @@ func (a *apiServer) KillExperiments(
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	id := int(req.Id)
-	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id,
-		expauth.AuthZProvider.Get().CanEditExperimentsMetadata)
-	if err != nil {
-		return nil, err
-	}
-	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot archive experiment %v in non terminate state %v",
-			id, dbExp.State)
+	re, err := a.ArchiveExperiments(ctx,
+		&apiv1.ArchiveExperimentsRequest{ExperimentIds: []int32{req.Id}})
+
+	if err == nil && re.Results[0].Error != "" {
+		return nil, errors.Errorf(re.Results[0].Error)
 	}
 
-	if dbExp.Archived {
-		return &apiv1.ArchiveExperimentResponse{}, nil
-	}
-	dbExp.Archived = true
-	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
-	switch err {
-	case nil:
-		return &apiv1.ArchiveExperimentResponse{}, nil
-	default:
-		return nil, errors.Wrapf(err, "failed to archive experiment %d",
-			req.Id)
-	}
+	return &apiv1.ArchiveExperimentResponse{}, err
+}
+
+type archiveExperimentOKResult struct {
+	Archived bool
+	Id       int32
+	State    bool
 }
 
 func (a *apiServer) ArchiveExperiments(
@@ -1068,30 +1056,70 @@ func (a *apiServer) ArchiveExperiments(
 		return nil, err
 	}
 
-	query := db.Bun().NewUpdate().
+	expChecks := []archiveExperimentOKResult{}
+	query := db.Bun().NewSelect().
 		ModelTableExpr("experiments as e").
-		Where("id IN (?)", bun.In(req.ExperimentIds)).
-		Where("NOT archived").
-		Where("state IN (?)", bun.In([]string{
+		Model(&expChecks).
+		Column("e.archived").
+		Column("e.id").
+		ColumnExpr("e.state IN (?) AS state", bun.In([]string{
 			"CANCELED",
 			"COMPLETED",
 			"ERROR",
-		}))
+		})).
+		Where("e.id IN (?)", bun.In(req.ExperimentIds))
 
 	query, err = expauth.AuthZProvider.Get().
-		FilterExperimentsUpdateQuery(ctx, *curUser, query,
+		FilterExperimentsQuery(ctx, *curUser, nil, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &apiv1.ArchiveExperimentsResponse{}
-	_, err = query.Set("archived = true").
-		Returning("e.id").
-		Model(&resp.ExperimentIds).
-		Exec(ctx)
+	err = query.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return resp, err
+	results := []*apiv1.ExperimentResult{}
+	// included missing / no-permission
+
+	validIDs := []int32{}
+	for _, check := range expChecks {
+		if check.Archived {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.FailedPrecondition, "Experiment is already archived.").Error(),
+				Id:    check.Id,
+			})
+		} else if !check.State {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: status.Errorf(codes.FailedPrecondition, "Experiment is not in terminal state.").Error(),
+				Id:    check.Id,
+			})
+		} else {
+			validIDs = append(validIDs, check.Id)
+		}
+	}
+
+	if len(validIDs) > 0 {
+		acceptedIDs := []int32{}
+		_, err = db.Bun().NewUpdate().
+			ModelTableExpr("experiments as e").
+			Set("archived = true").
+			Where("id IN (?)", bun.In(validIDs)).
+			Returning("e.id").
+			Model(&acceptedIDs).
+			Exec(ctx)
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.ExperimentResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+	}
+
+	return &apiv1.ArchiveExperimentsResponse{Results: results}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(

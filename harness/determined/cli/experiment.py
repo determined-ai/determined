@@ -42,22 +42,14 @@ def patch_experiment(args: Namespace, patch_doc: Dict[str, Any]) -> None:
 
 @authentication.required
 def activate(args: Namespace) -> None:
-    body = bindings.v1ActivateExperimentsRequest(experimentIds=[args.experiment_id])
-    resp = bindings.post_ActivateExperiments(cli.setup_session(args), body=body)
-    if args.experiment_id in resp.experimentIds:
-        print(f"Activated experiment {args.experiment_id}")
-    else:
-        print("Error in activating")
+    bindings.post_ActivateExperiment(cli.setup_session(args), id=args.experiment_id)
+    print(f"Activated experiment {args.experiment_id}")
 
 
 @authentication.required
 def archive(args: Namespace) -> None:
-    body = bindings.v1ArchiveExperimentsRequest(experimentIds=[args.experiment_id])
-    resp = bindings.post_ArchiveExperiments(cli.setup_session(args), body=body)
-    if args.experiment_id in resp.experimentIds:
-        print(f"Archived experiment {args.experiment_id}")
-    else:
-        print("Error in archiving")
+    bindings.post_ArchiveExperiment(cli.setup_session(args), id=args.experiment_id)
+    print(f"Archived experiment {args.experiment_id}")
 
 
 @authentication.required
@@ -781,12 +773,8 @@ def list_trials(args: Namespace) -> None:
 
 @authentication.required
 def pause(args: Namespace) -> None:
-    body = bindings.v1PauseExperimentsRequest(experimentIds=[args.experiment_id])
-    resp = bindings.post_PauseExperiments(cli.setup_session(args), body=body)
-    if args.experiment_id in resp.experimentIds:
-        print(f"Paused experiment {args.experiment_id}")
-    else:
-        print("Error in pausing")
+    bindings.post_PauseExperiment(cli.setup_session(args), id=args.experiment_id)
+    print(f"Paused experiment {args.experiment_id}")
 
 
 @authentication.required
