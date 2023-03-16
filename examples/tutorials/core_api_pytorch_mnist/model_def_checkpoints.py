@@ -4,7 +4,8 @@
 from __future__ import print_function
 
 import argparse
-
+# NEW: import pathlib for opening checkpoint directory
+import pathlib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -97,11 +98,22 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     )
 
 
-# NEW: Define load_state function for restarting model training from existing checkpoint.
-def load_state(checkpoint_directory):
+# NEW: Define load_state function for restarting model training from existing checkpoint. Returns (.pt, int).
+def load_state(checkpoint_directory, info):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
-    with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-        return torch.load(f)
+
+    with checkpoint_directory.joinpath("state").open("r") as f:
+        epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+        
+    # NEW: If the saved trial ID is the same as our current trial ID, we are resuming the trial, so we should return the model weights 
+    # and the number of epochs already completed to resume from.
+    if ckpt_trial_id == info.trial.trial_id:
+        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
+            return torch.load(saved_model), epochs_completed
+    else:
+        # This is a new trial; load the model weight but return the number of epochs completed as 0.
+        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
+            return torch.load(saved_model), 0
 
 
 def main(core_context):
@@ -166,7 +178,9 @@ def main(core_context):
     latest_checkpoint = info.latest_checkpoint
     if latest_checkpoint is not None:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            model = load_state(path)
+            model, epochs_completed = load_state(path, info)
+    else:
+        epochs_completed = 0
 
     torch.manual_seed(args.seed)
 
@@ -196,7 +210,9 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
+
+    # NEW: Resume training from epochs_completed. This is useful in the case of pausing and resuming an experiment.
+    for epoch in range(epochs_completed, args.epochs + 1):
 
         steps_completed = epoch * len(train_loader)
 
@@ -208,8 +224,12 @@ def main(core_context):
         # NEW: Save checkpoint.
         checkpoint_metadata_dict = {"steps_completed": steps_completed}
 
+        # NEW: Here we are saving multiple files to our checkpoint directory, a model weights file as well as a file that includes other 
+        # information about the checkpoint, in this case, epochs completed and the trial ID. 
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
             torch.save(model.state_dict(), path / "checkpoint.pt")
+            with path.joinpath("state").open("w") as f:
+                f.write(f"{epoch},{info.trial.trial_id}")
 
         # NEW: Detect when the experiment is paused by the WebUI.
         if core_context.preempt.should_preempt():

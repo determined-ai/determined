@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import argparse
 
+import pathlib
 # NEW: Import torch distributed libraries.
 import torch
 import torch.distributed as dist
@@ -112,10 +113,16 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
     return test_loss
 
 
-def load_state(checkpoint_directory):
+def load_state(checkpoint_directory, info):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
-    with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-        return torch.load(f)
+    with checkpoint_directory.joinpath("state").open("r") as f:
+        epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+    if ckpt_trial_id == info.trial.trial_id:
+        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
+            return torch.load(saved_model), epochs_completed
+    else:
+        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as saved_model:
+            return torch.load(saved_model), 0
 
 
 def main(core_context):
@@ -179,7 +186,9 @@ def main(core_context):
     latest_checkpoint = info.latest_checkpoint
     if latest_checkpoint is not None:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            model = load_state(path)
+            model, epochs_completed = load_state(path, info)
+    else:
+        epochs_completed = 0
 
     torch.manual_seed(args.seed)
 
@@ -234,7 +243,7 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    starting_epoch = 0
+    starting_epoch = epochs_completed
     epoch = starting_epoch
     last_checkpoint_batch = None
 
@@ -260,6 +269,8 @@ def main(core_context):
                     storage_id,
                 ):
                     torch.save(model.state_dict(), path / "checkpoint.pt")
+                    with path.joinpath("state").open("w") as f:
+                        f.write(f"{epoch},{info.trial.trial_id}")
 
             if core_context.preempt.should_preempt():
                 return
