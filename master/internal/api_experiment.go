@@ -239,8 +239,8 @@ func (a *apiServer) editableExperimentIds(ctx context.Context, requestedIds []in
 		return nil, err
 	}
 
-	query.Scan(ctx)
-	return expIDs, nil
+	err = query.Scan(ctx)
+	return expIDs, err
 }
 
 func (a *apiServer) nonTerminalExperiments(expIDs []int32,
@@ -1044,7 +1044,7 @@ func (a *apiServer) ArchiveExperiment(
 
 type archiveExperimentOKResult struct {
 	Archived bool
-	Id       int32
+	ID       int32
 	State    bool
 }
 
@@ -1086,18 +1086,19 @@ func (a *apiServer) ArchiveExperiments(
 
 	validIDs := []int32{}
 	for _, check := range expChecks {
-		if check.Archived {
+		switch {
+		case check.Archived:
 			results = append(results, &apiv1.ExperimentResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is already archived.").Error(),
-				Id:    check.Id,
+				Id:    check.ID,
 			})
-		} else if !check.State {
+		case !check.State:
 			results = append(results, &apiv1.ExperimentResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is not in terminal state.").Error(),
-				Id:    check.Id,
+				Id:    check.ID,
 			})
-		} else {
-			validIDs = append(validIDs, check.Id)
+		default:
+			validIDs = append(validIDs, check.ID)
 		}
 	}
 
