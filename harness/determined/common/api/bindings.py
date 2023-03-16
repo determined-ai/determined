@@ -1306,20 +1306,20 @@ class v1CancelExperimentsResponse:
     def __init__(
         self,
         *,
-        experimentIds: "typing.Sequence[int]",
+        results: "typing.Sequence[v1ExperimentResult]",
     ):
-        self.experimentIds = experimentIds
+        self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CancelExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": obj["experimentIds"],
+            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": self.experimentIds,
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -5408,20 +5408,20 @@ class v1KillExperimentsResponse:
     def __init__(
         self,
         *,
-        experimentIds: "typing.Sequence[int]",
+        results: "typing.Sequence[v1ExperimentResult]",
     ):
-        self.experimentIds = experimentIds
+        self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1KillExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": obj["experimentIds"],
+            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": self.experimentIds,
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -6472,20 +6472,20 @@ class v1MoveExperimentsResponse:
     def __init__(
         self,
         *,
-        experimentIds: "typing.Sequence[int]",
+        results: "typing.Sequence[v1ExperimentResult]",
     ):
-        self.experimentIds = experimentIds
+        self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": obj["experimentIds"],
+            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": self.experimentIds,
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -11643,20 +11643,20 @@ class v1UnarchiveExperimentsResponse:
     def __init__(
         self,
         *,
-        experimentIds: "typing.Sequence[int]",
+        results: "typing.Sequence[v1ExperimentResult]",
     ):
-        self.experimentIds = experimentIds
+        self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": obj["experimentIds"],
+            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "experimentIds": self.experimentIds,
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 

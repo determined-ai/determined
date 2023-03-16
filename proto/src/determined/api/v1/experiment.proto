@@ -280,11 +280,11 @@ message CancelExperimentsRequest {
 // Response to CancelExperimentsRequest.
 message CancelExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were successfully cancelled, by ID.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Kill an experiment.
@@ -307,11 +307,11 @@ message KillExperimentsRequest {
 // Response to KillExperimentsRequest.
 message KillExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were successfully killed, by ID.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Archive an experiment.
@@ -361,11 +361,11 @@ message UnarchiveExperimentsRequest {
 // Response to UnarchiveExperimentsRequest.
 message UnarchiveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // Experiments which were successfully unarchived, by ID.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Patch an experiment by providing the updated attributes. Only description,
@@ -766,11 +766,11 @@ message MoveExperimentsRequest {
 // Response to MoveExperimentsRequest.
 message MoveExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment_ids" ] }
+    json_schema: { required: [ "results" ] }
   };
 
-  // The ids of experiments which successfully moved.
-  repeated int32 experiment_ids = 1;
+  // Details on success or error for each experiment.
+  repeated ExperimentResult results = 1;
 }
 
 // Request to get model definition file tree of an experiment.
