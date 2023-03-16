@@ -1,0 +1,21 @@
+name: cifar10_pytorch_high_priority
+resources:
+  slots_per_trial: 8
+  resource_pool: defq_GPU_hipri
+hyperparameters:
+  learning_rate: 1.0e-4
+  learning_rate_decay: 1.0e-6
+  layer1_dropout: 0.25
+  layer2_dropout: 0.25
+  layer3_dropout: 0.5
+  global_batch_size: 32
+records_per_epoch: 50000
+searcher:
+  name: single
+  metric: validation_error
+  max_length:
+    epochs: 4
+entrypoint: model_def:CIFARTrial
+min_validation_period:
+  epochs: 1
+max_restarts: 0
