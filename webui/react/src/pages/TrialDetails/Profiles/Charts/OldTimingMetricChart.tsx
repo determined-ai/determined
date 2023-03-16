@@ -17,10 +17,7 @@ export const TimingMetricChart: React.FC<OldChartProps> = ({ trial, getOptionsFo
 
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">
-      <UPlotChart
-        data={timingMetrics.data}
-        options={options}
-      />
+      <UPlotChart data={timingMetrics.data} options={options} />
     </Section>
   );
 };
