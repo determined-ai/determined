@@ -4,7 +4,6 @@
 from __future__ import print_function
 
 import argparse
-
 # NEW: import pathlib for opening checkpoint directory
 import pathlib
 
@@ -104,15 +103,19 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
 # Also update load_state header to take trial info object as an argument.
 def load_state(checkpoint_directory, trial_id):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
+
+    with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
+        model = torch.load(f)
+
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
-    if ckpt_trial_id == trial_id:
-        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-            return torch.load(f), epochs_completed
-    else:
-        # This is a new trial; load the model weight but return the number of epochs completed as 0.
-        with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-            return torch.load(f), 0
+
+    # If trial ID does not match our current trial ID, we'll ignore epochs
+    # completed and start training from epoch_idx = 0
+    if ckpt_trial_id != trial_id:
+        epochs_completed = 0
+
+    return model, epochs_completed
 
 
 def main(core_context):
@@ -211,7 +214,7 @@ def main(core_context):
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
     # NEW: Resume training from epochs_completed. This is useful in the case of pausing and resuming an experiment.
-    for epoch_idx in range(epochs_completed, args.epochs + 1):
+    for epoch_idx in range(epochs_completed, args.epochs):
 
         train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
         epochs_completed = epoch_idx + 1
