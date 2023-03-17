@@ -38,6 +38,7 @@ import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { useModalComponent, useModalParams } from 'modal/useModality';
 import { paths } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -51,7 +52,6 @@ import {
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 
-import { useModalComponent, useModalParams } from 'modal/useModality';
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';

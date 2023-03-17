@@ -6,12 +6,15 @@ import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { ProjectModal } from 'modal/ProjectEditModal';
+import { useModalComponent } from 'modal/useModality';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
@@ -29,9 +32,6 @@ import ExperimentList from './ExperimentList';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
-import Button from 'components/kit/Button';
-import { useModalComponent } from 'modal/useModality';
-import { ProjectModal } from 'modal/ProjectEditModal';
 
 type Params = {
   projectId: string;
@@ -199,9 +199,9 @@ const ProjectDetails: React.FC = () => {
       <Button onClick={ProjectEditModal.open}>Modify</Button>
       <div style={{ height: '100%', padding: 16 }}>
         <ProjectEditModal.Component
-          projectId={project.id}
           initialDescription={project.description ?? ''}
           initialName={project.name}
+          projectId={project.id}
           onComplete={fetchProject}
         />
         <DynamicTabs

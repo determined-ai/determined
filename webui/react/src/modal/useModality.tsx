@@ -16,7 +16,6 @@ import Link from 'components/Link';
 import Icon from 'shared/components/Icon';
 
 import css from './useModality.module.scss';
-import { useNavigate } from 'react-router-dom';
 
 interface LinkParams {
   text: string;
@@ -52,11 +51,11 @@ interface ModalContext {
 
 const ModalContext = createContext<ModalContext | null>(null);
 
-export function useModalParams(params: UseModalParams) {
+export function useModalParams(params: UseModalParams): void {
   const modalContext = useContext(ModalContext);
   if (modalContext === null) throw new Error('tried to use modal context outside of modal');
   const { setParams } = modalContext;
-  useEffect(() => setParams(params), [params]);
+  useEffect(() => setParams(params), [setParams, params]);
 }
 
 interface ModalContainerProps {
@@ -69,8 +68,6 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
   const [params, setParams] = useState<UseModalParams | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const navigate = useNavigate();
-
   const close = useCallback(() => setModalIsOpen(false), [setModalIsOpen]);
 
   const handleOk = useCallback(async () => {
@@ -79,7 +76,7 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
     setIsSubmitting(false);
     setModalIsOpen(false);
     await params?.submit?.onComplete?.();
-  }, [params?.submit]);
+  }, [params?.submit, setModalIsOpen]);
 
   if (params === null) {
     return (
@@ -91,17 +88,16 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
 
   const { titleText, cancelText, submit, danger, icon, footerLink, headerLink, size } = params;
   return (
-    <ModalContext.Provider value={{ params, setParams, modalIsOpen }}>
+    <ModalContext.Provider value={{ modalIsOpen, params, setParams }}>
       <AntdModal
         cancelText={params.cancelText}
         footer={
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>
               {footerLink && (
-                <Link popout path={footerLink.url}>
+                <Link path={footerLink.url} popout>
                   {footerLink.text}
                 </Link>
-                // <Link onClick={() => navigate(footerLink.url)}>{footerLink.text}</Link>
               )}
             </div>
             <div>
@@ -109,10 +105,10 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
                 {cancelText}
               </Button>
               <Button
-                loading={isSubmitting}
                 danger={danger}
                 disabled={!!submit?.disabled}
                 key="submit"
+                loading={isSubmitting}
                 type="primary"
                 onClick={handleOk}>
                 {submit.text}
@@ -137,14 +133,11 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
               </div>
             ) : null}
             <div style={{ paddingRight: 4 }}>{titleText}</div>
-            {
-              headerLink && (
-                <Link popout path={headerLink.url}>
-                  {headerLink.text}
-                </Link>
-              )
-              // <Link onClick={() => navigate(headerLink.url)}>{headerLink.text}</Link>
-            }
+            {headerLink && (
+              <Link path={headerLink.url} popout>
+                {headerLink.text}
+              </Link>
+            )}
           </div>
         }
         onCancel={close}
@@ -156,7 +149,7 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
 }
 export function useModalComponent<ModalProps extends JSX.IntrinsicAttributes>(
   ModalBodyComponent: React.FC<ModalProps>,
-) {
+): { Component: React.FC<ModalProps>; open: () => void } {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const handleOpen = useCallback(() => setModalIsOpen(true), []);
 
@@ -170,5 +163,5 @@ export function useModalComponent<ModalProps extends JSX.IntrinsicAttributes>(
     },
     [ModalBodyComponent, modalIsOpen],
   );
-  return { open: handleOpen, Component };
+  return { Component, open: handleOpen };
 }

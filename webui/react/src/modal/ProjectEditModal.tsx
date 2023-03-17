@@ -1,11 +1,12 @@
 import { Form } from 'antd';
+import { useForm, useWatch } from 'antd/lib/form/Form';
 import React, { useCallback, useMemo } from 'react';
 
-import { useForm, useWatch } from 'antd/lib/form/Form';
 import Input from 'components/kit/Input';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
+
 import { useModalParams } from './useModality';
 import css from './useModality.module.scss';
 
@@ -47,7 +48,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         type: ErrorType.Server,
       });
     }
-  }, [form]);
+  }, [form, projectId]);
 
   const params = useMemo(
     () => ({
@@ -61,7 +62,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
       },
       titleText: 'Edit Project',
     }),
-    [handleSubmit, submitDisabled],
+    [handleSubmit, submitDisabled, onComplete],
   );
 
   useModalParams(params);
