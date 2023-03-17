@@ -4,8 +4,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { paths } from 'routes/utils';
 import {
   assignRolesToGroup,
   createGroup,
@@ -29,7 +31,7 @@ export const MODAL_HEADER_LABEL_EDIT = 'Edit Group';
 export const GROUP_NAME_NAME = 'name';
 export const GROUP_NAME_LABEL = 'Group Name';
 export const GROUP_ROLE_NAME = 'roles';
-export const GROUP_ROLE_LABEL = 'Roles';
+export const GROUP_ROLE_LABEL = 'Global Roles';
 export const USER_ADD_NAME = 'addUsers';
 export const USER_ADD_LABEL = 'Add Users';
 export const USER_REMOVE_LABEL = 'Remove Users';
@@ -132,10 +134,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               {Loadable.isLoaded(roles) ? (
                 <>
                   {roles.data.map((r) => (
-                    <Select.Option
-                      disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
-                      key={r.id}
-                      value={r.id}>
+                    <Select.Option key={r.id} value={r.id}>
                       {r.name}
                     </Select.Option>
                   ))}
@@ -144,7 +143,10 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
-            Note that roles inherited from workspaces cannot be removed here.
+            Groups may have additional inherited workspace roles not reflected here. &nbsp;
+            <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+              Learn more
+            </Link>
           </Typography.Text>
         </>
       )}
@@ -173,7 +175,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
     if (group?.group.groupId && rbacEnabled) {
       try {
         const roles = await getGroupRoles({ groupId: group.group.groupId });
-        setGroupRoles(roles);
+        setGroupRoles(roles.filter((r) => r.scopeCluster));
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this group's roles." });
       }

@@ -6,7 +6,6 @@ import pathlib
 import pickle
 import random
 import time
-import uuid
 import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
@@ -321,60 +320,19 @@ class DeepSpeedTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
-                    storage_id = ""
-                    # The checkpointing api would have been sufficient if the base_path for the
-                    # storage manager is guaranteed to be a shared file system.
-                    #
-                    # Since we can't guarantee that, we use the base storage_manager instead for
-                    # more flexibility.  Since checkpoints can be distributed across multiple
-                    # nodes, we will use the same uuid and separate path but each node
-                    # will upload its checkpoints to the storage manager individually.
-                    storage_manager = self.context._core.checkpoint._storage_manager
-                    if self.is_chief:
-                        metadata = {
-                            "steps_completed": self.steps_completed,
-                            "framework": f"torch-{torch.__version__}",
-                            "format": "pickle",
-                        }
-                        storage_id = str(uuid.uuid4())
-                        with storage_manager.store_path(storage_id) as path:
-                            # Broadcast checkpoint path to all ranks.
-                            self.context.distributed.broadcast((storage_id, path))
-                            self._save(path)
-                            # If the storage manager is a sharedfs, then the checkpoint directory
-                            # will already contain all the files.  Otherwise, checkpoint files are
-                            # saved to a local directory before being uploaded to cloud storage, so
-                            # we'll need to gather all the files across nodes before reporting the
-                            # checkpoint.
-                            resources = storage.StorageManager._list_directory(path)
-                            if isinstance(storage_manager, storage.SharedFSStorageManager):
-                                all_resources = [resources]
-                            else:
-                                # Gather resources across nodes.
-                                all_resources = self.context.distributed.gather(resources)
-                        resources = {k: v for d in all_resources for k, v in d.items()}
-
-                        self.context._core.checkpoint._report_checkpoint(
-                            storage_id, resources, metadata
-                        )
-                        response = {"uuid": storage_id}
-                    else:
-                        storage_id, path = self.context.distributed.broadcast(None)
+                    metadata = {
+                        "steps_completed": self.steps_completed,
+                        "framework": f"torch-{torch.__version__}",
+                        "format": "pickle",
+                    }
+                    with self.context._core.checkpoint.store_path(metadata, shard=True) as (
+                        path,
+                        storage_id,
+                    ):
                         self._save(path)
-                        if not isinstance(storage_manager, storage.SharedFSStorageManager):
-                            # Gather resources across nodes.
-                            if self.context.distributed.local_rank == 0:
-                                resources = storage.StorageManager._list_directory(path)
-                            else:
-                                resources = {}
-                            _ = self.context.distributed.gather(resources)
-                        if self.context.distributed.local_rank == 0:
-                            storage_manager.post_store_path(str(path), storage_id)
-                        response = {}
-                    storage_id = self.context.distributed.broadcast(storage_id)
+                    response = {"uuid": storage_id}
                     for callback in self.callbacks.values():
                         callback.on_checkpoint_upload_end(uuid=storage_id)
-
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
 

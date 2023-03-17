@@ -174,7 +174,7 @@ export const generateTestExperimentData = (): {
       searcher: {
         bracket_rungs: [],
         divisor: 4,
-        max_concurrent_trials: 0,
+        max_concurrent_trials: 16,
         max_length: { batches: 937 },
         max_rungs: 5,
         max_trials: 16,

@@ -3054,6 +3054,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     featureSwitches?: Array<string>;
+    /**
+     * Feature flag for user management.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    userManagementEnabled?: boolean;
 }
 /**
  * Response to GetMeRequest.

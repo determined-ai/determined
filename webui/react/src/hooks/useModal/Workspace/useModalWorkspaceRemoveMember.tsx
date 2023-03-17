@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { UserOrGroup } from 'types';
+import { UserOrGroupWithRoleInfo } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { isUser } from 'utils/user';
+import { isUserWithRoleInfo } from 'utils/user';
 
 import css from './useModalWorkspaceRemoveMember.module.scss';
 
@@ -16,7 +16,7 @@ interface Props {
   onClose?: () => void;
   roleIds: number[];
   scopeWorkspaceId: number;
-  userOrGroup: UserOrGroup;
+  userOrGroup: UserOrGroupWithRoleInfo;
   userOrGroupId: number;
 }
 
@@ -45,7 +45,7 @@ const useModalWorkspaceRemoveMember = ({
   const handleOk = useCallback(async () => {
     try {
       setIsDeleting(true);
-      isUser(userOrGroup)
+      isUserWithRoleInfo(userOrGroup)
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
       onClose?.();

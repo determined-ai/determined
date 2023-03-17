@@ -449,7 +449,7 @@ const CodeViewer: React.FC<Props> = ({
 
   return (
     <section className={classes.join(' ')}>
-      <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
+      <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="file-tree">
         <Spinner spinning={isFetchingTree}>
           <DirectoryTree
             className={css.fileTree}

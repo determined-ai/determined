@@ -4,9 +4,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { paths } from 'routes/utils';
 import {
   assignRolesToUser,
   getUserRoles,
@@ -36,7 +38,7 @@ const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
-const ROLE_LABEL = 'Roles';
+const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 
@@ -109,13 +111,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               {Loadable.isLoaded(knownRoles) ? (
                 <>
                   {knownRoles.data.map((r: UserRole) => (
-                    <Select.Option
-                      disabled={
-                        roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
-                        roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
-                      }
-                      key={r.id}
-                      value={r.id}>
+                    <Select.Option key={r.id} value={r.id}>
                       {r.name}
                     </Select.Option>
                   ))}
@@ -124,7 +120,10 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
-            Note that roles inherited from user groups or workspaces cannot be removed here.
+            Users may have additional inherited global or workspace roles not reflected here. &nbsp;
+            <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+              Learn more
+            </Link>
           </Typography.Text>
         </>
       )}
@@ -160,7 +159,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
     if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
       try {
         const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles);
+        setUserRoles(roles?.filter((r) => r.fromUser));
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }

@@ -25,7 +25,7 @@ const useValueMemoizedObservable = <T>(o: Observable<T>): T => {
     if (o.get() !== value) {
       forceRender({});
     }
-    o.subscribe((value, prevValue) => {
+    return o.subscribe((value, prevValue) => {
       if (!isEqual(value, prevValue)) {
         forceRender({});
       }

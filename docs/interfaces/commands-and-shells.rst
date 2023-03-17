@@ -4,10 +4,10 @@
  Commands and Shells
 #####################
 
-In addition to structured model training workloads, which are handled using :ref:`experiments
-<experiments>`, Determined also supports free-form tasks using *commands* and *shells*. Commands and
-shells enable you to use a Determined cluster and cluster GPUs without needing to write code that
-conforms to the trial APIs.
+In addition to structured model training workloads handled using :ref:`experiments <experiments>`,
+Determined also supports free-form tasks using *commands* and *shells*. Commands and shells enable
+you to use a Determined cluster and cluster GPUs without writing code that conforms to the trial
+APIs.
 
 Commands execute a user-specified program on the cluster. Commands are useful for running existing
 code in batch mode.
@@ -31,8 +31,8 @@ container:
 
    det cmd run nvidia-smi
 
-More complex commands including shell constructs can also be run provided they are quoted to prevent
-interpretation by the local shell:
+You can also run more complex commands including shell constructs provided they are quoted to
+prevent interpretation by the local shell:
 
 .. code::
 
@@ -56,18 +56,18 @@ Installation
 The CLI is distributed as a Python wheel package. Each user should install a copy of the CLI on
 their local development machine.
 
-The CLI requires Python >= 3.7. It is recommended that you install the CLI into a `virtualenv
-<https://virtualenv.pypa.io/en/latest/>`__, although this is optional. To install the CLI into a
-virtualenv, activate the virtualenv before entering the following command.
+The CLI requires Python >= 3.7. For best results, install the CLI into a `virtualenv
+<https://virtualenv.pypa.io/en/latest/>`__. To install the CLI into a virtualenv, activate the
+virtualenv before installing the CLI using the pip utility.
 
-Installed the CLI using the ``pip`` utility:
+Install the CLI using the ``pip`` utility:
 
 .. code::
 
    pip install determined
 
-After the CLI has been installed, it should be configured to connect to the Determined master at the
-appropriate IP address. This is done by setting the ``DET_MASTER`` environment variable:
+After installing the CLI, configure it to connect to the Determined master at the appropriate IP
+address. To do this, set the ``DET_MASTER`` environment variable:
 
 .. code::
 
@@ -86,7 +86,7 @@ CLI subcommands usually follow a ``<noun> <verb>`` form, similar to the paradigm
 <http://www.policyrouting.org/iproute2.doc.html>`__. Certain abbreviations are supported, and a
 missing verb is the same as ``list``, when possible.
 
-For example, the different commands within each of the blocks below all do the same thing:
+For example, the different commands within each block below all do the same thing:
 
 .. code:: bash
 

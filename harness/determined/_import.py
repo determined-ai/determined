@@ -94,7 +94,7 @@ def import_from_path(path: os.PathLike) -> Iterator:
 
     Without ``import_from_path``, the above code snippet would hit issues where ``model_def`` had
     already been imported so the second ``import`` would have been a noop and both ``new_model_def``
-    and ``old_model_def` would represent the same underlying module.
+    and ``old_model_def`` would represent the same underlying module.
     """
 
     global _in_import_from_path

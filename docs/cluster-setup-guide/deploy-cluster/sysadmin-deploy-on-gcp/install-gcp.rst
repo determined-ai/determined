@@ -150,7 +150,7 @@ Optional Arguments:
          selected ``region`` and ``zone`` by referring to the `GPUs on Compute Engine
          <https://cloud.google.com/compute/docs/gpus>`__ page.
 
-      -  nvidia-tesla-k80
+      -  nvidia-tesla-t4
 
    -  -  ``--gpu-num``
 
@@ -329,7 +329,7 @@ Example workflow:
         provider:
           instance_type:
              machine_type: n1-standard-4
-             gpu_type: nvidia-tesla-k80
+             gpu_type: nvidia-tesla-t4
              gpu_num: 1
              preemptible: false
        {{- toYaml .resource_pools.gcp | nindent 6}}

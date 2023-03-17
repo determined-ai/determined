@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';

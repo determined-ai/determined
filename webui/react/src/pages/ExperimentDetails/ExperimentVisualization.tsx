@@ -36,7 +36,6 @@ import {
 
 import { hpImportanceSorter } from '../../utils/experiment';
 
-import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
   ViewType,
@@ -46,6 +45,7 @@ import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
+import css from './ExperimentVisualization.module.scss';
 
 export const ExperimentVisualizationType = {
   HpHeatMap: 'hp-heat-map',

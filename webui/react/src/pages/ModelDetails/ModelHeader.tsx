@@ -18,10 +18,11 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import usersStore from 'stores/users';
-import { DetailedUser, ModelItem, Workspace } from 'types';
+import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -46,10 +47,7 @@ const ModelHeader: React.FC<Props> = ({
   onUpdateTags,
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
@@ -60,14 +58,22 @@ const ModelHeader: React.FC<Props> = ({
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === model.userId);
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === model.userId);
+
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {`${getDisplayName(user)} on
-          ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {`${getDisplayName(user)} on
+                ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',

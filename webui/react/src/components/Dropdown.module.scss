@@ -1,5 +1,3 @@
-$transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
-
 .base {
   position: relative;
 
@@ -9,7 +7,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   .content {
     opacity: 0;
     position: absolute;
-    transition: opacity $transition-props;
+    transition: opacity 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     visibility: hidden;
     z-index: 1;
   }

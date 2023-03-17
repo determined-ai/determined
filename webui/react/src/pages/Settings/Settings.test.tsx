@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -38,9 +37,9 @@ const setup = () => {
   return render(
     <UIProvider>
       <HelmetProvider>
-        <HistoryRouter history={history}>
+        <BrowserRouter>
           <Container />
-        </HistoryRouter>
+        </BrowserRouter>
       </HelmetProvider>
     </UIProvider>,
   );

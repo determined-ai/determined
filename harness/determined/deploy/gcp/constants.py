@@ -5,7 +5,7 @@ class defaults:
     DB_PASSWORD = "postgres"
     ENVIRONMENT_IMAGE = "det-environments-0e4beb5"
     GPU_NUM = 8
-    GPU_TYPE = "nvidia-tesla-k80"
+    GPU_TYPE = "nvidia-tesla-t4"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
     MAX_AUX_CONTAINERS_PER_AGENT = 100
     MAX_IDLE_AGENT_PERIOD = "10m"

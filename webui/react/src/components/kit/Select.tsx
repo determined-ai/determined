@@ -21,6 +21,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
   id?: string;
   label?: string;
+  loading?: boolean;
   mode?: 'multiple' | 'tags';
   onBlur?: () => void;
   onChange?: (value: T, option: Options) => void;
@@ -67,6 +68,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     filterSort,
     id,
     label,
+    loading,
     mode,
     onChange,
     onBlur,
@@ -124,6 +126,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
         filterSort={filterSort}
         id={id}
+        loading={loading}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
         mode={mode}
