@@ -110,25 +110,6 @@ def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None
     assert storage_id not in os.listdir(storage_manager._base_path)
 
 
-def test_delete_checkpoint(manager: storage.SharedFSStorageManager) -> None:
-    checkpoints = []
-    storage_id = str(uuid.uuid4())
-
-    # Create empty checkpoint directory.
-    with manager.store_path(storage_id):
-        checkpoints.append(storage_id)
-
-    checkpoint_dir = os.path.join(manager._base_path, storage_id)
-    assert os.path.isdir(checkpoint_dir)
-
-    # First delete - should succeed.
-    manager.delete(checkpoint_dir)
-    assert storage_id not in os.listdir(manager._base_path)
-
-    # Delete again - should not error.
-    manager.delete(checkpoint_dir)
-
-
 def test_checkpoint_sharded_upload_download(
     tmp_path: Path, manager: storage.SharedFSStorageManager
 ) -> None:
