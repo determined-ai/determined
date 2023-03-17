@@ -43,7 +43,118 @@ func makeMetrics() *structpb.Struct {
 	}
 }
 
-func reportMetrics(ctx context.Context, api *apiServer, trialID int32) error {
+func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) error {
+	trainingbBatchMetrics := []*structpb.Struct{}
+	validationBatchMetrics := []*structpb.Struct{}
+
+	N := 5
+	losses := []float64{}
+	for i := 0; i < N; i++ {
+		losses = append(losses, rand.Float64())
+	}
+
+	type Factor struct {
+		a, b float64
+	}
+
+	factors := []Factor{}
+	for i := 0; i < N; i++ {
+		factors = append(factors, Factor{rand.Float64(), rand.Float64()})
+	}
+
+	batches := 500
+
+	for b := 0; b < batches; b++ {
+		for i := 0; i < N; i++ {
+			val := float64(1)
+			if rand.Float64() <= factors[i].b {
+				val = float64(-1)
+			}
+			losses[i] = losses[i] * (1 - (val)*rand.Float64()*factors[i].a)
+
+		}
+
+		fmt.Println("batch: %v", b)
+		trainingbBatchMetrics = append(trainingbBatchMetrics, &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"loss": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[0], //nolint: gosec
+					},
+				},
+				"loss2": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[1], //nolint: gosec
+					},
+				},
+				"loss3": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[2], //nolint: gosec
+					},
+				},
+			},
+		})
+
+		trainingMetrics := trialv1.TrialMetrics{
+			TrialId:        trialID,
+			StepsCompleted: int32(b + 1),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics:   makeMetrics(),
+				BatchMetrics: trainingbBatchMetrics,
+			},
+		}
+
+		_, err := api.ReportTrialTrainingMetrics(ctx,
+			&apiv1.ReportTrialTrainingMetricsRequest{
+				TrainingMetrics: &trainingMetrics,
+			})
+		if err != nil {
+			return err
+		}
+
+		validationBatchMetrics = append(validationBatchMetrics, &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"loss": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[0], //nolint: gosec
+					},
+				},
+				"loss2": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[3], //nolint: gosec
+					},
+				},
+				"loss3": {
+					Kind: &structpb.Value_NumberValue{
+						NumberValue: losses[4], //nolint: gosec
+					},
+				},
+			},
+		})
+
+		validationMetrics := trialv1.TrialMetrics{
+			TrialId:        trialID,
+			StepsCompleted: int32(b + 1),
+			Metrics: &commonv1.Metrics{
+				AvgMetrics:   makeMetrics(),
+				BatchMetrics: validationBatchMetrics,
+			},
+		}
+		_, err = api.ReportTrialValidationMetrics(ctx,
+			&apiv1.ReportTrialValidationMetricsRequest{
+				ValidationMetrics: &validationMetrics,
+			})
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) error {
 	trainingbBatchMetrics := []*structpb.Struct{}
 	const stepSize = 500
 	for j := 0; j < stepSize; j++ {
@@ -203,5 +314,5 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 		return err
 	}
 
-	return reportMetrics(ctx, api, int32(tr.ID)) // single searcher so there's only one trial
+	return reportNonTrivialMetrics(ctx, api, int32(tr.ID)) // single searcher so there's only one trial
 }
