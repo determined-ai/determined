@@ -14,7 +14,7 @@ var (
 )
 
 func TestPortportRegistry(t *testing.T) {
-	NewPortRegistry()
+	InitPortRegistry()
 	port, err := GetPort(dtrainSSHPortBase)
 	require.NoError(t, err)
 	require.Equal(t, 12350, port)

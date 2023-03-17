@@ -60,11 +60,10 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	spec.ExtraEnvVars[tasks.DTrainSSHPort] = strconv.Itoa(rri.Ports[tasks.DTrainSSHPort])
-	spec.ExtraEnvVars[tasks.InterTrainProcessCommPort1] = strconv.Itoa(rri.Ports[tasks.InterTrainProcessCommPort1]) //nolint:lll
-	spec.ExtraEnvVars[tasks.InterTrainProcessCommPort2] = strconv.Itoa(rri.Ports[tasks.InterTrainProcessCommPort2]) //nolint:lll
-	spec.ExtraEnvVars[tasks.C10DPort] = strconv.Itoa(rri.Ports[tasks.C10DPort])
-
+	for portName, port := range rri.Ports {
+		spec.Environment.RawPorts[portName] = port
+		spec.ExtraEnvVars[portName] = strconv.Itoa(port)
+	}
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{

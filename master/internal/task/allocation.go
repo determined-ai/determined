@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/rm/portregistry"
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -77,8 +77,9 @@ type (
 		// active all gather state
 		allGather *allGather
 
-		logCtx   detLogger.Context
-		restored bool
+		logCtx       detLogger.Context
+		restored     bool
+		restorePorts bool
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -221,11 +222,13 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		// then the ports have been added to the port registry successfully.
 		// This is to avoid the race condition of a failed restored
 		// allocation releasing another allocation's port(s).
-		if a.req.Restore == a.restored { // XNOR
-			portregistry.ReleasePort(a.model.Ports["dtrain_port"])
-			portregistry.ReleasePort(a.model.Ports["inter_train_process_comm_port1"])
-			portregistry.ReleasePort(a.model.Ports["inter_train_process_comm_port2"])
-			portregistry.ReleasePort(a.model.Ports["c10d_port"])
+		// a.restorePorts is set to true right after ports are restored.
+		// This variable ensures to release ports even if there's a failure after restoring ports.
+		// The a.req.Restore == a.restored  (XNOR) condition will be true even if it's a new allocation.
+		if a.req.Restore == a.restored || a.restorePorts { // XNOR
+			for _, port := range a.model.Ports {
+				portregistry.ReleasePort(port)
+			}
 		}
 		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
@@ -418,20 +421,6 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	}
 }
 
-func (a *Allocation) getPorts(spec tasks.TaskSpec, ctx *actor.Context) (map[string]int, error) {
-	ports := make(map[string]int)
-	for portName, base := range spec.ReqPortsBaseMap {
-		port, err := portregistry.GetPort(base)
-		if err != nil {
-			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
-		}
-		ports[portName] = port
-		ctx.Log().Debugf("%v port : %v", portName, port)
-	}
-
-	return ports, nil
-}
-
 // ResourcesAllocated handles receiving resources from the resource manager. Note: it makes a single
 // ask to the parent to build its task spec.. this is mostly a hack to defer lots of computationally
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
@@ -489,10 +478,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Restore {
-		portregistry.RestorePort(a.model.Ports["dtrain_port"])
-		portregistry.RestorePort(a.model.Ports["inter_train_process_comm_port1"])
-		portregistry.RestorePort(a.model.Ports["inter_train_process_comm_port2"])
-		portregistry.RestorePort(a.model.Ports["c10d_port"])
+		a.restorePorts = true
+		for _, port := range a.model.Ports {
+			portregistry.RestorePort(port)
+		}
 
 		if a.getModelState() == model.AllocationStateRunning {
 			// Restore proxies.
@@ -510,12 +499,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return errors.Wrap(err, "starting a new allocation session")
 		}
 
-		ports, err := a.getPorts(spec, ctx)
+		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests, ctx)
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
-
-		a.model.Ports = ports
 
 		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {
@@ -1215,4 +1202,18 @@ func coalesceString(x *string, fallback string) string {
 		return fallback
 	}
 	return *x
+}
+
+func (a *Allocation) getPorts(exposedPorts map[string]int, ctx *actor.Context) (map[string]int, error) {
+	ports := make(map[string]int)
+	for portName, base := range exposedPorts {
+		port, err := portregistry.GetPort(base)
+		if err != nil {
+			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
+		}
+		ports[portName] = port
+		ctx.Log().Debugf("%v port : %v", portName, port)
+	}
+
+	return ports, nil
 }

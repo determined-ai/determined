@@ -431,11 +431,11 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		stepsCompleted = latestCheckpoint.StepsCompleted
 	}
 
-	t.taskSpec.ReqPortsBaseMap = make(map[string]int)
-	t.taskSpec.ReqPortsBaseMap[tasks.DTrainSSHPort] = tasks.DtrainSSHPortBase
-	t.taskSpec.ReqPortsBaseMap[tasks.InterTrainProcessCommPort1] = tasks.InterTrainProcessCommPort1Base
-	t.taskSpec.ReqPortsBaseMap[tasks.InterTrainProcessCommPort2] = tasks.InterTrainProcessCommPort2Base
-	t.taskSpec.ReqPortsBaseMap[tasks.C10DPort] = tasks.C10DPortBase
+	t.taskSpec.UniqueExposedPortRequests = make(map[string]int)
+	t.taskSpec.UniqueExposedPortRequests[tasks.DTrainSSHPort] = tasks.DtrainSSHPortBase
+	t.taskSpec.UniqueExposedPortRequests[tasks.InterTrainProcessCommPort1] = tasks.InterTrainProcessCommPort1Base
+	t.taskSpec.UniqueExposedPortRequests[tasks.InterTrainProcessCommPort2] = tasks.InterTrainProcessCommPort2Base
+	t.taskSpec.UniqueExposedPortRequests[tasks.C10DPort] = tasks.C10DPortBase
 
 	return tasks.TrialSpec{
 		Base: *t.taskSpec,

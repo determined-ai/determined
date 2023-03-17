@@ -11,8 +11,8 @@ var (
 	portRegistryMutex sync.RWMutex
 )
 
-// NewPortRegistry initializes the global port registry tree.
-func NewPortRegistry() {
+// InitPortRegistry initializes the global port registry tree.
+func InitPortRegistry() {
 	// initialize tree with node -1 because tree cannot be empty.
 	portRegistryTree = rbt.NewWithIntComparator()
 }
@@ -26,16 +26,14 @@ func GetPort(portBase int) (int, error) {
 
 	node := portRegistryTree.GetNode(portBase)
 	if node == nil {
-		portRegistryTree.Put(portBase, 0) // we only care about key.
+		portRegistryTree.Put(portBase, struct{}{}) // we only care about key.
 		return portBase, nil
 	}
 
 	it := portRegistryTree.IteratorAt(node)
-
 	prevNum := portBase // we only care about ports here after the port base
 	for {
-		exists := it.Next()
-		if !exists {
+		if !it.Next() {
 			break
 		}
 		v := it.Key().(int)
@@ -46,7 +44,7 @@ func GetPort(portBase int) (int, error) {
 	}
 	port := prevNum + 1 // lowest skipped number in registry
 	// or next value after the last in the registry (and above port base).
-	portRegistryTree.Put(port, 0) // we only care about key.
+	portRegistryTree.Put(port, struct{}{}) // we only care about key.
 	return port, nil
 }
 
@@ -55,7 +53,7 @@ func RestorePort(port int) {
 	portRegistryMutex.Lock()
 	defer portRegistryMutex.Unlock()
 
-	portRegistryTree.Put(port, 0)
+	portRegistryTree.Put(port, struct{}{})
 }
 
 // ReleasePort releases port and removes it from the port registry tree.

@@ -104,7 +104,7 @@ type TaskSpec struct {
 	Project   string
 	Labels    []string
 	// Ports required by trial or commands and their respective base port values.
-	ReqPortsBaseMap map[string]int
+	UniqueExposedPortRequests map[string]int
 }
 
 // ResolveWorkDir resolves the work dir.
