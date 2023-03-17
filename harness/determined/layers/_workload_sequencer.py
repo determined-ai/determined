@@ -3,7 +3,7 @@ import sys
 from typing import Any, Generator, Optional, Tuple
 
 import determined as det
-from determined import core, tensorboard, workload
+from determined import core, util, workload
 from determined.common import check
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
@@ -280,7 +280,7 @@ class WorkloadSequencer(workload.Source):
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = metrics[searcher_metric_name]
-        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
+        if not util.is_numerical_scalar(searcher_metric):
             raise RuntimeError(
                 f"Searcher validation metric '{searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}"

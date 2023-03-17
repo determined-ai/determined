@@ -782,7 +782,7 @@ class _PyTorchTrialController:
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = val_metrics[self.searcher_metric_name]
-        if not is_numerical_scalar(searcher_metric):
+        if not util.is_numerical_scalar(searcher_metric):
             raise RuntimeError(
                 f"Searcher validation metric '{self.searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}."
