@@ -1444,7 +1444,7 @@ const FormSection: React.FC = () => {
           <hr />
           <br />
           <strong>
-            Form-specific
+            Form-specific{' '}
             <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
               InputNumber
             </Link>{' '}
