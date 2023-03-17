@@ -120,8 +120,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
       const xValSet = new Set<number>();
       series.forEach((serie) => {
-        console.log('cp series');
-        console.log(serie)
         serie.data[xAxis]?.forEach((pt) => {
           xValSet.add(pt[0]);
         });
