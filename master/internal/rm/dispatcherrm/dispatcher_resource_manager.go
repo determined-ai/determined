@@ -1020,9 +1020,8 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		return
 	}
 
-	//nolint:lll
-	ctx.Log().WithField("allocation-id", msg.AllocationID).WithField("description", msg.Spec.Description).Infof("DispatchID is %s",
-		dispatchID)
+	ctx.Log().WithField("allocation-id", msg.AllocationID).
+		WithField("description", msg.Spec.Description).Infof("DispatchID is %s", dispatchID)
 
 	m.addDispatchIDToAllocationMap(dispatchID, req.AllocationID)
 
@@ -1418,9 +1417,17 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			slotsPerAgent = int(slotsAvailable) / v.TotalNodes
 		}
 
+		description := wlmName + "-managed pool of resources"
+		// Due to viper.MergeConfigMap, map keys in configurations lose case. We match case
+		// insensitive here to handle partitions with upper case characters, at the cost of
+		// incorrectly matching when names are only equal when comparing case-insensitive.
+		if overrides, ok := m.rmConfig.PartitionOverrides[strings.ToLower(v.PartitionName)]; ok {
+			description = overrides.Description
+		}
+
 		pool := resourcepoolv1.ResourcePool{
 			Name:                         v.PartitionName,
-			Description:                  wlmName + "-managed pool of resources",
+			Description:                  description,
 			Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
 			NumAgents:                    int32(v.TotalNodes),
 			SlotType:                     slotType.Proto(),
