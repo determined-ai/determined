@@ -170,4 +170,5 @@ type DispatcherPartitionOverrideConfigs struct {
 	ProxyNetworkInterface       *string                            `json:"proxy_network_interface"`
 	SlotType                    *device.Type                       `json:"slot_type"`
 	TaskContainerDefaultsConfig *model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	Description                 string                             `json:"description"`
 }
