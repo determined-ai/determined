@@ -627,6 +627,7 @@ func getEnvVarsForLauncherManifest(
 	//     - DETECTRON2_DATASETS=/mnt/dtrain-fsx/detectron2
 	//     - MY_ENV_VAR1=abc
 	//     - MY_ENV_VAR2=xyz
+	//     - EMPTY
 	envVars := taskSpec.Environment.EnvironmentVariables().For(deviceType)
 
 	// Add each user-defined environment variable to the map.
@@ -636,7 +637,7 @@ func getEnvVarsForLauncherManifest(
 		if len(tokens) > 1 {
 			m[tokens[0]] = tokens[1]
 		} else {
-			return nil, fmt.Errorf("invalid user-defined environment variable '%s'", s)
+			m[tokens[0]] = ""
 		}
 	}
 
