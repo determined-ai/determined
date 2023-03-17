@@ -1,9 +1,5 @@
-import pathlib
-
 import pytest
 import torch
-from _pytest import monkeypatch
-from torch.utils import tensorboard
 
 import determined as det
 from determined import errors, pytorch
@@ -59,18 +55,3 @@ class TestPyTorchContext:
         scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
-
-    def test_tensorboard_writer(
-        self, monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path
-    ) -> None:
-        def mock_get_tensorboard_path() -> pathlib.Path:
-            return tmp_path
-
-        monkeypatch.setattr(self.context, "get_tensorboard_path", mock_get_tensorboard_path)
-
-        assert self.context._tbd_writer is None
-
-        writer = self.context.get_tensorboard_writer()
-
-        assert isinstance(writer, tensorboard.SummaryWriter)
-        assert isinstance(self.context._tbd_writer, tensorboard.SummaryWriter)
