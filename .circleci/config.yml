@@ -390,34 +390,24 @@ commands:
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
               i=0
-              while [[ $i -lt <<parameters.pip-install-retries>> ]]; do
-                if pip install --progress-bar off <<parameters.extras-requires>>
-                then
-                  exit
-                fi
+              while true; do
+                pip install --progress-bar off <<parameters.extras-requires>> && exit
+                [[ $i -ge <<parameters.pip-install-retries>> ]] && exit 1
                 sleep $((2**$i))
                 ((i=i+1))
               done
-
-              # The last retry failed
-              exit 1
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
               i=0
-              while [[ $i -lt <<parameters.pip-install-retries>> ]]; do
-                if pip install -r <<parameters.extra-requirements-file>>
-                then
-                  exit
-                fi
+              while true; do
+                pip install -r <<parameters.extra-requirements-file>> && exit
+                [[ $i -ge <<parameters.pip-install-retries>> ]] && exit 1
                 sleep $((2**$i))
                 ((i=i+1))
               done
-
-              # The last retry failed
-              exit 1
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
@@ -1091,7 +1081,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
-      - reinstall-go      
+      - reinstall-go
       - attach_workspace:
           at: .
       - setup_remote_docker:
