@@ -1093,7 +1093,7 @@ const PivotSection: React.FC = () => {
 
 const PaginationSection: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [cunnrentPageSize, setCurrentPageSize] = useState<number>(1);
+  const [currentPageSize, setCurrentPageSize] = useState<number>(1);
 
   return (
     <ComponentSection id="Pagination" title="Pagination">
@@ -1118,7 +1118,7 @@ const PaginationSection: React.FC = () => {
         <strong>Pagination default</strong>
         <Pagination
           current={currentPage}
-          pageSize={cunnrentPageSize}
+          pageSize={currentPageSize}
           total={500}
           onChange={(page: number, pageSize: number) => {
             setCurrentPage(page);
