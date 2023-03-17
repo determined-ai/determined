@@ -648,7 +648,7 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis,
+	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType string, start string, end string,
 ) ([]*apiv1.SummarizedMetric, error) {
 	var startTime time.Time
 	var err error
@@ -716,7 +716,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED)
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, "", "", "")
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -745,7 +745,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis)
+			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, "", "", "")
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

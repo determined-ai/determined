@@ -752,7 +752,24 @@ message CompareTrialsRequest {
   Scale scale = 7;
   // x-axis selection. Default is in batch.
   XAxis x_axis = 8;
+
+  enum RangeType {
+    // unspeci
+    RANGE_TYPE_UNSPECIFIED=0;
+    // unspeci
+    RANGE_TYPE_BATCH=1;
+    // unspeci
+    RANGE_TYPE_TIME=2;
+  }
+
+  // unspeci
+  RangeType range_type = 9;
+  // unspeci
+  string start = 10;
+  // unspeci
+  string end = 11;
 }
+
 // Response to CompareTrialsRequest.
 message CompareTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
