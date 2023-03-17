@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -35,6 +37,90 @@ func (a *apiServer) GetProjectByID(
 		return nil, notFoundErr
 	}
 	return p, nil
+}
+
+func (a *apiServer) getProjectColumnsByID(
+	ctx context.Context, id int32, curUser model.User,
+) (*apiv1.GetProjectColumnsResponse, error) {
+	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
+	p := &projectv1.Project{}
+	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
+		return nil, notFoundErr
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
+	}
+	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, notFoundErr
+	}
+	// Get general columns
+	generalColumns := make([]*projectv1.ColumnGeneral, 0, len(projectv1.GeneralColumnName_value))
+	for gc := range projectv1.GeneralColumnName_value {
+		generalColumns = append(generalColumns, &projectv1.ColumnGeneral{
+			Name: projectv1.GeneralColumnName(projectv1.GeneralColumnName_value[gc]),
+		})
+	}
+	// Get hyperpatameters columns
+	hyperparameters := []struct {
+		Hyperparameters []expconf.Hyperparameters
+	}{}
+	err := db.Bun().
+		NewSelect().Table("hyperparameters_view").Column("hyperparameters").Where("project_id = ?", id).Scan(ctx, &hyperparameters)
+	if err != nil {
+		return nil, err
+	}
+	hyperparameterMap := make(map[string]*projectv1.ColumnDynamic)
+	for _, hps := range hyperparameters {
+		for _, hp := range hps.Hyperparameters {
+			// var hpj expconf.Hyperparameters
+			// err := json.Unmarshal([]byte(hp), &hpj)
+			// if err != nil {
+			// 	return nil, errors.Wrapf(err, "error parsing hyperparameters")
+			// }
+			// log.Infof("%+v", hp)
+			hps := expconf.FlattenHPs(hp)
+			for k, v := range hps {
+				hid := fmt.Sprintf("%s_%s", k, v.GetType())
+				hyperparameterMap[hid] = &projectv1.ColumnDynamic{Name: k, Type: v.GetType()}
+				log.Infof("%+v", v)
+			}
+		}
+	}
+
+	hyperColumns := make([]*projectv1.ColumnDynamic, 0)
+	for _, mn := range hyperparameterMap {
+		hyperColumns = append(hyperColumns, mn)
+	}
+
+	// Get metrics columns
+	metricNames := []struct {
+		Tname []string
+		Vname []string
+	}{}
+	err = db.Bun().
+		NewSelect().Table("metrics_name_view").Column("vname", "tname").Where("project_id = ?", id).Scan(ctx, &metricNames)
+	if err != nil {
+		return nil, err
+	}
+	// Use a set to deduplicate
+	metricColumnsMap := make(map[string]*projectv1.ColumnDynamic)
+	for _, mn := range metricNames {
+		for _, mc := range mn.Tname {
+			cid := fmt.Sprintf("%d_%s_%s", id, "T", mc)
+			metricColumnsMap[cid] = &projectv1.ColumnDynamic{Name: mc, Type: "TRAINING", Id: cid}
+		}
+		for _, mc := range mn.Vname {
+			cid := fmt.Sprintf("%d_%s_%s", id, "V", mc)
+			metricColumnsMap[cid] = &projectv1.ColumnDynamic{Name: mc, Type: "VALIDATION", Id: cid}
+		}
+	}
+	metricColumns := make([]*projectv1.ColumnDynamic, 0)
+	for _, mn := range metricColumnsMap {
+		metricColumns = append(metricColumns, mn)
+	}
+
+	return &apiv1.GetProjectColumnsResponse{General: generalColumns, Hyperparameters: hyperColumns, Metrics: metricColumns}, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
@@ -83,6 +169,17 @@ func (a *apiServer) GetProject(
 
 	p, err := a.GetProjectByID(ctx, req.Id, *curUser)
 	return &apiv1.GetProjectResponse{Project: p}, err
+}
+
+func (a *apiServer) GetProjectColumns(
+	ctx context.Context, req *apiv1.GetProjectColumnsRequest,
+) (*apiv1.GetProjectColumnsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
 }
 
 func (a *apiServer) PostProject(

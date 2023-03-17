@@ -10,6 +10,35 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Dynamic column instance of experiment list table for hyperparameters and metrics names.
+message ColumnDynamic {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name", "type" ] }
+  };
+  string name = 1;
+  string type = 2;
+  string id = 3;
+}
+
+enum GeneralColumnName {
+  GENERAL_COLUMN_STATE = 0;
+  GENERAL_COLUMN_ID = 1;
+  GENERAL_COLUMN_NAME = 2;
+  GENERAL_COLUMN_DESCRIPTION = 3;
+  GENERAL_COLUMN_TAGS = 4;
+  GENERAL_COLUMN_USER = 5;
+  GENERAL_COLUMN_STARTTIME = 6;
+  GENERAL_COLUMN_DURATION = 7;
+}
+
+// Static column instance of experiment list table for.
+message ColumnGeneral {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+  GeneralColumnName name = 1;
+}
+
 // Note is a user comment connected to a project.
 message Note {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
