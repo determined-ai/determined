@@ -11,11 +11,11 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
-	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -1204,7 +1204,8 @@ func coalesceString(x *string, fallback string) string {
 	return *x
 }
 
-func (a *Allocation) getPorts(exposedPorts map[string]int, ctx *actor.Context) (map[string]int, error) {
+func (a *Allocation) getPorts(exposedPorts map[string]int,
+	ctx *actor.Context) (map[string]int, error) {
 	ports := make(map[string]int)
 	for portName, base := range exposedPorts {
 		port, err := portregistry.GetPort(base)

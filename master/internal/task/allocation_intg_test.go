@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/portregistry"
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
