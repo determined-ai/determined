@@ -1,5 +1,4 @@
 import contextlib
-import dataclasses
 import importlib.util
 import json
 import logging
@@ -78,13 +77,6 @@ def normalize_base_ds_config(
     return base_ds_config
 
 
-@dataclasses.dataclass
-class ModelInfo:
-    num_params: int
-    trainable_num_params: int
-    activation_mem_per_gpu: int
-
-
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     """Contains runtime information for any Determined workflow that uses the ``DeepSpeedTrial``
     API.
@@ -145,17 +137,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._data_repro_checks_disabled = False
         self._manual_grad_accumulation = False
 
-        self._model_info = None  # type: Optional[ModelInfo]
-
         self._check_experiment_config_optimizations()
-
-    def _is_model_info_trial(self) -> bool:
-        # TODO we can think of a less hacky way
-        hparams = self.get_hparams()
-        if "deepspeed_mode" not in hparams:
-            return False
-        mode = hparams["deepspeed_mode"]
-        return isinstance(mode, str) and mode == "model_info_profiling"
 
     def _check_experiment_config_optimizations(self) -> None:
         """
