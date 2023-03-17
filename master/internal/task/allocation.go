@@ -1205,7 +1205,8 @@ func coalesceString(x *string, fallback string) string {
 }
 
 func (a *Allocation) getPorts(exposedPorts map[string]int,
-	ctx *actor.Context) (map[string]int, error) {
+	ctx *actor.Context,
+) (map[string]int, error) {
 	ports := make(map[string]int)
 	for portName, base := range exposedPorts {
 		port, err := portregistry.GetPort(base)
