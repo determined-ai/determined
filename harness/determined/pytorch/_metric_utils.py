@@ -6,7 +6,6 @@ import torch
 
 import determined as det
 from determined import pytorch, util
-from determined.tensorboard.metric_writers.util import is_numerical_scalar
 
 
 def _process_combined_metrics_and_batches(
@@ -197,7 +196,7 @@ def _log_tb_metrics(
         for batch_idx, batch in enumerate(batch_metrics):
             batches_seen = steps_completed - len(batch_metrics) + batch_idx
             for name, value in batch.items():
-                if is_numerical_scalar(value):
+                if util.is_numerical_scalar(value):
                     writer.add_scalar("Determined/" + name, value, batches_seen)
                 metrics_seen.add(name)
 
@@ -207,5 +206,5 @@ def _log_tb_metrics(
             continue
         if metric_type == "val" and not name.startswith("val"):
             name = "val_" + name
-        if is_numerical_scalar(value):
+        if util.is_numerical_scalar(value):
             writer.add_scalar("Determined/" + name, value, steps_completed)
