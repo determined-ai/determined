@@ -290,6 +290,7 @@ class _PyTorchTrialController:
         cls._set_random_seeds(trial_seed)
 
     def _upload_tb_files(self) -> None:
+        self.context._maybe_reset_tbd_writer()
         self.core_context.train.upload_tensorboard_files(
             (lambda _: True) if self.is_chief else (lambda p: not p.match("*tfevents*")),
             tensorboard.util.get_rank_aware_path,
@@ -327,10 +328,6 @@ class _PyTorchTrialController:
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
-        if not self.is_chief:
-            self.context._maybe_reset_tbd_writer()
-            return {}
-
         # Only report on the chief worker
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
@@ -341,8 +338,6 @@ class _PyTorchTrialController:
             avg_metrics,
             batch_metrics,
         )
-
-        self.context._maybe_reset_tbd_writer()
 
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
@@ -1075,7 +1070,6 @@ class _PyTorchTrialController:
             self._log_tb_metrics("val", self.state.batches_trained, metrics)
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
-        self.context._maybe_reset_tbd_writer()
         searcher_metric = None
 
         # Report searcher status.

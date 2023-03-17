@@ -383,6 +383,7 @@ class DeepSpeedTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.context._maybe_reset_tbd_writer()
             self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
@@ -523,8 +524,6 @@ class DeepSpeedTrialController(det.TrialController):
                 metrics["avg_metrics"],
                 metrics["batch_metrics"],
             )
-
-        self.context._maybe_reset_tbd_writer()
 
         if not self.is_chief:
             return {}
@@ -673,8 +672,6 @@ class DeepSpeedTrialController(det.TrialController):
             )
 
             self._log_tb_metrics(True, metrics)
-
-        self.context._maybe_reset_tbd_writer()
 
         if not self.is_chief:
             return {}
