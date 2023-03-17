@@ -1,14 +1,10 @@
 import json
-import time
 from argparse import Namespace
 from typing import Any, List, Optional
-
-from requests import Response
 
 from determined import cli
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings
-from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
