@@ -34,13 +34,11 @@ def logs(args: Namespace) -> None:
     offset: Optional[int] = None
     if args.tail:
         offset = -args.tail
-    logs = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
-    for log in logs:
-        if not log.logEntry:
-            continue  # should probably update he api def
-        log_entry = log.logEntry
-        log_level = str(log_entry.level.value)[len("LOG_LEVEL_") :] if log_entry.level else ""
-        print("{} [{}]: {}".format(log_entry.timestamp, log_level, log_entry.message))
+    responses = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
+    for response in responses:
+        log = response.logEntry
+        log_level = str(log.level.value)[len("LOG_LEVEL_") :] if log.level else ""
+        print("{} [{}]: {}".format(log.timestamp, log_level, log.message))
 
 
 # fmt: off
