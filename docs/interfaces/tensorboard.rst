@@ -198,12 +198,12 @@ Yes; any additional TFEvent files that are written to the appropriate path durin
 accessible to TensorBoard. The appropriate path varies by worker rank, and can be obtained via one
 of the following functions:
 
-   -  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
-   -  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
-   -  For DeepSpeedTrial users:
-      :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
-   -  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
-   -  For EstimatorTrial users:
-      :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
+-  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
+-  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
+-  For DeepSpeedTrial users:
+   :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
+-  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
+-  For EstimatorTrial users:
+   :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
 
 For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
