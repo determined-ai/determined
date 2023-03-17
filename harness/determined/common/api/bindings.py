@@ -5841,29 +5841,25 @@ class v1MarkAllocationResourcesDaemonRequest:
         return out
 
 class v1MasterLogsResponse:
-    logEntry: "typing.Optional[v1LogEntry]" = None
 
     def __init__(
         self,
         *,
-        logEntry: "typing.Union[v1LogEntry, None, Unset]" = _unset,
+        logEntry: "v1LogEntry",
     ):
-        if not isinstance(logEntry, Unset):
-            self.logEntry = logEntry
+        self.logEntry = logEntry
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MasterLogsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "logEntry": v1LogEntry.from_json(obj["logEntry"]),
         }
-        if "logEntry" in obj:
-            kwargs["logEntry"] = v1LogEntry.from_json(obj["logEntry"]) if obj["logEntry"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "logEntry": self.logEntry.to_json(omit_unset),
         }
-        if not omit_unset or "logEntry" in vars(self):
-            out["logEntry"] = None if self.logEntry is None else self.logEntry.to_json(omit_unset)
         return out
 
 class v1MetricBatchesResponse:

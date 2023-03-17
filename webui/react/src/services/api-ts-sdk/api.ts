@@ -4695,7 +4695,7 @@ export interface V1MasterLogsResponse {
      * @type {V1LogEntry}
      * @memberof V1MasterLogsResponse
      */
-    logEntry?: V1LogEntry;
+    logEntry: V1LogEntry;
 }
 /**
  * Response to MetricBatchesRequest.
