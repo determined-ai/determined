@@ -19,7 +19,6 @@ import determined as det
 from determined import layers, pytorch, util, workload
 from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
-from determined.tensorboard.metric_writers.util import is_numerical_scalar
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
@@ -519,8 +518,10 @@ class DeepSpeedTrialController(det.TrialController):
             )
             self.prof.set_training(False)
 
-            self._log_tb_metrics(
-                False,
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(),
+                "train",
+                self.steps_completed,
                 metrics["avg_metrics"],
                 metrics["batch_metrics"],
             )
@@ -529,40 +530,6 @@ class DeepSpeedTrialController(det.TrialController):
             return {}
 
         return metrics
-
-    def _log_tb_metrics(
-        self,
-        is_val: bool,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-
-        if is_val:
-            logging.debug("Write validation metrics for TensorBoard")
-        else:
-            logging.debug("Write training metrics for TensorBoard")
-
-        metrics_seen = set()
-
-        writer = self.context.get_tensorboard_writer()
-
-        # Log all batch metrics.
-        if batch_metrics:
-            for batch_idx, batch in enumerate(batch_metrics):
-                batches_seen = self.steps_completed - len(batch_metrics) + batch_idx
-                for name, value in batch.items():
-                    if is_numerical_scalar(value):
-                        writer.add_scalar("Determined/" + name, value, batches_seen)
-                    metrics_seen.add(name)
-
-        # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
-        for name, value in metrics.items():
-            if name in metrics_seen:
-                continue
-            if is_val and not name.startswith("val"):
-                name = "val_" + name
-            if is_numerical_scalar(value):
-                writer.add_scalar("Determined/" + name, value, self.steps_completed)
 
     @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
@@ -671,7 +638,9 @@ class DeepSpeedTrialController(det.TrialController):
                 )
             )
 
-            self._log_tb_metrics(True, metrics)
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+            )
 
         if not self.is_chief:
             return {}
@@ -679,7 +648,9 @@ class DeepSpeedTrialController(det.TrialController):
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
-        self._log_tb_metrics(True, metrics)
+        det.pytorch._log_tb_metrics(
+            self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+        )
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

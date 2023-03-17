@@ -20,7 +20,6 @@ from torch import distributed as dist
 import determined as det
 from determined import core, profiler, pytorch, tensorboard, util
 from determined.horovod import hvd
-from determined.tensorboard.metric_writers.util import is_numerical_scalar
 
 # Apex is included only for GPU trials.
 try:
@@ -332,7 +331,8 @@ class _PyTorchTrialController:
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
 
-        self._log_tb_metrics(
+        det.pytorch._log_tb_metrics(
+            self.context.get_tensorboard_writer(),
             "train",
             self.state.batches_trained,
             avg_metrics,
@@ -889,43 +889,6 @@ class _PyTorchTrialController:
             )
         return training_metrics
 
-    def _log_tb_metrics(
-        self,
-        metric_type: str,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-
-        if metric_type == "val":
-            logging.debug("Write validation metrics for TensorBoard")
-        elif metric_type == "train":
-            logging.debug("Write training metrics for TensorBoard")
-        else:
-            logging.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
-
-        metrics_seen = set()
-
-        writer = self.context.get_tensorboard_writer()
-
-        # Log all batch metrics.
-        if batch_metrics:
-            for batch_idx, batch in enumerate(batch_metrics):
-                batches_seen = steps_completed - len(batch_metrics) + batch_idx
-                for name, value in batch.items():
-                    if is_numerical_scalar(value):
-                        writer.add_scalar("Determined/" + name, value, batches_seen)
-                    metrics_seen.add(name)
-
-        # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
-        for name, value in metrics.items():
-            if name in metrics_seen:
-                continue
-            if metric_type == "val" and not name.startswith("val"):
-                name = "val_" + name
-            if is_numerical_scalar(value):
-                writer.add_scalar("Determined/" + name, value, steps_completed)
-
     @torch.no_grad()  # type: ignore
     def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
         # Report a validation step is starting.
@@ -1067,7 +1030,9 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            self._log_tb_metrics("val", self.state.batches_trained, metrics)
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.state.batches_trained, metrics
+            )
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         searcher_metric = None
