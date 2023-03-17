@@ -138,7 +138,6 @@ def run_storage_lifecycle_test(
         manager.delete(storage_id)
         with pytest.raises(errors.CheckpointNotFound):
             manager.download(storage_id, path)
-
         if post_delete_cb is not None:
             post_delete_cb(storage_id)
 
@@ -184,7 +183,6 @@ def run_storage_lifecycle_test(
             manager.delete(storage_id)
             with pytest.raises(errors.CheckpointNotFound):
                 manager.download(storage_id, path)
-
             if post_delete_cb is not None:
                 post_delete_cb(storage_id)
         finally:
@@ -216,7 +214,6 @@ def run_storage_lifecycle_test(
             manager.delete(storage_id)
             with pytest.raises(errors.CheckpointNotFound):
                 manager.download(storage_id, path)
-
             if post_delete_cb is not None:
                 post_delete_cb(storage_id)
         finally:
