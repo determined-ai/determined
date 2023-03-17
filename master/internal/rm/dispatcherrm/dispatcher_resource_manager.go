@@ -485,7 +485,12 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(m.generateGetAgentsResponse(ctx))
 
 	case taskContainerDefaults:
-		ctx.Respond(m.getTaskContainerDefaults(msg))
+		tcd, err := m.getTaskContainerDefaults(msg)
+		if err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(tcd)
+		}
 
 	case *apiv1.DisableAgentRequest:
 		response, err := m.disableAgent(msg.AgentId)
@@ -505,21 +510,36 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 
 func (m *dispatcherResourceManager) getTaskContainerDefaults(
 	msg taskContainerDefaults,
-) model.TaskContainerDefaultsConfig {
+) (model.TaskContainerDefaultsConfig, error) {
 	result := msg.fallbackDefault
-	if tcd := m.rmConfig.ResolveTaskContainerDefaults(msg.resourcePool); tcd != nil {
-		result = *tcd
+
+	partitionOverrides := m.rmConfig.ResolveTaskContainerDefaults(msg.resourcePool)
+	if partitionOverrides != nil {
+		tmp, err := result.Merge(*partitionOverrides)
+		if err != nil {
+			return model.TaskContainerDefaultsConfig{}, err
+		}
+		result = tmp
 	}
-	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+
+	var poolConfigOverrides *model.TaskContainerDefaultsConfig
 	for _, pool := range m.poolConfig {
 		if msg.resourcePool == pool.PoolName {
 			if pool.TaskContainerDefaults == nil {
 				break
 			}
-			result = *pool.TaskContainerDefaults
+			poolConfigOverrides = pool.TaskContainerDefaults
 		}
 	}
-	return result
+	if poolConfigOverrides != nil {
+		tmp, err := result.Merge(*poolConfigOverrides)
+		if err != nil {
+			return model.TaskContainerDefaultsConfig{}, err
+		}
+		result = tmp
+	}
+
+	return result, nil
 }
 
 // getPartitionValidationResponse computes a response to a resource pool
