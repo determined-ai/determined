@@ -74,7 +74,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 
 		}
 
-		fmt.Printf("batch: %v", b)
+		fmt.Println("batch: ", b)
 		trainingbBatchMetrics = append(trainingbBatchMetrics, &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
