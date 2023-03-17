@@ -150,9 +150,10 @@ recommended to optimize how Determined interacts with Slurm:
    and graceful shutdown. To prevent unnecessary loss of work, it is recommended to set ``GraceTime
    (secs)`` high enough to permit the job to complete an entire Determined ``scheduling_unit``.
 
-   To enable GPU job preemption, use ``PreemptMode=REQUEUE`` or ``PreemptMode=REQUEUE``, because
+   To enable GPU job preemption, use ``PreemptMode=CANCEL`` or ``PreemptMode=REQUEUE``, because
    ``PreemptMode=SUSPEND`` does not release GPUs so does not allow a higher-priority job to access
-   the allocated GPU resources.
+   the allocated GPU resources. Determined manages the requeue of a successfully preempted job so
+   even with ``PreemptMode=REQUEUE``, the Slurm job will be canceled and resubmitted.
 
 .. _pbs-config-requirements:
 

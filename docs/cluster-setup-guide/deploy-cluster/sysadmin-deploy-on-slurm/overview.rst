@@ -8,8 +8,7 @@
 | Supported Versions                         |
 +============================================+
 | Slurm >= 20.02 (excluding 22.05.5 through  |
-| at least 22.05.8 - see                     |
-| :ref:`slurm-known-issues`)                 |
+| 22.05.8 - see :ref:`slurm-known-issues`)   |
 |                                            |
 | PBS >= 2021.1.2                            |
 +--------------------------------------------+
