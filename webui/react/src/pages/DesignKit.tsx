@@ -19,6 +19,7 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import { Modal, ModalParams, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -38,7 +39,6 @@ import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
-import { useModalComponent, useModalParams } from 'modal/useModality';
 import { paths } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -1680,135 +1680,141 @@ const handleSubmit = async () => {
   return;
 };
 
-const SmallModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({ thing }) => {
-  const params = useMemo(
-    () => ({
-      cancelText: 'No',
-      headerLink: { text: 'Related', url: paths.dashboard() },
-      icon: 'experiment',
-      size: 'small' as const,
-      submit: {
+const SmallModalComponent: React.FC<{ thing: string } & ModalParams> = ({
+  thing,
+  isOpen,
+  setIsOpen,
+}) => {
+  return (
+    <Modal
+      cancelText="No"
+      headerLink={{ text: 'Related', url: paths.dashboard() }}
+      icon="experiment"
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      size="small"
+      submit={{
         handler: handleSubmit,
         text: 'Yes',
-      },
-      titleText: 'Experiment',
-    }),
-    [],
+      }}
+      titleText="Experiment">
+      <div>{thing}</div>
+    </Modal>
   );
-
-  useModalParams(params);
-
-  return <div>{thing}</div>;
 };
 
 /* medium modal */
 
-const MediumModalComponent: React.FC<JSX.IntrinsicAttributes> = () => {
-  const params = useMemo(
-    () => ({
-      cancelText: 'No',
-      footerLink: { text: 'Learn more about clusters', url: paths.cluster() },
-      size: 'medium' as const,
-      submit: {
-        handler: handleSubmit,
-        text: 'Yes',
-      },
-      titleText: 'Modal',
-    }),
-    [],
-  );
-
-  useModalParams(params);
-
+const MediumModalComponent: React.FC<ModalParams> = ({ isOpen, setIsOpen }) => {
   return (
-    <Form>
-      <Form.Item
-        className={css.line}
-        label="Workspace"
-        name="workspaceId"
-        rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-        <Select allowClear defaultValue={1} placeholder="Workspace (required)">
-          <Option key="1" value="1">
-            WS AS
-          </Option>
-          <Option key="2" value="2">
-            Further
-          </Option>
-          <Option key="3" value="3">
-            Whencelan
-          </Option>
-        </Select>
-      </Form.Item>
-      <Form.Item className={css.line} label="Template" name="template">
-        <Select allowClear placeholder="No template (optional)">
-          <Option key="1" value={1}>
-            Default Template
-          </Option>
-        </Select>
-      </Form.Item>
-      <Form.Item className={css.line} label="Name" name="name">
-        <Input placeholder="Name (optional)" />
-      </Form.Item>
-      <Form.Item className={css.line} label="Resource Pool" name="pool">
-        <Select allowClear placeholder="Pick the best option">
-          <Option key="1" value="1">
-            GPU Pool
-          </Option>
-          <Option key="2" value="2">
-            Aux Pool
-          </Option>
-        </Select>
-      </Form.Item>
-      <Form.Item className={css.line} label="Slots" name="slots">
-        <InputNumber max={10} min={0} />
-      </Form.Item>
-    </Form>
-  );
-};
-
-const LargeModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({ thing }) => {
-  const params = useMemo(
-    () => ({
-      cancelText: 'No',
-      size: 'large' as const,
-      submit: {
+    <Modal
+      cancelText="No"
+      footerLink={{ text: 'Learn more about clusters', url: paths.cluster() }}
+      icon="experiment"
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      size="medium"
+      submit={{
         handler: handleSubmit,
         text: 'Yes',
-      },
-      titleText: 'Modal',
-    }),
-    [],
+      }}
+      titleText="Modal">
+      <Form>
+        <Form.Item
+          className={css.line}
+          label="Workspace"
+          name="workspaceId"
+          rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
+          <Select allowClear defaultValue={1} placeholder="Workspace (required)">
+            <Option key="1" value="1">
+              WS AS
+            </Option>
+            <Option key="2" value="2">
+              Further
+            </Option>
+            <Option key="3" value="3">
+              Whencelan
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Template" name="template">
+          <Select allowClear placeholder="No template (optional)">
+            <Option key="1" value={1}>
+              Default Template
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Resource Pool" name="pool">
+          <Select allowClear placeholder="Pick the best option">
+            <Option key="1" value="1">
+              GPU Pool
+            </Option>
+            <Option key="2" value="2">
+              Aux Pool
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Slots" name="slots">
+          <InputNumber max={10} min={0} />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
-  useModalParams(params);
-  return <div>{thing}</div>;
 };
 
-const DangerousModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({
+const LargeModalComponent: React.FC<{ thing: string } & ModalParams> = ({
   thing,
+  isOpen,
+  setIsOpen,
 }) => {
-  const params = useMemo(
-    () => ({
-      cancelText: 'No',
-      danger: true,
-      size: 'small' as const,
-      submit: {
+  return (
+    <Modal
+      cancelText="No"
+      icon="experiment"
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      size="large"
+      submit={{
         handler: handleSubmit,
         text: 'Yes',
-      },
-      titleText: 'Modal',
-    }),
-    [],
+      }}
+      titleText="Modal">
+      <div>{thing}</div>
+    </Modal>
   );
-  useModalParams(params);
-  return <div>{thing}</div>;
+};
+
+const DangerousModalComponent: React.FC<{ thing: string } & ModalParams> = ({
+  thing,
+  isOpen,
+  setIsOpen,
+}) => {
+  return (
+    <Modal
+      cancelText="No"
+      danger
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      size="small"
+      submit={{
+        handler: handleSubmit,
+        text: 'Yes',
+      }}
+      titleText="Modal">
+      <div>{thing}</div>
+    </Modal>
+  );
 };
 
 const ModalSection: React.FC = () => {
   const [text, setText] = useState('asdf');
-  const SmallModal = useModalComponent(SmallModalComponent);
-  const MediumModal = useModalComponent(MediumModalComponent);
-  const LargeModal = useModalComponent(LargeModalComponent);
-  const DangerousModal = useModalComponent(DangerousModalComponent);
+  const SmallModal = useModal(SmallModalComponent);
+  const MediumModal = useModal(MediumModalComponent);
+  const LargeModal = useModal(LargeModalComponent);
+  const DangerousModal = useModal(DangerousModalComponent);
 
   return (
     <ComponentSection id="Modals" title="Modals">

@@ -1,20 +1,20 @@
 import { Form } from 'antd';
 import { useForm, useWatch } from 'antd/lib/form/Form';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Input from 'components/kit/Input';
+import { Modal, Opener } from 'components/kit/Modal';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import { useModalParams } from './useModality';
-import css from './useModality.module.scss';
-
-interface ProjectModalProps extends JSX.IntrinsicAttributes {
+interface ProjectModalProps {
   projectId: number;
   initialName: string;
   initialDescription: string;
   onComplete: () => Promise<void>;
+  isOpen: boolean;
+  setIsOpen: Opener;
 }
 interface FormInputs {
   description: string;
@@ -30,6 +30,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onComplete,
 }) => {
   const [form] = useForm<FormInputs>();
+  const [isOpen, setIsOpen] = useState(false);
 
   const projectName = useWatch('name', form);
   const submitDisabled = !projectName;
@@ -50,35 +51,31 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
     }
   }, [form, projectId]);
 
-  const params = useMemo(
-    () => ({
-      cancelText: 'No',
-      size: 'medium' as const,
-      submit: {
+  return (
+    <Modal
+      cancelText="No"
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      size="medium"
+      submit={{
         disabled: submitDisabled,
         handler: handleSubmit,
         onComplete: onComplete,
         text: 'Save Changes',
-      },
-      titleText: 'Edit Project',
-    }),
-    [handleSubmit, submitDisabled, onComplete],
-  );
-
-  useModalParams(params);
-
-  return (
-    <Form autoComplete="off" className={css.base} form={form} id={FORM_ID} layout="vertical">
-      <Form.Item
-        initialValue={initialName}
-        label="Project Name"
-        name="name"
-        rules={[{ message: 'Project name is required', required: true }]}>
-        <Input maxLength={80} />
-      </Form.Item>
-      <Form.Item initialValue={initialDescription} label="Description" name="description">
-        <Input />
-      </Form.Item>
-    </Form>
+      }}
+      titleText="Edit Project">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+        <Form.Item
+          initialValue={initialName}
+          label="Project Name"
+          name="name"
+          rules={[{ message: 'Project name is required', required: true }]}>
+          <Input maxLength={80} />
+        </Form.Item>
+        <Form.Item initialValue={initialDescription} label="Description" name="description">
+          <Input />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };

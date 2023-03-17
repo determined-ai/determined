@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -14,7 +15,6 @@ import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { ProjectModal } from 'modal/ProjectEditModal';
-import { useModalComponent } from 'modal/useModality';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
@@ -41,7 +41,7 @@ const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
 
-  const ProjectEditModal = useModalComponent(ProjectModal);
+  const ProjectEditModal = useModal(ProjectModal);
 
   const [project, setProject] = useState<Project | undefined>();
 
