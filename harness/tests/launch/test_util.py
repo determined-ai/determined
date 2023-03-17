@@ -45,6 +45,19 @@ def make_mock_cluster_info(
 
 
 @contextlib.contextmanager
+def set_mock_cluster_info(
+    container_addrs: List[str], container_rank: int, num_slots: int
+) -> Iterator[det.ClusterInfo]:
+    old_info = det._info._info
+    info = make_mock_cluster_info(container_addrs, container_rank, num_slots)
+    det._info._info = info
+    try:
+        yield info
+    finally:
+        det._info._info = old_info
+
+
+@contextlib.contextmanager
 def set_resources_id_env_var() -> Iterator[None]:
     try:
         os.environ["DET_RESOURCES_ID"] = "resourcesId"
