@@ -49,7 +49,8 @@ class TorchWriter(_TorchWriter):
             def train_batch(self, batch, epoch_idx, batch_idx):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
 
-    ..warning::
+    .. warning::
+
         TorchWriter() has been deprecated and will be removed in a future version.
 
         Users are encouraged to switch to one of the following depending on use case:
@@ -60,7 +61,11 @@ class TorchWriter(_TorchWriter):
 
     def __init__(self) -> None:
         warnings.warn(
-            "This object is deprecated in favor of the PyTorch SummaryWriter object",
+            "TorchWriter() has been deprecated and will be removed in a future version.\n \
+            Users are encouraged to switch to one of the following depending on use case:\n \
+            - Trials Users, see determined.pytorch.PyTorchTrialContext.get_tensorboard_writer()\n \
+            - CoreAPI Users, create a torch.utils.tensorboard.SummaryWriter() object\n \
+              and pass core_context.train.get_tensorboard_path() as the log_dir",
             FutureWarning,
             stacklevel=2,
         )
