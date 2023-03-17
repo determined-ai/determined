@@ -61,6 +61,9 @@ stages:
           # Next line is intentionally not indented to simplify inserting multi-line content.
 $OPT_TASKCONTAINERDEFAULTS
           image: $OPT_DEFAULTIMAGE
+        resource_pools:
+          # Next line is intentionally not indented to simplify inserting multi-line content.
+$OPT_RESOURCEPOOLS
 
         resource_manager:
           master_host: $OPT_MASTERHOST

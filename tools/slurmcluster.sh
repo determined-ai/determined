@@ -261,6 +261,29 @@ OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determine
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
+OPT_DEFAULTCOMPUTERESOURCEPOOL_casablanca_login=custom_defq_GPU
+# Indentation of resource_pools must match devcluster-slurm.yaml
+OPT_RESOURCEPOOLS_casablanca_login=$(
+    cat <<EOF
+        - pool_name: custom_defq_GPU
+          description: Lands jobs on defq_GPU with tesla GPU selected only node010
+          task_container_defaults:
+            slurm:
+              gpu_type: tesla
+              sbatch_args:
+                - -wnode10
+          provider:
+            type: hpc
+            partition: defq_GPU
+EOF
+)
+# Indentation of partition_overrides must match devcluster-slurm.yaml
+OPT_PARTITIONOVERRIDES_casablanca_login=$(
+    cat <<EOF
+             defq_GPU:
+                description: Customized Slurm partition description
+EOF
+)
 
 # Configuration for casablanca-login2 (uses suffix casablanca_login2)
 OPT_name_casablanca_login2=casablanca-login2.us.cray.com
@@ -478,6 +501,7 @@ export OPT_DEFAULTIMAGE=$(lookup "OPT_DEFAULTIMAGE_$CLUSTER")
 export OPT_DEFAULTCOMPUTERESOURCEPOOL=$(lookup "OPT_DEFAULTCOMPUTERESOURCEPOOL_$CLUSTER")
 export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
+export OPT_RESOURCEPOOLS=$(lookup "OPT_RESOURCEPOOLS_$CLUSTER")
 
 if [[ -z $OPT_GRESSUPPORTED ]]; then
     export OPT_GRESSUPPORTED="true"
