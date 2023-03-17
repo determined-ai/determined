@@ -13,8 +13,6 @@ interface ProjectModalProps {
   initialName: string;
   initialDescription: string;
   onComplete: () => Promise<void>;
-  isOpen: boolean;
-  setIsOpen: Opener;
 }
 interface FormInputs {
   description: string;
@@ -30,7 +28,6 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onComplete,
 }) => {
   const [form] = useForm<FormInputs>();
-  const [isOpen, setIsOpen] = useState(false);
 
   const projectName = useWatch('name', form);
   const submitDisabled = !projectName;
@@ -54,8 +51,6 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   return (
     <Modal
       cancelText="No"
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       size="medium"
       submit={{
         disabled: submitDisabled,

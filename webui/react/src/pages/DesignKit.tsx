@@ -19,7 +19,7 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
-import { Modal, ModalParams, useModal } from 'components/kit/Modal';
+import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -1680,18 +1680,12 @@ const handleSubmit = async () => {
   return;
 };
 
-const SmallModalComponent: React.FC<{ thing: string } & ModalParams> = ({
-  thing,
-  isOpen,
-  setIsOpen,
-}) => {
+const SmallModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
   return (
     <Modal
       cancelText="No"
       headerLink={{ text: 'Related', url: paths.dashboard() }}
       icon="experiment"
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       size="small"
       submit={{
         handler: handleSubmit,
@@ -1705,14 +1699,12 @@ const SmallModalComponent: React.FC<{ thing: string } & ModalParams> = ({
 
 /* medium modal */
 
-const MediumModalComponent: React.FC<ModalParams> = ({ isOpen, setIsOpen }) => {
+const MediumModalComponent: React.FC<{}> = () => {
   return (
     <Modal
       cancelText="No"
       footerLink={{ text: 'Learn more about clusters', url: paths.cluster() }}
       icon="experiment"
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       size="medium"
       submit={{
         handler: handleSubmit,
@@ -1765,17 +1757,11 @@ const MediumModalComponent: React.FC<ModalParams> = ({ isOpen, setIsOpen }) => {
   );
 };
 
-const LargeModalComponent: React.FC<{ thing: string } & ModalParams> = ({
-  thing,
-  isOpen,
-  setIsOpen,
-}) => {
+const LargeModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
   return (
     <Modal
       cancelText="No"
       icon="experiment"
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       size="large"
       submit={{
         handler: handleSubmit,
@@ -1787,17 +1773,11 @@ const LargeModalComponent: React.FC<{ thing: string } & ModalParams> = ({
   );
 };
 
-const DangerousModalComponent: React.FC<{ thing: string } & ModalParams> = ({
-  thing,
-  isOpen,
-  setIsOpen,
-}) => {
+const DangerousModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
   return (
     <Modal
       cancelText="No"
       danger
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
       size="small"
       submit={{
         handler: handleSubmit,

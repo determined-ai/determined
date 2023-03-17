@@ -1,6 +1,14 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal as AntdModal } from 'antd';
-import React, { Dispatch, ReactNode, SetStateAction, useCallback, useState } from 'react';
+import React, {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
@@ -16,7 +24,7 @@ interface LinkParams {
 export type ModalSize = 'small' | 'medium' | 'large';
 export type Opener = Dispatch<SetStateAction<boolean>>;
 
-export type ModalParams = {
+export type ModalContext = {
   isOpen: boolean;
   setIsOpen: Opener;
 };
@@ -38,13 +46,12 @@ interface ModalProps {
   size: ModalSize;
   submit: ModalSubmitParams;
   titleText: string;
-  isOpen: boolean;
-  setIsOpen: Opener;
   children: ReactNode;
 }
 
+const ModalContext = createContext<ModalContext | null>(null);
+
 export const Modal: React.FC<ModalProps> = ({
-  isOpen,
   cancelText,
   danger,
   footerLink,
@@ -55,8 +62,14 @@ export const Modal: React.FC<ModalProps> = ({
   submit,
   titleText,
   children: modalBody,
-  setIsOpen,
 }: ModalProps) => {
+  const modalContext = useContext(ModalContext);
+
+  if (modalContext === null) {
+    throw new Error('Modal used outside of ModalContext');
+  }
+  const { isOpen, setIsOpen } = modalContext;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const close = useCallback(() => setIsOpen(false), [setIsOpen]);
@@ -129,18 +142,22 @@ export const Modal: React.FC<ModalProps> = ({
   );
 };
 
-export const useModal = <ModalProps extends { isOpen: boolean; setIsOpen: Opener }>(
+export const useModal = <ModalProps extends {}>(
   Comp: React.FC<ModalProps>,
-): { Component: React.FC<Omit<ModalProps, 'isOpen' | 'setIsOpen'>>; open: () => void } => {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const handleOpen = React.useCallback(() => setModalIsOpen(true), []);
+): { Component: React.FC<ModalProps>; open: () => void } => {
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpen = React.useCallback(() => setIsOpen(true), []);
 
   const Component = React.useCallback(
-    (props: Omit<ModalProps, 'isOpen' | 'setIsOpen'>) => {
-      const p = { isOpen: modalIsOpen, setIsOpen: setModalIsOpen, ...props } as ModalProps;
-      return <Comp {...p} />;
+    (props: ModalProps) => {
+      const p = props as ModalProps;
+      return (
+        <ModalContext.Provider value={{ isOpen, setIsOpen }}>
+          <Comp {...p} />
+        </ModalContext.Provider>
+      );
     },
-    [Comp, modalIsOpen],
+    [Comp, isOpen],
   );
   return { Component, open: handleOpen };
 };
