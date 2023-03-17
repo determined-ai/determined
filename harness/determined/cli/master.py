@@ -1,7 +1,7 @@
 import json
 import time
 from argparse import Namespace
-from typing import Any, List
+from typing import Any, List, Optional
 
 from requests import Response
 
@@ -31,37 +31,16 @@ def get_master(args: Namespace) -> None:
 
 @authentication.required
 def logs(args: Namespace) -> None:
-    def process_response(response: Response, latest_log_id: int) -> int:
-        for log in response.json():
-            check_gt(log["id"], latest_log_id)
-            latest_log_id = log["id"]
-            print("{} [{}]: {}".format(log["time"], log["level"], log["message"]))
-        return latest_log_id
-
-    params = {}
+    offset: Optional[int] = None
     if args.tail:
-        params["tail"] = args.tail
-
-    response = api.get(args.master, "logs", params=params)
-    latest_log_id = process_response(response, -1)
-
-    # "Follow" mode is implemented as a loop in the CLI. We assume that
-    # newer log messages have a numerically larger ID than older log
-    # messages, so we keep track of the max ID seen so far.
-    if args.follow:
-        while True:
-            try:
-                # Poll for new logs every 100 ms.
-                time.sleep(0.1)
-
-                # The `tail` parameter only makes sense the first time we
-                # fetch logs.
-                response = api.get(
-                    args.master, "logs", params={"greater_than_id": str(latest_log_id)}
-                )
-                latest_log_id = process_response(response, latest_log_id)
-            except KeyboardInterrupt:
-                break
+        offset = -args.tail
+    logs = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
+    for log in logs:
+        if not log.logEntry:
+            continue  # should probably update he api def
+        log_entry = log.logEntry
+        log_level = str(log_entry.level.value)[len("LOG_LEVEL_") :] if log_entry.level else ""
+        print("{} [{}]: {}".format(log_entry.timestamp, log_level, log_entry.message))
 
 
 # fmt: off
