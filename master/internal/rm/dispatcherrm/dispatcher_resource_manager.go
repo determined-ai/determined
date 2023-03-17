@@ -168,7 +168,7 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 		if err != nil {
 			return "", fmt.Errorf("defaulting to aux pool: %w", err)
 		}
-		return resp.PoolName, nil
+		name = resp.PoolName
 	}
 
 	if name == "" && slots >= 0 {
@@ -177,7 +177,7 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 		if err != nil {
 			return "", fmt.Errorf("defaulting to compute pool: %w", err)
 		}
-		return resp.PoolName, nil
+		name = resp.PoolName
 	}
 	providingPartition, err := d.validateResourcePool(ctx, name)
 	if err != nil {
@@ -204,7 +204,7 @@ func (d *DispatcherResourceManager) validateResourcePool(ctx actor.Messenger,
 		return "", fmt.Errorf("requesting resource pool: %w", err)
 	case !resp.HasResourcePool && resp.ProvidingPartition != "":
 		return "", fmt.Errorf(
-			"resource pool %s is configured to use partition %s that does not exist "+
+			"resource pool %s is configured to use partition '%s' that does not exist "+
 				"-- verify the cluster configuration", name, resp.ProvidingPartition)
 	case !resp.HasResourcePool:
 		return "", fmt.Errorf("resource pool not found: %s", name)
@@ -974,7 +974,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	// Make sure we explicitly choose a partition.  Use default if unspecified.
 	partition := req.ResourcePool
 	if partition == "" {
-		partition = m.selectDefaultPartition(slotType)
+		partition = m.getDefaultPoolName(slotType == device.CPU)
 	}
 
 	tresSupported := m.rmConfig.TresSupported
@@ -1378,11 +1378,12 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 	return defaultComputePar, defaultAuxPar
 }
 
-// selectDefaultPartition picks the default partition for the current system.
-func (m *dispatcherResourceManager) selectDefaultPartition(slotType device.Type) string {
+// getDefaultPoolName returns the default aux pool if the arg is true,
+// otherwise default compute pool.
+func (m *dispatcherResourceManager) getDefaultPoolName(isCPU bool) string {
 	m.resourceDetails.mu.RLock()
 	defer m.resourceDetails.mu.RUnlock()
-	if slotType == device.CPU {
+	if isCPU {
 		return m.resourceDetails.lastSample.DefaultAuxPoolPartition
 	}
 	return m.resourceDetails.lastSample.DefaultComputePoolPartition
@@ -1435,8 +1436,8 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			SlotsUsed:                    slotsUsed,
 			AuxContainerCapacity:         int32(v.TotalCPUSlots),
 			AuxContainersRunning:         int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots),
-			DefaultComputePool:           v.PartitionName == m.selectDefaultPartition(device.CUDA),
-			DefaultAuxPool:               v.PartitionName == m.selectDefaultPartition(device.CPU),
+			DefaultComputePool:           v.PartitionName == m.getDefaultPoolName(false),
+			DefaultAuxPool:               v.PartitionName == m.getDefaultPoolName(true),
 			Preemptible:                  true,
 			MinAgents:                    int32(v.TotalNodes),
 			MaxAgents:                    int32(v.TotalNodes),
@@ -1469,7 +1470,7 @@ func (m *dispatcherResourceManager) getLauncherProvidedPools(
 			basePoolName := pool.Provider.HPC.Partition
 			basePool, found := poolNameMap[basePoolName]
 			if !found {
-				ctx.Log().Debugf("launcher-defined pool %s, base pool %s does not exist",
+				ctx.Log().Errorf("Resource pool %s specifies provider.partition '%s' that does not exist",
 					pool.PoolName, basePoolName)
 				continue
 			}
@@ -1481,6 +1482,8 @@ func (m *dispatcherResourceManager) getLauncherProvidedPools(
 			if pool.Description != "" {
 				launcherPoolResult.Description = pool.Description
 			}
+			launcherPoolResult.DefaultComputePool = pool.PoolName == m.getDefaultPoolName(false)
+			launcherPoolResult.DefaultAuxPool = pool.PoolName == m.getDefaultPoolName(true)
 			result = append(result, launcherPoolResult)
 		}
 	}
