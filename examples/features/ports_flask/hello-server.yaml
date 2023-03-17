@@ -1,0 +1,15 @@
+name: hello-server
+entrypoint: python3 hello-server.py
+resources:
+  slots: 0
+max_restarts: 0
+environment:
+  proxy_ports:
+    - proxy_port: 5000
+      proxy_tcp: true
+      unauthenticated: true
+
+searcher:
+   name: single
+   metric: x
+   max_length: 10000000
