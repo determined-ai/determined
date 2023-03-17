@@ -350,16 +350,16 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         Usage example:
 
-         .. code-block:: python
+        .. code-block:: python
 
-            class MyModel(PyTorchTrial):
-                def __init__(self, context):
-                    ...
-                    self.writer = context.get_tensorboard_writer()
+           class MyModel(PyTorchTrial):
+               def __init__(self, context):
+                   ...
+                   self.writer = context.get_tensorboard_writer()
 
-                def train_batch(self, batch, epoch_idx, batch_idx):
-                    self.writer.add_scalar('my_metric', np.random.random(), batch_idx)
-                    self.writer.add_image('my_image', torch.ones((3,32,32)), batch_idx)
+               def train_batch(self, batch, epoch_idx, batch_idx):
+                   self.writer.add_scalar('my_metric', np.random.random(), batch_idx)
+                   self.writer.add_image('my_image', torch.ones((3,32,32)), batch_idx)
         """
 
         if self._tbd_writer is None:

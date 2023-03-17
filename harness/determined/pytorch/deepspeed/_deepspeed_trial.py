@@ -16,7 +16,6 @@ from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
 from determined import layers, pytorch, util, workload
-from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
 
 
