@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -14,6 +15,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+var scimLock sync.Mutex
 
 // ByExternalToken returns a user session derived from an external authentication token.
 func ByExternalToken(ctx context.Context, tokenText string,
@@ -53,21 +56,84 @@ func ByExternalToken(ctx context.Context, tokenText string,
 		isAdmin = orgRoles.DefaultClusterRole == model.AdminRole
 	}
 
-	user, err := UserByUsername(claims.Email)
+	scimLock.Lock()
+	defer scimLock.Unlock()
+
+	scimUser, err := db.SingleDB().SCIMUserByAttribute("user_id", claims.UserID)
+	var user *model.User
 	if err != nil {
-		if err != db.ErrNotFound {
+		if !errors.Is(err, db.ErrNotFound) {
 			return nil, nil, err
 		}
-		user = &model.User{
-			Username:     claims.Email,
-			PasswordHash: null.NewString("", false),
-			Admin:        isAdmin,
-			Active:       true,
+
+		// An existing SCIM user was not found: create or finish creating one.
+
+		scimUser = &model.SCIMUser{
+			ExternalID: claims.UserID,
+			Emails:     model.SCIMEmailsFromJWT(claims),
+			Name:       model.SCIMNameFromJWT(claims),
+			RawAttributes: map[string]interface{}{
+				"user_id": claims.UserID,
+			},
+			Username: claims.Email,
 		}
-		err := AddUserExec(user)
+
+		// Check for the temporary case where their email exists in users but no SCIM user exists
+		user, err = UserByUsername(claims.Email)
+		if err != nil {
+			if err != db.ErrNotFound {
+				return nil, nil, err
+			}
+
+			// Legacy user was not found, so creating...
+			_, err = db.SingleDB().AddSCIMUser(scimUser)
+			if err != nil {
+				return nil, nil, errors.WithStack(err)
+			}
+			user, err = db.SingleDB().UserBySCIMAttribute("user_id", claims.UserID)
+			if err != nil {
+				return nil, nil, errors.WithStack(err)
+			}
+		} else {
+			// Legacy user was found, so retrofit it...
+			_, err = db.SingleDB().RetrofitSCIMUser(scimUser, user.ID)
+			if err != nil {
+				return nil, nil, errors.WithStack(err)
+			}
+		}
+	} else {
+		// Existing SCIM user was found: retrieve or update all details.
+
+		user, err = db.SingleDB().UserBySCIMAttribute("user_id", claims.UserID)
 		if err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
+
+		scimUser.Emails = model.SCIMEmailsFromJWT(claims)
+		scimUser.Name = model.SCIMNameFromJWT(claims)
+		scimUser.Username = claims.Email
+
+		_, err = db.SingleDB().SetSCIMUser(scimUser.ID.String(), scimUser)
+		if err != nil {
+			return nil, nil, errors.WithStack(err)
+		}
+
+		user.Username = claims.Email
+		user.Admin = isAdmin
+		user.Active = true
+
+		err = db.SingleDB().UpdateUser(user, []string{"username", "admin", "active"}, nil)
+		if err != nil {
+			return nil, nil, errors.WithStack(err)
+		}
+	}
+
+	user = &model.User{
+		ID:           user.ID,
+		Username:     claims.Email,
+		PasswordHash: null.NewString("", false),
+		Admin:        isAdmin,
+		Active:       true,
 	}
 
 	session := &model.UserSession{

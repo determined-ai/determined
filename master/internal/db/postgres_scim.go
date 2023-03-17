@@ -25,6 +25,49 @@ type scimUserRow struct {
 	RawAttributes map[string]interface{} `db:"raw_attributes"`
 }
 
+// RetrofitSCIMUser "upgrades" an existing user to one tracked in the SCIM table. This is a
+// temporary measure for SaaS clusters to migrate existing users to SCIM users.
+func (db *PgDB) RetrofitSCIMUser(suser *model.SCIMUser, userID model.UserID) (*model.SCIMUser,
+	error) {
+	row := &scimUserRow{
+		ExternalID:    suser.ExternalID,
+		Emails:        suser.Emails,
+		Name:          suser.Name,
+		RawAttributes: suser.RawAttributes,
+	}
+
+	tx, err := db.sql.Beginx()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	defer func() {
+		if tx == nil {
+			return
+		}
+
+		if rErr := tx.Rollback(); rErr != nil {
+			log.Errorf("error during rollback: %v", rErr)
+		}
+	}()
+
+	id, err := addSCIMUser(tx, userID, row)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tx = nil
+
+	added := *suser
+	added.ID = id
+
+	return &added, nil
+}
+
 // AddSCIMUser adds a user as well as additional SCIM-specific fields. If
 // the user already exists, this function will return an error.
 func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
@@ -198,6 +241,23 @@ SELECT
 	s.id, u.username, s.external_id, s.name, s.emails, u.active
 FROM users u, scim.users s
 WHERE u.id = s.user_id AND s.id = $1`, id).StructScan(&suser); err == sql.ErrNoRows {
+		return nil, errors.WithStack(ErrNotFound)
+	} else if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &suser, nil
+}
+
+// SCIMUserByAttribute returns the SCIM user with the given value for the given attribute.
+func (db *PgDB) SCIMUserByAttribute(name, value string) (*model.SCIMUser, error) {
+	var suser model.SCIMUser
+	err := db.sql.QueryRowx(`
+SELECT
+	s.id, u.username, s.external_id, s.name, s.emails, u.active
+FROM users u, scim.users s
+WHERE u.id = s.user_id AND s.raw_attributes->>$1 = $2`, name, value).StructScan(&suser)
+	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
 	} else if err != nil {
 		return nil, errors.WithStack(err)
