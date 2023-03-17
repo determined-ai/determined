@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // This should all correspond to models in the SaaS code
@@ -36,7 +36,27 @@ type OrgRoleClaims struct {
 // JWT defines the claims that are serialized and signed to make a bearer token.
 type JWT struct {
 	jwt.StandardClaims
-	Subject  string
+	UserID   string // SaaS user IDs are strings, unlike Determined's int-based type
 	Email    string
+	Name     string
 	OrgRoles map[OrgID]OrgRoleClaims
+}
+
+// SCIMEmailsFromJWT returns a consistent SCIMEmails struct wrapping the single email in a JWT.
+func SCIMEmailsFromJWT(claims *JWT) SCIMEmails {
+	return SCIMEmails{
+		SCIMEmail{
+			Type:    "OpenID Connect",
+			SValue:  claims.Email,
+			Primary: true,
+		},
+	}
+}
+
+// SCIMNameFromJWT returns a consistent SCIMName struct wrapping the single name in a JWT.
+func SCIMNameFromJWT(claims *JWT) SCIMName {
+	return SCIMName{
+		// TODO consider getting separate names from OpenID profile
+		GivenName: claims.Name,
+	}
 }
