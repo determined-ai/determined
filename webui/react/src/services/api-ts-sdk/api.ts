@@ -4578,19 +4578,19 @@ export interface V1LogEntry {
      * @type {string}
      * @memberof V1LogEntry
      */
-    message?: string;
+    message: string;
     /**
      * The timestamp.
      * @type {Date}
      * @memberof V1LogEntry
      */
-    timestamp?: Date;
+    timestamp: Date;
     /**
      * The log level.
      * @type {V1LogLevel}
      * @memberof V1LogEntry
      */
-    level?: V1LogLevel;
+    level: V1LogLevel;
 }
 /**
  * Login the user.

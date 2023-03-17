@@ -5696,49 +5696,37 @@ class v1ListRolesResponse:
         return out
 
 class v1LogEntry:
-    level: "typing.Optional[v1LogLevel]" = None
-    message: "typing.Optional[str]" = None
-    timestamp: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: int,
-        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
-        message: "typing.Union[str, None, Unset]" = _unset,
-        timestamp: "typing.Union[str, None, Unset]" = _unset,
+        level: "v1LogLevel",
+        message: str,
+        timestamp: str,
     ):
         self.id = id
-        if not isinstance(level, Unset):
-            self.level = level
-        if not isinstance(message, Unset):
-            self.message = message
-        if not isinstance(timestamp, Unset):
-            self.timestamp = timestamp
+        self.level = level
+        self.message = message
+        self.timestamp = timestamp
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LogEntry":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
+            "level": v1LogLevel(obj["level"]),
+            "message": obj["message"],
+            "timestamp": obj["timestamp"],
         }
-        if "level" in obj:
-            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
-        if "message" in obj:
-            kwargs["message"] = obj["message"]
-        if "timestamp" in obj:
-            kwargs["timestamp"] = obj["timestamp"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
+            "level": self.level.value,
+            "message": self.message,
+            "timestamp": self.timestamp,
         }
-        if not omit_unset or "level" in vars(self):
-            out["level"] = None if self.level is None else self.level.value
-        if not omit_unset or "message" in vars(self):
-            out["message"] = self.message
-        if not omit_unset or "timestamp" in vars(self):
-            out["timestamp"] = self.timestamp
         return out
 
 class v1LogLevel(enum.Enum):
