@@ -74,7 +74,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 
 		}
 
-		fmt.Println("batch: %v", b)
+		fmt.Printf("batch: %v", b)
 		trainingbBatchMetrics = append(trainingbBatchMetrics, &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
@@ -99,7 +99,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 			TrialId:        trialID,
 			StepsCompleted: int32(b + 1),
 			Metrics: &commonv1.Metrics{
-				AvgMetrics:   makeMetrics(),
+				//AvgMetrics:   makeMetrics(),
 				BatchMetrics: trainingbBatchMetrics,
 			},
 		}
@@ -136,7 +136,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 			TrialId:        trialID,
 			StepsCompleted: int32(b + 1),
 			Metrics: &commonv1.Metrics{
-				AvgMetrics:   makeMetrics(),
+				// AvgMetrics:   makeMetrics(),
 				BatchMetrics: validationBatchMetrics,
 			},
 		}
