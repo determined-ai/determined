@@ -1,5 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Card as AntDCard, Space } from 'antd';
+import { Card as AntDCard, Row, Space } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -22,11 +22,12 @@ import LogViewer from 'components/kit/LogViewer/LogViewer';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import Select from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
+import Label from 'components/Label';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -37,6 +38,7 @@ import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { paths } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import Icon from 'shared/components/Icon';
@@ -49,6 +51,7 @@ import {
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 
+import { useModalComponent, useModalParams } from 'modal/useModality';
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
@@ -67,6 +70,7 @@ const ComponentTitles = {
   InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Modals: 'Modals',
   Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
@@ -1669,6 +1673,163 @@ const ToggleSection: React.FC = () => {
   );
 };
 
+/* modal section */
+
+const handleSubmit = async () => {
+  await new Promise((r) => setTimeout(r, 1000));
+  return;
+};
+
+const SmallModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({ thing }) => {
+  const params = useMemo(
+    () => ({
+      cancelText: 'No',
+      headerLink: { text: 'Related', url: paths.dashboard() },
+      icon: 'experiment',
+      size: 'small' as const,
+      submit: {
+        handler: handleSubmit,
+        text: 'Yes',
+      },
+      titleText: 'Experiment',
+    }),
+    [],
+  );
+
+  useModalParams(params);
+
+  return <div>{thing}</div>;
+};
+
+/* medium modal */
+
+const MediumModalComponent: React.FC<JSX.IntrinsicAttributes> = () => {
+  const params = useMemo(
+    () => ({
+      cancelText: 'No',
+      footerLink: { text: 'Learn more about clusters', url: paths.cluster() },
+      size: 'medium' as const,
+      submit: {
+        handler: handleSubmit,
+        text: 'Yes',
+      },
+      titleText: 'Modal',
+    }),
+    [],
+  );
+
+  useModalParams(params);
+
+  return (
+    <Form>
+      <Form.Item
+        className={css.line}
+        label="Workspace"
+        name="workspaceId"
+        rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
+        <Select allowClear defaultValue={1} placeholder="Workspace (required)">
+          <Option key="1" value="1">
+            WS AS
+          </Option>
+          <Option key="2" value="2">
+            Further
+          </Option>
+          <Option key="3" value="3">
+            Whencelan
+          </Option>
+        </Select>
+      </Form.Item>
+      <Form.Item className={css.line} label="Template" name="template">
+        <Select allowClear placeholder="No template (optional)">
+          <Option key="1" value={1}>
+            Default Template
+          </Option>
+        </Select>
+      </Form.Item>
+      <Form.Item className={css.line} label="Name" name="name">
+        <Input placeholder="Name (optional)" />
+      </Form.Item>
+      <Form.Item className={css.line} label="Resource Pool" name="pool">
+        <Select allowClear placeholder="Pick the best option">
+          <Option key="1" value="1">
+            GPU Pool
+          </Option>
+          <Option key="2" value="2">
+            Aux Pool
+          </Option>
+        </Select>
+      </Form.Item>
+      <Form.Item className={css.line} label="Slots" name="slots">
+        <InputNumber max={10} min={0} />
+      </Form.Item>
+    </Form>
+  );
+};
+
+const LargeModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({ thing }) => {
+  const params = useMemo(
+    () => ({
+      cancelText: 'No',
+      size: 'large' as const,
+      submit: {
+        handler: handleSubmit,
+        text: 'Yes',
+      },
+      titleText: 'Modal',
+    }),
+    [],
+  );
+  useModalParams(params);
+  return <div>{thing}</div>;
+};
+
+const DangerousModalComponent: React.FC<{ thing: string } & JSX.IntrinsicAttributes> = ({
+  thing,
+}) => {
+  const params = useMemo(
+    () => ({
+      cancelText: 'No',
+      danger: true,
+      size: 'small' as const,
+      submit: {
+        handler: handleSubmit,
+        text: 'Yes',
+      },
+      titleText: 'Modal',
+    }),
+    [],
+  );
+  useModalParams(params);
+  return <div>{thing}</div>;
+};
+
+const ModalSection: React.FC = () => {
+  const [text, setText] = useState('asdf');
+  const SmallModal = useModalComponent(SmallModalComponent);
+  const MediumModal = useModalComponent(MediumModalComponent);
+  const LargeModal = useModalComponent(LargeModalComponent);
+  const DangerousModal = useModalComponent(DangerousModalComponent);
+
+  return (
+    <ComponentSection id="Modals" title="Modals">
+      <Card>
+        <Label>State that gets passed to modal via props</Label>
+        <Input value={text} onChange={(s) => setText(String(s.target.value))} />
+        <Row>
+          <Button onClick={SmallModal.open}>Open Small Modal</Button>
+          <Button onClick={MediumModal.open}>Open Medium Modal</Button>
+          <Button onClick={LargeModal.open}>Open Large Modal</Button>
+          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+        </Row>
+      </Card>
+      <SmallModal.Component thing={text} />
+      <MediumModal.Component />
+      <LargeModal.Component thing={text} />
+      <DangerousModal.Component thing={text} />
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
@@ -1683,6 +1844,7 @@ const Components = {
   InputSearch: <InputSearchSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
@@ -1704,7 +1866,7 @@ const DesignKit: React.FC = () => {
     <Page bodyNoPadding docTitle="Design Kit">
       <div className={css.base}>
         <nav>
-          <Link reloadDocument to={{}}>
+          <Link reloadDocument to={paths.dashboard()}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />

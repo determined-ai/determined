@@ -29,6 +29,9 @@ import ExperimentList from './ExperimentList';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
+import Button from 'components/kit/Button';
+import { useModalComponent } from 'modal/useModality';
+import { ProjectModal } from 'modal/ProjectEditModal';
 
 type Params = {
   projectId: string;
@@ -37,6 +40,8 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
+
+  const ProjectEditModal = useModalComponent(ProjectModal);
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -191,7 +196,14 @@ const ProjectDetails: React.FC = () => {
         type="project"
       />
       {/* TODO: Clean up once we standardize page layouts */}
+      <Button onClick={ProjectEditModal.open}>Modify</Button>
       <div style={{ height: '100%', padding: 16 }}>
+        <ProjectEditModal.Component
+          projectId={project.id}
+          initialDescription={project.description ?? ''}
+          initialName={project.name}
+          onComplete={fetchProject}
+        />
         <DynamicTabs
           basePath={paths.projectDetailsBasePath(id)}
           destroyInactiveTabPane

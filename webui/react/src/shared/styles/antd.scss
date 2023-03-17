@@ -134,9 +134,6 @@ html {
     border-radius: var(--theme-border-radius-strong);
     box-shadow: var(--theme-elevation-strong);
   }
-  .ant-modal > .ant-modal-content > .ant-modal-header {
-    padding: 16px;
-  }
 
   /* fix for confirm modal content for modals with no icon props */
 
