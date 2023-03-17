@@ -944,7 +944,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def get_tensorboard_writer(self) -> Any:
         """
-        This function returns an instance of `torch.utils.tensorboard.SummaryWriter`
+        This function returns an instance of ``torch.utils.tensorboard.SummaryWriter``
 
         Trials users who wish to log to TensorBoard can use this writer object.
         We provide and manage a writer in order to save and upload TensorBoard
