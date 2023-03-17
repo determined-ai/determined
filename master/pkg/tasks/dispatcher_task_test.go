@@ -773,7 +773,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	environment := expconf.EnvironmentConfigV0{
 		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
 			RawCPU:  []string{"cpu=default", "myenv=xyz"},
-			RawCUDA: []string{"cuda=default", "extra=expconf"},
+			RawCUDA: []string{"cuda=default", "extra=expconf", "empty"},
 			RawROCM: []string{"rocm=default"},
 		},
 		RawRegistryAuth: &types.AuthConfig{
@@ -830,6 +830,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 
 	assert.Equal(t, envVars["cpu"], "default")
 	assert.Equal(t, envVars["myenv"], "xyz")
+	assert.Equal(t, envVars["empty"], "")
 
 	envVarsPodman, _ := getEnvVarsForLauncherManifest(ts,
 		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)
@@ -849,31 +850,6 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, val, varTmp)
 	val = envVarsEnroot["ENROOT_MOUNT_HOME"]
 	assert.Equal(t, val, "y")
-}
-
-func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
-	disableImageCache := true
-	environment := expconf.EnvironmentConfigV0{
-		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
-			RawCPU: []string{"cpudefault", "cpuexpconf"},
-		},
-		RawImage:            &expconf.EnvironmentImageMapV0{},
-		RawProxyPorts:       &expconf.ProxyPortsConfigV0{},
-		RawRegistryAuth:     &types.AuthConfig{},
-		RawForcePullImage:   &disableImageCache,
-		RawPodSpec:          &expconf.PodSpec{},
-		RawAddCapabilities:  []string{},
-		RawDropCapabilities: []string{},
-		RawPorts:            map[string]int{},
-	}
-
-	ts := &TaskSpec{
-		Environment: environment,
-	}
-
-	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false,
-		device.CUDA, "podman", "/", 0)
-	assert.ErrorContains(t, err, "invalid user-defined environment variable 'cpudefault'")
 }
 
 func Test_generateRunDeterminedLinkNames(t *testing.T) {
