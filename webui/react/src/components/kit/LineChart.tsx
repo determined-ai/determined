@@ -320,7 +320,9 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
       const xOpts = new Set<string>();
       chartsProps.forEach((chart) => {
         chart.series.forEach((serie) => {
+          console.log(serie);
           Object.entries(serie.data).forEach(([xAxisOption, dataPoints]) => {
+            console.log([xAxisOption, dataPoints]);
             if (dataPoints.length > 0) {
               xOpts.add(xAxisOption);
             }

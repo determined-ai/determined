@@ -1880,44 +1880,18 @@ export interface V1DataPoint {
      * @memberof V1DataPoint
      */
     value: number;
-}
-/**
- * One DataPointEpoch in a series of metrics from a trial in epoch.
- * @export
- * @interface V1DataPointEpoch
- */
-export interface V1DataPointEpoch {
-    /**
-     * Total batches processed by the epoch this measurement is taken.
-     * @type {number}
-     * @memberof V1DataPointEpoch
-     */
-    epoch: number;
-    /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
-     * @memberof V1DataPointEpoch
-     */
-    value: number;
-}
-/**
- * One DataPointTime in a series of metrics from a trial in time.
- * @export
- * @interface V1DataPointTime
- */
-export interface V1DataPointTime {
     /**
      * The time the measurement is taken.
      * @type {Date}
-     * @memberof V1DataPointTime
+     * @memberof V1DataPoint
      */
     time: Date;
     /**
-     * Value of the requested metric at this point in the trial.
+     * The epoch this measurement is taken.
      * @type {number}
-     * @memberof V1DataPointTime
+     * @memberof V1DataPoint
      */
-    value: number;
+    epoch?: number;
 }
 /**
  * 
@@ -7796,19 +7770,7 @@ export interface V1SummarizedMetric {
      */
     data: Array<V1DataPoint>;
     /**
-     * A possibly down-sampled series of metric readings through the progress of the trial in wall time.
-     * @type {Array<V1DataPointTime>}
-     * @memberof V1SummarizedMetric
-     */
-    time?: Array<V1DataPointTime>;
-    /**
-     * A possibly down-sampled series of metric readings through the progress of the trial in epoch.
-     * @type {Array<V1DataPointEpoch>}
-     * @memberof V1SummarizedMetric
-     */
-    epochs?: Array<V1DataPointEpoch>;
-    /**
-     * Type of metrics (training, validation, or unset).
+     * A possibly down-sampled series of metric readings through the progress of the trial in wall time. Type of metrics (training, validation, or unset).
      * @type {V1MetricType}
      * @memberof V1SummarizedMetric
      */

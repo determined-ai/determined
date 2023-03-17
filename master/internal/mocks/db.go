@@ -1747,23 +1747,25 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 	return r0, r1, r2
 }
 
-// TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels
-func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string) (db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+// TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints
+func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) ([]db.MetricMeasurements, error) {
+	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 
-	var r0 db.MetricMeasurements
+	var r0 []db.MetricMeasurements
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) (db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) ([]db.MetricMeasurements, error)); ok {
+		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) []db.MetricMeasurements); ok {
+		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	} else {
-		r0 = ret.Get(0).(db.MetricMeasurements)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.MetricMeasurements)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int) error); ok {
+		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2301,23 +2303,25 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 	return r0, r1, r2
 }
 
-// ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string) (db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+// ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints
+func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) ([]db.MetricMeasurements, error) {
+	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 
-	var r0 db.MetricMeasurements
+	var r0 []db.MetricMeasurements
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) (db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) ([]db.MetricMeasurements, error)); ok {
+		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) []db.MetricMeasurements); ok {
+		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	} else {
-		r0 = ret.Get(0).(db.MetricMeasurements)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.MetricMeasurements)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
+	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int) error); ok {
+		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
 	} else {
 		r1 = ret.Error(1)
 	}

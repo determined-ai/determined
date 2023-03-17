@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -633,45 +632,17 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) formatMetricsBatch(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+func (a *apiServer) formatMetrics(
+	m *apiv1.SummarizedMetric, metricMeasurements []db.MetricMeasurements,
 ) {
-	for _, in := range metricSeries {
+	for _, in := range metricMeasurements {
 		out := apiv1.DataPoint{
-			Batches: int32(in.X),
-			Value:   in.Y,
+			Time:    timestamppb.New(timeFromFloat64(in.Time)),
+			Batches: int32(in.Batches),
+			Epoch:   in.Epoch,
+			Value:   in.Value,
 		}
 		m.Data = append(m.Data, &out)
-	}
-}
-
-func timeFromFloat64(ts float64) time.Time {
-	secs := int64(ts)
-	nsecs := int64((ts - float64(secs)) * 1e9)
-	return time.Unix(secs, nsecs)
-}
-
-func (a *apiServer) formatMetricsTime(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) {
-	for _, in := range metricSeries {
-		out := apiv1.DataPointTime{
-			Time:  timestamppb.New(timeFromFloat64(in.X)),
-			Value: in.Y,
-		}
-		m.Time = append(m.Time, &out)
-	}
-}
-
-func (a *apiServer) formatMetricsEpoch(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) {
-	for _, in := range metricSeries {
-		out := apiv1.DataPointEpoch{
-			Epoch: int32(in.X),
-			Value: in.Y,
-		}
-		m.Epochs = append(m.Epochs, &out)
 	}
 }
 
@@ -679,11 +650,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool, xAxis apiv1.XAxis,
 ) ([]*apiv1.SummarizedMetric, error) {
-	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	var startTime time.Time
 	var err error
 	var metrics []*apiv1.SummarizedMetric
-	var metricMeasurements db.MetricMeasurements
+	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
@@ -695,25 +665,19 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			a.formatMetricsBatch(&metric, metricSeriesBatch)
+			a.formatMetrics(&metric, metricMeasurements)
 
 			// For now "epoch" is the only custom xAxis metric label supported so we
 			// build the `MetricSeriesEpoch` array. In the future this logic should
 			// be updated to support any number of xAxis metric options
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
-				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
 
-			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
 		}
@@ -722,21 +686,14 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+			a.formatMetrics(&metric, metricMeasurements)
 
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			a.formatMetricsBatch(&metric, metricSeriesBatch)
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
-				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
-
-			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
 		}

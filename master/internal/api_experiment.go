@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/errors"
 
@@ -33,7 +34,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -1505,16 +1505,21 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacyS
 	}
 }
 
+func timeFromFloat64(ts float64) time.Time {
+	secs := int64(ts)
+	nsecs := int64((ts - float64(secs)) * 1e9)
+	return time.Unix(secs, nsecs)
+}
+
 func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
-	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricMeasurements db.MetricMeasurements
+	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
 	trial.TrialId = trialID
@@ -1535,28 +1540,30 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
 		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics)
+			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics)
+			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 	default:
 		panic("Invalid metric type")
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
-	if len(metricMeasurements.Batches) > 0 {
+	if len(metricMeasurements) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
-	if !seenBefore {
-		metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
-	}
+	// if !seenBefore {
+	// 	metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
+	// }
 
-	for _, in := range metricSeries {
+	for _, in := range metricMeasurements {
 		out := apiv1.DataPoint{
-			Batches: int32(in.X),
-			Value:   in.Y,
+			Batches: int32(in.Batches),
+			Value:   in.Value,
+			Time:    timestamppb.New(timeFromFloat64(in.Time)),
+			Epoch:   in.Epoch,
 		}
 		trial.Data = append(trial.Data, &out)
 	}
