@@ -299,6 +299,9 @@ commands:
       python-version:
         type: string
         default: "3.7.15"
+      pip-install-retries:
+        type: string
+        default: "3"
     steps:
       - when:
           condition: <<parameters.install-python>>
@@ -386,13 +389,35 @@ commands:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              pip install --progress-bar off <<parameters.extras-requires>>
+              i=0
+              while [[ $i -lt <<parameters.pip-install-retries>> ]]; do
+                if pip install --progress-bar off <<parameters.extras-requires>>
+                then
+                  exit
+                fi
+                sleep $((2**$i))
+                ((i=i+1))
+              done
+
+              # The last retry failed
+              exit 1
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
-              pip install -r <<parameters.extra-requirements-file>>
+              i=0
+              while [[ $i -lt <<parameters.pip-install-retries>> ]]; do
+                if pip install -r <<parameters.extra-requirements-file>>
+                then
+                  exit
+                fi
+                sleep $((2**$i))
+                ((i=i+1))
+              done
+
+              # The last retry failed
+              exit 1
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
