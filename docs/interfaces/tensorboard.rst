@@ -152,22 +152,8 @@ which Determined then moves to ``/tmp/tensorboard``.
 PyTorch
 =======
 
-To add TensorBoard support for models that use the :doc:`PyTorch API
-</training/apis-howto/api-pytorch-ug>`, use the ``writer`` field in an instance of the
-:class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter` class:
-
-.. code:: python
-
-   from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-
-   class MyModel(PyTorchTrial):
-       def __init__(self, context):
-           ...
-           self.logger = TorchWriter()
-
-       def train_batch(self, batch, epoch_idx, batch_idx):
-           self.logger.writer.add_scalar("my_metric", np.random.random(), batch_idx)
+See :func:`PyTorchTrialContext.get_tensorboard_writer()
+<determined.pytorch.PyTorchTrialContext.get_tensorboard_writer>`
 
 For a full-length example of using TensorBoard with PyTorch, see the :download:`mnist-GAN model
 </examples/gan_mnist_pytorch.tgz>`.
@@ -208,23 +194,16 @@ hosted on agent machines but they do not occupy GPUs.
 Can I log additional TensorBoard events beyond what Determined logs automatically?
 ==================================================================================
 
-Yes; any additional TFEvent files that are written to ``/tmp/tensorboard`` inside a trial container
-will be accessible via TensorBoard. For example, to log a custom TensorBoard event using PyTorch:
+Yes; any additional TFEvent files that are written to the appropriate path during training will be
+accessible to TensorBoard. The appropriate path varies by worker rank, and can be obtained via one
+of the following functions:
 
-.. code:: python
+   -  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
+   -  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
+   -  For DeepSpeedTrial users:
+      :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
+   -  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
+   -  For EstimatorTrial users:
+      :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
 
-   from torch.utils.tensorboard import SummaryWriter
-
-   writer = SummaryWriter(log_dir="/tmp/tensorboard")
-   writer.add_scalar("my_metric", np.random.random(), batch_idx)
-
-For more details, as well as examples of how to do this with TF Estimator and TF Keras models, refer
-to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
-
-Can I use TensorBoard with PyTorch?
-===================================
-
-Yes! For an example of this check out the :download:`mnist-GAN </examples/gan_mnist_pytorch.tgz>`
-example. This model uses the :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter`
-class which automatically configures the location for writing TensorBoards. Users can also directly
-use ``torch.utils.tensorboard.SummaryWriter`` as shown in the snippet above.
+For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
