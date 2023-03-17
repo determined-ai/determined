@@ -44,7 +44,6 @@ export interface UseModalParams {
 }
 
 interface ModalContext {
-  modalIsOpen: boolean;
   params?: UseModalParams;
   setParams: Dispatch<SetStateAction<UseModalParams | null>>;
 }
@@ -65,6 +64,10 @@ interface ModalContainerProps {
 }
 
 function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: ModalContainerProps) {
+  /*
+   * the params are defined here, but set from with the ModalBodyComponent
+   * via useModalParams (which uses React Context)
+   */
   const [params, setParams] = useState<UseModalParams | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -79,8 +82,13 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
   }, [params?.submit, setModalIsOpen]);
 
   if (params === null) {
+    /**
+     * we still want to render the modalBody, although invisibly,
+     * so that it can set the params (which will then allow it to be
+     * displayed)
+     */
     return (
-      <ModalContext.Provider value={{ modalIsOpen, setParams }}>
+      <ModalContext.Provider value={{ setParams }}>
         <div style={{ display: 'none' }}>{modalBody}</div>
       </ModalContext.Provider>
     );
@@ -88,7 +96,7 @@ function ModalContainer({ modalIsOpen, children: modalBody, setModalIsOpen }: Mo
 
   const { titleText, cancelText, submit, danger, icon, footerLink, headerLink, size } = params;
   return (
-    <ModalContext.Provider value={{ modalIsOpen, params, setParams }}>
+    <ModalContext.Provider value={{ params, setParams }}>
       <AntdModal
         cancelText={params.cancelText}
         footer={
@@ -153,6 +161,14 @@ export function useModalComponent<ModalProps extends JSX.IntrinsicAttributes>(
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const handleOpen = useCallback(() => setModalIsOpen(true), []);
 
+  /**
+   * Here we are wrapping the provided ModalBodyComponent with ModalContainer,
+   * while maintaining the type, i.e. React.FC<ModalProps>.
+   * ModalContainer handles the putting the body into an actual modal, along with
+   * dealing with the state and parameter handling.
+   * The assumption here is that the ModalBodyComponent is doing a useModalParams(params)
+   * to specify the desired parameters from within, otherwise nothing will happen.
+   */
   const Component = useCallback(
     (props: ModalProps) => {
       return (
