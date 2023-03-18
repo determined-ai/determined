@@ -19,10 +19,11 @@ import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import usersStore from 'stores/users';
-import { DetailedUser, ModelVersion, Workspace } from 'types';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -53,10 +54,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onSaveName,
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -75,14 +73,22 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === modelVersion.userId);
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === modelVersion.userId);
+
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {getDisplayName(user)}
-            on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {getDisplayName(user)}
+                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',
@@ -271,7 +277,9 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Dropdown>
           </div>
         </div>
-        <InfoBox rows={infoRows} separator={false} />
+        <Spinner spinning>
+          <InfoBox rows={infoRows} separator={false} />
+        </Spinner>
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}

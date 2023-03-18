@@ -1,6 +1,5 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { LabeledValue } from 'antd/es/select';
-import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';

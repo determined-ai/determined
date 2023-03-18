@@ -10,6 +10,7 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -41,6 +42,7 @@ const SettingsAccount: React.FC = () => {
   });
   const [isUsernameEditable, setIsUsernameEditable] = useState<boolean>(false);
   const [isDisplaynameEditable, setIsDisplaynameEditable] = useState<boolean>(false);
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();
@@ -95,6 +97,7 @@ const SettingsAccount: React.FC = () => {
             <span>{currentUser?.username ?? ''}</span>
             <Button
               data-testid="edit-username"
+              disabled={!info.userManagementEnabled}
               icon={<EditOutlined />}
               onClick={() => setIsUsernameEditable(true)}
             />
@@ -113,7 +116,12 @@ const SettingsAccount: React.FC = () => {
               <Input maxLength={32} placeholder="Add username" style={{ widows: '80%' }} />
             </Form.Item>
             <Form.Item noStyle>
-              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
+              <Button
+                disabled={!info.userManagementEnabled}
+                htmlType="submit"
+                icon={<CheckOutlined />}
+                type="primary"
+              />
             </Form.Item>
             <Form.Item noStyle>
               <Button icon={<CloseOutlined />} onClick={() => setIsUsernameEditable(false)} />
@@ -131,6 +139,7 @@ const SettingsAccount: React.FC = () => {
             </span>
             <Button
               data-testid="edit-displayname"
+              disabled={!info.userManagementEnabled}
               icon={<EditOutlined />}
               onClick={() => setIsDisplaynameEditable(true)}
             />
@@ -153,12 +162,16 @@ const SettingsAccount: React.FC = () => {
           </Form>
         )}
       </div>
-      <Divider />
-      <div className={css.row}>
-        <label>Password</label>
-        <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
-      </div>
-      {modalPasswordChangeContextHolder}
+      {info.userManagementEnabled && (
+        <>
+          <Divider />
+          <div className={css.row}>
+            <label>Password</label>
+            <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
+          </div>
+          {modalPasswordChangeContextHolder}
+        </>
+      )}
     </div>
   );
 };

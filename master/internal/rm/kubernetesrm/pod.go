@@ -120,7 +120,7 @@ func newPod(
 
 	// The lifecycle of the containers specified in this map will be monitored.
 	// As soon as one or more of them exits, the pod will be terminated.
-	containerNames := set.New([]string{model.DeterminedK8ContainerName})
+	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	return &pod{
 		submissionInfo: &podSubmissionInfo{

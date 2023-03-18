@@ -28,6 +28,7 @@
 :global(.ant-tabs-nav-list) {
   height: min-content;
 }
+
 @media only screen and (max-width: $breakpoint-tablet) {
   .tabOptions {
     .actionList {

@@ -61,6 +61,8 @@ message GetMasterResponse {
   Product product = 11;
   // List of features that is on.
   repeated string feature_switches = 12;
+  // Feature flag for user management.
+  bool user_management_enabled = 13;
 }
 
 // Get telemetry information.

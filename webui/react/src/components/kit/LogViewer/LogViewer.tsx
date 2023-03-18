@@ -184,8 +184,8 @@ const LogViewer: React.FC<Props> = ({
       if (newLogs.length === 0) return;
       flushSync(() => {
         setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
-        resizeLogs();
       });
+      resizeLogs();
     },
     [resizeLogs],
   );
@@ -310,10 +310,8 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      flushSync(() => {
-        setLogs([]);
-        setFetchDirection(FetchDirection.Newer);
-      });
+      setLogs([]);
+      setFetchDirection(FetchDirection.Newer);
     }
   }, [fetchDirection]);
 

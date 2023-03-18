@@ -360,6 +360,7 @@ const InteractiveTable = <T extends object>({
   ContextMenu,
   areRowsSelected,
   defaultColumns,
+  rowKey,
   ...props
 }: InteractiveTableProps<T>): JSX.Element => {
   const columnDefs: ColumnDefs<string, T> = useMemo(
@@ -652,6 +653,7 @@ const InteractiveTable = <T extends object>({
             columns={renderColumns}
             components={components}
             dataSource={dataSource}
+            rowKey={rowKey}
             scroll={scroll}
             tableLayout="fixed"
             onChange={handleChange}

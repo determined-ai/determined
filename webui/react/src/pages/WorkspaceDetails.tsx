@@ -23,16 +23,16 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
 import usersStore from 'stores/users';
-import { DetailedUser, User, Workspace } from 'types';
+import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import ModelRegistry from './ModelRegistry';
-import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
+import css from './WorkspaceDetails.module.scss';
 
 type Params = {
   tab: string;
@@ -52,10 +52,7 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
   const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -152,7 +149,13 @@ const WorkspaceDetails: React.FC = () => {
     [groups, groupsAssignedDirectlyIds],
   );
 
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
+  const addableUsers = useMemo(
+    () =>
+      Loadable.isLoaded(users)
+        ? users.data.filter((user) => !usersAssignedDirectlyIds.has(user.id))
+        : [],
+    [users, usersAssignedDirectlyIds],
+  );
   const addableUsersAndGroups = useMemo(
     () => [...addableGroups, ...addableUsers],
     [addableGroups, addableUsers],
@@ -259,15 +262,15 @@ const WorkspaceDetails: React.FC = () => {
     return () => canceler.abort();
   }, [canceler]);
 
-  if (isNaN(id)) {
+  if (!workspace || Loadable.isLoading(users)) {
+    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
+  } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch Workspace ${workspaceId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if ((!rbacLoading && !canViewWorkspaceFlag) || (pageError && isNotFound(pageError))) {
     return <PageNotFound />;
-  } else if (!workspace) {
-    return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   }
 
   return (

@@ -51,7 +51,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         max_trials: int,
         num_rungs: int,
         divisor: int,
-        max_concurrent_trials: int = 0,
+        max_concurrent_trials: int = 16,
     ) -> None:
         # Store all information about ASHASearchMethod in ASHASearchMethodState
         # to support easy saving and loading
@@ -381,7 +381,7 @@ class ASHASearchMethodState:
         max_trials: int,
         num_rungs: int,
         divisor: int,
-        max_concurrent_trials: int = 0,
+        max_concurrent_trials: int = 16,
     ) -> None:
         # ASHA params
         self.max_length = max_length

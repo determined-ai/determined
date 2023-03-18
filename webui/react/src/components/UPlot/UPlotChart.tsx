@@ -5,7 +5,7 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import useResize from 'hooks/useResize';
-import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
@@ -25,8 +25,7 @@ interface Props {
   allowDownload?: boolean;
   data?: AlignedData | FacetedData;
   experimentId?: number;
-  focusIndex?: number;
-  noDataMessage?: string;
+  isLoading?: boolean;
   options?: Partial<Options>;
   style?: React.CSSProperties;
 }
@@ -84,10 +83,9 @@ type ChartType = 'Line' | 'Scatter';
 const UPlotChart: React.FC<Props> = ({
   allowDownload,
   data,
-  focusIndex,
+  isLoading,
   options,
   style,
-  noDataMessage,
   experimentId,
 }: Props) => {
   const chartRef = useRef<uPlot>();
@@ -200,15 +198,6 @@ const UPlotChart: React.FC<Props> = ({
     }
   }, [data, hasData, extendedOptions, previousOptions, chartType]);
 
-  /**
-   * When a focus index is provided, highlight applicable series.
-   */
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
-  }, [focusIndex]);
-
   useEffect(() => {
     extendedOptions.series.forEach((ser, i) => {
       const chartSer = chartRef.current?.series?.[i];
@@ -256,13 +245,12 @@ const UPlotChart: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
       {allowDownload && <DownloadButton containerRef={chartDivRef} experimentId={experimentId} />}
-      {!hasData && (
-        <Message
-          style={{ height: options?.height ?? 'auto' }}
-          title={noDataMessage || 'No Data to plot.'}
-          type={MessageType.Empty}
-        />
+      {!hasData && !isLoading && (
+        <div className={css.chartEmpty}>
+          <span>No data to plot.</span>
+        </div>
       )}
+      {isLoading && <Spinner spinning tip="Loading chart data..." />}
     </div>
   );
 };
