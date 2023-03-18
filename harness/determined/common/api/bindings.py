@@ -2743,6 +2743,17 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
     FITTING_POLICY_PBS = "FITTING_POLICY_PBS"
 
+class v1GeneralColumn(enum.Enum):
+    GENERAL_COLUMN_UNSPECIFIED = "GENERAL_COLUMN_UNSPECIFIED"
+    GENERAL_COLUMN_ID = "GENERAL_COLUMN_ID"
+    GENERAL_COLUMN_NAME = "GENERAL_COLUMN_NAME"
+    GENERAL_COLUMN_DESCRIPTION = "GENERAL_COLUMN_DESCRIPTION"
+    GENERAL_COLUMN_TAGS = "GENERAL_COLUMN_TAGS"
+    GENERAL_COLUMN_USER = "GENERAL_COLUMN_USER"
+    GENERAL_COLUMN_STARTTIME = "GENERAL_COLUMN_STARTTIME"
+    GENERAL_COLUMN_DURATION = "GENERAL_COLUMN_DURATION"
+    GENERAL_COLUMN_STATE = "GENERAL_COLUMN_STATE"
+
 class v1GetActiveTasksCountResponse:
 
     def __init__(
@@ -3857,6 +3868,36 @@ class v1GetPermissionsSummaryResponse:
         out: "typing.Dict[str, typing.Any]" = {
             "assignments": [x.to_json(omit_unset) for x in self.assignments],
             "roles": [x.to_json(omit_unset) for x in self.roles],
+        }
+        return out
+
+class v1GetProjectColumnsResponse:
+
+    def __init__(
+        self,
+        *,
+        general: "typing.Sequence[v1GeneralColumn]",
+        hyperparameters: "typing.Sequence[str]",
+        metrics: "typing.Sequence[str]",
+    ):
+        self.general = general
+        self.hyperparameters = hyperparameters
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectColumnsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "general": [v1GeneralColumn(x) for x in obj["general"]],
+            "hyperparameters": obj["hyperparameters"],
+            "metrics": obj["metrics"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "general": [x.value for x in self.general],
+            "hyperparameters": self.hyperparameters,
+            "metrics": self.metrics,
         }
         return out
 
@@ -13393,6 +13434,26 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
+
+def get_GetProjectColumns(
+    session: "api.Session",
+    *,
+    id: int,
+) -> "v1GetProjectColumnsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{id}/columns",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectColumnsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectColumns", _resp)
 
 def get_GetProjectsByUserActivity(
     session: "api.Session",
