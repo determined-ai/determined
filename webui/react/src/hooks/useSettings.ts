@@ -306,6 +306,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   useLayoutEffect(() => {
+    if (initialLoading) return;
     return derivedOb.subscribe(async (cur, prev) => {
       const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
@@ -313,7 +314,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       });
       if (!cur || !user || cur === prev) return;
 
-      if (!initialLoading) await updateDB(cur, prev as SettingsRecord<T>);
+      await updateDB(cur, prev as SettingsRecord<T>);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(

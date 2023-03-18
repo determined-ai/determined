@@ -117,11 +117,6 @@ interface Props {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
