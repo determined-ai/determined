@@ -55,72 +55,69 @@ func (a *apiServer) getProjectColumnsByID(
 		return nil, notFoundErr
 	}
 	// Get general columns
-	generalColumns := make([]*projectv1.ColumnGeneral, 0, len(projectv1.GeneralColumnName_value))
-	for gc := range projectv1.GeneralColumnName_value {
-		generalColumns = append(generalColumns, &projectv1.ColumnGeneral{
-			Name: projectv1.GeneralColumnName(projectv1.GeneralColumnName_value[gc]),
-		})
+	generalColumns := make([]projectv1.GeneralColumn, 0, len(projectv1.GeneralColumn_value))
+	for gc := range projectv1.GeneralColumn_value {
+		generalColumns = append(
+			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
 	}
 	// Get hyperpatameters columns
 	hyperparameters := []struct {
 		Hyperparameters []expconf.Hyperparameters
 	}{}
 	err := db.Bun().
-		NewSelect().Table("hyperparameters_view").Column("hyperparameters").Where("project_id = ?", id).Scan(ctx, &hyperparameters)
+		NewSelect().Table("exp_hyperparameters").Column("hyperparameters").Where(
+		"project_id = ?", id).Scan(ctx, &hyperparameters)
 	if err != nil {
 		return nil, err
 	}
-	hyperparameterMap := make(map[string]*projectv1.ColumnDynamic)
+	hyperparameterMap := make(map[string]string)
 	for _, hps := range hyperparameters {
 		for _, hp := range hps.Hyperparameters {
-			// var hpj expconf.Hyperparameters
-			// err := json.Unmarshal([]byte(hp), &hpj)
-			// if err != nil {
-			// 	return nil, errors.Wrapf(err, "error parsing hyperparameters")
-			// }
-			// log.Infof("%+v", hp)
-			hps := expconf.FlattenHPs(hp)
-			for k, v := range hps {
-				hid := fmt.Sprintf("%s_%s", k, v.GetType())
-				hyperparameterMap[hid] = &projectv1.ColumnDynamic{Name: k, Type: v.GetType()}
-				log.Infof("%+v", v)
+			hpf := expconf.FlattenHPs(hp)
+			for k := range hpf {
+				hyperparameterMap[k] = k
 			}
 		}
 	}
 
-	hyperColumns := make([]*projectv1.ColumnDynamic, 0)
+	hyperColumns := make([]string, 0)
 	for _, mn := range hyperparameterMap {
 		hyperColumns = append(hyperColumns, mn)
 	}
 
 	// Get metrics columns
 	metricNames := []struct {
-		Tname []string
-		Vname []string
+		Name string
 	}{}
+	metricColumns := make([]string, 0)
 	err = db.Bun().
-		NewSelect().Table("metrics_name_view").Column("vname", "tname").Where("project_id = ?", id).Scan(ctx, &metricNames)
+		NewSelect().Table("exp_metrics_name").ColumnExpr(
+		"json_array_elements_text(tname) AS name").Distinct().Where(
+		"project_id = ?", id).Scan(ctx, &metricNames)
 	if err != nil {
 		return nil, err
 	}
-	// Use a set to deduplicate
-	metricColumnsMap := make(map[string]*projectv1.ColumnDynamic)
 	for _, mn := range metricNames {
-		for _, mc := range mn.Tname {
-			cid := fmt.Sprintf("%d_%s_%s", id, "T", mc)
-			metricColumnsMap[cid] = &projectv1.ColumnDynamic{Name: mc, Type: "TRAINING", Id: cid}
-		}
-		for _, mc := range mn.Vname {
-			cid := fmt.Sprintf("%d_%s_%s", id, "V", mc)
-			metricColumnsMap[cid] = &projectv1.ColumnDynamic{Name: mc, Type: "VALIDATION", Id: cid}
-		}
-	}
-	metricColumns := make([]*projectv1.ColumnDynamic, 0)
-	for _, mn := range metricColumnsMap {
-		metricColumns = append(metricColumns, mn)
+		metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "training", mn.Name))
 	}
 
-	return &apiv1.GetProjectColumnsResponse{General: generalColumns, Hyperparameters: hyperColumns, Metrics: metricColumns}, nil
+	metricNames = []struct {
+		Name string
+	}{}
+	err = db.Bun().
+		NewSelect().Table("exp_metrics_name").ColumnExpr(
+		"json_array_elements_text(vname) AS name").Distinct().Where(
+		"project_id = ?", id).Scan(ctx, &metricNames)
+	if err != nil {
+		return nil, err
+	}
+	for _, mn := range metricNames {
+		metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mn.Name))
+	}
+
+	return &apiv1.GetProjectColumnsResponse{
+		General: generalColumns, Hyperparameters: hyperColumns, Metrics: metricColumns,
+	}, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
