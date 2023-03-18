@@ -136,24 +136,6 @@ func (h HyperparametersV0) Each(f func(name string, param HyperparameterV0)) {
 	}
 }
 
-func (h HyperparameterV0) GetType() string {
-	switch {
-	case h.RawConstHyperparameter != nil:
-		return "CONST"
-	case h.RawIntHyperparameter != nil:
-		return "INT"
-	case h.RawDoubleHyperparameter != nil:
-		return "DOUBLE"
-	case h.RawLogHyperparameter != nil:
-		return "LOG"
-	case h.RawCategoricalHyperparameter != nil:
-		return "CATEGORICAL"
-	case h.RawNestedHyperparameter != nil:
-		return "NESTED"
-	}
-	return "UNKNOWN"
-}
-
 // ConstHyperparameterV0 is a constant.
 //
 //go:generate ../gen.sh

@@ -41,9 +41,12 @@ message GetProjectColumnsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "general", "hyperparameters", "metrics" ] }
   };
-  repeated determined.project.v1.ColumnGeneral general = 1;
-  repeated determined.project.v1.ColumnDynamic hyperparameters = 2;
-  repeated determined.project.v1.ColumnDynamic metrics = 3;
+  // List of general columns.
+  repeated determined.project.v1.GeneralColumn general = 1;
+  // List of hyperparameters.
+  repeated string hyperparameters = 2;
+  // List of metrics.
+  repeated string metrics = 3;
 }
 
 // Request for creating a project.
