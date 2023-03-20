@@ -39,7 +39,6 @@ import (
 	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -756,7 +755,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 		Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
-		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA}).
+		mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, expectedErr, err)
@@ -764,7 +763,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 	// Filter only to only one experiment ID.
 	resQuery := &bun.SelectQuery{}
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
-		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA}).
+		mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
 		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("e.id = ?", exp0.ID)
@@ -920,8 +919,20 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			_, err := api.ActivateExperiments(ctx, &apiv1.ActivateExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.PauseExperiment(ctx, &apiv1.PauseExperimentRequest{
 				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.PauseExperiments(ctx, &apiv1.PauseExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
@@ -932,8 +943,20 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			_, err := api.CancelExperiments(ctx, &apiv1.CancelExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
 			_, err := api.KillExperiment(ctx, &apiv1.KillExperimentRequest{
 				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.KillExperiments(ctx, &apiv1.KillExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
@@ -944,8 +967,20 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
+			_, err := api.ArchiveExperiments(ctx, &apiv1.ArchiveExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			return err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) error {
 			_, err := api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
 				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) error {
+			_, err := api.UnarchiveExperiments(ctx, &apiv1.UnarchiveExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
