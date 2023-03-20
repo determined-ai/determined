@@ -87,32 +87,28 @@ func (a *apiServer) getProjectColumnsByID(
 
 	// Get metrics columns
 	metricNames := []struct {
-		Name string
+		Tname []string
+		Vname []string
 	}{}
 	metricColumns := make([]string, 0)
 	err = db.Bun().
-		NewSelect().Table("exp_metrics_name").ColumnExpr(
-		"json_array_elements_text(tname) AS name").Distinct().Where(
-		"project_id = ?", id).Scan(ctx, &metricNames)
+		NewSelect().
+		TableExpr("exp_metrics_name").
+		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
+		TableExpr("LATERAL json_array_elements_text(tname) AS tnames").
+		ColumnExpr("array_to_json(array_agg(DISTINCT tnames)) AS tname").
+		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
+		Where("project_id = ?", id).Scan(ctx, &metricNames)
 	if err != nil {
 		return nil, err
 	}
 	for _, mn := range metricNames {
-		metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "training", mn.Name))
-	}
-
-	metricNames = []struct {
-		Name string
-	}{}
-	err = db.Bun().
-		NewSelect().Table("exp_metrics_name").ColumnExpr(
-		"json_array_elements_text(vname) AS name").Distinct().Where(
-		"project_id = ?", id).Scan(ctx, &metricNames)
-	if err != nil {
-		return nil, err
-	}
-	for _, mn := range metricNames {
-		metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mn.Name))
+		for _, mnt := range mn.Tname {
+			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "training", mnt))
+		}
+		for _, mnv := range mn.Vname {
+			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mnv))
+		}
 	}
 
 	return &apiv1.GetProjectColumnsResponse{
