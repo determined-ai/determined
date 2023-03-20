@@ -17,7 +17,6 @@ from deepspeed.runtime import dataloader as ds_loader
 import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.pytorch import deepspeed as det_ds
-from determined.pytorch.deepspeed import dsat
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
@@ -306,7 +305,9 @@ class DeepSpeedTrialController(det.TrialController):
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
                     metrics = self._train_for_step(
-                        w.step_id, w.num_batches, w.total_batches_processed, w.op
+                        w.step_id,
+                        w.num_batches,
+                        w.total_batches_processed,
                     )
                     response = {
                         "metrics": metrics,
@@ -352,11 +353,7 @@ class DeepSpeedTrialController(det.TrialController):
         return batch_id // cast(int, self.context._epoch_len)
 
     def _train_for_step(
-        self,
-        step_id: int,
-        num_batches: int,
-        total_batches_processed: int,
-        op: Optional[core.SearcherOperation] = None,
+        self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Metrics:
         """
         DeepSpeed allows specifying train_batch_size, train_micro_batch_size_per_gpu, and
@@ -396,55 +393,52 @@ class DeepSpeedTrialController(det.TrialController):
 
         for batch_idx in range(start, end):
             self.steps_completed += 1
-            with dsat.dsat_reporting_context(self.context._core, op, self.steps_completed):
-                self.prof.update_batch_idx(batch_idx)
-                batch_start_time = time.time()
-                self.context._current_batch_idx = batch_idx
-                if self.context.is_epoch_start():
-                    for callback in self.callbacks.values():
-                        with self.prof.record_timing(
-                            f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
-                        ):
-                            callback.on_training_epoch_start(self.get_epoch_idx(batch_idx))
-                # This can be inaccurate if the user's data loader does not return batches with
-                # the micro batch size.  It is also slightly inaccurate if the data loader can return
-                # partial batches.  The same sort of assumptions is made in the DeepSpeed
-                # model engine's accounting and profiling computations.
-                batch_inputs = (
-                    self.context.train_micro_batch_size_per_gpu
-                    * self.context.num_micro_batches_per_slot
-                )
-                num_inputs += batch_inputs
-                num_train_batch_calls = self.context.num_micro_batches_per_slot
-                if self.context.use_pipeline_parallel or self.context._manual_grad_accumulation:
-                    num_train_batch_calls = 1
-                self.context._loss_ids = {}
-                for _ in range(num_train_batch_calls):
+            self.prof.update_batch_idx(batch_idx)
+            batch_start_time = time.time()
+            self.context._current_batch_idx = batch_idx
+            if self.context.is_epoch_start():
+                for callback in self.callbacks.values():
                     with self.prof.record_timing(
-                        "train_batch", requires_sync=False, accumulate=True
+                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
                     ):
-                        tr_metrics = self.trial.train_batch(
-                            self.training_iterator,
-                            self.get_epoch_idx(batch_idx),
-                            batch_idx,
+                        callback.on_training_epoch_start(self.get_epoch_idx(batch_idx))
+            # This can be inaccurate if the user's data loader does not return batches with
+            # the micro batch size.  It is also slightly inaccurate if the data loader can return
+            # partial batches.  The same sort of assumptions is made in the DeepSpeed
+            # model engine's accounting and profiling computations.
+            batch_inputs = (
+                self.context.train_micro_batch_size_per_gpu
+                * self.context.num_micro_batches_per_slot
+            )
+            num_inputs += batch_inputs
+            num_train_batch_calls = self.context.num_micro_batches_per_slot
+            if self.context.use_pipeline_parallel or self.context._manual_grad_accumulation:
+                num_train_batch_calls = 1
+            self.context._loss_ids = {}
+            for _ in range(num_train_batch_calls):
+                with self.prof.record_timing("train_batch", requires_sync=False, accumulate=True):
+                    tr_metrics = self.trial.train_batch(
+                        self.training_iterator,
+                        self.get_epoch_idx(batch_idx),
+                        batch_idx,
+                    )
+                if self.context._mpu.should_report_metrics:
+                    if isinstance(tr_metrics, torch.Tensor):
+                        tr_metrics = {"loss": tr_metrics}
+                    if not isinstance(tr_metrics, dict):
+                        raise det.errors.InvalidExperimentException(
+                            "train_batch must return a dictionary "
+                            f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
                         )
-                    if self.context._mpu.should_report_metrics:
-                        if isinstance(tr_metrics, torch.Tensor):
-                            tr_metrics = {"loss": tr_metrics}
-                        if not isinstance(tr_metrics, dict):
-                            raise det.errors.InvalidExperimentException(
-                                "train_batch must return a dictionary "
-                                f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
-                            )
 
-                        for name, metric in tr_metrics.items():
-                            # Convert PyTorch metric values to NumPy, so that
-                            # `det.util.encode_json` handles them properly without
-                            # needing a dependency on PyTorch.
-                            if isinstance(metric, torch.Tensor):
-                                metric = metric.cpu().detach().numpy()
-                            tr_metrics[name] = metric
-                        per_batch_metrics.append(tr_metrics)
+                    for name, metric in tr_metrics.items():
+                        # Convert PyTorch metric values to NumPy, so that
+                        # `det.util.encode_json` handles them properly without
+                        # needing a dependency on PyTorch.
+                        if isinstance(metric, torch.Tensor):
+                            metric = metric.cpu().detach().numpy()
+                        tr_metrics[name] = metric
+                    per_batch_metrics.append(tr_metrics)
             # We do a check here to make sure that we do indeed process `num_micro_batches_per_slot`
             # micro batches when training a batch for models that do not use pipeline parallelism.
             model0 = self.context.models[0]
