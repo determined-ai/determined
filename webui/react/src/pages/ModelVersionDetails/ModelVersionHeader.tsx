@@ -277,9 +277,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Dropdown>
           </div>
         </div>
-        <Spinner spinning>
-          <InfoBox rows={infoRows} separator={false} />
-        </Spinner>
+        <InfoBox rows={infoRows} separator={false} />
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}
