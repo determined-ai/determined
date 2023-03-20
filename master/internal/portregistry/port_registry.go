@@ -30,12 +30,8 @@ func GetPort(portBase int) (int, error) {
 		return portBase, nil
 	}
 
-	it := portRegistryTree.IteratorAt(node)
 	prevNum := portBase // we only care about ports here after the port base
-	for {
-		if !it.Next() {
-			break
-		}
+	for it := portRegistryTree.IteratorAt(node); it.Next(); {
 		v := it.Key().(int)
 		if (v - 1) != prevNum {
 			break
