@@ -18,8 +18,7 @@ In this guide, you'll learn how to use :ref:`pytorch_trial_ug` and :ref:`pytorch
 
 This section guides you through training a PyTorch model in Determined. You need to implement a
 trial class that inherits from :class:`~determined.pytorch.PyTorchTrial` and specify it as the
-entrypoint in the :ref:`experiment configuration
-<experiment-config-reference>`.
+entrypoint in the :ref:`experiment configuration <experiment-config-reference>`.
 
 To implement a :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions
 that represent the components that are used in the training procedure. It is helpful to work off of
@@ -64,8 +63,8 @@ Download Data
 
 .. note::
 
-   Before continuing, read how to :ref:`prepare-data` to understand how to work with
-   different sources of data.
+   Before continuing, read how to :ref:`prepare-data` to understand how to work with different
+   sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
 
@@ -112,8 +111,7 @@ Each :class:`determined.pytorch.DataLoader` will return batches of data, which w
 to the :meth:`~determined.pytorch.PyTorchTrial.train_batch` and
 :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` functions. The batch size of the data loader
 will be set to the per-slot batch size, which is calculated based on ``global_batch_size`` and
-``slots_per_trial`` as defined in the :ref:`experiment configuration
-<experiment-config-reference>`.
+``slots_per_trial`` as defined in the :ref:`experiment configuration <experiment-config-reference>`.
 
 See the following code as an example:
 
@@ -636,12 +634,11 @@ Take the following code for example.
            model = models.__dict__[args.arch]()
 
 ``args.arch`` is a hyperparameter. You should define the hyperparameter space in the
-:ref:`experiment config <experiment-config-reference>`. By
-doing so, you get better tracking in the WebUI, especially for experiments that use a searcher.
-Depending on how your trial is run, you can access all the current hyperparameters from inside the
-trial by either calling ``self.context.get_hparams()`` if you submitted your trial with
-``entrypoint: model_def:Trial`` or passing in hyperparameters directly into the Trial ``__init__``
-if using PyTorch Trainer API.
+:ref:`experiment config <experiment-config-reference>`. By doing so, you get better tracking in the
+WebUI, especially for experiments that use a searcher. Depending on how your trial is run, you can
+access all the current hyperparameters from inside the trial by either calling
+``self.context.get_hparams()`` if you submitted your trial with ``entrypoint: model_def:Trial`` or
+passing in hyperparameters directly into the Trial ``__init__`` if using PyTorch Trainer API.
 
 .. _pytorch_trainer_ug:
 
@@ -869,11 +866,11 @@ To load a checkpoint from a checkpoint saved using Trainer, you'll need to downl
 to a file directory and use an import helper method to import modules. You should instantiate your
 loaded Trial with a ``CheckpointLoadContext``.
 
-``det.import_from_path`` allows you to import from a specific directory and cleans up afterwards.
-Even if you are importing identically-named files, you can import them as separate modules. This is
-intended to help when you have, for example, a current model_def.py, but also import an older
-``model_def.py`` from a checkpoint into the same interpreter, without conflicts (so long as you
-import them as different names, of course).
+:func:`~determined.import_from_path` allows you to import from a specific directory and cleans up
+afterwards. Even if you are importing identically-named files, you can import them as separate
+modules. This is intended to help when you have, for example, a current model_def.py, but also
+import an older ``model_def.py`` from a checkpoint into the same interpreter, without conflicts (so
+long as you import them as different names, of course).
 
 ``CheckpointLoadContext`` is a special PyTorchTrialContext that can be used to load Trial classes
 outside of normal training loops. It does not support any training features such as metrics
