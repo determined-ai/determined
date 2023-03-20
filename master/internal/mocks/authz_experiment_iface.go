@@ -265,32 +265,6 @@ func (_m *ExperimentAuthZ) FilterExperimentsQuery(ctx context.Context, curUser m
 	return r0, r1
 }
 
-// FilterExperimentsUpdateQuery provides a mock function with given fields: ctx, curUser, query, permissions
-func (_m *ExperimentAuthZ) FilterExperimentsUpdateQuery(ctx context.Context, curUser model.User, query *bun.UpdateQuery, permissions []rbacv1.PermissionType) (*bun.UpdateQuery, error) {
-	ret := _m.Called(ctx, curUser, query, permissions)
-
-	var r0 *bun.UpdateQuery
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *bun.UpdateQuery, []rbacv1.PermissionType) (*bun.UpdateQuery, error)); ok {
-		return rf(ctx, curUser, query, permissions)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, *bun.UpdateQuery, []rbacv1.PermissionType) *bun.UpdateQuery); ok {
-		r0 = rf(ctx, curUser, query, permissions)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bun.UpdateQuery)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, *bun.UpdateQuery, []rbacv1.PermissionType) error); ok {
-		r1 = rf(ctx, curUser, query, permissions)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 type mockConstructorTestingTNewExperimentAuthZ interface {
 	mock.TestingT
 	Cleanup(func())

@@ -592,14 +592,14 @@ class v1ActivateExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ActivateExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -1084,14 +1084,14 @@ class v1ArchiveExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ArchiveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -1306,14 +1306,14 @@ class v1CancelExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CancelExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -2725,6 +2725,32 @@ class v1Experiment:
             out["workspaceName"] = self.workspaceName
         return out
 
+class v1ExperimentActionResult:
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
+        return out
+
 class v1ExperimentInactive:
 
     def __init__(
@@ -2744,32 +2770,6 @@ class v1ExperimentInactive:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentState": self.experimentState.value,
-        }
-        return out
-
-class v1ExperimentResult:
-
-    def __init__(
-        self,
-        *,
-        error: str,
-        id: int,
-    ):
-        self.error = error
-        self.id = id
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentResult":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "error": obj["error"],
-            "id": obj["id"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "error": self.error,
-            "id": self.id,
         }
         return out
 
@@ -5408,14 +5408,14 @@ class v1KillExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1KillExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -6472,14 +6472,14 @@ class v1MoveExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -7379,14 +7379,14 @@ class v1PauseExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PauseExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -11643,14 +11643,14 @@ class v1UnarchiveExperimentsResponse:
     def __init__(
         self,
         *,
-        results: "typing.Sequence[v1ExperimentResult]",
+        results: "typing.Sequence[v1ExperimentActionResult]",
     ):
         self.results = results
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "results": [v1ExperimentResult.from_json(x) for x in obj["results"]],
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 

@@ -204,7 +204,7 @@ message ActivateExperimentRequest {
 message ActivateExperimentResponse {}
 
 // Message for results of individual experiments in a multi-experiment action.
-message ExperimentResult {
+message ExperimentActionResult {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "error", "id" ] }
   };
@@ -230,7 +230,7 @@ message ActivateExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Pause an experiment.
@@ -257,7 +257,7 @@ message PauseExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Cancel an experiment.
@@ -284,7 +284,7 @@ message CancelExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Kill an experiment.
@@ -311,7 +311,7 @@ message KillExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Archive an experiment.
@@ -338,7 +338,7 @@ message ArchiveExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Unarchive an experiment.
@@ -365,7 +365,7 @@ message UnarchiveExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Patch an experiment by providing the updated attributes. Only description,
@@ -770,7 +770,7 @@ message MoveExperimentsResponse {
   };
 
   // Details on success or error for each experiment.
-  repeated ExperimentResult results = 1;
+  repeated ExperimentActionResult results = 1;
 }
 
 // Request to get model definition file tree of an experiment.

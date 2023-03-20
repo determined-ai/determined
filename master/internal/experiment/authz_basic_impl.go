@@ -48,14 +48,6 @@ func (a *ExperimentAuthZBasic) FilterExperimentsQuery(
 	return query, nil
 }
 
-// FilterExperimentsUpdateQuery returns the query unmodified and a nil error.
-func (a *ExperimentAuthZBasic) FilterExperimentsUpdateQuery(
-	ctx context.Context, curUser model.User, query *bun.UpdateQuery,
-	permissions []rbacv1.PermissionType,
-) (*bun.UpdateQuery, error) {
-	return query, nil
-}
-
 // FilterExperimentLabelsQuery returns the query unmodified and a nil error.
 func (a *ExperimentAuthZBasic) FilterExperimentLabelsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,

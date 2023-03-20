@@ -797,10 +797,10 @@ export interface V1ActivateExperimentsRequest {
 export interface V1ActivateExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1ActivateExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
@@ -1143,10 +1143,10 @@ export interface V1ArchiveExperimentsRequest {
 export interface V1ArchiveExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1ArchiveExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * 
@@ -1375,10 +1375,10 @@ export interface V1CancelExperimentsRequest {
 export interface V1CancelExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1CancelExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * Checkpoint a collection of files saved by a task.
@@ -2448,6 +2448,25 @@ export interface V1Experiment {
     bestTrialSearcherMetric?: number;
 }
 /**
+ * Message for results of individual experiments in a multi-experiment action.
+ * @export
+ * @interface V1ExperimentActionResult
+ */
+export interface V1ExperimentActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1ExperimentActionResult
+     */
+    error: string;
+    /**
+     * Experiment ID.
+     * @type {number}
+     * @memberof V1ExperimentActionResult
+     */
+    id: number;
+}
+/**
  * ExperimentInactive is a searcher event triggered when an experiment is no longer active.
  * @export
  * @interface V1ExperimentInactive
@@ -2459,25 +2478,6 @@ export interface V1ExperimentInactive {
      * @memberof V1ExperimentInactive
      */
     experimentState: Experimentv1State;
-}
-/**
- * Message for results of individual experiments in a multi-experiment action.
- * @export
- * @interface V1ExperimentResult
- */
-export interface V1ExperimentResult {
-    /**
-     * Optional error message.
-     * @type {string}
-     * @memberof V1ExperimentResult
-     */
-    error: string;
-    /**
-     * Experiment ID.
-     * @type {number}
-     * @memberof V1ExperimentResult
-     */
-    id: number;
 }
 /**
  * ExperimentSimulation holds the configuration and results of simulated run of a searcher.
@@ -4356,10 +4356,10 @@ export interface V1KillExperimentsRequest {
 export interface V1KillExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1KillExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * Response to KillNotebookRequest.
@@ -5167,10 +5167,10 @@ export interface V1MoveExperimentsRequest {
 export interface V1MoveExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1MoveExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * Request to move a model to a workspace.
@@ -5804,10 +5804,10 @@ export interface V1PauseExperimentsRequest {
 export interface V1PauseExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1PauseExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * 
@@ -9106,10 +9106,10 @@ export interface V1UnarchiveExperimentsRequest {
 export interface V1UnarchiveExperimentsResponse {
     /**
      * Details on success or error for each experiment.
-     * @type {Array<V1ExperimentResult>}
+     * @type {Array<V1ExperimentActionResult>}
      * @memberof V1UnarchiveExperimentsResponse
      */
-    results: Array<V1ExperimentResult>;
+    results: Array<V1ExperimentActionResult>;
 }
 /**
  * 

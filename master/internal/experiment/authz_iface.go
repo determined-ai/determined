@@ -58,12 +58,6 @@ type ExperimentAuthZ interface {
 		permissions []rbacv1.PermissionType,
 	) (*bun.SelectQuery, error)
 
-	// Bulk actions such as archive/pause
-	FilterExperimentsUpdateQuery(
-		ctx context.Context, curUser model.User, query *bun.UpdateQuery,
-		permissions []rbacv1.PermissionType,
-	) (*bun.UpdateQuery, error)
-
 	// GET /api/v1/experiments/labels
 	// "proj" being nil indicates searching across all projects.
 	FilterExperimentLabelsQuery(
