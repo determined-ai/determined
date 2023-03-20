@@ -3,29 +3,33 @@ import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
-import { patchModel } from 'services/api';
+import { patchModelVersion } from 'services/api';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { ModelItem } from 'types';
+import { ModelVersion } from 'types';
 import handleError from 'utils/error';
 
 type FormInputs = {
-  modelName: string;
+  modelVersionName: string;
   description?: string;
 };
 
 interface Props {
-  model: ModelItem;
+  modelVersion: ModelVersion;
   onClose?: (reason?: ModalCloseReason) => void;
-  fetchModel: () => Promise<void>;
+  fetchModelVersion: () => Promise<void>;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: () => void;
 }
 
-const FORM_ID = 'edit-model-form';
+const FORM_ID = 'edit-model-version-form';
 
-const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks => {
+const useModalModelVersionEdit = ({
+  onClose,
+  modelVersion,
+  fetchModelVersion,
+}: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
@@ -33,14 +37,20 @@ const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks =>
     const handleOk = async () => {
       const values = await form.validateFields();
       try {
-        await patchModel({
-          body: { description: values.description, name: values.modelName },
-          modelName: model.name,
+        await patchModelVersion({
+          body: {
+            comment: values.description,
+            modelName: modelVersion.model.id.toString(),
+            name: values.modelVersionName,
+          },
+          modelName: modelVersion.model.id.toString(),
+          versionNum: modelVersion.version,
         });
-        await fetchModel();
+
+        await fetchModelVersion();
       } catch (e) {
         handleError(e, {
-          publicSubject: 'Unable to edit model',
+          publicSubject: 'Unable to edit model version',
           silent: false,
         });
       }
@@ -55,14 +65,10 @@ const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks =>
       closable: true,
       content: (
         <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
-          <Form.Item
-            initialValue={model.name}
-            label="Name"
-            name="modelName"
-            rules={[{ message: 'Name is required', required: true }]}>
+          <Form.Item initialValue={modelVersion.name} label="Name" name="modelVersionName">
             <Input />
           </Form.Item>
-          <Form.Item initialValue={model.description} label="Description" name="description">
+          <Form.Item initialValue={modelVersion.comment} label="Description" name="description">
             <Input />
           </Form.Item>
         </Form>
@@ -74,7 +80,15 @@ const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks =>
       onOk: handleOk,
       title: 'Edit',
     };
-  }, [fetchModel, form, model.description, model.name, onClose]);
+  }, [
+    fetchModelVersion,
+    form,
+    modelVersion.comment,
+    modelVersion.model.id,
+    modelVersion.name,
+    modelVersion.version,
+    onClose,
+  ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate(getModalProps());
@@ -83,4 +97,4 @@ const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks =>
   return { modalOpen, ...modalHook };
 };
 
-export default useModalModelEdit;
+export default useModalModelVersionEdit;
