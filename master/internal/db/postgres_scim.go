@@ -28,7 +28,8 @@ type scimUserRow struct {
 // RetrofitSCIMUser "upgrades" an existing user to one tracked in the SCIM table. This is a
 // temporary measure for SaaS clusters to migrate existing users to SCIM users.
 func (db *PgDB) RetrofitSCIMUser(suser *model.SCIMUser, userID model.UserID) (*model.SCIMUser,
-	error) {
+	error,
+) {
 	row := &scimUserRow{
 		ExternalID:    suser.ExternalID,
 		Emails:        suser.Emails,
