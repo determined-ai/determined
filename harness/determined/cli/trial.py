@@ -9,6 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from determined import cli
 from determined.cli import render
+from determined.cli.master import format_log_entry
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -242,11 +243,11 @@ def write_trial_logs(args: Namespace, temp_dir: str) -> str:
 
 
 def write_master_logs(args: Namespace, temp_dir: str) -> str:
-    response = api.get(args.master, "logs")
+    responses = bindings.get_MasterLogs(cli.setup_session(args))
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
-        for log in response.json():
-            f.write("{} [{}]: {}\n".format(log["time"], log["level"], log["message"]))
+        for response in responses:
+            f.write(format_log_entry(response.logEntry))
     return file_path
 
 

@@ -25,6 +25,12 @@ def get_master(args: Namespace) -> None:
         print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
 
 
+def format_log_entry(log: bindings.v1LogEntry) -> str:
+    """Format v1LogEntry for printing."""
+    log_level = str(log.level.value)[len("LOG_LEVEL_") :] if log.level else ""
+    return "{} [{}]: {}".format(log.timestamp, log_level, log.message)
+
+
 @authentication.required
 def logs(args: Namespace) -> None:
     offset: Optional[int] = None
@@ -32,9 +38,7 @@ def logs(args: Namespace) -> None:
         offset = -args.tail
     responses = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
     for response in responses:
-        log = response.logEntry
-        log_level = str(log.level.value)[len("LOG_LEVEL_") :] if log.level else ""
-        print("{} [{}]: {}".format(log.timestamp, log_level, log.message))
+        print(format_log_entry(response.logEntry))
 
 
 # fmt: off
