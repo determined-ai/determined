@@ -2218,7 +2218,7 @@ func (a *apiServer) MoveExperiments(
 		Model(&expChecks).
 		Column("exp.id").
 		ColumnExpr("(exp.archived OR p.archived OR w.archived) AS archived").
-		ColumnExpr("'' AS state").
+		ColumnExpr("TRUE AS state").
 		Join("JOIN projects p ON exp.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("exp.id IN (?)", bun.In(req.ExperimentIds))
