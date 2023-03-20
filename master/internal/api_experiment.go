@@ -1016,7 +1016,22 @@ func (a *apiServer) CancelExperiments(
 		}
 	}
 
-	refs, refExpIDs, results := a.nonTerminalExperiments(expIDs, results)
+	refs := []*actor.Ref{}
+	refExpIDs := []int32{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		ref := a.m.system.Get(addr)
+		if ref == nil {
+			// For cancel/kill, it's OK if experiment already terminated.
+			results = append(results, &apiv1.ExperimentActionResult{
+				Error: "",
+				Id:    expID,
+			})
+		} else {
+			refs = append(refs, ref)
+			refExpIDs = append(refExpIDs, expID)
+		}
+	}
 	resps := a.m.system.AskAll(&apiv1.CancelExperimentRequest{}, refs...).GetAll()
 	results = a.loadMultiExperimentActionResults(results, resps, refExpIDs)
 
@@ -1057,7 +1072,22 @@ func (a *apiServer) KillExperiments(
 		}
 	}
 
-	refs, refExpIDs, results := a.nonTerminalExperiments(expIDs, results)
+	refs := []*actor.Ref{}
+	refExpIDs := []int32{}
+	for _, expID := range expIDs {
+		addr := experimentsAddr.Child(expID)
+		ref := a.m.system.Get(addr)
+		if ref == nil {
+			// For cancel/kill, it's OK if experiment already terminated.
+			results = append(results, &apiv1.ExperimentActionResult{
+				Error: "",
+				Id:    expID,
+			})
+		} else {
+			refs = append(refs, ref)
+			refExpIDs = append(refExpIDs, expID)
+		}
+	}
 	resps := a.m.system.AskAll(&apiv1.KillExperimentRequest{}, refs...).GetAll()
 	results = a.loadMultiExperimentActionResults(results, resps, refExpIDs)
 

@@ -243,7 +243,7 @@ resources:
 	createReq.ProjectId = 1
 
 	// mock for ActivateExperiment (included in Create unless otherwise specified)
-	resQuery := &bun.SelectQuery{}
+	resQuery := db.Bun().NewSelect()
 	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything).
 		Return(resQuery, nil).Once()
