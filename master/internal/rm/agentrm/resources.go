@@ -3,7 +3,6 @@ package agentrm
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -60,10 +59,6 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 
-	for portName, port := range rri.Ports {
-		spec.Environment.RawPorts[portName] = port
-		spec.ExtraEnvVars[portName] = strconv.Itoa(port)
-	}
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{

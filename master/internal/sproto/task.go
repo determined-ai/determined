@@ -177,7 +177,6 @@ type (
 		Token        string
 		AgentRank    int
 		IsMultiAgent bool
-		Ports        map[string]int
 	}
 )
 

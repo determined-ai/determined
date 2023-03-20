@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,9 +78,9 @@ type (
 		// active all gather state
 		allGather *allGather
 
-		logCtx       detLogger.Context
-		restored     bool
-		restorePorts bool
+		logCtx          detLogger.Context
+		restored        bool
+		portsRegistered bool
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -222,10 +223,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		// then the ports have been added to the port registry successfully.
 		// This is to avoid the race condition of a failed restored
 		// allocation releasing another allocation's port(s).
-		// a.restorePorts is set to true right after ports are restored.
+		// a.portsRegistered  is set to true right after ports are registered.
 		// This variable ensures to release ports even if there's a failure after restoring ports.
 		// The a.req.Restore == a.restored  (XNOR) condition will be true even if it's a new allocation.
-		if a.req.Restore == a.restored || a.restorePorts { // XNOR
+		if a.req.Restore == a.restored || a.portsRegistered { // XNOR
 			for _, port := range a.model.Ports {
 				portregistry.ReleasePort(port)
 			}
@@ -478,7 +479,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Restore {
-		a.restorePorts = true
+		a.portsRegistered = true
 		for _, port := range a.model.Ports {
 			portregistry.RestorePort(port)
 		}
@@ -500,6 +501,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests, ctx)
+		a.portsRegistered = true
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
@@ -509,12 +511,16 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			return fmt.Errorf("updating allocation db")
 		}
 
+		for portName, port := range a.model.Ports {
+			spec.Environment.RawPorts[portName] = port
+			spec.ExtraEnvVars[portName] = strconv.Itoa(port)
+		}
+
 		for cID, r := range a.resources {
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
-				Ports:        a.model.Ports,
 			}); err != nil {
 				return fmt.Errorf("starting resources (%v): %w", r, err)
 			}
@@ -1213,6 +1219,13 @@ func (a *Allocation) getPorts(exposedPorts map[string]int,
 		if err != nil {
 			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
 		}
+		defer func() {
+			if err != nil {
+				for _, port := range ports {
+					portregistry.ReleasePort(port)
+				}
+			}
+		}()
 		ports[portName] = port
 		ctx.Log().Debugf("%v port : %v", portName, port)
 	}

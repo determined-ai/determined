@@ -346,11 +346,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case task.BuildTaskSpec:
 		if ctx.ExpectingResponse() {
-			c.Base.UniqueExposedPortRequests = make(map[string]int)
-			c.Base.UniqueExposedPortRequests[tasks.DTrainSSHPort] = tasks.DtrainSSHPortBase
-			c.Base.UniqueExposedPortRequests[tasks.InterTrainProcessCommPort1] = tasks.InterTrainProcessCommPort1Base //nolint:lll
-			c.Base.UniqueExposedPortRequests[tasks.InterTrainProcessCommPort2] = tasks.InterTrainProcessCommPort2Base //nolint:lll
-			c.Base.UniqueExposedPortRequests[tasks.C10DPort] = tasks.C10DPortBase
 			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
 			// Evict the context from memory after starting the command as it is no longer needed. We
 			// evict as soon as possible to prevent the master from hitting an OOM.
