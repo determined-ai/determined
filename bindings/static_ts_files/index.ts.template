@@ -1,0 +1,13 @@
+/**
+ * {swagger.info.title}
+ * {clean_description}
+ *
+ * OpenAPI spec version: {swagger.info.version}
+ * Contact: {swagger.info.contact}
+ *
+ * NOTE: Do not edit the class manually.
+ */
+
+
+export * from "./api";
+export * from "./configuration";

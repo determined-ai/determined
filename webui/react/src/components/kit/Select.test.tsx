@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { generateAlphaNumeric } from 'shared/utils/string';
 
@@ -14,7 +13,7 @@ const OPTION_TITLE = 'option';
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = () => {
-  const handleOpen = jest.fn();
+  const handleOpen = vi.fn();
   const view = render(
     <Select label={LABEL} placeholder={PLACEHOLDER}>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (

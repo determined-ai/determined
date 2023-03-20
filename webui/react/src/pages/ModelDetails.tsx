@@ -38,13 +38,13 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
-import css from './ModelDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
@@ -52,6 +52,7 @@ import settingsConfig, {
 } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
+import css from './ModelDetails.module.scss';
 
 type Params = {
   modelId: string;
@@ -65,10 +66,8 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
   const lodableWorkspaces = useWorkspaces();
   const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
@@ -175,6 +174,11 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     const tagsRenderer = (value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -254,7 +258,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -278,6 +282,10 @@ const ModelDetails: React.FC = () => {
     users,
     canModifyModelVersion,
   ]);
+  const tableIsLoading = useMemo(
+    () => isLoading || isLoadingSettings,
+    [isLoading, isLoadingSettings],
+  );
 
   const handleTableChange = useCallback(
     (
@@ -324,48 +332,6 @@ const ModelDetails: React.FC = () => {
     [fetchModel, model?.model.name],
   );
 
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { description: editedDescription, name: modelName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { name: editedName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
@@ -397,7 +363,7 @@ const ModelDetails: React.FC = () => {
             body: { labels: editedTags, name: modelName },
             modelName,
           });
-          fetchModel();
+          await fetchModel();
         }
       } catch (e) {
         handleError(e, {
@@ -458,10 +424,9 @@ const ModelDetails: React.FC = () => {
       docTitle="Model Details"
       headerComponent={
         <ModelHeader
+          fetchModel={fetchModel}
           model={model.model}
           workspace={workspace}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />
@@ -482,7 +447,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading || isLoadingSettings}
+            loading={tableIsLoading}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,

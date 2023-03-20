@@ -49,11 +49,12 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -71,10 +72,8 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,8 +104,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   } = useSettings<Settings>(settingConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
-
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
+  const isTableLoading = useMemo(
+    () => isLoading || isLoadingSettings,
+    [isLoading, isLoadingSettings],
+  );
 
   const fetchModels = useCallback(async () => {
     if (!settings) return;
@@ -157,8 +158,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchModels(), fetchTags(), fetchUsers(), fetchWorkspaces()]);
-  }, [fetchModels, fetchTags, fetchUsers, fetchWorkspaces]);
+    await Promise.allSettled([
+      fetchModels(),
+      fetchTags(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchWorkspaces(),
+    ]);
+  }, [canceler, fetchModels, fetchTags, fetchWorkspaces]);
 
   const workspaces = Loadable.match(useWorkspaces(), {
     Loaded: (ws) => ws,
@@ -451,6 +457,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -582,10 +593,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -752,7 +763,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
           dataSource={models}
-          loading={isLoading || isLoadingSettings}
+          loading={isTableLoading}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,

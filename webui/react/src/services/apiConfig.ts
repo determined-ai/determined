@@ -113,7 +113,7 @@ export const getUsers: DetApi<
     users: decoder.mapV1UserList(response),
   }),
   request: (params) =>
-    detApi.Users.getUsers(params.sortBy, params.orderBy, params.offset, params.limit),
+    detApi.Users.getUsers(params.sortBy, params.orderBy, params.offset, params.limit, params.name),
 };
 
 export const getUser: DetApi<Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser> = {

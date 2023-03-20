@@ -1,5 +1,6 @@
 import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
+import { V1LaunchWarning } from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
@@ -703,7 +704,7 @@ export const openOrCreateTensorBoard = async (
       !terminalCommandStates.has(tensorboard.state) &&
       tensorBoardMatchesSource(tensorboard, params),
   );
-  if (match) return { command: match, warnings: [1] };
+  if (match) return { command: match, warnings: [V1LaunchWarning.CURRENTSLOTSEXCEEDED] };
   return launchTensorBoard(params);
 };
 

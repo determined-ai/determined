@@ -1,12 +1,11 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Dropdown, Space } from 'antd';
+import { Alert, Dropdown, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
@@ -18,19 +17,20 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onSaveDescription: (editedDescription: string) => Promise<void>;
-  onSaveName: (editedName: string) => Promise<Error | void>;
+  fetchModel: () => Promise<void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace?: Workspace;
@@ -39,33 +39,38 @@ interface Props {
 const ModelHeader: React.FC<Props> = ({
   model,
   workspace,
-  onSaveDescription,
-  onSaveName,
+  fetchModel,
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ modelName: model.name, onSaveName });
+    useModalModelEdit({ fetchModel, model });
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === model.userId);
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === model.userId);
+
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {`${getDisplayName(user)} on
-          ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {`${getDisplayName(user)} on
+                ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',
@@ -73,18 +78,13 @@ const ModelHeader: React.FC<Props> = ({
       { content: <TimeAgo datetime={new Date(model.lastUpdatedTime)} />, label: 'Updated' },
       {
         content: (
-          <Input
-            defaultValue={model.description ?? ''}
-            disabled={model.archived || !canModifyModelFlag}
-            placeholder={model.archived ? 'Archived' : 'Add description...'}
-            onBlur={(e) => {
-              const newValue = e.currentTarget.value;
-              onSaveDescription(newValue);
-            }}
-            onPressEnter={(e) => {
-              e.currentTarget.blur();
-            }}
-          />
+          <div>
+            {(model.description ?? '') || (
+              <Typography.Text disabled={model.archived || !canModifyModelFlag}>
+                N/A
+              </Typography.Text>
+            )}
+          </div>
         ),
         label: 'Description',
       },
@@ -100,7 +100,7 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onSaveDescription, onUpdateTags, users, canModifyModelFlag]);
+  }, [model, onUpdateTags, users, canModifyModelFlag]);
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 

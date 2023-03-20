@@ -150,9 +150,10 @@ recommended to optimize how Determined interacts with Slurm:
    and graceful shutdown. To prevent unnecessary loss of work, it is recommended to set ``GraceTime
    (secs)`` high enough to permit the job to complete an entire Determined ``scheduling_unit``.
 
-   To enable GPU job preemption, use ``PreemptMode=REQUEUE`` or ``PreemptMode=REQUEUE``, because
+   To enable GPU job preemption, use ``PreemptMode=CANCEL`` or ``PreemptMode=REQUEUE``, because
    ``PreemptMode=SUSPEND`` does not release GPUs so does not allow a higher-priority job to access
-   the allocated GPU resources.
+   the allocated GPU resources. Determined manages the requeue of a successfully preempted job so
+   even with ``PreemptMode=REQUEUE``, the Slurm job will be canceled and resubmitted.
 
 .. _pbs-config-requirements:
 
@@ -349,7 +350,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-7aa5364
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0e4beb5
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

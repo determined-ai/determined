@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -39,7 +40,13 @@ func NewIdleTimeoutWatcher(name string, cfg *sproto.IdleTimeoutConfig) *IdleTime
 		IdleTimeoutConfig: *cfg,
 		Action: func(ctx *actor.Context) {
 			ctx.Log().Infof("killing %s due to inactivity", name)
-			ctx.Tell(ctx.Self(), sproto.TerminateAllocation)
+			ctx.Tell(ctx.Self(),
+				sproto.AllocationSignalWithReason{
+					AllocationSignal: sproto.TerminateAllocation,
+					InformationalReason: fmt.Sprintf(
+						"inactivity for more than %s",
+						cfg.TimeoutDuration.Round(time.Second)),
+				})
 		},
 	}
 }

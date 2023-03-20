@@ -64,7 +64,7 @@ args_description = [
     Cmd(
         "dev",
         None,
-        "dev utilities",
+        argparse.SUPPRESS,
         [
             Cmd("auth-token", token, "print the active user's auth token", []),
             Cmd(

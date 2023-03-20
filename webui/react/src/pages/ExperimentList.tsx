@@ -65,7 +65,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -84,6 +84,7 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -115,11 +116,8 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -234,11 +232,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
-
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);
-  }, [fetchExperiments, fetchUsers, fetchLabels]);
+    await Promise.allSettled([
+      fetchExperiments(),
+      usersStore.ensureUsersFetched(canceler),
+      fetchLabels(),
+    ]);
+  }, [fetchExperiments, canceler, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -402,6 +402,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -600,10 +604,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },
@@ -688,7 +692,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
-        return openOrCreateTensorBoard({ experimentIds: settings.row });
+        return openOrCreateTensorBoard({
+          experimentIds: settings.row,
+          workspaceId: project?.workspaceId,
+        });
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;

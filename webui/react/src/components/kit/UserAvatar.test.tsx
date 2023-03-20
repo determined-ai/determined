@@ -1,11 +1,10 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProps } from 'antd/es/tooltip';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -20,47 +19,20 @@ const testUsers: DetailedUser[] = [
   },
 ];
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getUsers: () => Promise.resolve({ users: testUsers }),
 }));
 
-jest.mock('antd', () => {
-  const antd = jest.requireActual('antd');
-
-  /**
-   * We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
-   * sets the DOM container and if this prop is set, the popup div may not be available in the body
-   */
-  const Tooltip = (props: TooltipProps) => {
-    return (
-      <antd.Tooltip
-        {...props}
-        getPopupContainer={(trigger: HTMLElement) => trigger}
-        mouseEnterDelay={0}
-      />
-    );
-  };
-
-  return {
-    __esModule: true,
-    ...antd,
-    Tooltip,
-  };
-});
+vi.mock('components/kit/Tooltip');
 
 const Component = ({ user }: Partial<Props> = {}) => {
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
-  const asyncFetch = useCallback(async () => {
-    await fetchUsers();
-  }, [fetchUsers]);
-  const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
-    asyncFetch();
-    updateCurrentUser(44);
+    usersStore.ensureUsersFetched(canceler);
+    usersStore.updateCurrentUser(44);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canceler]);
 
   return <UserAvatar hideTooltip={false} user={user} />;
 };
@@ -70,9 +42,7 @@ const setup = (testUser: DetailedUser) => {
 
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <Component user={testUser} />
-      </UsersProvider>
+      <Component user={testUser} />
     </UIProvider>,
   );
 

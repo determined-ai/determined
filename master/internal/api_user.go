@@ -27,8 +27,9 @@ import (
 const determinedName = "determined"
 
 var (
-	errUserNotFound = status.Error(codes.NotFound, "user not found")
-	latinText       = regexp.MustCompile("[^[:graph:]\\s]")
+	errExternalSessions = status.Error(codes.PermissionDenied, "not enabled with external sessions")
+	errUserNotFound     = status.Error(codes.NotFound, "user not found")
+	latinText           = regexp.MustCompile("[^[:graph:]\\s]")
 )
 
 func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {
@@ -152,11 +153,19 @@ func (a *apiServer) GetUsers(
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	users := []model.FullUser{}
-	err := a.m.db.QueryF(
-		"get_users",
-		[]interface{}{orderExpr},
-		&users,
-	)
+	nameFilterExpr := "%" + req.Name + "%"
+	selectExpr := `
+		SELECT
+			u.id, u.display_name, u.username, u.admin, u.active, u.modified_at,
+			h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group, 
+			COALESCE(u.display_name, u.username) AS name
+		FROM users u
+			LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
+		WHERE ((? = '') OR u.display_name ILIKE ? OR u.username ILIKE ?)
+	`
+	query := selectExpr + fmt.Sprintf(" ORDER BY %s", orderExpr)
+	err := db.Bun().NewRaw(query,
+		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
 	if err != nil {
 		return nil, err
 	}
@@ -237,6 +246,9 @@ func (a *apiServer) GetUserByUsername(
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
 	}
@@ -311,7 +323,9 @@ func (a *apiServer) PostUser(
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest,
 ) (*apiv1.SetUserPasswordResponse, error) {
-	// TODO if ExternalSessions is there, don't even allow this
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -348,6 +362,9 @@ func (a *apiServer) SetUserPassword(
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must provide user")
 	}
@@ -496,6 +513,9 @@ func (a *apiServer) GetUserSetting(
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
 	if req.Setting == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify setting")
 	}

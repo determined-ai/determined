@@ -1,13 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import RadioGroup, { RadioGroupOption } from './RadioGroup';
 
 const user = userEvent.setup();
 
 const setup = (options: RadioGroupOption[], iconOnly = false) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
     <RadioGroup iconOnly={iconOnly} options={options} onChange={handleOnChange} />,
   );

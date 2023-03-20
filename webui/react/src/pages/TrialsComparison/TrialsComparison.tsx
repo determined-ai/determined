@@ -4,6 +4,7 @@ import { debounce } from 'throttle-debounce';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
 import Empty from 'components/kit/Empty';
+import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -24,14 +25,15 @@ import useLearningCurveData from './Metrics/useLearningCurveData';
 import { trialsTableSettingsConfig } from './Table/settings';
 import { useFetchTrials } from './Trials/useFetchTrials';
 import css from './TrialsComparison.module.scss';
-import LearningCurveChart from './TrialsComparisonChart';
 
 interface Props {
   projectId: string;
+  workspaceId: number;
 }
 
-const TrialsComparison: React.FC<Props> = ({ projectId }) => {
-  const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
+const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
+  const config = useMemo(() => trialsTableSettingsConfig(projectId), [projectId]);
+  const tableSettingsHook = useSettings<InteractiveTableSettings>(config);
 
   const collections = useTrialCollections(projectId, tableSettingsHook);
 
@@ -50,6 +52,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     openCreateModal: collections.openCreateModal,
     refetch,
     sorter: collections.sorter,
+    workspaceId,
   });
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);

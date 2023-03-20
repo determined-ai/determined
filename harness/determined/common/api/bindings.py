@@ -422,7 +422,6 @@ class trialv1Trial:
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
-    latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
@@ -444,7 +443,6 @@ class trialv1Trial:
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
@@ -467,8 +465,6 @@ class trialv1Trial:
             self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(latestTraining, Unset):
-            self.latestTraining = latestTraining
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
@@ -501,8 +497,6 @@ class trialv1Trial:
             kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "latestTraining" in obj:
-            kwargs["latestTraining"] = v1MetricsWorkload.from_json(obj["latestTraining"]) if obj["latestTraining"] is not None else None
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
@@ -535,8 +529,6 @@ class trialv1Trial:
             out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "latestTraining" in vars(self):
-            out["latestTraining"] = None if self.latestTraining is None else self.latestTraining.to_json(omit_unset)
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
@@ -3424,6 +3416,7 @@ class v1GetMasterResponse:
     rbacEnabled: "typing.Optional[bool]" = None
     ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None
     telemetryEnabled: "typing.Optional[bool]" = None
+    userManagementEnabled: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -3440,6 +3433,7 @@ class v1GetMasterResponse:
         rbacEnabled: "typing.Union[bool, None, Unset]" = _unset,
         ssoProviders: "typing.Union[typing.Sequence[v1SSOProvider], None, Unset]" = _unset,
         telemetryEnabled: "typing.Union[bool, None, Unset]" = _unset,
+        userManagementEnabled: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
@@ -3461,6 +3455,8 @@ class v1GetMasterResponse:
             self.ssoProviders = ssoProviders
         if not isinstance(telemetryEnabled, Unset):
             self.telemetryEnabled = telemetryEnabled
+        if not isinstance(userManagementEnabled, Unset):
+            self.userManagementEnabled = userManagementEnabled
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -3486,6 +3482,8 @@ class v1GetMasterResponse:
             kwargs["ssoProviders"] = [v1SSOProvider.from_json(x) for x in obj["ssoProviders"]] if obj["ssoProviders"] is not None else None
         if "telemetryEnabled" in obj:
             kwargs["telemetryEnabled"] = obj["telemetryEnabled"]
+        if "userManagementEnabled" in obj:
+            kwargs["userManagementEnabled"] = obj["userManagementEnabled"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -3511,6 +3509,8 @@ class v1GetMasterResponse:
             out["ssoProviders"] = None if self.ssoProviders is None else [x.to_json(omit_unset) for x in self.ssoProviders]
         if not omit_unset or "telemetryEnabled" in vars(self):
             out["telemetryEnabled"] = self.telemetryEnabled
+        if not omit_unset or "userManagementEnabled" in vars(self):
+            out["userManagementEnabled"] = self.userManagementEnabled
         return out
 
 class v1GetMeResponse:
@@ -5977,13 +5977,11 @@ class v1MetricsWorkload:
         *,
         metrics: "v1Metrics",
         numInputs: int,
-        state: "experimentv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.metrics = metrics
         self.numInputs = numInputs
-        self.state = state
         self.totalBatches = totalBatches
         if not isinstance(endTime, Unset):
             self.endTime = endTime
@@ -5993,7 +5991,6 @@ class v1MetricsWorkload:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
             "numInputs": obj["numInputs"],
-            "state": experimentv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -6004,7 +6001,6 @@ class v1MetricsWorkload:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
             "numInputs": self.numInputs,
-            "state": self.state.value,
             "totalBatches": self.totalBatches,
         }
         if not omit_unset or "endTime" in vars(self):
@@ -14009,12 +14005,14 @@ def get_GetUsers(
     session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
         "limit": limit,
+        "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,

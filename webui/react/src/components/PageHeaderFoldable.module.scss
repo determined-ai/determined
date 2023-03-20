@@ -85,7 +85,7 @@
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(1) {
-    display: none;
+    display: none !important;
   }
   .optionsDropdownOneChild {
     display: none !important;
@@ -97,7 +97,7 @@
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(2) {
-    display: none;
+    display: none !important;
   }
   .optionsDropdownTwoChild {
     display: none !important;
@@ -109,7 +109,7 @@
     display: inline-block !important;
   }
   .optionsDropdownItem:nth-child(3) {
-    display: none;
+    display: none !important;
   }
   .optionsDropdownThreeChild {
     display: none !important;

@@ -1,20 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getModels: () => {
     return Promise.resolve({ models: [] });
   },
@@ -40,15 +38,13 @@ const ModalTrigger: React.FC = () => {
 
 const setup = async () => {
   render(
-    <HistoryRouter history={history}>
+    <BrowserRouter>
       <UIProvider>
-        <UsersProvider>
-          <WorkspacesProvider>
-            <ModalTrigger />
-          </WorkspacesProvider>
-        </UsersProvider>
+        <WorkspacesProvider>
+          <ModalTrigger />
+        </WorkspacesProvider>
       </UIProvider>
-    </HistoryRouter>,
+    </BrowserRouter>,
   );
 
   await user.click(screen.getByRole('button'));

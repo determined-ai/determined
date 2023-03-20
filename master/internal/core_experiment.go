@@ -563,6 +563,12 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		dbExp.Username = user.Username
 	}
 
+	taskSpec.Project = config.Project()
+	taskSpec.Workspace = config.Workspace()
+	for label := range config.Labels() {
+		taskSpec.Labels = append(taskSpec.Labels, label)
+	}
+
 	return dbExp, config, project, params.ValidateOnly, &taskSpec, err
 }
 

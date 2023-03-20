@@ -16,7 +16,7 @@ export interface Settings extends Omit<InteractiveTableSettings, 'tableLimit' | 
   columns: HyperparameterColumnName[];
 }
 
-const config: SettingsConfig<Settings> = {
+export const configForTrial = (id: number): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -44,7 +44,5 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, union([boolean, number, string])]),
     },
   },
-  storagePath: 'trial-hyperparameters',
-};
-
-export default config;
+  storagePath: `trial-${id}-hyperparameters`,
+});

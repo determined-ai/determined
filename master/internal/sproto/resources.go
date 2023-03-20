@@ -155,7 +155,10 @@ func NewResourcesFailure(
 
 func (f ResourcesFailure) Error() string {
 	if f.ExitCode == nil {
-		return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
+		if len(f.ErrMsg) > 0 {
+			return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
+		}
+		return fmt.Sprintf("%s", f.FailureType)
 	}
 	return fmt.Sprintf("%s: %s (exit code %d)", f.FailureType, f.ErrMsg, *f.ExitCode)
 }

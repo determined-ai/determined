@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { Metadata } from 'types';
 
@@ -16,7 +15,7 @@ const initMetadata = { hello: 'world', testing: 'metadata' };
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = (metadata: Metadata = {}, editing = false) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
     <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
   );

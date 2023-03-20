@@ -1,0 +1,21 @@
+.base {
+  align-items: center;
+  display: flex;
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    margin-left: 16px;
+    max-width: 60px;
+
+    .alias {
+      font-size: larger;
+      white-space: nowrap;
+    }
+  }
+}
+.compact {
+  font-size: smaller;
+  line-height: initial;
+  min-height: 38px;
+}

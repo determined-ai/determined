@@ -138,3 +138,6 @@ variable "gpu_env_image" {
 
 variable "master_config_template" {
 }
+
+variable "labels" {
+}

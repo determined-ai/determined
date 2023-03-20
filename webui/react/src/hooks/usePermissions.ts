@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { PermissionsStore } from 'stores/permissions';
-import { useCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -98,7 +98,7 @@ const usePermissions = (): PermissionsHook => {
     rbacAllPermission = useFeature().isOn('mock_permissions_all'),
     rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
 
-  const loadableCurrentUser = useCurrentUser();
+  const loadableCurrentUser = useObservable<Loadable<DetailedUser>>(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

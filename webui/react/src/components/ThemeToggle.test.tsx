@@ -1,19 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { Mode } from 'shared/themes';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
 const ThemeToggleContainer: React.FC = () => (
   <UIProvider>
-    <HistoryRouter history={history}>
+    <BrowserRouter>
       <ThemeToggle />
-    </HistoryRouter>
+    </BrowserRouter>
   </UIProvider>
 );
 

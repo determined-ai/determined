@@ -1,19 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { GetWorkspaceParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { UsersProvider } from 'stores/users';
-
-import useFeature from './useFeature';
-import usePermissions from './usePermissions';
 
 const workspace = {
   id: 10,
   name: 'Test Workspace',
 };
-jest.mock('hooks/useFeature');
-jest.mock('services/api', () => ({
+vi.mock('hooks/useFeature');
+vi.mock('services/api', () => ({
   getWorkspace: (params: GetWorkspaceParams) => {
     return {
       ...workspace,
@@ -49,16 +47,14 @@ const PermissionRenderer: React.FC<Props> = () => {
 const setup = async () => {
   return await render(
     <UIProvider>
-      <UsersProvider>
-        <PermissionRenderer workspaceId={1} />
-      </UsersProvider>
+      <PermissionRenderer workspaceId={1} />
     </UIProvider>,
   );
 };
 
 describe('usePermissions', () => {
   it('should have OSS permissions', async () => {
-    (useFeature as jest.Mock).mockReturnValue({
+    vi.mocked(useFeature).mockReturnValue({
       isOn: () => false,
     });
     await setup();
@@ -73,7 +69,7 @@ describe('usePermissions', () => {
   });
 
   it('should have read permissions', async () => {
-    (useFeature as jest.Mock).mockReturnValue({
+    vi.mocked(useFeature).mockReturnValue({
       isOn: (f: string) => ['rbac', 'mock_permissions_read'].includes(f),
     });
     await setup();
@@ -89,7 +85,7 @@ describe('usePermissions', () => {
   });
 
   it('should have create/read/update/delete permissions', async () => {
-    (useFeature as jest.Mock).mockReturnValue({
+    vi.mocked(useFeature).mockReturnValue({
       isOn: (f: string) => ['rbac', 'mock_permissions_all'].includes(f),
     });
     await setup();

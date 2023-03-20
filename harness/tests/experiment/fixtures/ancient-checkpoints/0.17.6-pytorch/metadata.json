@@ -38,9 +38,9 @@
       },
       "force_pull_image": false,
       "image": {
-        "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-7aa5364",
-        "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-7aa5364",
-        "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-7aa5364"
+        "cpu": "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0e4beb5",
+        "cuda": "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0e4beb5",
+        "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0e4beb5"
       },
       "pod_spec": null,
       "ports": {},

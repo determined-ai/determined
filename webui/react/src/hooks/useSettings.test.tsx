@@ -2,18 +2,16 @@ import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import history from 'shared/routes/history';
 import { setAuth, setAuthChecked } from 'stores/auth';
-import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
 
-jest.mock('services/api', () => ({
-  ...jest.requireActual('services/api'),
+vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
@@ -99,18 +97,16 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
 };
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
-  const updateCurrentUser = useUpdateCurrentUser();
-
   useEffect(() => {
     setAuth({ isAuthenticated: true });
     setAuthChecked();
-    updateCurrentUser(1);
+    usersStore.updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <SettingsProvider>
-      <HistoryRouter history={history}>{children}</HistoryRouter>
+      <BrowserRouter>{children}</BrowserRouter>
     </SettingsProvider>
   );
 };
@@ -124,9 +120,7 @@ const setup = async (
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <UIProvider>
-      <UsersProvider>
-        <Container>{children}</Container>
-      </UsersProvider>
+      <Container>{children}</Container>
     </UIProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
@@ -156,7 +150,7 @@ describe('useSettings', () => {
   };
   const newExtraSettings = { extra: 'fancy' };
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it('should have default settings', async () => {
     const { result } = await setup();
@@ -165,24 +159,24 @@ describe('useSettings', () => {
       expect(result.container.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
 
-    expect(history.location.search).toBe('');
+    expect(window.location.search).toBe('');
   });
 
   it('should update settings', async () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
 
-    Object.values(config.settings).forEach((configProp) => {
+    for (const configProp of Object.values(config.settings)) {
       const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() =>
+      await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
-    });
+    }
 
-    waitFor(() => {
-      expect(history.location.search).toContain(
+    await waitFor(() => {
+      expect(window.location.search).toContain(
         [
           'boolean=false',
           'booleanArray=false&booleanArray=true',
@@ -199,7 +193,7 @@ describe('useSettings', () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
 
-    waitFor(() =>
+    await waitFor(() =>
       expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)),
     );
   });
@@ -208,14 +202,14 @@ describe('useSettings', () => {
     const { result } = await setup();
     await act(() => result.container.current.resetSettings());
 
-    Object.values(config.settings).forEach(async (configProp) => {
+    for (const configProp of Object.values(config.settings)) {
       const settingsKey = configProp.storageKey as keyof Settings;
       await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           configProp.defaultValue,
         ),
       );
-    });
+    }
   });
 
   it('should be able to keep track of multiple settings', async () => {
@@ -225,22 +219,18 @@ describe('useSettings', () => {
       extraResult.container.current.updateSettings(newExtraSettings);
     });
 
-    Object.values(config.settings).forEach((configProp) => {
-      const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() =>
+    for (const configProp of Object.values(config.settings)) {
+      const settingsKey = configProp.storageKey as keyof Settings & keyof ExtraSettings;
+      await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
-    });
-
-    Object.values(config.settings).forEach((configProp) => {
-      const settingsKey = configProp.storageKey as keyof ExtraSettings;
-      waitFor(() =>
+      await waitFor(() =>
         expect(extraResult.container.current.settings[settingsKey]).toStrictEqual(
           newExtraSettings[settingsKey],
         ),
       );
-    });
+    }
   });
 });

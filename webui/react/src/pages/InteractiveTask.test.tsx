@@ -5,15 +5,13 @@ import { HelmetProvider } from 'react-helmet-async';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 
 import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
+vi.mock('react-router-dom', () => ({
   useParams: () => ({
     taskId: 'task-id',
     taskName: TASK_NAME,
@@ -34,13 +32,11 @@ const InteractiveTaskPageContainer: React.FC = () => {
 
 const InteractiveTaskContainer: React.FC = () => {
   return (
-    <UsersProvider>
-      <UIProvider>
-        <HelmetProvider>
-          <InteractiveTaskPageContainer />
-        </HelmetProvider>
-      </UIProvider>
-    </UsersProvider>
+    <UIProvider>
+      <HelmetProvider>
+        <InteractiveTaskPageContainer />
+      </HelmetProvider>
+    </UIProvider>
   );
 };
 

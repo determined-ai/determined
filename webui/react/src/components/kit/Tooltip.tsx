@@ -1,7 +1,7 @@
 import { Tooltip as AntdTooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
-interface TooltipProps {
+export interface TooltipProps {
   children?: ReactNode;
   mouseEnterDelay?: number;
   placement?:

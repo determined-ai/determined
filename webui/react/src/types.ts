@@ -54,6 +54,7 @@ export interface DeterminedInfo {
   masterId: string;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
   version: string;
 }
 
@@ -429,6 +430,14 @@ export const TrialWorkloadFilter = {
 } as const;
 
 export type TrialWorkloadFilter = ValueOf<typeof TrialWorkloadFilter>;
+
+// This is to support the steps table in trial details and shouldn't be used
+// elsewhere so we can remove it with a redesign.
+export interface Step extends WorkloadGroup, StartEndTimes {
+  batchNum: number;
+  key: string;
+  training: MetricsWorkload;
+}
 
 type MetricStruct = Record<string, number>;
 export interface Metrics extends Api.V1Metrics {
@@ -869,11 +878,11 @@ export interface Permission {
 }
 
 export interface UserRole {
-  fromGroup?: number[];
-  fromWorkspace?: number[];
+  fromUser?: boolean;
   id: number;
   name: string;
   permissions: Permission[];
+  scopeCluster?: boolean;
 }
 
 export interface UserAssignment {
@@ -914,3 +923,18 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
+
+export type GroupWithRoleInfo = {
+  groupId: Api.V1Group['groupId'];
+  groupName: Api.V1Group['name'];
+  roleAssignment: Api.V1RoleAssignment;
+};
+
+export type UserWithRoleInfo = {
+  displayName: User['displayName'];
+  roleAssignment: Api.V1RoleAssignment;
+  userId: User['id'];
+  username: User['username'];
+};
+
+export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;

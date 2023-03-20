@@ -6,10 +6,12 @@ import DynamicIcon from 'components/DynamicIcon';
 import Card from 'components/kit/Card';
 import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
+import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
-import { useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
@@ -24,12 +26,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     onComplete: fetchWorkspaces,
     workspace,
   });
-
-  const users = Loadable.match(useUsers(), {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
-  const user = users.find((user) => user.id === workspace.userId);
+  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
+  const user = Loadable.map(loadableUser, (user) => user);
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);
@@ -55,7 +53,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
           </p>
           <div className={css.avatarRow}>
             <div className={css.avatar}>
-              <Avatar user={user} />
+              <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
+                {Loadable.isLoaded(user) && <Avatar user={user.data} />}
+              </Spinner>
             </div>
             {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
           </div>

@@ -27,8 +27,8 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { checkpointSize } from 'utils/workload';
 
-import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
+import css from './ModelVersionDetails.module.scss';
 
 const TabType = {
   Model: 'model',
@@ -138,44 +138,6 @@ const ModelVersionDetails: React.FC = () => {
         handleError(e, {
           publicSubject: 'Unable to update notes.',
           silent: true,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
-  );
-
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        await patchModelVersion({
-          body: { comment: editedDescription, modelName: modelId },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        await patchModelVersion({
-          body: { modelName: modelId, name: editedName },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
           type: ErrorType.Api,
         });
       }
@@ -337,10 +299,9 @@ const ModelVersionDetails: React.FC = () => {
       docTitle="Model Version Details"
       headerComponent={
         <ModelVersionHeader
+          fetchModelVersion={fetchModelVersion}
           modelVersion={modelVersion}
           workspace={workspace}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
           onUpdateTags={saveVersionTags}
         />
       }

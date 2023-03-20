@@ -1,6 +1,6 @@
-import NotebookJS from 'notebook';
 import React, { useEffect, useState } from 'react';
 
+import NotebookJS from 'notebook';
 import { DetError, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 

@@ -55,7 +55,7 @@ func TestGetTrialCheckpoints(t *testing.T) {
 }
 
 func testGetCheckpoint(
-	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	type testCase struct {
 		name     string
@@ -77,7 +77,7 @@ func testGetCheckpoint(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment, trial, allocation := createPrereqs(t, db)
+			experiment, trial, allocation := createPrereqs(t, pgDB)
 
 			stepsCompleted := int32(10)
 			if tc.validate {
@@ -98,7 +98,7 @@ func testGetCheckpoint(
 					},
 				}
 
-				err := db.AddValidationMetrics(context.Background(), &trialMetrics)
+				err := pgDB.AddValidationMetrics(context.Background(), &trialMetrics)
 				assert.NilError(t, err, "failed to add validation metrics")
 			}
 
@@ -155,9 +155,9 @@ func testGetCheckpoint(
 }
 
 func testGetExperimentCheckpoints(
-	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	experiment, trial, allocation := createPrereqs(t, db)
+	experiment, trial, allocation := createPrereqs(t, pgDB)
 	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string
@@ -199,7 +199,7 @@ func testGetExperimentCheckpoints(
 			},
 		}
 
-		err = db.AddValidationMetrics(context.Background(), &trialMetrics)
+		err = pgDB.AddValidationMetrics(context.Background(), &trialMetrics)
 		assert.NilError(t, err, "failed to add validation metrics")
 	}
 
@@ -270,9 +270,9 @@ func testGetExperimentCheckpoints(
 }
 
 func testGetTrialCheckpoints(
-	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, trial, allocation := createPrereqs(t, db)
+	_, trial, allocation := createPrereqs(t, pgDB)
 	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string

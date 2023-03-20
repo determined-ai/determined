@@ -1,20 +1,22 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React from 'react';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { patchModel } from 'services/api';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { ModelItem } from 'types';
 import handleError from 'utils/error';
 
 type FormInputs = {
   modelName: string;
+  description?: string;
 };
 
 interface Props {
-  modelName: string;
+  model: ModelItem;
   onClose?: (reason?: ModalCloseReason) => void;
-  onSaveName: (editedName: string) => Promise<Error | void>;
+  fetchModel: () => Promise<void>;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -23,7 +25,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const FORM_ID = 'edit-model-form';
 
-const useModalModelEdit = ({ onClose, modelName, onSaveName }: Props): ModalHooks => {
+const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
@@ -31,14 +33,16 @@ const useModalModelEdit = ({ onClose, modelName, onSaveName }: Props): ModalHook
     const handleOk = async () => {
       const values = await form.validateFields();
       try {
-        onSaveName(values.modelName);
+        await patchModel({
+          body: { description: values.description, name: values.modelName },
+          modelName: model.name,
+        });
+        await fetchModel();
       } catch (e) {
         handleError(e, {
-          publicSubject: 'Unable to edit name',
+          publicSubject: 'Unable to edit model',
           silent: false,
         });
-      } finally {
-        form.resetFields();
       }
     };
 
@@ -52,10 +56,13 @@ const useModalModelEdit = ({ onClose, modelName, onSaveName }: Props): ModalHook
       content: (
         <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
           <Form.Item
-            initialValue={modelName}
+            initialValue={model.name}
             label="Name"
             name="modelName"
             rules={[{ message: 'Name is required', required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item initialValue={model.description} label="Description" name="description">
             <Input />
           </Form.Item>
         </Form>
@@ -67,7 +74,7 @@ const useModalModelEdit = ({ onClose, modelName, onSaveName }: Props): ModalHook
       onOk: handleOk,
       title: 'Edit',
     };
-  }, [form, modelName, onClose, onSaveName]);
+  }, [fetchModel, form, model.description, model.name, onClose]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate(getModalProps());

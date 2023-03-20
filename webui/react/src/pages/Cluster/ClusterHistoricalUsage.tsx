@@ -8,10 +8,10 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
-import { useUsers } from 'stores/users';
-import { DetailedUser } from 'types';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
@@ -33,10 +33,8 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users: Readonly<DetailedUser[]> = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -111,7 +109,11 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
 
   const chartSeries = useMemo(() => {
-    return mapResourceAllocationApiToChartSeries(aggRes.resourceEntries, filters.groupBy, users);
+    return mapResourceAllocationApiToChartSeries(
+      aggRes.resourceEntries,
+      filters.groupBy,
+      (Loadable.isLoaded(users) && users.data) || [],
+    );
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 
   useEffect(() => {
@@ -134,7 +136,7 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
+        <Section bodyBorder loading={Loadable.isLoading(users)} title="Compute Hours by User">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}

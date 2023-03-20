@@ -10,10 +10,12 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUser, useUpdateUser } from 'stores/users';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './SettingsAccount.module.scss';
 
@@ -33,14 +35,14 @@ export const CHANGE_PASSWORD_TEXT = 'Change Password';
 const SettingsAccount: React.FC = () => {
   const [usernameForm] = Form.useForm<FormUsernameInputs>();
   const [displaynameForm] = Form.useForm<FormDisplaynameInputs>();
-  const loadableCurrentUser = useCurrentUser();
-  const updateUser = useUpdateUser();
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [isUsernameEditable, setIsUsernameEditable] = useState<boolean>(false);
   const [isDisplaynameEditable, setIsDisplaynameEditable] = useState<boolean>(false);
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();
@@ -56,14 +58,14 @@ const SettingsAccount: React.FC = () => {
         userId: currentUser?.id || 0,
         userParams: { displayName: values.displayName },
       });
-      updateUser(user.id, (oldUser) => ({ ...oldUser, displayName: values.displayName }));
+      usersStore.updateUsers(user);
       message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       setIsDisplaynameEditable(false);
     } catch (e) {
       handleError(e, { silent: false, type: ErrorType.Input });
       return e as Error;
     }
-  }, [currentUser?.id, displaynameForm, updateUser]);
+  }, [currentUser?.id, displaynameForm]);
 
   const handleSaveUsername = useCallback(async (): Promise<void | Error> => {
     const values = await usernameForm.validateFields();
@@ -72,7 +74,7 @@ const SettingsAccount: React.FC = () => {
         userId: currentUser?.id || 0,
         userParams: { username: values.username },
       });
-      updateUser(user.id, (oldUser) => ({ ...oldUser, username: values.username }));
+      usersStore.updateUsers(user);
       message.success(API_USERNAME_SUCCESS_MESSAGE);
       setIsUsernameEditable(false);
     } catch (e) {
@@ -80,7 +82,7 @@ const SettingsAccount: React.FC = () => {
       handleError(e, { silent: true, type: ErrorType.Input });
       return e as Error;
     }
-  }, [currentUser?.id, updateUser, usernameForm]);
+  }, [currentUser?.id, usernameForm]);
 
   return (
     <div className={css.base}>
@@ -95,6 +97,7 @@ const SettingsAccount: React.FC = () => {
             <span>{currentUser?.username ?? ''}</span>
             <Button
               data-testid="edit-username"
+              disabled={!info.userManagementEnabled}
               icon={<EditOutlined />}
               onClick={() => setIsUsernameEditable(true)}
             />
@@ -113,7 +116,12 @@ const SettingsAccount: React.FC = () => {
               <Input maxLength={32} placeholder="Add username" style={{ widows: '80%' }} />
             </Form.Item>
             <Form.Item noStyle>
-              <Button htmlType="submit" icon={<CheckOutlined />} type="primary" />
+              <Button
+                disabled={!info.userManagementEnabled}
+                htmlType="submit"
+                icon={<CheckOutlined />}
+                type="primary"
+              />
             </Form.Item>
             <Form.Item noStyle>
               <Button icon={<CloseOutlined />} onClick={() => setIsUsernameEditable(false)} />
@@ -126,11 +134,12 @@ const SettingsAccount: React.FC = () => {
         <label>Display Name</label>
         {!isDisplaynameEditable ? (
           <div className={css.displayInfo}>
-            <span>
+            <span data-testid="text-displayname">
               {currentUser?.displayName || <Typography.Text disabled>N/A</Typography.Text>}
             </span>
             <Button
               data-testid="edit-displayname"
+              disabled={!info.userManagementEnabled}
               icon={<EditOutlined />}
               onClick={() => setIsDisplaynameEditable(true)}
             />
@@ -153,12 +162,16 @@ const SettingsAccount: React.FC = () => {
           </Form>
         )}
       </div>
-      <Divider />
-      <div className={css.row}>
-        <label>Password</label>
-        <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
-      </div>
-      {modalPasswordChangeContextHolder}
+      {info.userManagementEnabled && (
+        <>
+          <Divider />
+          <div className={css.row}>
+            <label>Password</label>
+            <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
+          </div>
+          {modalPasswordChangeContextHolder}
+        </>
+      )}
     </div>
   );
 };

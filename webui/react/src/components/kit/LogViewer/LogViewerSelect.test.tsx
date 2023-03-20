@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
@@ -18,8 +17,8 @@ const DEFAULT_FILTER_OPTIONS: Filters = {
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
-  const handleOnChange = jest.fn();
-  const handleOnReset = jest.fn();
+  const handleOnChange = vi.fn();
+  const handleOnReset = vi.fn();
   const view = render(
     <LogViewerSelect
       options={filterOptions}
@@ -73,8 +72,8 @@ describe('LogViewerFilter', () => {
 
     const agentOption1 = screen.getByText('All Ranks');
     await user.click(agentOption1);
-    await waitFor(async () => {
-      expect(await screen.findAllByText('0')).toHaveLength(2);
+    await waitFor(() => {
+      expect(screen.getAllByText('0')).toHaveLength(2);
     });
   });
 

@@ -34,13 +34,15 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useCurrentUser, useUsers } from 'stores/users';
+import usersStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './WorkspaceProjects.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   ProjectColumnName,
   WhoseProjects,
@@ -54,11 +56,8 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.match(useUsers(), {
-    Loaded: (cUser) => cUser.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
-  const loadableCurrentUser = useCurrentUser();
+  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
@@ -71,7 +70,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
     workspaceId: workspace.id,
   });
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const config = useMemo(() => configForWorkspace(id), [id]);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;
@@ -143,7 +143,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
@@ -153,7 +153,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
+        updateSettings({
+          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
+        });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
@@ -173,6 +175,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
@@ -238,7 +245,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -352,7 +359,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading}
+            loading={isLoading || Loadable.isLoading(users)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -375,6 +382,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     pageRef,
     projects,
     settings,
+    users,
     total,
     updateSettings,
     workspace?.archived,

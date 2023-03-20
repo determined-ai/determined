@@ -19,13 +19,13 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Select from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
-import UserBadge from 'components/kit/UserBadge';
 import { useTags } from 'components/kit/useTags';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
@@ -35,10 +35,11 @@ import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
+import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
@@ -47,9 +48,10 @@ import {
   generateTestWorkspaceData,
 } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
+import { NotLoaded } from 'utils/loadable';
 
 import css from './DesignKit.module.scss';
-import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
+import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
@@ -66,6 +68,7 @@ const ComponentTitles = {
   InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Select: 'Select',
@@ -73,7 +76,6 @@ const ComponentTitles = {
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
   UserAvatar: 'UserAvatar',
-  UserBadge: 'UserBadge',
 } as const;
 
 type ComponentNames = ValueOf<typeof ComponentTitles>;
@@ -483,6 +485,13 @@ const ChartsSection: React.FC = () => {
         <p>Highlight a specific metric in the chart.</p>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </AntDCard>
+      <AntDCard title="States without data">
+        <strong>Loading</strong>
+        <LineChart height={250} series={NotLoaded} showLegend={true} title="Loading state" />
+        <hr />
+        <strong>Empty</strong>
+        <LineChart height={250} series={[]} showLegend={true} title="Empty state" />
+      </AntDCard>
       <AntDCard title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
@@ -522,6 +531,20 @@ const ChartsSection: React.FC = () => {
               xLabel: xAxis,
             },
           ],
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <hr />
+        <strong>Loading</strong>
+        {createChartGrid({
+          chartsProps: NotLoaded,
+          onXAxisChange: setXAxis,
+          xAxis: xAxis,
+        })}
+        <hr />
+        <strong>Empty</strong>
+        {createChartGrid({
+          chartsProps: [],
           onXAxisChange: setXAxis,
           xAxis: xAxis,
         })}
@@ -848,7 +871,7 @@ const BreadcrumbsSection: React.FC = () => {
           <li>By default, Breadcrumb uses arrow keys to cycle through each item. </li>
           <li>
             Place Breadcrumbs at the top of a page, above a list of items, or above the main content
-            of a page.{' '}
+            of a page.
           </li>
         </ul>
       </AntDCard>
@@ -990,26 +1013,37 @@ const UserAvatarSection: React.FC = () => {
   );
 };
 
-const UserBadgeSection: React.FC = () => {
-  const testUser = { displayName: 'Abc', id: 1, username: 'alpha123' };
+const NameplateSection: React.FC = () => {
+  const testUser: User = { displayName: 'Test User', id: 1, username: 'testUser123' };
 
   return (
-    <ComponentSection id="UserBadge" title="UserBadge">
+    <ComponentSection id="Nameplate" title="Nameplate">
       <AntDCard>
         <p>
-          A (<code>{'<UserBadge>'}</code>) fully represents a user with a UserAvatar circle icon,
-          and the user&apos;s display name and username. If there is a display name, it appears
-          first, otherwise only the username is visible. A &apos;compact&apos; option reduces the
-          size of the name for use in a smaller form or modal.
+          A (<code>{'<Nameplate>'}</code>) displays an icon, a name, and an optional alias. The icon
+          is displayed on the left, and the text fields are displayed on the right. If an alias is
+          provided, it is displayed above the name in larger font. A &apos;compact&apos; option
+          reduces the size of the name for use in a smaller form or modal.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <li>User with Display Name</li>
-        <UserBadge user={testUser as User} />
+        <li>With name and alias</li>
+        <Nameplate
+          alias={testUser.displayName}
+          icon={<UserAvatar user={testUser} />}
+          name={testUser.username}
+        />
         <li>Compact format</li>
-        <UserBadge compact user={testUser as User} />
-        <li>User without Display Name</li>
-        <UserBadge user={{ ...testUser, displayName: undefined } as User} />
+        <Nameplate
+          alias={testUser.displayName}
+          compact
+          icon={<UserAvatar user={testUser} />}
+          name={testUser.username}
+        />
+        <li>No alias</li>
+        <Nameplate icon={<Icon name="group" />} name="testGroup123" />
+        <li>Compact, no alias</li>
+        <Nameplate compact icon={<Icon name="group" />} name="testGroup123" />
       </AntDCard>
     </ComponentSection>
   );
@@ -1080,6 +1114,9 @@ const PivotSection: React.FC = () => {
 };
 
 const PaginationSection: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPageSize, setCurrentPageSize] = useState<number>(1);
+
   return (
     <ComponentSection id="Pagination" title="Pagination">
       <AntDCard>
@@ -1101,7 +1138,15 @@ const PaginationSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Pagination default</strong>
-        <Pagination total={500} />
+        <Pagination
+          current={currentPage}
+          pageSize={currentPageSize}
+          total={500}
+          onChange={(page: number, pageSize: number) => {
+            setCurrentPage(page);
+            setCurrentPageSize(pageSize);
+          }}
+        />
         <strong>Considerations</strong>
         <ul>
           <li>
@@ -1230,6 +1275,13 @@ const CardsSection: React.FC = () => {
                 ...project,
                 name: 'Project with a very long name that spans many lines and eventually gets cut off',
               }}
+            />
+            <ProjectCard
+              project={{
+                ...project,
+                workspaceId: 2,
+              }}
+              showWorkspace
             />
           </Card.Group>
           <li>
@@ -1365,12 +1417,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required input" name="required" required>
+          <Form.Item label="Required input" name="required_input" required>
             <Input />
           </Form.Item>
           <Form.Item
             label="Invalid input"
-            name="invalid"
+            name="invalid_input"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input />
@@ -1386,12 +1438,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required TextArea" name="required" required>
+          <Form.Item label="Required TextArea" name="required_textarea" required>
             <Input.TextArea />
           </Form.Item>
           <Form.Item
             label="Invalid TextArea"
-            name="invalid"
+            name="invalid_textarea"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input.TextArea />
@@ -1407,12 +1459,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required Password" name="required" required>
+          <Form.Item label="Required Password" name="required_label" required>
             <Input.Password />
           </Form.Item>
           <Form.Item
             label="Invalid Password"
-            name="invalid"
+            name="invalid_password"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input.Password />
@@ -1446,9 +1498,8 @@ const FormSection: React.FC = () => {
             </Link>{' '}
             variations
           </strong>
-          <Form.Item label="Required dropdown" name="required" required>
+          <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
-              defaultValue={1}
               options={[
                 { label: 'Option 1', value: 1 },
                 { label: 'Option 2', value: 2 },
@@ -1473,12 +1524,12 @@ const TagsSection: React.FC = () => {
   const moreTags: string[] = ['working', 'TODO', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
   return (
     <ComponentSection id="Tags" title="Tags">
-      <Card>
+      <AntDCard>
         <p>
           The editable tags list (<code>{'<Tags>'}</code>) supports &quot;add&quot;,
           &quot;edit&quot; and &quot;remove&quot; actions on individual tags.
         </p>
-      </Card>
+      </AntDCard>
       <AntDCard title="Best practices">
         <strong>Content</strong>
         <ul>
@@ -1671,6 +1722,7 @@ const Components = {
   InputSearch: <InputSearchSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
   Select: <SelectSection />,
@@ -1678,7 +1730,6 @@ const Components = {
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
   UserAvatar: <UserAvatarSection />,
-  UserBadge: <UserBadgeSection />,
 };
 
 const DesignKit: React.FC = () => {
@@ -1706,7 +1757,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>{componentOrder.map((componentId) => Components[componentId])}</main>
+        <main>
+          {componentOrder.map((componentId) => (
+            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+          ))}
+        </main>
       </div>
     </Page>
   );

@@ -3,12 +3,14 @@ import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
-import { SetUserPasswordParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
-import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
+
+vi.useFakeTimers();
 
 import useModalPasswordChange, {
   API_SUCCESS_MESSAGE,
@@ -19,8 +21,6 @@ import useModalPasswordChange, {
   OK_BUTTON_LABEL,
   OLD_PASSWORD_LABEL,
 } from './useModalPasswordChange';
-
-const mockSetUserPassword = jest.fn();
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
@@ -35,9 +35,7 @@ const CURRENT_USER: DetailedUser = {
   username: USERNAME,
 };
 
-jest.setTimeout(10000);
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getUsers: () =>
     Promise.resolve({
       users: [
@@ -57,24 +55,20 @@ jest.mock('services/api', () => ({
       return Promise.reject();
     }
   },
-  setUserPassword: (params: SetUserPasswordParams) => {
-    return mockSetUserPassword(params);
-  },
+  setUserPassword: vi.fn(),
 }));
 
-const user = userEvent.setup();
+const user = userEvent.setup({ delay: null });
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
-  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
-  const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(async () => {
-    await fetchUsers();
+    await usersStore.ensureUsersFetched(canceler);
     setAuth({ isAuthenticated: true });
-    updateCurrentUser(CURRENT_USER.id);
-  }, [fetchUsers, updateCurrentUser]);
+    usersStore.updateCurrentUser(CURRENT_USER.id);
+  }, [canceler]);
 
   useEffect(() => {
     loadUsers();
@@ -92,9 +86,7 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <UIProvider>
-      <UsersProvider>
-        <Container />
-      </UsersProvider>
+      <Container />
     </UIProvider>,
   );
 
@@ -143,7 +135,7 @@ describe('useModalPasswordChange', () => {
     await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
 
-    jest.advanceTimersToNextTimer();
+    vi.advanceTimersToNextTimer();
 
     // Check for successful toast message.
     await waitFor(() => {
@@ -161,4 +153,4 @@ describe('useModalPasswordChange', () => {
       userId: USER_ID,
     });
   });
-});
+} /* { timeout: 10000 } */);

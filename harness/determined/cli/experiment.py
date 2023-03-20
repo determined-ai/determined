@@ -491,6 +491,7 @@ def describe(args: Namespace) -> None:
                     wl_detail = workload.checkpoint
 
                 if workload.checkpoint and wl_detail:
+                    assert isinstance(wl_detail, bindings.v1CheckpointWorkload)
                     checkpoint_state = wl_detail.state.value
                     checkpoint_end_time = wl_detail.endTime
                 else:
@@ -500,7 +501,7 @@ def describe(args: Namespace) -> None:
                 v_metrics_fields = []
                 if workload.validation:
                     wl_detail = workload.validation
-                    validation_state = wl_detail.state.value
+                    validation_state = "STATE_COMPLETED"
                     validation_end_time = wl_detail.endTime
                     for name in v_metrics_names:
                         if (
@@ -545,7 +546,7 @@ def describe(args: Namespace) -> None:
                             [
                                 trial.id,
                                 wl_detail.totalBatches,
-                                wl_detail.state.value.replace("STATE_", ""),
+                                (checkpoint_state or validation_state).replace("STATE_", ""),
                                 render.format_time(wl_detail.endTime),
                             ]
                             + t_metrics_fields

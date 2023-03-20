@@ -27,7 +27,6 @@ trial_validations AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    v.state,
     v.metrics,
     (
       (
@@ -36,16 +35,14 @@ trial_validations AS (
     ) AS signed_searcher_metric
   FROM validations v
     INNER JOIN searcher_info ON v.trial_id = searcher_info.trial_id
-  WHERE v.state = 'COMPLETED'
-    AND (
-      v.metrics->'validation_metrics'->>(searcher_info.metric_name)
-    ) IS NOT NULL
+  WHERE (
+    v.metrics->'validation_metrics'->>(searcher_info.metric_name)
+  ) IS NOT NULL
 ),
 best_validation AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    'STATE_' || v.state AS state,
     json_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics,
     v.metrics->'num_inputs' as num_inputs
   FROM (
@@ -63,7 +60,6 @@ latest_validation AS (
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
-    'STATE_' || v.state AS state,
     json_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics,
     v.metrics->'num_inputs' as num_inputs
   FROM (
@@ -128,31 +124,11 @@ best_checkpoint AS (
     ) c
     WHERE c.rank = 1
   ) c
-),
-latest_training AS (
-  SELECT s.trial_id,
-    s.total_batches,
-    s.end_time,
-    'STATE_' || s.state AS state,
-    json_build_object('avg_metrics', s.metrics->'avg_metrics') as metrics
-  FROM (
-      SELECT s.*,
-        ROW_NUMBER() OVER(
-          PARTITION BY s.trial_id
-          ORDER BY s.end_time DESC
-        ) AS rank
-      FROM steps s
-      INNER JOIN searcher_info ON s.trial_id = searcher_info.trial_id
-      WHERE s.state = 'COMPLETED'
-    ) s
-  JOIN searcher_info ON searcher_info.trial_id = s.trial_id
-  WHERE s.rank = 1
 )
 SELECT
   row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
   row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
-  row_to_json(lt)::jsonb - 'trial_id' AS latest_training,
   t.id AS id,
   t.experiment_id,
   'STATE_' || t.state AS state,
@@ -167,7 +143,6 @@ SELECT
     SELECT s.total_batches
     FROM steps s
     WHERE s.trial_id = t.id
-      AND s.state = 'COMPLETED'
     ORDER BY s.total_batches DESC
     LIMIT 1
   ) AS total_batches_processed,
@@ -190,5 +165,4 @@ FROM searcher_info
   -- additionally, it joins a lot of stuff we don't need, so just fallback to the actual tables.
   LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
-  LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
   ORDER BY searcher_info.ordering

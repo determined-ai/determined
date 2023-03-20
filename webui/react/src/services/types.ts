@@ -254,6 +254,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
+  workspaceId?: number;
 }
 
 export interface LaunchJupyterLabParams {
@@ -313,6 +314,7 @@ export interface GetJobQStatsParams extends FetchOptions {
 }
 
 export interface GetUsersParams extends PaginationParams {
+  name?: string;
   sortBy?:
     | 'SORT_BY_UNSPECIFIED'
     | 'SORT_BY_USER_NAME'

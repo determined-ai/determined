@@ -2,17 +2,18 @@ import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import GroupAvatar from 'components/GroupAvatar';
 import Form from 'components/kit/Form';
-import UserBadge from 'components/kit/UserBadge';
+import Nameplate from 'components/kit/Nameplate';
+import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group, V1Role } from 'services/api-ts-sdk';
+import { V1Role } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser, UserNameFields } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -61,10 +62,10 @@ const useModalWorkspaceAddMember = ({
     (value: string) => {
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u) && value.substring(0, 2) === 'u_') {
-          const user = u as User;
+          const user = u;
           return user.id === Number(value.substring(2));
         } else if (!isUser(u) && value.substring(0, 2) === 'g_') {
-          const group = u as V1Group;
+          const group = u;
           return group.groupId === Number(value.substring(2));
         }
       });
@@ -126,9 +127,9 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserBadge compact user={option as UserNameFields} />
+                  <UserBadge compact user={option as User} />
                 ) : (
-                  <GroupAvatar groupName={getName(option)} />
+                  <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
