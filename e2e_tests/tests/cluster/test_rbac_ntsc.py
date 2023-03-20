@@ -306,9 +306,16 @@ def test_ntsc_iface_access() -> None:
                     session, typ, created_id, 1
                 )  # user 1 should not be able to set priority.
             assert "access denied" in fe.value.message
-            # user 1 should be able to launch tensorboards but not NSCs in either workspace.
+            # user 1 should be able to launch tensorboards but not NSCs in workspace 0.
             only_tensorboard_can_launch(session, workspaces[0].id, typ, experiment_id)
-            only_tensorboard_can_launch(session, workspaces[1].id, typ, experiment_id)
+            # tensorboard requires workspace access so returns workspace not found if
+            # the user does not have access to the workspace.
+            if typ == NTSC_Kind.tensorboard:
+                with pytest.raises(errors.NotFoundException):
+                    launch_ntsc(session, workspaces[1].id, typ, experiment_id)
+            else:
+                with pytest.raises(errors.ForbiddenException):
+                    launch_ntsc(session, workspaces[1].id, typ, experiment_id)
 
             # user 2
             assert not can_access_logs(
@@ -330,8 +337,13 @@ def test_ntsc_iface_access() -> None:
                     session, typ, created_id, 1
                 )  # user 2 should not be able to set priority or know it exists.
             assert e.value.status_code == 404, f"user 2 should not be able to set priority {typ}"
-            with pytest.raises(errors.ForbiddenException):
-                launch_ntsc(session, workspaces[0].id, typ, experiment_id)
+            if typ == NTSC_Kind.tensorboard:
+                with pytest.raises(errors.NotFoundException):
+                    launch_ntsc(session, workspaces[0].id, typ, experiment_id)
+            else:
+                with pytest.raises(errors.ForbiddenException):
+                    launch_ntsc(session, workspaces[0].id, typ, experiment_id)
+            # user 2 has view access to workspace 1 so gets forbidden instead of not found.
             with pytest.raises(errors.ForbiddenException):
                 launch_ntsc(session, workspaces[1].id, typ, experiment_id)
 
