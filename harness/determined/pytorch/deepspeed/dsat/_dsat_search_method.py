@@ -131,6 +131,10 @@ class DSATTrialTracker:
         Creates a new `DSATTrial` object, updates lineages as appropriate, and updates the
         searcher's Trial tracking dictionary.
         """
+        # Verify the batch config and update the config to make these fields explicit.
+        batch_size_config = _utils.verify_and_get_tbs_mps_gas(hparams["ds_config"])
+        hparams["ds_config"] = {**hparams["ds_config"], **batch_size_config}
+
         trial = DSATTrial(hparams=hparams, is_model_profiling_info_run=is_model_profiling_info_run)
         if search_data is not None:
             trial.search_data = search_data
@@ -563,6 +567,8 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 hparams=hparams, search_data=search_data, parent_trial=None
             )
             # A +1 is required to align DS step/DET max_length conventions.
+            # TODO: DS has a fixed notion of what a step is while Determined does not. Make sure
+            # there are no issues in reconciling this fact.
             end_profile_step = self.autotuning_config["end_profile_step"] + 1
             new_ops = self.trial_tracker.get_ops_list_from_trial(
                 trial=new_trial, length=end_profile_step
