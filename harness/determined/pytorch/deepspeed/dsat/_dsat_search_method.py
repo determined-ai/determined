@@ -105,11 +105,13 @@ class DSATTrialTracker:
 
     def __init__(
         self,
+        slots: int,
         all_trials_dict: Optional[Dict[str, DSATTrial]] = None,
         best_autotuning_metric_val: Optional[Any] = None,
         num_trials_since_best_result: int = 0,
         should_early_stop: bool = False,
     ) -> None:
+        self.slots = slots
         self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
 
         # Altered after running autotuning trials:
@@ -132,7 +134,9 @@ class DSATTrialTracker:
         searcher's Trial tracking dictionary.
         """
         # Verify the batch config and update the config to make these fields explicit.
-        batch_size_config = _utils.verify_and_get_tbs_mps_gas(hparams["ds_config"])
+        batch_size_config = _utils.validate_and_get_tbs_mps_gas(
+            hparams["ds_config"], slots=self.slots
+        )
         hparams["ds_config"] = {**hparams["ds_config"], **batch_size_config}
 
         trial = DSATTrial(hparams=hparams, is_model_profiling_info_run=is_model_profiling_info_run)
@@ -350,19 +354,22 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         submitted_config_dict: Dict[str, Any],
     ) -> None:
         self.submitted_config_dict = submitted_config_dict
+        self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
         self.searcher_metric_name = self.submitted_config_dict["searcher"]["metric"]
         self.smaller_is_better = self.submitted_config_dict["searcher"].get(
             "smaller_is_better", _defaults.SMALLER_IS_BETTER
         )
         self.submitted_hps = self.submitted_config_dict["hyperparameters"]
         self.ds_config = self.submitted_hps["ds_config"]
+        self.fp16 = self.ds_config.get("fp16", {}).get("enabled") or False
         # Merge the submitted autotuning section with the DS _defaults.
-        self.autotuning_config = {**_defaults.AUTOTUNING_DICT, **self.ds_config["autotuning"]}
+        self.autotuning_config = {**_defaults.AUTUTONING_DICT, **self.ds_config["autotuning"]}
+        self.mp_size = self.autotuning_config["mp_size"]
         self.tuner_num_trials = self.autotuning_config["tuner_num_trials"]
         self.num_tuning_micro_batch_sizes = self.autotuning_config["num_tuning_micro_batch_sizes"]
         self.tuner_early_stopping = self.autotuning_config["num_tuning_micro_batch_sizes"]
 
-        self.trial_tracker = DSATTrialTracker()
+        self.trial_tracker = DSATTrialTracker(slots=self.slots)
 
         # Non-trivial values instantiated after model profiling run
         self.model_profile_info = None
@@ -413,15 +420,12 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         last_trial.oom = "OOM" in metric
 
         if last_trial.is_model_profiling_info_run:
-            slots = self.submitted_config_dict["resources"]["slots_per_trial"]
-            fp16 = self.ds_config.get("fp16", {}).get("enabled", False)
-            mp_size = self.autotuning_config["mp_size"]
             self.model_profile_info = DSATModelProfilingInfo(
                 request_id=request_id,
                 model_profiling_info_results=metric,
-                slots=slots,
-                fp16=fp16,
-                mp_size=mp_size,
+                slots=self.slots,
+                fp16=self.fp16,
+                mp_size=self.mp_size,
             )
         else:
             last_trial.metric = metric
@@ -564,7 +568,9 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         for _ in range(approx_num_lineages):
             hparams, search_data = self.get_random_hparams_and_search_data()
             new_trial = self.trial_tracker.create_trial(
-                hparams=hparams, search_data=search_data, parent_trial=None
+                hparams=hparams,
+                search_data=search_data,
+                parent_trial=None,
             )
             # A +1 is required to align DS step/DET max_length conventions.
             # TODO: DS has a fixed notion of what a step is while Determined does not. Make sure
@@ -605,7 +611,9 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             new_ops_list = []
         else:
             new_trial = self.trial_tracker.create_trial(
-                hparams=hparams, search_data=search_data, parent_trial=parent_trial
+                hparams=hparams,
+                search_data=search_data,
+                parent_trial=parent_trial,
             )
             # A +1 is required to align DS step/DET max_length conventions.
             end_profile_step = self.autotuning_config["end_profile_step"] + 1

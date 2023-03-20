@@ -3,11 +3,11 @@ import json
 import logging
 import os
 import pathlib
+import random
 import re
 import time
 from contextlib import contextmanager
-from random import choice
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -184,15 +184,14 @@ def get_zero_optim_keys_and_defaults_per_stage(
 
 def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
     keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
-    zero_optim_dict = {key: choice(defaults) for key, defaults in keys_and_defaults.items()}
+    zero_optim_dict = {key: random.choice(defaults) for key, defaults in keys_and_defaults.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
 
 
-def get_tbs_mps_gas(ds_config: Dict[str, Any]) -> Tuple[int, int, int]:
+def validate_and_get_tbs_mps_gas(ds_config: Dict[str, Any], slots: int) -> Dict[str, int]:
     """
-    Verifies that the batch size configuration is valid and returns the Tuple
-    `(train_batch_size, train_micro_batch_size_per_gpu, gradient_accumulation_steps)`.
+    Verifies that the batch size configuration is valid and returns the configuration as a dict.
     """
     tbs, mbs, gas = (
         ds_config.get("train_batch_size", None),
@@ -202,14 +201,19 @@ def get_tbs_mps_gas(ds_config: Dict[str, Any]) -> Tuple[int, int, int]:
     # TODO: assert messages.
     if tbs is not None:
         if mbs is not None:
-            assert tbs == mbs * gas
+            assert tbs == mbs * gas * slots, f"{ds_config}, slots: {slots}"
         else:
-            mbs, remainder = divmod(tbs, gas)
+            mbs, remainder = divmod(tbs, gas * slots)
             assert not remainder
     elif mbs is not None:
-        tbs = mbs * gas
+        tbs = mbs * gas * slots
 
-    return tbs, mbs, gas
+    batch_size_config = {
+        "train_batch_size": tbs,
+        "train_micro_batch_size_per_gpu": mbs,
+        "gradient_accumulation_steps": gas,
+    }
+    return batch_size_config
 
 
 # TODO: implement reproducibility and use this function.
