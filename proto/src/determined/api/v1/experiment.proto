@@ -690,7 +690,7 @@ message SearchExperimentsRequest {
 // combination of experiment and best trial with metrics
 message SearchExperimentExperiment {
   determined.experiment.v1.Experiment experiment = 1;
-  determined.trial.v1.Trial best_trial = 2;
+  determined.trial.v1.Trial best_trial           = 2;
 }
 
 // Response for searching experiments
