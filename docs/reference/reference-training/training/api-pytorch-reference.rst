@@ -16,6 +16,8 @@ single batch. - :class:`~determined.pytorch.PyTorchTrialContext`, which can be a
 :class:`~determined.pytorch.Trainer`, which is used for customizing and executing the training loop
 around a ``PyTorchTrial``.
 
+.. _pytorch_api_ref:
+
 *************************************
  ``determined.pytorch.PyTorchTrial``
 *************************************
