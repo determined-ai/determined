@@ -957,7 +957,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			webuiStaticAssets := regexp.MustCompile(`\/det\/(themes|static|determined)\/`)
+			webuiStaticAssets := regexp.MustCompile(`\/det\/assets\/`)
 			return !webuiStaticAssets.MatchString(c.Request().URL.Path)
 		},
 	}
