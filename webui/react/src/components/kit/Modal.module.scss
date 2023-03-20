@@ -4,3 +4,23 @@
     stroke: #cb504c;
   }
 }
+.icon {
+  padding-right: 16px;
+}
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.title {
+  display: flex;
+
+  .titleText {
+    padding-right: 4px;
+  }
+}

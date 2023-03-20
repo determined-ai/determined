@@ -13,6 +13,9 @@ import React, {
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Icon from 'shared/components/Icon';
+import Spinner from 'shared/components/Spinner';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import css from './Modal.module.scss';
 
@@ -22,6 +25,12 @@ interface LinkParams {
 }
 
 export type ModalSize = 'small' | 'medium' | 'large';
+const modalWidths: { [key in ModalSize]: number } = {
+  large: 1025,
+  medium: 692,
+  small: 358,
+};
+
 export type Opener = Dispatch<SetStateAction<boolean>>;
 
 export type ModalContext = {
@@ -58,7 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
   headerLink,
   icon,
   key,
-  size,
+  size = 'large',
   submit,
   titleText,
   children: modalBody,
@@ -74,19 +83,30 @@ export const Modal: React.FC<ModalProps> = ({
 
   const close = useCallback(() => setIsOpen(false), [setIsOpen]);
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
-    await submit?.handler();
-    setIsSubmitting(false);
-    setIsOpen(false);
-    await submit?.onComplete?.();
+    try {
+      await submit?.handler();
+      setIsSubmitting(false);
+      setIsOpen(false);
+      await submit?.onComplete?.();
+    } catch (err) {
+      handleError(err, {
+        level: ErrorLevel.Error,
+        publicMessage: err instanceof Error ? err.message : '',
+        publicSubject: 'Could not submit form',
+        silent: false,
+        type: ErrorType.Server,
+      });
+      setIsSubmitting(false);
+    }
   }, [submit, setIsOpen]);
 
   return (
     <AntdModal
       cancelText={cancelText}
       footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div className={css.footer}>
           <div>
             {footerLink && (
               <Link path={footerLink.url} popout>
@@ -104,7 +124,7 @@ export const Modal: React.FC<ModalProps> = ({
               key="submit"
               loading={isSubmitting}
               type="primary"
-              onClick={handleOk}>
+              onClick={handleSubmit}>
               {submit.text}
             </Button>
           </div>
@@ -113,21 +133,18 @@ export const Modal: React.FC<ModalProps> = ({
       key={key}
       maskClosable={true}
       open={isOpen}
-      style={{
-        minWidth: size === 'small' ? 358 : size === 'medium' ? 692 : 1025,
-      }}
       title={
-        <div style={{ display: 'flex' }}>
+        <div className={css.title}>
           {danger ? (
-            <div className={css.dangerIcon} style={{ paddingRight: 16 }}>
+            <div className={`${css.dangerIcon} ${css.icon}`}>
               <ExclamationCircleOutlined />
             </div>
           ) : icon ? (
-            <div style={{ paddingRight: 16 }}>
+            <div className={css.icon}>
               <Icon name={icon} />
             </div>
           ) : null}
-          <div style={{ paddingRight: 4 }}>{titleText}</div>
+          <div className={css.titleText}>{titleText}</div>
           {headerLink && (
             <Link path={headerLink.url} popout>
               {headerLink.text}
@@ -135,14 +152,17 @@ export const Modal: React.FC<ModalProps> = ({
           )}
         </div>
       }
+      width={modalWidths[size]}
       onCancel={close}
-      onOk={handleOk}>
-      {modalBody}
+      onOk={handleSubmit}>
+      <Spinner spinning={isSubmitting}>
+        <div className={css.modalBody}>{modalBody}</div>
+      </Spinner>
     </AntdModal>
   );
 };
 
-export const useModal = <ModalProps extends {}>(
+export const useModal = <ModalProps extends object>(
   Comp: React.FC<ModalProps>,
 ): { Component: React.FC<ModalProps>; open: () => void } => {
   const [isOpen, setIsOpen] = useState(false);
@@ -150,10 +170,9 @@ export const useModal = <ModalProps extends {}>(
 
   const Component = React.useCallback(
     (props: ModalProps) => {
-      const p = props as ModalProps;
       return (
         <ModalContext.Provider value={{ isOpen, setIsOpen }}>
-          <Comp {...p} />
+          <Comp {...props} />
         </ModalContext.Provider>
       );
     },

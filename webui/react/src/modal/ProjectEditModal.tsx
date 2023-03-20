@@ -1,9 +1,9 @@
 import { Form } from 'antd';
 import { useForm, useWatch } from 'antd/lib/form/Form';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import Input from 'components/kit/Input';
-import { Modal, Opener } from 'components/kit/Modal';
+import { Modal } from 'components/kit/Modal';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

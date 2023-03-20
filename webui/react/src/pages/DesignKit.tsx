@@ -1680,7 +1680,7 @@ const handleSubmit = async () => {
   return;
 };
 
-const SmallModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
+const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
       cancelText="No"
@@ -1692,14 +1692,14 @@ const SmallModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
         text: 'Yes',
       }}
       titleText="Experiment">
-      <div>{thing}</div>
+      <div>{value}</div>
     </Modal>
   );
 };
 
 /* medium modal */
 
-const MediumModalComponent: React.FC<{}> = () => {
+const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
       cancelText="No"
@@ -1737,7 +1737,7 @@ const MediumModalComponent: React.FC<{}> = () => {
           </Select>
         </Form.Item>
         <Form.Item className={css.line} label="Name" name="name">
-          <Input placeholder="Name (optional)" />
+          <Input defaultValue={value} placeholder="Name (optional)" />
         </Form.Item>
         <Form.Item className={css.line} label="Resource Pool" name="pool">
           <Select allowClear placeholder="Pick the best option">
@@ -1757,7 +1757,7 @@ const MediumModalComponent: React.FC<{}> = () => {
   );
 };
 
-const LargeModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
+const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
       cancelText="No"
@@ -1768,12 +1768,12 @@ const LargeModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
         text: 'Yes',
       }}
       titleText="Modal">
-      <div>{thing}</div>
+      <div>{value}</div>
     </Modal>
   );
 };
 
-const DangerousModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
+const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
       cancelText="No"
@@ -1784,13 +1784,13 @@ const DangerousModalComponent: React.FC<{ thing: string }> = ({ thing }) => {
         text: 'Yes',
       }}
       titleText="Modal">
-      <div>{thing}</div>
+      <div>{value}</div>
     </Modal>
   );
 };
 
 const ModalSection: React.FC = () => {
-  const [text, setText] = useState('asdf');
+  const [text, setText] = useState('state value');
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
@@ -1798,7 +1798,7 @@ const ModalSection: React.FC = () => {
 
   return (
     <ComponentSection id="Modals" title="Modals">
-      <Card>
+      <AntDCard>
         <Label>State that gets passed to modal via props</Label>
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
         <Row>
@@ -1807,11 +1807,11 @@ const ModalSection: React.FC = () => {
           <Button onClick={LargeModal.open}>Open Large Modal</Button>
           <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
         </Row>
-      </Card>
-      <SmallModal.Component thing={text} />
-      <MediumModal.Component />
-      <LargeModal.Component thing={text} />
-      <DangerousModal.Component thing={text} />
+      </AntDCard>
+      <SmallModal.Component value={text} />
+      <MediumModal.Component value={text} />
+      <LargeModal.Component value={text} />
+      <DangerousModal.Component value={text} />
     </ComponentSection>
   );
 };
