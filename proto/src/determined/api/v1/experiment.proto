@@ -16,6 +16,7 @@ import "determined/experiment/v1/experiment.proto";
 import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
+import "determined/trial/v1/trial.proto";
 
 // One datapoint in a series of metrics from a trial in batch.
 message DataPoint {
@@ -686,13 +687,19 @@ message SearchExperimentsRequest {
   int32 limit = 3;
 }
 
+// combination of experiment and best trial with metrics
+message SearchExperimentExperiment {
+  determined.experiment.v1.Experiment experiment = 1;
+  determined.trial.v1.Trial best_trial = 2;
+}
+
 // Response for searching experiments
 message SearchExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "experiments", "pagination" ] }
   };
   // The list of returned experiments.
-  repeated determined.experiment.v1.Experiment experiments = 1;
+  repeated SearchExperimentExperiment experiments = 1;
   // Pagination information of the full dataset
   Pagination pagination = 2;
 }
