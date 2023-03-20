@@ -32,7 +32,7 @@ class FakeRunner:
 
     @property
     def optimizer(self) -> Dict[int, Any]:
-        return {i: opt for i, opt in enumerate(self.context.optimizers)}
+        return dict(enumerate(self.context.optimizers))
 
     @property
     def data_loader(self) -> Optional[DummyDataloader]:
