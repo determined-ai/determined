@@ -901,27 +901,20 @@ def set_gc_policy(args: Namespace) -> None:
 
 @authentication.required
 def unarchive(args: Namespace) -> None:
-    body = bindings.v1UnarchiveExperimentsRequest(experimentIds=[args.experiment_id])
-    resp = bindings.post_UnarchiveExperiments(cli.setup_session(args), body=body)
-    if args.experiment_id in resp.experimentIds:
-        print(f"Unarchived experiment {args.experiment_id}")
-    else:
-        print("Error in unarchiving")
+    bindings.post_UnarchiveExperiment(cli.setup_session(args), id=args.experiment_id)
+    print(f"Unarchived experiment {args.experiment_id}")
 
 
 @authentication.required
 def move_experiment(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    body = bindings.v1MoveExperimentsRequest(
+    req = bindings.v1MoveExperimentRequest(
         destinationProjectId=p.id,
-        experimentIds=[args.experiment_id],
+        experimentId=args.experiment_id,
     )
-    resp = bindings.post_MoveExperiments(cli.setup_session(args), body=body)
-    if args.experiment_id in resp.experimentIds:
-        print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
-    else:
-        print("Error in moving experiment")
+    bindings.post_MoveExperiment(sess, body=req, experimentId=args.experiment_id)
+    print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
 
 
 def none_or_int(string: str) -> Optional[int]:
