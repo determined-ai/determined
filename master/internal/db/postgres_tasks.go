@@ -227,7 +227,7 @@ func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {
 
 	if _, err := db.sql.Exec(`
 	UPDATE allocations
-	SET end_time = greatest(cluster_heartbeat, start_time)
+	SET end_time = greatest(cluster_heartbeat, start_time), state = 'TERMINATED'
 	FROM cluster_id
 	WHERE end_time IS NULL AND
 	($1 = '' OR allocation_id NOT IN (
