@@ -1675,7 +1675,8 @@ const ToggleSection: React.FC = () => {
 
 /* modal section */
 
-const handleSubmit = async () => {
+const handleSubmit = async (fail?: boolean) => {
+  if (fail) throw new Error('Error message');
   await new Promise((r) => setTimeout(r, 1000));
   return;
 };
@@ -1683,15 +1684,8 @@ const handleSubmit = async () => {
 const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
-      cancelText="No"
-      headerLink={{ text: 'Related', url: paths.dashboard() }}
-      icon="experiment"
       size="small"
-      submit={{
-        handler: handleSubmit,
-        text: 'Yes',
-      }}
-      titleText="Experiment">
+      title="Experiment">
       <div>{value}</div>
     </Modal>
   );
@@ -1702,15 +1696,67 @@ const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
 const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
-      cancelText="No"
-      footerLink={{ text: 'Learn more about clusters', url: paths.cluster() }}
-      icon="experiment"
       size="medium"
+      title="Experiment">
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      size="large"
+      title="Modal">
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      danger
       submit={{
         handler: handleSubmit,
+        text: 'Submit',
+      }}
+      title="Modal">
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      icon="experiment"
+      title="Modal">
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      footerLink={{ text: 'Learn more about clusters', url: paths.cluster() }}
+      headerLink={{ text: 'Related', url: paths.dashboard() }}
+      title="Modal">
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const FormModalComponent: React.FC<{ value: string, fail?: boolean }> = ({ value, fail }) => {
+  return (
+    <Modal
+      cancelText="No"
+      submit={{
+        handler: () => handleSubmit(fail),
         text: 'Yes',
       }}
-      titleText="Modal">
+      title="Modal">
       <Form>
         <Form.Item
           className={css.line}
@@ -1757,54 +1803,44 @@ const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
-const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <Modal
-      cancelText="No"
-      icon="experiment"
-      size="large"
-      submit={{
-        handler: handleSubmit,
-        text: 'Yes',
-      }}
-      titleText="Modal">
-      <div>{value}</div>
-    </Modal>
-  );
-};
-
-const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
-  return (
-    <Modal
-      cancelText="No"
-      danger
-      size="small"
-      submit={{
-        handler: handleSubmit,
-        text: 'Yes',
-      }}
-      titleText="Modal">
-      <div>{value}</div>
-    </Modal>
-  );
-};
-
 const ModalSection: React.FC = () => {
   const [text, setText] = useState('state value');
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
   const DangerousModal = useModal(DangerousModalComponent);
+  const FormModal = useModal(FormModalComponent);
+  const FormFailModal = useModal(FormModalComponent);
+  const LinksModal = useModal(LinksModalComponent);
+  const IconModal = useModal(IconModalComponent);
 
   return (
     <ComponentSection id="Modals" title="Modals">
       <AntDCard>
         <Label>State that gets passed to modal via props</Label>
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
+        <hr />
+        <strong>Sizes</strong>
         <Row>
           <Button onClick={SmallModal.open}>Open Small Modal</Button>
           <Button onClick={MediumModal.open}>Open Medium Modal</Button>
           <Button onClick={LargeModal.open}>Open Large Modal</Button>
+        </Row>
+        <hr />
+        <strong>Links and Icons</strong>
+        <Row>
+          <Button onClick={LinksModal.open}>Open Modal with Header and Footer Links</Button>
+          <Button onClick={IconModal.open}>Open Modal with Title Icon</Button>
+        </Row>
+        <hr />
+        <strong>With form submission</strong>
+        <Row>
+          <Button onClick={FormModal.open}>Open Form Modal (Success)</Button>
+          <Button onClick={FormFailModal.open}>Open Form Modal (Failure)</Button>
+        </Row>
+        <hr />
+        <strong>Variations</strong>
+        <Row>
           <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
         </Row>
       </AntDCard>
@@ -1812,6 +1848,10 @@ const ModalSection: React.FC = () => {
       <MediumModal.Component value={text} />
       <LargeModal.Component value={text} />
       <DangerousModal.Component value={text} />
+      <FormModal.Component value={text} />
+      <FormFailModal.Component fail value={text} />
+      <LinksModal.Component value={text} />
+      <IconModal.Component value={text} />
     </ComponentSection>
   );
 };

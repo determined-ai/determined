@@ -58,7 +58,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         onComplete: onComplete,
         text: 'Save Changes',
       }}
-      titleText="Edit Project">
+      title="Edit Project">
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           initialValue={initialName}

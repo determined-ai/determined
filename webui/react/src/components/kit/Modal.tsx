@@ -46,21 +46,23 @@ export interface ModalSubmitParams {
 }
 
 interface ModalProps {
-  cancelText: string;
+  cancel?: boolean;
+  cancelText?: string;
   danger?: boolean;
   footerLink?: LinkParams;
   headerLink?: LinkParams;
   icon?: string;
   key?: string;
-  size: ModalSize;
-  submit: ModalSubmitParams;
-  titleText: string;
+  size?: ModalSize;
+  submit?: ModalSubmitParams;
+  title: string;
   children: ReactNode;
 }
 
 const ModalContext = createContext<ModalContext | null>(null);
 
 export const Modal: React.FC<ModalProps> = ({
+  cancel,
   cancelText,
   danger,
   footerLink,
@@ -69,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
   key,
   size = 'large',
   submit,
-  titleText,
+  title,
   children: modalBody,
 }: ModalProps) => {
   const modalContext = useContext(ModalContext);
@@ -106,50 +108,58 @@ export const Modal: React.FC<ModalProps> = ({
     <AntdModal
       cancelText={cancelText}
       footer={
-        <div className={css.footer}>
-          <div>
-            {footerLink && (
-              <Link path={footerLink.url} popout>
-                {footerLink.text}
-              </Link>
-            )}
+        (footerLink || cancel || submit) ? (
+          <div className={css.footer}>
+            <div>
+              {footerLink && (
+                <Link path={footerLink.url} popout>
+                  {footerLink.text}
+                </Link>
+              )}
+            </div>
+            <div>
+              {(cancel || cancelText) && (
+                <Button key="back" onClick={close}>
+                  {cancelText || 'Cancel'}
+                </Button>
+              )}
+              {submit && (
+                <Button
+                  danger={danger}
+                  disabled={!!submit?.disabled}
+                  key="submit"
+                  loading={isSubmitting}
+                  type="primary"
+                  onClick={handleSubmit}>
+                  {submit.text}
+                </Button>
+              )}
+            </div>
           </div>
-          <div>
-            <Button key="back" onClick={close}>
-              {cancelText}
-            </Button>
-            <Button
-              danger={danger}
-              disabled={!!submit?.disabled}
-              key="submit"
-              loading={isSubmitting}
-              type="primary"
-              onClick={handleSubmit}>
-              {submit.text}
-            </Button>
-          </div>
-        </div>
-      }
+        ) : false}
       key={key}
       maskClosable={true}
       open={isOpen}
       title={
         <div className={css.title}>
-          {danger ? (
-            <div className={`${css.dangerIcon} ${css.icon}`}>
-              <ExclamationCircleOutlined />
-            </div>
-          ) : icon ? (
-            <div className={css.icon}>
-              <Icon name={icon} />
-            </div>
-          ) : null}
-          <div className={css.titleText}>{titleText}</div>
-          {headerLink && (
-            <Link path={headerLink.url} popout>
-              {headerLink.text}
-            </Link>
-          )}
+          {
+            danger ? (
+              <div className={`${css.dangerIcon} ${css.icon}`}>
+                <ExclamationCircleOutlined />
+              </div>
+            ) : icon && (
+              <div className={css.icon}>
+                <Icon name={icon} />
+              </div>
+            )}
+          <div className={css.titleText}>{title}</div>
+          {
+            headerLink && (
+              <Link path={headerLink.url} popout>
+                {headerLink.text}
+              </Link>
+            )
+          }
         </div>
       }
       width={modalWidths[size]}
