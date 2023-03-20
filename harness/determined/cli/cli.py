@@ -48,7 +48,7 @@ from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.cli.workspace import args_description as workspace_args_description
 from determined.common import api, yaml
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_not_none
 from determined.common.declarative_argparse import Arg, Cmd, add_args, generate_aliases
 from determined.common.util import (
@@ -60,7 +60,6 @@ from determined.common.util import (
 from determined.errors import EnterpriseOnlyError
 
 from .errors import CliError, FeatureFlagDisabled
-from determined.common.api import bindings
 
 
 @authentication.required
