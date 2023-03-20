@@ -6347,7 +6347,7 @@ export interface V1QueueStats {
     scheduledCount: number;
 }
 /**
- * - RANGE_TYPE_UNSPECIFIED: unspecifhfghfg  - RANGE_TYPE_BATCH: unspecifahgjhkjhkjhk  - RANGE_TYPE_TIME: unspecifrrertretrerte
+ * - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
  * @export
  * @enum {string}
  */
@@ -11562,9 +11562,9 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {V1RangeType} [rangeType] unspecirr.   - RANGE_TYPE_UNSPECIFIED: unspecifhfghfg  - RANGE_TYPE_BATCH: unspecifahgjhkjhkjhk  - RANGE_TYPE_TIME: unspecifrrertretrerte
-         * @param {string} [start] unspeciccc.
-         * @param {string} [end] unspecijkhbiiub.
+         * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
+         * @param {string} [start] The start of the range for the query.
+         * @param {string} [end] The end of the range of the query.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12899,9 +12899,9 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {V1RangeType} [rangeType] unspecirr.   - RANGE_TYPE_UNSPECIFIED: unspecifhfghfg  - RANGE_TYPE_BATCH: unspecifahgjhkjhkjhk  - RANGE_TYPE_TIME: unspecifrrertretrerte
-         * @param {string} [start] unspeciccc.
-         * @param {string} [end] unspecijkhbiiub.
+         * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
+         * @param {string} [start] The start of the range for the query.
+         * @param {string} [end] The end of the range of the query.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13480,9 +13480,9 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {V1RangeType} [rangeType] unspecirr.   - RANGE_TYPE_UNSPECIFIED: unspecifhfghfg  - RANGE_TYPE_BATCH: unspecifahgjhkjhkjhk  - RANGE_TYPE_TIME: unspecifrrertretrerte
-         * @param {string} [start] unspeciccc.
-         * @param {string} [end] unspecijkhbiiub.
+         * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
+         * @param {string} [start] The start of the range for the query.
+         * @param {string} [end] The end of the range of the query.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13843,9 +13843,9 @@ export class ExperimentsApi extends BaseAPI {
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
-     * @param {V1RangeType} [rangeType] unspecirr.   - RANGE_TYPE_UNSPECIFIED: unspecifhfghfg  - RANGE_TYPE_BATCH: unspecifahgjhkjhkjhk  - RANGE_TYPE_TIME: unspecifrrertretrerte
-     * @param {string} [start] unspeciccc.
-     * @param {string} [end] unspecijkhbiiub.
+     * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
+     * @param {string} [start] The start of the range for the query.
+     * @param {string} [end] The end of the range of the query.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi

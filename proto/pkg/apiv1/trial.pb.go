@@ -136,15 +136,15 @@ func (XAxis) EnumDescriptor() ([]byte, []int) {
 	return file_determined_api_v1_trial_proto_rawDescGZIP(), []int{1}
 }
 
-// Enum for time series queries
+// Enum for supported range query types
 type RangeType int32
 
 const (
-	// unspecifhfghfg
+	// unspecified
 	RangeType_RANGE_TYPE_UNSPECIFIED RangeType = 0
-	// unspecifahgjhkjhkjhk
+	// Represents a range of batches
 	RangeType_RANGE_TYPE_BATCH RangeType = 1
-	// unspecifrrertretrerte
+	// Represents a time range
 	RangeType_RANGE_TYPE_TIME RangeType = 2
 )
 
@@ -3733,11 +3733,11 @@ type CompareTrialsRequest struct {
 	XAxis XAxis `protobuf:"varint,8,opt,name=x_axis,json=xAxis,proto3,enum=determined.api.v1.XAxis" json:"x_axis,omitempty"`
 	// metric ids for the query
 	MetricIds []string `protobuf:"bytes,9,rep,name=metric_ids,json=metricIds,proto3" json:"metric_ids,omitempty"`
-	// unspecirr
+	// The type of range for the query
 	RangeType RangeType `protobuf:"varint,10,opt,name=range_type,json=rangeType,proto3,enum=determined.api.v1.RangeType" json:"range_type,omitempty"`
-	// unspeciccc
+	// The start of the range for the query
 	Start string `protobuf:"bytes,11,opt,name=start,proto3" json:"start,omitempty"`
-	// unspecijkhbiiub
+	// The end of the range of the query
 	End string `protobuf:"bytes,12,opt,name=end,proto3" json:"end,omitempty"`
 }
 
