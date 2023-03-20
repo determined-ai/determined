@@ -60,6 +60,7 @@ from determined.common.util import (
 from determined.errors import EnterpriseOnlyError
 
 from .errors import CliError, FeatureFlagDisabled
+from determined.common.api import bindings
 
 
 @authentication.required
@@ -292,6 +293,8 @@ def main(
             die(e.message, exit_code=e.exit_code)
         except ArgumentError as e:
             die(e.message, exit_code=2)
+        except bindings.APIHttpError as e:
+            die("Failed on operation {}: {}".format(e.operation_name, e.message))
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
