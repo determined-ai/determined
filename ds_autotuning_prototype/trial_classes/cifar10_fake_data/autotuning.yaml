@@ -2,6 +2,7 @@ name: cifar10_trial_dsat_fake_data
 debug: false
 hyperparameters:
   deepspeed_config: ds_config.json
+  use_dsat_mode: True
   ds_config:
     autotuning:
       enabled: True
@@ -33,8 +34,6 @@ searcher:
   name: custom
   metric: throughput
   smaller_is_better: false
-  max_length:
-    batches: 100
 entrypoint:
   - python3
   - -m

@@ -118,8 +118,6 @@ class CIFARTrial(DeepSpeedTrial):
             shuffle=True,
             num_workers=2,
         )
-        print(f"train loader length: {len(train_loader)}")
-        print(f"self.context._epoch_len: {self.context._epoch_len}")
         return train_loader
 
     def build_validation_data_loader(self) -> Any:
