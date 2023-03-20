@@ -241,6 +241,13 @@ resources:
 	}
 
 	createReq.ProjectId = 1
+
+	// mock for ActivateExperiment (included in Create unless otherwise specified)
+	resQuery := &bun.SelectQuery{}
+	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything).
+		Return(resQuery, nil).Once()
+
 	resp, err = api.CreateExperiment(ctx, createReq)
 	require.NoError(t, err)
 
