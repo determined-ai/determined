@@ -699,19 +699,58 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 		}
 	}
-	if rangeType != apiv1.RangeType_RANGE_TYPE_UNSPECIFIED {
+	if len(metricIds) > 0 {
+		var startRangeValue interface{}
+		var endRangeValue interface{}
+		if rangeType == apiv1.RangeType_RANGE_TYPE_BATCH {
+			rangeType = apiv1.RangeType_RANGE_TYPE_BATCH
+		}
 		switch rangeType {
 		case apiv1.RangeType_RANGE_TYPE_BATCH:
-			startRange, err := strconv.Atoi(start)
-			if err != nil {
-				return nil, errors.Wrapf(err, "invalid integer string for batch start range %v", start)
+			var startRangeComparisonValue, endRangeComparisonValue int
+			if start == "" {
+				startRangeValue = start
+			} else {
+				startRangeComparisonValue, err = strconv.Atoi(start)
+				if err != nil {
+					return nil, errors.Wrapf(err, "invalid integer string for batch start range %v", start)
+				}
+				startRangeValue = startRangeComparisonValue
 			}
-			endRange, err := strconv.Atoi(end)
-			if err != nil {
-				return nil, errors.Wrapf(err, "invalid integer string for batch end range %v", end)
+			if end == "" {
+				endRangeValue = end
+			} else {
+				endRangeComparisonValue, err = strconv.Atoi(end)
+				if err != nil {
+					return nil, errors.Wrapf(err, "invalid integer string for batch end range %v", end)
+				}
+				endRangeValue = endRangeComparisonValue
 			}
-			if endRange < startRange {
-				return nil, errors.Wrapf(err, "invalid range end value %v cannot be less than start value %v", endRange, startRange)
+			if start != "" && end != "" && endRangeComparisonValue < startRangeComparisonValue {
+				return nil, fmt.Errorf("invalid range end value %v cannot be less than start value %v", endRangeComparisonValue, startRangeComparisonValue)
+			}
+		case apiv1.RangeType_RANGE_TYPE_TIME:
+			var startRangeComparisonValue, endRangeComparisonValue time.Time
+			if start == "" {
+				startRangeValue = start
+			} else {
+				startRangeComparisonValue, err = time.Parse(time.RFC3339, start)
+				if err != nil {
+					return nil, errors.Wrapf(err, "invalid date string for time start range %v", start)
+				}
+				startRangeValue = start
+			}
+			if end == "" {
+				endRangeValue = end
+			} else {
+				endRangeComparisonValue, err = time.Parse(time.RFC3339, end)
+				if err != nil {
+					return nil, errors.Wrapf(err, "invalid date string for time end range %v", end)
+				}
+				endRangeValue = end
+			}
+			if start != "" && end != "" && endRangeComparisonValue.Before(startRangeComparisonValue) {
+				return nil, fmt.Errorf("invalid range end value %v cannot be less than start value %v", endRangeComparisonValue, startRangeComparisonValue)
 			}
 		}
 		for _, metricId := range metricIds {
@@ -726,14 +765,17 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if metricIdType == "validation" {
 				var metric apiv1.SummarizedMetric
 				metric.Name = metricId
+				if maxDatapoints == 0 {
+					maxDatapoints = 200
+				}
 				metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, start, end)
+					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, startRangeValue, endRangeValue)
 				if err != nil {
 					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 				}
 				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
-				a.formatMetrics(&metric, metricMeasurements)
 				if len(metricMeasurements) > 0 {
+					a.formatMetrics(&metric, metricMeasurements)
 					metrics = append(metrics, &metric)
 				}
 			}

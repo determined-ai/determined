@@ -420,12 +420,12 @@ func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
 		var metrics *string
 		err := rows.Scan(&batches, &endTime, &metrics)
 		if err != nil {
-			panic(err)
+			continue
 		}
 		if metrics != nil {
 			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
 			if err != nil {
-				panic(err)
+				continue
 			}
 		}
 		value := avgMetrics[metricName]
@@ -481,28 +481,37 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, start string, end string) (
+	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, start interface{}, end interface{}) (
 	metricMeasurements []MetricMeasurements, err error,
 ) {
-	fmt.Println("startTime")
-	fmt.Println(startTime)
-	var queryColumn string
+	var queryColumn, filterExpr string
 	switch rangeType {
-	case apiv1.RangeType_RANGE_TYPE_BATCH:
-		queryColumn = "total_batches"
 	case apiv1.RangeType_RANGE_TYPE_TIME:
 		queryColumn = "end_time"
+		if start == "" && end == "" {
+			filterExpr = ""
+		} else if start == "" {
+			filterExpr = fmt.Sprintf(" AND %v <= '%v'", queryColumn, end)
+		} else if end == "" {
+			filterExpr = fmt.Sprintf("AND %v >= '%v'", queryColumn, start)
+		} else {
+			filterExpr = fmt.Sprintf(" AND %v >= '%v' AND %v <= '%v'", queryColumn, start, queryColumn, end)
+		}
+	case apiv1.RangeType_RANGE_TYPE_BATCH:
+		queryColumn = "total_batches"
+		if start == "" && end == "" {
+			filterExpr = ""
+		} else if start == "" {
+			filterExpr = fmt.Sprintf(" AND %v <= %v", queryColumn, end)
+		} else if end == "" {
+			filterExpr = fmt.Sprintf("AND %v >= %v", queryColumn, start)
+		} else {
+			filterExpr = fmt.Sprintf(" AND %v >= %v AND %v <= %v", queryColumn, start, queryColumn, end)
+		}
 	default:
 		queryColumn = "total_batches"
+		filterExpr = fmt.Sprintf(" AND %v >= %v AND (%v <= 0 OR %v <= %v) AND end_time > %v", queryColumn, startBatches, end, queryColumn, end, startTime)
 	}
-	fmt.Println("qCol")
-	fmt.Println(queryColumn)
-	fmt.Println(metricName)
-	fmt.Println(trialID)
-	fmt.Println(start)
-	fmt.Println(end)
-	fmt.Println(startTime)
-	fmt.Println(maxDatapoints)
 	rows, err := db.sql.Query(`
 	SELECT * FROM (
 	SELECT
@@ -510,18 +519,14 @@ func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metr
   		end_time as end_time,
   		metrics->>'validation_metrics' AS metrics
 	FROM validations
-	WHERE trial_id=$2
-  	AND $6 >= $3
-  	AND $6 <= $4
-	AND (end_time > $5 OR end_time <= $5)
-  	AND metrics->'validation_metrics'->$1 IS NOT NULL ORDER BY random() LIMIT $7) downsample
-ORDER BY $6;`, metricName, trialID, start, end, startTime, queryColumn, maxDatapoints)
+	WHERE trial_id=$2 `+filterExpr+
+		` AND metrics->'validation_metrics'->$1 IS NOT NULL ORDER BY random() LIMIT $3) 
+	downsample ORDER BY $4;`, metricName, trialID, maxDatapoints, queryColumn)
 	if err != nil {
 		defer rows.Close()
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	fmt.Println(metricMeasurements)
 	defer rows.Close()
 	return metricMeasurements, nil
 }

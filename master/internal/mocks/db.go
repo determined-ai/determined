@@ -2304,15 +2304,15 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 }
 
 // ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int, rangeType apiv1.RangeType, start string, end string) ([]db.MetricMeasurements, error) {
+func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int, rangeType apiv1.RangeType, start interface{}, end interface{}) ([]db.MetricMeasurements, error) {
 	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
 
 	var r0 []db.MetricMeasurements
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, string, string) ([]db.MetricMeasurements, error)); ok {
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) ([]db.MetricMeasurements, error)); ok {
 		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
 	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, string, string) []db.MetricMeasurements); ok {
+	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) []db.MetricMeasurements); ok {
 		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
 	} else {
 		if ret.Get(0) != nil {
@@ -2320,7 +2320,7 @@ func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metric
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) error); ok {
 		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
 	} else {
 		r1 = ret.Error(1)
