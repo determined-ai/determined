@@ -955,10 +955,16 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
 
+	// Files that receive a unique hash when bundled and deployed can be cached forever
+	cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-z]{1,}\.(js|css))$|(woff2|woff)$`)
+
+	// Other static files should only be cached for a short period of time
+	cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
+
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			webuiStaticAssets := regexp.MustCompile(`\/det\/assets\/`)
-			return !webuiStaticAssets.MatchString(c.Request().URL.Path)
+			reqPath := c.Request().URL.Path
+			return !cacheFileLongTerm.MatchString(reqPath) && !cacheFileShortTerm.MatchString(reqPath)
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
@@ -1110,11 +1116,6 @@ func (m *Master) Run(ctx context.Context) error {
 		default:
 			hasMatchingFile = !stat.IsDir()
 		}
-
-		// Files that receive a unique hash when bundled and deployed can be cached forever
-		// Other static files should only be cached for a short period of time
-		cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-z]{1,}\.(js|css))$|(woff2|woff)$`)
-		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
 
 		if cacheFileLongTerm.MatchString(requestedFile) {
 			c.Response().Header().Set("cache-control", "public, max-age=31536000")
