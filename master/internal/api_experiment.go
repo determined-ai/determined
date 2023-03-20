@@ -1543,7 +1543,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
+			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, apiv1.RangeType_RANGE_TYPE_UNSPECIFIED, "", "")
 	default:
 		panic("Invalid metric type")
 	}

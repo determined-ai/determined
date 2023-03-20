@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -648,7 +649,7 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType string, start string, end string,
+	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType, start string, end string, metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
 	var startTime time.Time
 	var err error
@@ -686,7 +687,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, start, end)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
@@ -698,12 +699,54 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 		}
 	}
+	if rangeType != apiv1.RangeType_RANGE_TYPE_UNSPECIFIED {
+		switch rangeType {
+		case apiv1.RangeType_RANGE_TYPE_BATCH:
+			startRange, err := strconv.Atoi(start)
+			if err != nil {
+				return nil, errors.Wrapf(err, "invalid integer string for batch start range %v", start)
+			}
+			endRange, err := strconv.Atoi(end)
+			if err != nil {
+				return nil, errors.Wrapf(err, "invalid integer string for batch end range %v", end)
+			}
+			if endRange < startRange {
+				return nil, errors.Wrapf(err, "invalid range end value %v cannot be less than start value %v", endRange, startRange)
+			}
+		}
+		for _, metricId := range metricIds {
+			nameAndType := strings.Split(metricId, ".")
+			if len(nameAndType) < 2 {
+				if err != nil {
+					return nil, errors.Wrapf(err, "error fetching time series of validation metrics invalid metricId %v", metricId)
+				}
+			}
+			metricIdName := nameAndType[1]
+			metricIdType := nameAndType[0]
+			if metricIdType == "validation" {
+				var metric apiv1.SummarizedMetric
+				metric.Name = metricId
+				metricMeasurements, err = a.m.db.ValidationMetricsSeries(
+					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, start, end)
+				if err != nil {
+					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+				}
+				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+				a.formatMetrics(&metric, metricMeasurements)
+				if len(metricMeasurements) > 0 {
+					metrics = append(metrics, &metric)
+				}
+			}
+		}
+	}
+
 	return metrics, nil
 }
 
 func (a *apiServer) SummarizeTrial(ctx context.Context,
 	req *apiv1.SummarizeTrialRequest,
 ) (*apiv1.SummarizeTrialResponse, error) {
+	var metric_ids []string
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -716,7 +759,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, "", "", "")
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, apiv1.RangeType_RANGE_TYPE_BATCH, "", "", metric_ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -745,7 +788,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, "", "", "")
+			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, req.RangeType, req.Start, req.End, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

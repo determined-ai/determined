@@ -5898,6 +5898,7 @@ class v1MetricType(enum.Enum):
     METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
     METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
+    METRIC_TYPE_GENERIC = "METRIC_TYPE_GENERIC"
 
 class v1Metrics:
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -8113,6 +8114,11 @@ class v1RPQueueStat:
         if not omit_unset or "aggregates" in vars(self):
             out["aggregates"] = None if self.aggregates is None else [x.to_json(omit_unset) for x in self.aggregates]
         return out
+
+class v1RangeType(enum.Enum):
+    RANGE_TYPE_UNSPECIFIED = "RANGE_TYPE_UNSPECIFIED"
+    RANGE_TYPE_BATCH = "RANGE_TYPE_BATCH"
+    RANGE_TYPE_TIME = "RANGE_TYPE_TIME"
 
 class v1RemoveAssignmentsRequest:
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
@@ -12053,21 +12059,29 @@ def post_CancelExperiment(
 def get_CompareTrials(
     session: "api.Session",
     *,
+    end: "typing.Optional[str]" = None,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
+    metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
+    rangeType: "typing.Optional[v1RangeType]" = None,
     scale: "typing.Optional[v1Scale]" = None,
+    start: "typing.Optional[str]" = None,
     startBatches: "typing.Optional[int]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
+        "end": end,
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
+        "metricIds": metricIds,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
+        "rangeType": rangeType.value if rangeType is not None else None,
         "scale": scale.value if scale is not None else None,
+        "start": start,
         "startBatches": startBatches,
         "trialIds": trialIds,
         "xAxis": xAxis.value if xAxis is not None else None,

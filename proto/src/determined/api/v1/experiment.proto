@@ -365,7 +365,7 @@ message MetricNamesResponse {
   repeated string validation_metrics = 3;
 }
 
-// To distinguish the 2 different categories of metrics.
+// To distinguish the different categories of metrics.
 enum MetricType {
   // Zero-value (not allowed).
   METRIC_TYPE_UNSPECIFIED = 0;
@@ -373,6 +373,8 @@ enum MetricType {
   METRIC_TYPE_TRAINING = 1;
   // For metrics emitted during validation.
   METRIC_TYPE_VALIDATION = 2;
+  // For metrics emitted during any process.
+  METRIC_TYPE_GENERIC = 3;
 }
 
 // Request the milestones (in batches processed) at which a metric is recorded
