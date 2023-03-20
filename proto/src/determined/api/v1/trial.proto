@@ -731,13 +731,13 @@ message ComparableTrial {
   repeated SummarizedMetric metrics = 2;
 }
 
-// Enum for time series queries
+// Enum for supported range query types
 enum RangeType {
-    // unspecifhfghfg
+    // unspecified
     RANGE_TYPE_UNSPECIFIED=0;
-    // unspecifahgjhkjhkjhk
+    // Represents a range of batches
     RANGE_TYPE_BATCH=1;
-    // unspecifrrertretrerte
+    // Represents a time range
     RANGE_TYPE_TIME=2;
   }
 
@@ -764,11 +764,11 @@ message CompareTrialsRequest {
   XAxis x_axis = 8;
   // metric ids for the query
   repeated string metric_ids=9;
-  // unspecirr
+  // The type of range for the query
   RangeType range_type = 10;
-  // unspeciccc
+  // The start of the range for the query
   string start = 11;
-  // unspecijkhbiiub
+  // The end of the range of the query
   string end = 12;
 }
 

@@ -1554,9 +1554,6 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
-	// if !seenBefore {
-	// 	metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
-	// }
 
 	for _, in := range metricMeasurements {
 		out := apiv1.DataPoint{
