@@ -1,24 +1,22 @@
-name: minimal_testing
+name: ffn_example_no_autotune
 workspace: DS_AT_PROTOTYPING
-project: minimal_testing
+project: ffn_example
 max_restarts: 0
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
+    cpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
 resources:
-  slots_per_trial: 1
+  slots_per_trial: 2
+  shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)."
+  max_slots: 8
+  # resource_pool: young # Grenoble specific; remove later.
 searcher:
   name: single
   max_length: 1e3
   metric: placeholder
 hyperparameters:
-  dim: 100
-  num_records: 1e3
-  layers: 3
-  ds_config:
-    train_micro_batch_size_per_gpu: 128
-    gradient_accumulation_steps: 1
-    optimizer:
-      TYPE: Adam
-      params:
-        lr: 1e-3
-    zero_optimization:
-      stage: 0
-entrypoint: python3 -m determined.launch.torch_distributed python3 minimal_script.py
+  dim: 16
+  layers: 2 # Total params will be layers * dim ** 2
+  deepspeed_config: ds_config_no_autotune.json
+entrypoint: python3 -m determined.launch.deepspeed python3 script.py

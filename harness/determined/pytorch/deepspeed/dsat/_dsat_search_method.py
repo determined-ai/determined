@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined import searcher
 
-# from determined.pytorch.deepspeed import get_ds_config_from_hparams
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 

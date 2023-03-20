@@ -21,7 +21,7 @@ class RandDataset(Dataset):
         self.data = torch.randn(self.num_actual_datapoints, self.dim)
 
     def __len__(self) -> int:
-        return 2 ** 32
+        return 10 ** 6
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         data = self.data[idx % self.num_actual_datapoints]
@@ -46,6 +46,7 @@ def main(
     core_context: det.core.Context,
     hparams: Dict[str, Any],
 ) -> None:
+    deepspeed.init_distributed()
     is_chief = core_context.distributed.rank == 0
     hparams = AttrDict(hparams)
     if is_chief:
@@ -56,7 +57,6 @@ def main(
     dataset = RandDataset(hparams.dim)
     model = MinimalModel(hparams.dim, hparams.layers)
 
-    deepspeed.init_distributed()
     model_engine, optimizer, train_loader, __ = deepspeed.initialize(
         model=model,
         model_parameters=model.parameters(),
@@ -106,6 +106,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
     info = det.get_cluster_info()
     hparams = info.trial.hparams
-    distributed = det.core.DistributedContext.from_torch_distributed()
+    distributed = det.core.DistributedContext.from_deepspeed()
     with det.core.init(distributed=distributed) as core_context:
         main(core_context, hparams)
