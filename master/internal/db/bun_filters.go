@@ -2,7 +2,9 @@ package db
 
 import (
 	"fmt"
+	"math"
 	"time"
+	"unsafe"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
@@ -139,4 +141,78 @@ func ApplyTimestampFieldFilter[T string | schema.Ident](
 	}
 
 	return q, nil
+}
+
+// Valdiate Int32 field range
+func ValidateInt32FieldFilterComparison(
+	filter *commonv1.Int32FieldFilter,
+) error {
+	var minValue, maxValue int32
+	if filter.Gt == nil && filter.Gte == nil {
+		return nil
+	}
+	if filter.Lt == nil && filter.Lte == nil {
+		return nil
+	}
+	if filter.Lt != nil && filter.Lte != nil {
+		maxValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte))))))
+	} else if filter.Lt != nil {
+		maxValue = *((*int32)(unsafe.Pointer(filter.Lt)))
+	} else {
+		maxValue = *((*int32)(unsafe.Pointer(filter.Lte)))
+	}
+	if filter.Gt != nil && filter.Gte != nil {
+		minValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), float64(*((*int32)(unsafe.Pointer(filter.Gte))))))
+	} else if filter.Gt != nil {
+		minValue = *((*int32)(unsafe.Pointer(filter.Gt)))
+	} else {
+		minValue = *((*int32)(unsafe.Pointer(filter.Gte)))
+	}
+	if minValue > maxValue {
+		return fmt.Errorf("invalid range: start value %v cannot be larger than end value %v", minValue, maxValue)
+	}
+	return nil
+}
+
+// Valdiate Timstamp field range
+func ValidateTimeStampFieldFilterComparison(
+	filter *commonv1.TimestampFieldFilter,
+) error {
+	var startTime, endTime time.Time
+	if filter.Gt == nil && filter.Gte == nil {
+		return nil
+	}
+	if filter.Lt == nil && filter.Lte == nil {
+		return nil
+	}
+	if filter.Lt != nil && filter.Lte != nil {
+		lt := tryAsTime(filter.Lt)
+		lte := tryAsTime(filter.Lte)
+		if lt.Before(*lte) {
+			endTime = *lt
+		} else {
+			endTime = *lte
+		}
+	} else if filter.Lt != nil {
+		endTime = *tryAsTime(filter.Lt)
+	} else {
+		endTime = *tryAsTime(filter.Lte)
+	}
+	if filter.Gt != nil && filter.Gte != nil {
+		gt := tryAsTime(filter.Gt)
+		gte := tryAsTime(filter.Gte)
+		if gt.Before(*gte) {
+			startTime = *gt
+		} else {
+			startTime = *gte
+		}
+	} else if filter.Lt != nil {
+		startTime = *tryAsTime(filter.Gt)
+	} else {
+		startTime = *tryAsTime(filter.Gte)
+	}
+	if endTime.Before(startTime) {
+		return fmt.Errorf("invalid range: end date %v cannot be earlier than start date %v", endTime, startTime)
+	}
+	return nil
 }

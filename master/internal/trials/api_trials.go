@@ -3,6 +3,7 @@ package trials
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
 // TrialsAPIServer is an embedded api server struct.
@@ -337,4 +339,42 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 	}
 
 	return &apiv1.DeleteTrialsCollectionResponse{}, nil
+}
+
+// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
+// trial.
+func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
+	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, integer_range *commonv1.Int32FieldFilter, time_range *commonv1.TimestampFieldFilter) (
+	metricMeasurements []db.MetricMeasurements, err error,
+) {
+	var queryColumn, orderColumn string
+	var query *bun.SelectQuery
+	var measurements = []db.MetricMeasurements{}
+	subq := db.Bun().NewSelect().TableExpr("validations").ColumnExpr("total_batches as batches").ColumnExpr("trial_id").ColumnExpr("end_time as time").ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).Where("trial_id = ?", trialID).OrderExpr("random()")
+	switch rangeType {
+	case apiv1.RangeType_RANGE_TYPE_TIME:
+		queryColumn = "end_time"
+		orderColumn = "time"
+		query, err = db.ApplyTimestampFieldFilter(subq, queryColumn, time_range)
+		if err != nil {
+			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		}
+	case apiv1.RangeType_RANGE_TYPE_BATCH:
+		queryColumn = "total_batches"
+		orderColumn = "batches"
+		query, err = db.ApplyInt32FieldFilter(subq, queryColumn, integer_range)
+		if err != nil {
+			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		}
+	default:
+		queryColumn = "total_batches"
+		orderColumn = "batches"
+		query = subq.Where("total_batches >= ?", startBatches).Where("total_batches <= 0 OR total_batches <= ?", endBatches).Where("end_time > ?", startTime)
+	}
+	err = db.Bun().NewSelect().TableExpr("(?) as downsample", query).OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
+	if err != nil {
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
+	fmt.Println(measurements)
+	return measurements, nil
 }

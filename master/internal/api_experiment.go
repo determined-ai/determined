@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
@@ -1542,8 +1543,8 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, apiv1.RangeType_RANGE_TYPE_UNSPECIFIED, "", "")
+		metricMeasurements, err = trials.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, apiv1.RangeType_RANGE_TYPE_UNSPECIFIED, nil, nil)
 	default:
 		panic("Invalid metric type")
 	}
@@ -1559,7 +1560,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		out := apiv1.DataPoint{
 			Batches: int32(in.Batches),
 			Value:   in.Value,
-			Time:    timestamppb.New(timeFromFloat64(in.Time)),
+			Time:    timestamppb.New(in.Time),
 			Epoch:   in.Epoch,
 		}
 		trial.Data = append(trial.Data, &out)

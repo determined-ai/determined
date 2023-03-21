@@ -8,11 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -20,6 +15,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -394,8 +393,9 @@ SELECT t.id FROM (
 type MetricMeasurements struct {
 	Value   float64
 	Batches uint
-	Time    float64
+	Time    time.Time
 	Epoch   int32
+	TrialId int32
 }
 
 func timeToFloat(t time.Time) float64 {
@@ -430,7 +430,7 @@ func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
 		}
 		value := avgMetrics[metricName]
 		metricMeasurement.Batches = batches
-		metricMeasurement.Time = timeToFloat(endTime)
+		metricMeasurement.Time = endTime
 		metricMeasurement.Value = value
 		for _, xAxisLabel := range xAxisMetricLabels {
 			// For now we will always only search for an "epoch" value but this will be updated in the future
@@ -469,59 +469,6 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
   		AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 		ORDER BY random() LIMIT $6
 	) downsample ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime, maxDataPoints)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
-}
-
-// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
-// trial.
-func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, start interface{}, end interface{}) (
-	metricMeasurements []MetricMeasurements, err error,
-) {
-	var queryColumn, filterExpr string
-	switch rangeType {
-	case apiv1.RangeType_RANGE_TYPE_TIME:
-		queryColumn = "end_time"
-		if start == "" && end == "" {
-			filterExpr = ""
-		} else if start == "" {
-			filterExpr = fmt.Sprintf(" AND %v <= '%v'", queryColumn, end)
-		} else if end == "" {
-			filterExpr = fmt.Sprintf("AND %v >= '%v'", queryColumn, start)
-		} else {
-			filterExpr = fmt.Sprintf(" AND %v >= '%v' AND %v <= '%v'", queryColumn, start, queryColumn, end)
-		}
-	case apiv1.RangeType_RANGE_TYPE_BATCH:
-		queryColumn = "total_batches"
-		if start == "" && end == "" {
-			filterExpr = ""
-		} else if start == "" {
-			filterExpr = fmt.Sprintf(" AND %v <= %v", queryColumn, end)
-		} else if end == "" {
-			filterExpr = fmt.Sprintf("AND %v >= %v", queryColumn, start)
-		} else {
-			filterExpr = fmt.Sprintf(" AND %v >= %v AND %v <= %v", queryColumn, start, queryColumn, end)
-		}
-	default:
-		queryColumn = "total_batches"
-		filterExpr = fmt.Sprintf(" AND %v >= %v AND (%v <= 0 OR %v <= %v) AND end_time > %v", queryColumn, startBatches, end, queryColumn, end, startTime)
-	}
-	rows, err := db.sql.Query(`
-	SELECT * FROM (
-	SELECT
-  		total_batches AS batches,
-  		end_time as end_time,
-  		metrics->>'validation_metrics' AS metrics
-	FROM validations
-	WHERE trial_id=$2 `+filterExpr+
-		` AND metrics->'validation_metrics'->$1 IS NOT NULL ORDER BY random() LIMIT $3) 
-	downsample ORDER BY $4;`, metricName, trialID, maxDatapoints, queryColumn)
 	if err != nil {
 		defer rows.Close()
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")

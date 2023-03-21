@@ -766,10 +766,10 @@ message CompareTrialsRequest {
   repeated string metric_ids=9;
   // The type of range for the query
   RangeType range_type = 10;
-  // The start of the range for the query
-  string start = 11;
-  // The end of the range of the query
-  string end = 12;
+  // Integer range for the query
+  determined.common.v1.Int32FieldFilter integer_range = 11;
+  // Time range for the query
+  determined.common.v1.TimestampFieldFilter time_range = 12;
 }
 
 // Response to CompareTrialsRequest.

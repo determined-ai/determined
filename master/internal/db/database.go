@@ -120,9 +120,6 @@ type DB interface {
 	TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
 		startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) (
 		metricMeasurements []MetricMeasurements, err error)
-	ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int, rangeType apiv1.RangeType, start interface{}, end interface{}) (
-		metricMeasurements []MetricMeasurements, err error)
 	FetchHPImportanceTrainingData(experimentID int, metric string) (
 		map[int][]model.HPImportanceTrialData, error)
 	FetchHPImportanceValidationData(experimentID int, metric string) (

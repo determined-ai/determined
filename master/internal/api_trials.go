@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -33,6 +33,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -638,7 +639,7 @@ func (a *apiServer) formatMetrics(
 ) {
 	for _, in := range metricMeasurements {
 		out := apiv1.DataPoint{
-			Time:    timestamppb.New(timeFromFloat64(in.Time)),
+			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
 			Epoch:   in.Epoch,
 			Value:   in.Value,
@@ -649,7 +650,7 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType, start string, end string, metricIds []string,
+	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType, integerRange *commonv1.Int32FieldFilter, timeRange *commonv1.TimestampFieldFilter, metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
 	var startTime time.Time
 	var err error
@@ -686,8 +687,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, start, end)
+			metricMeasurements, err = trials.ValidationMetricsSeries(
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, integerRange, timeRange)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
@@ -700,57 +701,19 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		}
 	}
 	if len(metricIds) > 0 {
-		var startRangeValue interface{}
-		var endRangeValue interface{}
 		if rangeType == apiv1.RangeType_RANGE_TYPE_BATCH {
 			rangeType = apiv1.RangeType_RANGE_TYPE_BATCH
 		}
 		switch rangeType {
 		case apiv1.RangeType_RANGE_TYPE_BATCH:
-			var startRangeComparisonValue, endRangeComparisonValue int
-			if start == "" {
-				startRangeValue = start
-			} else {
-				startRangeComparisonValue, err = strconv.Atoi(start)
-				if err != nil {
-					return nil, errors.Wrapf(err, "invalid integer string for batch start range %v", start)
-				}
-				startRangeValue = startRangeComparisonValue
-			}
-			if end == "" {
-				endRangeValue = end
-			} else {
-				endRangeComparisonValue, err = strconv.Atoi(end)
-				if err != nil {
-					return nil, errors.Wrapf(err, "invalid integer string for batch end range %v", end)
-				}
-				endRangeValue = endRangeComparisonValue
-			}
-			if start != "" && end != "" && endRangeComparisonValue < startRangeComparisonValue {
-				return nil, fmt.Errorf("invalid range end value %v cannot be less than start value %v", endRangeComparisonValue, startRangeComparisonValue)
+			err = db.ValidateInt32FieldFilterComparison(integerRange)
+			if err != nil {
+				return nil, err
 			}
 		case apiv1.RangeType_RANGE_TYPE_TIME:
-			var startRangeComparisonValue, endRangeComparisonValue time.Time
-			if start == "" {
-				startRangeValue = start
-			} else {
-				startRangeComparisonValue, err = time.Parse(time.RFC3339, start)
-				if err != nil {
-					return nil, errors.Wrapf(err, "invalid date string for time start range %v", start)
-				}
-				startRangeValue = start
-			}
-			if end == "" {
-				endRangeValue = end
-			} else {
-				endRangeComparisonValue, err = time.Parse(time.RFC3339, end)
-				if err != nil {
-					return nil, errors.Wrapf(err, "invalid date string for time end range %v", end)
-				}
-				endRangeValue = end
-			}
-			if start != "" && end != "" && endRangeComparisonValue.Before(startRangeComparisonValue) {
-				return nil, fmt.Errorf("invalid range end value %v cannot be less than start value %v", endRangeComparisonValue, startRangeComparisonValue)
+			err = db.ValidateTimeStampFieldFilterComparison(timeRange)
+			if err != nil {
+				return nil, err
 			}
 		}
 		for _, metricId := range metricIds {
@@ -768,8 +731,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				if maxDatapoints == 0 {
 					maxDatapoints = 200
 				}
-				metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, startRangeValue, endRangeValue)
+				metricMeasurements, err = trials.ValidationMetricsSeries(
+					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, integerRange, timeRange)
 				if err != nil {
 					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 				}
@@ -801,7 +764,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, apiv1.RangeType_RANGE_TYPE_BATCH, "", "", metric_ids)
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metric_ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -830,7 +793,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, req.RangeType, req.Start, req.End, req.MetricIds)
+			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, req.RangeType, req.IntegerRange, req.TimeRange, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

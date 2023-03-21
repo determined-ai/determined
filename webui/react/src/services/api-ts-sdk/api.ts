@@ -11563,12 +11563,20 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
-         * @param {string} [start] The start of the range for the query.
-         * @param {string} [end] The end of the range of the query.
+         * @param {number} [integerRangeLt] Less than.
+         * @param {number} [integerRangeLte] Less than or equal.
+         * @param {number} [integerRangeGt] Greater than.
+         * @param {number} [integerRangeGte] Greater than or equal.
+         * @param {Array<number>} [integerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [integerRangeNotIn] Not in a set.
+         * @param {Date} [timeRangeLt] Less than.
+         * @param {Date} [timeRangeLte] Less than or equal.
+         * @param {Date} [timeRangeGt] Greater than.
+         * @param {Date} [timeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, start?: string, end?: string, options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, integerRangeLt?: number, integerRangeLte?: number, integerRangeGt?: number, integerRangeGte?: number, integerRangeIncl?: Array<number>, integerRangeNotIn?: Array<number>, timeRangeLt?: Date, timeRangeLte?: Date, timeRangeGt?: Date, timeRangeGte?: Date, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -11623,12 +11631,44 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['rangeType'] = rangeType
             }
             
-            if (start !== undefined) {
-                localVarQueryParameter['start'] = start
+            if (integerRangeLt !== undefined) {
+                localVarQueryParameter['integerRange.lt'] = integerRangeLt
             }
             
-            if (end !== undefined) {
-                localVarQueryParameter['end'] = end
+            if (integerRangeLte !== undefined) {
+                localVarQueryParameter['integerRange.lte'] = integerRangeLte
+            }
+            
+            if (integerRangeGt !== undefined) {
+                localVarQueryParameter['integerRange.gt'] = integerRangeGt
+            }
+            
+            if (integerRangeGte !== undefined) {
+                localVarQueryParameter['integerRange.gte'] = integerRangeGte
+            }
+            
+            if (integerRangeIncl) {
+                localVarQueryParameter['integerRange.incl'] = integerRangeIncl
+            }
+            
+            if (integerRangeNotIn) {
+                localVarQueryParameter['integerRange.notIn'] = integerRangeNotIn
+            }
+            
+            if (timeRangeLt) {
+                localVarQueryParameter['timeRange.lt'] = timeRangeLt.toISOString()
+            }
+            
+            if (timeRangeLte) {
+                localVarQueryParameter['timeRange.lte'] = timeRangeLte.toISOString()
+            }
+            
+            if (timeRangeGt) {
+                localVarQueryParameter['timeRange.gt'] = timeRangeGt.toISOString()
+            }
+            
+            if (timeRangeGte) {
+                localVarQueryParameter['timeRange.gte'] = timeRangeGte.toISOString()
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -12900,13 +12940,21 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
-         * @param {string} [start] The start of the range for the query.
-         * @param {string} [end] The end of the range of the query.
+         * @param {number} [integerRangeLt] Less than.
+         * @param {number} [integerRangeLte] Less than or equal.
+         * @param {number} [integerRangeGt] Greater than.
+         * @param {number} [integerRangeGte] Greater than or equal.
+         * @param {Array<number>} [integerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [integerRangeNotIn] Not in a set.
+         * @param {Date} [timeRangeLt] Less than.
+         * @param {Date} [timeRangeLte] Less than or equal.
+         * @param {Date} [timeRangeGt] Greater than.
+         * @param {Date} [timeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, start?: string, end?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, start, end, options);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, integerRangeLt?: number, integerRangeLte?: number, integerRangeGt?: number, integerRangeGte?: number, integerRangeIncl?: Array<number>, integerRangeNotIn?: Array<number>, timeRangeLt?: Date, timeRangeLte?: Date, timeRangeGt?: Date, timeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, integerRangeLt, integerRangeLte, integerRangeGt, integerRangeGte, integerRangeIncl, integerRangeNotIn, timeRangeLt, timeRangeLte, timeRangeGt, timeRangeGte, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13481,13 +13529,21 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
          * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
-         * @param {string} [start] The start of the range for the query.
-         * @param {string} [end] The end of the range of the query.
+         * @param {number} [integerRangeLt] Less than.
+         * @param {number} [integerRangeLte] Less than or equal.
+         * @param {number} [integerRangeGt] Greater than.
+         * @param {number} [integerRangeGte] Greater than or equal.
+         * @param {Array<number>} [integerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [integerRangeNotIn] Not in a set.
+         * @param {Date} [timeRangeLt] Less than.
+         * @param {Date} [timeRangeLte] Less than or equal.
+         * @param {Date} [timeRangeGt] Greater than.
+         * @param {Date} [timeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, start?: string, end?: string, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, start, end, options)(fetch, basePath);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, integerRangeLt?: number, integerRangeLte?: number, integerRangeGt?: number, integerRangeGte?: number, integerRangeIncl?: Array<number>, integerRangeNotIn?: Array<number>, timeRangeLt?: Date, timeRangeLte?: Date, timeRangeGt?: Date, timeRangeGte?: Date, options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, integerRangeLt, integerRangeLte, integerRangeGt, integerRangeGte, integerRangeIncl, integerRangeNotIn, timeRangeLt, timeRangeLte, timeRangeGt, timeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -13844,14 +13900,22 @@ export class ExperimentsApi extends BaseAPI {
      * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
      * @param {V1RangeType} [rangeType] The type of range for the query.   - RANGE_TYPE_UNSPECIFIED: unspecified  - RANGE_TYPE_BATCH: Represents a range of batches  - RANGE_TYPE_TIME: Represents a time range
-     * @param {string} [start] The start of the range for the query.
-     * @param {string} [end] The end of the range of the query.
+     * @param {number} [integerRangeLt] Less than.
+     * @param {number} [integerRangeLte] Less than or equal.
+     * @param {number} [integerRangeGt] Greater than.
+     * @param {number} [integerRangeGte] Greater than or equal.
+     * @param {Array<number>} [integerRangeIncl] In a set. `in` is a reserved word in python.
+     * @param {Array<number>} [integerRangeNotIn] Not in a set.
+     * @param {Date} [timeRangeLt] Less than.
+     * @param {Date} [timeRangeLte] Less than or equal.
+     * @param {Date} [timeRangeGt] Greater than.
+     * @param {Date} [timeRangeGte] Greater than or equal.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, start?: string, end?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, start, end, options)(this.fetch, this.basePath)
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, rangeType?: V1RangeType, integerRangeLt?: number, integerRangeLte?: number, integerRangeGt?: number, integerRangeGte?: number, integerRangeIncl?: Array<number>, integerRangeNotIn?: Array<number>, timeRangeLt?: Date, timeRangeLte?: Date, timeRangeGt?: Date, timeRangeGte?: Date, options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, rangeType, integerRangeLt, integerRangeLte, integerRangeGt, integerRangeGte, integerRangeIncl, integerRangeNotIn, timeRangeLt, timeRangeLte, timeRangeGt, timeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**

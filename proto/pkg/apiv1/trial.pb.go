@@ -3735,10 +3735,10 @@ type CompareTrialsRequest struct {
 	MetricIds []string `protobuf:"bytes,9,rep,name=metric_ids,json=metricIds,proto3" json:"metric_ids,omitempty"`
 	// The type of range for the query
 	RangeType RangeType `protobuf:"varint,10,opt,name=range_type,json=rangeType,proto3,enum=determined.api.v1.RangeType" json:"range_type,omitempty"`
-	// The start of the range for the query
-	Start string `protobuf:"bytes,11,opt,name=start,proto3" json:"start,omitempty"`
-	// The end of the range of the query
-	End string `protobuf:"bytes,12,opt,name=end,proto3" json:"end,omitempty"`
+	// Integer range for the query
+	IntegerRange *commonv1.Int32FieldFilter `protobuf:"bytes,11,opt,name=integer_range,json=integerRange,proto3" json:"integer_range,omitempty"`
+	// Time range for the query
+	TimeRange *commonv1.TimestampFieldFilter `protobuf:"bytes,12,opt,name=time_range,json=timeRange,proto3" json:"time_range,omitempty"`
 }
 
 func (x *CompareTrialsRequest) Reset() {
@@ -3843,18 +3843,18 @@ func (x *CompareTrialsRequest) GetRangeType() RangeType {
 	return RangeType_RANGE_TYPE_UNSPECIFIED
 }
 
-func (x *CompareTrialsRequest) GetStart() string {
+func (x *CompareTrialsRequest) GetIntegerRange() *commonv1.Int32FieldFilter {
 	if x != nil {
-		return x.Start
+		return x.IntegerRange
 	}
-	return ""
+	return nil
 }
 
-func (x *CompareTrialsRequest) GetEnd() string {
+func (x *CompareTrialsRequest) GetTimeRange() *commonv1.TimestampFieldFilter {
 	if x != nil {
-		return x.End
+		return x.TimeRange
 	}
-	return ""
+	return nil
 }
 
 // Response to CompareTrialsRequest.
@@ -6200,7 +6200,7 @@ var file_determined_api_v1_trial_proto_rawDesc = []byte{
 	0x76, 0x31, 0x2e, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69, 0x7a, 0x65, 0x64, 0x4d, 0x65, 0x74,
 	0x72, 0x69, 0x63, 0x52, 0x07, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x3a, 0x17, 0x92, 0x41,
 	0x14, 0x0a, 0x12, 0xd2, 0x01, 0x07, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0xd2, 0x01, 0x05,
-	0x74, 0x72, 0x69, 0x61, 0x6c, 0x22, 0x8c, 0x04, 0x0a, 0x14, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x72,
+	0x74, 0x72, 0x69, 0x61, 0x6c, 0x22, 0xfc, 0x04, 0x0a, 0x14, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x72,
 	0x65, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b,
 	0x0a, 0x09, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
 	0x05, 0x52, 0x08, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x49, 0x64, 0x73, 0x12, 0x25, 0x0a, 0x0e, 0x6d,
@@ -6228,9 +6228,16 @@ var file_determined_api_v1_trial_proto_rawDesc = []byte{
 	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0e, 0x32,
 	0x1c, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69,
 	0x2e, 0x76, 0x31, 0x2e, 0x52, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x09, 0x72,
-	0x61, 0x6e, 0x67, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x72,
-	0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x72, 0x74, 0x12, 0x10,
-	0x0a, 0x03, 0x65, 0x6e, 0x64, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x6e, 0x64,
+	0x61, 0x6e, 0x67, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x4b, 0x0a, 0x0d, 0x69, 0x6e, 0x74, 0x65,
+	0x67, 0x65, 0x72, 0x5f, 0x72, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x26, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x63, 0x6f, 0x6d,
+	0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x74, 0x33, 0x32, 0x46, 0x69, 0x65, 0x6c,
+	0x64, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x0c, 0x69, 0x6e, 0x74, 0x65, 0x67, 0x65, 0x72,
+	0x52, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x49, 0x0a, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x5f, 0x72, 0x61,
+	0x6e, 0x67, 0x65, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31,
+	0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x46, 0x69, 0x65, 0x6c, 0x64, 0x46,
+	0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x52, 0x61, 0x6e, 0x67, 0x65,
 	0x3a, 0x22, 0x92, 0x41, 0x1f, 0x0a, 0x1d, 0xd2, 0x01, 0x0e, 0x6d, 0x61, 0x78, 0x5f, 0x64, 0x61,
 	0x74, 0x61, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0xd2, 0x01, 0x09, 0x74, 0x72, 0x69, 0x61, 0x6c,
 	0x5f, 0x69, 0x64, 0x73, 0x22, 0x63, 0x0a, 0x15, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x72, 0x65, 0x54,
@@ -6579,12 +6586,13 @@ var file_determined_api_v1_trial_proto_goTypes = []interface{}{
 	(*trialv1.Trial)(nil),                               // 100: determined.trial.v1.Trial
 	(*trialv1.TrialProfilerMetricLabels)(nil),           // 101: determined.trial.v1.TrialProfilerMetricLabels
 	(*trialv1.TrialProfilerMetricsBatch)(nil),           // 102: determined.trial.v1.TrialProfilerMetricsBatch
-	(*trialv1.RendezvousInfo)(nil),                      // 103: determined.trial.v1.RendezvousInfo
-	(*experimentv1.TrialOperation)(nil),                 // 104: determined.experiment.v1.TrialOperation
-	(*experimentv1.CompleteValidateAfterOperation)(nil), // 105: determined.experiment.v1.CompleteValidateAfterOperation
-	(*trialv1.TrialEarlyExit)(nil),                      // 106: determined.trial.v1.TrialEarlyExit
-	(*trialv1.TrialMetrics)(nil),                        // 107: determined.trial.v1.TrialMetrics
-	(*trialv1.TrialRunnerMetadata)(nil),                 // 108: determined.trial.v1.TrialRunnerMetadata
+	(*commonv1.Int32FieldFilter)(nil),                   // 103: determined.common.v1.Int32FieldFilter
+	(*trialv1.RendezvousInfo)(nil),                      // 104: determined.trial.v1.RendezvousInfo
+	(*experimentv1.TrialOperation)(nil),                 // 105: determined.experiment.v1.TrialOperation
+	(*experimentv1.CompleteValidateAfterOperation)(nil), // 106: determined.experiment.v1.CompleteValidateAfterOperation
+	(*trialv1.TrialEarlyExit)(nil),                      // 107: determined.trial.v1.TrialEarlyExit
+	(*trialv1.TrialMetrics)(nil),                        // 108: determined.trial.v1.TrialMetrics
+	(*trialv1.TrialRunnerMetadata)(nil),                 // 109: determined.trial.v1.TrialRunnerMetadata
 }
 var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	85,  // 0: determined.api.v1.SummarizedMetric.data:type_name -> determined.api.v1.DataPoint
@@ -6664,24 +6672,26 @@ var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	0,   // 74: determined.api.v1.CompareTrialsRequest.scale:type_name -> determined.api.v1.Scale
 	1,   // 75: determined.api.v1.CompareTrialsRequest.x_axis:type_name -> determined.api.v1.XAxis
 	2,   // 76: determined.api.v1.CompareTrialsRequest.range_type:type_name -> determined.api.v1.RangeType
-	50,  // 77: determined.api.v1.CompareTrialsResponse.trials:type_name -> determined.api.v1.ComparableTrial
-	103, // 78: determined.api.v1.AllocationRendezvousInfoResponse.rendezvous_info:type_name -> determined.trial.v1.RendezvousInfo
-	93,  // 79: determined.api.v1.AllocationAllGatherRequest.data:type_name -> google.protobuf.Struct
-	93,  // 80: determined.api.v1.AllocationAllGatherResponse.data:type_name -> google.protobuf.Struct
-	93,  // 81: determined.api.v1.NotifyContainerRunningRequest.data:type_name -> google.protobuf.Struct
-	93,  // 82: determined.api.v1.NotifyContainerRunningResponse.data:type_name -> google.protobuf.Struct
-	104, // 83: determined.api.v1.GetCurrentTrialSearcherOperationResponse.op:type_name -> determined.experiment.v1.TrialOperation
-	105, // 84: determined.api.v1.CompleteTrialSearcherValidationRequest.completed_operation:type_name -> determined.experiment.v1.CompleteValidateAfterOperation
-	106, // 85: determined.api.v1.ReportTrialSearcherEarlyExitRequest.early_exit:type_name -> determined.trial.v1.TrialEarlyExit
-	107, // 86: determined.api.v1.ReportTrialTrainingMetricsRequest.training_metrics:type_name -> determined.trial.v1.TrialMetrics
-	107, // 87: determined.api.v1.ReportTrialValidationMetricsRequest.validation_metrics:type_name -> determined.trial.v1.TrialMetrics
-	108, // 88: determined.api.v1.PostTrialRunnerMetadataRequest.metadata:type_name -> determined.trial.v1.TrialRunnerMetadata
-	11,  // 89: determined.api.v1.TrialFilters.RankWithinExp.sorter:type_name -> determined.api.v1.TrialSorter
-	90,  // [90:90] is the sub-list for method output_type
-	90,  // [90:90] is the sub-list for method input_type
-	90,  // [90:90] is the sub-list for extension type_name
-	90,  // [90:90] is the sub-list for extension extendee
-	0,   // [0:90] is the sub-list for field type_name
+	103, // 77: determined.api.v1.CompareTrialsRequest.integer_range:type_name -> determined.common.v1.Int32FieldFilter
+	91,  // 78: determined.api.v1.CompareTrialsRequest.time_range:type_name -> determined.common.v1.TimestampFieldFilter
+	50,  // 79: determined.api.v1.CompareTrialsResponse.trials:type_name -> determined.api.v1.ComparableTrial
+	104, // 80: determined.api.v1.AllocationRendezvousInfoResponse.rendezvous_info:type_name -> determined.trial.v1.RendezvousInfo
+	93,  // 81: determined.api.v1.AllocationAllGatherRequest.data:type_name -> google.protobuf.Struct
+	93,  // 82: determined.api.v1.AllocationAllGatherResponse.data:type_name -> google.protobuf.Struct
+	93,  // 83: determined.api.v1.NotifyContainerRunningRequest.data:type_name -> google.protobuf.Struct
+	93,  // 84: determined.api.v1.NotifyContainerRunningResponse.data:type_name -> google.protobuf.Struct
+	105, // 85: determined.api.v1.GetCurrentTrialSearcherOperationResponse.op:type_name -> determined.experiment.v1.TrialOperation
+	106, // 86: determined.api.v1.CompleteTrialSearcherValidationRequest.completed_operation:type_name -> determined.experiment.v1.CompleteValidateAfterOperation
+	107, // 87: determined.api.v1.ReportTrialSearcherEarlyExitRequest.early_exit:type_name -> determined.trial.v1.TrialEarlyExit
+	108, // 88: determined.api.v1.ReportTrialTrainingMetricsRequest.training_metrics:type_name -> determined.trial.v1.TrialMetrics
+	108, // 89: determined.api.v1.ReportTrialValidationMetricsRequest.validation_metrics:type_name -> determined.trial.v1.TrialMetrics
+	109, // 90: determined.api.v1.PostTrialRunnerMetadataRequest.metadata:type_name -> determined.trial.v1.TrialRunnerMetadata
+	11,  // 91: determined.api.v1.TrialFilters.RankWithinExp.sorter:type_name -> determined.api.v1.TrialSorter
+	92,  // [92:92] is the sub-list for method output_type
+	92,  // [92:92] is the sub-list for method input_type
+	92,  // [92:92] is the sub-list for extension type_name
+	92,  // [92:92] is the sub-list for extension extendee
+	0,   // [0:92] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_trial_proto_init() }

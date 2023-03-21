@@ -2303,32 +2303,6 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 	return r0, r1, r2
 }
 
-// ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int, rangeType apiv1.RangeType, start interface{}, end interface{}) ([]db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
-
-	var r0 []db.MetricMeasurements
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) ([]db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
-	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) []db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.MetricMeasurements)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int, apiv1.RangeType, interface{}, interface{}) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints, rangeType, start, end)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ValidationTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
 func (_m *DB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
 	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime)
