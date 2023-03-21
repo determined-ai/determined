@@ -107,6 +107,9 @@ message MasterLogsResponse {
 
 // Get a detailed view of resource allocation during the given time period.
 message ResourceAllocationRawRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "timestamp_after", "timestamp_before" ] }
+  };
   // The start of the period to consider.
   google.protobuf.Timestamp timestamp_after = 1;
   // The end of the period to consider.
@@ -120,6 +123,9 @@ message ResourceAllocationRawResponse {
 
 // Get an aggregated view of resource allocation during the given time period.
 message ResourceAllocationAggregatedRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "period", "start_date", "end_date" ] }
+  };
   // The first day to consider (the exact time is midnight UTC at the beginning
   // of the day).
   string start_date = 1;
