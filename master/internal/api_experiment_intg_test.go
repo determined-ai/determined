@@ -39,6 +39,7 @@ import (
 	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -762,7 +763,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 		Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
 	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA}).
 		Return(nil, expectedErr).Once()
 	_, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, expectedErr, err)
