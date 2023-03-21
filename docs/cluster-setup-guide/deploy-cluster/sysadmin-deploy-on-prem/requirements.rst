@@ -34,7 +34,7 @@ Hardware
 
 -  Each Determined agent node should be configured with at least two Intel Broadwell or later CPU
    cores, 4GB of RAM, and 50GB of free disk space. If you are using GPUs, Nvidia GPUs with compute
-   capability 6.0 or greater are required. These include P100, V100, A100, GTX 1080, GTX 1080 Ti,
+   capability 6.0 or greater are required. These include P100, V100, A100, RTX 2080 Ti, RTX 3090,
    TITAN X, and TITAN XP.
 
 Most of the disk space required by the master is because of the experiment metadata database. If
