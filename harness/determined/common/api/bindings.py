@@ -15309,13 +15309,13 @@ def post_ResetUserSetting(
 def get_ResourceAllocationAggregated(
     session: "api.Session",
     *,
-    endDate: "typing.Optional[str]" = None,
-    period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
-    startDate: "typing.Optional[str]" = None,
+    endDate: str,
+    period: "v1ResourceAllocationAggregationPeriod",
+    startDate: str,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
-        "period": period.value if period is not None else None,
+        "period": period.value,
         "startDate": startDate,
     }
     _resp = session._do_request(
@@ -15335,8 +15335,8 @@ def get_ResourceAllocationAggregated(
 def get_ResourceAllocationRaw(
     session: "api.Session",
     *,
-    timestampAfter: "typing.Optional[str]" = None,
-    timestampBefore: "typing.Optional[str]" = None,
+    timestampAfter: str,
+    timestampBefore: str,
 ) -> "v1ResourceAllocationRawResponse":
     _params = {
         "timestampAfter": timestampAfter,
