@@ -863,6 +863,6 @@ Loading Checkpoints
 ===================
 
 To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint
-to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint_path`. If your 
-``Trial`` was instantiated with arguments, you can pass them via the ``trial_kwargs`` parameter of 
+to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint_path`. If your
+``Trial`` was instantiated with arguments, you can pass them via the ``trial_kwargs`` parameter of
 ``load_trial_from_checkpoint_path``.
