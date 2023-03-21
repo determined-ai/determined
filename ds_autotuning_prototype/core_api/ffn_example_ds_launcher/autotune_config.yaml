@@ -1,4 +1,4 @@
-name: ffn_example_ds_launcher
+name: ffn_example_ds_launcher_dsat
 workspace: DS_AT_PROTOTYPING
 project: ffn_example
 max_restarts: 0
@@ -19,21 +19,5 @@ hyperparameters:
   dim: 16
   layers: 2 # Total params will be layers * dim ** 2
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
-  ds_config:
-    train_micro_batch_size_per_gpu: 128
-    gradient_accumulation_steps: 1
-    optimizer:
-      TYPE: Adam
-      params:
-        lr: 1e-3
-    fp16:
-      enabled: True
-    autotuning:
-      enabled: True
-      fast: False
-      tuner_type: random
-      tuner_num_trials: 50
-      num_tuning_micro_batch_sizes: 5
-      tuner_early_stopping: 5
-      metric: throughput
+  deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.deepspeed python3 script.py

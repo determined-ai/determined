@@ -1,4 +1,4 @@
-name: torchvision_models_dsat
+name: torchvision_models
 workspace: DS_AT_PROTOTYPING
 project: torchvision_models
 description: resnet152 baseline
@@ -9,9 +9,9 @@ resources:
   shm_size: 17179869184 # 16 GiB. Was hitting "Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm)." on Grenoble.
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
-  name: custom
-  metric: throughput
-  smaller_is_better: False
+  name: single
+  metric: arbitrary
+  max_length: 10
 hyperparameters:
   model_name: resnet152
   # NOTE: dsat code expects usual DS config dict to appear as in the below.

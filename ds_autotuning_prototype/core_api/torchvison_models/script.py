@@ -6,10 +6,7 @@ import determined as det
 import torch
 import torch.nn as nn
 from attrdict import AttrDict
-from determined.pytorch.deepspeed import dsat
-from determined.pytorch.deepspeed.dsat import (
-    _utils,
-)  # TODO: Remove import after resolving type key hack
+from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
 from torch.utils.data import Dataset
 from torchvision import models
 
@@ -36,11 +33,11 @@ def main(
     is_chief = core_context.distributed.rank == 0
     hparams = AttrDict(hparams)
     # TODO: Remove hack for seeing actual used HPs after Web UI is fixed.
-    if is_chief:
-        logging.info(f"HPs seen by trial: {hparams}")
+    logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
-    ds_config = _utils.lower_case_dict_key(hparams.ds_config, "TYPE")
+    ds_config = get_ds_config_from_hparams(hparams)
+    logging.info(f"ds_config: {ds_config}")
 
     deepspeed.init_distributed()
 
@@ -114,6 +111,7 @@ def main(
                     model_engine.step()
                 if model_engine.is_gradient_accumulation_boundary():
                     steps_completed += 1
+                    logging.info("COMPLETED STEP")
                     if steps_completed == op.length:
                         break
                 if core_context.preempt.should_preempt():
