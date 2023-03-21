@@ -312,7 +312,7 @@ func (m *Master) fetchAggregatedResourceAllocation(
 		return resp, nil
 
 	default:
-		return nil, errors.New("no aggregation period specified")
+		return nil, status.Error(codes.InvalidArgument, "no aggregation period specified")
 	}
 }
 
