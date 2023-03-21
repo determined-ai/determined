@@ -863,38 +863,6 @@ Loading Checkpoints
 ===================
 
 To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint
-to a file directory and use an import helper method to import modules. You should instantiate your
-loaded Trial with a ``CheckpointLoadContext``.
-
-:func:`~determined.import_from_path` allows you to import from a specific directory and cleans up
-afterwards. Even if you are importing identically-named files, you can import them as separate
-modules. This is intended to help when you have, for example, a current model_def.py, but also
-import an older ``model_def.py`` from a checkpoint into the same interpreter, without conflicts (so
-long as you import them as different names, of course).
-
-``CheckpointLoadContext`` is a special PyTorchTrialContext that can be used to load Trial classes
-outside of normal training loops. It does not support any training features such as metrics
-reporting or uploading checkpoints and provides only the necessary methods to load and extract
-objects from a ``Trial`` class.
-
-.. code:: python
-
-   import determined as det
-   from determined import pytorch
-   from determined.experimental import client
-   import model_def as model_def
-
-    # Download checkpoint and load training code from checkpoint.
-   path = client.get_checkpoint(MY_CHECKPOINT_UUID)
-   with det.import_from_path(path + "/code/"):
-       import my_model_def as old_model_def
-       # Load weights from previous model.
-       old_model = old_model_def.load_weights(path + "/code/")
-
-   model = model_def.my_build_model(
-       base_layers=old_model.base_layers
-   )
-   # Create CheckpointLoadContext for instantiating trial.
-   context = pytorch.CheckpointLoadContext()
-   # Instantiate trial with context and any other args.
-   my_trial = my_model_def.MyTrial(context, ...)
+to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint_path`. If your 
+``Trial`` was instantiated with arguments, you can pass them via the ``trial_kwargs`` parameter of 
+``load_trial_from_checkpoint_path``.
