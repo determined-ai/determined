@@ -17,7 +17,7 @@ import {
   removeRolesFromUser,
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
 import usersStore from 'stores/users';
@@ -132,7 +132,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
 };
 
 interface ModalProps {
-  onOk?: () => void;
+  onClose?: () => void;
   user?: DetailedUser;
 }
 
@@ -140,15 +140,9 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (viewOnly?: boolean) => void;
 }
 
-const useModalCreateUser = ({ onOk, user }: ModalProps): ModalHooks => {
+const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
-  const onClose = useCallback(
-    (reason?: ModalCloseReason) => {
-      if (reason === ModalCloseReason.Ok) onOk?.();
-    },
-    [onOk],
-  );
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   const rbacEnabled = useFeature().isOn('rbac');
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
@@ -218,6 +212,7 @@ const useModalCreateUser = ({ onOk, user }: ModalProps): ModalHooks => {
           message.success(API_SUCCESS_MESSAGE_CREATE);
           form.resetFields();
         }
+        onClose?.();
       } catch (e) {
         message.error(user ? 'Error updating user' : 'Error creating new user');
         handleError(e, { silent: true, type: ErrorType.Input });
@@ -228,6 +223,7 @@ const useModalCreateUser = ({ onOk, user }: ModalProps): ModalHooks => {
     },
     [
       form,
+      onClose,
       user,
       handleCancel,
       userRoles,

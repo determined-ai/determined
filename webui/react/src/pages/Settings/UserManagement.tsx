@@ -62,7 +62,7 @@ interface DropdownProps {
 
 const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
-    useModalCreateUser({ onOk: fetchUsers, user });
+    useModalCreateUser({ onClose: fetchUsers, user });
   const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
     useModalManageGroups({ groups, user });
   const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
@@ -193,7 +193,7 @@ const UserManagement: React.FC = () => {
     }
   }, [canceler, rbacEnabled]);
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
-    useModalCreateUser({ onOk: fetchUsers });
+    useModalCreateUser({ onClose: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
