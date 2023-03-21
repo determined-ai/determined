@@ -1,4 +1,4 @@
-package internal
+package experiment
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -96,7 +95,7 @@ func editableExperimentIds(ctx context.Context, requestedIds []int32) ([]int32,
 		Column("e.id").
 		Where("id IN (?)", bun.In(requestedIds))
 
-	if query, err = expauth.AuthZProvider.Get().
+	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
 		return nil, err
@@ -277,7 +276,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		})).
 		Where("e.id IN (?)", bun.In(experimentIds))
 
-	query, err = expauth.AuthZProvider.Get().
+	query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
 	if err != nil {
@@ -363,7 +362,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		})).
 		Where("e.id IN (?)", bun.In(experimentIds))
 
-	query, err = expauth.AuthZProvider.Get().
+	query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
 	if err != nil {
@@ -447,7 +446,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("exp.id IN (?)", bun.In(experimentIds))
 
-	if getQ, err = expauth.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+	if getQ, err = AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
 		[]rbacv1.PermissionType{
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
 			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
