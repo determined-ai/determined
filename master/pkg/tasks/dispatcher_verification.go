@@ -35,6 +35,7 @@ func ValidateSlurm(slurmOptions []string) []error {
 		"--error=", "-e",
 		"--output=", "-o",
 		"--partition=", "-p",
+		"--no-requeue",
 		"--requeue",
 	}
 	errors := validateWlmOptions(wlmSlurm, slurmOptions, forbiddenArgs)
