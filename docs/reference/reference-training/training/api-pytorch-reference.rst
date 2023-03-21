@@ -9,12 +9,14 @@
 +--------------------------------------------+
 
 Determined offers a PyTorch-based training loop that is fully integrated with the Determined
-platform which includes: - :class:`~determined.pytorch.PyTorchTrial`, which you must subclass to
-define things like model architecture, optimizer, data loaders, and how to train or validate a
-single batch. - :class:`~determined.pytorch.PyTorchTrialContext`, which can be accessed from within
-``PyTorchTrial`` and contains runtime methods used for training with the ``PyTorch`` API. -
-:class:`~determined.pytorch.Trainer`, which is used for customizing and executing the training loop
-around a ``PyTorchTrial``.
+platform which includes:
+
+-  :class:`~determined.pytorch.PyTorchTrial`, which you must subclass to define things like model
+   architecture, optimizer, data loaders, and how to train or validate a single batch.
+-  :class:`~determined.pytorch.PyTorchTrialContext`, which can be accessed from within
+   ``PyTorchTrial`` and contains runtime methods used for training with the ``PyTorch`` API.
+-  :class:`~determined.pytorch.Trainer`, which is used for customizing and executing the training
+   loop around a ``PyTorchTrial``.
 
 .. _pytorch_api_ref:
 
