@@ -47,10 +47,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
   });
-  const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const settingsConfig = useMemo(() => settingsConfigForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(
-    Object.assign(settingsConfig, { storagePath }),
+    Object.assign(settingsConfigForExperiment(experiment.id), {
+      storagePath: `trial-detail/experiment/${experiment.id}`,
+    }),
   );
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
