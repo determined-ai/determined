@@ -182,10 +182,12 @@ const LogViewer: React.FC<Props> = ({
   const addLogs = useCallback(
     (newLogs: ViewerLog[], prepend = false): void => {
       if (newLogs.length === 0) return;
-      flushSync(() => {
-        setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+      queueMicrotask(() => {
+        flushSync(() => {
+          setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+        });
+        resizeLogs();
       });
-      resizeLogs();
     },
     [resizeLogs],
   );
