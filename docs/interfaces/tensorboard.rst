@@ -5,14 +5,14 @@
 ###################
 
 `TensorBoard <https://www.tensorflow.org/tensorboard>`__ is a popular tool for visualizing and
-inspecting deep learning models. In Determined, you can use TensorBoard to for examining individual
-experiments or comparing multiple experiments.
+inspecting deep learning models. In Determined, you can use TensorBoard to examine individual
+experiments or compare multiple experiments.
 
 *****************
  Getting Started
 *****************
 
-You launch TensorBoard instances via the WebUI or the Determined CLI. Before launching TensorBoard
+Launch TensorBoard instances via the WebUI or the Determined CLI. Before launching TensorBoard
 instances from the CLI, :ref:`install the CLI <install-cli>` on your development machine.
 
 ***********************
@@ -69,7 +69,7 @@ Example experiment configuration file:
 .. code:: yaml
 
    environment:
-     image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0
+     image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1
    bind_mounts:
      - host_path: /my/agent/path
        container_path: /my/container/path
@@ -159,22 +159,8 @@ then moves to ``/tmp/tensorboard``.
 PyTorch
 =======
 
-For models using the :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>`, use the ``writer``
-field in an instance of the :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter`
-class:
-
-.. code:: python
-
-   from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-
-   class MyModel(PyTorchTrial):
-       def __init__(self, context):
-           ...
-           self.logger = TorchWriter()
-
-       def train_batch(self, batch, epoch_idx, batch_idx):
-           self.logger.writer.add_scalar("my_metric", np.random.random(), batch_idx)
+See :func:`PyTorchTrialContext.get_tensorboard_writer()
+<determined.pytorch.PyTorchTrialContext.get_tensorboard_writer>`
 
 For a full-length example of using TensorBoard with PyTorch, check out the :download:`mnist-GAN
 model </examples/gan_mnist_pytorch.tgz>`.
@@ -184,10 +170,10 @@ model </examples/gan_mnist_pytorch.tgz>`.
 **********************************
 
 Determined automatically terminates idle TensorBoard instances. A TensorBoard instance is considered
-idle if it is does not receive HTTP traffic (a TensorBoard that is still being viewed by a web
-browser is not considered idle). TensorBoards are terminated after 5 minutes by default; however,
-you can change the timeout duration by editing ``tensorboard_timeout`` in the :ref:`master config
-file <master-config-reference>`.
+idle if it does not receive HTTP traffic (a TensorBoard that is still being viewed by a web browser
+is not considered idle). TensorBoards are terminated after 5 minutes by default; however, you can
+change the timeout duration by editing ``tensorboard_timeout`` in the :ref:`master config file
+<master-config-reference>`.
 
 You can also terminate TensorBoard instances manually by using ``det tensorboard kill
 <tensorboard-id>``:
@@ -208,29 +194,13 @@ Determined schedules TensorBoard instances in containers that run on agent machi
 master will proxy HTTP requests to and from the TensorBoard container. TensorBoard instances are
 hosted on agent machines but they do not occupy GPUs.
 
-*****
- FAQ
-*****
+***************************************
+ Logging Additional TensorBoard Events
+***************************************
 
-Can I log additional TensorBoard events beyond what Determined logs automatically?
-==================================================================================
-
-Yes; any additional TFEvent files that are written to the appropriate path during training are
-accessible to TensorBoard. The appropriate path varies by worker rank and can be obtained by one of
-the following functions:
-
--  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
--  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
--  For DeepSpeedTrial users:
-   :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
--  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
--  For EstimatorTrial users:
-   :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
-
-For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
-
-Can I use TensorBoard with PyTorch?
-===================================
+Any additional TFEvent files that are written to the appropriate path during training are accessible
+to TensorBoard. The appropriate path varies by worker rank and can be obtained by one of the
+following functions:
 
 -  For CoreAPI users: :func:`~determined.core.TrainContext.get_tensorboard_path`
 -  For PyTorchTrial users: :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_path`
