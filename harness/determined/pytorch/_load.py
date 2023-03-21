@@ -14,16 +14,21 @@ class CheckpointLoadContext(pytorch.PyTorchTrialContext):
     """
     CheckpointLoadContext is a special PyTorchTrialContext that can be used to load Trial classes
     outside of normal training loops.
+
     It does not support actually reporting metrics to a real master or uploading checkpoints or any
     of the normal behaviors associated with model training.  :func:`determined.pytorch.init()`
     should still be used for normal training.
+
     CheckpointLoadContext is meant to be used by users using the PyTorchTrial Trainer directly.
     Users using the Trainer might prefer CheckpointLoadContext because it allows them to create a
     Trial class with extra parameters they may have added.
+
     Users who are relying on the legacy `entrypoint: my_model:MyTrainer` way of launching their code
     should continue to use :func:`~determined.pytorch.load_trial_from_checkpoint_path()`.
     Example usage:
+
     .. code:: python
+
        import determined as det
        from determined import pytorch
        from determined.experimental import client
