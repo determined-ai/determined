@@ -583,7 +583,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			containerRunType: "singularity",
 			slotType:         device.CUDA,
 			Slurm:            []string{"--want=slurmArgs", "--X=Y"},
-			wantSlurmArgs:    []string{"--want=slurmArgs", "--X=Y", "--no-requeue"},
+			wantSlurmArgs:    []string{"--want=slurmArgs", "--X=Y"},
 		},
 		{
 			name:             "Test custom pbsArgs",
@@ -635,7 +635,24 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			containerRunType: "singularity",
 			slotType:         device.CUDA,
 			Slurm:            []string{"--no-requeue"},
-			wantSlurmArgs:    []string{"--no-requeue"},
+			wantErr:          true,
+			errorContains:    "is not configurable",
+		},
+		{
+			name:             "Invalid PBS Option -r",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Pbs:              []string{"-r"},
+			wantErr:          true,
+			errorContains:    "is not configurable",
+		},
+		{
+			name:             "Existing PBS Option -r n",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Pbs:              []string{"-r n"},
+			wantErr:          true,
+			errorContains:    "is not configurable",
 		},
 	}
 
@@ -715,7 +732,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				if len(tt.wantSlurmArgs) > 0 {
 					assert.DeepEqual(t, customs["slurmArgs"], tt.wantSlurmArgs)
 				} else {
-					assert.DeepEqual(t, customs["slurmArgs"], []string{"--no-requeue"})
+					assert.Assert(t, customs["slurmArgs"] == nil)
 				}
 
 				if len(tt.wantPbsArgs) > 0 {

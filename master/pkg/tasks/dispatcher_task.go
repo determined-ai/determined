@@ -219,21 +219,6 @@ func (t *TaskSpec) ToDispatcherManifest(
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 
-	// SLURM can requeue a job if there are node level settings to specify it to do so.
-	// So, we have to explicitly specify NO_REQUEUE option to disable the requeueing of slurm jobs.
-	// Determined will manage the failed/preempted experiments by itself.
-	// In case, the user has already provided the NO_REQUEUE option, skip this step.
-	noRequeueExists := false
-	for _, arg := range slurmArgs {
-		if arg == "--no-requeue" {
-			noRequeueExists = true
-			break
-		}
-	}
-	if !noRequeueExists {
-		slurmArgs = append(slurmArgs, "--no-requeue")
-	}
-
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
 	errList := ValidateSlurm(slurmArgs)
 	if len(errList) > 0 {
