@@ -387,7 +387,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Log().Info("Starting dispatcher resource manager")
-		go m.debugKillAllInactiveDispatches(ctx, ctx.Self())
+		go m.killAllInactiveDispatches(ctx, ctx.Self())
 		go m.jobWatcher.watch(ctx)
 
 		// SLURM Resource Manager always fulfills requests for resource pool details using the
@@ -2056,19 +2056,13 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 	m.reqList.RemoveTaskByHandler(handler)
 }
 
-// Used on DEBUG startup, to perform a terminate and delete all dispatches in the DB
+// Perform a terminate and delete all dispatches in the DB
 // that are no-longer associated with an active experiment/task.
 // All active tasks, will get reconnected via AllocationRequest{Restore:true}
-// events.   This path is currently used only for debug mode where we defer
-// cleanup of dispatches until the restart to enable debugging of job
-// logs.
-func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
+// events.  This case is to handle those that will not be restored.
+func (m *dispatcherResourceManager) killAllInactiveDispatches(
 	ctx *actor.Context, handler *actor.Ref,
 ) {
-	if ctx.Log().Logger.Level < logrus.DebugLevel {
-		return
-	}
-
 	ctx.Log().Infof("Releasing all dispatches for terminated allocations.")
 
 	// Find the Dispatch IDs
@@ -2083,7 +2077,7 @@ func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
 		impersonatedUser := dispatch.ImpersonatedUser
 		allocation, err := m.db.AllocationByID(dispatch.AllocationID)
 		if err != nil || (allocation != nil &&
-			allocation.State != nil) && *allocation.State != model.AllocationStateTerminated {
+			allocation.EndTime == nil) {
 			ctx.Log().Debugf(
 				"Not removing dispatch environment for dispatchID %s because allocationID %s is still active.",
 				dispatchID, dispatch.AllocationID)
