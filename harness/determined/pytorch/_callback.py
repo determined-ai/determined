@@ -60,20 +60,6 @@ class PyTorchCallback:
         """
         pass
 
-    def on_validation_step_start(self) -> None:
-        """
-        Run before every validation step begins.
-        """
-        # TODO(DET-3555): remove this once it has been deprecated long enough.
-        pass
-
-    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
-        """
-        Run after every validation step ends.
-        """
-        # TODO(DET-3555): remove this once it has been deprecated long enough.
-        pass
-
     def on_checkpoint_load_start(self, checkpoint: Dict[str, Any]) -> None:
         """
         Run before state_dict is restored.

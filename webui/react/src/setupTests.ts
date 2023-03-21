@@ -31,4 +31,6 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
+vi.mock('router');
+
 global.ResizeObserver = require('resize-observer-polyfill');

@@ -1,13 +1,12 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Card, Space } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { unstable_useBlocker as useBlocker } from 'react-router-dom';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
-import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -40,7 +39,17 @@ const NotesCard: React.FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedNotes, setEditedNotes] = useState(notes);
-  const location = useLocation();
+
+  const blocker = () => {
+    if (isEditing && notes !== editedNotes) {
+      const answer = window.confirm(
+        'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
+      );
+      return !answer;
+    }
+    return false;
+  };
+  useBlocker(() => blocker());
 
   const existingNotes = useRef(notes);
 
@@ -53,31 +62,6 @@ const NotesCard: React.FC<Props> = ({
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
   }, [noteChangeSignal]);
-
-  useEffect(() => {
-    // TODO: This is an alternative of Prompt from react-router-dom
-    // As soon as react-router-domv6 supports Prompt, replace this with Promt
-    const unblock = isEditing
-      ? history.block((tx) => {
-          const pathnames = ['notes', 'models', 'projects'];
-          let isAllowedNavigation = true;
-
-          // check pathname if one of these names is included
-          if (pathnames.some((name) => location.pathname.includes(name)) && notes !== editedNotes) {
-            isAllowedNavigation = window.confirm(
-              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
-            );
-          }
-          if (isAllowedNavigation) {
-            unblock();
-            tx.retry();
-          }
-          return isAllowedNavigation;
-        })
-      : () => undefined;
-
-    return () => unblock();
-  }, [editedNotes, isEditing, location.pathname, notes]);
 
   const editNotes = useCallback(() => {
     if (disabled) return;

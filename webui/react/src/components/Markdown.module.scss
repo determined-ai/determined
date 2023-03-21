@@ -1,8 +1,8 @@
-//adapted from this repo: https://github.com/sindresorhus/github-markdown-css
+// adapted from this repo: https://github.com/sindresorhus/github-markdown-css
 
 .base {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
-    Apple Color Emoji, Segoe UI Emoji;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif,
+    'Apple Color', Emoji;
   font-size: 16px;
   height: 100%;
   line-height: 1.5;
@@ -174,7 +174,7 @@
     box-shadow: inset 0 -1px 0 #d1d5da;
     color: #444d56;
     display: inline-block;
-    font: 11px SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font: 11px SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-family: monospace;
     font-size: 1em;
     line-height: 10px;
@@ -285,9 +285,9 @@
     margin-left: 0;
   }
   code {
-    background-color: rgba(27, 31, 35, 0.05);
+    background-color: rgba(27 31 35 / 5%);
     border-radius: 3px;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 12px;
     margin: 0;
     padding: 0.2em 0.4em;
@@ -296,7 +296,7 @@
     background-color: #f6f8fa;
     border-radius: 3px;
     font-family: monospace;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 1em;
     font-size: 12px;
     font-size: 85%;
@@ -306,7 +306,7 @@
     margin-top: 0;
     overflow: auto;
     padding: 16px;
-    word-wrap: normal;
+    word-break: normal;
 
     > code {
       background: transparent;
@@ -323,7 +323,6 @@
       display: inline;
       line-height: inherit;
       margin: 0;
-      max-width: auto;
       overflow: visible;
       padding: 0;
       word-wrap: normal;
@@ -512,7 +511,7 @@
     display: table;
   }
   li {
-    word-wrap: break-all;
+    word-break: break-all;
 
     > p {
       margin-top: 16px;
@@ -563,7 +562,7 @@
   .commit-tease-sha {
     color: #444d56;
     display: inline-block;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 90%;
   }
   .full-commit {
@@ -585,9 +584,9 @@
     overflow-y: auto;
   }
   .blob-num {
-    color: rgba(27, 31, 35, 0.3);
+    color: rgba(27 31 35 / 30%);
     cursor: pointer;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 12px;
     line-height: 20px;
     min-width: 50px;
@@ -603,7 +602,7 @@
     width: 1%;
 
     &:hover {
-      color: rgba(27, 31, 35, 0.6);
+      color: rgba(27 31 35 / 60%);
     }
     &::before {
       content: attr(data-line-number);
@@ -618,7 +617,7 @@
   }
   .blob-code-inner {
     color: #24292e;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+    font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 12px;
     overflow: visible;
     white-space: pre;

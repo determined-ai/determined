@@ -36,7 +36,6 @@ import {
 
 import { hpImportanceSorter } from '../../utils/experiment';
 
-import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
   ViewType,
@@ -46,6 +45,7 @@ import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
+import css from './ExperimentVisualization.module.scss';
 
 export const ExperimentVisualizationType = {
   HpHeatMap: 'hp-heat-map',
@@ -113,12 +113,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
     }),
   );
+
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: searcherMetric.current,
+    metric: null,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -130,7 +131,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric>(initFilters.metric);
+  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
+  const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
@@ -144,7 +146,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
-      hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
+      hasData: !!metrics?.length,
       hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
@@ -155,9 +157,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, [batches, experiment, metrics]);
 
   const hpImportance = useMemo(() => {
-    if (!hpImportanceMap) return {};
-    return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
-  }, [filters.metric, hpImportanceMap]);
+    if (!hpImportanceMap || !activeMetric) return {};
+    return hpImportanceMap[activeMetric.type][activeMetric.name] || {};
+  }, [activeMetric, hpImportanceMap]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
@@ -174,6 +176,24 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleMetricChange = useCallback((metric: Metric) => {
     setActiveMetric(metric);
   }, []);
+
+  useEffect(() => {
+    if (!hasSearcherMetric) {
+      const activeMetricFound = metrics.find(
+        (metric) =>
+          metric.type === searcherMetric.current.type &&
+          metric.name === searcherMetric.current.name,
+      );
+      if (activeMetricFound) {
+        setHasSearcherMetric(true);
+        setActiveMetric(searcherMetric.current);
+        handleFiltersChange({
+          ...filters,
+          metric: searcherMetric.current,
+        });
+      }
+    }
+  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -221,7 +241,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
+            selectedMetric={activeMetric}
             selectedScale={filters.scale}
           />
         ),
@@ -240,7 +260,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
             />
           ),
@@ -256,7 +276,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
             />
           ),
@@ -272,7 +292,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
+              selectedMetric={activeMetric}
               selectedScale={filters.scale}
               selectedView={filters.view}
             />
@@ -289,7 +309,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     filters.batchMargin,
     filters.hParams,
     filters.maxTrial,
-    filters.metric,
+    activeMetric,
     filters.scale,
     filters.view,
     visualizationFilters,
@@ -327,7 +347,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
+    if (!isSupported || ui.isPageHidden || !activeMetric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
@@ -363,23 +383,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     });
   }, [batches]);
 
-  // Validate active metric against metrics.
-  useEffect(() => {
-    setActiveMetric((prev) => {
-      const activeMetricFound = metrics.reduce((acc, metric) => {
-        return acc || (metric.type === prev.type && metric.name === prev.name);
-      }, false);
-      return activeMetricFound ? prev : searcherMetric.current;
-    });
-  }, [metrics]);
-
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
 
     setFilters((prev) => {
       if (prev.hParams.length !== 0) return prev;
-      const map = hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {};
+      const map = prev.metric ? hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {} : {};
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));

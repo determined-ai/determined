@@ -196,7 +196,7 @@
       "searcher": {
         "bracket_rungs": null,
         "divisor": 4,
-        "max_concurrent_trials": 0,
+        "max_concurrent_trials": 16,
         "max_length": {
           "epochs": 32
         },

@@ -1,7 +1,5 @@
-$border-color: var(--theme-surface-border);
-
 .base {
-  border: 1px solid $border-color;
+  border: 1px solid var(--theme-surface-border);
   border-radius: var(--theme-border-radius);
   display: flex;
   flex-direction: column;
@@ -11,7 +9,7 @@ $border-color: var(--theme-surface-border);
 
   .row {
     align-items: center;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid var(--theme-surface-border);
     display: grid;
     grid-auto-columns: minmax(160px, 1fr);
     grid-auto-flow: column;
@@ -49,7 +47,7 @@ $border-color: var(--theme-surface-border);
     height: 100%;
   }
   .cell.sticky {
-    border-right: 1px solid $border-color;
+    border-right: 1px solid var(--theme-surface-border);
     left: 0;
     position: sticky;
   }

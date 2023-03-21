@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';

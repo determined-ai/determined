@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'shared/types';

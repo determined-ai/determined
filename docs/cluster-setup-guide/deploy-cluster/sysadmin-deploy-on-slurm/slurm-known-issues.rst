@@ -280,11 +280,12 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
  Slurm Known Issues
 ********************
 
--  Jobs may fail to submit with Slurm version 22.05.5 through at least 22.05.8 with the message
-   ``error: Unable to allocate resources: Requested node configuration is not available``.
+-  Jobs may fail to submit with Slurm version 22.05.5 through 22.05.8 with the message ``error:
+   Unable to allocate resources: Requested node configuration is not available``.
 
-   Until `Slurm Bug 15857 <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__ has been resolved,
-   consider using Slurm 22.05.4.
+   Slurm 22.05.5 through 22.05.8 are not supported due to `Slurm Bug 15857
+   <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__. The bug was addressed in 22.05.09 or
+   23.02.00.
 
 -  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
 
@@ -494,3 +495,7 @@ the GPUs used for the experiment to be evenly distributed among the compute node
       ERROR: task failed without an associated exit code: sbatch: error: CPU count per node can not
       be satisfied sbatch: error: Batch job submission failed: Requested node configuration is not
       available.
+
+-  A job may fail with the message ``resources failed with non-zero exit code``, Determined reports
+   the exit code in the experiment logs. For example, the experiment logs contain ``srun: error:
+   node002: task 0: Exited with exit code 7``.

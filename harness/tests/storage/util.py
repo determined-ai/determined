@@ -108,6 +108,10 @@ def run_storage_lifecycle_test(
         with pytest.raises(errors.CheckpointNotFound):
             with manager.restore_path(storage_id) as path:
                 pass
+
+        # Ensure second delete does not puke.
+        manager.delete(storage_id)
+
         # Allow for backend-specific inspection.
         if post_delete_cb is not None:
             post_delete_cb(storage_id)
