@@ -92,11 +92,6 @@ commands:
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
-  add-tools-scripts-to-path:
-    description: "Add tools/script to $PATH"
-    steps:
-      - run: echo "export PATH=$(pwd)/tools/scripts:"'${PATH}' >> $BASH_ENV
-
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
   checkout-with-sm:
@@ -305,7 +300,6 @@ commands:
         type: string
         default: "3.7.15"
     steps:
-      - add-tools-script-to-path
       - when:
           condition: <<parameters.install-python>>
           steps:
@@ -392,13 +386,13 @@ commands:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+              tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
-              retry.sh pip install --progress-bar off <<parameters.extras-requires>>
+              tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}

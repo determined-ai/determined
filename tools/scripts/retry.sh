@@ -8,8 +8,8 @@ until "$@"; do
         echo "Command $1 failed after $i retries"
         exit 1
     fi
-    delay=$((2**i))
+    delay=$((2 ** i))
     echo "Command $1 failed, retrying in $delay second(s)"
     sleep $delay
-    ((i=i+1))
+    ((i = i + 1))
 done
