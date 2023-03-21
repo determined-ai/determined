@@ -33,6 +33,7 @@ type GCPClusterConfig struct {
 	BootDiskSize        int    `json:"boot_disk_size"`
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
 
+	Labels     map[string]string `json:"labels"`
 	LabelKey   string `json:"label_key"`
 	LabelValue string `json:"label_value"`
 	NamePrefix string `json:"name_prefix"`
