@@ -38,7 +38,7 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
    # When installing Determined, set checkpointStorage.bucket to the value defined here.
    GCS_BUCKET_NAME=<any unique name, e.g., "determined-checkpoint-bucket">
 
-   # Set the GPU type for your node pool. Other options include k80, p100, p4, and v100.
+   # Set the GPU type for your node pool. Other options include p100, p4, and v100.
    GPU_TYPE=nvidia-tesla-t4
 
    # Set the number of GPUs per node.

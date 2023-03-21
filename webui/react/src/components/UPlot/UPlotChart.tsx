@@ -5,7 +5,7 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import useResize from 'hooks/useResize';
-import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
@@ -25,7 +25,7 @@ interface Props {
   allowDownload?: boolean;
   data?: AlignedData | FacetedData;
   experimentId?: number;
-  noDataMessage?: string;
+  isLoading?: boolean;
   options?: Partial<Options>;
   style?: React.CSSProperties;
 }
@@ -83,9 +83,9 @@ type ChartType = 'Line' | 'Scatter';
 const UPlotChart: React.FC<Props> = ({
   allowDownload,
   data,
+  isLoading,
   options,
   style,
-  noDataMessage,
   experimentId,
 }: Props) => {
   const chartRef = useRef<uPlot>();
@@ -245,13 +245,12 @@ const UPlotChart: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
       {allowDownload && <DownloadButton containerRef={chartDivRef} experimentId={experimentId} />}
-      {!hasData && (
-        <Message
-          style={{ height: options?.height ?? 'auto' }}
-          title={noDataMessage || 'No Data to plot.'}
-          type={MessageType.Empty}
-        />
+      {!hasData && !isLoading && (
+        <div className={css.chartEmpty}>
+          <span>No data to plot.</span>
+        </div>
       )}
+      {isLoading && <Spinner spinning tip="Loading chart data..." />}
     </div>
   );
 };

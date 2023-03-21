@@ -163,7 +163,7 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    usersStore.ensureUsersFetched(canceler, apiConfig);
+    usersStore.ensureUsersFetched(canceler, apiConfig, true);
   }, [settings, canceler, apiConfig]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
