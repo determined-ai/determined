@@ -237,6 +237,7 @@ Can I use TensorBoard with PyTorch?
 -  For DeepSpeedTrial users:
    :func:`~determined.pytorch.deepspeed.DeepSpeedTrialContext.get_tensorboard_path`
 -  For TFKerasTrial users: :func:`~determined.keras.TFKerasTrialContext.get_tensorboard_path`
--  For EstimatorTrial users: :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
+-  For EstimatorTrial users:
+   :func:`~determined.estimator.EstimatorTrialContext.get_tensorboard_path`
 
 For more details and examples, refer to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
