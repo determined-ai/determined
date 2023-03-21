@@ -217,6 +217,8 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	// Can't view source project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything).
+		Return(false, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
