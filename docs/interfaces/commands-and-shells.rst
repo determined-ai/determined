@@ -4,23 +4,21 @@
  Commands and Shells
 #####################
 
-In addition to structured model training workloads handled using :ref:`experiments <experiments>`,
-Determined also supports free-form tasks using *commands* and *shells*. Commands and shells enable
-you to use a Determined cluster and cluster GPUs without writing code that conforms to the trial
-APIs.
+This article provides instructions for installing and using the Determined Command-Line Interface
+(CLI), and provides a description of CLI commands including shell-related commands.
+
+Determined supports free-form tasks in addition to the structured model training workloads that are
+handled using :ref:`experiments <experiments>`. Commands and shells enable you to use a Determined
+cluster and cluster GPUs without writing code that conforms to the trial APIs.
 
 Commands execute a user-specified program on the cluster. Commands are useful for running existing
-code in batch mode.
+code in batch mode. Shells start SSH servers that let you use cluster resources interactively.
+Shells provide access to the cluster in the form of interactive `SSH
+<https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
 
-Shells start SSH servers that let you use cluster resources interactively. Shells provide access to
-the cluster in the form of interactive `SSH <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_
-sessions.
-
-This document describes the most common CLI and shell commands.
-
-**********
- Commands
-**********
+**************************
+ ``det cmd`` CLI Commands
+**************************
 
 CLI commands start with ``det command``, abbreviated as ``det cmd``. The main subcommand is ``det
 cmd run``, which runs a command in the cluster and streams its output. For example, the following
@@ -50,8 +48,9 @@ UUID, run
 
 .. _install-cli:
 
-Installation
-============
+*******************************
+ Installing the Determined CLI
+*******************************
 
 The CLI is distributed as a Python wheel package. Each user should install a copy of the CLI on
 their local development machine.
@@ -76,11 +75,12 @@ address. To do this, set the ``DET_MASTER`` environment variable:
 You might want to place this into the appropriate configuration file for your login shell, such as
 ``.bashrc``.
 
-Usage
-=====
+**************************
+ Using the Determined CLI
+**************************
 
-After the wheel is installed, the CLI is invoked with the ``det`` command. Use ``det --help`` for
-more information about the individual CLI commands.
+After installing the wheel, invoke the CLI using the ``det`` command. Use ``det --help`` for more
+information about the individual CLI commands.
 
 CLI subcommands usually follow a ``<noun> <verb>`` form, similar to the paradigm of `ip
 <http://www.policyrouting.org/iproute2.doc.html>`__. Certain abbreviations are supported, and a
@@ -114,8 +114,9 @@ Each noun also provides a ``help`` verb that describes the possible verbs for th
 provide the ``-h`` or ``--help`` argument anywhere, which causes the CLI to exit after printing a
 help message for the object or action specified to that point.
 
-Environment Variables
-=====================
+***********************
+ Environment Variables
+***********************
 
 -  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
    be overridden using the ``-m`` flag.
@@ -125,8 +126,9 @@ Environment Variables
    usage. Both ``DET_USER`` and ``DET_PASS`` must be set together to take effect. These variables
    can be overridden by using the ``-u`` flag.
 
-Examples
-========
+******************
+ Example Commands
+******************
 
 +-------------------------------------------+----------------------------------------------------+
 | Commands(s)                               | Description                                        |
@@ -166,9 +168,9 @@ Examples
 
    <br />
 
-********
- Shells
-********
+****************************
+ Shell-Related CLI Commands
+****************************
 
 Shell-related CLI commands start with ``det shell``. To start a persistent SSH server container in
 the Determined cluster and connect an interactive session to it, use ``det shell start``:
@@ -199,48 +201,6 @@ and forwards a port from the local machine to the container:
 
 To stop the SSH server container and free cluster resources, run ``det shell kill <UUID>``.
 
-.. _cli:
+.. note::
 
-****************************************
- Command-line Interface (CLI) Reference
-****************************************
-
-.. code:: bash
-
-   usage: det [-h] [-u username] [-m address] [-v] command ...
-
-   Determined command-line client
-
-   positional arguments:
-     command
-       help                show help for this command
-       auth                manage auth
-       agent (a)           manage agents
-       command (cmd)       manage commands
-       checkpoint (c)      manage checkpoints
-       deploy (d)          manage deployments
-       experiment (e)      manage experiments
-       job (j)             manage job
-       master (m)          manage master
-       model (m)           manage models
-       notebook            manage notebooks
-       oauth               manage OAuth
-       preview-search      preview search
-       resources (res)     query historical resource allocation
-       shell               manage shells
-       slot (s)            manage slots
-       task                manage tasks (commands, experiments, notebooks,
-                           shells, tensorboards)
-       template (tpl)      manage config templates
-       tensorboard         manage TensorBoard instances
-       trial (t)           manage trials
-       user (u)            manage users
-       version             show version information
-
-   optional arguments:
-     -h, --help            show this help message and exit
-     -u username, --user username
-                           run as the given user (default: None)
-     -m address, --master address
-                           master address (default: localhost:8080)
-     -v, --version         print CLI version and exit
+   See also :ref:`CLI <cli>`.

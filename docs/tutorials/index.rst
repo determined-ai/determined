@@ -1,6 +1,6 @@
-################
- Try Determined
-################
+###########################
+ Tutorials and Quickstarts
+###########################
 
 Learn the basics of working with Determined and how to port your existing code to the Determined
 environment.
