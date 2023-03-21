@@ -15,6 +15,7 @@ from ruamel import yaml
 
 import determined as det
 from determined.pytorch.deepspeed.dsat import _defaults
+from determined.pytorch.deepspeed import overwrite_deepspeed_config
 
 
 def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
