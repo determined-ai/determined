@@ -17,6 +17,7 @@ from deepspeed.runtime import dataloader as ds_loader
 import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.pytorch import deepspeed as det_ds
+from determined.pytorch.deepspeed import dsat
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
@@ -41,6 +42,12 @@ class DeepSpeedTrialController(det.TrialController):
         ), "DeepSpeedTrialController needs a DeepSpeedTrial"
         self.trial = trial_inst
         self.context = cast(det_ds.DeepSpeedTrialContext, self.context)
+        self._use_dsat_mode = self.context.get_hparams().get(dsat._defaults.USE_DSAT_MODE) or False
+        if self._use_dsat_mode:
+            searcher_name = self.context.get_experiment_config()["searcher"]["name"]
+            assert (
+                searcher_name == "custom"
+            ), "`_use_dsat_mode` can only be set to true for Custom Searcher trials."
         self.context._set_determined_profiler(self.prof)
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
@@ -299,6 +306,20 @@ class DeepSpeedTrialController(det.TrialController):
                 self._run()
 
     def _run(self) -> None:
+        # Special code path only used for DeepSpeed Autotuning.
+        if self._use_dsat_mode:
+            ops = self.context._core.searcher.operations()
+            op = next(ops)
+            # TODO: read out the actual number of expected batches to run for from the config.
+            while True:
+                step_id = self.steps_completed + 1
+                with dsat.dsat_reporting_context(
+                    core_context=self.context._core, op=op, steps_completed=self.steps_completed
+                ):
+                    _ = self._train_for_step(
+                        step_id=step_id, num_batches=1, total_batches_processed=self.steps_completed
+                    )
+
         assert self.workloads is not None
         for w, response_func in self.workloads:
             try:

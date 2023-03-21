@@ -5,6 +5,8 @@ AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 ZERO_STAGE = 0
 
 SMALLER_IS_BETTER = True
+USE_DSAT_MODE = "_use_dsat_mode"
+GAS_DEFAULT = 1
 
 MODEL_INFO_PROFILING_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,

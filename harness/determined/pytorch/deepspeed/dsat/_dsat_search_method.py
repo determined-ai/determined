@@ -133,8 +133,8 @@ class DSATTrialTracker:
         Creates a new `DSATTrial` object, updates lineages as appropriate, and updates the
         searcher's Trial tracking dictionary.
         """
-        # Verify the batch config and update the config to make these fields explicit.
-        batch_size_config = _utils.validate_and_get_tbs_mps_gas(
+        # Create a consistent batch size configuration which obeys the DS constraints.
+        batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             hparams["ds_config"], slots=self.slots
         )
         hparams["ds_config"] = {**hparams["ds_config"], **batch_size_config}
