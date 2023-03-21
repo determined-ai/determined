@@ -914,7 +914,10 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
+WHERE state IN (
+	'ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR',
+	'STOPPING_KILLED'
+)`)
 	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
 	} else if err != nil {
