@@ -22,7 +22,7 @@ resource_pools:
     provider:
       instance_type:
         machine_type: n1-standard-4
-        gpu_type: nvidia-tesla-k80
+        gpu_type: nvidia-tesla-t4
         gpu_num: 1
         preemptible: false
       cpu_slots_allowed: true
@@ -43,7 +43,7 @@ resource_pools:
 			"compute_pool": map[string]interface{}{
 				"instance_type": map[string]interface{}{
 					"machine_type": "n1-standard-4",
-					"gpu_type":     "nvidia-tesla-k80",
+					"gpu_type":     "nvidia-tesla-t4",
 					"gpu_num":      0,
 					"preemptible":  false,
 				},

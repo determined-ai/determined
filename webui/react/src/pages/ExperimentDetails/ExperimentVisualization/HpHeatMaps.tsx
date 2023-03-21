@@ -39,7 +39,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric;
+  selectedMetric: Metric | null;
   selectedScale: Scale;
   selectedView: ViewType;
 }
@@ -97,6 +97,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
   const smallerIsBetter = useMemo(() => {
     if (
+      selectedMetric &&
       selectedMetric.type === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
@@ -110,7 +111,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [chartData, smallerIsBetter, ui.theme]);
 
   const chartProps = useMemo(() => {
-    if (!chartData) return undefined;
+    if (!chartData || !selectedMetric) return undefined;
 
     const props: Record<string, UPlotScatterProps> = {};
     const rgbaStroke0 = str2rgba(colorScale[0].color);
@@ -215,7 +216,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [selectedHParams]);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
@@ -338,7 +339,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
   if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (hasLoaded && !chartData) {
+  } else if ((hasLoaded && !chartData) || !selectedMetric) {
     return isExperimentTerminal ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (

@@ -332,48 +332,6 @@ const ModelDetails: React.FC = () => {
     [fetchModel, model?.model.name],
   );
 
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { description: editedDescription, name: modelName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { name: editedName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
@@ -405,7 +363,7 @@ const ModelDetails: React.FC = () => {
             body: { labels: editedTags, name: modelName },
             modelName,
           });
-          fetchModel();
+          await fetchModel();
         }
       } catch (e) {
         handleError(e, {
@@ -466,10 +424,9 @@ const ModelDetails: React.FC = () => {
       docTitle="Model Details"
       headerComponent={
         <ModelHeader
+          fetchModel={fetchModel}
           model={model.model}
           workspace={workspace}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />

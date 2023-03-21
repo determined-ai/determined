@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0e4beb5
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-835d8b1
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0e4beb5
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-835d8b1
 
   login-docker:
     parameters:
@@ -1066,7 +1066,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
-      - reinstall-go      
+      - reinstall-go
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1910,6 +1910,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
+          wait-for-master: false
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
@@ -1969,7 +1970,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0
         type: string
       accel-node-taints:
         type: string
