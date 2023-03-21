@@ -199,6 +199,7 @@ class WorkloadSequencer(workload.Source):
             s_id=self.state.step_id + 1,
             num_batches=num_batches,
             total_batches_processed=self.state.steps_completed,
+            op=op,
         )
 
         response = yield from yield_and_await_response(wkld)

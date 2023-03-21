@@ -2,6 +2,7 @@ import abc
 from enum import Enum, unique
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
+from determined import core
 from determined.common import check
 
 
@@ -20,6 +21,7 @@ class Workload:
         s_id: int,
         num_batches: int,
         total_batches_processed: int,
+        op: Optional[core.SearcherOperation] = None,
     ) -> None:
         self.kind = kind
         self.experiment_id = e_id
@@ -27,6 +29,7 @@ class Workload:
         self.step_id = s_id
         self.num_batches = num_batches
         self.total_batches_processed = total_batches_processed
+        self.op = op
 
     def __eq__(self, other: object) -> bool:
         if type(self) is not type(other):
