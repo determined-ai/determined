@@ -784,7 +784,7 @@ func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 }
 
 func (a *Allocation) kill(ctx *actor.Context, reason string) {
-	if a.killCooldown != nil && time.Now().UTC().Before(*a.killCooldown) {
+	if a.killCooldown != nil && time.Now().Before(*a.killCooldown) {
 		ctx.Log().Debug("still inside of kill cooldown")
 		return
 	}
@@ -808,7 +808,7 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 
 	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
 	// happened before due to network failures).
-	a.killCooldown = ptrs.Ptr(time.Now().UTC().Add(killCooldown))
+	a.killCooldown = ptrs.Ptr(time.Now().Add(killCooldown / 2))
 	actors.NotifyAfter(ctx, killCooldown, sproto.AllocationSignalWithReason{
 		AllocationSignal:    sproto.KillAllocation,
 		InformationalReason: "killing again after 30s without all container exits",
