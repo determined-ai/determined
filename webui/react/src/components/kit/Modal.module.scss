@@ -7,6 +7,10 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
+
+  .buttons > :not(:first-child) {
+    margin-inline-start: 8px;
+  }
 }
 .title {
   display: flex;

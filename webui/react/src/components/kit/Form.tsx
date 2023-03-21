@@ -58,7 +58,7 @@ const FormItem: React.FC<FormItemProps> = ({
 
   return (
     <AntdForm.Item
-      className={css.FormItem}
+      className={css.formItem}
       help={validateMessage}
       label={label}
       labelCol={labelCol}

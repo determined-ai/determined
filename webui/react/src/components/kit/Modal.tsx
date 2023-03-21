@@ -117,7 +117,7 @@ export const Modal: React.FC<ModalProps> = ({
                 </Link>
               )}
             </div>
-            <div>
+            <div className={css.buttons}>
               {(cancel || cancelText) && (
                 <Button key="back" onClick={close}>
                   {cancelText || 'Cancel'}
