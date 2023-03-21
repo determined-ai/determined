@@ -155,6 +155,7 @@ def _run_pytorch_trial(
 
             train_context._set_default_gradient_compression(fp16_compression)
             train_context._set_default_average_aggregated_gradients(average_aggregated_gradients)
+            train_context._set_is_pre_trainer()
 
             trial_inst = trial_class(train_context)
 

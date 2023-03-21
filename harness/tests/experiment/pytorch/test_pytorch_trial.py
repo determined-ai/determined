@@ -958,21 +958,38 @@ class TestPyTorchTrial:
 
 
 @pytest.mark.parametrize(
-    "ckpt,istrial",
+    "ckpt,istrial,trial_kwargs",
     [
-        ("0.13.13-pytorch-old", False),
-        ("0.13.13-pytorch-flex", True),
-        ("0.17.6-pytorch", True),
-        ("0.17.7-pytorch", True),
+        ("0.13.13-pytorch-old", False, {}),
+        ("0.13.13-pytorch-flex", True, {}),
+        ("0.17.6-pytorch", True, {}),
+        ("0.17.7-pytorch", True, {}),
+        ("0.20.0-pytorch", True, {}),
+        ("0.21.0-pytorch", True, {"per_slot_batch_size": 4, "lr": 0.001}),
     ],
 )
-def test_checkpoint_loading(ckpt: str, istrial: bool):
+def test_trial_checkpoint_loading(
+    ckpt: str, istrial: bool, trial_kwargs: typing.Dict[str, typing.Any]
+):
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt}")
-    trial = pytorch.load_trial_from_checkpoint_path(checkpoint_dir)
+    trial = pytorch.load_trial_from_checkpoint_path(
+        checkpoint_dir,
+        trial_kwargs=trial_kwargs,
+        torch_load_kwargs={"map_location": "cpu"},
+    )
     if istrial:
         assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
     else:
         assert isinstance(trial, torch.nn.Module), type(trial)
+
+
+def test_guess_script_importable_name():
+    assert pytorch._guess_script_importable_name("./train.py") == "train"
+    assert pytorch._guess_script_importable_name("./path/to/train.py") == "path.to.train"
+    assert pytorch._guess_script_importable_name("/tmp/train.py") == ""
+    assert pytorch._guess_script_importable_name("../train.py") == ""
+    assert pytorch._guess_script_importable_name("./train") == ""
+    assert pytorch._guess_script_importable_name("./8mile") == ""
 
 
 def amp_metrics_test(trial_class, training_metrics, agg_freq=1):

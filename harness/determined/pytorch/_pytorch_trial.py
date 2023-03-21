@@ -1310,15 +1310,27 @@ class _PyTorchTrialController:
                 exp_conf = None
                 hparams = None
 
-            json.dump(
-                {
-                    "trial_type": "PyTorchTrial",
-                    "experiment_config": exp_conf,
-                    "hparams": hparams,
-                    "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
-                },
-                f2,
-            )
+            if trial_cls.__module__ == "__main__":
+                module = pytorch._guess_script_importable_name(sys.modules["__main__"].__file__)
+                # Remember that we guessed this import path.
+                trial_in_main = True
+            else:
+                module = trial_cls.__module__
+                trial_in_main = False
+
+            load_data = {
+                "trial_type": "PyTorchTrial",
+                "experiment_config": exp_conf,
+                "hparams": hparams,
+                "trial_cls_spec": f"{module}:{trial_cls.__qualname__}",
+                "is_trainer": True,
+                "trial_in_main": trial_in_main,
+            }
+
+            if self.context._is_pre_trainer:
+                load_data.pop("is_trainer")
+
+            json.dump(load_data, f2)
 
         for callback in self.callbacks.values():
             # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
