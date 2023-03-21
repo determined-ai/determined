@@ -1966,7 +1966,7 @@ func (a *apiServer) SearchExperiments(ctx context.Context, req *apiv1.SearchExpe
 		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
 		ColumnExpr("metrics->'num_inputs' AS num_inputs").
 		ColumnExpr("((metrics->'validation_metrics'->>(si.metric_name))::float8 * si.sign) AS signed_searcher_metric").
-		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY end_time DESC NULLS LAST) AS latest_rank").
+		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank").
 		Join("JOIN si ON validations.trial_id = si.trial_id")
 
 	// get best checkpoint info for best trial
