@@ -359,6 +359,16 @@ class Checkpoint:
 
         self._push_metadata()
 
+    def delete(self) -> None:
+        """
+        Notifies the master of a checkpoint deletion request, which will be handled asynchronously.
+        Master will delete checkpoint and all associated data in the checkpoint storage.
+        """
+
+        delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])
+        bindings.delete_DeleteCheckpoints(self._session, body=delete_body)
+        logging.info(f"Deletion of checkpoint {self.uuid} is in progress.")
+
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
         """Loads a Determined checkpoint from a local file system path into memory.
