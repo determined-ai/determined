@@ -45,8 +45,27 @@ export const isColor = (color: string): boolean => {
   return hexRegex.test(color) || hslRegex.test(color) || rgbaRegex.test(color);
 };
 
-export const glasbeyColor = (seriesIdx: number): string => {
-  const index = seriesIdx % GLASBEY.length;
+/**
+ * GLASBEY color palette is designed in a way where each sequential color
+ * is highly distinguishable from the previous set in an additive manner.
+ * For example, if we are already using the first 5 glasbey colors, the 6th
+ * color is chosen in a manner where it is the furthest from the previous 5
+ * based on the color space within a set of rules. One example of a rule is
+ * that the colors need to maintain a certain level of intensity so it does
+ * not get washed out with a white background.
+ *
+ * What this means in terms of usage. What we want is to pass a sequence number
+ * to get back a color. So if we have 3 items we need color for, for the first
+ * item we call `glasbeyColor(0)`, 2nd we call `glasbeyColor(1)` and `glasbeyColor(2)`
+ * for the last. What we don't want to do is arbitrarily send any number in here
+ * to generate a color as Glasbey's distinguishable factor is diminished by doing so.
+ *
+ * TODO: add better support for dark mode glasbey colors. Some ideas include:
+ *   - inverting the color values (255 - colorValue)
+ *   - converting color to HSL and increasing the L value.
+ */
+export const glasbeyColor = (sequence: number): string => {
+  const index = sequence % GLASBEY.length;
   const rgb = GLASBEY[index];
   return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 };
