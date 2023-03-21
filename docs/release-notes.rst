@@ -24,12 +24,12 @@ Version 0.20.1
 
 **New Features**
 
--  You can now allow tasks and experiments to expose arbitrary ports that you can tunnel using the
-   CLI. To learn more about how to expose custom ports or see an example, check out
-   :ref:`proxy-ports` or visit ``examples/features/ports``.
+-  Tasks and experiments can now expose arbitrary ports that you can tunnel to using the CLI. To
+   learn more about how to expose custom ports or see an example, check out :ref:`proxy-ports` or
+   visit ``examples/features/ports``.
 
--  Container Images: Add maintained images for PyTorch-only environments. Current environment images
-   contain both PyTorch and TensorFlow which results in large image sizes. The new images are
+-  Container Images: Add maintained images for PyTorch-only environments. The current environment
+   images contain both PyTorch and TensorFlow, resulting in large image sizes. The new images are
    appropriate for users who do not require TensorFlow but may still require TensorBoard.
 
 **Removed Features**
