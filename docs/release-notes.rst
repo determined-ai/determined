@@ -28,7 +28,7 @@ Version 0.20.1
    CLI. To learn more about how to expose custom ports or see an example, check out
    :ref:`proxy-ports` or visit ``examples/features/ports``.
 
--  Container Images: Add maintained images for PyTorch-only environments.Current environment images
+-  Container Images: Add maintained images for PyTorch-only environments. Current environment images
    contain both PyTorch and TensorFlow which results in large image sizes. The new images are
    appropriate for users who do not require TensorFlow but may still require TensorBoard.
 
