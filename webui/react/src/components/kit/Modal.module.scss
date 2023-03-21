@@ -1,12 +1,3 @@
-.dangerIcon {
-  :global(.anticon svg) {
-    fill: #cb504c;
-    stroke: #cb504c;
-  }
-}
-.icon {
-  padding-right: 16px;
-}
 .modalBody {
   display: flex;
   flex-direction: column;
@@ -20,6 +11,15 @@
 .title {
   display: flex;
 
+  .dangerIcon {
+    :global(.anticon svg) {
+      fill: #cb504c;
+      stroke: #cb504c;
+    }
+  }
+  .icon {
+    padding-right: 16px;
+  }
   .titleText {
     padding-right: 4px;
   }

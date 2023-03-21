@@ -1,5 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Card as AntDCard, Row, Space } from 'antd';
+import { Card as AntDCard, Space } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -1683,21 +1683,15 @@ const handleSubmit = async (fail?: boolean) => {
 
 const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      size="small"
-      title="Experiment">
+    <Modal size="small" title="Experiment">
       <div>{value}</div>
     </Modal>
   );
 };
 
-/* medium modal */
-
 const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      size="medium"
-      title="Experiment">
+    <Modal size="medium" title="Experiment">
       <div>{value}</div>
     </Modal>
   );
@@ -1705,9 +1699,7 @@ const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      size="large"
-      title="Modal">
+    <Modal size="large" title="Modal">
       <div>{value}</div>
     </Modal>
   );
@@ -1729,9 +1721,7 @@ const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal
-      icon="experiment"
-      title="Modal">
+    <Modal icon="experiment" title="Modal">
       <div>{value}</div>
     </Modal>
   );
@@ -1748,7 +1738,7 @@ const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
   );
 };
 
-const FormModalComponent: React.FC<{ value: string, fail?: boolean }> = ({ value, fail }) => {
+const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value, fail }) => {
   return (
     <Modal
       cancelText="No"
@@ -1758,11 +1748,7 @@ const FormModalComponent: React.FC<{ value: string, fail?: boolean }> = ({ value
       }}
       title="Modal">
       <Form>
-        <Form.Item
-          className={css.line}
-          label="Workspace"
-          name="workspaceId"
-          rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
+        <Form.Item label="Workspace" name="workspaceId">
           <Select allowClear defaultValue={1} placeholder="Workspace (required)">
             <Option key="1" value="1">
               WS AS
@@ -1803,6 +1789,31 @@ const FormModalComponent: React.FC<{ value: string, fail?: boolean }> = ({ value
   );
 };
 
+const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  const [form] = Form.useForm();
+  const alias = Form.useWatch('alias', form);
+
+  return (
+    <Modal
+      cancelText="No"
+      submit={{
+        disabled: !alias,
+        handler: handleSubmit,
+        text: 'Yes',
+      }}
+      title="Modal">
+      <Form form={form}>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input defaultValue={value} placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Alias" name="alias" required>
+          <Input placeholder="Alias" />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
 const ModalSection: React.FC = () => {
   const [text, setText] = useState('state value');
   const SmallModal = useModal(SmallModalComponent);
@@ -1813,6 +1824,7 @@ const ModalSection: React.FC = () => {
   const FormFailModal = useModal(FormModalComponent);
   const LinksModal = useModal(LinksModalComponent);
   const IconModal = useModal(IconModalComponent);
+  const ValidationModal = useModal(ValidationModalComponent);
 
   return (
     <ComponentSection id="Modals" title="Modals">
@@ -1821,28 +1833,33 @@ const ModalSection: React.FC = () => {
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
         <hr />
         <strong>Sizes</strong>
-        <Row>
+        <Space>
           <Button onClick={SmallModal.open}>Open Small Modal</Button>
           <Button onClick={MediumModal.open}>Open Medium Modal</Button>
           <Button onClick={LargeModal.open}>Open Large Modal</Button>
-        </Row>
+        </Space>
         <hr />
         <strong>Links and Icons</strong>
-        <Row>
+        <Space>
           <Button onClick={LinksModal.open}>Open Modal with Header and Footer Links</Button>
           <Button onClick={IconModal.open}>Open Modal with Title Icon</Button>
-        </Row>
+        </Space>
         <hr />
         <strong>With form submission</strong>
-        <Row>
+        <Space>
           <Button onClick={FormModal.open}>Open Form Modal (Success)</Button>
           <Button onClick={FormFailModal.open}>Open Form Modal (Failure)</Button>
-        </Row>
+        </Space>
+        <hr />
+        <strong>With form validation</strong>
+        <Space>
+          <Button onClick={ValidationModal.open}>Open Modal with Form Validation</Button>
+        </Space>
         <hr />
         <strong>Variations</strong>
-        <Row>
+        <Space>
           <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
-        </Row>
+        </Space>
       </AntDCard>
       <SmallModal.Component value={text} />
       <MediumModal.Component value={text} />
@@ -1852,6 +1869,7 @@ const ModalSection: React.FC = () => {
       <FormFailModal.Component fail value={text} />
       <LinksModal.Component value={text} />
       <IconModal.Component value={text} />
+      <ValidationModal.Component value={text} />
     </ComponentSection>
   );
 };

@@ -108,7 +108,7 @@ export const Modal: React.FC<ModalProps> = ({
     <AntdModal
       cancelText={cancelText}
       footer={
-        (footerLink || cancel || submit) ? (
+        footerLink || cancel || submit ? (
           <div className={css.footer}>
             <div>
               {footerLink && (
@@ -136,30 +136,32 @@ export const Modal: React.FC<ModalProps> = ({
               )}
             </div>
           </div>
-        ) : false}
+        ) : (
+          false
+        )
+      }
       key={key}
       maskClosable={true}
       open={isOpen}
       title={
         <div className={css.title}>
-          {
-            danger ? (
-              <div className={`${css.dangerIcon} ${css.icon}`}>
-                <ExclamationCircleOutlined />
-              </div>
-            ) : icon && (
+          {danger ? (
+            <div className={`${css.dangerIcon} ${css.icon}`}>
+              <ExclamationCircleOutlined />
+            </div>
+          ) : (
+            icon && (
               <div className={css.icon}>
                 <Icon name={icon} />
               </div>
-            )}
-          <div className={css.titleText}>{title}</div>
-          {
-            headerLink && (
-              <Link path={headerLink.url} popout>
-                {headerLink.text}
-              </Link>
             )
-          }
+          )}
+          <div className={css.titleText}>{title}</div>
+          {headerLink && (
+            <Link path={headerLink.url} popout>
+              {headerLink.text}
+            </Link>
+          )}
         </div>
       }
       width={modalWidths[size]}
