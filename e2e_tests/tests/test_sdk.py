@@ -114,7 +114,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         sort_by=_client.CheckpointSortBy.END_TIME, order_by=_client.CheckpointOrderBy.DESC
     )
     end_times = [checkpoint.report_time for checkpoint in checkpoints]
-    assert all(x >= y for x, y in zip(end_times, end_times[1:]))
+    assert all(x >= y for x, y in zip(end_times, end_times[1:]))  # type: ignore
 
     # Validate state sorting.
     checkpoints = trial.get_checkpoints(
@@ -142,7 +142,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         sort_by="validation_error", order_by=_client.CheckpointOrderBy.ASC
     )
     validation_metrics = [
-        checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]
+        checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
         for checkpoint in checkpoints
     ]
     assert all(x <= y for x, y in zip(validation_metrics, validation_metrics[1:]))
