@@ -1066,7 +1066,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
-      - reinstall-go      
+      - reinstall-go
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1910,6 +1910,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
+          wait-for-master: false
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:

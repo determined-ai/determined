@@ -45,7 +45,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric;
+  selectedMetric: Metric | null;
   selectedScale: Scale;
 }
 
@@ -101,6 +101,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const smallerIsBetter = useMemo(() => {
     if (
+      selectedMetric &&
       selectedMetric.type === MetricType.Validation &&
       selectedMetric.name === experiment.config.searcher.metric
     ) {
@@ -165,7 +166,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data: {
           colorScale: {
             colors: colorScale.map((scale) => scale.color),
-            dimensionKey: metricToStr(selectedMetric),
+            dimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
           },
         },
         dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
@@ -194,7 +195,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     // Add metric as column to parcoords dimension list
-    if (chartData?.metricRange) {
+    if (chartData?.metricRange && selectedMetric) {
       const key = metricToStr(selectedMetric);
       newDimensions.push(
         selectedScale === Scale.Log
@@ -218,7 +219,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
     const trialMetricsMap: Record<number, number> = {};
@@ -363,7 +364,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (hasLoaded && !chartData) {
+  } else if ((hasLoaded && !chartData) || !selectedMetric) {
     return isExperimentTerminal ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (

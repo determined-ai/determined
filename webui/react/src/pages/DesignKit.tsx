@@ -871,7 +871,7 @@ const BreadcrumbsSection: React.FC = () => {
           <li>By default, Breadcrumb uses arrow keys to cycle through each item. </li>
           <li>
             Place Breadcrumbs at the top of a page, above a list of items, or above the main content
-            of a page.{' '}
+            of a page.
           </li>
         </ul>
       </AntDCard>
@@ -1114,6 +1114,9 @@ const PivotSection: React.FC = () => {
 };
 
 const PaginationSection: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPageSize, setCurrentPageSize] = useState<number>(1);
+
   return (
     <ComponentSection id="Pagination" title="Pagination">
       <AntDCard>
@@ -1135,7 +1138,15 @@ const PaginationSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Pagination default</strong>
-        <Pagination total={500} />
+        <Pagination
+          current={currentPage}
+          pageSize={currentPageSize}
+          total={500}
+          onChange={(page: number, pageSize: number) => {
+            setCurrentPage(page);
+            setCurrentPageSize(pageSize);
+          }}
+        />
         <strong>Considerations</strong>
         <ul>
           <li>
@@ -1406,12 +1417,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required input" name="required" required>
+          <Form.Item label="Required input" name="required_input" required>
             <Input />
           </Form.Item>
           <Form.Item
             label="Invalid input"
-            name="invalid"
+            name="invalid_input"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input />
@@ -1427,12 +1438,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required TextArea" name="required" required>
+          <Form.Item label="Required TextArea" name="required_textarea" required>
             <Input.TextArea />
           </Form.Item>
           <Form.Item
             label="Invalid TextArea"
-            name="invalid"
+            name="invalid_textarea"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input.TextArea />
@@ -1448,12 +1459,12 @@ const FormSection: React.FC = () => {
             variations
           </strong>
           <br />
-          <Form.Item label="Required Password" name="required" required>
+          <Form.Item label="Required Password" name="required_label" required>
             <Input.Password />
           </Form.Item>
           <Form.Item
             label="Invalid Password"
-            name="invalid"
+            name="invalid_password"
             validateMessage="Input validation error"
             validateStatus="error">
             <Input.Password />
@@ -1487,9 +1498,8 @@ const FormSection: React.FC = () => {
             </Link>{' '}
             variations
           </strong>
-          <Form.Item label="Required dropdown" name="required" required>
+          <Form.Item initialValue={1} label="Required dropdown" name="required_dropdown" required>
             <Select
-              defaultValue={1}
               options={[
                 { label: 'Option 1', value: 1 },
                 { label: 'Option 2', value: 2 },
@@ -1747,7 +1757,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>{componentOrder.map((componentId) => Components[componentId])}</main>
+        <main>
+          {componentOrder.map((componentId) => (
+            <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
+          ))}
+        </main>
       </div>
     </Page>
   );

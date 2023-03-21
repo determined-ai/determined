@@ -14,7 +14,11 @@ interface ButtonProps {
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
 }
 
-const IconicButton: React.FC<ButtonProps> = ({ type = 'default', ...props }: ButtonProps) => {
+const IconicButton: React.FC<ButtonProps> = ({
+  type = 'default',
+  iconName,
+  ...props
+}: ButtonProps) => {
   return (
     <AntdButton
       style={{
@@ -26,7 +30,7 @@ const IconicButton: React.FC<ButtonProps> = ({ type = 'default', ...props }: But
       type={type}
       {...props}>
       <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-        <Icon name={props.iconName} />
+        <Icon name={iconName} />
         <p>{props.text}</p>
       </div>
     </AntdButton>

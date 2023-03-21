@@ -145,44 +145,6 @@ const ModelVersionDetails: React.FC = () => {
     [modelId, versionNum],
   );
 
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        await patchModelVersion({
-          body: { comment: editedDescription, modelName: modelId },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        await patchModelVersion({
-          body: { modelName: modelId, name: editedName },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
-  );
-
   const saveVersionTags = useCallback(
     async (newTags: string[]) => {
       try {
@@ -337,10 +299,9 @@ const ModelVersionDetails: React.FC = () => {
       docTitle="Model Version Details"
       headerComponent={
         <ModelVersionHeader
+          fetchModelVersion={fetchModelVersion}
           modelVersion={modelVersion}
           workspace={workspace}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
           onUpdateTags={saveVersionTags}
         />
       }

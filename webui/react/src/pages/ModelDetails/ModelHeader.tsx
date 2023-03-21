@@ -1,12 +1,11 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Dropdown, Space } from 'antd';
+import { Alert, Dropdown, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
@@ -31,8 +30,7 @@ import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onSaveDescription: (editedDescription: string) => Promise<void>;
-  onSaveName: (editedName: string) => Promise<Error | void>;
+  fetchModel: () => Promise<void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace?: Workspace;
@@ -41,8 +39,7 @@ interface Props {
 const ModelHeader: React.FC<Props> = ({
   model,
   workspace,
-  onSaveDescription,
-  onSaveName,
+  fetchModel,
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
@@ -52,7 +49,7 @@ const ModelHeader: React.FC<Props> = ({
   const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
     useModalModelMove();
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ modelName: model.name, onSaveName });
+    useModalModelEdit({ fetchModel, model });
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
@@ -81,18 +78,13 @@ const ModelHeader: React.FC<Props> = ({
       { content: <TimeAgo datetime={new Date(model.lastUpdatedTime)} />, label: 'Updated' },
       {
         content: (
-          <Input
-            defaultValue={model.description ?? ''}
-            disabled={model.archived || !canModifyModelFlag}
-            placeholder={model.archived ? 'Archived' : 'Add description...'}
-            onBlur={(e) => {
-              const newValue = e.currentTarget.value;
-              onSaveDescription(newValue);
-            }}
-            onPressEnter={(e) => {
-              e.currentTarget.blur();
-            }}
-          />
+          <div>
+            {(model.description ?? '') || (
+              <Typography.Text disabled={model.archived || !canModifyModelFlag}>
+                N/A
+              </Typography.Text>
+            )}
+          </div>
         ),
         label: 'Description',
       },
@@ -108,7 +100,7 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onSaveDescription, onUpdateTags, users, canModifyModelFlag]);
+  }, [model, onUpdateTags, users, canModifyModelFlag]);
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
