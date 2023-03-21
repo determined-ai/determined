@@ -34,8 +34,8 @@ Hardware
 
 -  Each Determined agent node should be configured with at least two Intel Broadwell or later CPU
    cores, 4GB of RAM, and 50GB of free disk space. If you are using GPUs, Nvidia GPUs with compute
-   capability 3.7 or greater are required. These include K80, P100, V100, A100, GTX 1080, GTX 1080
-   Ti, TITAN, and TITAN XP.
+   capability 6.0 or greater are required. These include P100, V100, A100, GTX 1080, GTX 1080 Ti,
+   TITAN X, and TITAN XP.
 
 Most of the disk space required by the master is because of the experiment metadata database. If
 PostgreSQL is set up on a different machine, the disk space requirements for the master are minimal
