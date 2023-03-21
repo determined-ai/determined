@@ -1,4 +1,3 @@
-import collections
 import json
 import logging
 import os
@@ -7,14 +6,12 @@ import random
 import re
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
-import numpy as np
 import torch
 from ruamel import yaml
 
 import determined as det
-from determined.pytorch.deepspeed import overwrite_deepspeed_config
 from determined.pytorch.deepspeed.dsat import _defaults
 
 
@@ -23,16 +20,6 @@ def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
     with open(path, "r") as f:
         config_dict = config.load(f)
     return config_dict
-
-
-def replace_dict_in_place(d: Dict[str, Any], u: Dict[str, Any]):
-    """Replaces values in dict d with values in dict u."""
-    # TODO: Double check  logic.
-    for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping) and k in d:
-            replace_dict_in_place(d[k], v)
-        else:
-            d[k] = v
 
 
 # TODO: The following two dict functions are needed as hacks around the `type` key

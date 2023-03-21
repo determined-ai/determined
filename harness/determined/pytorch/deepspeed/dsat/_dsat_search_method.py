@@ -8,7 +8,9 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined import searcher
+from determined.pytorch.deepspeed import get_ds_config_from_hparams
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
+from determined.util import merge_dicts
 
 
 class DSATTrial:
@@ -19,6 +21,7 @@ class DSATTrial:
     def __init__(
         self,
         hparams: Dict[str, Any],
+        model_dir: str,
         is_model_profiling_info_run: bool = False,
         request_id: Optional[uuid.UUID] = None,
         metric: Optional[Any] = None,
@@ -28,6 +31,7 @@ class DSATTrial:
         oom: bool = False,
     ) -> None:
         self.hparams = hparams
+        self.model_dir = model_dir
         self.is_model_profiling_info_run = is_model_profiling_info_run
         self.request_id = request_id or uuid.uuid4()
         self.metric = metric
@@ -44,7 +48,7 @@ class DSATTrial:
 
     @property
     def ds_config(self):
-        return self.hparams["ds_config"]
+        return get_ds_config_from_hparams(self.hparams, self.model_dir)
 
     @property
     def zero_stage(self):
@@ -106,12 +110,14 @@ class DSATTrialTracker:
     def __init__(
         self,
         slots: int,
+        model_dir: str,
         all_trials_dict: Optional[Dict[str, DSATTrial]] = None,
         best_autotuning_metric_val: Optional[Any] = None,
         num_trials_since_best_result: int = 0,
         should_early_stop: bool = False,
     ) -> None:
         self.slots = slots
+        self.model_dir = model_dir
         self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
 
         # Altered after running autotuning trials:
@@ -134,12 +140,25 @@ class DSATTrialTracker:
         searcher's Trial tracking dictionary.
         """
         # Create a consistent batch size configuration which obeys the DS constraints.
+        ds_config = get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
-            hparams["ds_config"], slots=self.slots
+            ds_config, slots=self.slots
         )
-        hparams["ds_config"] = {**hparams["ds_config"], **batch_size_config}
+        hparams[
+            _defaults.USE_DSAT_MODE_KEY
+        ] = True  # Key to enable dsat code path for Trial classes.
+        hparams[_defaults.OVERWRITE_KEY] = {
+            **hparams.get(
+                _defaults.OVERWRITE_KEY,
+            ),
+            **batch_size_config,
+        }
 
-        trial = DSATTrial(hparams=hparams, is_model_profiling_info_run=is_model_profiling_info_run)
+        trial = DSATTrial(
+            hparams=hparams,
+            model_dir=self.model_dir,
+            is_model_profiling_info_run=is_model_profiling_info_run,
+        )
         if search_data is not None:
             trial.search_data = search_data
         if parent_trial is not None:
@@ -349,27 +368,27 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     Base searcher class implementing common methods.
     """
 
-    def __init__(
-        self,
-        submitted_config_dict: Dict[str, Any],
-    ) -> None:
+    def __init__(self, submitted_config_dict: Dict[str, Any], model_dir: str) -> None:
         self.submitted_config_dict = submitted_config_dict
+        self.model_dir = model_dir
         self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
         self.searcher_metric_name = self.submitted_config_dict["searcher"]["metric"]
         self.smaller_is_better = self.submitted_config_dict["searcher"].get(
             "smaller_is_better", _defaults.SMALLER_IS_BETTER
         )
         self.submitted_hps = self.submitted_config_dict["hyperparameters"]
-        self.ds_config = self.submitted_hps["ds_config"]
+        self.ds_config = get_ds_config_from_hparams(self.submitted_hps, self.model_dir)
         self.fp16 = self.ds_config.get("fp16", {}).get("enabled") or False
-        # Merge the submitted autotuning section with the DS _defaults.
-        self.autotuning_config = {**_defaults.AUTUTONING_DICT, **self.ds_config["autotuning"]}
+        self.autotuning_config = _defaults.AUTOTUNING_DICT  # TODO: let the user configure this.
         self.mp_size = self.autotuning_config["mp_size"]
         self.tuner_num_trials = self.autotuning_config["tuner_num_trials"]
         self.num_tuning_micro_batch_sizes = self.autotuning_config["num_tuning_micro_batch_sizes"]
-        self.tuner_early_stopping = self.autotuning_config["num_tuning_micro_batch_sizes"]
+        self.tuner_early_stopping = self.autotuning_config["tuner_early_stopping"]
+        self.submitted_hps_with_autotuning = merge_dicts(
+            self.submitted_hps, {_defaults.OVERWRITE_KEY: {"autotuning": self.autotuning_config}}
+        )
 
-        self.trial_tracker = DSATTrialTracker(slots=self.slots)
+        self.trial_tracker = DSATTrialTracker(slots=self.slots, model_dir=self.model_dir)
 
         # Non-trivial values instantiated after model profiling run
         self.model_profile_info = None
@@ -393,8 +412,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         inform the search.
         """
         model_profile_info_hps = copy.deepcopy(self.submitted_hps)
-        _utils.replace_dict_in_place(
-            model_profile_info_hps["ds_config"],
+        model_profile_info_hps[_defaults.OVERWRITE_KEY] = merge_dicts(
+            model_profile_info_hps.get(_defaults.OVERWRITE_KEY, {}),
             _defaults.MODEL_INFO_PROFILING_DS_CONFIG,
         )
         model_profile_info_trial = self.trial_tracker.create_trial(
@@ -593,14 +612,13 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
 
             # TODO: remove print tests.
             logging.info("**************** BSZ History ****************")
-            bsz_history = [hparams["ds_config"]["train_micro_batch_size_per_gpu"]]
+            bsz_history = []
             print_trial = last_trial
             while print_trial is not None:
                 bsz = print_trial.ds_config["train_micro_batch_size_per_gpu"]
                 bsz_history.append(bsz)
                 print_trial = print_trial.parent
-            logging.info(f"History: {str(list(reversed(bsz_history)))}")
-            logging.info(f'ds_config for lineage: {hparams["ds_config"]}')
+            logging.info(f"History (most recent last): {str(list(reversed(bsz_history)))}")
             logging.info("**************** BSZ History End ****************")
 
             parent_trial = last_trial
@@ -647,16 +665,17 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             new_hparams = None
         else:
             new_hparams = copy.deepcopy(last_trial.hparams)
-            new_hparams["ds_config"]["train_micro_batch_size_per_gpu"] = new_mid
+            new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = new_mid
         return new_hparams, {"lo": lo, "hi": hi}
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         # TODO: verify that we are not repeating a previously attempted config.
         random_zero_stage = random.choice(tuple(self.model_profile_info.viable_zero_stages))
-        new_hparams = copy.deepcopy(self.submitted_hps)
+        new_hparams = copy.deepcopy(self.submitted_hps_with_autotuning)
         zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)
-        _utils.replace_dict_in_place(
-            new_hparams["ds_config"], {"zero_optimization": zero_optim_config}
+        new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
+            new_hparams.get(_defaults.OVERWRITE_KEY, {}),
+            {"zero_optimization": zero_optim_config},
         )
         random_zero_stage_max_mbs = self.model_profile_info.max_mbs_per_stage[random_zero_stage]
         lo, hi = 1, 2 * random_zero_stage_max_mbs - 1
@@ -665,5 +684,5 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             "lo": lo,
             "hi": hi,
         }
-        new_hparams["ds_config"]["train_micro_batch_size_per_gpu"] = mid
+        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mid
         return (new_hparams, search_data)

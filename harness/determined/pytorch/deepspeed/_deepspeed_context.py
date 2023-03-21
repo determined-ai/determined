@@ -39,7 +39,7 @@ def overwrite_deepspeed_config(
 
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
-    model_dir: pathlib.Path = pathlib.Path("."),
+    model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
 ) -> Dict[str, Any]:
     """Fetch and recursively merge the deepspeed config from the experiment config
 
@@ -52,7 +52,9 @@ def get_ds_config_from_hparams(
     Returns:
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
+    model_dir = pathlib.Path(model_dir)
     base_config_file_name = hparams.get("deepspeed_config", "")
+    # TODO: deprecate ds_config option.
     manual_ds_config = hparams.get("ds_config", {})
     if base_config_file_name != "":
         base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
@@ -67,10 +69,11 @@ def normalize_base_ds_config(
 ) -> Dict[str, Any]:
     if isinstance(base_ds_config, str):
         full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
-        base_ds_config = json.load(
-            open(full_path, "r"),
-            object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
-        )
+        with open(full_path, "r") as f:
+            base_ds_config = json.load(
+                f,
+                object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
+            )
     else:
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")

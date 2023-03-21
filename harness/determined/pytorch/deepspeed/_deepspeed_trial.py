@@ -42,12 +42,12 @@ class DeepSpeedTrialController(det.TrialController):
         ), "DeepSpeedTrialController needs a DeepSpeedTrial"
         self.trial = trial_inst
         self.context = cast(det_ds.DeepSpeedTrialContext, self.context)
-        self._use_dsat_mode = self.context.get_hparams().get(dsat._defaults.USE_DSAT_MODE) or False
-        if self._use_dsat_mode:
+        self._dsat_mode = self.context.get_hparams().get(dsat._defaults.USE_DSAT_MODE_KEY) or False
+        if self._dsat_mode:
             searcher_name = self.context.get_experiment_config()["searcher"]["name"]
             assert (
                 searcher_name == "custom"
-            ), "`_use_dsat_mode` can only be set to true for Custom Searcher trials."
+            ), "`_dsat_mode` can only be set to true for Custom Searcher trials."
         self.context._set_determined_profiler(self.prof)
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
@@ -307,7 +307,7 @@ class DeepSpeedTrialController(det.TrialController):
 
     def _run(self) -> None:
         # Special code path only used for DeepSpeed Autotuning.
-        if self._use_dsat_mode:
+        if self._dsat_mode:
             ops = self.context._core.searcher.operations()
             op = next(ops)
             # TODO: read out the actual number of expected batches to run for from the config.
