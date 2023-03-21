@@ -129,6 +129,7 @@ export const Modal: React.FC<ModalProps> = ({
                   disabled={!!submit?.disabled}
                   key="submit"
                   loading={isSubmitting}
+                  tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
                   type="primary"
                   onClick={handleSubmit}>
                   {submit.text}
