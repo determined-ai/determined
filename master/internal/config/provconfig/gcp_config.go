@@ -57,7 +57,7 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
-			GPUType:     "nvidia-tesla-v100",
+			GPUType:     "nvidia-tesla-t4",
 			GPUNum:      4,
 		},
 		OperationTimeoutPeriod: model.Duration(5 * time.Minute),

@@ -1,28 +1,28 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, Space } from 'antd';
+import { Dropdown, Modal, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import usersStore from 'stores/users';
-import { DetailedUser, ModelVersion, Workspace } from 'types';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -39,8 +39,7 @@ type Action = {
 
 interface Props {
   modelVersion: ModelVersion;
-  onSaveDescription: (editedNotes: string) => Promise<void>;
-  onSaveName: (editedName: string) => Promise<void>;
+  fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace: Workspace;
 }
@@ -48,15 +47,11 @@ interface Props {
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
   workspace,
-  onSaveDescription,
   onUpdateTags,
-  onSaveName,
+  fetchModelVersion,
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -66,7 +61,7 @@ const ModelVersionHeader: React.FC<Props> = ({
     useModalModelVersionDelete();
 
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ modelName: modelVersion.name ?? '', onSaveName });
+    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
 
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
@@ -75,14 +70,22 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find((user) => user.id === modelVersion.userId);
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === modelVersion.userId);
+
     return [
       {
         content: (
           <Space>
-            <Avatar user={user} />
-            {getDisplayName(user)}
-            on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {getDisplayName(user)}
+                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',
@@ -95,18 +98,14 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <Input
-            defaultValue={modelVersion.comment ?? ''}
-            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
-            placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-            onBlur={(e) => {
-              const newValue = e.currentTarget.value;
-              onSaveDescription(newValue);
-            }}
-            onPressEnter={(e) => {
-              e.currentTarget.blur();
-            }}
-          />
+          <div>
+            {(modelVersion.comment ?? '') || (
+              <Typography.Text
+                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}>
+                N/A
+              </Typography.Text>
+            )}
+          </div>
         ),
         label: 'Description',
       },
@@ -122,7 +121,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onSaveDescription, onUpdateTags, users, canModifyModelVersion]);
+  }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);

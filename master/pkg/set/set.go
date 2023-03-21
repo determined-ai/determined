@@ -8,8 +8,13 @@ type Set[T comparable] map[T]unit
 // Making Set a defined type rather than a struct means we need the casting shenanigans below, but
 // it also allows normal indexing and iteration syntax to be used.
 
-// New returns a set containing the values in the given slice.
-func New[T comparable](keys []T) Set[T] {
+// New returns a empty set.
+func New[T comparable]() Set[T] {
+	return make(Set[T])
+}
+
+// FromSlice returns a set containing the values in the given slice.
+func FromSlice[T comparable](keys []T) Set[T] {
 	set := make(Set[T])
 	for _, x := range keys {
 		set.Insert(x)
@@ -37,4 +42,12 @@ func (s *Set[T]) Insert(val T) {
 
 func (s *Set[T]) Remove(val T) {
 	delete((map[T]unit)(*s), val)
+}
+
+func (s Set[T]) ToSlice() []T {
+	res := make([]T, 0, len(s))
+	for val := range s {
+		res = append(res, val)
+	}
+	return res
 }

@@ -1,5 +1,5 @@
 class defaults:
-    GPU_TYPE = "nvidia-tesla-k80"
+    GPU_TYPE = "nvidia-tesla-t4"
     GPUS_PER_NODE = 4
     ZONE = "us-west1-b"
     MASTER_MACHINE_TYPE = "n1-standard-16"

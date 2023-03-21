@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
@@ -35,8 +35,6 @@ const LearningCurveChart: React.FC<Props> = ({
   trialIds,
   xValues,
 }: Props) => {
-  const [focusIndex, setFocusIndex] = useState<number>();
-
   const selectedTrialsIdsSet = useMemo(() => new Set(selectedTrialIds), [selectedTrialIds]);
 
   const chartData: AlignedData = useMemo(() => {
@@ -81,6 +79,7 @@ const LearningCurveChart: React.FC<Props> = ({
         { label: 'batches' },
         ...trialIds.map((trialId) => {
           return {
+            alpha: focusedTrialId === undefined || trialId === focusedTrialId ? 1 : 0.4,
             label: `trial ${trialId}`,
             scale: 'y',
             show:
@@ -104,18 +103,7 @@ const LearningCurveChart: React.FC<Props> = ({
     focusedTrialId,
   ]);
 
-  /*
-   * Focus on a trial series if provided.
-   */
-  useEffect(() => {
-    let seriesIdx = -1;
-    if (focusedTrialId && trialIds.includes(focusedTrialId)) {
-      seriesIdx = trialIds.findIndex((id) => id === focusedTrialId);
-    }
-    setFocusIndex(seriesIdx !== -1 ? seriesIdx : undefined);
-  }, [focusedTrialId, trialIds]);
-
-  return <UPlotChart data={chartData} focusIndex={focusIndex} options={chartOptions} />;
+  return <UPlotChart data={chartData} options={chartOptions} />;
 };
 
 export default LearningCurveChart;

@@ -176,7 +176,8 @@ class SharedFSStorageManager(storage.StorageManager):
         storage_dir = os.path.join(self._base_path, tgt)
 
         if not os.path.exists(storage_dir):
-            raise errors.CheckpointNotFound(f"Storage directory does not exist: {storage_dir}")
+            logging.info(f"Storage directory does not exist: {storage_dir}")
+            return
         if not os.path.isdir(storage_dir):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
         shutil.rmtree(storage_dir, ignore_errors=False)

@@ -45,16 +45,16 @@ Because they can be reclaimed, using spot instances requires you to have good fa
 into your software. Determined was built with fault-tolerance as a core feature, so using spot
 instances is usually as easy as configuring a :ref:`resource pool <resource-pools>` with ``spot:
 true`` in the master configuration. Here is a fragment of a master configuration file that defines a
-resource pool with up to 10 p2.8xlarge spot instances:
+resource pool with up to 10 g4dn.metal spot instances:
 
 .. code:: yaml
 
    resource_pools:
-     - pool_name: aws-spot-p2-8xlarge
+     - pool_name: aws-spot-g4dn-metal
        provider:
          type: aws
          max_instances: 10
-         instance_type: p2.8xlarge
+         instance_type: g4dn.metal
          spot: true
          # ...
 

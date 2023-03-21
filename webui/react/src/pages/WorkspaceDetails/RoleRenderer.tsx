@@ -9,78 +9,85 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { UserOrGroup } from 'types';
+import { V1Role } from 'services/api-ts-sdk';
+import { UserOrGroupWithRoleInfo } from 'types';
 import handleError from 'utils/error';
-import { getAssignedRole, getIdFromUserOrGroup, isUser } from 'utils/user';
+import { isUserWithRoleInfo } from 'utils/user';
 
 import css from './RoleRenderer.module.scss';
 
 interface Props {
-  assignments: V1RoleWithAssignments[];
+  fetchMembers: () => void;
   rolesAssignableToScope: V1Role[];
   userCanAssignRoles: boolean;
-  userOrGroup: UserOrGroup;
+  userOrGroupWithRoleInfo: UserOrGroupWithRoleInfo;
   workspaceId: number;
 }
 
 const RoleRenderer: React.FC<Props> = ({
-  assignments,
+  fetchMembers,
   rolesAssignableToScope,
-  userOrGroup,
+  userOrGroupWithRoleInfo,
   userCanAssignRoles,
   workspaceId,
 }) => {
-  const roleAssignment = getAssignedRole(userOrGroup, assignments);
-  const [memberRoleId, setMemberRole] = useState(roleAssignment?.role?.roleId);
+  const [memberRoleId, setMemberRole] = useState(
+    userOrGroupWithRoleInfo.roleAssignment?.role?.roleId,
+  );
 
   return (
     <Select
       className={css.base}
-      disabled={!userCanAssignRoles || !roleAssignment?.scopeWorkspaceId}
+      disabled={!userCanAssignRoles || !userOrGroupWithRoleInfo.roleAssignment.scopeWorkspaceId}
       value={memberRoleId}
       onSelect={async (value: RawValueType | LabelInValueType) => {
         const roleIdValue = value as number;
-        const userOrGroupId = getIdFromUserOrGroup(userOrGroup);
+        const userOrGroupId = isUserWithRoleInfo(userOrGroupWithRoleInfo)
+          ? userOrGroupWithRoleInfo.userId
+          : userOrGroupWithRoleInfo.groupId ?? 0;
         const oldRoleIds = memberRoleId ? [memberRoleId] : [];
         try {
-          // Try to remove the old role and then add the new role
-          isUser(userOrGroup)
-            ? await removeRolesFromUser({
-                roleIds: oldRoleIds,
+          // Try to add the new role and then remove the old role
+          // to keep the permission
+          isUserWithRoleInfo(userOrGroupWithRoleInfo)
+            ? await assignRolesToUser({
+                roleIds: [roleIdValue],
                 scopeWorkspaceId: workspaceId,
                 userId: userOrGroupId,
               })
-            : await removeRolesFromGroup({
+            : await assignRolesToGroup({
                 groupId: userOrGroupId,
-                roleIds: oldRoleIds,
+                roleIds: [roleIdValue],
                 scopeWorkspaceId: workspaceId,
               });
+
           try {
-            isUser(userOrGroup)
-              ? await assignRolesToUser({
-                  roleIds: [roleIdValue],
+            isUserWithRoleInfo(userOrGroupWithRoleInfo)
+              ? await removeRolesFromUser({
+                  roleIds: oldRoleIds,
                   scopeWorkspaceId: workspaceId,
                   userId: userOrGroupId,
                 })
-              : await assignRolesToGroup({
+              : await removeRolesFromGroup({
                   groupId: userOrGroupId,
-                  roleIds: [roleIdValue],
+                  roleIds: oldRoleIds,
                   scopeWorkspaceId: workspaceId,
                 });
             setMemberRole(roleIdValue);
           } catch (addRoleError) {
             handleError(addRoleError, {
-              publicSubject: 'Unable to update role for user or group unable to add new role.',
+              publicSubject: 'Unable to update role for user or group unable to remove new role.',
               silent: false,
             });
           }
         } catch (removeRoleError) {
           handleError(removeRoleError, {
             publicSubject:
-              'Unable to update role for user or group could unable to remove current role.',
+              'Unable to update role for user or group could unable to add current role.',
             silent: false,
           });
+        } finally {
+          fetchMembers();
         }
       }}>
       {rolesAssignableToScope.map((role) => (

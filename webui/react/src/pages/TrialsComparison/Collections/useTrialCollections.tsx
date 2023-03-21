@@ -1,6 +1,5 @@
 import { Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
-import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';

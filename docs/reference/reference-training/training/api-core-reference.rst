@@ -1,8 +1,8 @@
 .. _core-reference:
 
-####################
- Core API Reference
-####################
+############################
+ ``det.core`` API Reference
+############################
 
 +-----------------------------------------------+
 | User Guide                                    |
@@ -89,16 +89,11 @@
 
 .. autoclass:: determined.core.TensorboardMode
 
-****************************
- ``determined.ClusterInfo``
-****************************
-
-.. autoclass:: determined.ClusterInfo
-   :members:
-
 **************************
  ``determined.TrialInfo``
 **************************
 
 .. autoclass:: determined.TrialInfo
    :members:
+
+yo yo dawg, this is a test :func:`determined.import_from_path`

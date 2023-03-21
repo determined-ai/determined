@@ -1,5 +1,3 @@
-import React from 'react';
-
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';

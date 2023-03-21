@@ -82,7 +82,7 @@ Parameters:
   ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of agents in the compute resource pool
-    Default: p2.8xlarge
+    Default: g4dn.metal
 
   BastionInstanceType:
     Type: String
@@ -122,7 +122,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.20.1-dev0
+    Default: 0.20.2-dev0
 
   DBPassword:
     Type: String

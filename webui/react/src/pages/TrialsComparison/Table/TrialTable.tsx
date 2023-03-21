@@ -27,7 +27,7 @@ import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
 import usersStore from 'stores/users';
 import { StateOfUnion } from 'themes';
-import { DetailedUser, MetricType } from 'types';
+import { MetricType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
@@ -76,10 +76,7 @@ const TrialTable: React.FC<Props> = ({
   const { settings, updateSettings } = tableSettingsHook;
 
   const loadableUsers = useObservable(usersStore.getUsers());
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  }); // TODO: handle loading state
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
 
   const { filters, setFilters } = collectionsInterface;
 
@@ -409,8 +406,13 @@ const TrialTable: React.FC<Props> = ({
     [],
   );
 
-  const userColumn = useMemo(
-    () => ({
+  const userColumn = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
+    return {
       defaultWidth: 100,
       filterDropdown: (filterProps: FilterDropdownProps) => (
         <TableFilterMultiSearch
@@ -422,16 +424,15 @@ const TrialTable: React.FC<Props> = ({
           onReset={() => setFilters?.((filters) => ({ ...filters, userIds: undefined }))}
         />
       ),
-      filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+      filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
       render: (_: number, r: V1AugmentedTrial) =>
-        userRenderer(users.find((u) => u.id === r.userId)),
+        userRenderer(matchUsers.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
-    }),
-    [filters.userIds, setFilters, users],
-  );
+    };
+  }, [filters.userIds, setFilters, users]);
 
   const totalBatchesColumn = useMemo(
     () => ({
@@ -489,47 +490,45 @@ const TrialTable: React.FC<Props> = ({
     [TrialActionDropdown],
   );
 
-  const columns = useMemo(
-    () =>
-      [
-        experimentNameColumn,
-        experimentIdColumn,
-        idColumn,
-        expRankColumn,
-        searcherTypeColumn,
-        searcherMetricColumn,
-        searcherMetricValueColumn,
-        ...validationMetricColumns,
-        ...trainingMetricColumns,
-        tagColumn,
-        userColumn,
-        totalBatchesColumn,
-        stateColumn,
-        startTimeColumn,
-        endTimeColumn,
-        ...hpColumns,
-        actionColumn,
-      ].map((col) => ({ ...col, dataIndex: col.key } as ColumnDef<V1AugmentedTrial>)),
-    [
-      actionColumn,
-      idColumn,
+  const columns = useMemo(() => {
+    return [
+      experimentNameColumn,
       experimentIdColumn,
+      idColumn,
       expRankColumn,
+      searcherTypeColumn,
+      searcherMetricColumn,
+      searcherMetricValueColumn,
+      ...validationMetricColumns,
+      ...trainingMetricColumns,
       tagColumn,
-      hpColumns,
-      trainingMetricColumns,
-      validationMetricColumns,
       userColumn,
       totalBatchesColumn,
-      searcherMetricValueColumn,
-      searcherMetricColumn,
-      searcherTypeColumn,
       stateColumn,
-      experimentNameColumn,
       startTimeColumn,
       endTimeColumn,
-    ],
-  );
+      ...hpColumns,
+      actionColumn,
+    ].map((col) => ({ ...col, dataIndex: col.key } as ColumnDef<V1AugmentedTrial>));
+  }, [
+    actionColumn,
+    idColumn,
+    experimentIdColumn,
+    expRankColumn,
+    tagColumn,
+    hpColumns,
+    trainingMetricColumns,
+    validationMetricColumns,
+    userColumn,
+    totalBatchesColumn,
+    searcherMetricValueColumn,
+    searcherMetricColumn,
+    searcherTypeColumn,
+    stateColumn,
+    experimentNameColumn,
+    startTimeColumn,
+    endTimeColumn,
+  ]);
 
   const availableColumns = useMemo(
     () => (columns.map((c) => String(c.key)).slice(0, -1) ?? []).join('|'),
@@ -569,6 +568,7 @@ const TrialTable: React.FC<Props> = ({
           ContextMenu={ContextMenu}
           dataSource={trials.data.slice(0, settings.tableLimit)}
           interactiveColumns={false}
+          loading={userColumn === undefined}
           pagination={pagination}
           rowClassName={highlights.rowClassName}
           rowKey="trialId"
