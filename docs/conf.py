@@ -24,9 +24,7 @@ language = "en"
 source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
-html_css_files = [
-    "styles/determined.css",
-]
+html_css_files = ["styles/determined.css"]
 
 
 def env_get_outdated(app, env, added, changed, removed):
@@ -53,38 +51,29 @@ todo_include_todos = True
 # HTML theme settings
 html_show_sourcelink = False
 html_show_sphinx = False
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
 html_favicon = "assets/images/favicon.ico"
 html_last_updated_fmt = None
 # See https://pradyunsg.me/furo/
 
 html_sidebars = {
     "**": [
-        "sidebar/brand.html",
+        "navbar-logo.html",
         "sidebar-version.html",
-        "sidebar/search.html",
-        "sidebar/scroll-start.html",
-        "sidebar/navigation.html",
-        "sidebar/ethical-ads.html",
-        "sidebar/scroll-end.html",
+        "search-field.html",
+        "sbt-sidebar-nav.html",
     ]
 }
 
 pygments_style = "sphinx"
 pygments_dark_style = "monokai"
 html_theme_options = {
-    "light_logo": "images/logo-determined-ai.svg",
-    "dark_logo": "images/logo-determined-ai-white.svg",
-    "sidebar_hide_name": True,
-    "light_css_variables": {
-        "color-brand-primary": "#f37a22",
-        "color-brand-content": "#f37a22",
-        "font-stack": "Open Sans, Metric HPE, Arial, sans-serif",
+    "logo": {
+        "image_light": "assets/images/logo-determined-ai.svg",
+        "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
-    "dark_css_variables": {
-        "color-brand-primary": "#f37a22",
-        "color-brand-content": "#f37a22",
-    },
+    "article_header_start": "header-left.html",
+    "article_header_end": "header-right.html",
 }
 html_use_index = True
 html_domain_indices = True

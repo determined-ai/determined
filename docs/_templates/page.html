@@ -1,23 +1,9 @@
-{# We are modifying furo's page.html directly here.  We aren't totally
-   overwriting it or we would extend "base.html" like furo's page.html does,
+{# We are modifying the theme's page.html directly here.  We aren't totally
+   overwriting it or we would extend "base.html" like the theme's page.html does,
    but rather we are just overwriting specific blocks from it. #}
 {% extends "!page.html" %}
 
 {# Include an analytics script. #}
 {% block extrahead %}
 {% include "analytics.html" %}
-{% endblock %}
-
-{# HACK: include a top-nav like component in our right sidebar. #}
-{% block right_sidebar %}
-{% if not furo_hide_toc %}
-<div class="toc-sticky toc-scroll">
-  {% include "header.html" %}
-  <div class="toc-tree-container">
-    <div class="toc-tree">
-      {{ toc }}
-    </div>
-  </div>
-</div>
-{% endif %}
 {% endblock %}
