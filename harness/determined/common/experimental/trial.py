@@ -197,7 +197,7 @@ class TrialReference:
 
         order_by = None
         if latest:
-            sort_by = CheckpointSortBy.BATCH_NUMBER
+            sort_by = CheckpointSortBy.BATCH_NUMBER  # type: ignore
             order_by = CheckpointOrderBy.DESC
 
         if sort_by:
@@ -234,7 +234,7 @@ class TrialReference:
             return bindings.get_GetTrialCheckpoints(
                 self._session,
                 id=self.id,
-                orderBy=order_by and order_by._to_bindings(),
+                orderBy=order_by._to_bindings() if order_by else None,
                 sortBy=sort_by._to_bindings() if isinstance(sort_by, CheckpointSortBy) else None,
                 offset=offset,
             )
