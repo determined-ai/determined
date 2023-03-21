@@ -327,6 +327,9 @@ class _PyTorchTrialController:
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
+        if not self.is_chief:
+            return {}
+
         # Only report on the chief worker
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
