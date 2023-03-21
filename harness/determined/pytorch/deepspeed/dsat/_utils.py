@@ -154,6 +154,13 @@ def report_json_results_and_exit(
             steps_completed=steps_completed, metrics=results_dict
         )
         op.report_completed(results_dict)
+    # Ensure the operations generator is empty to complete sanity checks.
+    try:
+        next(core_context.searcher.operations())
+    except StopIteration:
+        pass
+    else:
+        raise AssertionError("Unexpected additional operations found!")
     exit()
 
 
@@ -189,37 +196,19 @@ def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Unio
     return zero_optim_dict
 
 
-def validate_and_get_tbs_mps_gas(ds_config: Dict[str, Any], slots: int) -> Dict[str, int]:
+def get_batch_config_from_mbs_gas_and_slots(
+    ds_config: Dict[str, Any], slots: int
+) -> Dict[str, int]:
     """
-    Verifies that the batch size configuration is valid and returns the configuration as a dict.
+    Returns a consistent batch size configuration by adjusting `train_batch_size` according to the
+    number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
+    default value, if not specified).
     """
-    tbs, mbs, gas = (
-        ds_config.get("train_batch_size", None),
-        ds_config.get("train_micro_batch_size_per_gpu", None),
-        ds_config.get("gradient_accumulation_steps", 1),  # Uses the DS default.
-    )
-    # TODO: assert messages.
-    if tbs is not None:
-        if mbs is not None:
-            assert tbs == mbs * gas * slots, f"{ds_config}, slots: {slots}"
-        else:
-            mbs, remainder = divmod(tbs, gas * slots)
-            assert not remainder
-    elif mbs is not None:
-        tbs = mbs * gas * slots
-
-    batch_size_config = {
+    mbs = ds_config["train_micro_batch_size_per_gpu"]
+    gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
+    tbs = mbs * gas * slots
+    return {
         "train_batch_size": tbs,
         "train_micro_batch_size_per_gpu": mbs,
         "gradient_accumulation_steps": gas,
     }
-    return batch_size_config
-
-
-# TODO: implement reproducibility and use this function.
-def set_random_seeds(seed: Optional[int] = None) -> None:
-    if seed is None:
-        seed = random.randint(0, 2 ** 31 - 1)
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.random.manual_seed(seed)
