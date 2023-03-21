@@ -8,7 +8,6 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined import searcher
-
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
