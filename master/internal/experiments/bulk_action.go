@@ -17,9 +17,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
-type experimentActionResult struct {
+// ExperimentActionResult contains an experiment's ID and associated error.
+type ExperimentActionResult struct {
 	Error error
-	Id    int32
+	ID    int32
 }
 
 type archiveExperimentOKResult struct {
@@ -31,25 +32,25 @@ type archiveExperimentOKResult struct {
 var experimentsAddr = actor.Addr("experiments")
 
 // For each experiment, based on the actor, add an error or non-error to results.
-func loadMultiExperimentActionResults(results []experimentActionResult,
+func loadMultiExperimentActionResults(results []ExperimentActionResult,
 	resps map[*actor.Ref]actor.Message, refExpIDs []int32,
-) []experimentActionResult {
+) []ExperimentActionResult {
 	idx := 0
 	for _, actorResp := range resps {
 		if actorResp == nil {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.Internal, "actorResp nil."),
-				Id:    refExpIDs[idx],
+				ID:    refExpIDs[idx],
 			})
 		} else if typed, ok := actorResp.(error); ok && typed != nil {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: typed,
-				Id:    refExpIDs[idx],
+				ID:    refExpIDs[idx],
 			})
 		} else {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    refExpIDs[idx],
+				ID:    refExpIDs[idx],
 			})
 		}
 		idx++
@@ -59,17 +60,17 @@ func loadMultiExperimentActionResults(results []experimentActionResult,
 
 // For each experiment, try to retrieve an actor or append an error message.
 func nonTerminalExperiments(system *actor.System, expIDs []int32,
-	results []experimentActionResult,
-) ([]*actor.Ref, []int32, []experimentActionResult) {
+	results []ExperimentActionResult,
+) ([]*actor.Ref, []int32, []ExperimentActionResult) {
 	refs := []*actor.Ref{}
 	refExpIDs := []int32{}
 	for _, expID := range expIDs {
 		addr := experimentsAddr.Child(expID)
 		ref := system.Get(addr)
 		if ref == nil {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "experiment in terminal state"),
-				Id:    expID,
+				ID:    expID,
 			})
 		} else {
 			refs = append(refs, ref)
@@ -105,38 +106,40 @@ func editableExperimentIds(ctx context.Context, requestedIds []int32) ([]int32,
 	return expIDs, err
 }
 
-func ToApiResults(results []experimentActionResult) []*apiv1.ExperimentActionResult {
+// ToAPIResults converts ExperimentActionResult type with error object to error strings.
+func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionResult {
 	apiResults := []*apiv1.ExperimentActionResult{}
 	for _, result := range results {
 		if result.Error == nil {
 			apiResults = append(apiResults, &apiv1.ExperimentActionResult{
 				Error: "",
-				Id:    result.Id,
+				Id:    result.ID,
 			})
 		} else {
 			apiResults = append(apiResults, &apiv1.ExperimentActionResult{
 				Error: result.Error.Error(),
-				Id:    result.Id,
+				Id:    result.ID,
 			})
 		}
 	}
 	return apiResults
 }
 
+// ActivateExperiments works on one or many experiments.
 func ActivateExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	expIDs, err := editableExperimentIds(ctx, experimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -147,20 +150,21 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 	return results, nil
 }
 
+// CancelExperiments works on one or many experiments.
 func CancelExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	expIDs, err := editableExperimentIds(ctx, experimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -172,9 +176,9 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		ref := system.Get(addr)
 		if ref == nil {
 			// For cancel/kill, it's OK if experiment already terminated.
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    expID,
+				ID:    expID,
 			})
 		} else {
 			refs = append(refs, ref)
@@ -186,20 +190,21 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 	return results, nil
 }
 
+// KillExperiments works on one or many experiments.
 func KillExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	expIDs, err := editableExperimentIds(ctx, experimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -211,9 +216,9 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		ref := system.Get(addr)
 		if ref == nil {
 			// For cancel/kill, it's OK if experiment already terminated.
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    expID,
+				ID:    expID,
 			})
 		} else {
 			refs = append(refs, ref)
@@ -225,20 +230,21 @@ func KillExperiments(ctx context.Context, system *actor.System,
 	return results, nil
 }
 
+// PauseExperiments works on one or many experiments.
 func PauseExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	expIDs, err := editableExperimentIds(ctx, experimentIds)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -249,9 +255,10 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 	return results, nil
 }
 
+// ArchiveExperiments works on one or many experiments.
 func ArchiveExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -282,21 +289,21 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	visibleIDs := []int32{}
 	validIDs := []int32{}
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		switch {
 		case check.Archived:
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is already archived."),
-				Id:    check.ID,
+				ID:    check.ID,
 			})
 		case !check.State:
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is not in terminal state."),
-				Id:    check.ID,
+				ID:    check.ID,
 			})
 		default:
 			validIDs = append(validIDs, check.ID)
@@ -304,9 +311,9 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 	}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -320,20 +327,24 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 			Returning("e.id").
 			Model(&acceptedIDs).
 			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
 
 		for _, acceptID := range acceptedIDs {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    acceptID,
+				ID:    acceptID,
 			})
 		}
 	}
 	return results, nil
 }
 
+// UnarchiveExperiments works on one or many experiments.
 func UnarchiveExperiments(ctx context.Context, system *actor.System,
 	experimentIds []int32,
-) ([]experimentActionResult, error) {
+) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -364,21 +375,21 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	visibleIDs := []int32{}
 	validIDs := []int32{}
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		switch {
 		case !check.Archived:
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is not archived."),
-				Id:    check.ID,
+				ID:    check.ID,
 			})
 		case !check.State:
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is not in terminal state."),
-				Id:    check.ID,
+				ID:    check.ID,
 			})
 		default:
 			validIDs = append(validIDs, check.ID)
@@ -386,9 +397,9 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 	}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -402,24 +413,24 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 			Returning("e.id").
 			Model(&acceptedIDs).
 			Exec(ctx)
-
 		if err != nil {
 			return nil, err
 		}
 
 		for _, acceptID := range acceptedIDs {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    acceptID,
+				ID:    acceptID,
 			})
 		}
 	}
 	return results, nil
 }
 
+// MoveExperiments works on one or many experiments.
 func MoveExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32, destinationProjectId int32,
-) ([]experimentActionResult, error) {
+	experimentIds []int32, destinationProjectID int32,
+) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -448,15 +459,15 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []experimentActionResult{}
+	results := []ExperimentActionResult{}
 	visibleIDs := []int32{}
 	validIDs := []int32{}
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		if check.Archived {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.FailedPrecondition, "Experiment is archived."),
-				Id:    check.ID,
+				ID:    check.ID,
 			})
 		} else {
 			validIDs = append(validIDs, check.ID)
@@ -464,9 +475,9 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	}
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
-				Id:    originalID,
+				ID:    originalID,
 			})
 		}
 	}
@@ -475,16 +486,19 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		acceptedIDs := []int32{}
 		_, err = db.Bun().NewUpdate().
 			ModelTableExpr("experiments as e").
-			Set("project_id = ?", destinationProjectId).
+			Set("project_id = ?", destinationProjectID).
 			Where("e.id IN (?)", bun.In(validIDs)).
 			Returning("e.id").
 			Model(&acceptedIDs).
 			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
 
 		for _, acceptID := range acceptedIDs {
-			results = append(results, experimentActionResult{
+			results = append(results, ExperimentActionResult{
 				Error: nil,
-				Id:    acceptID,
+				ID:    acceptID,
 			})
 		}
 	}

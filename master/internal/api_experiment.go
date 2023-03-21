@@ -843,7 +843,7 @@ func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
 	results, err := exp.ActivateExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.ActivateExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.ActivateExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PauseExperiment(
@@ -866,7 +866,7 @@ func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
 	results, err := exp.PauseExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.PauseExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.PauseExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) CancelExperiment(
@@ -889,7 +889,7 @@ func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
 	results, err := exp.CancelExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.CancelExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.CancelExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) KillExperiment(
@@ -912,7 +912,7 @@ func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
 	results, err := exp.KillExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.KillExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.KillExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) ArchiveExperiment(
@@ -935,7 +935,7 @@ func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
 	results, err := exp.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.ArchiveExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.ArchiveExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
@@ -958,7 +958,7 @@ func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
 	results, err := exp.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.UnarchiveExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.UnarchiveExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PatchExperiment(
@@ -1917,7 +1917,7 @@ func (a *apiServer) MoveExperiments(
 	}
 
 	results, err := exp.MoveExperiments(ctx, a.m.system, req.ExperimentIds, req.DestinationProjectId)
-	return &apiv1.MoveExperimentsResponse{Results: exp.ToApiResults(results)}, err
+	return &apiv1.MoveExperimentsResponse{Results: exp.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) GetModelDefTree(
