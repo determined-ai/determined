@@ -1,7 +1,7 @@
 import math
 import pathlib
 import pickle
-from typing import Any, Dict, Type, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 
@@ -128,8 +128,7 @@ class MetricMaker(det.TrialController):
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         pass
 
-    @classmethod
-    def create_metric_writer(cls: Type["MetricMaker"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         return tensorboard.BatchMetricWriter(DummyMetricWriter())
 
     def run(self) -> None:

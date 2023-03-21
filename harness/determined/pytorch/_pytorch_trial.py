@@ -270,17 +270,6 @@ class _PyTorchTrialController:
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training."
 
-        self.metric_writer = self._create_metric_writer()
-
-    @classmethod
-    def _create_metric_writer(
-        cls: Type["_PyTorchTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
-
     @classmethod
     def pre_execute_hook(
         cls: Type["_PyTorchTrialController"],
@@ -300,6 +289,7 @@ class _PyTorchTrialController:
         cls._set_random_seeds(trial_seed)
 
     def _upload_tb_files(self) -> None:
+        self.context._maybe_reset_tbd_writer()
         self.core_context.train.upload_tensorboard_files(
             (lambda _: True) if self.is_chief else (lambda p: not p.match("*tfevents*")),
             tensorboard.util.get_rank_aware_path,
@@ -337,18 +327,18 @@ class _PyTorchTrialController:
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
-        if not self.is_chief:
-            return {}
-
         # Only report on the chief worker
         avg_metrics = metrics.get("avg_metrics", {})
         batch_metrics = metrics.get("batch_metrics", [])
 
-        self.metric_writer.on_train_step_end(
+        det.pytorch._log_tb_metrics(
+            self.context.get_tensorboard_writer(),
+            "train",
             self.state.batches_trained,
             avg_metrics,
             batch_metrics,
         )
+
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.batches_trained,
             metrics=avg_metrics,
@@ -792,7 +782,7 @@ class _PyTorchTrialController:
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = val_metrics[self.searcher_metric_name]
-        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
+        if not util.is_numerical_scalar(searcher_metric):
             raise RuntimeError(
                 f"Searcher validation metric '{self.searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}."
@@ -897,7 +887,6 @@ class _PyTorchTrialController:
                 f"train_batch() must return a dictionary mapping string names to Tensor metrics, "
                 f"got {type(training_metrics).__name__}"
             )
-
         return training_metrics
 
     @torch.no_grad()  # type: ignore
@@ -1024,7 +1013,9 @@ class _PyTorchTrialController:
                 logging.info(
                     det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
                 )
-            self.metric_writer.on_validation_step_end(self.state.batches_trained, metrics)
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.state.batches_trained, metrics
+            )
             self.core_context.train.report_validation_metrics(self.state.batches_trained, metrics)
 
         searcher_metric = None

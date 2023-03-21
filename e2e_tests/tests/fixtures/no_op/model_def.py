@@ -7,7 +7,7 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -46,6 +46,7 @@ class NoOpTrialController(det.TrialController):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self.metric_writer = self.create_metric_writer()
 
         check_startup_hook_ran = self.env.hparams.get("check_startup_hook_ran", False)
         if check_startup_hook_ran:
@@ -108,8 +109,7 @@ class NoOpTrialController(det.TrialController):
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
 
-    @classmethod
-    def create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         return tensorboard.get_metric_writer()
 
     def run(self) -> None:

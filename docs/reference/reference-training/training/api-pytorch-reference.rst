@@ -88,14 +88,6 @@
 .. autoclass:: determined.pytorch.PyTorchCallback
    :members:
 
-.. _pytorch-writer:
-
-***************************************************************
- ``determined.tensorboard.metric_writers.pytorch.TorchWriter``
-***************************************************************
-
-.. autoclass:: determined.tensorboard.metric_writers.pytorch.TorchWriter
-
 ********************************************************
  ``determined.pytorch.load_trial_from_checkpoint_path``
 ********************************************************
