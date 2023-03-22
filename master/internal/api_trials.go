@@ -723,24 +723,24 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, err
 			}
 		}
-		for _, metricId := range metricIds {
-			nameAndType := strings.SplitN(metricId, ".", 2)
+		for _, metricID := range metricIds {
+			nameAndType := strings.SplitN(metricID, ".", 2)
 			if len(nameAndType) < 2 {
 				return nil, fmt.Errorf(`error fetching time series of validation metrics 
 				invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricId,
+					metricID,
 				)
 			}
-			metricIdName := nameAndType[1]
-			metricIdType := nameAndType[0]
-			if metricIdType == "validation" {
+			metricIDName := nameAndType[1]
+			metricIDType := nameAndType[0]
+			if metricIDType == "validation" {
 				var metric apiv1.SummarizedMetric
-				metric.Name = metricId
+				metric.Name = metricID
 				if maxDatapoints == 0 {
 					maxDatapoints = 200
 				}
 				metricMeasurements, err = trials.ValidationMetricsSeries(
-					trialID, startTime, metricIdName, startBatches, endBatches,
+					trialID, startTime, metricIDName, startBatches, endBatches,
 					xAxisLabelMetrics, maxDatapoints, rangeType, integerRange,
 					timeRange,
 				)

@@ -469,7 +469,9 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
   		AND s.end_time > $5
   		AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 		ORDER BY random() LIMIT $6
-	) downsample ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime, maxDataPoints)
+	) downsample ORDER BY batches;`, metricName, trialID,
+		startBatches, endBatches, startTime, maxDataPoints,
+	)
 	if err != nil {
 		defer rows.Close()
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")

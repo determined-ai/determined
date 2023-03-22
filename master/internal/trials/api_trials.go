@@ -349,7 +349,7 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, integer_range *commonv1.Int32FieldFilter, time_range *commonv1.TimestampFieldFilter) (
+	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, integerRange *commonv1.Int32FieldFilter, timeRange *commonv1.TimestampFieldFilter) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
@@ -359,8 +359,8 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 	case apiv1.RangeType_RANGE_TYPE_TIME:
 		queryColumn = "end_time"
 		orderColumn = "time"
-		if time_range != nil {
-			subq, err = db.ApplyTimestampFieldFilter(subq, queryColumn, time_range)
+		if timeRange != nil {
+			subq, err = db.ApplyTimestampFieldFilter(subq, queryColumn, timeRange)
 		}
 		if err != nil {
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
@@ -368,8 +368,8 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 	case apiv1.RangeType_RANGE_TYPE_BATCH:
 		queryColumn = total_batches
 		orderColumn = batches
-		if integer_range != nil {
-			subq, err = db.ApplyInt32FieldFilter(subq, queryColumn, integer_range)
+		if integerRange != nil {
+			subq, err = db.ApplyInt32FieldFilter(subq, queryColumn, integerRange)
 		}
 		if err != nil {
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
