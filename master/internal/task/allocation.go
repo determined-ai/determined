@@ -219,14 +219,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		a.Terminate(ctx, "allocation resource pool changed", false)
 	case actor.PostStop:
 		a.Cleanup(ctx)
-		// if this is a restore allocation req and a.restored is set
-		// then the ports have been added to the port registry successfully.
-		// This is to avoid the race condition of a failed restored
-		// allocation releasing another allocation's port(s).
 		// a.portsRegistered  is set to true right after ports are registered.
 		// This variable ensures to release ports even if there's a failure after restoring ports.
-		// The a.req.Restore == a.restored  (XNOR) condition will be true even if it's a new allocation.
-		if a.req.Restore == a.restored || a.portsRegistered { // XNOR
+		if a.portsRegistered {
 			for _, port := range a.model.Ports {
 				portregistry.ReleasePort(port)
 			}
@@ -479,11 +474,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if a.req.Restore {
-		a.portsRegistered = true
 		for _, port := range a.model.Ports {
 			portregistry.RestorePort(port)
 		}
-
+		a.portsRegistered = true
 		if a.getModelState() == model.AllocationStateRunning {
 			// Restore proxies.
 			if len(a.req.ProxyPorts) > 0 {
@@ -501,11 +495,10 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 
 		a.model.Ports, err = a.getPorts(spec.UniqueExposedPortRequests, ctx)
-		a.portsRegistered = true
 		if err != nil {
 			return errors.Wrap(err, "getting ports")
 		}
-
+		a.portsRegistered = true
 		err = db.UpdateAllocationPorts(a.model)
 		if err != nil {
 			return fmt.Errorf("updating allocation db")
@@ -1214,18 +1207,19 @@ func (a *Allocation) getPorts(exposedPorts map[string]int,
 	ctx *actor.Context,
 ) (map[string]int, error) {
 	ports := make(map[string]int)
+	var err error
+	defer func() {
+		if err != nil {
+			for _, port := range ports {
+				portregistry.ReleasePort(port)
+			}
+		}
+	}()
 	for portName, base := range exposedPorts {
 		port, err := portregistry.GetPort(base)
 		if err != nil {
 			return nil, fmt.Errorf("getting %v port from the registry for an allocation", portName)
 		}
-		defer func() {
-			if err != nil {
-				for _, port := range ports {
-					portregistry.ReleasePort(port)
-				}
-			}
-		}()
 		ports[portName] = port
 		ctx.Log().Debugf("%v port : %v", portName, port)
 	}
