@@ -1885,7 +1885,7 @@ export interface V1DataPoint {
      * @type {Date}
      * @memberof V1DataPoint
      */
-    time: Date;
+    time?: Date;
     /**
      * The epoch this measurement is taken.
      * @type {number}
@@ -7820,12 +7820,6 @@ export interface V1SummarizedMetric {
      */
     data: Array<V1DataPoint>;
     /**
-     * Type of metrics (training, validation, or unset).
-     * @type {V1MetricType}
-     * @memberof V1SummarizedMetric
-     */
-    type: V1MetricType;
-    /**
      * A possibly down-sampled series of metric readings through the progress of the trial in wall time.
      * @type {Array<V1DataPointTime>}
      * @memberof V1SummarizedMetric
@@ -7837,6 +7831,12 @@ export interface V1SummarizedMetric {
      * @memberof V1SummarizedMetric
      */
     epochs?: Array<V1DataPointEpoch>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1SummarizedMetric
+     */
+    type: V1MetricType;
 }
 /**
  * Response to SummarizeTrialRequest.
