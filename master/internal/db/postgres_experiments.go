@@ -436,7 +436,6 @@ func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
 			}
 		}
 		metricMeasurements = append(metricMeasurements, metricMeasurement)
-
 	}
 	return metricMeasurements
 }

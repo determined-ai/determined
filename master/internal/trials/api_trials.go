@@ -348,13 +348,22 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
-func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string, maxDatapoints int, rangeType apiv1.RangeType, integerRange *commonv1.Int32FieldFilter, timeRange *commonv1.TimestampFieldFilter) (
+func ValidationMetricsSeries(trialID int32, startTime time.Time,
+	metricName string,
+	startBatches int, endBatches int, xAxisMetricLabels []string,
+	maxDatapoints int, rangeType apiv1.RangeType,
+	integerRange *commonv1.Int32FieldFilter,
+	timeRange *commonv1.TimestampFieldFilter) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
 	measurements := []db.MetricMeasurements{}
-	subq := db.Bun().NewSelect().TableExpr("validations").ColumnExpr("total_batches as batches").ColumnExpr("trial_id").ColumnExpr("end_time as time").ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).Where("trial_id = ?", trialID).OrderExpr("random()")
+	subq := db.Bun().NewSelect().TableExpr("validations").
+		ColumnExpr("total_batches as batches").
+		ColumnExpr("trial_id").ColumnExpr("end_time as time").
+		ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).
+		Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).
+		Where("trial_id = ?", trialID).OrderExpr("random()")
 	switch rangeType {
 	case apiv1.RangeType_RANGE_TYPE_TIME:
 		queryColumn = "end_time"
@@ -376,9 +385,12 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 		}
 	default:
 		orderColumn = batches
-		subq = subq.Where("total_batches >= ?", startBatches).Where("total_batches <= 0 OR total_batches <= ?", endBatches).Where("end_time > ?", startTime)
+		subq = subq.Where("total_batches >= ?", startBatches).
+			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
+			Where("end_time > ?", startTime)
 	}
-	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
+	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
+		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
