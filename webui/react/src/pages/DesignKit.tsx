@@ -39,7 +39,6 @@ import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
-import { paths } from 'routes/utils';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import Icon from 'shared/components/Icon';
@@ -1683,7 +1682,7 @@ const handleSubmit = async (fail?: boolean) => {
 
 const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal size="small" title="Experiment">
+    <Modal size="small" title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1691,7 +1690,7 @@ const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal size="medium" title="Experiment">
+    <Modal size="medium" title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1699,7 +1698,7 @@ const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal size="large" title="Modal">
+    <Modal size="large" title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1713,7 +1712,7 @@ const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
         handler: handleSubmit,
         text: 'Submit',
       }}
-      title="Modal">
+      title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1721,7 +1720,7 @@ const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
 const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <Modal icon="experiment" title="Modal">
+    <Modal icon="experiment" title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1730,9 +1729,10 @@ const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
 const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
   return (
     <Modal
-      footerLink={{ text: 'Learn more about clusters', url: paths.cluster() }}
-      headerLink={{ text: 'Related', url: paths.dashboard() }}
-      title="Modal">
+      cancel
+      footerLink={{ text: value, url: '/' }}
+      headerLink={{ text: value, url: '/' }}
+      title={value}>
       <div>{value}</div>
     </Modal>
   );
@@ -1741,12 +1741,12 @@ const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
 const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value, fail }) => {
   return (
     <Modal
-      cancelText="No"
+      cancel
       submit={{
         handler: () => handleSubmit(fail),
-        text: 'Yes',
+        text: 'Submit',
       }}
-      title="Modal">
+      title={value}>
       <Form>
         <Form.Item label="Workspace" name="workspaceId">
           <Select allowClear defaultValue={1} placeholder="Workspace (required)">
@@ -1795,13 +1795,13 @@ const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
 
   return (
     <Modal
-      cancelText="No"
+      cancel
       submit={{
         disabled: !alias,
         handler: handleSubmit,
-        text: 'Yes',
+        text: 'Submit',
       }}
-      title="Modal">
+      title={value}>
       <Form form={form}>
         <Form.Item className={css.line} label="Name" name="name">
           <Input defaultValue={value} placeholder="Name (optional)" />
@@ -1815,7 +1815,7 @@ const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
 };
 
 const ModalSection: React.FC = () => {
-  const [text, setText] = useState('state value');
+  const [text, setText] = useState('State value that gets passed to modal via props');
   const SmallModal = useModal(SmallModalComponent);
   const MediumModal = useModal(MediumModalComponent);
   const LargeModal = useModal(LargeModalComponent);
@@ -1829,7 +1829,7 @@ const ModalSection: React.FC = () => {
   return (
     <ComponentSection id="Modals" title="Modals">
       <AntDCard>
-        <Label>State that gets passed to modal via props</Label>
+        <Label>State value that gets passed to modal via props</Label>
         <Input value={text} onChange={(s) => setText(String(s.target.value))} />
         <hr />
         <strong>Sizes</strong>
@@ -1910,7 +1910,7 @@ const DesignKit: React.FC = () => {
     <Page bodyNoPadding docTitle="Design Kit">
       <div className={css.base}>
         <nav>
-          <Link reloadDocument to={paths.dashboard()}>
+          <Link reloadDocument to={'/'}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />

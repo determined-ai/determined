@@ -128,13 +128,6 @@ html {
     background-color: inherit;
   }
 
-  /* Modal */
-
-  .ant-modal > .ant-modal-content {
-    border-radius: var(--theme-border-radius-strong);
-    box-shadow: var(--theme-elevation-strong);
-  }
-
   /* fix for confirm modal content for modals with no icon props */
 
   .ant-modal-confirm .ant-modal-confirm-title:first-child + .ant-modal-confirm-content {

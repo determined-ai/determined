@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal as AntdModal } from 'antd';
 import React, {
   createContext,
@@ -107,64 +106,56 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <AntdModal
       cancelText={cancelText}
+      className={css.modalContent}
+      closeIcon={<Icon name="close" size="small" />}
       footer={
-        footerLink || cancel || submit ? (
-          <div className={css.footer}>
-            <div>
-              {footerLink && (
-                <Link path={footerLink.url} popout>
-                  {footerLink.text}
-                </Link>
-              )}
-            </div>
-            <div className={css.buttons}>
-              {(cancel || cancelText) && (
-                <Button key="back" onClick={close}>
-                  {cancelText || 'Cancel'}
-                </Button>
-              )}
-              {submit && (
-                <Button
-                  danger={danger}
-                  disabled={!!submit?.disabled}
-                  key="submit"
-                  loading={isSubmitting}
-                  tooltip={
-                    submit?.disabled ? 'Address validation errors before proceeding' : undefined
-                  }
-                  type="primary"
-                  onClick={handleSubmit}>
-                  {submit.text}
-                </Button>
-              )}
-            </div>
+        <div className={css.footer}>
+          <div className={css.footerLink}>
+            {footerLink && (
+              <Link path={footerLink.url} popout>
+                {footerLink.text}
+              </Link>
+            )}
           </div>
-        ) : (
-          false
-        )
+          <div className={css.buttons}>
+            {(cancel || cancelText) && (
+              <Button key="back" onClick={close}>
+                {cancelText || 'Cancel'}
+              </Button>
+            )}
+            <Button
+              danger={danger}
+              disabled={!!submit?.disabled}
+              key="submit"
+              loading={isSubmitting}
+              tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
+              type="primary"
+              onClick={handleSubmit}>
+              {submit?.text ?? 'OK'}
+            </Button>
+          </div>
+        </div>
       }
       key={key}
       maskClosable={true}
       open={isOpen}
       title={
-        <div className={css.title}>
+        <div className={css.header}>
           {danger ? (
-            <div className={`${css.dangerIcon} ${css.icon}`}>
-              <ExclamationCircleOutlined />
+            <div className={css.dangerIcon}>
+              <Icon name="warning-large" size="large" />
             </div>
           ) : (
-            icon && (
-              <div className={css.icon}>
-                <Icon name={icon} />
-              </div>
-            )
+            icon && <Icon name={icon} size="large" />
           )}
-          <div className={css.titleText}>{title}</div>
-          {headerLink && (
-            <Link path={headerLink.url} popout>
-              {headerLink.text}
-            </Link>
-          )}
+          <div className={css.headerTitle}>{title}</div>
+          <div className={css.headerLink}>
+            {headerLink && (
+              <Link path={headerLink.url} popout>
+                {headerLink.text}
+              </Link>
+            )}
+          </div>
         </div>
       }
       width={modalWidths[size]}
