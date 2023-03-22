@@ -93,6 +93,15 @@ class DSATTrial:
             trial = trial.parent
         return False
 
+    @property
+    def mbs_in_lineage(self) -> Set["DSATTrial"]:
+        """
+        Returns the set of all `train_micro_batch_size_per_gpu` (mbs) used in the Trial's lineage.
+        """
+        lineage_set = self.lineage_set
+        mbs_in_lineage = {t.ds_config["train_micro_batch_size_per_gpu"] for t in lineage_set}
+        return mbs_in_lineage
+
     def get_state_dict(self) -> Dict[str, Any]:
         state_dict = self.__dict__
         return state_dict
@@ -111,6 +120,7 @@ class DSATTrialTracker:
         self,
         slots: int,
         model_dir: str,
+        tuner_early_stopping: int,
         all_trials_dict: Optional[Dict[str, DSATTrial]] = None,
         best_autotuning_metric_val: Optional[Any] = None,
         num_trials_since_best_result: int = 0,
@@ -118,6 +128,7 @@ class DSATTrialTracker:
     ) -> None:
         self.slots = slots
         self.model_dir = model_dir
+        self.tuner_early_stopping = tuner_early_stopping
         self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
 
         # Altered after running autotuning trials:
@@ -178,43 +189,6 @@ class DSATTrialTracker:
         }
         return root_trial_set
 
-    def get_closed_trials_dict(
-        self, searcher_state: searcher.SearcherState, zero_stage: Optional[int] = None
-    ) -> Dict[str, DSATTrial]:
-        closed_request_ids = searcher_state.trials_closed
-        closed_trials_dict = self.get_trials_dict_from_request_id_set(
-            closed_request_ids, zero_stage
-        )
-        return closed_trials_dict
-
-    def get_failed_trials_dict(
-        self, searcher_state: searcher.SearcherState, zero_stage: Optional[int]
-    ) -> Dict[str, DSATTrial]:
-        failed_request_ids = searcher_state.failures
-        failed_trials_dict = self.get_trials_dict_from_request_id_set(
-            failed_request_ids, zero_stage
-        )
-        return failed_trials_dict
-
-    def get_running_trials_dict(
-        self, searcher_state: searcher.SearcherState, zero_stage: Optional[int]
-    ) -> Dict[str, DSATTrial]:
-        running_request_ids = searcher_state.trials_created - (
-            searcher_state.trials_closed | searcher_state.failures
-        )
-        running_trials_dict = self.get_trials_dict_from_request_id_set(
-            running_request_ids, zero_stage
-        )
-        return running_trials_dict
-
-    def get_trials_dict_from_request_id_set(
-        self, request_id_set: Set[int], zero_stage: Optional[int]
-    ):
-        for r_id in request_id_set:
-            trial = self.all_trials_dict[r_id]
-            if zero_stage is None or trial.zero_stage == zero_stage:
-                request_id_set[r_id] = trial
-
     def get_ops_list_from_trial(self, trial: DSATTrial, length: int) -> List[searcher.Operation]:
         create_op = searcher.Create(
             request_id=trial.request_id,
@@ -250,6 +224,14 @@ class DSATTrialTracker:
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
+            self.update_should_early_stop()
+
+    def update_should_early_stop(self) -> None:
+        if self.should_early_stop:
+            pass
+        if self.num_trials_since_best_result == self.tuner_early_stopping:
+            logging.info("Early stopping criteria met, no new Trials will be submitted.")
+            self.should_early_stop = True
 
     def get_state_dict(self) -> Dict[uuid.UUID, Any]:
         state_dict = self.__dict__
@@ -280,15 +262,17 @@ class DSATModelProfilingInfo:
         self.fp16 = fp16
         self.mp_size = mp_size
 
-        logging.info(
-            f"Appprox. max mbs per stage: {self.max_mbs_per_stage}"
-        )  # TODO: remove after testing.
-        logging.info(f"Approx. GPU memory per stage: {self.mem_per_gpu_per_stage}")  # TODO: remove.
+        # TODO: remove some of these info logs. Some are just for testing.
+        logging.info(f"Appprox. max mbs per stage: {self.max_mbs_per_stage}")
+        logging.info(f"Approx. GPU memory per stage: {self.mem_per_gpu_per_stage}")
         logging.info(f"Total GPU memory: {self.gpu_mem}")
         logging.info(f"Viable zero stages: {self.viable_zero_stages}")
 
     @property
     def gpu_mem(self) -> int:
+        """
+        Returns the available GPU memory in bytes.
+        """
         return self.model_profiling_info_results["gpu_mem"]
 
     @property
@@ -372,6 +356,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     def __init__(self, submitted_config_dict: Dict[str, Any], model_dir: str) -> None:
         self.submitted_config_dict = submitted_config_dict
         self.model_dir = model_dir
+
         self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
         self.searcher_metric_name = self.submitted_config_dict["searcher"]["metric"]
         self.smaller_is_better = self.submitted_config_dict["searcher"].get(
@@ -391,7 +376,11 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             self.submitted_hps, {_defaults.OVERWRITE_KEY: {"autotuning": self.autotuning_config}}
         )
 
-        self.trial_tracker = DSATTrialTracker(slots=self.slots, model_dir=self.model_dir)
+        self.trial_tracker = DSATTrialTracker(
+            slots=self.slots,
+            model_dir=self.model_dir,
+            tuner_early_stopping=self.tuner_early_stopping,
+        )
 
         # Non-trivial values instantiated after model profiling run
         self.model_profile_info = None
@@ -463,14 +452,14 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         # All DS AT Trials should be closed upon completion.
         ops = [searcher.Close(request_id=request_id)]
 
-        self.update_should_early_stop()
-        new_ops_list = self.get_new_searcher_ops_list(
-            searcher_state=searcher_state,
-            request_id=request_id,
-            metric=metric,
-            last_trial=last_trial,
-        )
-        ops.extend(new_ops_list)
+        if not self.trial_tracker.should_early_stop:
+            new_ops_list = self.get_new_searcher_ops_list(
+                searcher_state=searcher_state,
+                request_id=request_id,
+                metric=metric,
+                last_trial=last_trial,
+            )
+            ops.extend(new_ops_list)
         return ops
 
     def on_trial_closed(
@@ -512,13 +501,15 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 metric=None,
             )
 
-            self.update_should_early_stop()
-            new_ops_list = self.get_new_searcher_ops_list(
-                searcher_state=searcher_state,
-                request_id=request_id,
-                metric=None,
-                last_trial=last_trial,
-            )
+            if self.trial_tracker.should_early_stop:
+                new_ops_list = []
+            else:
+                new_ops_list = self.get_new_searcher_ops_list(
+                    searcher_state=searcher_state,
+                    request_id=request_id,
+                    metric=None,
+                    last_trial=last_trial,
+                )
         else:
             # TODO: this code should never be reached, except for user error, so it's essentially
             # here as a test. Remove later.
@@ -588,6 +579,8 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
     def get_ops_list_after_model_profiling_info_run(
         self,
     ) -> List[searcher.Operation]:
+        # This isn't actually how native DS AT uses num_tuning_micro_batch_sizes, but it's a good
+        # enough placeholder usage until we get other aspects of custom searcher DS AT to work.
         approx_num_lineages = self.tuner_num_trials // self.num_tuning_micro_batch_sizes
         new_ops_list = []
         for _ in range(approx_num_lineages):
@@ -615,8 +608,9 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             hparams, search_data = self.get_hparams_and_search_data_after_trial(
                 last_trial=last_trial,
             )
+            parent_trial = last_trial
 
-            # TODO: remove print tests.
+            # TODO: remove below print tests.
             logging.info("**************** BSZ History ****************")
             bsz_history = []
             print_trial = last_trial
@@ -626,12 +620,11 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 print_trial = print_trial.parent
             logging.info(f"History (to-be-submitted last): {str(list(reversed(bsz_history)))}")
             logging.info("**************** BSZ History End ****************")
-
-            parent_trial = last_trial
         else:
             hparams, search_data = self.get_random_hparams_and_search_data()
             parent_trial = None
         if hparams is None:
+            # hparams will be None if a previously used configuration was suggested by the searcher.
             new_ops_list = []
         else:
             new_trial = self.trial_tracker.create_trial(
@@ -649,7 +642,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
     def get_hparams_and_search_data_after_trial(
         self,
         last_trial: DSATTrial,
-    ) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, int]]]:
         """
         Get new hparams and search data according to the results of a parent trial.
         Performs a slightly modified binary search on the train_micro_batch_size_per_gpu.
@@ -668,12 +661,14 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             )  # TODO: let user configure ceiling factor. Current number is just a guess, and maybe
             # what native DS AT does?
         new_mid = (lo + hi) // 2
-        if new_mid == lo:
-            new_hparams = None
+        if new_mid in last_trial.mbs_in_lineage:
+            # Already tried this configuration.
+            new_hparams = new_search_data = None
         else:
             new_hparams = copy.deepcopy(last_trial.hparams)
             new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = new_mid
-        return new_hparams, {"lo": lo, "hi": hi}
+            new_search_data = {"lo": lo, "hi": hi}
+        return new_hparams, new_search_data
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         # TODO: verify that we are not repeating a previously attempted config.
