@@ -7,8 +7,8 @@ import shutil
 
 import determined as det
 from determined import searcher
+from determined.pytorch.deepspeed import get_ds_config_from_hparams, overwrite_deepspeed_config
 from determined.pytorch.deepspeed.dsat import _dsat_search_method, _utils
-from determined.pytorch.deepspeed import overwrite_deepspeed_config, get_ds_config_from_hparams
 
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.DSATRandomSearchMethod,
