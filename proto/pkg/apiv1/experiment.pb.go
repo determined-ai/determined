@@ -3723,8 +3723,10 @@ type SearchExperimentExperiment struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The experiment in question
 	Experiment *experimentv1.Experiment `protobuf:"bytes,1,opt,name=experiment,proto3" json:"experiment,omitempty"`
-	BestTrial  *trialv1.Trial           `protobuf:"bytes,2,opt,name=best_trial,json=bestTrial,proto3" json:"best_trial,omitempty"`
+	// The best performing trial associated with the experiment
+	BestTrial *trialv1.Trial `protobuf:"bytes,2,opt,name=best_trial,json=bestTrial,proto3" json:"best_trial,omitempty"`
 }
 
 func (x *SearchExperimentExperiment) Reset() {
