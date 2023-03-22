@@ -29,7 +29,7 @@ message DataPoint {
   // The time the measurement is taken.
   google.protobuf.Timestamp time = 3;
   // The epoch this measurement is taken.
-  int32 epoch = 4;
+  optional int32 epoch = 4;
 }
 
 // One DataPointTime in a series of metrics from a trial in time.

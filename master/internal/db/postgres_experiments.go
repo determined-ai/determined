@@ -395,7 +395,7 @@ type MetricMeasurements struct {
 	Value   float64
 	Batches uint
 	Time    time.Time
-	Epoch   int32
+	Epoch   *int32 `json:"epoch,omitempty"`
 	TrialID int32
 }
 
@@ -429,7 +429,8 @@ func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
 			// to accept or expect a dynamic list of poossible x-axis values.
 			epoch, ok := avgMetrics[xAxisLabel]
 			if ok {
-				metricMeasurement.Epoch = int32(epoch)
+				epochValue := int32(epoch)
+				metricMeasurement.Epoch = &epochValue
 			}
 			if endTime.After(maxEndTime) {
 				maxEndTime = endTime

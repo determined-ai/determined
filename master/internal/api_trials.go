@@ -641,8 +641,10 @@ func (a *apiServer) formatMetrics(
 		out := apiv1.DataPoint{
 			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
-			Epoch:   in.Epoch,
 			Value:   in.Value,
+		}
+		if in.Epoch != nil {
+			out.Epoch = in.Epoch
 		}
 		m.Data = append(m.Data, &out)
 	}

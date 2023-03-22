@@ -1556,7 +1556,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 			Batches: int32(in.Batches),
 			Value:   in.Value,
 			Time:    timestamppb.New(in.Time),
-			Epoch:   in.Epoch,
+		}
+		if in.Epoch != nil {
+			out.Epoch = in.Epoch
 		}
 		trial.Data = append(trial.Data, &out)
 	}

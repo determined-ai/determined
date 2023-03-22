@@ -362,6 +362,7 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
 		ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).
+		ColumnExpr("(metrics ->'validation_metrics' ->> 'epoch')::float8 as epoch").
 		Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).
 		Where("trial_id = ?", trialID).OrderExpr("random()")
 	switch rangeType {
@@ -394,5 +395,6 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
+	fmt.Println(measurements)
 	return measurements, nil
 }
