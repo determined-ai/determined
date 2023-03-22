@@ -7,10 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from attrdict import AttrDict
-from determined.pytorch.deepspeed import dsat
-from determined.pytorch.deepspeed.dsat import (
-    _utils,
-)  # TODO: Remove import after resolving type key hack
+from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
 from torch.utils.data import Dataset
 
 
@@ -51,9 +48,7 @@ def main(
     hparams = AttrDict(hparams)
     if is_chief:
         logging.info(f"HPs seen by trial: {hparams}")
-    # Hack for clashing 'type' key. Need to change config parsing behavior so that
-    # user scripts don't need to inject helper functions like this.
-    ds_config = _utils.lower_case_dict_key(hparams.ds_config, "TYPE")
+    ds_config = get_ds_config_from_hparams(hparams)
     dataset = RandDataset(hparams.dim)
     model = MinimalModel(hparams.dim, hparams.layers)
 

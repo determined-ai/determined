@@ -4,11 +4,13 @@ import tempfile
 from typing import Any, Dict
 
 from determined.experimental import client
-from determined.pytorch.deepspeed.dsat import _defaults, _utils
+from determined.pytorch.deepspeed.dsat import _utils
 from determined.util import merge_dicts
 
 
 def parse_args():
+    # TODO: Allow for additional includes args to be specified, as in the CLI.
+    # TODO: Allow the user to pass an optional `searcher_config` to override default DS AT search.
     parser = argparse.ArgumentParser(description="DS Autotuning")
     parser.add_argument("-m", "--master", type=str)
     parser.add_argument("-u", "--user", type=str, default="determined")
@@ -32,7 +34,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     search_runner_overrides = {
         "searcher": {"name": "single", "max_length": 0},
         # TODO: don't hardcode the searcher's max_restarts.
-        "max_restarts": 3,
+        "max_restarts": 10,
         # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assumption
         # e.g. on Grenoble.
         "resources": {"slots_per_trial": 0},

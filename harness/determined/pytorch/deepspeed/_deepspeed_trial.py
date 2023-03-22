@@ -1,6 +1,5 @@
 import abc
 import contextlib
-import json
 import logging
 import os
 import pathlib
@@ -18,6 +17,7 @@ from deepspeed.runtime import dataloader as ds_loader
 import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.pytorch import deepspeed as det_ds
+from determined.pytorch.deepspeed import dsat
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
@@ -42,6 +42,12 @@ class DeepSpeedTrialController(det.TrialController):
         ), "DeepSpeedTrialController needs a DeepSpeedTrial"
         self.trial = trial_inst
         self.context = cast(det_ds.DeepSpeedTrialContext, self.context)
+        self._dsat_mode = self.context.get_hparams().get(dsat._defaults.USE_DSAT_MODE_KEY) or False
+        if self._dsat_mode:
+            searcher_name = self.context.get_experiment_config()["searcher"]["name"]
+            assert (
+                searcher_name == "custom"
+            ), "`_dsat_mode` can only be set to true for Custom Searcher trials."
         self.context._set_determined_profiler(self.prof)
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
@@ -300,33 +306,30 @@ class DeepSpeedTrialController(det.TrialController):
                 self._run()
 
     def _run(self) -> None:
+        # Special code path only used for DeepSpeed Autotuning.
+        if self._dsat_mode:
+            ops = self.context._core.searcher.operations()
+            op = next(ops)
+            # TODO: read out the actual number of expected batches to run for from the config.
+            while True:
+                step_id = self.steps_completed + 1
+                with dsat.dsat_reporting_context(
+                    core_context=self.context._core, op=op, steps_completed=step_id
+                ):
+                    _ = self._train_for_step(
+                        step_id=step_id, num_batches=1, total_batches_processed=self.steps_completed
+                    )
+
         assert self.workloads is not None
         for w, response_func in self.workloads:
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
-                    try:
-                        metrics = self._train_for_step(
-                            w.step_id,
-                            w.num_batches,
-                            w.total_batches_processed,
-                        )
-                    except SystemExit as se:
-                        logging.info("Trial exited from _train_for_step")
-                        if not self.context._is_model_info_trial():
-                            raise se
-                        if self.is_chief:
-                            path = pathlib.Path("profile_model_info/model_info.json")
-                            with path.open("r") as f:
-                                model_info_dict = json.load(f)
-                                self.context.model_info = det_ds.ModelInfo(
-                                    num_params=model_info_dict["num_params"],
-                                    trainable_num_params=model_info_dict["trainable_num_params"],
-                                    activation_mem_per_gpu=model_info_dict[
-                                        "activation_mem_per_gpu"
-                                    ],
-                                )
-                        metrics = {}
+                    metrics = self._train_for_step(
+                        w.step_id,
+                        w.num_batches,
+                        w.total_batches_processed,
+                    )
                     response = {
                         "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
@@ -510,18 +513,6 @@ class DeepSpeedTrialController(det.TrialController):
 
     @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
-        if self.context._is_model_info_trial():
-            logging.info("Computing validation metrics for model info trial")
-            if self.is_chief:
-                searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
-                return {
-                    "num_inputs": 0,
-                    "validation_metrics": {
-                        searcher_metric_name: self.context.model_info.activation_mem_per_gpu,
-                    },
-                }
-            return {}
-
         self.context.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.

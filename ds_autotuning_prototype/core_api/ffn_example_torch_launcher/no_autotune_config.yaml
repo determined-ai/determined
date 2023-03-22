@@ -1,4 +1,4 @@
-name: ffn_example_no_autotune
+name: ffn_example_torch_launcher
 workspace: DS_AT_PROTOTYPING
 project: ffn_example
 max_restarts: 0
@@ -13,20 +13,10 @@ resources:
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
   name: single
-  max_length: 1e3
-  metric: placeholder
+  metric: arbitrary
+  max_length: 10
 hyperparameters:
-  dim: 16
-  layers: 2 # Total params will be layers * dim ** 2
-  # NOTE: dsat code expects usual DS config dict to appear as in the below.
-  ds_config:
-    train_micro_batch_size_per_gpu: 128
-    gradient_accumulation_steps: 1
-    optimizer:
-      TYPE: Adam
-      params:
-        lr: 1e-3
-    fp16:
-      enabled: True
-    # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?).
+  dim: 4096
+  layers: 8 # Total params will be layers * dim ** 2
+  deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.torch_distributed python3 script.py

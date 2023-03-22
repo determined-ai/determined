@@ -1,5 +1,4 @@
 import contextlib
-import dataclasses
 import importlib.util
 import json
 import logging
@@ -40,7 +39,7 @@ def overwrite_deepspeed_config(
 
 def get_ds_config_from_hparams(
     hparams: Dict[str, Any],
-    model_dir: pathlib.Path = pathlib.Path("."),
+    model_dir: Union[pathlib.Path, str] = pathlib.Path("."),
 ) -> Dict[str, Any]:
     """Fetch and recursively merge the deepspeed config from the experiment config
 
@@ -53,7 +52,9 @@ def get_ds_config_from_hparams(
     Returns:
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
+    model_dir = pathlib.Path(model_dir)
     base_config_file_name = hparams.get("deepspeed_config", "")
+    # TODO: deprecate ds_config option.
     manual_ds_config = hparams.get("ds_config", {})
     if base_config_file_name != "":
         base_ds_config = normalize_base_ds_config(base_config_file_name, model_dir=model_dir)
@@ -68,21 +69,15 @@ def normalize_base_ds_config(
 ) -> Dict[str, Any]:
     if isinstance(base_ds_config, str):
         full_path = model_dir.joinpath(pathlib.Path(base_ds_config))
-        base_ds_config = json.load(
-            open(full_path, "r"),
-            object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
-        )
+        with open(full_path, "r") as f:
+            base_ds_config = json.load(
+                f,
+                object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
+            )
     else:
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")
     return base_ds_config
-
-
-@dataclasses.dataclass
-class ModelInfo:
-    num_params: int
-    trainable_num_params: int
-    activation_mem_per_gpu: int
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
@@ -145,17 +140,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._data_repro_checks_disabled = False
         self._manual_grad_accumulation = False
 
-        self._model_info = None  # type: Optional[ModelInfo]
-
         self._check_experiment_config_optimizations()
-
-    def _is_model_info_trial(self) -> bool:
-        # TODO we can think of a less hacky way
-        hparams = self.get_hparams()
-        if "deepspeed_mode" not in hparams:
-            return False
-        mode = hparams["deepspeed_mode"]
-        return isinstance(mode, str) and mode == "model_info_profiling"
 
     def _check_experiment_config_optimizations(self) -> None:
         """

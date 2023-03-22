@@ -1,20 +1,17 @@
-import collections
 import json
 import logging
 import os
 import pathlib
+import random
 import re
 import time
 from contextlib import contextmanager
-from random import choice
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Union
 
-import numpy as np
 import torch
 from ruamel import yaml
 
 import determined as det
-from determined.pytorch.deepspeed import overwrite_deepspeed_config
 from determined.pytorch.deepspeed.dsat import _defaults
 
 
@@ -23,16 +20,6 @@ def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
     with open(path, "r") as f:
         config_dict = config.load(f)
     return config_dict
-
-
-def replace_dict_in_place(d: Dict[str, Any], u: Dict[str, Any]):
-    """Replaces values in dict d with values in dict u."""
-    # TODO: Double check  logic.
-    for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping) and k in d:
-            replace_dict_in_place(d[k], v)
-        else:
-            d[k] = v
 
 
 # TODO: The following two dict functions are needed as hacks around the `type` key
@@ -127,7 +114,7 @@ def report_oom_and_exit(
         )
         logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
-        report_oom_dict = {"OOM": True, "OOM_message": oom_error_string}
+        report_oom_dict = {_defaults.OOM_KEY: True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
@@ -154,6 +141,13 @@ def report_json_results_and_exit(
             steps_completed=steps_completed, metrics=results_dict
         )
         op.report_completed(results_dict)
+    # Ensure the operations generator is empty to complete sanity checks.
+    try:
+        next(core_context.searcher.operations())
+    except StopIteration:
+        pass
+    else:
+        raise AssertionError("Unexpected additional operations found!")
     exit()
 
 
@@ -184,38 +178,24 @@ def get_zero_optim_keys_and_defaults_per_stage(
 
 def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
     keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
-    zero_optim_dict = {key: choice(defaults) for key, defaults in keys_and_defaults.items()}
+    zero_optim_dict = {key: random.choice(defaults) for key, defaults in keys_and_defaults.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
 
 
-def get_tbs_mps_gas(ds_config: Dict[str, Any]) -> Tuple[int, int, int]:
+def get_batch_config_from_mbs_gas_and_slots(
+    ds_config: Dict[str, Any], slots: int
+) -> Dict[str, int]:
     """
-    Verifies that the batch size configuration is valid and returns the Tuple
-    `(train_batch_size, train_micro_batch_size_per_gpu, gradient_accumulation_steps)`.
+    Returns a consistent batch size configuration by adjusting `train_batch_size` according to the
+    number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
+    default value, if not specified).
     """
-    tbs, mbs, gas = (
-        ds_config.get("train_batch_size", None),
-        ds_config.get("train_micro_batch_size_per_gpu", None),
-        ds_config.get("gradient_accumulation_steps", 1),  # Uses the DS default.
-    )
-    # TODO: assert messages.
-    if tbs is not None:
-        if mbs is not None:
-            assert tbs == mbs * gas
-        else:
-            mbs, remainder = divmod(tbs, gas)
-            assert not remainder
-    elif mbs is not None:
-        tbs = mbs * gas
-
-    return tbs, mbs, gas
-
-
-# TODO: implement reproducibility and use this function.
-def set_random_seeds(seed: Optional[int] = None) -> None:
-    if seed is None:
-        seed = random.randint(0, 2 ** 31 - 1)
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.random.manual_seed(seed)
+    mbs = ds_config["train_micro_batch_size_per_gpu"]
+    gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
+    tbs = mbs * gas * slots
+    return {
+        "train_batch_size": tbs,
+        "train_micro_batch_size_per_gpu": mbs,
+        "gradient_accumulation_steps": gas,
+    }

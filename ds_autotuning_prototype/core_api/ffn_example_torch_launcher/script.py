@@ -7,10 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from attrdict import AttrDict
-from determined.pytorch.deepspeed import dsat
-from determined.pytorch.deepspeed.dsat import (
-    _utils,
-)  # TODO: Remove import after resolving type key hack
+from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
 from torch.utils.data import Dataset
 
 
@@ -46,17 +43,17 @@ def main(
     core_context: det.core.Context,
     hparams: Dict[str, Any],
 ) -> None:
-    deepspeed.init_distributed()
     is_chief = core_context.distributed.rank == 0
     hparams = AttrDict(hparams)
     if is_chief:
         logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
-    ds_config = _utils.lower_case_dict_key(hparams.ds_config, "TYPE")
+    ds_config = get_ds_config_from_hparams(hparams)
     dataset = RandDataset(hparams.dim)
     model = MinimalModel(hparams.dim, hparams.layers)
 
+    deepspeed.init_distributed()
     model_engine, optimizer, train_loader, __ = deepspeed.initialize(
         model=model,
         model_parameters=model.parameters(),
@@ -106,6 +103,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
     info = det.get_cluster_info()
     hparams = info.trial.hparams
-    distributed = det.core.DistributedContext.from_deepspeed()
+    distributed = det.core.DistributedContext.from_torch_distributed()
     with det.core.init(distributed=distributed) as core_context:
         main(core_context, hparams)

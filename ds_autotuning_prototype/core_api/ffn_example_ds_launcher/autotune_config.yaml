@@ -1,4 +1,4 @@
-name: ffn_example_no_autotune
+name: ffn_example_ds_launcher_dsat
 workspace: DS_AT_PROTOTYPING
 project: ffn_example
 max_restarts: 0
@@ -12,11 +12,11 @@ resources:
   max_slots: 8
   # resource_pool: young # Grenoble specific; remove later.
 searcher:
-  name: single
-  max_length: 1e3
-  metric: placeholder
+  name: custom
+  metric: throughput
+  smaller_is_better: False
 hyperparameters:
-  dim: 16
-  layers: 2 # Total params will be layers * dim ** 2
-  deepspeed_config: ds_config_no_autotune.json
+  dim: 4096
+  layers: 8 # Total params will be layers * dim ** 2
+  deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.deepspeed python3 script.py
