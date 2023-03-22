@@ -71,12 +71,13 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
         });
       });
     } catch (error) {
-      isLoading.set(false);
       handleError(error, {
         isUserTriggered: false,
         publicMessage: 'Unable to fetch user settings.',
         type: ErrorType.Api,
       });
+    } finally {
+      isLoading.set(false);
     }
 
     return () => canceler.abort();

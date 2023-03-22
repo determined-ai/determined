@@ -183,10 +183,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useEffect(() => {
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
-
     if (mappedSettings && url !== window.location.search) navigate(url, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [settings, config, navigate]);
 
   /*
    * A setting is considered active if it is set to a value and the
@@ -218,7 +216,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
-        const stateSetting = oldSettings[setting as keyof T];
+        const stateSetting = oldSettings?.[setting as keyof T];
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
             setting: {
@@ -312,7 +310,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
       });
-      if (!cur || !user || cur === prev) return;
+      if (!cur || !user || isEqual(cur, prev)) return;
 
       await updateDB(cur, prev as SettingsRecord<T>);
 

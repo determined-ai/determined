@@ -162,6 +162,20 @@ describe('useSettings', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('should have default settings after reset', async () => {
+    const { result } = await setup();
+    await act(() => result.container.current.resetSettings());
+
+    for (const configProp of Object.values(config.settings)) {
+      const settingsKey = configProp.storageKey as keyof Settings;
+      await waitFor(() =>
+        expect(result.container.current.settings[settingsKey]).toStrictEqual(
+          configProp.defaultValue,
+        ),
+      );
+    }
+  });
+
   it('should update settings', async () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
@@ -196,20 +210,6 @@ describe('useSettings', () => {
     await waitFor(() =>
       expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)),
     );
-  });
-
-  it('should have default settings after reset', async () => {
-    const { result } = await setup();
-    await act(() => result.container.current.resetSettings());
-
-    for (const configProp of Object.values(config.settings)) {
-      const settingsKey = configProp.storageKey as keyof Settings;
-      await waitFor(() =>
-        expect(result.container.current.settings[settingsKey]).toStrictEqual(
-          configProp.defaultValue,
-        ),
-      );
-    }
   });
 
   it('should be able to keep track of multiple settings', async () => {
