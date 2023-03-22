@@ -701,7 +701,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		}
 	}
 	if len(metricIds) > 0 {
-		if rangeType == apiv1.RangeType_RANGE_TYPE_BATCH {
+		if rangeType == apiv1.RangeType_RANGE_TYPE_UNSPECIFIED {
 			rangeType = apiv1.RangeType_RANGE_TYPE_BATCH
 		}
 		switch rangeType {
@@ -717,11 +717,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 		}
 		for _, metricId := range metricIds {
-			nameAndType := strings.Split(metricId, ".")
+			nameAndType := strings.SplitN(metricId, ".", 2)
 			if len(nameAndType) < 2 {
-				if err != nil {
-					return nil, errors.Wrapf(err, "error fetching time series of validation metrics invalid metricId %v", metricId)
-				}
+				return nil, fmt.Errorf("error fetching time series of validation metrics invalid metricId %v metrics must be in the form metric_type.metric_name", metricId)
 			}
 			metricIdName := nameAndType[1]
 			metricIdType := nameAndType[0]

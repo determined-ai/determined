@@ -148,6 +148,9 @@ func ValidateInt32FieldFilterComparison(
 	filter *commonv1.Int32FieldFilter,
 ) error {
 	var minValue, maxValue int32
+	if filter == nil {
+		return nil
+	}
 	if filter.Gt == nil && filter.Gte == nil {
 		return nil
 	}
@@ -155,14 +158,14 @@ func ValidateInt32FieldFilterComparison(
 		return nil
 	}
 	if filter.Lt != nil && filter.Lte != nil {
-		maxValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte))))))
+		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte))))))
 	} else if filter.Lt != nil {
 		maxValue = *((*int32)(unsafe.Pointer(filter.Lt)))
 	} else {
 		maxValue = *((*int32)(unsafe.Pointer(filter.Lte)))
 	}
 	if filter.Gt != nil && filter.Gte != nil {
-		minValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), float64(*((*int32)(unsafe.Pointer(filter.Gte))))))
+		minValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), float64(*((*int32)(unsafe.Pointer(filter.Gte))))))
 	} else if filter.Gt != nil {
 		minValue = *((*int32)(unsafe.Pointer(filter.Gt)))
 	} else {
@@ -179,6 +182,9 @@ func ValidateTimeStampFieldFilterComparison(
 	filter *commonv1.TimestampFieldFilter,
 ) error {
 	var startTime, endTime time.Time
+	if filter == nil {
+		return nil
+	}
 	if filter.Gt == nil && filter.Gte == nil {
 		return nil
 	}
@@ -201,15 +207,15 @@ func ValidateTimeStampFieldFilterComparison(
 	if filter.Gt != nil && filter.Gte != nil {
 		gt := tryAsTime(filter.Gt)
 		gte := tryAsTime(filter.Gte)
-		if gt.Before(*gte) {
+		if gt.After(*gte) {
 			startTime = *gt
 		} else {
 			startTime = *gte
 		}
 	} else if filter.Lt != nil {
-		startTime = *tryAsTime(filter.Gt)
+		startTime = *tryAsTime(filter.Lt)
 	} else {
-		startTime = *tryAsTime(filter.Gte)
+		startTime = *tryAsTime(filter.Lte)
 	}
 	if endTime.Before(startTime) {
 		return fmt.Errorf("invalid range: end date %v cannot be earlier than start date %v", endTime, startTime)
