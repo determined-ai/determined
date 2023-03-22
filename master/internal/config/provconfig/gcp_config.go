@@ -34,9 +34,9 @@ type GCPClusterConfig struct {
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
 
 	Labels     map[string]string `json:"labels"`
-	LabelKey   string `json:"label_key"`
-	LabelValue string `json:"label_value"`
-	NamePrefix string `json:"name_prefix"`
+	LabelKey   string            `json:"label_key"`
+	LabelValue string            `json:"label_value"`
+	NamePrefix string            `json:"name_prefix"`
 
 	NetworkInterface gceNetworkInterface `json:"network_interface"`
 	NetworkTags      []string            `json:"network_tags"`
@@ -162,10 +162,13 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 		}, rb.Disks...)
 	}
 
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
+	}
+	for labelKey, labelValue := range c.Labels {
+		rb.Labels[labelKey] = labelValue
+	}
 	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
 		rb.Labels[c.LabelKey] = c.LabelValue
 	}
 
