@@ -12994,14 +12994,17 @@ def get_GetHPImportance(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetHPImportance",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetHPImportanceResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetHPImportance",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetHPImportanceResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetHPImportance", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetHPImportance", _resp)
 
@@ -13836,14 +13839,17 @@ def get_GetTrialProfilerAvailableSeries(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerAvailableSeries",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerAvailableSeries",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerAvailableSeries", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerAvailableSeries", _resp)
 
@@ -13875,14 +13881,17 @@ def get_GetTrialProfilerMetrics(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerMetrics",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
 
@@ -14468,14 +14477,17 @@ def get_MasterLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MasterLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MasterLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MasterLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MasterLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MasterLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MasterLogs", _resp)
 
@@ -14503,14 +14515,17 @@ def get_MetricBatches(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricBatches",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricBatchesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricBatches",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricBatchesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricBatches", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricBatches", _resp)
 
@@ -14534,14 +14549,17 @@ def get_MetricNames(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricNamesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricNames",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricNamesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricNames", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricNames", _resp)
 
@@ -15558,14 +15576,17 @@ def get_TaskLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogs", _resp)
 
@@ -15589,14 +15610,17 @@ def get_TaskLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogsFields", _resp)
 
@@ -15662,14 +15686,17 @@ def get_TrialLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogs", _resp)
 
@@ -15693,14 +15720,17 @@ def get_TrialLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogsFields", _resp)
 
@@ -15736,14 +15766,17 @@ def get_TrialsSample(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSampleResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSample",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSampleResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSample", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSample", _resp)
 
@@ -15775,14 +15808,17 @@ def get_TrialsSnapshot(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSnapshot",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSnapshot",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSnapshot", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSnapshot", _resp)
 
