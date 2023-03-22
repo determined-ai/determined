@@ -33,7 +33,6 @@ type (
 
 type informer struct {
 	podInterface typedV1.PodInterface
-	namespace    string
 	podsHandler  *actor.Ref
 }
 

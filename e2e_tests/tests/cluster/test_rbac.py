@@ -32,7 +32,11 @@ def create_workspaces_with_users(
     Tuple[List[bindings.v1Workspace], Dict[int, authentication.Credentials]], None, None
 ]:
     """
-    eg:
+    Set up workspaces and users with the provided role assignments.
+    For example the following sets up 2 workspaces and 2 users referenced
+    with the integer ids 1 and 2. User 1 has the roles Editor and Viewer on
+    workspace 1 and the role Viewer on workspace 2. User 2 has the role Viewer
+    on workspace 1 and no roles on workspace 2.
     perm_assigments = [
         [
             (1, ["Editor", "Viewer"]),
