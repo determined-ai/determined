@@ -8,7 +8,7 @@ import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
+import authStore from 'stores/auth';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { WorkspaceState } from 'types';
 
@@ -54,8 +54,8 @@ const ModalTrigger: React.FC = () => {
   const JupyterLabModal = useModal(JupyterLabModalComponent);
 
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
   }, []);
 
   return (

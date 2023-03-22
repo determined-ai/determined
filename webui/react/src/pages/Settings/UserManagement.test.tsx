@@ -7,7 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
+import authStore from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -46,8 +46,8 @@ const Container: React.FC = () => {
 
   const loadUsers = useCallback(() => {
     usersStore.ensureUsersFetched(canceler);
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
     usersStore.updateCurrentUser(mockCurrentUser.id);
   }, [canceler]);
 

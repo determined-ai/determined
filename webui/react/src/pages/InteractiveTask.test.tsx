@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
+import authStore from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';
 
@@ -25,7 +25,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 
 const InteractiveTaskPageContainer: React.FC = () => {
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
+    authStore.setAuth({ isAuthenticated: true });
   }, []);
 
   return <InteractiveTask />;

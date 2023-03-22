@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { updateDetApi } from 'services/apiConfig';
-import { AUTH_COOKIE_KEY, setAuth, setAuthChecked } from 'stores/auth';
+import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
@@ -48,13 +48,13 @@ const useAuthCheck = (): (() => void) => {
       updateBearerToken(authToken);
 
       Observable.batch(() => {
-        setAuth({ isAuthenticated: true, token: authToken });
-        setAuthChecked();
+        authStore.setAuth({ isAuthenticated: true, token: authToken });
+        authStore.setAuthChecked();
       });
     } else if (info.externalLoginUri) {
       redirectToExternalSignin();
     } else {
-      setAuthChecked();
+      authStore.setAuthChecked();
     }
   }, [info.externalLoginUri, location.search, redirectToExternalSignin, updateBearerToken]);
 

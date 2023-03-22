@@ -6,7 +6,7 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
-import { reset as resetAuth } from 'stores/auth';
+import authStore from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
 import usersStore from 'stores/users';
@@ -40,7 +40,7 @@ const SignOut: React.FC = () => {
         }
       }
       updateDetApi({ apiKey: undefined });
-      resetAuth();
+      authStore.reset();
 
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);

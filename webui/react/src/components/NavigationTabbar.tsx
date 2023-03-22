@@ -11,7 +11,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { selectIsAuthenticated } from 'stores/auth';
+import authStore from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import usersStore from 'stores/users';
@@ -49,7 +49,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const isAuthenticated = useObservable(selectIsAuthenticated);
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
   const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
   const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,

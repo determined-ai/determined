@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
+import authStore from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { Loadable, Loaded } from 'utils/loadable';
@@ -114,8 +114,8 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
     usersStore.updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -11,7 +11,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { getAgents, getResourcePools } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
-import { selectIsAuthenticated } from 'stores/auth';
+import authStore from 'stores/auth';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -117,7 +117,7 @@ const ClusterContext = createContext<ClusterService | null>(null);
 
 export const ClusterProvider = ({ children }: { children: ReactNode }): ReactElement => {
   const [store] = useState(() => new ClusterService());
-  const isAuthenticated = useObservable(selectIsAuthenticated);
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) {

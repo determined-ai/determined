@@ -24,11 +24,7 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
-import {
-  auth as authObservable,
-  authChecked as observeAuthChecked,
-  selectIsAuthenticated,
-} from 'stores/auth';
+import authStore from 'stores/auth';
 import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import usersStore from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
@@ -43,11 +39,11 @@ import '@glideapps/glide-data-grid/dist/index.css';
 const AppView: React.FC = () => {
   const resize = useResize();
 
-  const isAuthenticated = useObservable(selectIsAuthenticated);
-  const auth = useObservable(authObservable);
+  const loadableAuth = useObservable(authStore.auth);
+  const isAuthChecked = useObservable(authStore.isChecked);
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
   const loadableUser = useObservable(usersStore.getCurrentUser());
   const infoLoadable = useDeterminedInfo();
-  const authChecked = useObservable(observeAuthChecked);
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
@@ -121,8 +117,13 @@ const AppView: React.FC = () => {
 
   // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
-    updateTelemetry(auth, loadableUser, info);
-  }, [auth, loadableUser, info, updateTelemetry]);
+    Loadable.match(Loadable.all([loadableAuth, loadableUser]), {
+      Loaded: ([auth, user]) => updateTelemetry(auth, user, info),
+      NotLoaded: () => {
+        return;
+      },
+    });
+  }, [loadableAuth, loadableUser, info, updateTelemetry]);
 
   // Abort cancel signal when app unmounts.
   useEffect(() => {
@@ -135,7 +136,7 @@ const AppView: React.FC = () => {
   return Loadable.match(infoLoadable, {
     Loaded: () => (
       <div className={css.base}>
-        {authChecked ? (
+        {isAuthChecked ? (
           <>
             {isServerReachable ? (
               <SettingsProvider>

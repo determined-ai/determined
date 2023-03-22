@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 
 import Button from 'components/kit/Button';
-import { setAuth } from 'stores/auth';
+import authStore from 'stores/auth';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
@@ -26,7 +26,7 @@ const ModalTrigger: React.FC = () => {
   const { contextHolder, modalOpen } = useModalExperimentCreate();
   const { experiment, trial } = generateTestExperimentData();
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
+    authStore.setAuth({ isAuthenticated: true });
   }, []);
 
   return (

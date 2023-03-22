@@ -7,7 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
+import authStore from 'stores/auth';
 import usersStore from 'stores/users';
 
 import CodeViewer, { Props } from './CodeViewer';
@@ -93,8 +93,8 @@ const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
     usersStore.updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

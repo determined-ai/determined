@@ -7,7 +7,7 @@ import { NEW_PASSWORD_LABEL } from 'components/PasswordChangeModal';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
+import authStore from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -57,7 +57,7 @@ const Container: React.FC = () => {
 
   useEffect(() => {
     usersStore.ensureUsersFetched(canceler);
-    setAuth({ isAuthenticated: true });
+    authStore.setAuth({ isAuthenticated: true });
   }, [canceler]);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { useModal } from 'components/kit/Modal';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { setAuth } from 'stores/auth';
+import authStore from 'stores/auth';
 import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -65,7 +65,7 @@ const Container: React.FC = () => {
 
   const loadUsers = useCallback(async () => {
     await usersStore.ensureUsersFetched(canceler);
-    setAuth({ isAuthenticated: true });
+    authStore.setAuth({ isAuthenticated: true });
     usersStore.updateCurrentUser(CURRENT_USER.id);
   }, [canceler]);
 

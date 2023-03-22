@@ -6,14 +6,14 @@ import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { selectIsAuthenticated } from 'stores/auth';
+import authStore from 'stores/auth';
 
 interface Props {
   routes: RouteConfig[];
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const isAuthenticated = useObservable(selectIsAuthenticated);
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();
