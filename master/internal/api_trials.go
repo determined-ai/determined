@@ -762,7 +762,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 func (a *apiServer) SummarizeTrial(ctx context.Context,
 	req *apiv1.SummarizeTrialRequest,
 ) (*apiv1.SummarizeTrialResponse, error) {
-	var metric_ids []string
+	var metricIds []string
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -776,7 +776,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
-		apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metric_ids)
+		apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metricIds)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}

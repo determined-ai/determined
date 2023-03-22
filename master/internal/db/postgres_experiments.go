@@ -396,16 +396,7 @@ type MetricMeasurements struct {
 	Batches uint
 	Time    time.Time
 	Epoch   int32
-	TrialId int32
-}
-
-func timeToFloat(t time.Time) float64 {
-	// If time.Time is the empty value, UnixNano will return the farthest back
-	// timestamp a float can represent, which is some large negative value.
-	if t.IsZero() {
-		return 0
-	}
-	return float64(t.UnixNano()) / 1e9
+	TrialID int32
 }
 
 func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,

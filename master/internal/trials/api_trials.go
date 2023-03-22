@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	batches       = "batches"
-	total_batches = "total_batches"
+	batches      = "batches"
+	totalBatches = "total_batches"
 )
 
 // TrialsAPIServer is an embedded api server struct.
@@ -366,7 +366,7 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	case apiv1.RangeType_RANGE_TYPE_BATCH:
-		queryColumn = total_batches
+		queryColumn = totalBatches
 		orderColumn = batches
 		if integerRange != nil {
 			subq, err = db.ApplyInt32FieldFilter(subq, queryColumn, integerRange)
@@ -375,7 +375,6 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	default:
-		queryColumn = total_batches
 		orderColumn = batches
 		subq = subq.Where("total_batches >= ?", startBatches).Where("total_batches <= 0 OR total_batches <= ?", endBatches).Where("end_time > ?", startTime)
 	}

@@ -158,7 +158,7 @@ func ValidateInt32FieldFilterComparison(
 		return nil
 	}
 	if filter.Lt != nil && filter.Lte != nil {
-		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte))))))
+		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte)))))) //nolint: gosec
 	} else if filter.Lt != nil {
 		maxValue = *((*int32)(unsafe.Pointer(filter.Lt))) //nolint: gosec
 	} else {
