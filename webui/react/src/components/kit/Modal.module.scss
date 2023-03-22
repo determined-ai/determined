@@ -1,5 +1,15 @@
-.modalContent :global(.ant-modal-content) {
-  padding: 0;
+.modalContent {
+  :global(.ant-modal-content) {
+    padding: 0;
+  }
+  :global(.ant-modal-close) {
+    inset-inline-end: 8px;
+    top: 8px;
+  }
+  :global(.ant-modal-header),
+  :global(.ant-modal-footer) {
+    margin: 0;
+  }
 }
 .modalBody {
   display: flex;
@@ -20,7 +30,7 @@
     white-space: nowrap;
   }
   .dangerIcon {
-    color: var(--theme-status-critical-weak);
+    color: var(--theme-status-critical);
   }
   > * {
     margin-inline-end: 16px;

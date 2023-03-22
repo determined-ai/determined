@@ -3,6 +3,7 @@ import React, { MouseEvent, ReactNode } from 'react';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 
+import css from './Button.module.scss';
 import Tooltip from './Tooltip';
 
 interface ButtonProps {
@@ -33,6 +34,7 @@ const Button: React.FC<ButtonProps> = ({
       condition={tooltip.length > 0}
       wrapper={(children) => <Tooltip title={tooltip}>{children}</Tooltip>}>
       <AntdButton
+        className={css.base}
         shape={shape}
         size={size}
         tabIndex={props.disabled ? -1 : 0}
