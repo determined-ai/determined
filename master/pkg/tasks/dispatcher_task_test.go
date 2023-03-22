@@ -12,6 +12,7 @@ import (
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -126,6 +127,10 @@ func Test_getPortMappings(t *testing.T) {
 }
 
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	gpuTypeValue := "tesla"
 
 	type args struct {
@@ -285,6 +290,8 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 			}
 
 			if got := tr.computeLaunchConfig(
+				ctx,
+				allocationID,
 				tt.args.slotType,
 				tt.args.workDir,
 				tt.args.slurmPartition,
@@ -298,6 +305,10 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 }
 
 func Test_dispatcherArchive(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	err := etc.SetRootPath("../../static/srv/")
 	assert.NilError(t, err)
 
@@ -342,7 +353,7 @@ func Test_dispatcherArchive(t *testing.T) {
 		},
 	}
 
-	got := dispatcherArchive(aug, []string{"link-1", "link-2", "link-3"}, "")
+	got := dispatcherArchive(ctx, allocationID, aug, []string{"link-1", "link-2", "link-3"}, "")
 
 	assert.Equal(t, got.Path, want.Path)
 	assert.Equal(t, len(got.Archive), len(want.Archive))
@@ -474,18 +485,26 @@ func Test_getAllArchives(t *testing.T) {
 }
 
 func Test_encodeArchiveParameters(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	dispatcherArchive := cproto.RunArchive{}
 	allArchives := []cproto.RunArchive{
 		{
 			Path: "/run/determined/workdir",
 		},
 	}
-	customArgs, err := encodeArchiveParameters(dispatcherArchive, allArchives)
+	customArgs, err := encodeArchiveParameters(ctx, allocationID, dispatcherArchive, allArchives)
 	assert.NilError(t, err)
 	assert.Assert(t, len(customArgs["Archives"]) > 0)
 }
 
 func Test_ToDispatcherManifest(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	err := etc.SetRootPath("../../static/srv/")
 	assert.NilError(t, err)
 	tests := []struct {
@@ -699,6 +718,8 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			}
 
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
+				ctx,
+				allocationID,
 				"masterHost", 8888, "certName", 16, tt.slotType,
 				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType,
 				tt.isPbsScheduler, nil, nil)
@@ -785,6 +806,10 @@ func Test_ToDispatcherManifest(t *testing.T) {
 }
 
 func Test_getEnvVarsForLauncherManifest(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	disableImageCache := true
 
 	environment := expconf.EnvironmentConfigV0{
@@ -822,7 +847,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 		},
 	}
 
-	envVars, err := getEnvVarsForLauncherManifest(ts,
+	envVars, err := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
 		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
 
 	assert.NilError(t, err)
@@ -849,7 +874,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["myenv"], "xyz")
 	assert.Equal(t, envVars["empty"], "")
 
-	envVarsPodman, _ := getEnvVarsForLauncherManifest(ts,
+	envVarsPodman, _ := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
 		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)
 	assert.Equal(t, envVarsPodman["DET_CONTAINER_LOCAL_TMP"], "1")
 	val := envVarsPodman["DET_LOCALTMP"]
@@ -859,7 +884,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, present, false)
 
 	// test DET_CONTAINER_LOCAL_TMP is not in ENVs, and DET_LOCALTMP set properly
-	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ts,
+	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ctx, allocationID, ts,
 		"masterHost", 8888, "certName", false, device.CUDA, "enroot", varTmp, 0)
 	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
 	assert.Equal(t, ok, false)
@@ -1096,6 +1121,10 @@ func TestTaskSpec_slotsPerNode(t *testing.T) {
 }
 
 func TestTaskSpec_computeResources(t *testing.T) {
+	ctx := getMockActorCtx()
+
+	allocationID := "123456790"
+
 	type fields struct {
 		SlurmConfig expconf.SlurmConfig
 		PbsConfig   expconf.PbsConfig
@@ -1443,7 +1472,8 @@ func TestTaskSpec_computeResources(t *testing.T) {
 				PbsConfig:   tt.fields.PbsConfig,
 				TaskType:    tt.fields.TaskType,
 			}
-			got := tr.computeResources(tt.args.tresSupported, tt.args.numSlots, tt.args.slotType,
+			got := tr.computeResources(ctx, allocationID, tt.args.tresSupported,
+				tt.args.numSlots, tt.args.slotType,
 				tt.args.gresSupported, tt.args.isPbsLauncher)
 			if !reflect.DeepEqual(got, tt.wantResources) {
 				t.Errorf("TaskSpec.computeResources() = %v, want %v", got, tt.wantResources)
@@ -1589,4 +1619,19 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getMockActorCtx() *actor.Context {
+	var ctx *actor.Context
+	sys := actor.NewSystem("")
+	child, _ := sys.ActorOf(actor.Addr("child"), actor.ActorFunc(func(context *actor.Context) error {
+		ctx = context
+		return nil
+	}))
+	parent, _ := sys.ActorOf(actor.Addr("parent"), actor.ActorFunc(func(context *actor.Context) error {
+		context.Ask(child, "").Get()
+		return nil
+	}))
+	sys.Ask(parent, "").Get()
+	return ctx
 }

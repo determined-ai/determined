@@ -26,13 +26,13 @@ import (
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 )
 
+//nolint:lll
 const (
-	pollLoopInterval                 = time.Duration(10) * time.Second
-	minJobStatusCheckPollingInterval = pollLoopInterval
-	ignoredReporter                  = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
-	errorLinesToRetrieve             = 200
-	errorLinesToDisplay              = 15
-	ownerLauncher                    = "launcher"
+	pollLoopInterval     = time.Duration(10) * time.Second
+	ignoredReporter      = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
+	errorLinesToRetrieve = 200
+	errorLinesToDisplay  = 15
+	ownerLauncher        = "launcher"
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -68,7 +68,6 @@ type launcherJob struct {
 	lastJobStatusCheckTime time.Time
 	totalContainers        int
 	runningContainers      map[int]containerInfo
-	numTimesGot404Error    int
 	jobWasTerminated       bool
 }
 
@@ -116,7 +115,6 @@ func (m *launcherMonitor) monitorJob(user string, dispatchID string, payloadName
 		lastJobStatusCheckTime: time.Now(),
 		totalContainers:        0,
 		runningContainers:      make(map[int]containerInfo),
-		numTimesGot404Error:    0,
 		jobWasTerminated:       false,
 	}
 }
@@ -165,7 +163,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 			job, ok := m.getJobByDispatchID(msg.dispatcherID)
 
 			if ok {
-				_ = m.updateJobStatus(ctx, job, true)
+				_ = m.updateJobStatus(ctx, job)
 
 				// Save the job to be removed in map. This job will deleted
 				// later when processing watched jobs.
@@ -179,7 +177,7 @@ func (m *launcherMonitor) watch(ctx *actor.Context) {
 
 			if ok {
 				// Check the status of the given job.
-				_ = m.updateJobStatus(ctx, job, true)
+				_ = m.updateJobStatus(ctx, job)
 			}
 
 		case <-m.schedulerTick.C:
@@ -405,29 +403,7 @@ func (m *launcherMonitor) processWatchedJobs(
 			continue // An optimization to avoid per-job use of updateJobStatus (below)
 		}
 
-		if m.shouldSkip(job) {
-			//nolint:lll
-			ctx.Log().Debugf("Skipping job status check for dispatchID %s as not enough time has elapsed since last check",
-				dispatchID)
-
-			// Jobs are sorted by the time that the job status was last checked.
-			// Once we determine that the status check can be skipped for a job
-			// because not enough time has elapsed since its last status check,
-			// then all the other jobs behind it can be skipped too, as they
-			// will have newer timestamp.
-			break
-		}
-
-		// Without a job ID response, the Slurm/PBS job has not even been
-		// created yet by the launchAsync, so do not bother setting
-		// refresh=true because that is accomplished by a workload manager
-		// command that needs the job ID in the first place. Reduce overhead on
-		// the launcher by avoiding workload manager status polling until the
-		// job is actually created. Polling without refresh will get the job ID
-		// when available, or a failed state if the job cannot be created.
-		refresh := len(job.hpcJobID) > 0
-
-		if removeJob := m.updateJobStatus(ctx, job, refresh); removeJob {
+		if removeJob := m.updateJobStatus(ctx, job); removeJob {
 			m.removeJobFromMonitoredList(dispatchID, ctx)
 			continue
 		}
@@ -688,55 +664,31 @@ func minimizeErrorLog(messages []string) []string {
 Processes the job state and sends DispatchStateChange on each call.
 updateJobStatus returns true when the job has finished or no longer exists,
 and monitoring should stop.
-
-When "refresh" is true, it means we want the latest job status from the launcher.
-When "refresh" is false, it means we only want the HPC job ID.
 */
-func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob, refresh bool) bool {
+func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob) bool {
 	removeJob := false
 	dispatchID := job.dispatcherID
 	owner := job.user
 
-	if refresh {
-		ctx.Log().WithField("dispatch-id", dispatchID).Debug("Checking status of launcher job")
-	} else {
-		ctx.Log().WithField("dispatch-id", dispatchID).Debugf("Checking if HPC job ID is available")
-	}
+	ctx.Log().WithField("dispatch-id", dispatchID).Debug("Checking status of launcher job")
 
-	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID, refresh)
-	if doesNotExist {
-		// The user canceled the job.
+	resp, ok := m.getDispatchStatus(ctx, owner, dispatchID)
+
+	// Dispatch was not found.
+	if !ok {
 		if job.jobWasTerminated {
 			ctx.Log().WithField("dispatch-id", dispatchID).Infof("The job was canceled")
 
 			ctx.Tell(ctx.Self(), DispatchExited{
 				DispatchID: dispatchID,
-				ExitCode:   1,
+				ExitCode:   -1,
 				Message:    "Job was canceled",
 			})
-
-			return true
 		}
 
-		job.numTimesGot404Error++
-
-		// After 4 attempts to get the job status from the launcher, the
-		// launcher still reports that it cannot find the status for this
-		// job, so give up.
-		if job.numTimesGot404Error > 4 {
-			return true
-		}
-
-		ctx.Log().Debugf("For dispatchID %s, "+
-			"the job status could not be updated because launcher environment does not exist. "+
-			"Waiting at least another %d seconds to allow launcher to complete any state transition.",
-			dispatchID, int64(minJobStatusCheckPollingInterval.Seconds()))
-
-		// In this case, it's an update, not an actual add.
-		m.addJobToMonitoredJobs(job)
-
-		return false
+		return true
 	}
+
 	if _, gotResponse := resp.GetStateOk(); !gotResponse {
 		return false
 	}
@@ -826,17 +778,16 @@ func (m *launcherMonitor) publishJobState(
 
 /*
 Return the DispatchInfo (possibly invalid/empty), caller must check fields for
-existence (e.g. GetStateOk()) before use.   A second value indicates if the dispatch
-is reported as no longer  existing at all (i.e. 404).
+existence (e.g. GetStateOk()) before use.   A second value will be true if the
+dispatch exists, or false if it no longer exists (i.e. 404).
 */
 func (m *launcherMonitor) getDispatchStatus(
 	ctx *actor.Context, owner string,
 	dispatchID string,
-	refresh bool,
-) (dispatchInfo launcher.DispatchInfo, doesNotExist bool) {
+) (dispatchInfo launcher.DispatchInfo, dispatchFound bool) {
 	resp, r, err := m.apiClient.MonitoringApi.
 		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
-		Refresh(refresh).
+		Refresh(true).
 		Execute() //nolint:bodyclose
 	if err != nil {
 		// This may happen if the job is canceled before the launcher creates
@@ -845,47 +796,35 @@ func (m *launcherMonitor) getDispatchStatus(
 		// of "LaunchAsync()", but we're still seeing it.
 		if r != nil && r.StatusCode == 404 {
 			//nolint:lll
-			ctx.Log().Infof("For dispatchID %s, the job status could not be determined because the launcher returned HTTP code 404",
-				dispatchID)
+			ctx.Log().WithField("dispatch-id", dispatchID).
+				Infof("The job status could not be obtained because the launcher returned HTTP code 404")
+
 			// No details, but we know dispatch does not exist
-			return launcher.DispatchInfo{}, true
+			return launcher.DispatchInfo{}, false
 		}
 
 		if r != nil && (r.StatusCode == http.StatusUnauthorized ||
 			r.StatusCode == http.StatusForbidden) {
 			//nolint:lll
-			ctx.Log().WithError(err).Infof("For dispatchID %s, failed to `GetEnvironmentStatus` due to error {%v}. "+
-				"Reloaded the auth token file {%s}. If this error persists, restart "+
-				"the launcher service followed by a restart of the determined-master service.",
-				dispatchID, err, m.authFile)
+			ctx.Log().WithField("dispatch-id", dispatchID).
+				WithError(err).
+				Infof("Failed to `GetEnvironmentStatus` due to error {%v}. "+
+					"Reloaded the auth token file {%s}. If this error persists, restart "+
+					"the launcher service followed by a restart of the determined-master service.",
+					err, m.authFile)
 			m.ReloadAuthToken()
 		} else {
-			ctx.Log().WithError(err).Infof(
-				"For dispatchID %s, an error occurred when calling `GetEnvironmentStatus`:\n%v",
-				dispatchID, r)
+			ctx.Log().WithField("dispatch-id", dispatchID).
+				WithError(err).
+				Infof("An error occurred when calling `GetEnvironmentStatus`:\n%v", r)
 		}
 		// No details, but job may still exist
-		return launcher.DispatchInfo{}, false
+		return launcher.DispatchInfo{}, true
 	}
 
 	ctx.Log().Debugf("DispatchID %s state: %s", dispatchID, *resp.State)
 	// We have details, need to process them
-	return resp, false
-}
-
-// shouldSkip returns true if we should not get the status of the specified job
-// this time around the polling loop. The skip is computed on the time elapsed since
-// either the time the job was added to the list of those to monitor, or the time
-// of the last sample, for the following reasons. If insufficient time has elapsed
-// since the job was launched then the launcher GetEnvironmentStatus REST API
-// may block awaiting the job status to be come available, so reduce the likelihood of this by
-// requiring a minimum time before the first status fetch. If we do encounter a delay
-// for the above (or any other) reason, then the next scheduling tick may arrive
-// soon thereafter, resulting in the overhead of unnecessarily rapid polling.
-// Avoid the latter by applying a rate limit to each job.
-func (*launcherMonitor) shouldSkip(job *launcherJob) bool {
-	durationSinceJobAddedOrLastStatusCollection := time.Since(job.lastJobStatusCheckTime)
-	return durationSinceJobAddedOrLastStatusCollection < minJobStatusCheckPollingInterval
+	return resp, true
 }
 
 type exitCode int
@@ -1017,8 +956,10 @@ func (m *launcherMonitor) isDispatchInProgress(
 	owner string,
 	dispatchID string,
 ) bool {
-	resp, doesNotExist := m.getDispatchStatus(ctx, owner, dispatchID, true)
-	if doesNotExist {
+	resp, ok := m.getDispatchStatus(ctx, owner, dispatchID)
+
+	// Dispatch was not found.
+	if !ok {
 		// We know it does not exist so not in progress
 		return false
 	}
