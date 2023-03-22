@@ -1961,44 +1961,40 @@ class v1CurrentUserResponse:
 
 class v1DataPoint:
     epoch: "typing.Optional[int]" = None
-    time: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         batches: int,
+        time: str,
         value: float,
         epoch: "typing.Union[int, None, Unset]" = _unset,
-        time: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.batches = batches
+        self.time = time
         self.value = value
         if not isinstance(epoch, Unset):
             self.epoch = epoch
-        if not isinstance(time, Unset):
-            self.time = time
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DataPoint":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "batches": obj["batches"],
+            "time": obj["time"],
             "value": float(obj["value"]),
         }
         if "epoch" in obj:
             kwargs["epoch"] = obj["epoch"]
-        if "time" in obj:
-            kwargs["time"] = obj["time"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "batches": self.batches,
+            "time": self.time,
             "value": dump_float(self.value),
         }
         if not omit_unset or "epoch" in vars(self):
             out["epoch"] = self.epoch
-        if not omit_unset or "time" in vars(self):
-            out["time"] = self.time
         return out
 
 class v1DataPointEpoch:

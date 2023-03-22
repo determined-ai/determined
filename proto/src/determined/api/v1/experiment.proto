@@ -20,7 +20,7 @@ import "determined/experiment/v1/searcher.proto";
 // One datapoint in a series of metrics from a trial in batch.
 message DataPoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "batches", "value" ] }
+    json_schema: { required: [ "batches", "value", "time" ] }
   };
   // Total batches processed by the time this measurement is taken.
   int32 batches = 1;

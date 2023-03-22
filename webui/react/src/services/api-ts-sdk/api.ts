@@ -1885,7 +1885,7 @@ export interface V1DataPoint {
      * @type {Date}
      * @memberof V1DataPoint
      */
-    time?: Date;
+    time: Date;
     /**
      * The epoch this measurement is taken.
      * @type {number}
