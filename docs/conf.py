@@ -72,8 +72,8 @@ html_theme_options = {
         "image_light": "assets/images/logo-determined-ai.svg",
         "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
-    "article_header_start": "header-left.html",
-    "article_header_end": "header-right.html",
+    "repository_url": "https://github.com/determined-ai/determined",
+    "use_repository_button": True,
 }
 html_use_index = True
 html_domain_indices = True
