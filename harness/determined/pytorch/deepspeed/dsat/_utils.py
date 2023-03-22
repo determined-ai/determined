@@ -114,7 +114,7 @@ def report_oom_and_exit(
         )
         logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
-        report_oom_dict = {"OOM": True, "OOM_message": oom_error_string}
+        report_oom_dict = {_defaults.OOM_KEY: True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )

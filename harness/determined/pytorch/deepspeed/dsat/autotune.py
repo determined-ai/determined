@@ -34,7 +34,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     search_runner_overrides = {
         "searcher": {"name": "single", "max_length": 0},
         # TODO: don't hardcode the searcher's max_restarts.
-        "max_restarts": 3,
+        "max_restarts": 10,
         # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assumption
         # e.g. on Grenoble.
         "resources": {"slots_per_trial": 0},

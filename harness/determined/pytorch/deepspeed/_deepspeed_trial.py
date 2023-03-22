@@ -314,7 +314,7 @@ class DeepSpeedTrialController(det.TrialController):
             while True:
                 step_id = self.steps_completed + 1
                 with dsat.dsat_reporting_context(
-                    core_context=self.context._core, op=op, steps_completed=self.steps_completed
+                    core_context=self.context._core, op=op, steps_completed=step_id
                 ):
                     _ = self._train_for_step(
                         step_id=step_id, num_batches=1, total_batches_processed=self.steps_completed
