@@ -2,6 +2,7 @@ import datetime
 import os
 from typing import Any, Dict
 
+import deepspeed
 import filelock
 import torch
 import torch.nn as nn
@@ -9,8 +10,6 @@ import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 from attrdict import AttrDict
-
-import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,
@@ -26,16 +25,16 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
+        self.fc1 = nn.Linear(16 * 5 * 5, 4096)
+        self.fc2 = nn.Linear(4096, 2048)
         if args.moe:
-            fc3 = nn.Linear(84, 84)
+            fc3 = nn.Linear(2048, 2048)
             self.moe_layer_list = []
             for n_e in args.num_experts:
                 # create moe layers based on the number of experts
                 self.moe_layer_list.append(
                     deepspeed.moe.layer.MoE(
-                        hidden_size=84,
+                        hidden_size=2048,
                         expert=fc3,
                         num_experts=n_e,
                         ep_size=args.ep_world_size,
@@ -46,9 +45,9 @@ class Net(nn.Module):
                     )
                 )
             self.moe_layer_list = nn.ModuleList(self.moe_layer_list)
-            self.fc4 = nn.Linear(84, 10)
+            self.fc4 = nn.Linear(2048, 10)
         else:
-            self.fc3 = nn.Linear(84, 10)
+            self.fc3 = nn.Linear(2048, 10)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))

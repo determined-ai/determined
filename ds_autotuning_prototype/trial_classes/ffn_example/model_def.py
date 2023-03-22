@@ -1,14 +1,10 @@
 import logging
-import os
 from typing import Any, Dict
 
 import deepspeed
-import filelock
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision
-import torchvision.transforms as transforms
 from attrdict import AttrDict
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
@@ -16,52 +12,42 @@ from determined.pytorch.deepspeed import (
     DeepSpeedTrialContext,
     get_ds_config_from_hparams,
 )
+from torch.utils.data import Dataset
 
 
-class RandCIFAR10Dataset(torch.utils.data.Dataset):
-    def __init__(self, num_actual_datapoints: int = 128) -> None:
+class RandDataset(Dataset):
+    def __init__(self, dim: int, num_actual_datapoints: int = 128) -> None:
         self.num_actual_datapoints = num_actual_datapoints
-        self.imgs = torch.randn(self.num_actual_datapoints, 3, 32, 32)
-        self.labels = torch.randint(10, size=(self.num_actual_datapoints,))
+        self.dim = dim
+        self.data = torch.randn(self.num_actual_datapoints, self.dim)
 
     def __len__(self) -> int:
-        return 10 ** 8
+        return 10 ** 6
 
     def __getitem__(self, idx: int) -> torch.Tensor:
-        img = self.imgs[idx % self.num_actual_datapoints]
-        label = self.labels[idx % self.num_actual_datapoints]
-        return img, label
+        data = self.data[idx % self.num_actual_datapoints]
+        return data
 
 
-class Net(nn.Module):
-    def __init__(self, args):
-        super(Net, self).__init__()
-        self.args = args
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        # Adding some additional layers to make the model larger and avoid shm size errors.
-        hidden_dim = 2 ** 15
-        self.fc0 = nn.Linear(16 * 5 * 5, hidden_dim)
-        self.more_fcls = nn.ModuleList([nn.Linear(hidden_dim, hidden_dim) for _ in range(8)])
-        self.fc_last = nn.Linear(hidden_dim, 10)
+class MinimalModel(nn.Module):
+    def __init__(self, dim: int, layers: int) -> None:
+        super().__init__()
+        self.dim = dim
+        layers = [nn.Linear(dim, dim, bias=False) for _ in range(layers)]
+        self.model = nn.ModuleList(layers)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc0(x))
-        for layer in self.more_fcls:
-            x = F.relu(layer(x))
-        x = self.fc_last(x)
-        return x
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        outputs = inputs
+        for layer in self.model:
+            outputs = layer(outputs)
+        return outputs
 
 
-class CIFARTrial(DeepSpeedTrial):
+class FNNTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext) -> None:
         self.context = context
         self.args = AttrDict(self.context.get_hparams())
-        model = Net(self.args)
+        model = MinimalModel(self.args.dim, self.args.layers)
         parameters = filter(lambda p: p.requires_grad, model.parameters())
         logging.info(f"Seeing args:{self.args}")
 
@@ -74,7 +60,7 @@ class CIFARTrial(DeepSpeedTrial):
         self.fp16 = model_engine.fp16_enabled()
         self.model_engine = self.context.wrap_model_engine(model_engine)
 
-        self.criterion = nn.CrossEntropyLoss().to(self.context.device)
+        self.criterion = nn.MSELoss().to(self.context.device)
         self.reducer = self.context.wrap_reducer(
             lambda x: sum([m[0] for m in x]) / sum([m[1] for m in x]),
             "accuracy",
@@ -83,11 +69,10 @@ class CIFARTrial(DeepSpeedTrial):
 
     def train_batch(self, iter_dataloader, epoch_idx, batch_idx) -> Dict[str, torch.Tensor]:
         batch = self.context.to_device(next(iter_dataloader))
-        inputs, labels = batch[0], batch[1]
         if self.fp16:
-            inputs = inputs.half()
-        outputs = self.model_engine(inputs)
-        loss = self.criterion(outputs, labels)
+            batch = batch.half()
+        outputs = self.model_engine(batch)
+        loss = self.criterion(outputs, batch)
 
         self.model_engine.backward(loss)
         self.model_engine.step()
@@ -98,19 +83,10 @@ class CIFARTrial(DeepSpeedTrial):
         Calculate validation metrics for a batch and return them as a dictionary.
         This method is not necessary if the user defines evaluate_full_dataset().
         """
-        batch = self.context.to_device(next(iter_dataloader))
-        images, labels = batch[0], batch[1]
-        if self.fp16:
-            images = images.half()
-        outputs = self.model_engine(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total = labels.size(0)
-        correct = (predicted == labels).sum().item()
-        self.reducer.update((correct, total))
         return {}
 
     def build_training_data_loader(self) -> Any:
-        trainset = RandCIFAR10Dataset()
+        trainset = RandDataset(self.args.dim)
         train_loader = DataLoader(
             trainset,
             batch_size=self.context.train_micro_batch_size_per_gpu,
@@ -120,7 +96,7 @@ class CIFARTrial(DeepSpeedTrial):
         return train_loader
 
     def build_validation_data_loader(self) -> Any:
-        testset = RandCIFAR10Dataset()
+        testset = RandDataset(self.args.dim)
         return DataLoader(
             testset,
             batch_size=self.context.train_micro_batch_size_per_gpu,

@@ -1,16 +1,11 @@
-name: cifar10_trial_dsat_fake_data
+name: ffn_trial_dsat
+workspace: DS_AT_PROTOTYPING
+project: ffn_example
 debug: false
 hyperparameters:
+  dim: 4096
+  layers: 8 # Total params will be layers * dim ** 2
   deepspeed_config: ds_config.json
-  # ds_config:
-  #   autotuning:
-  #     enabled: True
-  #     fast: False
-  #     tuner_type: random
-  #     tuner_num_trials: 50
-  #     num_tuning_micro_batch_sizes: 5
-  #     tuner_early_stopping: 5
-  #     metric: throughput
 environment:
   environment_variables:
     - NCCL_DEBUG=INFO
@@ -38,7 +33,7 @@ entrypoint:
   - -m
   - determined.launch.deepspeed
   - --trial
-  - model_def:CIFARTrial
+  - model_def:FNNTrial
 checkpoint_policy: none
 max_restarts: 0
 scheduling_unit: 2000

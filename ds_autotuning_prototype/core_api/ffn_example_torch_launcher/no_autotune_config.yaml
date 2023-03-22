@@ -16,8 +16,7 @@ searcher:
   metric: arbitrary
   max_length: 10
 hyperparameters:
-  dim: 16
-  layers: 2 # Total params will be layers * dim ** 2
-  # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  dim: 4096
+  layers: 8 # Total params will be layers * dim ** 2
   deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.torch_distributed python3 script.py
