@@ -7,10 +7,9 @@ import time
 from typing import Any, Dict, List, Set, Tuple
 
 import pytest
-import yaml
 
 from determined import errors
-from determined.common import api, storage
+from determined.common import api, storage, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import checkpointv1State
 from tests import api_utils

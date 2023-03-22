@@ -1,17 +1,16 @@
 import os
+import pathlib
 import re
 import socket
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+import threading
+from typing import Any, Dict, List, Optional, Sequence, Type
 
 import appdirs
 import docker
 
-import determined
-import determined.deploy
 from determined.common import yaml
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
@@ -19,9 +18,43 @@ from determined.deploy.healthcheck import wait_for_master
 AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
 MASTER_PORT_DEFAULT = 8080
 
+# Default names are consistent with previous docker-compose names to support migration.
+DB_NAME = "determined-db_1"
+NETWORK_NAME = "determined_default"
+VOLUME_NAME = "determined-db-volume"
+MASTER_NAME = "determined-master_1"
+
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
 GPU_DEVICE_REQUEST = {"Driver": "nvidia", "Count": -1, "Capabilities": [["gpu", "utility"]]}
+
+Container = Type[docker.models.containers.Container]
+
+# These defaults come from master/packaging/master.yaml (except for host_path).
+MASTER_CONF_DEFAULT = {
+    "db": {
+        "user": "postgres",
+        "host": "determined-db",
+        "port": 5432,
+        "name": "determined",
+    },
+    "checkpoint_storage": {
+        "type": "shared_fs",
+        "host_path": appdirs.user_data_dir("determined"),
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+    },
+}
+
+_docker_client = None
+
+
+def docker_client() -> docker.client:
+    global _docker_client
+    if not _docker_client:
+        _docker_client = docker.from_env()
+    return _docker_client
 
 
 # Patch the Docker library to support device requests, since it has yet to support them natively
@@ -75,91 +108,40 @@ def get_proxy_addr() -> str:
         return ""
 
 
-def docker_compose(
-    args: List[str],
-    cluster_name: str,
-    env: Optional[Dict] = None,
-    extra_files: Optional[List[str]] = None,
-) -> None:
-    path = Path(__file__).parent.joinpath("docker-compose.yaml")
-    # Start with the user's environment to ensure that Docker and Docker Compose work correctly.
-    process_env = dict(os.environ)
-    if env is not None:
-        process_env.update(env)
-    process_env["INTEGRATIONS_PROXY_ADDR"] = get_proxy_addr()
-    base_command = ["docker-compose", "-f", str(path), "-p", cluster_name]
-    if extra_files is not None:
-        for extra_file in extra_files:
-            base_command += ["-f", extra_file]
-    args = base_command + args
-    subprocess.check_call(args, env=process_env)
-
-
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
     try:
         wait_for_master(master_host, master_port, timeout=100)
         return
     except MasterTimeoutExpired:
         print("Timed out connecting to master, but attempting to dump logs from cluster...")
-        docker_compose(["logs"], cluster_name)
+        logs(cluster_name=cluster_name, follow=False)
         raise ConnectionError("Timed out connecting to master")
 
 
 def master_up(
     port: int,
-    master_config_path: Optional[Path],
-    storage_host_path: Path,
-    master_name: str,
-    image_repo_prefix: Optional[str],
-    version: Optional[str],
+    master_config_path: Optional[pathlib.Path],
+    storage_host_path: pathlib.Path,
+    master_name: Optional[str],
+    image_repo_prefix: str,
+    version: str,
     db_password: str,
     delete_db: bool,
     autorestart: bool,
     cluster_name: str,
-    auto_work_dir: Optional[Path],
+    auto_work_dir: Optional[pathlib.Path],
 ) -> None:
-    command = ["up", "-d"]
-    if image_repo_prefix is None:
-        image_repo_prefix = "determinedai"
-    if version is None:
-        version = determined.__version__
-    if autorestart:
-        restart_policy = "unless-stopped"
-    else:
-        restart_policy = "no"
-
-    env = {
-        "INTEGRATIONS_HOST_PORT": str(port),
-        "DET_DB_PASSWORD": db_password,
-        "IMAGE_REPO_PREFIX": image_repo_prefix,
-        "DET_VERSION": version,
-        "DET_RESTART_POLICY": restart_policy,
-    }
-
     # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
-    master_conf = {}
     make_temp_conf = False
+
+    if master_name is None:
+        master_name = f"{cluster_name}_{MASTER_NAME}"
 
     if master_config_path is not None:
         with master_config_path.open() as f:
             master_conf = yaml.safe_load(f)
     else:
-        # These defaults come from master/packaging/master.yaml (except for host_path).
-        master_conf = {
-            "db": {
-                "user": "postgres",
-                "host": "determined-db",
-                "port": 5432,
-                "name": "determined",
-            },
-            "checkpoint_storage": {
-                "type": "shared_fs",
-                "host_path": appdirs.user_data_dir("determined"),
-                "save_experiment_best": 0,
-                "save_trial_best": 1,
-                "save_trial_latest": 1,
-            },
-        }
+        master_conf = MASTER_CONF_DEFAULT
         make_temp_conf = True
 
     if storage_host_path is not None:
@@ -169,6 +151,13 @@ def master_up(
         }
         make_temp_conf = True
 
+    # Ensure checkpoint storage directory exists.
+    final_storage_host_path = master_conf.get("checkpoint_storage", {}).get("host_path")
+    if final_storage_host_path is not None:
+        final_storage_host_path = pathlib.Path(final_storage_host_path)
+        if not final_storage_host_path.exists():
+            final_storage_host_path.mkdir(parents=True)
+
     if auto_work_dir is not None:
         work_dir = str(auto_work_dir.resolve())
         master_conf.setdefault("task_container_defaults", {})["work_dir"] = work_dir
@@ -177,56 +166,122 @@ def master_up(
         )
         make_temp_conf = True
 
-    # Ensure checkpoint storage directory exists.
-    final_storage_host_path = master_conf.get("checkpoint_storage", {}).get("host_path")
-    if final_storage_host_path is not None:
-        final_storage_host_path = Path(final_storage_host_path)
-        if not final_storage_host_path.exists():
-            final_storage_host_path.mkdir(parents=True)
-
     if make_temp_conf:
         fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")
         with open(fd, "w") as f:
             yaml.dump(master_conf, f)
-        master_config_path = Path(temp_path)
+        master_config_path = pathlib.Path(temp_path)
 
     # This is always true by now, but mypy needs help.
     assert master_config_path is not None
+    restart_policy = "unless-stopped" if autorestart else "no"
+    env = {
+        "DET_MASTER_HTTP_PORT": str(port),
+        "DET_DB_PASSWORD": db_password,
+        "DET_LOG_INFO": "info",
+    }
 
-    env["DET_MASTER_CONFIG"] = str(master_config_path.resolve())
+    # Kill existing master container if exists.
+    master_down(master_name=master_name, delete_db=delete_db, cluster_name=cluster_name)
 
-    master_down(master_name, delete_db)
-    docker_compose(command, master_name, env)
+    # Create network.
+    client = docker_client()
+    print(f"Creating network {NETWORK_NAME}...")
+    client.networks.create(name=NETWORK_NAME, attachable=True)
+
+    # Start db.
+    db_up(password=db_password, network_name=NETWORK_NAME, cluster_name=cluster_name)
+
+    # Start master instance.
+    print(f"Creating {master_name}...")
+    volumes = [f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml"]
+    client.containers.run(
+        image=f"{image_repo_prefix}/determined-master:{version}",
+        environment=env,
+        init=True,
+        mounts=[],
+        volumes=volumes,
+        name=master_name,
+        detach=True,
+        labels={},
+        restart_policy={"Name": restart_policy},
+        device_requests=None,
+        ports={"8080": f"{port}"},
+    )
+
+    # Connect to the network separately to set alias.
+    network = client.networks.get(NETWORK_NAME)
+    network.connect(container=master_name, aliases=["determined-master"])
+
     _wait_for_master("localhost", port, cluster_name)
 
 
-def master_down(master_name: str, delete_db: bool) -> None:
+def db_up(password: str, network_name: str, cluster_name: str) -> None:
+    name = f"{cluster_name}_{DB_NAME}"
+    print(f"Creating {name}...")
+    env = {"POSTGRES_DB": "determined", "POSTGRES_PASSWORD": password}
+    client = docker_client()
+    client.containers.run(
+        image="postgres:10.14",
+        environment=env,
+        mounts=[],
+        volumes=[f"{cluster_name}_{VOLUME_NAME}:/var/lib/postgresql/data"],
+        name=name,
+        detach=True,
+        labels={},
+        restart_policy={"Name": "unless-stopped"},
+        device_requests=None,
+        command="--max_connections=96 --shared_buffers=512MB",
+    )
+    # Connect to the network separately to set alias.
+    network = client.networks.get(network_name)
+    network.connect(container=name, aliases=["determined-db"])
+
+
+def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
+    if master_name is None:
+        master_name = f"{cluster_name}_{MASTER_NAME}"
+
+    _kill_containers(names=[master_name, f"{cluster_name}_{DB_NAME}"])
+
+    client = docker_client()
+    # Remove the volume if specified.
     if delete_db:
-        docker_compose(["down", "--volumes", "-t", "1"], master_name)
-    else:
-        docker_compose(["down", "-t", "1"], master_name)
+        volume_name = f"{cluster_name}_{VOLUME_NAME}"
+        try:
+            volume = client.volumes.get(volume_name)
+            print(f"Removing db volume {volume_name}")
+            volume.remove()
+        except docker.errors.NotFound:
+            print(f"Volume {volume_name} not found.")
+
+    # Remove network if exists.
+    networks = client.networks.list(names=[NETWORK_NAME])
+    for network in networks:
+        print(f"Removing network {network.name}")
+        network.remove()
 
 
 def cluster_up(
     num_agents: int,
     port: int,
-    master_config_path: Optional[Path],
-    storage_host_path: Path,
+    master_config_path: Optional[pathlib.Path],
+    storage_host_path: pathlib.Path,
     cluster_name: str,
-    image_repo_prefix: Optional[str],
-    version: Optional[str],
+    image_repo_prefix: str,
+    version: str,
     db_password: str,
     delete_db: bool,
     gpu: bool,
     autorestart: bool,
-    auto_work_dir: Optional[Path],
+    auto_work_dir: Optional[pathlib.Path],
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
         port=port,
         master_config_path=master_config_path,
         storage_host_path=storage_host_path,
-        master_name=cluster_name,
+        master_name=f"{cluster_name}_{MASTER_NAME}",
         image_repo_prefix=image_repo_prefix,
         version=version,
         db_password=db_password,
@@ -254,18 +309,40 @@ def cluster_up(
 
 
 def cluster_down(cluster_name: str, delete_db: bool) -> None:
-    master_down(master_name=cluster_name, delete_db=delete_db)
+    master_down(
+        master_name=f"{cluster_name}_{MASTER_NAME}", delete_db=delete_db, cluster_name=cluster_name
+    )
     stop_cluster_agents(cluster_name=cluster_name)
 
 
-def logs(cluster_name: str, no_follow: bool) -> None:
-    docker_compose(["logs"] if no_follow else ["logs", "-f"], cluster_name)
+def logs(cluster_name: str, follow: bool) -> None:
+    def docker_logs(container_name: str) -> None:
+        client = docker_client()
+        try:
+            container = client.containers.get(container_name)
+        except docker.errors.NotFound:
+            return
+        log_stream = container.logs(stream=follow)
+        if not follow:
+            print(log_stream.decode("utf-8"))
+            return
+        log_line = next(log_stream)
+        while log_line:
+            print(log_line.decode("utf-8").strip())
+            log_line = next(log_stream)
+
+    master_name = f"{cluster_name}_{MASTER_NAME}"
+    db_name = f"{cluster_name}_{DB_NAME}"
+    master_thread = threading.Thread(target=docker_logs, args=(master_name,))
+    db_thread = threading.Thread(target=docker_logs, args=(db_name,))
+    db_thread.start()
+    master_thread.start()
 
 
 def agent_up(
     master_host: str,
     master_port: int,
-    agent_config_path: Optional[Path],
+    agent_config_path: Optional[pathlib.Path],
     agent_name: str,
     agent_resource_pool: Optional[str],
     image_repo_prefix: Optional[str],
@@ -296,10 +373,6 @@ def agent_up(
 
     if agent_resource_pool is not None:
         environment["DET_RESOURCE_POOL"] = agent_resource_pool
-    if image_repo_prefix is None:
-        image_repo_prefix = "determinedai"
-    if version is None:
-        version = determined.__version__
 
     _wait_for_master(master_host, master_port, cluster_name)
 
@@ -317,10 +390,9 @@ def agent_up(
     restart_policy = {"Name": "unless-stopped"} if autorestart else None
     device_requests = [GPU_DEVICE_REQUEST] if gpu else None
 
-    docker_client = docker.from_env()
-
+    client = docker_client()
     print(f"Starting {agent_name}")
-    docker_client.containers.run(
+    client.containers.run(
         image=image,
         environment=environment,
         init=init,
@@ -335,8 +407,18 @@ def agent_up(
     )
 
 
-def _kill_containers(containers: docker.models.containers.Container) -> None:
+def _kill_containers(names: Optional[List[str]] = None, labels: Optional[List[str]] = None) -> None:
+    filters = {}
+    if names:
+        filters["name"] = names
+    if labels:
+        filters["label"] = labels
+    client = docker_client()
+    containers = client.containers.list(all=True, filters=filters)
     for container in containers:
+        # Docker will match container names containing the string instead of strictly matching.
+        if names and container.name not in names:
+            continue
         print(f"Stopping {container.name}")
         container.stop(timeout=20)
         print(f"Removing {container.name}")
@@ -344,22 +426,12 @@ def _kill_containers(containers: docker.models.containers.Container) -> None:
 
 
 def stop_all_agents() -> None:
-    docker_client = docker.from_env()
-    filters = {"label": ["ai.determined.type=agent"]}
-    to_stop = docker_client.containers.list(all=True, filters=filters)
-    _kill_containers(to_stop)
+    _kill_containers(labels=["ai.determined.type=agent"])
 
 
 def stop_cluster_agents(cluster_name: str) -> None:
-    docker_client = docker.from_env()
-    labels = [f"determined.cluster={cluster_name}"]
-    filters = {"label": labels}
-    to_stop = docker_client.containers.list(all=True, filters=filters)
-    _kill_containers(to_stop)
+    _kill_containers(labels=[f"determined.cluster={cluster_name}"])
 
 
 def stop_agent(agent_name: str) -> None:
-    docker_client = docker.from_env()
-    filters = {"name": [agent_name]}
-    to_stop = docker_client.containers.list(all=True, filters=filters)
-    _kill_containers(to_stop)
+    _kill_containers(names=[agent_name])
