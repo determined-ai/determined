@@ -165,10 +165,6 @@ Optional Arguments:
       -  Maximum number of dynamic agent instances at one time.
       -  5
 
-   -  -  ``--static-agents``
-      -  Number of non-preemptible static agent instances.
-      -  0
-
    -  -  ``--max-aux-containers-per-agent``
       -  The maximum number of containers running for agents in the auxiliary resource pool.
       -  100
