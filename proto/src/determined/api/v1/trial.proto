@@ -737,7 +737,7 @@ message ComparableTrial {
 
 // Enum for supported range query types
 enum RangeType {
-  // unspecified
+  // Represents an unspecified range type
   RANGE_TYPE_UNSPECIFIED = 0;
   // Represents a range of batches
   RANGE_TYPE_BATCH = 1;

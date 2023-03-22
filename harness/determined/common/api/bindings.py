@@ -1960,29 +1960,41 @@ class v1CurrentUserResponse:
         return out
 
 class v1DataPoint:
+    epoch: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         batches: int,
+        time: str,
         value: float,
+        epoch: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.batches = batches
+        self.time = time
         self.value = value
+        if not isinstance(epoch, Unset):
+            self.epoch = epoch
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DataPoint":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "batches": obj["batches"],
+            "time": obj["time"],
             "value": float(obj["value"]),
         }
+        if "epoch" in obj:
+            kwargs["epoch"] = obj["epoch"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "batches": self.batches,
+            "time": self.time,
             "value": dump_float(self.value),
         }
+        if not omit_unset or "epoch" in vars(self):
+            out["epoch"] = self.epoch
         return out
 
 class v1DataPointEpoch:
@@ -5922,6 +5934,7 @@ class v1MetricType(enum.Enum):
     METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
     METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
+    METRIC_TYPE_GENERIC = "METRIC_TYPE_GENERIC"
 
 class v1Metrics:
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -8138,6 +8151,11 @@ class v1RPQueueStat:
         if not omit_unset or "aggregates" in vars(self):
             out["aggregates"] = None if self.aggregates is None else [x.to_json(omit_unset) for x in self.aggregates]
         return out
+
+class v1RangeType(enum.Enum):
+    RANGE_TYPE_UNSPECIFIED = "RANGE_TYPE_UNSPECIFIED"
+    RANGE_TYPE_BATCH = "RANGE_TYPE_BATCH"
+    RANGE_TYPE_TIME = "RANGE_TYPE_TIME"
 
 class v1RemoveAssignmentsRequest:
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
@@ -12095,21 +12113,45 @@ def get_CompareTrials(
     session: "api.Session",
     *,
     endBatches: "typing.Optional[int]" = None,
+    integerRange_gt: "typing.Optional[int]" = None,
+    integerRange_gte: "typing.Optional[int]" = None,
+    integerRange_incl: "typing.Optional[typing.Sequence[int]]" = None,
+    integerRange_lt: "typing.Optional[int]" = None,
+    integerRange_lte: "typing.Optional[int]" = None,
+    integerRange_notIn: "typing.Optional[typing.Sequence[int]]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
+    metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
+    rangeType: "typing.Optional[v1RangeType]" = None,
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
+    timeRange_gt: "typing.Optional[str]" = None,
+    timeRange_gte: "typing.Optional[str]" = None,
+    timeRange_lt: "typing.Optional[str]" = None,
+    timeRange_lte: "typing.Optional[str]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
+        "integerRange.gt": integerRange_gt,
+        "integerRange.gte": integerRange_gte,
+        "integerRange.incl": integerRange_incl,
+        "integerRange.lt": integerRange_lt,
+        "integerRange.lte": integerRange_lte,
+        "integerRange.notIn": integerRange_notIn,
         "maxDatapoints": maxDatapoints,
+        "metricIds": metricIds,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
+        "rangeType": rangeType.value if rangeType is not None else None,
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
+        "timeRange.gt": timeRange_gt,
+        "timeRange.gte": timeRange_gte,
+        "timeRange.lt": timeRange_lt,
+        "timeRange.lte": timeRange_lte,
         "trialIds": trialIds,
         "xAxis": xAxis.value if xAxis is not None else None,
     }
