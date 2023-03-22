@@ -247,7 +247,7 @@ def write_master_logs(args: Namespace, temp_dir: str) -> str:
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
         for response in responses:
-            f.write(format_log_entry(response.logEntry))
+            f.write(format_log_entry(response.logEntry) + "\n")
     return file_path
 
 
