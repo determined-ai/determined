@@ -1,0 +1,1 @@
+{"trial_type": "PyTorchTrial", "experiment_config": null, "hparams": null, "trial_cls_spec": "train:OneVarPytorchTrial", "is_trainer": true, "trial_in_main": true}

@@ -1,19 +1,18 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, Space } from 'antd';
+import { Dropdown, Modal, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
-import Input from 'components/kit/Input';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -40,8 +39,7 @@ type Action = {
 
 interface Props {
   modelVersion: ModelVersion;
-  onSaveDescription: (editedNotes: string) => Promise<void>;
-  onSaveName: (editedName: string) => Promise<void>;
+  fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
   workspace: Workspace;
 }
@@ -49,9 +47,8 @@ interface Props {
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
   workspace,
-  onSaveDescription,
   onUpdateTags,
-  onSaveName,
+  fetchModelVersion,
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
@@ -64,7 +61,7 @@ const ModelVersionHeader: React.FC<Props> = ({
     useModalModelVersionDelete();
 
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ modelName: modelVersion.name ?? '', onSaveName });
+    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
 
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
@@ -101,18 +98,14 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <Input
-            defaultValue={modelVersion.comment ?? ''}
-            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
-            placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-            onBlur={(e) => {
-              const newValue = e.currentTarget.value;
-              onSaveDescription(newValue);
-            }}
-            onPressEnter={(e) => {
-              e.currentTarget.blur();
-            }}
-          />
+          <div>
+            {(modelVersion.comment ?? '') || (
+              <Typography.Text
+                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}>
+                N/A
+              </Typography.Text>
+            )}
+          </div>
         ),
         label: 'Description',
       },
@@ -128,7 +121,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onSaveDescription, onUpdateTags, users, canModifyModelVersion]);
+  }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
@@ -179,23 +172,27 @@ const ModelVersionHeader: React.FC<Props> = ({
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `from determined.experimental import Determined
-client = Determined()
+    return `import determined as det
+from determined.experimental import client
+
 model_entry = client.get_model("${escapedModelName}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
+path = ckpt.download()
 
-################ Approach 1 ################
-# You can load the trial directly without having to instantiate the model.
-# The trial should have the model as an attribute.
-trial = ckpt.load()
+# Load a PyTorchTrial from a checkpoint:
+from determined import pytorch
+my_trial = \\
+    pytorch.load_trial_from_checkpoint_path(path)
 
-################ Approach 2 ################
-# You can download the checkpoint and load the model state manually.
-ckpt_path = ckpt.download()
-ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
-# assuming your model is already instantiated, you can then load the state_dict
-my_model.load_state_dict(ckpt['models_state_dict'][0])`;
+# Load a Keras model from TFKerasTrial checkpoint:
+from determined import keras
+model = keras.load_model_from_checkpoint_path(path)
+
+# Import your checkpointed code:
+with det.import_from_path(path + "/code"):
+    import my_model_def as ckpt_model_def
+`;
   }, [modelVersion]);
 
   const handleCopy = useCallback(async () => {
@@ -277,9 +274,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Dropdown>
           </div>
         </div>
-        <Spinner spinning>
-          <InfoBox rows={infoRows} separator={false} />
-        </Spinner>
+        <InfoBox rows={infoRows} separator={false} />
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}

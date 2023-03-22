@@ -151,7 +151,7 @@ def unwrap_streaming_response(anno: swagger_parser.TypeAnno):
 
 def gen_function(func: swagger_parser.Function) -> Code:
     # Function name.
-    out = [f"def {func.method}_{func.name}("]
+    out = [f"def {func.operation_name_sc()}("]
 
     # Function parameters.
     out += ['    session: "api.Session",']
@@ -242,17 +242,20 @@ def gen_function(func: swagger_parser.Function) -> Code:
             # Too many quotes to do it inline:
             yieldable = load(returntype, '_j["result"]')
             out += [
-                f"        for _line in _resp.iter_lines():",
-                f"            _j = json.loads(_line)",
-                f'            if "error" in _j:',
-                f"                raise APIHttpStreamError(",
-                f'                    "{func.method}_{func.name}",',
-                f'                    runtimeStreamError.from_json(_j["error"])',
-                f"            )",
-                f"            yield {yieldable}",
+                f"        try:",
+                f"            for _line in _resp.iter_lines():",
+                f"                _j = json.loads(_line)",
+                f'                if "error" in _j:',
+                f"                    raise APIHttpStreamError(",
+                f'                        "{func.operation_name_sc()}",',
+                f'                        runtimeStreamError.from_json(_j["error"])',
+                f"                )",
+                f"                yield {yieldable}",
+                f"        except requests.exceptions.ChunkedEncodingError:",
+                f'            raise APIHttpStreamError("{func.operation_name_sc()}", runtimeStreamError(message="ChunkedEncodingError"))',
                 f"        return",
             ]
-    out += [f'    raise APIHttpError("{func.method}_{func.name}", _resp)']
+    out += [f'    raise APIHttpError("{func.operation_name_sc()}", _resp)']
 
     return "\n".join(out)
 

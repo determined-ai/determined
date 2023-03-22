@@ -115,8 +115,10 @@ TypeDefs = typing.Dict[str, typing.Optional[TypeDef]]
 
 @dataclass
 class Function:
+    """Remote HTTP-based call"""
+
     name: str
-    method: str
+    method: str  # http method.
     path: str
     params: typing.Dict[str, Parameter]
     responses: typing.Dict[str, TypeAnno]
@@ -136,6 +138,10 @@ class Function:
             out += f"\n       {code} = {resp}"
         out += "\n    }"
         return out
+
+    def operation_name_sc(self) -> str:
+        """Returns the name of the operation in snake_case"""
+        return f"{self.method}_{self.name}"
 
 
 @dataclass

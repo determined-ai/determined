@@ -12,7 +12,6 @@ ON_DEMAND_QUOTA_CODES = {
     "nvidia-tesla-v100": "NVIDIA_V100_GPUS",
     "nvidia-tesla-p100": "NVIDIA_P100_GPUS",
     "nvidia-tesla-p4": "NVIDIA_P4_GPUS",
-    "nvidia-tesla-k80": "NVIDIA_K80_GPUS",
     "nvidia-tesla-a100": "NVIDIA_A100_GPUS",
 }
 

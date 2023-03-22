@@ -1,13 +1,11 @@
 package actor
 
 import (
-	"path/filepath"
+	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	prom "github.com/prometheus/client_golang/prometheus"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -16,7 +14,6 @@ import (
 const (
 	promNamespace = "determined"
 	promSubsystem = "actors"
-	wildcard      = "*"
 )
 
 var (
@@ -68,9 +65,10 @@ func (r *Ref) recordErr(ctx *Context) func(error) {
 func (r *Ref) promLabels(ctx *Context) []string {
 	from := "system"
 	if ctx != nil && ctx.sender != nil {
-		from = r.normalizeAddr(ctx.sender.address.path)
+		from = actorToGenericName(ctx.sender.actor)
 	}
-	to := r.normalizeAddr(r.address.path)
+
+	to := actorToGenericName(r.actor)
 	msg := "PreStart"
 	if ctx != nil {
 		msg = reflect.TypeOf(ctx.message).String()
@@ -78,24 +76,8 @@ func (r *Ref) promLabels(ctx *Context) []string {
 	return []string{from, to, msg}
 }
 
-// normalizeAddr exists to normalize actor paths like /trials/1 and /noisy-actor-xyz into
-// /trials/* and /noisy-actor-* so that there isn't an explosion of prometheus labels.
-func (r *Ref) normalizeAddr(addr string) string {
-	out := "/"
-	for _, part := range filepath.SplitList(addr) {
-		if _, err := uuid.Parse(part); err == nil {
-			part = wildcard
-		} else if _, err := strconv.Atoi(part); err == nil {
-			part = wildcard
-		} else {
-			for _, noisy := range noisyActors {
-				if strings.Contains(part, noisy) {
-					part = part[:len(noisy)] + wildcard
-					break
-				}
-			}
-		}
-		out = filepath.Join(out, part)
-	}
+func actorToGenericName(actor Actor) string {
+	out := fmt.Sprintf("%T", actor)
+	out = strings.TrimPrefix(out, "*")
 	return out
 }

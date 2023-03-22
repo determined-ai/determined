@@ -35,7 +35,6 @@ import torchvision
 from torch.optim.lr_scheduler import LambdaLR
 
 from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -90,7 +89,7 @@ class Discriminator(nn.Module):
 class GANTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
-        self.logger = TorchWriter()
+        self.logger = self.context.get_tensorboard_writer()
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.
@@ -160,7 +159,7 @@ class GANTrial(PyTorchTrial):
         # Log sampled images to Tensorboard.
         sample_imgs = generated_imgs[:6]
         grid = torchvision.utils.make_grid(sample_imgs)
-        self.logger.writer.add_image(f"generated_images_epoch_{epoch_idx}", grid, batch_idx)
+        self.logger.add_image(f"generated_images_epoch_{epoch_idx}", grid, batch_idx)
 
         # Calculate generator loss.
         valid = torch.ones(imgs.size(0), 1)
