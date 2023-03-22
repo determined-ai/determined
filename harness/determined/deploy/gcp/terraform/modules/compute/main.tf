@@ -78,6 +78,7 @@ resource "google_compute_instance" "master_instance" {
         max_agent_starting_period: ${var.max_agent_starting_period}
         type: gcp
         name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
+        labels: ${jsonencode(var.labels)}
         label_key: managed-by
         label_value: det-master-${var.unique_id}-${var.det_version_key}
         network_interface:
