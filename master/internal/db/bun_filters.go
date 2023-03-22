@@ -157,7 +157,7 @@ func ValidateInt32FieldFilterComparison(
 	if filter.Lt == nil && filter.Lte == nil {
 		return nil
 	}
-	if filter.Lt != nil && filter.Lte != nil {
+	if filter.Lt != nil && filter.Lte != nil { //nolint: gocritic
 		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), //nolint: gosec
 			float64(*((*int32)(unsafe.Pointer(filter.Lte)))))) //nolint: gosec
 	} else if filter.Lt != nil {
@@ -165,7 +165,7 @@ func ValidateInt32FieldFilterComparison(
 	} else {
 		maxValue = *((*int32)(unsafe.Pointer(filter.Lte))) //nolint: gosec
 	}
-	if filter.Gt != nil && filter.Gte != nil {
+	if filter.Gt != nil && filter.Gte != nil { //nolint: gocritic
 		minValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), //nolint: gosec
 			float64(*((*int32)(unsafe.Pointer(filter.Gte)))))) //nolint: gosec
 	} else if filter.Gt != nil {
@@ -196,7 +196,7 @@ func ValidateTimeStampFieldFilterComparison(
 	if filter.Lt == nil && filter.Lte == nil {
 		return nil
 	}
-	if filter.Lt != nil && filter.Lte != nil {
+	if filter.Lt != nil && filter.Lte != nil { //nolint: gocritic
 		lt := tryAsTime(filter.Lt)
 		lte := tryAsTime(filter.Lte)
 		if lt.Before(*lte) {
@@ -209,7 +209,7 @@ func ValidateTimeStampFieldFilterComparison(
 	} else {
 		endTime = *tryAsTime(filter.Lte)
 	}
-	if filter.Gt != nil && filter.Gte != nil {
+	if filter.Gt != nil && filter.Gte != nil { //nolint: gocritic
 		gt := tryAsTime(filter.Gt)
 		gte := tryAsTime(filter.Gte)
 		if gt.After(*gte) {
