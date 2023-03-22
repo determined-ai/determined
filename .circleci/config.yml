@@ -386,13 +386,13 @@ commands:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              pip install --progress-bar off <<parameters.extras-requires>>
+              tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
-              pip install -r <<parameters.extra-requirements-file>>
+              tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
