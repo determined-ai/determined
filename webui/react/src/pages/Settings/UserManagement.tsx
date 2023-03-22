@@ -34,7 +34,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { RolesStore } from 'stores/roles';
+import roleStore from 'stores/roles';
 import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
@@ -147,7 +147,6 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
 const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
-  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
   const apiConfig = useMemo<FetchUsersConfig>(
@@ -169,6 +168,8 @@ const UserManagement: React.FC = () => {
     Loaded: (users) => users.pagination.total ?? 0,
     NotLoaded: () => 0,
   });
+  const canceler = useRef(new AbortController());
+
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
@@ -176,12 +177,12 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    usersStore.ensureUsersFetched(canceler, apiConfig, true);
-  }, [settings, canceler, apiConfig]);
+    usersStore.ensureUsersFetched(canceler.current, apiConfig, true);
+  }, [settings, apiConfig]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.signal });
+      const response = await getGroups({}, { signal: canceler.current.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
@@ -190,7 +191,12 @@ const UserManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch groups.' });
     }
-  }, [canceler.signal]);
+  }, []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -200,11 +206,7 @@ const UserManagement: React.FC = () => {
     fetchGroups();
   }, [fetchGroups]);
 
-  useEffect(() => {
-    if (rbacEnabled) {
-      RolesStore.fetchRoles(canceler);
-    }
-  }, [canceler, rbacEnabled]);
+  useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
   const CreateUserModal = useModal(CreateUserModalComponent);
 

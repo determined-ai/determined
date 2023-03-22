@@ -25,7 +25,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { RolesStore } from 'stores/roles';
+import roleStore from 'stores/roles';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -96,14 +96,15 @@ const GroupActionDropdown = ({
 };
 
 const GroupManagement: React.FC = () => {
+  const rbacEnabled = useFeature().isOn('rbac');
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
   const [users, setUsers] = useState<DetailedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<readonly React.Key[]>([]);
-  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const canceler = useRef(new AbortController());
 
   const { settings, updateSettings } = useSettings<GroupManagementSettings>(settingsConfig);
 
@@ -117,7 +118,7 @@ const GroupManagement: React.FC = () => {
           limit: settings.tableLimit,
           offset: settings.tableOffset,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
 
       setTotal(response.pagination?.total ?? 0);
@@ -130,7 +131,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings]);
+  }, [settings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
@@ -144,7 +145,7 @@ const GroupManagement: React.FC = () => {
 
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
-      const response = await getUsers({}, { signal: canceler.signal });
+      const response = await getUsers({}, { signal: canceler.current.signal });
       setUsers((prev) => {
         if (isEqual(prev, response.users)) return prev;
         return response.users;
@@ -152,7 +153,12 @@ const GroupManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     }
-  }, [canceler.signal]);
+  }, []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   useEffect(() => {
     fetchGroups();
@@ -160,12 +166,7 @@ const GroupManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const rbacEnabled = useFeature().isOn('rbac');
-  useEffect(() => {
-    if (rbacEnabled) {
-      RolesStore.fetchRoles(canceler);
-    }
-  }, [canceler, rbacEnabled]);
+  useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
   const CreateGroupModal = useModal(CreateGroupModalComponent);
 

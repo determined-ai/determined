@@ -19,7 +19,7 @@ import {
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
-import { RolesStore } from 'stores/roles';
+import roleStore from 'stores/roles';
 import usersStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
@@ -73,7 +73,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
 
   const username = Form.useWatch(USER_NAME_NAME, form);
 
-  const knownRoles = RolesStore.useRoles();
+  const knownRoles = useObservable(roleStore.roles);
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
       try {

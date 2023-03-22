@@ -9,6 +9,7 @@ import { isAuthFailure } from 'shared/utils/service';
 import authStore from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { PermissionsStore } from 'stores/permissions';
+import roleStore from 'stores/roles';
 import usersStore from 'stores/users';
 import { useResetWorkspaces } from 'stores/workspaces';
 import handleError from 'utils/error';
@@ -25,6 +26,7 @@ const SignOut: React.FC = () => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
       PermissionsStore.resetMyAssignmentsAndRoles();
+      roleStore.reset();
       usersStore.updateCurrentUser(null);
       resetWorkspaces();
       try {
