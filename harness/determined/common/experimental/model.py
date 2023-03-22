@@ -1,7 +1,6 @@
 import datetime
 import enum
 import json
-import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
@@ -74,31 +73,6 @@ class ModelVersion:
         bindings.delete_DeleteModelVersion(
             self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
-
-    @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
-        return cls(
-            session,
-            model_version_id=data.get("id", 1),
-            checkpoint=checkpoint.Checkpoint._from_json(data["checkpoint"], session),
-            metadata=data.get("metadata", {}),
-            name=data.get("name", ""),
-            comment=data.get("comment", ""),
-            notes=data.get("notes", ""),
-            model_id=data["model"]["id"],
-            model_name=data["model"]["name"],
-            model_version=data["version"],
-        )
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
-        warnings.warn(
-            "ModelVersion.from_json() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return cls._from_json(data, session)
 
     @classmethod
     def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":
@@ -370,31 +344,6 @@ class Model:
         return "Model(id={}, name={}, metadata={})".format(
             self.model_id, self.name, json.dumps(self.metadata)
         )
-
-    @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
-        return cls(
-            session,
-            model_id=data["id"],
-            name=data["name"],
-            description=data.get("description", ""),
-            creation_time=util.parse_protobuf_timestamp(data["creationTime"]),
-            last_updated_time=util.parse_protobuf_timestamp(data["lastUpdatedTime"]),
-            metadata=data.get("metadata", {}),
-            labels=data.get("labels", []),
-            username=data.get("username", ""),
-            archived=data.get("archived", False),
-        )
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
-        warnings.warn(
-            "Model.from_json() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return cls._from_json(data, session)
 
     @classmethod
     def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":

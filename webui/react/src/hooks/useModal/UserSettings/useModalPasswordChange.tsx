@@ -41,7 +41,6 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
     <Form.Item
       label={OLD_PASSWORD_LABEL}
       name={OLD_PASSWORD_NAME}
-      required
       rules={[
         {
           message: INCORRECT_PASSWORD_MESSAGE,

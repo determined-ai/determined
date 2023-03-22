@@ -114,6 +114,8 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         self._check_experiment_config_optimizations()
 
+        self._tbd_writer = None  # type: Optional[Any]
+
     def _check_experiment_config_optimizations(self) -> None:
         """
         Check if the user specified options in optimizations are incompatible with
@@ -337,3 +339,36 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
+
+    def get_tensorboard_writer(self) -> Any:
+        """
+        This function returns an instance of ``torch.utils.tensorboard.SummaryWriter``
+
+        Trials users who wish to log to TensorBoard can use this writer object.
+        We provide and manage a writer in order to save and upload TensorBoard
+        files automatically on behalf of the user.
+
+        Usage example:
+
+        .. code-block:: python
+
+           class MyModel(PyTorchTrial):
+               def __init__(self, context):
+                   ...
+                   self.writer = context.get_tensorboard_writer()
+
+               def train_batch(self, batch, epoch_idx, batch_idx):
+                   self.writer.add_scalar('my_metric', np.random.random(), batch_idx)
+                   self.writer.add_image('my_image', torch.ones((3,32,32)), batch_idx)
+        """
+
+        if self._tbd_writer is None:
+            from torch.utils.tensorboard import SummaryWriter
+
+            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+
+        return self._tbd_writer
+
+    def _maybe_reset_tbd_writer(self) -> None:
+        if self._tbd_writer is not None:
+            self._tbd_writer.close()

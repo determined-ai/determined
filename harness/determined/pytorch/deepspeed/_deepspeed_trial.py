@@ -15,9 +15,8 @@ import torch
 from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
-from determined import layers, pytorch, tensorboard, util, workload
+from determined import layers, pytorch, util, workload
 from determined.pytorch import deepspeed as det_ds
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
@@ -67,13 +66,6 @@ class DeepSpeedTrialController(det.TrialController):
             )
 
         self.steps_completed = self.env.steps_completed
-
-    @classmethod
-    def create_metric_writer(
-        cls: Type["DeepSpeedTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -347,6 +339,7 @@ class DeepSpeedTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.context._maybe_reset_tbd_writer()
             self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
@@ -475,19 +468,24 @@ class DeepSpeedTrialController(det.TrialController):
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
+        if self.is_chief:
+            step_duration = time.time() - step_start_time
+            logging.info(
+                det.util.make_timing_log("trained", step_duration, num_inputs, num_batches)
+            )
+            self.prof.set_training(False)
+
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(),
+                "train",
+                self.steps_completed,
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
+            )
+
         if not self.is_chief:
-            # The training metrics are reported only in the chief process.
             return {}
 
-        step_duration = time.time() - step_start_time
-        logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
-        self.prof.set_training(False)
-
-        self.metric_writer.on_train_step_end(
-            self.steps_completed,
-            metrics["avg_metrics"],
-            metrics["batch_metrics"],
-        )
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -499,14 +497,6 @@ class DeepSpeedTrialController(det.TrialController):
             model.eval()
 
         step_start_time = time.time()
-
-        for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_start is now deprecated, "
-                    "please use on_validation_start instead"
-                )
-                callback.on_validation_step_start()
 
         for callback in self.callbacks.values():
             callback.on_validation_start()
@@ -569,7 +559,6 @@ class DeepSpeedTrialController(det.TrialController):
 
         if self.context.distributed.size > 1 and any(
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-            or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
         ):
             logging.debug(
@@ -579,28 +568,30 @@ class DeepSpeedTrialController(det.TrialController):
             metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_end is now deprecated, please use on_validation_end instead"
-                )
-                callback.on_validation_step_end(metrics)
-
-        for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
+
+        if self.is_chief:
+            num_inputs *= self.context._mpu.data_parallel_world_size
+            step_duration = time.time() - step_start_time
+            logging.info(
+                det.util.make_timing_log(
+                    "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
+                )
+            )
+
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+            )
 
         if not self.is_chief:
             return {}
 
-        num_inputs *= self.context._mpu.data_parallel_world_size
-        step_duration = time.time() - step_start_time
-        logging.info(
-            det.util.make_timing_log(
-                "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
-            )
-        )
-
-        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
+
+    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
+        det.pytorch._log_tb_metrics(
+            self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+        )
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

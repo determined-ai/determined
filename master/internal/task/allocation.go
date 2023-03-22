@@ -125,7 +125,7 @@ type (
 )
 
 const (
-	killCooldown       = 30 * time.Second
+	killCooldown       = 15 * time.Second
 	okExitMessage      = "allocation exited successfully"
 	missingExitMessage = ""
 )
@@ -554,12 +554,9 @@ func (a *Allocation) ResourcesStateChanged(
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
-		a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
-		a.sendEvent(ctx, sproto.Event{AssignedEvent: &sproto.AllocatedEvent{Recovered: a.restored}})
-		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
-			ctx.Log().
-				WithError(err).
-				Errorf("allocation will not be properly accounted for")
+		a.markResourcesStarted(ctx)
+		if a.model.StartTime == nil {
+			a.markResourcesStarted(ctx)
 		}
 	case sproto.Starting:
 		a.setMostProgressedModelState(model.AllocationStateStarting)
@@ -572,6 +569,9 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 
 		a.setMostProgressedModelState(model.AllocationStateRunning)
+		if a.model.StartTime == nil {
+			a.markResourcesStarted(ctx)
+		}
 
 		a.resources[msg.ResourcesID].Started = msg.ResourcesStarted
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
@@ -784,7 +784,7 @@ func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 }
 
 func (a *Allocation) kill(ctx *actor.Context, reason string) {
-	if a.killCooldown != nil && time.Now().UTC().Before(*a.killCooldown) {
+	if a.killCooldown != nil && time.Now().Before(*a.killCooldown) {
 		ctx.Log().Debug("still inside of kill cooldown")
 		return
 	}
@@ -808,8 +808,8 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 
 	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
 	// happened before due to network failures).
-	a.killCooldown = ptrs.Ptr(time.Now().UTC().Add(killCooldown))
-	actors.NotifyAfter(ctx, killCooldown, sproto.AllocationSignalWithReason{
+	a.killCooldown = ptrs.Ptr(time.Now().Add(killCooldown))
+	actors.NotifyAfter(ctx, killCooldown*2, sproto.AllocationSignalWithReason{
 		AllocationSignal:    sproto.KillAllocation,
 		InformationalReason: "killing again after 30s without all container exits",
 	})
@@ -995,6 +995,17 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		// If we ever exit without a reason and we have no exited resources, something has gone
 		// wrong.
 		panic("allocation exited early without a valid reason")
+	}
+}
+
+// markResourcesStarted persists start information.
+func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
+	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
+	a.sendEvent(ctx, sproto.Event{AssignedEvent: &sproto.AllocatedEvent{Recovered: a.restored}})
+	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
+		ctx.Log().
+			WithError(err).
+			Errorf("allocation will not be properly accounted for")
 	}
 }
 
