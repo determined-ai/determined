@@ -137,7 +137,7 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}
@@ -162,7 +162,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}
@@ -202,7 +202,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}
@@ -242,7 +242,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(expIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found, or no permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}

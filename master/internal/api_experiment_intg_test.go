@@ -243,12 +243,6 @@ resources:
 
 	createReq.ProjectId = 1
 
-	// mock for ActivateExperiment (included in Create unless otherwise specified)
-	resQuery := db.Bun().NewSelect()
-	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything).
-		Return(resQuery, nil).Once()
-
 	resp, err = api.CreateExperiment(ctx, createReq)
 	require.NoError(t, err)
 
@@ -904,6 +898,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
+	resQuery := &bun.SelectQuery{}
 
 	cases := []struct {
 		DenyFuncName string
@@ -921,72 +916,144 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.ActivateExperiments(ctx, &apiv1.ActivateExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.PauseExperiment(ctx, &apiv1.PauseExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.PauseExperiments(ctx, &apiv1.PauseExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.CancelExperiment(ctx, &apiv1.CancelExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.CancelExperiments(ctx, &apiv1.CancelExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.KillExperiment(ctx, &apiv1.KillExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperiment", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.KillExperiments(ctx, &apiv1.KillExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.ArchiveExperiments(ctx, &apiv1.ArchiveExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
 				Id: int32(id),
 			})
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
+			authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA}).
+				Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+				q := args.Get(3).(*bun.SelectQuery)
+				*resQuery = *q
+			})
 			_, err := api.UnarchiveExperiments(ctx, &apiv1.UnarchiveExperimentsRequest{
 				ExperimentIds: []int32{int32(id)},
 			})
