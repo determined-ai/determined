@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import argparse
+
 # NEW: import pathlib for opening checkpoint directory
 import pathlib
 
@@ -65,7 +66,7 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
             )
 
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                steps_completed=(batch_idx + 1) + epoch * len(train_loader),
                 metrics={"train_loss": loss.item()},
             )
 
@@ -106,7 +107,6 @@ def load_state(checkpoint_directory, trial_id):
 
     with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
         model = torch.load(f)
-
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
 

@@ -69,7 +69,7 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
             # NEW: Report epoch-based training metrics to Determined master via core_context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                steps_completed=(batch_idx + 1) + epoch * len(train_loader),
                 metrics={"train_loss": loss.item(), "epoch": epoch},
             )
 
@@ -193,7 +193,7 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(0, args.epochs):
 
         # NEW: Calculate steps_completed for plotting test metrics.
         steps_completed = epoch * len(train_loader)

@@ -71,7 +71,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             # or upload checkpoints.
             if core_context.distributed.rank == 0:
                 core_context.train.report_training_metrics(
-                    steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                    steps_completed=(batch_idx + 1) + epoch * len(train_loader),
                     metrics={"train_loss": loss.item()},
                 )
 
