@@ -168,46 +168,86 @@ const ButtonsSection: React.FC = () => {
         <strong>Primary Button variations</strong>
         <Space>
           <Button type="primary">Primary</Button>
-          <Button danger type="primary">Danger</Button>
-          <Button disabled type="primary">Disabled</Button>
-          <Button ghost type="primary">Ghost</Button>
-          <Button loading type="primary">Loading</Button>
+          <Button danger type="primary">
+            Danger
+          </Button>
+          <Button disabled type="primary">
+            Disabled
+          </Button>
+          <Button ghost type="primary">
+            Ghost
+          </Button>
+          <Button loading type="primary">
+            Loading
+          </Button>
         </Space>
         <hr />
         <strong>Link Button variations</strong>
         <Space>
           <Button type="link">Link</Button>
-          <Button danger type="link">Danger</Button>
-          <Button disabled type="link">Disabled</Button>
-          <Button ghost type="link">Ghost</Button>
-          <Button loading type="link">Loading</Button>
+          <Button danger type="link">
+            Danger
+          </Button>
+          <Button disabled type="link">
+            Disabled
+          </Button>
+          <Button ghost type="link">
+            Ghost
+          </Button>
+          <Button loading type="link">
+            Loading
+          </Button>
         </Space>
         <hr />
         <strong>Text Button variations</strong>
         <Space>
           <Button type="text">Text</Button>
-          <Button danger type="text">Danger</Button>
-          <Button disabled type="text">Disabled</Button>
-          <Button ghost type="text">Ghost</Button>
-          <Button loading type="text">Loading</Button>
+          <Button danger type="text">
+            Danger
+          </Button>
+          <Button disabled type="text">
+            Disabled
+          </Button>
+          <Button ghost type="text">
+            Ghost
+          </Button>
+          <Button loading type="text">
+            Loading
+          </Button>
         </Space>
         <hr />
         <strong>Ghost Button variations</strong>
         <Space>
           <Button type="ghost">Ghost</Button>
-          <Button danger type="ghost">Danger</Button>
-          <Button disabled type="ghost">Disabled</Button>
-          <Button ghost type="ghost">Ghost</Button>
-          <Button loading type="ghost">Loading</Button>
+          <Button danger type="ghost">
+            Danger
+          </Button>
+          <Button disabled type="ghost">
+            Disabled
+          </Button>
+          <Button ghost type="ghost">
+            Ghost
+          </Button>
+          <Button loading type="ghost">
+            Loading
+          </Button>
         </Space>
         <hr />
         <strong>Dashed Button variations</strong>
         <Space>
           <Button type="dashed">Dashed</Button>
-          <Button danger type="dashed">Danger</Button>
-          <Button disabled type="dashed">Disabled</Button>
-          <Button ghost type="dashed">Ghost</Button>
-          <Button loading type="dashed">Loading</Button>
+          <Button danger type="dashed">
+            Danger
+          </Button>
+          <Button disabled type="dashed">
+            Disabled
+          </Button>
+          <Button ghost type="dashed">
+            Ghost
+          </Button>
+          <Button loading type="dashed">
+            Loading
+          </Button>
         </Space>
         <hr />
         <strong>Shapes</strong>
