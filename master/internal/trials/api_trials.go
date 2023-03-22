@@ -364,7 +364,7 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 		ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).
 		ColumnExpr("(metrics ->'validation_metrics' ->> 'epoch')::float8 as epoch").
 		Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).
-		Where("trial_id = ?", trialID).OrderExpr("random()")
+		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
 	switch rangeType {
 	case apiv1.RangeType_RANGE_TYPE_TIME:
 		queryColumn = "end_time"
@@ -395,6 +395,5 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	fmt.Println(measurements)
 	return measurements, nil
 }

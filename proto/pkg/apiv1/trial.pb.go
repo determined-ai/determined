@@ -140,7 +140,7 @@ func (XAxis) EnumDescriptor() ([]byte, []int) {
 type RangeType int32
 
 const (
-	// unspecified
+	// Represents an unspecified range type
 	RangeType_RANGE_TYPE_UNSPECIFIED RangeType = 0
 	// Represents a range of batches
 	RangeType_RANGE_TYPE_BATCH RangeType = 1
