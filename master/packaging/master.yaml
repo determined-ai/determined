@@ -78,6 +78,7 @@
 #      zone: <zone>
 #      boot_disk_size: 200
 #      boot_disk_source_image: projects/<project-id>/global/images/<image-name>
+#      labels: {<key1>: <val1>, <key2>: <val2>, ...}
 #      label_key: <label key for agent discovery>
 #      label_value: <label value for agent discovery>
 #      name_prefix: <name prefix>
