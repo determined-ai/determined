@@ -63,7 +63,7 @@ const useModalModelEdit = ({ onClose, model, fetchModel }: Props): ModalHooks =>
             <Input />
           </Form.Item>
           <Form.Item initialValue={model.description} label="Description" name="description">
-            <Input />
+            <Input.TextArea />
           </Form.Item>
         </Form>
       ),
