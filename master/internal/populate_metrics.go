@@ -44,8 +44,8 @@ func makeMetrics() *structpb.Struct {
 }
 
 func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) error {
-	trainingbBatchMetrics := []*structpb.Struct{}
-	validationBatchMetrics := []*structpb.Struct{}
+	trainingAvgMetrics := &structpb.Struct{}
+	validationAvgMetrics := &structpb.Struct{}
 
 	N := 5
 	losses := []float64{}
@@ -59,23 +59,26 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 
 	factors := []Factor{}
 	for i := 0; i < N; i++ {
-		factors = append(factors, Factor{rand.Float64(), rand.Float64()})
+		factors = append(factors, Factor{rand.Float64(), rand.Float64() / 10})
 	}
 
-	batches := 500
-
+	batches := 15000
+	printTime := 200
+	start := time.Now()
 	for b := 0; b < batches; b++ {
+		if b%printTime == 0 {
+			start = time.Now()
+		}
 		for i := 0; i < N; i++ {
 			val := float64(1)
-			if rand.Float64() <= factors[i].b {
+			if rand.Float64() <= factors[i].a {
 				val = float64(-1)
 			}
-			losses[i] = losses[i] * (1 - (val)*rand.Float64()*factors[i].a)
+			losses[i] = losses[i] * (1 - (val)) * rand.Float64() * factors[i].b
 
 		}
-
-		fmt.Println("batch: ", b)
-		trainingbBatchMetrics = append(trainingbBatchMetrics, &structpb.Struct{
+		//fmt.Println("batch: ", b)
+		trainingAvgMetrics = &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
 					Kind: &structpb.Value_NumberValue{
@@ -93,14 +96,13 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 					},
 				},
 			},
-		})
+		}
 
 		trainingMetrics := trialv1.TrialMetrics{
 			TrialId:        trialID,
 			StepsCompleted: int32(b + 1),
 			Metrics: &commonv1.Metrics{
-				//AvgMetrics:   makeMetrics(),
-				BatchMetrics: trainingbBatchMetrics,
+				AvgMetrics: trainingAvgMetrics,
 			},
 		}
 
@@ -112,7 +114,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 			return err
 		}
 
-		validationBatchMetrics = append(validationBatchMetrics, &structpb.Struct{
+		validationAvgMetrics = &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
 					Kind: &structpb.Value_NumberValue{
@@ -130,14 +132,13 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 					},
 				},
 			},
-		})
+		}
 
 		validationMetrics := trialv1.TrialMetrics{
 			TrialId:        trialID,
 			StepsCompleted: int32(b + 1),
 			Metrics: &commonv1.Metrics{
-				// AvgMetrics:   makeMetrics(),
-				BatchMetrics: validationBatchMetrics,
+				AvgMetrics: validationAvgMetrics,
 			},
 		}
 		_, err = api.ReportTrialValidationMetrics(ctx,
@@ -148,7 +149,9 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 		if err != nil {
 			return err
 		}
-
+		if b%printTime == 0 {
+			fmt.Println("batch time after these many batches", time.Since(start), b)
+		}
 	}
 
 	return nil

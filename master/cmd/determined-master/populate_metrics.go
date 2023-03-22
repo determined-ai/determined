@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,6 +28,7 @@ func newPopulateCmd() *cobra.Command {
 }
 
 func runPopulate(cmd *cobra.Command, args []string) error {
+	start := time.Now()
 	err := initializeConfig()
 	if err != nil {
 		return err
@@ -48,5 +50,7 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	return internal.PopulateExpTrialsMetrics(database, masterConfig)
+	err = internal.PopulateExpTrialsMetrics(database, masterConfig)
+	fmt.Println("total time", time.Since(start))
+	return err
 }
