@@ -26,10 +26,14 @@ message SummarizedMetric {
   // A possibly down-sampled series of metric readings through the progress of
   // the trial.
   repeated DataPoint data = 2;
-  // A possibly down-sampled series of metric readings through the progress of
-  // the trial in wall time.
   // Type of metrics (training, validation, or unset).
   MetricType type = 3;
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial in wall time.
+  repeated DataPointTime time = 4;
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial in epoch.
+  repeated DataPointEpoch epochs = 5;
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -733,13 +737,13 @@ message ComparableTrial {
 
 // Enum for supported range query types
 enum RangeType {
-    // unspecified
-    RANGE_TYPE_UNSPECIFIED=0;
-    // Represents a range of batches
-    RANGE_TYPE_BATCH=1;
-    // Represents a time range
-    RANGE_TYPE_TIME=2;
-  }
+  // unspecified
+  RANGE_TYPE_UNSPECIFIED = 0;
+  // Represents a range of batches
+  RANGE_TYPE_BATCH = 1;
+  // Represents a time range
+  RANGE_TYPE_TIME = 2;
+}
 
 // Get downsampled metrics from multiple trials.
 message CompareTrialsRequest {
@@ -763,7 +767,7 @@ message CompareTrialsRequest {
   // x-axis selection. Default is in batch.
   XAxis x_axis = 8;
   // metric ids for the query
-  repeated string metric_ids=9;
+  repeated string metric_ids = 9;
   // The type of range for the query
   RangeType range_type = 10;
   // Integer range for the query

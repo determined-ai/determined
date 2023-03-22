@@ -348,7 +348,7 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
-	var measurements = []db.MetricMeasurements{}
+	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr("validations").ColumnExpr("total_batches as batches").ColumnExpr("trial_id").ColumnExpr("end_time as time").ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).Where("trial_id = ?", trialID).OrderExpr("random()")
 	switch rangeType {
 	case apiv1.RangeType_RANGE_TYPE_TIME:

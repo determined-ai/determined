@@ -8,6 +8,11 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -15,10 +20,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
-	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
