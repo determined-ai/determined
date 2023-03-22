@@ -143,7 +143,7 @@ func ApplyTimestampFieldFilter[T string | schema.Ident](
 	return q, nil
 }
 
-// Valdiate Int32 field range
+// ValidateInt32FieldFilterComparison validates the min and max values in the range.
 func ValidateInt32FieldFilterComparison(
 	filter *commonv1.Int32FieldFilter,
 ) error {
@@ -160,24 +160,27 @@ func ValidateInt32FieldFilterComparison(
 	if filter.Lt != nil && filter.Lte != nil {
 		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), float64(*((*int32)(unsafe.Pointer(filter.Lte))))))
 	} else if filter.Lt != nil {
-		maxValue = *((*int32)(unsafe.Pointer(filter.Lt)))
+		maxValue = *((*int32)(unsafe.Pointer(filter.Lt))) //nolint: gosec
 	} else {
-		maxValue = *((*int32)(unsafe.Pointer(filter.Lte)))
+		maxValue = *((*int32)(unsafe.Pointer(filter.Lte))) //nolint: gosec
 	}
 	if filter.Gt != nil && filter.Gte != nil {
-		minValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), float64(*((*int32)(unsafe.Pointer(filter.Gte))))))
+		minValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), float64(*((*int32)(unsafe.Pointer(filter.Gte)))))) //nolint: gosec
 	} else if filter.Gt != nil {
-		minValue = *((*int32)(unsafe.Pointer(filter.Gt)))
+		minValue = *((*int32)(unsafe.Pointer(filter.Gt))) //nolint: gosec
 	} else {
-		minValue = *((*int32)(unsafe.Pointer(filter.Gte)))
+		minValue = *((*int32)(unsafe.Pointer(filter.Gte))) //nolint: gosec
 	}
 	if minValue > maxValue {
-		return fmt.Errorf("invalid range: start value %v cannot be larger than end value %v", minValue, maxValue)
+		return fmt.Errorf("invalid range: start value %v cannot be larger than end value %v",
+			minValue,
+			maxValue,
+		)
 	}
 	return nil
 }
 
-// Valdiate Timstamp field range
+// ValidateTimeStampFieldFilterComparison validates the min and max timestamps in the range.
 func ValidateTimeStampFieldFilterComparison(
 	filter *commonv1.TimestampFieldFilter,
 ) error {
@@ -218,7 +221,10 @@ func ValidateTimeStampFieldFilterComparison(
 		startTime = *tryAsTime(filter.Lte)
 	}
 	if endTime.Before(startTime) {
-		return fmt.Errorf("invalid range: end date %v cannot be earlier than start date %v", endTime, startTime)
+		return fmt.Errorf("invalid range: end date %v cannot be earlier than start date %v",
+			endTime,
+			startTime,
+		)
 	}
 	return nil
 }

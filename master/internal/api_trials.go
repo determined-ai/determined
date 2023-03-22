@@ -650,7 +650,10 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType, integerRange *commonv1.Int32FieldFilter, timeRange *commonv1.TimestampFieldFilter, metricIds []string,
+	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType,
+	integerRange *commonv1.Int32FieldFilter,
+	timeRange *commonv1.TimestampFieldFilter,
+	metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
 	var startTime time.Time
 	var err error
@@ -667,7 +670,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
+				trialID, startTime, name, startBatches, endBatches,
+				xAxisLabelMetrics,
+				maxDatapoints)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
@@ -688,7 +693,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricMeasurements, err = trials.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, integerRange, timeRange)
+				trialID, startTime, name, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, rangeType, integerRange,
+				timeRange)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
@@ -719,7 +726,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		for _, metricId := range metricIds {
 			nameAndType := strings.SplitN(metricId, ".", 2)
 			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf("error fetching time series of validation metrics invalid metricId %v metrics must be in the form metric_type.metric_name", metricId)
+				return nil, fmt.Errorf(`error fetching time series of validation metrics 
+				invalid metricId %v metrics must be in the form metric_type.metric_name`,
+					metricId,
+				)
 			}
 			metricIdName := nameAndType[1]
 			metricIdType := nameAndType[0]
@@ -730,7 +740,10 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 					maxDatapoints = 200
 				}
 				metricMeasurements, err = trials.ValidationMetricsSeries(
-					trialID, startTime, metricIdName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, rangeType, integerRange, timeRange)
+					trialID, startTime, metricIdName, startBatches, endBatches,
+					xAxisLabelMetrics, maxDatapoints, rangeType, integerRange,
+					timeRange,
+				)
 				if err != nil {
 					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 				}
@@ -762,7 +775,8 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED, apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metric_ids)
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
+		apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metric_ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -791,7 +805,9 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis, req.RangeType, req.IntegerRange, req.TimeRange, req.MetricIds)
+			(req.Scale == apiv1.Scale_SCALE_LOG),
+			req.XAxis, req.RangeType, req.IntegerRange,
+			req.TimeRange, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

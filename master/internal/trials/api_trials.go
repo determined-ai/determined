@@ -17,6 +17,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
+const (
+	batches       = "batches"
+	total_batches = "total_batches"
+)
+
 // TrialsAPIServer is an embedded api server struct.
 type TrialsAPIServer struct{}
 
@@ -361,8 +366,8 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	case apiv1.RangeType_RANGE_TYPE_BATCH:
-		queryColumn = "total_batches"
-		orderColumn = "batches"
+		queryColumn = total_batches
+		orderColumn = batches
 		if integer_range != nil {
 			subq, err = db.ApplyInt32FieldFilter(subq, queryColumn, integer_range)
 		}
@@ -370,14 +375,13 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time, metricName stri
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	default:
-		queryColumn = "total_batches"
-		orderColumn = "batches"
+		queryColumn = total_batches
+		orderColumn = batches
 		subq = subq.Where("total_batches >= ?", startBatches).Where("total_batches <= 0 OR total_batches <= ?", endBatches).Where("end_time > ?", startTime)
 	}
 	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	fmt.Println(measurements)
 	return measurements, nil
 }

@@ -1506,12 +1506,6 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacyS
 	}
 }
 
-func timeFromFloat64(ts float64) time.Time {
-	secs := int64(ts)
-	nsecs := int64((ts - float64(secs)) * 1e9)
-	return time.Unix(secs, nsecs)
-}
-
 func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
@@ -1544,7 +1538,8 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 		metricMeasurements, err = trials.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints, apiv1.RangeType_RANGE_TYPE_UNSPECIFIED, nil, nil)
+			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+			apiv1.RangeType_RANGE_TYPE_UNSPECIFIED, nil, nil)
 	default:
 		panic("Invalid metric type")
 	}
