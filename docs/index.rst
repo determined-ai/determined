@@ -8,8 +8,8 @@
    :maxdepth: 2
    :hidden:
 
-   Try Determined <tutorials/index>
    How It Works <architecture/index>
+   Tutorials <tutorials/index>
    quickstart-mdldev
    Examples <example-solutions/examples>
    Model Hub Library <model-hub-library/index>
@@ -97,15 +97,15 @@ You can quickly train almost any deep learning model using Determined.
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-             <a class="tile" href="tutorials/index.html">
-                 <h2 class="tile-title">Try It</h2>
-                 <p class="tile-description">Learn the basics of working with Determined and how to port your existing code to the Determined environment.</p>
-             </a>
-         </div>
-         <div class="tile-container">
              <a class="tile" href="architecture/index.html">
                  <h2 class="tile-title">How It Works</h2>
                  <p class="tile-description">Learn about core concepts, key features, and system architecture.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="tutorials/index.html">
+                 <h2 class="tile-title">Tutorials</h2>
+                 <p class="tile-description">Try Determined. Learn the basics of working with Determined and how to port your existing code to the Determined environment.</p>
              </a>
          </div>
          <div class="tile-container">
@@ -123,7 +123,7 @@ You can quickly train almost any deep learning model using Determined.
          <div class="tile-container">
              <a class="tile" href="training/index.html">
                  <h2 class="tile-title">Model Developer Guide</h2>
-                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
+                 <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
              </a>
          </div>
          <div class="tile-container">
