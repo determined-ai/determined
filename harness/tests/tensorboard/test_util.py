@@ -1,12 +1,10 @@
 import pathlib
 
-import numpy as np
 import pytest
 
 import determined as det
 from determined import tensorboard
 from determined.tensorboard import SharedFSTensorboardManager
-from determined.tensorboard.metric_writers import util as metric_writers_util
 
 BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
@@ -36,28 +34,6 @@ def get_dummy_env() -> det.EnvContext:
         test_mode=False,
         on_cluster=False,
     )
-
-
-def test_is_not_numerical_scalar() -> None:
-    # Invalid types
-    assert not metric_writers_util.is_numerical_scalar("foo")
-    assert not metric_writers_util.is_numerical_scalar(np.array("foo"))
-    assert not metric_writers_util.is_numerical_scalar(object())
-
-    # Invalid shapes
-    assert not metric_writers_util.is_numerical_scalar([1])
-    assert not metric_writers_util.is_numerical_scalar(np.array([3.14]))
-    assert not metric_writers_util.is_numerical_scalar(np.ones(shape=(5, 5)))
-
-
-def test_is_numerical_scalar() -> None:
-    assert metric_writers_util.is_numerical_scalar(1)
-    assert metric_writers_util.is_numerical_scalar(1.0)
-    assert metric_writers_util.is_numerical_scalar(-3.14)
-    assert metric_writers_util.is_numerical_scalar(np.ones(shape=()))
-    assert metric_writers_util.is_numerical_scalar(np.array(1))
-    assert metric_writers_util.is_numerical_scalar(np.array(-3.14))
-    assert metric_writers_util.is_numerical_scalar(np.array([1.0])[0])
 
 
 def test_list_tb_files(tmp_path: pathlib.Path) -> None:

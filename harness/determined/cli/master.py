@@ -1,14 +1,10 @@
 import json
-import time
 from argparse import Namespace
-from typing import Any, List
-
-from requests import Response
+from typing import Any, List, Optional
 
 from determined import cli
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings
-from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -29,39 +25,20 @@ def get_master(args: Namespace) -> None:
         print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
 
 
+def format_log_entry(log: bindings.v1LogEntry) -> str:
+    """Format v1LogEntry for printing."""
+    log_level = str(log.level.value)[len("LOG_LEVEL_") :] if log.level else ""
+    return f"{log.timestamp} [{log_level}]: {log.message}"
+
+
 @authentication.required
 def logs(args: Namespace) -> None:
-    def process_response(response: Response, latest_log_id: int) -> int:
-        for log in response.json():
-            check_gt(log["id"], latest_log_id)
-            latest_log_id = log["id"]
-            print("{} [{}]: {}".format(log["time"], log["level"], log["message"]))
-        return latest_log_id
-
-    params = {}
+    offset: Optional[int] = None
     if args.tail:
-        params["tail"] = args.tail
-
-    response = api.get(args.master, "logs", params=params)
-    latest_log_id = process_response(response, -1)
-
-    # "Follow" mode is implemented as a loop in the CLI. We assume that
-    # newer log messages have a numerically larger ID than older log
-    # messages, so we keep track of the max ID seen so far.
-    if args.follow:
-        while True:
-            try:
-                # Poll for new logs every 100 ms.
-                time.sleep(0.1)
-
-                # The `tail` parameter only makes sense the first time we
-                # fetch logs.
-                response = api.get(
-                    args.master, "logs", params={"greater_than_id": str(latest_log_id)}
-                )
-                latest_log_id = process_response(response, latest_log_id)
-            except KeyboardInterrupt:
-                break
+        offset = -args.tail
+    responses = bindings.get_MasterLogs(cli.setup_session(args), follow=args.follow, offset=offset)
+    for response in responses:
+        print(format_log_entry(response.logEntry))
 
 
 # fmt: off

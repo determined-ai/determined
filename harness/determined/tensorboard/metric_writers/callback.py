@@ -2,7 +2,7 @@ import abc
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from determined.tensorboard.metric_writers import util
+from determined import util
 
 if TYPE_CHECKING:
     import numpy as np

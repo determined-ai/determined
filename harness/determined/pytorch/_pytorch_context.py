@@ -123,8 +123,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._fp16_compression_default = False
         self._average_aggregated_gradients_default = True
+        self._is_pre_trainer = False
 
         self._stop_requested = False
+
+        self._tbd_writer = None  # type: Optional[Any]
 
     def get_global_batch_size(self) -> int:
         """
@@ -451,6 +454,9 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def _set_default_average_aggregated_gradients(self, average_aggregated_gradients: bool) -> None:
         self._average_aggregated_gradients_default = average_aggregated_gradients
+
+    def _set_is_pre_trainer(self) -> None:
+        self._is_pre_trainer = True
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.
@@ -937,6 +943,39 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         Get the path where files for consumption by TensorBoard should be written
         """
         return self._core.train.get_tensorboard_path()
+
+    def get_tensorboard_writer(self) -> Any:
+        """
+        This function returns an instance of ``torch.utils.tensorboard.SummaryWriter``
+
+        Trials users who wish to log to TensorBoard can use this writer object.
+        We provide and manage a writer in order to save and upload TensorBoard
+        files automatically on behalf of the user.
+
+        Usage example:
+
+        .. code-block:: python
+
+           class MyModel(PyTorchTrial):
+               def __init__(self, context):
+                   ...
+                   self.writer = context.get_tensorboard_writer()
+
+               def train_batch(self, batch, epoch_idx, batch_idx):
+                   self.writer.add_scalar('my_metric', np.random.random(), batch_idx)
+                   self.writer.add_image('my_image', torch.ones((3,32,32)), batch_idx)
+        """
+
+        if self._tbd_writer is None:
+            from torch.utils.tensorboard import SummaryWriter
+
+            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+
+        return self._tbd_writer
+
+    def _maybe_reset_tbd_writer(self) -> None:
+        if self._tbd_writer is not None:
+            self._tbd_writer.close()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore

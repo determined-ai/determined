@@ -1,25 +1,9 @@
 from typing import Dict
 
 import pytest
-from tensorflow.python.training.tracking.tracking import AutoTrackable
 
-from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
-
-
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
-def test_mnist_estimator_load() -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
-    config = conf.set_tf1_image(config)
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    model = Determined(conf.make_master_url()).get_trial(trials[0].trial.id).top_checkpoint().load()
-    assert isinstance(model, AutoTrackable)
 
 
 @pytest.mark.parallel

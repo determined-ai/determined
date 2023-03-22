@@ -41,7 +41,7 @@ func (s *slotProxy) Receive(ctx *actor.Context) error {
 		enabled := false
 		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID, enabled: &enabled})
 		if result != nil {
-			ctx.Respond(&proto.EnableSlotResponse{Slot: result.ToProto()})
+			ctx.Respond(&proto.DisableSlotResponse{Slot: result.ToProto()})
 		}
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)

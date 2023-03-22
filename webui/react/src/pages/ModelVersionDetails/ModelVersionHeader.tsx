@@ -172,23 +172,27 @@ const ModelVersionHeader: React.FC<Props> = ({
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `from determined.experimental import Determined
-client = Determined()
+    return `import determined as det
+from determined.experimental import client
+
 model_entry = client.get_model("${escapedModelName}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
+path = ckpt.download()
 
-################ Approach 1 ################
-# You can load the trial directly without having to instantiate the model.
-# The trial should have the model as an attribute.
-trial = ckpt.load()
+# Load a PyTorchTrial from a checkpoint:
+from determined import pytorch
+my_trial = \\
+    pytorch.load_trial_from_checkpoint_path(path)
 
-################ Approach 2 ################
-# You can download the checkpoint and load the model state manually.
-ckpt_path = ckpt.download()
-ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
-# assuming your model is already instantiated, you can then load the state_dict
-my_model.load_state_dict(ckpt['models_state_dict'][0])`;
+# Load a Keras model from TFKerasTrial checkpoint:
+from determined import keras
+model = keras.load_model_from_checkpoint_path(path)
+
+# Import your checkpointed code:
+with det.import_from_path(path + "/code"):
+    import my_model_def as ckpt_model_def
+`;
   }, [modelVersion]);
 
   const handleCopy = useCallback(async () => {

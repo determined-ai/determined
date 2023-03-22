@@ -103,11 +103,6 @@ variable "max_dynamic_agents" {
   default = 5
 }
 
-variable "static_agents" {
-  type = number
-  default = 0
-}
-
 variable "preemptible" {
   type = bool
   default = false

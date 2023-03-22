@@ -61,6 +61,7 @@ class TrialContext:
             test_mode=False,
             config=config,
             checkpoint_dir="/tmp",
+            tensorboard_path=pathlib.Path("/tmp/tensorboard"),
             limit_gpus=1,
         )
         return cls(core_context, env)

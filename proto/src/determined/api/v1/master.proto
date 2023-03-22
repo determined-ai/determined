@@ -101,6 +101,9 @@ message MasterLogsRequest {
 }
 // Response to MasterLogsRequest.
 message MasterLogsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "log_entry" ] }
+  };
   // The log entry.
   determined.log.v1.LogEntry log_entry = 1;
 }
