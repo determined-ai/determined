@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
@@ -11,8 +11,8 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
-import { TasksStore } from 'stores/tasks';
-import { ResourceType, TaskCounts } from 'types';
+import taskStore from 'stores/tasks';
+import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -27,20 +27,20 @@ export const ClusterOverallStats: React.FC = () => {
   const resourcePools = useObservable(useClusterStore().resourcePools);
   const agents = useObservable(useClusterStore().agents);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
+  const canceler = useRef(new AbortController());
 
-  const [canceler] = useState(new AbortController());
   const fetchActiveExperiments = experimentStore.fetchExperiments(
     ACTIVE_EXPERIMENTS_PARAMS,
-    canceler,
+    canceler.current,
   );
-  const activeTasks = useObservable<Loadable<TaskCounts>>(TasksStore.getActiveTaskCounts());
+  const activeTasks = useObservable(taskStore.activeTasks);
 
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
-    TasksStore.fetchActiveTasks(canceler);
-  }, [fetchActiveExperiments, canceler]);
+  }, [fetchActiveExperiments]);
 
   usePolling(fetchActiveRunning);
+
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
@@ -67,6 +67,8 @@ export const ClusterOverallStats: React.FC = () => {
       ),
     );
   }, [resourcePools, agents]);
+
+  useEffect(() => taskStore.startPolling(), []);
 
   return (
     <Section hideTitle title="Overview Stats">
