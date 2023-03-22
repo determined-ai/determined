@@ -464,14 +464,14 @@ type SummarizedMetric struct {
 	// A possibly down-sampled series of metric readings through the progress of
 	// the trial.
 	Data []*DataPoint `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`
-	// Type of metrics (training, validation, or unset).
-	Type MetricType `protobuf:"varint,3,opt,name=type,proto3,enum=determined.api.v1.MetricType" json:"type,omitempty"`
 	// A possibly down-sampled series of metric readings through the progress of
 	// the trial in wall time.
 	Time []*DataPointTime `protobuf:"bytes,4,rep,name=time,proto3" json:"time,omitempty"`
 	// A possibly down-sampled series of metric readings through the progress of
 	// the trial in epoch.
 	Epochs []*DataPointEpoch `protobuf:"bytes,5,rep,name=epochs,proto3" json:"epochs,omitempty"`
+	// Type of metrics (training, validation, or unset).
+	Type MetricType `protobuf:"varint,3,opt,name=type,proto3,enum=determined.api.v1.MetricType" json:"type,omitempty"`
 }
 
 func (x *SummarizedMetric) Reset() {
@@ -520,13 +520,6 @@ func (x *SummarizedMetric) GetData() []*DataPoint {
 	return nil
 }
 
-func (x *SummarizedMetric) GetType() MetricType {
-	if x != nil {
-		return x.Type
-	}
-	return MetricType_METRIC_TYPE_UNSPECIFIED
-}
-
 func (x *SummarizedMetric) GetTime() []*DataPointTime {
 	if x != nil {
 		return x.Time
@@ -539,6 +532,13 @@ func (x *SummarizedMetric) GetEpochs() []*DataPointEpoch {
 		return x.Epochs
 	}
 	return nil
+}
+
+func (x *SummarizedMetric) GetType() MetricType {
+	if x != nil {
+		return x.Type
+	}
+	return MetricType_METRIC_TYPE_UNSPECIFIED
 }
 
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
@@ -5594,17 +5594,17 @@ var file_determined_api_v1_trial_proto_rawDesc = []byte{
 	0x12, 0x30, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c,
 	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
 	0x76, 0x31, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x04, 0x64, 0x61,
-	0x74, 0x61, 0x12, 0x31, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e,
-	0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70,
-	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65, 0x52,
-	0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x34, 0x0a, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x04, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x50, 0x6f, 0x69, 0x6e,
-	0x74, 0x54, 0x69, 0x6d, 0x65, 0x52, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x12, 0x39, 0x0a, 0x06, 0x65,
-	0x70, 0x6f, 0x63, 0x68, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x44, 0x61, 0x74, 0x61, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x52, 0x06,
-	0x65, 0x70, 0x6f, 0x63, 0x68, 0x73, 0x3a, 0x1a, 0x92, 0x41, 0x17, 0x0a, 0x15, 0xd2, 0x01, 0x04,
+	0x74, 0x61, 0x12, 0x34, 0x0a, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x20, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70,
+	0x69, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x61, 0x74, 0x61, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x54, 0x69,
+	0x6d, 0x65, 0x52, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x12, 0x39, 0x0a, 0x06, 0x65, 0x70, 0x6f, 0x63,
+	0x68, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x61, 0x74,
+	0x61, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x52, 0x06, 0x65, 0x70, 0x6f,
+	0x63, 0x68, 0x73, 0x12, 0x31, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0e, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65,
+	0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x3a, 0x1a, 0x92, 0x41, 0x17, 0x0a, 0x15, 0xd2, 0x01, 0x04,
 	0x64, 0x61, 0x74, 0x61, 0xd2, 0x01, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0xd2, 0x01, 0x04, 0x74, 0x79,
 	0x70, 0x65, 0x22, 0xf6, 0x01, 0x0a, 0x11, 0x57, 0x6f, 0x72, 0x6b, 0x6c, 0x6f, 0x61, 0x64, 0x43,
 	0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x12, 0x42, 0x0a, 0x08, 0x74, 0x72, 0x61, 0x69,
@@ -6594,9 +6594,9 @@ var file_determined_api_v1_trial_proto_goTypes = []interface{}{
 	(*TrialFilters_RankWithinExp)(nil),                  // 83: determined.api.v1.TrialFilters.RankWithinExp
 	(*UpdateTrialTagsRequest_Ids)(nil),                  // 84: determined.api.v1.UpdateTrialTagsRequest.Ids
 	(*DataPoint)(nil),                                   // 85: determined.api.v1.DataPoint
-	(MetricType)(0),                                     // 86: determined.api.v1.MetricType
-	(*DataPointTime)(nil),                               // 87: determined.api.v1.DataPointTime
-	(*DataPointEpoch)(nil),                              // 88: determined.api.v1.DataPointEpoch
+	(*DataPointTime)(nil),                               // 86: determined.api.v1.DataPointTime
+	(*DataPointEpoch)(nil),                              // 87: determined.api.v1.DataPointEpoch
+	(MetricType)(0),                                     // 88: determined.api.v1.MetricType
 	(*trialv1.MetricsWorkload)(nil),                     // 89: determined.trial.v1.MetricsWorkload
 	(*trialv1.CheckpointWorkload)(nil),                  // 90: determined.trial.v1.CheckpointWorkload
 	(*commonv1.DoubleFieldFilter)(nil),                  // 91: determined.common.v1.DoubleFieldFilter
@@ -6623,9 +6623,9 @@ var file_determined_api_v1_trial_proto_goTypes = []interface{}{
 }
 var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	85,  // 0: determined.api.v1.SummarizedMetric.data:type_name -> determined.api.v1.DataPoint
-	86,  // 1: determined.api.v1.SummarizedMetric.type:type_name -> determined.api.v1.MetricType
-	87,  // 2: determined.api.v1.SummarizedMetric.time:type_name -> determined.api.v1.DataPointTime
-	88,  // 3: determined.api.v1.SummarizedMetric.epochs:type_name -> determined.api.v1.DataPointEpoch
+	86,  // 1: determined.api.v1.SummarizedMetric.time:type_name -> determined.api.v1.DataPointTime
+	87,  // 2: determined.api.v1.SummarizedMetric.epochs:type_name -> determined.api.v1.DataPointEpoch
+	88,  // 3: determined.api.v1.SummarizedMetric.type:type_name -> determined.api.v1.MetricType
 	89,  // 4: determined.api.v1.WorkloadContainer.training:type_name -> determined.trial.v1.MetricsWorkload
 	89,  // 5: determined.api.v1.WorkloadContainer.validation:type_name -> determined.trial.v1.MetricsWorkload
 	90,  // 6: determined.api.v1.WorkloadContainer.checkpoint:type_name -> determined.trial.v1.CheckpointWorkload
@@ -6684,20 +6684,20 @@ var file_determined_api_v1_trial_proto_depIdxs = []int32{
 	102, // 59: determined.api.v1.GetTrialResponse.trial:type_name -> determined.trial.v1.Trial
 	92,  // 60: determined.api.v1.GetTrialWorkloadsRequest.order_by:type_name -> determined.api.v1.OrderBy
 	6,   // 61: determined.api.v1.GetTrialWorkloadsRequest.filter:type_name -> determined.api.v1.GetTrialWorkloadsRequest.FilterOption
-	86,  // 62: determined.api.v1.GetTrialWorkloadsRequest.metric_type:type_name -> determined.api.v1.MetricType
+	88,  // 62: determined.api.v1.GetTrialWorkloadsRequest.metric_type:type_name -> determined.api.v1.MetricType
 	8,   // 63: determined.api.v1.GetTrialWorkloadsResponse.workloads:type_name -> determined.api.v1.WorkloadContainer
 	100, // 64: determined.api.v1.GetTrialWorkloadsResponse.pagination:type_name -> determined.api.v1.Pagination
 	103, // 65: determined.api.v1.GetTrialProfilerMetricsRequest.labels:type_name -> determined.trial.v1.TrialProfilerMetricLabels
 	104, // 66: determined.api.v1.GetTrialProfilerMetricsResponse.batch:type_name -> determined.trial.v1.TrialProfilerMetricsBatch
 	103, // 67: determined.api.v1.GetTrialProfilerAvailableSeriesResponse.labels:type_name -> determined.trial.v1.TrialProfilerMetricLabels
 	104, // 68: determined.api.v1.PostTrialProfilerMetricsBatchRequest.batches:type_name -> determined.trial.v1.TrialProfilerMetricsBatch
-	86,  // 69: determined.api.v1.SummarizeTrialRequest.metric_type:type_name -> determined.api.v1.MetricType
+	88,  // 69: determined.api.v1.SummarizeTrialRequest.metric_type:type_name -> determined.api.v1.MetricType
 	0,   // 70: determined.api.v1.SummarizeTrialRequest.scale:type_name -> determined.api.v1.Scale
 	102, // 71: determined.api.v1.SummarizeTrialResponse.trial:type_name -> determined.trial.v1.Trial
 	7,   // 72: determined.api.v1.SummarizeTrialResponse.metrics:type_name -> determined.api.v1.SummarizedMetric
 	102, // 73: determined.api.v1.ComparableTrial.trial:type_name -> determined.trial.v1.Trial
 	7,   // 74: determined.api.v1.ComparableTrial.metrics:type_name -> determined.api.v1.SummarizedMetric
-	86,  // 75: determined.api.v1.CompareTrialsRequest.metric_type:type_name -> determined.api.v1.MetricType
+	88,  // 75: determined.api.v1.CompareTrialsRequest.metric_type:type_name -> determined.api.v1.MetricType
 	0,   // 76: determined.api.v1.CompareTrialsRequest.scale:type_name -> determined.api.v1.Scale
 	1,   // 77: determined.api.v1.CompareTrialsRequest.x_axis:type_name -> determined.api.v1.XAxis
 	2,   // 78: determined.api.v1.CompareTrialsRequest.range_type:type_name -> determined.api.v1.RangeType
