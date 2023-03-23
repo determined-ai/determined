@@ -770,7 +770,7 @@ class _PyTorchTrialController:
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
 
-        if self.is_chief:
+        if self.is_chief and not self.test_mode:
             assert op._completed, "logic error; op was never completed."
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
