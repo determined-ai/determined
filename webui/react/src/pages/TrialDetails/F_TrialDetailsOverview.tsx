@@ -234,7 +234,9 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           )}
         </>
       ) : null}
-      {contextHolders}
+      {contextHolders.map((contextHolder, i) => (
+        <React.Fragment key={i}>{contextHolder}</React.Fragment>
+      ))}
     </>
   );
 };
