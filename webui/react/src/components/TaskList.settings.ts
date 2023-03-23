@@ -100,6 +100,7 @@ const config = (id: string): SettingsConfig<Settings> => {
       },
       row: {
         defaultValue: undefined,
+        skipUrlEncoding: true,
         storageKey: 'row',
         type: union([undefinedType, array(string)]),
       },
