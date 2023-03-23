@@ -49,9 +49,9 @@ const LogViewerSelect: React.FC<Props> = ({
     const { agentIds, allocationIds, containerIds, rankIds } = options;
     return {
       ...options,
-      agentIds: agentIds ? agentIds.sortAll(alphaNumericSorter) : undefined,
-      allocationIds: allocationIds ? allocationIds.sortAll(alphaNumericSorter) : undefined,
-      containerIds: containerIds ? containerIds.sortAll(alphaNumericSorter) : undefined,
+      agentIds: agentIds?.sortAll(alphaNumericSorter),
+      allocationIds: allocationIds?.sortAll(alphaNumericSorter),
+      containerIds: containerIds?.sortAll(alphaNumericSorter),
       levels: Object.entries(LogLevelFromApi)
         .filter((entry) => entry[1] !== LogLevelFromApi.Unspecified)
         .map(([key, value]) => ({ label: key, value })),
@@ -117,7 +117,7 @@ const LogViewerSelect: React.FC<Props> = ({
             ))}
           </Select>
         )}
-        {moreThanOne.agentIds && (
+        {!!selectOptions?.agentIds?.length && (
           <Select
             disableTags
             mode="multiple"
