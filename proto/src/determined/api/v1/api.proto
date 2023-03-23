@@ -315,6 +315,7 @@ service Determined {
   rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) {
     option (google.api.http) = {
       post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"

@@ -2078,6 +2078,31 @@ export interface V1DisableAgentResponse {
     agent?: V1Agent;
 }
 /**
+ * Disable the slot.
+ * @export
+ * @interface V1DisableSlotRequest
+ */
+export interface V1DisableSlotRequest {
+    /**
+     * The id of the agent.
+     * @type {string}
+     * @memberof V1DisableSlotRequest
+     */
+    agentId?: string;
+    /**
+     * The id of the slot.
+     * @type {string}
+     * @memberof V1DisableSlotRequest
+     */
+    slotId?: string;
+    /**
+     * If true, wait for running task to finish.
+     * @type {boolean}
+     * @memberof V1DisableSlotRequest
+     */
+    drain?: boolean;
+}
+/**
  * Response to DisableSlotRequest.
  * @export
  * @interface V1DisableSlotResponse
@@ -9938,10 +9963,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling disableSlot.');
@@ -9949,6 +9975,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             // verify required parameter 'slotId' is not null or undefined
             if (slotId === null || slotId === undefined) {
                 throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling disableSlot.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling disableSlot.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
@@ -9966,10 +9996,13 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: url.format(localVarUrlObj),
@@ -10470,11 +10503,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, options);
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10728,11 +10762,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).disableSlot(agentId, slotId, options)(fetch, basePath);
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any) {
+            return ClusterApiFp(configuration).disableSlot(agentId, slotId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -10881,12 +10916,13 @@ export class ClusterApi extends BaseAPI {
      * @summary Disable the slot.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
+     * @param {V1DisableSlotRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public disableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, options)(this.fetch, this.basePath)
+    public disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any) {
+        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, body, options)(this.fetch, this.basePath)
     }
     
     /**

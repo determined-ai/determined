@@ -2213,6 +2213,48 @@ class v1DisableAgentResponse:
             out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
+class v1DisableSlotRequest:
+    agentId: "typing.Optional[str]" = None
+    drain: "typing.Optional[bool]" = None
+    slotId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        drain: "typing.Union[bool, None, Unset]" = _unset,
+        slotId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(drain, Unset):
+            self.drain = drain
+        if not isinstance(slotId, Unset):
+            self.slotId = slotId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DisableSlotRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "drain" in obj:
+            kwargs["drain"] = obj["drain"]
+        if "slotId" in obj:
+            kwargs["slotId"] = obj["slotId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "drain" in vars(self):
+            out["drain"] = self.drain
+        if not omit_unset or "slotId" in vars(self):
+            out["slotId"] = self.slotId
+        return out
+
 class v1DisableSlotResponse:
     slot: "typing.Optional[v1Slot]" = None
 
@@ -12534,6 +12576,7 @@ def post_DisableSlot(
     session: "api.Session",
     *,
     agentId: str,
+    body: "v1DisableSlotRequest",
     slotId: str,
 ) -> "v1DisableSlotResponse":
     _params = None
@@ -12541,7 +12584,7 @@ def post_DisableSlot(
         method="POST",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

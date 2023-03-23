@@ -200,7 +200,10 @@ def patch_slot(enabled: bool) -> Callable[[argparse.Namespace], None]:
             )
         else:
             bindings.post_DisableSlot(
-                cli.setup_session(args), agentId=args.agent_id, slotId=args.slot_id
+                cli.setup_session(args),
+                agentId=args.agent_id,
+                slotId=args.slot_id,
+                body=bindings.v1DisableSlotRequest(),
             )
 
         status = "Disabled" if not enabled else "Enabled"
