@@ -194,9 +194,15 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
 def patch_slot(enabled: bool) -> Callable[[argparse.Namespace], None]:
     @authentication.required
     def patch(args: argparse.Namespace) -> None:
-        bindings.post_EnableSlot(
-            cli.setup_session(args), agentId=args.agent_id, slotId=args.slot_id
-        )
+        if enabled:
+            bindings.post_EnableSlot(
+                cli.setup_session(args), agentId=args.agent_id, slotId=args.slot_id
+            )
+        else:
+            bindings.post_DisableSlot(
+                cli.setup_session(args), agentId=args.agent_id, slotId=args.slot_id
+            )
+
         status = "Disabled" if not enabled else "Enabled"
         print("{} slot {} of agent {}".format(status, args.slot_id, args.agent_id))
 
