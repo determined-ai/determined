@@ -5,7 +5,7 @@ import numpy as np
 from attrdict import AttrMap
 from eval_tasks.eval_adapter import run_eval_harness
 from megatron.neox_arguments import NeoXArgs
-from torch.util.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 from determined.pytorch import MetricReducer, PyTorchCallback
 

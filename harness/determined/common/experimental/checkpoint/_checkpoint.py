@@ -5,8 +5,7 @@ import logging
 import pathlib
 import shutil
 import tarfile
-import warnings
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 from determined import errors
 from determined.common import api, constants, storage
@@ -264,54 +263,6 @@ class Checkpoint:
         with open(path, "w") as f:
             json.dump(self.metadata, f, indent=2)
 
-    def load(
-        self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
-    ) -> Any:
-        """Loads a Determined checkpoint into memory.
-
-        If the checkpoint is not present on disk it will be downloaded from persistent storage.
-        The behavior here is different for TensorFlow and PyTorch checkpoints.
-
-        For PyTorch checkpoints, the return type is an object that inherits from
-        ``determined.pytorch.PyTorchTrial`` as defined by the ``entrypoint`` field
-        in the experiment config.
-
-        For TensorFlow checkpoints, the return type is a TensorFlow autotrackable object.
-
-        Arguments:
-            path (string, optional): Top level directory to load the
-                checkpoint from. (default: ``checkpoints/<UUID>``)
-            tags (list string, optional): Only relevant for TensorFlow
-                SavedModel checkpoints. Specifies which tags are loaded from
-                the TensorFlow SavedModel. See documentation for
-                `tf.compat.v1.saved_model.load_v2
-                <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
-            kwargs: Only relevant for PyTorch checkpoints. The keyword arguments
-                will be applied to ``torch.load``. See documentation for `torch.load
-                <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
-
-        .. warning::
-
-           Checkpoint.load() has been deprecated and will be removed in a future version.
-
-           Please combine Checkpoint.download() with one of the following instead:
-             - ``det.pytorch.load_trial_from_checkpoint()``
-             - ``det.keras.load_model_from_checkpoint()``
-             - ``det.estimator.load_estimator_from_checkpoint_path()``
-        """
-        warnings.warn(
-            "Checkpoint.load() has been deprecated and will be removed in a future version.\n"
-            "\n"
-            "Please combine Checkpoint.download() with one of the following instead:\n"
-            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
-            "  - det.keras.load_model_from_checkpoint_path()\n"
-            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
-            FutureWarning,
-            stacklevel=2,
-        )
-        ckpt_path = self.download(path)
-        return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
-
     def _push_metadata(self) -> None:
         # TODO: in a future version of this REST API, an entire, well-formed Checkpoint object.
         req = bindings.v1PostCheckpointMetadataRequest(
@@ -359,117 +310,15 @@ class Checkpoint:
 
         self._push_metadata()
 
-    @staticmethod
-    def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
-        """Loads a Determined checkpoint from a local file system path into memory.
-
-        For PyTorch checkpoints, the return type is an object that inherits from
-        ``determined.pytorch.PyTorchTrial`` as defined by the ``entrypoint`` field
-        in the experiment config.
-
-        For TensorFlow checkpoints, the return type is a TensorFlow autotrackable object.
-
-        Arguments:
-            path (string): Local path to the checkpoint directory.
-            tags (list string, optional): Only relevant for TensorFlow
-                SavedModel checkpoints. Specifies which tags are loaded from
-                the TensorFlow SavedModel. See documentation for
-                `tf.compat.v1.saved_model.load_v2
-                <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
-
-        .. warning::
-
-           Checkpoint.load_from_path() has been deprecated and will be removed in a future version.
-
-           Please use one of the following instead to load your checkpoint:
-             - ``det.pytorch.load_trial_from_checkpoint_path()``
-             - ``det.keras.load_model_from_checkpoint_path()``
-             - ``det.estimator.load_estimator_from_checkpoint_path()``
+    def delete(self) -> None:
         """
-        warnings.warn(
-            "Checkpoint.load_from_path() has been deprecated and will be removed in a future "
-            "version.\n"
-            "\n"
-            "Please use one of the following instead to load your checkpoint:\n"
-            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
-            "  - det.keras.load_model_from_checkpoint_path()\n"
-            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
-            FutureWarning,
-            stacklevel=2,
-        )
-        checkpoint_dir = pathlib.Path(path)
-        metadata = Checkpoint._parse_metadata(checkpoint_dir)
-        checkpoint_type = Checkpoint._get_type(metadata)
+        Notifies the master of a checkpoint deletion request, which will be handled asynchronously.
+        Master will delete checkpoint and all associated data in the checkpoint storage.
+        """
 
-        if checkpoint_type == ModelFramework.PYTORCH:
-            from determined import pytorch
-
-            return pytorch.load_trial_from_checkpoint_path(path, **kwargs)
-
-        if checkpoint_type == ModelFramework.TENSORFLOW:
-            save_format = metadata.get("format", "saved_model")
-
-            # For tf.estimators we save the entire model using the saved_model format.
-            # For tf.keras we save only the weights also using the saved_model format,
-            # which we call saved_weights.
-            if cast(str, save_format) == "saved_model":
-                from determined import estimator
-
-                return estimator.load_estimator_from_checkpoint_path(path, tags)
-
-            if save_format in ("saved_weights", "h5"):
-                from determined import keras
-
-                return keras.load_model_from_checkpoint_path(path, tags)
-
-        raise AssertionError("Unknown checkpoint format at {}".format(path))
-
-    @staticmethod
-    def _parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
-        metadata_path = directory.joinpath("metadata.json")
-        with metadata_path.open() as f:
-            metadata = json.load(f)
-
-        return cast(Dict[str, Any], metadata)
-
-    @staticmethod
-    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
-        warnings.warn(
-            "Checkpoint.parse_metadata() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return Checkpoint._parse_metadata(directory)
-
-    @staticmethod
-    def _get_type(metadata: Dict[str, Any]) -> ModelFramework:
-        if "framework" in metadata:
-            if metadata["framework"].startswith("torch"):
-                return ModelFramework.PYTORCH
-
-            if metadata["framework"].startswith("tensorflow"):
-                return ModelFramework.TENSORFLOW
-
-        # Older metadata layout contained torch_version and tensorflow_version
-        # as keys. Eventually, we should drop support for the older format.
-        if "torch_version" in metadata:
-            return ModelFramework.PYTORCH
-
-        elif "tensorflow_version" in metadata:
-            return ModelFramework.TENSORFLOW
-
-        raise AssertionError("Unknown checkpoint format")
-
-    @staticmethod
-    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
-        warnings.warn(
-            "Checkpoint.get_type() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return Checkpoint._get_type(metadata)
+        delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[self.uuid])
+        bindings.delete_DeleteCheckpoints(self._session, body=delete_body)
+        logging.info(f"Deletion of checkpoint {self.uuid} is in progress.")
 
     def __repr__(self) -> str:
         if self.training is not None:
@@ -493,41 +342,3 @@ class Checkpoint:
             state=CheckpointState(ckpt.state.value),
             training=CheckpointTrainingMetadata._from_bindings(ckpt.training),
         )
-
-    @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Checkpoint":
-        metadata = data.get("metadata", {})
-        training_data = data.get("training")
-        training = (
-            CheckpointTrainingMetadata(
-                training_data["experimentConfig"],
-                training_data["experimentId"],
-                training_data["trialId"],
-                training_data["hparams"],
-                training_data["validationMetrics"],
-            )
-            if training_data
-            else None
-        )
-
-        return cls(
-            session,
-            task_id=data["taskId"],
-            allocation_id=data["allocationId"],
-            uuid=data["uuid"],
-            report_time=data.get("reportTime"),
-            resources=data["resources"],
-            metadata=metadata,
-            state=data["state"],
-            training=training,
-        )
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "Checkpoint":
-        warnings.warn(
-            "Checkpoint.from_json() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return cls._from_json(data, session)

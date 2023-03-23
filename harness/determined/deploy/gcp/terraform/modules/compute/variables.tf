@@ -76,9 +76,6 @@ variable "min_dynamic_agents" {
 variable "max_dynamic_agents" {
 }
 
-variable "static_agents" {
-}
-
 variable "preemptible" {
 }
 

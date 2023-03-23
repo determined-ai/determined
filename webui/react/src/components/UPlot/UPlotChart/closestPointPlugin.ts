@@ -46,6 +46,9 @@ export const closestPointPlugin = ({
     let closestDistance: number = Number.MAX_VALUE;
     let closestPoint: Point | undefined;
 
+    // filter out hidden y series
+    const shownData = uPlot.data.slice(1).filter((_, idx) => uPlot.series[idx + 1].show);
+
     // find idx range
     // note: assuming X data to be sorted, uPlot behaves odd if that's false
     const cursorValX = uPlot.posToVal(cursorLeft, 'x');
@@ -61,8 +64,8 @@ export const closestPointPlugin = ({
     for (let idx = idxMin; idx <= idxMax; idx++) {
       const posX = uPlot.valToPos(uPlot.data[0][idx], 'x');
 
-      for (let seriesIdx = 1; seriesIdx < uPlot.data.length; seriesIdx++) {
-        const yVal = uPlot.data[seriesIdx][idx];
+      for (let seriesIdx = 0; seriesIdx < shownData.length; seriesIdx++) {
+        const yVal = shownData[seriesIdx][idx];
 
         // value is inside Y range
         if (yVal && yVal >= yValMin && yVal <= yValMax) {

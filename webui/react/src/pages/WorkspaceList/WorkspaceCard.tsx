@@ -33,36 +33,41 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   if (workspace.archived) classnames.push(css.archived);
 
   return (
-    <Card
-      actionMenu={!workspace.immutable ? menuProps : undefined}
-      href={paths.workspaceDetails(workspace.id)}
-      size="medium">
-      <div className={classnames.join(' ')}>
-        <div className={css.icon}>
-          <DynamicIcon name={workspace.name} size={78} />
-        </div>
-        <div className={css.info}>
-          <div className={css.nameRow}>
-            <Typography.Title className={css.name} ellipsis={{ rows: 1, tooltip: true }} level={5}>
-              {workspace.name}
-            </Typography.Title>
-            {workspace.pinned && <PushpinOutlined className={css.pinned} />}
+    <>
+      <Card
+        actionMenu={!workspace.immutable ? menuProps : undefined}
+        href={paths.workspaceDetails(workspace.id)}
+        size="medium">
+        <div className={classnames.join(' ')}>
+          <div className={css.icon}>
+            <DynamicIcon name={workspace.name} size={78} />
           </div>
-          <p className={css.projects}>
-            {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
-          </p>
-          <div className={css.avatarRow}>
-            <div className={css.avatar}>
-              <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
-                {Loadable.isLoaded(user) && <Avatar user={user.data} />}
-              </Spinner>
+          <div className={css.info}>
+            <div className={css.nameRow}>
+              <Typography.Title
+                className={css.name}
+                ellipsis={{ rows: 1, tooltip: true }}
+                level={5}>
+                {workspace.name}
+              </Typography.Title>
+              {workspace.pinned && <PushpinOutlined className={css.pinned} />}
             </div>
-            {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+            <p className={css.projects}>
+              {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
+            </p>
+            <div className={css.avatarRow}>
+              <div className={css.avatar}>
+                <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
+                  {Loadable.isLoaded(user) && <Avatar user={user.data} />}
+                </Spinner>
+              </div>
+              {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+            </div>
           </div>
         </div>
-      </div>
+      </Card>
       {contextHolders}
-    </Card>
+    </>
   );
 };
 

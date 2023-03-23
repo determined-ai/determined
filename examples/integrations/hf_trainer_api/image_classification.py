@@ -220,7 +220,7 @@ def parse_input_arguments(train_hps):
     return model_args, data_args, training_args
 
 
-def main(det_callback, model_args, data_args, training_args, tb_callback):
+def main(det_callback, tb_callback, model_args, data_args, training_args):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -472,4 +472,4 @@ if __name__ == "__main__":
             tb_writer=SummaryWriter(core_context.train.get_tensorboard_path())
         )
 
-        main(det_callback, model_args, data_args, tb_callback)
+        main(det_callback, tb_callback, model_args, data_args, training_args)

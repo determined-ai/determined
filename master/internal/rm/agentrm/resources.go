@@ -3,7 +3,6 @@ package agentrm
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -59,8 +58,7 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
-	// Write the real DET_UNIQUE_PORT_OFFSET value now that we know which devices to use.
-	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = strconv.Itoa(tasks.UniquePortOffset(spec.Devices))
+
 	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{

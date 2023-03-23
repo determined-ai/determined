@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.20.2-dev0
+    default: 0.21.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -386,13 +386,13 @@ commands:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              pip install --progress-bar off <<parameters.extras-requires>>
+              tools/scripts/retry.sh pip install --progress-bar off <<parameters.extras-requires>>
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
-              pip install -r <<parameters.extra-requirements-file>>
+              tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
@@ -2305,6 +2305,15 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+      
+      - test-e2e:
+          name: test-e2e-port-registry
+          requires: 
+            - build-go
+          parallelism: 1 
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
 
       - test-e2e:
           name: test-e2e-cpu-elastic

@@ -123,6 +123,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._fp16_compression_default = False
         self._average_aggregated_gradients_default = True
+        self._is_pre_trainer = False
 
         self._stop_requested = False
 
@@ -453,6 +454,9 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def _set_default_average_aggregated_gradients(self, average_aggregated_gradients: bool) -> None:
         self._average_aggregated_gradients_default = average_aggregated_gradients
+
+    def _set_is_pre_trainer(self) -> None:
+        self._is_pre_trainer = True
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.
@@ -963,6 +967,12 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         """
 
         if self._tbd_writer is None:
+            # As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools
+            # 59.6.0.  The bug is that it attempts to import distutils then access distutils.version
+            # without actually importing distutils.version.  We can workaround this by prepopulating
+            # the distutils.version submodule in the distutils module.
+            import distutils.version  # noqa: F401
+
             from torch.utils.tensorboard import SummaryWriter
 
             self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore

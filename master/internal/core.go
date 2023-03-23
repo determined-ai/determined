@@ -32,6 +32,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -46,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -151,39 +154,6 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
-func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
-	args := struct {
-		LessThanID    *int `query:"less_than_id"`
-		GreaterThanID *int `query:"greater_than_id"`
-		Limit         *int `query:"tail"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-
-	limit := -1
-	if args.Limit != nil {
-		limit = *args.Limit
-	}
-
-	startID := -1
-	if args.GreaterThanID != nil {
-		startID = *args.GreaterThanID + 1
-	}
-
-	endID := -1
-	if args.LessThanID != nil {
-		endID = *args.LessThanID
-	}
-
-	entries := m.logs.Entries(startID, endID, limit)
-	if len(entries) == 0 {
-		// Return a zero-length array here so the JSON encoding is `[]` rather than `null`.
-		entries = make([]*logger.Entry, 0)
-	}
-	return entries, nil
-}
-
 //	@Summary	Get a detailed view of resource allocation during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-raw-resource-allocation-csv
@@ -269,14 +239,14 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY:
 		start, err := time.Parse("2006-01-02", req.StartDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid start date")
+			return nil, status.Errorf(codes.InvalidArgument, "invalid start date %s", err.Error())
 		}
 		end, err := time.Parse("2006-01-02", req.EndDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid end date")
+			return nil, status.Errorf(codes.InvalidArgument, "invalid end date %s", err.Error())
 		}
 		if start.After(end) {
-			return nil, errors.New("start date cannot be after end date")
+			return nil, status.Error(codes.InvalidArgument, "start date cannot be after end date")
 		}
 
 		if err := m.db.QueryProto(
@@ -290,15 +260,15 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY:
 		start, err := time.Parse("2006-01", req.StartDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid start date")
+			return nil, status.Error(codes.InvalidArgument, "invalid start date")
 		}
 		end, err := time.Parse("2006-01", req.EndDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid end date")
+			return nil, status.Error(codes.InvalidArgument, "invalid end date")
 		}
 		end = end.AddDate(0, 1, -1)
 		if start.After(end) {
-			return nil, errors.New("start date cannot be after end date")
+			return nil, status.Error(codes.InvalidArgument, "start date cannot be after end date")
 		}
 
 		if err := m.db.QueryProto(
@@ -310,7 +280,7 @@ func (m *Master) fetchAggregatedResourceAllocation(
 		return resp, nil
 
 	default:
-		return nil, errors.New("no aggregation period specified")
+		return nil, status.Error(codes.InvalidArgument, "no aggregation period specified")
 	}
 }
 
@@ -943,6 +913,7 @@ func (m *Master) Run(ctx context.Context) error {
 	})
 
 	allocationmap.InitAllocationMap()
+	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
@@ -1135,7 +1106,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
-	m.echo.GET("/logs", api.Route(m.getMasterLogs))
 
 	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)

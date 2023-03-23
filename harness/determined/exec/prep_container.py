@@ -331,7 +331,16 @@ if __name__ == "__main__":
         trial_prep(sess, info)
 
     if args.resources:
-        det.ResourcesInfo._by_inspection()._to_file()
+        resources = det.ResourcesInfo._by_inspection()
+        resources._to_file()
+        # Log where we are running and what GPUs are attached so hardware failures can be traced
+        # based only on task logs.
+        hostname = os.environ.get("HOSTNAME", "")
+        agent_id = os.environ.get("DET_AGENT_ID", "")
+        logging.info(
+            f"Running task container on agent_id={agent_id}, hostname={hostname} "
+            f"with visible GPUs {resources.gpu_uuids}"
+        )
         for process in gpu.get_gpu_processes():
             logging.warning(
                 f"process {process.process_name} "

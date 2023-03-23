@@ -63,8 +63,13 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	if err := userShouldBeAdmin(ctx, a); err != nil {
+	// TODO: migrate to RBAC.
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
 		return nil, err
+	}
+	if !u.Admin {
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	config, err := a.m.config.Printable()

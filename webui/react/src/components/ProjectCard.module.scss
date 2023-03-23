@@ -1,21 +1,31 @@
 .base {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 16px;
+  grid-template:
+    'header  header' auto
+    'workspace workspace' 20px
+    'footer footer' 20px / auto auto;
   height: 100%;
-  justify-content: space-between;
 
+  .headerContainer {
+    grid-area: header;
+  }
   .name {
-    font-size: 16px;
+    font-size: 13px;
     margin-bottom: 0;
     width: fit-content;
   }
-  .workspace {
-    display: flex;
+  .workspaceContainer {
+    grid-area: workspace;
   }
-  .footer {
+  .workspaceIcon {
+    width: fit-content;
+  }
+  .footerContainer {
+    align-items: end;
     display: flex;
     font-size: 12px;
+    grid-area: footer;
     justify-content: space-between;
 
     .experiments {

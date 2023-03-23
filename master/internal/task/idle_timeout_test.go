@@ -28,7 +28,7 @@ func (m *MockIdleTimeoutWatchee) Receive(ctx *actor.Context) error {
 }
 
 func TestIdleTimeoutWatcher(t *testing.T) {
-	tickInterval := time.Millisecond
+	tickInterval := time.Second
 	lastActivity := time.Now()
 	actionDone := false
 
@@ -50,18 +50,9 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 	assert.Assert(t, created)
 
 	system.Ask(mActor, actor.Ping{}).Get()
+
+	time.Sleep(tickInterval / 2)
 	assert.Equal(t, actionDone, false)
-
-	// Go scheduling may sometimes be late to schedule the `IdleTimeoutWatcherTick`.
-	// The earliest it'd run is after `tickInterval`.
-	// To make the check more reliable, we wait between 2 and 10 `tickIntervals`.
-	for i := 0; i < 5; i++ {
-		time.Sleep(2 * tickInterval)
-		system.Ask(mActor, actor.Ping{}).Get()
-		if actionDone == true {
-			break
-		}
-	}
-
+	time.Sleep(tickInterval)
 	assert.Equal(t, actionDone, true)
 }

@@ -69,7 +69,6 @@ class TrialInfo:
         steps_completed: int,
         trial_run_id: int,
         debug: bool,
-        unique_port_offset: int,
         inter_node_network_interface: Optional[str],
     ):
         """
@@ -104,8 +103,6 @@ class TrialInfo:
         self._trial_run_id = trial_run_id
         # TODO: decide if the experiment config is the right place for users to set a debug flag.
         self._debug = debug
-        # TODO: is this derivable from the slot ids?
-        self._unique_port_offset = unique_port_offset
         # TODO: Get rid of this in favor of launch layer configs?
         self._inter_node_network_interface = inter_node_network_interface
 
@@ -122,7 +119,6 @@ class TrialInfo:
             steps_completed=int(os.environ["DET_STEPS_COMPLETED"]),
             trial_run_id=int(os.environ["DET_TRIAL_RUN_ID"]),
             debug=experiment_config.get("debug", False),
-            unique_port_offset=int(os.environ["DET_UNIQUE_PORT_OFFSET"]),
             inter_node_network_interface=os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE"),
         )
 

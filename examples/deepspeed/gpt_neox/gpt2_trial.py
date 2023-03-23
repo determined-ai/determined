@@ -21,7 +21,7 @@ from megatron.data.data_utils import build_datasets_from_neox_args
 import deepspeed
 from determined import LOG_FORMAT, InvalidHP
 from determined.pytorch import DataLoader
-from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnitS
+from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
