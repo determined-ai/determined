@@ -19,14 +19,16 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import Select from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
+import Label from 'components/Label';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -68,6 +70,7 @@ const ComponentTitles = {
   InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Modals: 'Modals',
   Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
@@ -154,12 +157,112 @@ const ButtonsSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default Button</strong>
+        <strong>Default Button variations</strong>
+        <Space>
+          <Button>Default</Button>
+          <Button danger>Danger</Button>
+          <Button disabled>Disabled</Button>
+          <Button ghost>Ghost</Button>
+          <Button loading>Loading</Button>
+        </Space>
+        <hr />
+        <strong>Primary Button variations</strong>
         <Space>
           <Button type="primary">Primary</Button>
-          <Button>Secondary</Button>
-          <Button loading>Loading</Button>
-          <Button disabled>Disabled</Button>
+          <Button danger type="primary">
+            Danger
+          </Button>
+          <Button disabled type="primary">
+            Disabled
+          </Button>
+          <Button ghost type="primary">
+            Ghost
+          </Button>
+          <Button loading type="primary">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Link Button variations</strong>
+        <Space>
+          <Button type="link">Link</Button>
+          <Button danger type="link">
+            Danger
+          </Button>
+          <Button disabled type="link">
+            Disabled
+          </Button>
+          <Button ghost type="link">
+            Ghost
+          </Button>
+          <Button loading type="link">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Text Button variations</strong>
+        <Space>
+          <Button type="text">Text</Button>
+          <Button danger type="text">
+            Danger
+          </Button>
+          <Button disabled type="text">
+            Disabled
+          </Button>
+          <Button ghost type="text">
+            Ghost
+          </Button>
+          <Button loading type="text">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Ghost Button variations</strong>
+        <Space>
+          <Button type="ghost">Ghost</Button>
+          <Button danger type="ghost">
+            Danger
+          </Button>
+          <Button disabled type="ghost">
+            Disabled
+          </Button>
+          <Button ghost type="ghost">
+            Ghost
+          </Button>
+          <Button loading type="ghost">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Dashed Button variations</strong>
+        <Space>
+          <Button type="dashed">Dashed</Button>
+          <Button danger type="dashed">
+            Danger
+          </Button>
+          <Button disabled type="dashed">
+            Disabled
+          </Button>
+          <Button ghost type="dashed">
+            Ghost
+          </Button>
+          <Button loading type="dashed">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Shapes</strong>
+        <Space>
+          <Button shape="circle">Circle</Button>
+          <Button shape="default">Default</Button>
+          <Button shape="round">Round</Button>
+        </Space>
+        <hr />
+        <strong>Sizes</strong>
+        <Space>
+          <Button size="large">Large</Button>
+          <Button size="middle">Middle</Button>
+          <Button size="small">Small</Button>
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
@@ -1708,6 +1811,208 @@ const ToggleSection: React.FC = () => {
   );
 };
 
+/* modal section */
+
+const handleSubmit = async (fail?: boolean) => {
+  if (fail) throw new Error('Error message');
+  await new Promise((r) => setTimeout(r, 1000));
+  return;
+};
+
+const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="small" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="medium" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="large" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      danger
+      submit={{
+        handler: handleSubmit,
+        text: 'Submit',
+      }}
+      title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal icon="experiment" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      cancel
+      footerLink={{ text: value, url: '/' }}
+      headerLink={{ text: value, url: '/' }}
+      title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value, fail }) => {
+  return (
+    <Modal
+      cancel
+      submit={{
+        handler: () => handleSubmit(fail),
+        text: 'Submit',
+      }}
+      title={value}>
+      <Form>
+        <Form.Item label="Workspace" name="workspaceId">
+          <Select allowClear defaultValue={1} placeholder="Workspace (required)">
+            <Option key="1" value="1">
+              WS AS
+            </Option>
+            <Option key="2" value="2">
+              Further
+            </Option>
+            <Option key="3" value="3">
+              Whencelan
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Template" name="template">
+          <Select allowClear placeholder="No template (optional)">
+            <Option key="1" value={1}>
+              Default Template
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input defaultValue={value} placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Resource Pool" name="pool">
+          <Select allowClear placeholder="Pick the best option">
+            <Option key="1" value="1">
+              GPU Pool
+            </Option>
+            <Option key="2" value="2">
+              Aux Pool
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Slots" name="slots">
+          <InputNumber max={10} min={0} />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  const [form] = Form.useForm();
+  const alias = Form.useWatch('alias', form);
+
+  return (
+    <Modal
+      cancel
+      submit={{
+        disabled: !alias,
+        handler: handleSubmit,
+        text: 'Submit',
+      }}
+      title={value}>
+      <Form form={form}>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input defaultValue={value} placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Alias" name="alias" required>
+          <Input placeholder="Alias" />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+const ModalSection: React.FC = () => {
+  const [text, setText] = useState('State value that gets passed to modal via props');
+  const SmallModal = useModal(SmallModalComponent);
+  const MediumModal = useModal(MediumModalComponent);
+  const LargeModal = useModal(LargeModalComponent);
+  const DangerousModal = useModal(DangerousModalComponent);
+  const FormModal = useModal(FormModalComponent);
+  const FormFailModal = useModal(FormModalComponent);
+  const LinksModal = useModal(LinksModalComponent);
+  const IconModal = useModal(IconModalComponent);
+  const ValidationModal = useModal(ValidationModalComponent);
+
+  return (
+    <ComponentSection id="Modals" title="Modals">
+      <AntDCard>
+        <Label>State value that gets passed to modal via props</Label>
+        <Input value={text} onChange={(s) => setText(String(s.target.value))} />
+        <hr />
+        <strong>Sizes</strong>
+        <Space>
+          <Button onClick={SmallModal.open}>Open Small Modal</Button>
+          <Button onClick={MediumModal.open}>Open Medium Modal</Button>
+          <Button onClick={LargeModal.open}>Open Large Modal</Button>
+        </Space>
+        <hr />
+        <strong>Links and Icons</strong>
+        <Space>
+          <Button onClick={LinksModal.open}>Open Modal with Header and Footer Links</Button>
+          <Button onClick={IconModal.open}>Open Modal with Title Icon</Button>
+        </Space>
+        <hr />
+        <strong>With form submission</strong>
+        <Space>
+          <Button onClick={FormModal.open}>Open Form Modal (Success)</Button>
+          <Button onClick={FormFailModal.open}>Open Form Modal (Failure)</Button>
+        </Space>
+        <hr />
+        <strong>With form validation</strong>
+        <Space>
+          <Button onClick={ValidationModal.open}>Open Modal with Form Validation</Button>
+        </Space>
+        <hr />
+        <strong>Variations</strong>
+        <Space>
+          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+        </Space>
+      </AntDCard>
+      <SmallModal.Component value={text} />
+      <MediumModal.Component value={text} />
+      <LargeModal.Component value={text} />
+      <DangerousModal.Component value={text} />
+      <FormModal.Component value={text} />
+      <FormFailModal.Component fail value={text} />
+      <LinksModal.Component value={text} />
+      <IconModal.Component value={text} />
+      <ValidationModal.Component value={text} />
+    </ComponentSection>
+  );
+};
+
 const Components = {
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
@@ -1722,6 +2027,7 @@ const Components = {
   InputSearch: <InputSearchSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
@@ -1743,7 +2049,7 @@ const DesignKit: React.FC = () => {
     <Page bodyNoPadding docTitle="Design Kit">
       <div className={css.base}>
         <nav>
-          <Link reloadDocument to={{}}>
+          <Link reloadDocument to={'/'}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />
