@@ -38,7 +38,7 @@ func TestUnmarshalGCPClusterConfig(t *testing.T) {
 	"boot_disk_size": 100,
 	"boot_disk_source_image": "test-source_image",
 	"labels": {
-	    "test-label-key": "test-label-value"
+	    "test-labels-key": "test-labels-value"
 	},
 	"label_key": "test-label-key",
 	"label_value": "test-label-value",
@@ -65,7 +65,7 @@ func TestUnmarshalGCPClusterConfig(t *testing.T) {
 			Zone:                "test-zone",
 			BootDiskSize:        100,
 			BootDiskSourceImage: "test-source_image",
-			Labels:              map[string]string{"test-label-key": "test-label-value"},
+			Labels:              map[string]string{"test-labels-key": "test-labels-value"},
 			LabelKey:            "test-label-key",
 			LabelValue:          "test-label-value",
 			NamePrefix:          "test-name",
