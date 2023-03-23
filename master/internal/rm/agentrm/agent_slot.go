@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -71,8 +70,6 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 		if result != nil {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, result))
 		}
-	case echo.PATCH:
-		ctx.Respond(api.ErrAPIRemoved)
 	default:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(echo.ErrMethodNotAllowed)

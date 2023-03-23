@@ -5,7 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -35,8 +34,6 @@ func (s *slots) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	case echo.GET:
 		result := ctx.Ask(ctx.Self().Parent(), model.SlotsSummary{}).Get().(model.SlotsSummary)
 		ctx.Respond(apiCtx.JSON(http.StatusOK, result))
-	case echo.PATCH:
-		ctx.Respond(api.ErrAPIRemoved)
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
