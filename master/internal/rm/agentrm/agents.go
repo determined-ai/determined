@@ -32,10 +32,10 @@ func initializeAgents(
 	check.Panic(check.True(ok, "agents address already taken"))
 	system.Ask(agentsRef, actor.Ping{}).Get()
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
-	e.Any("/agents*", func(c echo.Context) error {
+	e.Any("/agents*", api.Route(system, nil))
+	e.PATCH("/agents*", func(c echo.Context) error {
 		return intApi.ErrAPIRemoved
 	})
-	e.GET("/agents*", api.Route(system, nil))
 }
 
 type agents struct {
