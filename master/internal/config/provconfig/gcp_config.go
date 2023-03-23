@@ -3,6 +3,7 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"strings"
 	"time"
 
@@ -162,15 +163,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 		}, rb.Disks...)
 	}
 
-	if rb.Labels == nil {
-		rb.Labels = make(map[string]string)
-	}
-	for labelKey, labelValue := range c.Labels {
-		rb.Labels[labelKey] = labelValue
-	}
-	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		rb.Labels[c.LabelKey] = c.LabelValue
-	}
+	maps.Copy(rb.Labels, c.Labels)
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {
 		networkInterface := &compute.NetworkInterface{
