@@ -1938,8 +1938,8 @@ func (a *apiServer) SearchExperiments(ctx context.Context, req *apiv1.SearchExpe
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 	var proj *projectv1.Project
-	if req.ProjectId != 0 {
-		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
+	if req.ProjectId != nil {
+		proj, err = a.GetProjectByID(ctx, *req.ProjectId, *curUser)
 		if err != nil {
 			return nil, err
 		}
