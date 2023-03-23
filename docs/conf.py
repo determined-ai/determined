@@ -74,6 +74,8 @@ html_theme_options = {
     },
     "repository_url": "https://github.com/determined-ai/determined",
     "use_repository_button": True,
+    "use_download_button": False,
+    "use_fullscreen_button": False,
 }
 html_use_index = True
 html_domain_indices = True
