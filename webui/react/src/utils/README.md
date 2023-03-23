@@ -66,7 +66,7 @@ When programming with API values, you often don't care (yet) whether the value i
 
 ### map
 
-`map` will take any function and apply it to the value inside the `Loadable` once it is loaded.
+`map` will take any function and apply it to the value inside the `Loadable` if it is loaded.
 
 ```typescript
 Loadable.map(addOne, Loaded(1)); // Loaded(2)
