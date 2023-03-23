@@ -2,6 +2,8 @@
 
 ## Brief Architecture
 
+THIS IS A WEB ONLY CHANGE
+
 The **React** webapp was bootstrapped using [Create React App](https://github.com/facebook/create-react-app#create-react-app--) because it brings a lot to the table with minimal setup and package management. Such as DOM router, Typescript, bundle analyzer, linting, style normalizer and webpack config (gzip, minify, hasing, source maps, tree shaking, code splitting, etc).
 
 The following are the notable main packages and libraries we are using:
