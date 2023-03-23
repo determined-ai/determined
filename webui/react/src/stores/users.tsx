@@ -27,8 +27,7 @@ class UsersService {
   };
 
   public getCurrentUser = (): Observable<Loadable<DetailedUser>> => {
-    return this.#users.select((map) => {
-      const id = this.#currentUserId.get();
+    return Observable.select([this.#users, this.#currentUserId], (map, id) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return Loadable.map(id, (id) => map.get(id)!);
     });
@@ -53,7 +52,7 @@ class UsersService {
   public getUsers = (cfg?: FetchUsersConfig): Observable<Loadable<DetailedUserList>> => {
     const config = cfg ?? {};
 
-    return this.#usersByKey.select((map) => {
+    return Observable.select([this.#usersByKey, this.#users], (map, users) => {
       const usersPagination = map.get(encodeParams(config));
 
       if (!usersPagination) return NotLoaded;
@@ -61,7 +60,7 @@ class UsersService {
       const userPage: DetailedUserList = {
         pagination: usersPagination.pagination,
         users: usersPagination.users.flatMap((userId) => {
-          const user = this.#users.get().get(userId);
+          const user = users.get(userId);
 
           return user ? [user] : [];
         }),
