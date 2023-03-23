@@ -191,9 +191,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
           ...filters,
           metric: searcherMetric.current,
         });
+      } else if (metrics.length > 0 && !activeMetric) {
+        setActiveMetric(metrics[0]);
+        handleFiltersChange({
+          ...filters,
+          metric: metrics[0],
+        });
       }
     }
-  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics]);
+  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics, activeMetric]);
 
   const handleTabChange = useCallback(
     (type: string) => {
