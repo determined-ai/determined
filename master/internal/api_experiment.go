@@ -1551,17 +1551,20 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		trialCursors[trialID] = endTime
 	}
 
-	for _, in := range metricMeasurements {
-		out := apiv1.DataPoint{
-			Batches: int32(in.Batches),
-			Value:   in.Value,
-			Time:    timestamppb.New(in.Time),
+	if !seenBefore {
+		for _, in := range metricMeasurements {
+			out := apiv1.DataPoint{
+				Batches: int32(in.Batches),
+				Value:   in.Value,
+				Time:    timestamppb.New(in.Time),
+			}
+			if in.Epoch != nil {
+				out.Epoch = in.Epoch
+			}
+			trial.Data = append(trial.Data, &out)
 		}
-		if in.Epoch != nil {
-			out.Epoch = in.Epoch
-		}
-		trial.Data = append(trial.Data, &out)
 	}
+
 	return &trial, nil
 }
 
