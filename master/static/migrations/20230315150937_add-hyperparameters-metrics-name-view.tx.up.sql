@@ -1,32 +1,3 @@
-CREATE TABLE public.exp_hyperparameters (
-    id SERIAL PRIMARY KEY,
-    project_id INT REFERENCES projects(id),
-    experiment_id INT REFERENCES experiments(id),
-    hyperparameters JSON 
-);
-
-CREATE INDEX ix_hyperparameters_project_id ON exp_hyperparameters USING btree (project_id);
-CREATE UNIQUE INDEX ix_hyperparameters_experiment_id_unique ON exp_hyperparameters(experiment_id);
-
-INSERT INTO public.exp_hyperparameters (project_id, experiment_id, hyperparameters) (
-    SELECT project_id, id AS experiment_id, json_build_array((config->'hyperparameters')) AS hyperparameters FROM experiments
-);
-
-CREATE OR REPLACE FUNCTION autoupdate_exp_hyperparameters() RETURNS trigger AS $$
-BEGIN
-  INSERT INTO exp_hyperparameters (project_id, experiment_id, hyperparameters) VALUES (
-    NEW.project_id, NEW.id, json_build_array((NEW.config->'hyperparameters'))
-  ) ON CONFLICT(experiment_id) DO UPDATE SET hyperparameters = EXCLUDED.hyperparameters;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER autoupdate_exp_hyperparameters
-AFTER INSERT OR UPDATE ON experiments
-FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_hyperparameters();
-
-
-
 CREATE TABLE public.exp_metrics_name (
     id SERIAL PRIMARY KEY,
     project_id INT REFERENCES projects(id),

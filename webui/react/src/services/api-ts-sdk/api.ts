@@ -2495,7 +2495,7 @@ export const V1FittingPolicy = {
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
 /**
- * GeneralColumn is the pre-defined column names for experiment list table.   - GENERAL_COLUMN_UNSPECIFIED: Unspecified column.  - GENERAL_COLUMN_ID: Column id.  - GENERAL_COLUMN_NAME: Column name.  - GENERAL_COLUMN_DESCRIPTION: Column discription.  - GENERAL_COLUMN_TAGS: Column tags.  - GENERAL_COLUMN_USER: Column user.  - GENERAL_COLUMN_STARTTIME: Column starttime.  - GENERAL_COLUMN_DURATION: Column duration.  - GENERAL_COLUMN_STATE: Column state.
+ * GeneralColumn is the pre-defined column names for experiment list table.   - GENERAL_COLUMN_UNSPECIFIED: Unspecified column.  - GENERAL_COLUMN_ID: Column id.  - GENERAL_COLUMN_NAME: Column name.  - GENERAL_COLUMN_DESCRIPTION: Column discription.  - GENERAL_COLUMN_TAGS: Column tags.  - GENERAL_COLUMN_FORKED: Column forked.  - GENERAL_COLUMN_STARTTIME: Column starttime.  - GENERAL_COLUMN_DURATION: Column duration.  - GENERAL_COLUMN_COUNT: Column trial count.  - GENERAL_COLUMN_STATE: Column state.  - GENERAL_COLUMN_SEARCHER_TYPE: Column searcher type.  - GENERAL_COLUMN_RESOURSE_POOL: Column resourse pool.  - GENERAL_COLUMN_PROGRESS: Column progress.  - GENERAL_COLUMN_CHECKPOINT_SIZE: Column checkpoint size.  - GENERAL_COLUMN_CHECKPOINT_COUNT: Column checkpoint count.  - GENERAL_COLUMN_USER: Column user.
  * @export
  * @enum {string}
  */
@@ -2505,10 +2505,17 @@ export const V1GeneralColumn = {
     NAME: 'GENERAL_COLUMN_NAME',
     DESCRIPTION: 'GENERAL_COLUMN_DESCRIPTION',
     TAGS: 'GENERAL_COLUMN_TAGS',
-    USER: 'GENERAL_COLUMN_USER',
+    FORKED: 'GENERAL_COLUMN_FORKED',
     STARTTIME: 'GENERAL_COLUMN_STARTTIME',
     DURATION: 'GENERAL_COLUMN_DURATION',
+    COUNT: 'GENERAL_COLUMN_COUNT',
     STATE: 'GENERAL_COLUMN_STATE',
+    SEARCHERTYPE: 'GENERAL_COLUMN_SEARCHER_TYPE',
+    RESOURSEPOOL: 'GENERAL_COLUMN_RESOURSE_POOL',
+    PROGRESS: 'GENERAL_COLUMN_PROGRESS',
+    CHECKPOINTSIZE: 'GENERAL_COLUMN_CHECKPOINT_SIZE',
+    CHECKPOINTCOUNT: 'GENERAL_COLUMN_CHECKPOINT_COUNT',
+    USER: 'GENERAL_COLUMN_USER',
 } as const
 export type V1GeneralColumn = ValueOf<typeof V1GeneralColumn>
 /**

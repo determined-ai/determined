@@ -65,7 +65,7 @@ func (a *apiServer) getProjectColumnsByID(
 		Hyperparameters []expconf.Hyperparameters
 	}{}
 	err := db.Bun().
-		NewSelect().Table("exp_hyperparameters").Column("hyperparameters").Where(
+		NewSelect().Table("experiments").ColumnExpr("json_build_array(config->'hyperparameters') AS Hyperparameters").Where(
 		"project_id = ?", id).Scan(ctx, &hyperparameters)
 	if err != nil {
 		return nil, err
