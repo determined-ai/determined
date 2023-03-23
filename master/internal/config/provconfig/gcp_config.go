@@ -3,9 +3,10 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"strings"
 	"time"
+
+	"golang.org/x/exp/maps"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/pkg/errors"
