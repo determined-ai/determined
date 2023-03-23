@@ -175,16 +175,6 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 		return err
 	}
 
-	user := c.(*detContext.DetContext).MustGetUser()
-
-	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
-		ok, echoErr := api.GrpcErrToEcho(err)
-		if !ok {
-			return err
-		}
-		return echoErr
-	}
-
 	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
 		return errors.Wrap(err, "invalid start time")
@@ -345,15 +335,6 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
-	}
-
-	user := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
-		ok, echoErr := api.GrpcErrToEcho(err)
-		if !ok {
-			return err
-		}
-		return echoErr
 	}
 
 	// Parse start & end timestamps
@@ -525,15 +506,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
-	}
-
-	user := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canGetUsageDetails(c.Request().Context(), &user); err != nil {
-		ok, echoErr := api.GrpcErrToEcho(err)
-		if !ok {
-			return err
-		}
-		return echoErr
 	}
 
 	resp, err := m.fetchAggregatedResourceAllocation(&apiv1.ResourceAllocationAggregatedRequest{
@@ -1164,9 +1136,8 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources")
-	// TODO secure these.
-	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation) // TODO add middleware
+	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
+	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
