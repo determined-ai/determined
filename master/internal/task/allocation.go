@@ -586,7 +586,6 @@ func (a *Allocation) ResourcesStateChanged(
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
-		a.markResourcesStarted(ctx)
 		if a.model.StartTime == nil {
 			a.markResourcesStarted(ctx)
 		}
