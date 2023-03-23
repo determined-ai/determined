@@ -18,6 +18,9 @@
   .workspaceContainer {
     grid-area: workspace;
   }
+  .workspaceIcon {
+    width: fit-content;
+  }
   .footerContainer {
     align-items: end;
     display: flex;

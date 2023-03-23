@@ -49,9 +49,9 @@ const ProjectCard: React.FC<Props> = ({
           <div className={css.workspaceContainer}>
             {showWorkspace && project.workspaceId !== 1 && (
               <Tooltip title={project.workspaceName}>
-                <span>
+                <div className={css.workspaceIcon}>
                   <DynamicIcon name={project.workspaceName} size={20} />
-                </span>
+                </div>
               </Tooltip>
             )}
           </div>
