@@ -3,6 +3,7 @@ package experiment
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
@@ -81,11 +82,77 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 	return refs, results
 }
 
-// A Bun query for editable experiments in multi-experiment actions.
-func editableExperimentIds(ctx context.Context, requestedIds []int32) ([]int32,
+// Apply filters to a query
+func queryBulkExperiments(query *bun.SelectQuery,
+	filters *apiv1.BulkExperimentFilters,
+) *bun.SelectQuery {
+	if filters.Description != "" {
+		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", filters.Description)
+	}
+	if filters.Name != "" {
+		query = query.Where("e.config->>'name' ILIKE ('%%' || ? || '%%')",
+			filters.Name)
+	}
+
+	if len(filters.Labels) > 0 {
+		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+				CASE WHEN e.config->'labels'::text = 'null'
+				THEN NULL
+				ELSE e.config->'labels' END
+			))`, strings.Join(filters.Labels, ","))
+	}
+
+	if filters.Archived != nil {
+		query = query.Where("e.archived = ?", filters.Archived.Value)
+	}
+	if len(filters.States) > 0 {
+		var allStates []string
+		for _, state := range filters.States {
+			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+		}
+		query = query.Where("e.state IN (?)", bun.In(allStates))
+	}
+	if len(filters.UserIds) > 0 {
+		query = query.Where("e.owner_id IN (?)", bun.In(filters.UserIds))
+	}
+	if filters.ProjectId != 0 {
+		query = query.Where("project_id = ?", filters.ProjectId)
+	}
+	return query
+}
+
+// Apply filters to get a list of matching experiment IDs.
+func filterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
 	error,
 ) {
+	experimentIdList := []int32{}
+	query := db.Bun().NewSelect().
+		Model(&experimentIdList).
+		ModelTableExpr("experiments as e").
+		Column("e.id")
+	query = queryBulkExperiments(query, filters)
+
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	return experimentIdList, nil
+}
+
+// A Bun query for editable experiments in multi-experiment actions.
+func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
+	filters *apiv1.BulkExperimentFilters,
+) ([]int32, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	experimentIdList := []int32{}
+	if filters == nil {
+		experimentIdList = inputExpIDs
+	} else {
+		experimentIdList, err = filterToExperimentIds(ctx, filters)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +162,7 @@ func editableExperimentIds(ctx context.Context, requestedIds []int32) ([]int32,
 		ModelTableExpr("experiments AS e").
 		Model(&expIDs).
 		Column("e.id").
-		Where("id IN (?)", bun.In(requestedIds))
+		Where("id IN (?)", bun.In(experimentIdList))
 
 	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -128,20 +195,22 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 
 // ActivateExperiments works on one or many experiments.
 func ActivateExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	expIDs, err := editableExperimentIds(ctx, experimentIds)
+	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []ExperimentActionResult{}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(expIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(expIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -152,20 +221,22 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 
 // CancelExperiments works on one or many experiments.
 func CancelExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	expIDs, err := editableExperimentIds(ctx, experimentIds)
+	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []ExperimentActionResult{}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(expIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(expIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -189,20 +260,22 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 
 // KillExperiments works on one or many experiments.
 func KillExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	expIDs, err := editableExperimentIds(ctx, experimentIds)
+	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []ExperimentActionResult{}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(expIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(expIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -226,20 +299,22 @@ func KillExperiments(ctx context.Context, system *actor.System,
 
 // PauseExperiments works on one or many experiments.
 func PauseExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
-	expIDs, err := editableExperimentIds(ctx, experimentIds)
+	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []ExperimentActionResult{}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(expIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(expIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -250,7 +325,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 
 // ArchiveExperiments works on one or many experiments.
 func ArchiveExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -267,8 +342,13 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 			"CANCELED",
 			"COMPLETED",
 			"ERROR",
-		})).
-		Where("e.id IN (?)", bun.In(experimentIds))
+		}))
+
+	if filters == nil {
+		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	} else {
+		query = queryBulkExperiments(query, filters)
+	}
 
 	query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -302,12 +382,14 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -336,7 +418,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 
 // UnarchiveExperiments works on one or many experiments.
 func UnarchiveExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -353,8 +435,13 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 			"CANCELED",
 			"COMPLETED",
 			"ERROR",
-		})).
-		Where("e.id IN (?)", bun.In(experimentIds))
+		}))
+
+	if filters == nil {
+		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	} else {
+		query = queryBulkExperiments(query, filters)
+	}
 
 	query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -388,12 +475,14 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
@@ -422,7 +511,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 
 // MoveExperiments works on one or many experiments.
 func MoveExperiments(ctx context.Context, system *actor.System,
-	experimentIds []int32, destinationProjectID int32,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters, destinationProjectID int32,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -437,8 +526,13 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		ColumnExpr("(exp.archived OR p.archived OR w.archived) AS archived").
 		ColumnExpr("TRUE AS state").
 		Join("JOIN projects p ON exp.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("exp.id IN (?)", bun.In(experimentIds))
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
+
+	if filters == nil {
+		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
+	} else {
+		getQ = queryBulkExperiments(getQ, filters)
+	}
 
 	if getQ, err = AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
 		[]rbacv1.PermissionType{
@@ -466,12 +560,14 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	for _, originalID := range experimentIds {
-		if !slices.Contains(visibleIDs, originalID) {
-			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
-				ID:    originalID,
-			})
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
+					ID:    originalID,
+				})
+			}
 		}
 	}
 
