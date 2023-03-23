@@ -10294,13 +10294,25 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options: any = {}): FetchArgs {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options: any = {}): FetchArgs {
+            // verify required parameter 'startDate' is not null or undefined
+            if (startDate === null || startDate === undefined) {
+                throw new RequiredError('startDate','Required parameter startDate was null or undefined when calling resourceAllocationAggregated.');
+            }
+            // verify required parameter 'endDate' is not null or undefined
+            if (endDate === null || endDate === undefined) {
+                throw new RequiredError('endDate','Required parameter endDate was null or undefined when calling resourceAllocationAggregated.');
+            }
+            // verify required parameter 'period' is not null or undefined
+            if (period === null || period === undefined) {
+                throw new RequiredError('period','Required parameter period was null or undefined when calling resourceAllocationAggregated.');
+            }
             const localVarPath = `/api/v1/resources/allocation/aggregated`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -10340,12 +10352,20 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options: any = {}): FetchArgs {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options: any = {}): FetchArgs {
+            // verify required parameter 'timestampAfter' is not null or undefined
+            if (timestampAfter === null || timestampAfter === undefined) {
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling resourceAllocationRaw.');
+            }
+            // verify required parameter 'timestampBefore' is not null or undefined
+            if (timestampBefore === null || timestampBefore === undefined) {
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling resourceAllocationRaw.');
+            }
             const localVarPath = `/api/v1/resources/allocation/raw`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -10607,13 +10627,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated(startDate, endDate, period, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10628,12 +10648,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10775,24 +10795,24 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any) {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
     }
@@ -10948,27 +10968,27 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Get an aggregated view of resource allocation during the given time period.
-     * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-     * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-     * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+     * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+     * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+     * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any) {
+    public resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationAggregated(startDate, endDate, period, options)(this.fetch, this.basePath)
     }
     
     /**
      * 
      * @summary Get a detailed view of resource allocation during the given time period.
-     * @param {Date} [timestampAfter] The start of the period to consider.
-     * @param {Date} [timestampBefore] The end of the period to consider.
+     * @param {Date} timestampAfter The start of the period to consider.
+     * @param {Date} timestampBefore The end of the period to consider.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+    public resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath)
     }
     
