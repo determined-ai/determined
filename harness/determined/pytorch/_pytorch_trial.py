@@ -770,6 +770,7 @@ class _PyTorchTrialController:
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
 
+        # Test mode will break after one batch despite not completing op.
         if self.is_chief and not self.test_mode:
             assert op._completed, "logic error; op was never completed."
 
