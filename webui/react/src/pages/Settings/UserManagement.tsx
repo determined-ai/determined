@@ -201,13 +201,13 @@ const UserManagement: React.FC = () => {
 
   const handleNameSearchApply = useCallback(
     (name: string) => {
-      updateSettings({ name: name || undefined, row: undefined });
+      updateSettings({ name: name || undefined, row: undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined, row: undefined });
+    updateSettings({ name: undefined, row: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
