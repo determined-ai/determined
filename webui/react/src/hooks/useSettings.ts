@@ -294,7 +294,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateOb.update((s) =>
         s.set(
           config.storagePath,
-          s.get(config.storagePath) === updates
+          isEqual(s.get(config.storagePath), updates)
             ? s.get(config.storagePath) ?? {}
             : { ...s.get(config.storagePath), ...updates },
         ),
@@ -312,7 +312,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       });
       if (!cur || !user || isEqual(cur, prev)) return;
 
-      await updateDB(cur, prev as SettingsRecord<T>);
+      await updateDB(cur, prev as unknown as SettingsRecord<T>);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(

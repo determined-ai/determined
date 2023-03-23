@@ -50,7 +50,11 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
     return JSON.stringify(Array.from(a)) === JSON.stringify(Array.from(b));
   }
   if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
-  if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
+  if (isObject(a) && isObject(b))
+    return (
+      JSON.stringify(a, Object.keys(a as object).sort()) ===
+      JSON.stringify(Object.keys(b as object).sort())
+    );
   if (isSet(a) && isSet(b)) {
     if (a.size !== b.size) return false;
     for (const elem of a.values()) {
