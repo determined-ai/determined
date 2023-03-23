@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import sys
 from pathlib import Path
@@ -63,10 +62,8 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
 
     det_configs["labels"] = dict(det_configs.get("add_label", []))
     if "managed-by" in det_configs["labels"]:
-        logging.warning(
-            'The label "managed-by" is reserved for agent discovery. '
-            "Agents will likely not have the given label value."
-        )
+        print("The label 'managed-by' is reserved for agent discovery.")
+        sys.exit(1)
 
     # Handle Up subcommand.
     if (args.cpu_env_image and not args.gpu_env_image) or (
