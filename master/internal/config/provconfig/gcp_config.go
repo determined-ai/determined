@@ -165,6 +165,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 	}
 
 	maps.Copy(rb.Labels, c.Labels)
+	rb.Labels[c.LabelKey] = c.LabelValue
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {
 		networkInterface := &compute.NetworkInterface{
