@@ -41,19 +41,21 @@ const ProjectCard: React.FC<Props> = ({
         actionMenu={!project.immutable ? menuProps : undefined}
         href={paths.projectDetails(project.id)}>
         <div className={classnames.join(' ')}>
-          <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
-            {project.name}
-          </Typography.Title>
-          {showWorkspace && project.workspaceId !== 1 ? (
-            <div className={css.workspace}>
+          <div className={css.headerContainer}>
+            <Typography.Title className={css.name} ellipsis={{ rows: 3, tooltip: true }} level={5}>
+              {project.name}
+            </Typography.Title>
+          </div>
+          <div className={css.workspaceContainer}>
+            {showWorkspace && project.workspaceId !== 1 && (
               <Tooltip title={project.workspaceName}>
-                <span>
-                  <DynamicIcon name={project.workspaceName} size={24} />
-                </span>
+                <div className={css.workspaceIcon}>
+                  <DynamicIcon name={project.workspaceName} size={20} />
+                </div>
               </Tooltip>
-            </div>
-          ) : null}
-          <div className={css.footer}>
+            )}
+          </div>
+          <div className={css.footerContainer}>
             <div className={css.experiments}>
               <Tooltip
                 title={
