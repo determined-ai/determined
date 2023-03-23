@@ -9126,6 +9126,66 @@ class v1ScopeTypeMask:
             out["workspace"] = self.workspace
         return out
 
+class v1SearchExperimentExperiment:
+    bestTrial: "typing.Optional[trialv1Trial]" = None
+    experiment: "typing.Optional[v1Experiment]" = None
+
+    def __init__(
+        self,
+        *,
+        bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
+        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
+    ):
+        if not isinstance(bestTrial, Unset):
+            self.bestTrial = bestTrial
+        if not isinstance(experiment, Unset):
+            self.experiment = experiment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "bestTrial" in obj:
+            kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
+        if "experiment" in obj:
+            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "bestTrial" in vars(self):
+            out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
+        if not omit_unset or "experiment" in vars(self):
+            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
+        return out
+
+class v1SearchExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        experiments: "typing.Sequence[v1SearchExperimentExperiment]",
+        pagination: "v1Pagination",
+    ):
+        self.experiments = experiments
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiments": [v1SearchExperimentExperiment.from_json(x) for x in obj["experiments"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experiments": [x.to_json(omit_unset) for x in self.experiments],
+            "pagination": self.pagination.to_json(omit_unset),
+        }
+        return out
+
 class v1SearchRolesAssignableToScopeRequest:
     offset: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -15359,6 +15419,32 @@ def get_ResourceAllocationRaw(
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
+def get_SearchExperiments(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+) -> "v1SearchExperimentsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments-search",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchExperiments", _resp)
+
 def post_SearchRolesAssignableToScope(
     session: "api.Session",
     *,
@@ -15991,5 +16077,6 @@ Paginated = typing.Union[
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
     v1ListRolesResponse,
+    v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
 ]

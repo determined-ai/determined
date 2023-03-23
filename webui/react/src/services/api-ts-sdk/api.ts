@@ -7411,6 +7411,44 @@ export interface V1SearcherOperation {
 /**
  * 
  * @export
+ * @interface V1SearchExperimentExperiment
+ */
+export interface V1SearchExperimentExperiment {
+    /**
+     * The experiment in question
+     * @type {V1Experiment}
+     * @memberof V1SearchExperimentExperiment
+     */
+    experiment?: V1Experiment;
+    /**
+     * The best performing trial associated with the experiment
+     * @type {Trialv1Trial}
+     * @memberof V1SearchExperimentExperiment
+     */
+    bestTrial?: Trialv1Trial;
+}
+/**
+ * 
+ * @export
+ * @interface V1SearchExperimentsResponse
+ */
+export interface V1SearchExperimentsResponse {
+    /**
+     * The list of returned experiments.
+     * @type {Array<V1SearchExperimentExperiment>}
+     * @memberof V1SearchExperimentsResponse
+     */
+    experiments: Array<V1SearchExperimentExperiment>;
+    /**
+     * Pagination information of the full dataset
+     * @type {V1Pagination}
+     * @memberof V1SearchExperimentsResponse
+     */
+    pagination: V1Pagination;
+}
+/**
+ * 
+ * @export
  * @interface V1SearchRolesAssignableToScopeRequest
  */
 export interface V1SearchRolesAssignableToScopeRequest {
@@ -12607,6 +12645,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments-search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial's id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -13359,6 +13443,27 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial's id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -13744,6 +13849,18 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
             return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -14144,6 +14261,20 @@ export class ExperimentsApi extends BaseAPI {
      */
     public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get experiments with grouping and search syntax
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15741,6 +15872,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments-search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -16687,6 +16864,27 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -17166,6 +17364,18 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -17682,6 +17892,20 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get experiments with grouping and search syntax
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**

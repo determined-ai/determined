@@ -48,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
@@ -417,13 +418,8 @@ func protoStateDBCaseString(
 	return query + fmt.Sprintf("END AS %s", serializedName)
 }
 
-func (a *apiServer) GetExperiments(
-	ctx context.Context, req *apiv1.GetExperimentsRequest,
-) (*apiv1.GetExperimentsResponse, error) {
-	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
-	query := db.Bun().NewSelect().
-		Model(&resp.Experiments).
-		ModelTableExpr("experiments as e").
+func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
 		Column("e.id").
 		ColumnExpr("e.config->>'description' AS description").
 		ColumnExpr("e.config->>'labels' AS labels").
@@ -459,6 +455,16 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
+}
+
+func (a *apiServer) GetExperiments(
+	ctx context.Context, req *apiv1.GetExperimentsRequest,
+) (*apiv1.GetExperimentsResponse, error) {
+	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
+	query := db.Bun().NewSelect().
+		Model(&resp.Experiments).
+		ModelTableExpr("experiments as e").
+		Apply(getExperimentColumns)
 
 	if req.ShowTrialData {
 		query.ColumnExpr(`
@@ -1915,4 +1921,194 @@ func (a *apiServer) GetModelDefFile(
 		return nil, err
 	}
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
+}
+
+func (a *apiServer) SearchExperiments(
+	ctx context.Context,
+	req *apiv1.SearchExperimentsRequest,
+) (*apiv1.SearchExperimentsResponse, error) {
+	resp := &apiv1.SearchExperimentsResponse{}
+	var experiments []*experimentv1.Experiment
+	var trials []*trialv1.Trial
+	experimentQuery := db.Bun().NewSelect().
+		Model(&experiments).
+		ModelTableExpr("experiments as e").
+		Apply(getExperimentColumns)
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+	var proj *projectv1.Project
+	if req.ProjectId != nil {
+		proj, err = a.GetProjectByID(ctx, *req.ProjectId, *curUser)
+		if err != nil {
+			return nil, err
+		}
+
+		experimentQuery = experimentQuery.Where("project_id = ?", req.ProjectId)
+	}
+	if experimentQuery, err = expauth.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, experimentQuery); err != nil {
+		return nil, err
+	}
+
+	resp.Pagination, err = runPagedBunExperimentsQuery(
+		ctx,
+		experimentQuery,
+		int(req.Offset),
+		int(req.Limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = a.enrichExperimentState(experiments...); err != nil {
+		return nil, err
+	}
+
+	// get the best trial associated with the experiment.
+
+	// don't query for experiments twice
+	experimentValues := db.Bun().NewValues(&experiments)
+
+	// extract config info from experiments and associate with trials
+	searcherInfoQuery := db.Bun().NewSelect().
+		Table("ex").
+		ColumnExpr("ex.config->'searcher'->>'metric' AS metric_name").
+		//nolint:lll
+		ColumnExpr("(SELECT CASE WHEN coalesce((ex.config->'searcher'->>'smaller_is_better')::boolean, true) THEN 1 ELSE -1 END) as sign").
+		ColumnExpr("trials.id AS trial_id").
+		Join("JOIN trials ON trials.experiment_id = ex.id")
+
+	// get info for best/latest validation for best trial
+	validationsQuery := db.Bun().NewSelect().
+		Table("validations").
+		Column("id").
+		ColumnExpr("validations.trial_id as trial_id").
+		Column("total_batches").
+		ColumnExpr("proto_time(end_time) AS end_time").
+		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
+		ColumnExpr("metrics->'num_inputs' AS num_inputs").
+		//nolint:lll
+		ColumnExpr("((metrics->'validation_metrics'->>(si.metric_name))::float8 * si.sign) AS signed_searcher_metric").
+		//nolint:lll
+		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank").
+		Join("JOIN si ON validations.trial_id = si.trial_id")
+
+	// get best checkpoint info for best trial
+	addCheckpointColumnsAndJoin := func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			Column("v.signed_searcher_metric").
+			ColumnExpr("c.*").
+			//nolint:lll
+			ColumnExpr("row_number() OVER(PARTITION BY v.trial_id ORDER BY v.signed_searcher_metric ASC) AS rank").
+			Join("JOIN v ON c.steps_completed = v.total_batches AND c.trial_id = v.trial_id").
+			Where("c.state = 'COMPLETED'")
+	}
+
+	oldCheckpointInnerQuery := db.Bun().NewSelect().
+		TableExpr("checkpoints_old_view c").
+		Apply(addCheckpointColumnsAndJoin)
+
+	oldCheckpointOuterQuery := db.Bun().NewSelect().
+		TableExpr("(?) as old_c", oldCheckpointInnerQuery).
+		ColumnExpr("old_c.*").
+		Where("old_c.rank = 1")
+
+	newCheckpointInnerQuery := db.Bun().NewSelect().
+		TableExpr("checkpoints_new_view c").
+		Apply(addCheckpointColumnsAndJoin)
+
+	newCheckpointOuterQuery := db.Bun().NewSelect().
+		TableExpr("(?) as new_c", newCheckpointInnerQuery).
+		ColumnExpr("new_c.*").
+		Where("new_c.rank = 1")
+
+	checkpointInnerQueryUnion := oldCheckpointOuterQuery.UnionAll(newCheckpointOuterQuery)
+
+	checkpointInnerQuery := db.Bun().NewSelect().
+		TableExpr("(?) as bc", checkpointInnerQueryUnion).
+		ColumnExpr("bc.*").
+		//nolint:lll
+		ColumnExpr("row_number() OVER(PARTITION BY bc.trial_id ORDER BY bc.signed_searcher_metric) AS order_rank")
+
+	checkpointsQuery := db.Bun().NewSelect().
+		TableExpr("(?) as c", checkpointInnerQuery).
+		Column("c.trial_id").
+		Column("c.resources").
+		ColumnExpr("c.order_rank AS rank").
+		ColumnExpr("c.uuid::text AS uuid").
+		ColumnExpr("c.steps_completed AS total_batches").
+		ColumnExpr("proto_time(c.report_time) AS end_time").
+		ColumnExpr(protoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
+
+	stepsQuery := db.Bun().NewSelect().
+		TableExpr("steps AS s").
+		Column("s.total_batches").
+		Where("s.trial_id = trials.id").
+		Order("s.total_batches DESC").
+		Limit(1)
+
+	allocationsQuery := db.Bun().NewSelect().
+		TableExpr("allocations AS a").
+		ColumnExpr("extract(EPOCH FROM sum(coalesce(a.end_time, now()) - a.start_time))").
+		Where("a.task_id = trials.task_id")
+
+	trialsInnerQuery := db.Bun().NewSelect().
+		Table("trials").
+		Column("trials.id").
+		Column("trials.experiment_id").
+		Column("trials.runner_state").
+		Column("trials.checkpoint_count").
+		Column("trials.task_id").
+		ColumnExpr("proto_time(trials.start_time) AS start_time").
+		ColumnExpr("proto_time(trials.end_time) AS end_time").
+		ColumnExpr("least(trials.restarts, (ex.config->>'max_restarts')::int) AS restarts").
+		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
+		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
+		ColumnExpr(protoStateDBCaseString(trialv1.State_value, "trials.state", "state", "STATE_")).
+		//nolint:lll
+		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
+		ColumnExpr("(?) AS total_batches_processed", stepsQuery).
+		ColumnExpr("(?) AS wall_clock_time", allocationsQuery).
+		ColumnExpr("row_to_json(lv)::jsonb AS latest_validation").
+		ColumnExpr("row_to_json(bv)::jsonb AS best_validation").
+		ColumnExpr("row_to_json(ch)::jsonb AS best_checkpoint").
+		//nolint:lll
+		ColumnExpr("row_number() OVER(PARTITION BY trials.experiment_id ORDER BY (bv.signed_searcher_metric)) as _metric_rank").
+		Join("JOIN ex ON ex.id = trials.experiment_id").
+		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
+		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
+		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
+		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
+		Join("LEFT JOIN ch ON ch.trial_id = trials.id AND ch.rank = 1")
+
+	err = db.Bun().NewSelect().
+		With("ex", experimentValues).
+		With("si", searcherInfoQuery).
+		With("v", validationsQuery).
+		With("ch", checkpointsQuery).
+		Model(&trials).
+		ModelTableExpr("(?) AS trial", trialsInnerQuery).
+		Where("trial._metric_rank = 1").
+		Scan(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	trialsByExperimentID := make(map[int32]*trialv1.Trial, len(trials))
+	for _, trial := range trials {
+		trialsByExperimentID[trial.ExperimentId] = trial
+	}
+	for _, experiment := range experiments {
+		trial := trialsByExperimentID[experiment.Id]
+		resp.Experiments = append(
+			resp.Experiments,
+			&apiv1.SearchExperimentExperiment{Experiment: experiment, BestTrial: trial},
+		)
+	}
+
+	return resp, nil
 }

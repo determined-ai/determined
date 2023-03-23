@@ -1974,4 +1974,15 @@ service Determined {
       tags: "Projects"
     };
   }
+
+  // Get experiments with grouping and search syntax
+  rpc SearchExperiments(SearchExperimentsRequest)
+      returns (SearchExperimentsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments-search"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Experiments", "Internal" ]
+    };
+  }
 }
