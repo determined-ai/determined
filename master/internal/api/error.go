@@ -47,6 +47,10 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrNotImplemented is the inner error for errors that convert to a 501.
 	ErrNotImplemented = errors.New("not implemented")
+
+	// ErrAPIRemoved is an error to inform the client they are calling an old, removed API.
+	ErrAPIRemoved = errors.New(`the API being called was removed,
+	please ensure the client consuming the API is up to date and report a bug if the problem persists`)
 )
 
 // AsValidationError returns an error that wraps ErrInvalid, so that errors.Is can identify it.

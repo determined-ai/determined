@@ -7,8 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -74,18 +72,7 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, result))
 		}
 	case echo.PATCH:
-		patch := patchSlot{}
-		if err := api.BindPatch(&patch, apiCtx); err != nil {
-			ctx.Respond(errors.Wrap(err, "error patching slot"))
-			return
-		}
-		agentRef := ctx.Self().Parent().Parent()
-		resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID, enabled: &patch.Enabled})
-		if err := resp.Error(); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(apiCtx.NoContent(http.StatusNoContent))
-		}
+		ctx.Respond(api.ErrAPIRemoved)
 	default:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(echo.ErrMethodNotAllowed)
