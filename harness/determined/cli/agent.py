@@ -194,11 +194,18 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
 def patch_slot(enabled: bool) -> Callable[[argparse.Namespace], None]:
     @authentication.required
     def patch(args: argparse.Namespace) -> None:
-        path = "agents/{}/slots/{}".format(args.agent_id, args.slot_id)
-        headers = {"Content-Type": "application/merge-patch+json"}
-        payload = {"enabled": enabled}
+        if enabled:
+            bindings.post_EnableSlot(
+                cli.setup_session(args), agentId=args.agent_id, slotId=args.slot_id
+            )
+        else:
+            bindings.post_DisableSlot(
+                cli.setup_session(args),
+                agentId=args.agent_id,
+                slotId=args.slot_id,
+                body=bindings.v1DisableSlotRequest(),
+            )
 
-        api.patch(args.master, path, json=payload, headers=headers)
         status = "Disabled" if not enabled else "Enabled"
         print("{} slot {} of agent {}".format(status, args.slot_id, args.agent_id))
 
