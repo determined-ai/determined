@@ -1933,7 +1933,24 @@ func (a *apiServer) SearchExperiments(ctx context.Context, req *apiv1.SearchExpe
 		ModelTableExpr("experiments as e").
 		Apply(getExperimentColumns)
 
-	var err error
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+	var proj *projectv1.Project
+	if req.ProjectId != 0 {
+		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
+		if err != nil {
+			return nil, err
+		}
+
+		experimentQuery = experimentQuery.Where("project_id = ?", req.ProjectId)
+	}
+	if experimentQuery, err = expauth.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, experimentQuery); err != nil {
+		return nil, err
+	}
+
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, experimentQuery, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
