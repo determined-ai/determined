@@ -7,7 +7,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.parallel
+@pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
 def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
@@ -22,13 +22,6 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
         config, conf.cv_examples_path("cifar10_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
-    (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0].trial.id)
-        .select_checkpoint(latest=True)
-        .load(map_location="cpu")
-    )
-
     collect_trial_profiles(trials[0].trial.id)
 
     assert exp.check_if_string_present_in_trial_logs(
