@@ -1032,6 +1032,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 // markResourcesStarted persists start information.
 func (a *Allocation) markResourcesStarted(ctx *actor.Context) {
 	a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
+	ctx.Log().Error("SETTING START TIME")
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &sproto.AllocatedEvent{Recovered: a.restored}})
 	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 		ctx.Log().
