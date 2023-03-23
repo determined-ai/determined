@@ -69,7 +69,7 @@ const useModalModelVersionEdit = ({
             <Input />
           </Form.Item>
           <Form.Item initialValue={modelVersion.comment} label="Description" name="description">
-            <Input.TextArea />
+            <Input />
           </Form.Item>
         </Form>
       ),
