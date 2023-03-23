@@ -1,15 +1,31 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
+import { observable, Observable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
+import { DetailedUser } from 'types';
+import { Loadable, Loaded } from 'utils/loadable';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
+
+vi.mock('stores/users', async () => {
+  const actual: { default: object } = await vi.importActual('stores/users');
+  const getCurrentUser = (): Observable<Loadable<DetailedUser>> => {
+    return observable(
+      Loaded({
+        id: 1,
+      } as DetailedUser),
+    );
+  };
+  actual.default = { ...actual.default, getCurrentUser };
+  return { ...actual, getCurrentUser };
+});
 
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
