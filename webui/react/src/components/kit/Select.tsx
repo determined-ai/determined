@@ -1,5 +1,5 @@
-import { Select as AntdSelect } from 'antd';
-import type { DefaultOptionType, LabeledValue, RefSelectProps, SelectValue } from 'antd/es/select';
+import { Select as AntdSelect, SelectProps as AntdSelectProps } from 'antd';
+import type { DefaultOptionType, RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
@@ -17,8 +17,8 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   defaultValue?: T;
   disableTags?: boolean;
   disabled?: boolean;
-  filterOption?: boolean | ((inputValue: string, option: LabeledValue | undefined) => boolean);
-  filterSort?: (a: LabeledValue, b: LabeledValue) => 1 | -1;
+  filterOption?: AntdSelectProps['filterOption'];
+  filterSort?: AntdSelectProps['filterSort'];
   id?: string;
   label?: string;
   loading?: boolean;
@@ -28,7 +28,7 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   onDeselect?: (selected: SelectValue, option: Options) => void;
   onSearch?: (searchInput: string) => void;
   onSelect?: (selected: SelectValue, option: Options) => void;
-  options?: LabeledValue[];
+  options?: AntdSelectProps['options'];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
   searchable?: boolean;
