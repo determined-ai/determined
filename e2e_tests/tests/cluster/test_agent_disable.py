@@ -272,8 +272,10 @@ def test_drain_agent_sched() -> None:
 
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:
     command = ["det", "-m", conf.make_master_url(), "task", "list", "--json"]
-    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())
-    matches = [t for t in tasks_data.values() if t["task_id"] == task_id]
+    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())[
+        "allocationIdToSummary"
+    ]
+    matches = [t for t in tasks_data.values() if t["taskId"] == task_id]
     return matches[0] if matches else None
 
 
@@ -281,7 +283,7 @@ def _task_agents(task_id: str) -> List[str]:
     task_data = _task_data(task_id)
     if not task_data:
         return []
-    return [a for r in task_data.get("resources", []) for a in r["agent_devices"]]
+    return [a for r in task_data.get("resources", []) for a in r["agentDevices"]]
 
 
 @pytest.mark.e2e_cpu_2a

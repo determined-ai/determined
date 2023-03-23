@@ -255,6 +255,19 @@ export const ProtobufNullValue = {
 } as const
 export type ProtobufNullValue = ValueOf<typeof ProtobufNullValue>
 /**
+ * A wrapper message of a list of devices.
+ * @export
+ * @interface ResourcesSummaryDevices
+ */
+export interface ResourcesSummaryDevices {
+    /**
+     * The devices on an agent.
+     * @type {Array<V1Device>}
+     * @memberof ResourcesSummaryDevices
+     */
+    devices?: Array<V1Device>;
+}
+/**
  * 
  * @export
  * @interface RuntimeError
@@ -870,6 +883,37 @@ export interface V1AddProjectNoteResponse {
     notes: Array<V1Note>;
 }
 /**
+ * Address represents an exposed port on a container.
+ * @export
+ * @interface V1Address
+ */
+export interface V1Address {
+    /**
+     * ContainerIP is the IP address from inside the container.
+     * @type {string}
+     * @memberof V1Address
+     */
+    containerIp?: string;
+    /**
+     * ContainerPort is the port from inside the container.
+     * @type {number}
+     * @memberof V1Address
+     */
+    containerPort?: number;
+    /**
+     * HostIP is the IP address from outside the container. This can be different than the ContainerIP because of network forwarding on the host machine.
+     * @type {string}
+     * @memberof V1Address
+     */
+    hostIp?: string;
+    /**
+     * HostPort is the IP port from outside the container. This can be different than the ContainerPort because of network forwarding on the host machine.
+     * @type {number}
+     * @memberof V1Address
+     */
+    hostPort?: number;
+}
+/**
  * Agent is a pool of resources where containers are run.
  * @export
  * @interface V1Agent
@@ -1138,6 +1182,73 @@ export interface V1AllocationRendezvousInfoResponse {
      * @memberof V1AllocationRendezvousInfoResponse
      */
     rendezvousInfo: V1RendezvousInfo;
+}
+/**
+ * AllocationSummary contains information about a task for external display.
+ * @export
+ * @interface V1AllocationSummary
+ */
+export interface V1AllocationSummary {
+    /**
+     * TaskID is the unique ID of a task among all tasks.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    taskId?: string;
+    /**
+     * AllocationID is the ID of an allocation of a task. It is usually of the form TaskID.allocation_number, maybe with some other metadata if different types of allocations run.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    allocationId?: string;
+    /**
+     * The name of the task
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    name?: string;
+    /**
+     * The registered time of the task
+     * @type {Date}
+     * @memberof V1AllocationSummary
+     */
+    registeredTime?: Date;
+    /**
+     * The name of the resource pool.
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    resourcePool?: string;
+    /**
+     * The number of slots that are needed.
+     * @type {number}
+     * @memberof V1AllocationSummary
+     */
+    slotsNeeded?: number;
+    /**
+     * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted,
+     * @type {Array<V1ResourcesSummary>}
+     * @memberof V1AllocationSummary
+     */
+    resources?: Array<V1ResourcesSummary>;
+    /**
+     * The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or 'ROUND_ROBIN'
+     * @type {string}
+     * @memberof V1AllocationSummary
+     */
+    schedulerType?: string;
+    /**
+     * THe priority of the task
+     * @type {number}
+     * @memberof V1AllocationSummary
+     */
+    priority?: number;
+    /**
+     * ProxyPortConfig configures a proxy the allocation should start.
+     * @type {Array<V1ProxyPortConfig>}
+     * @memberof V1AllocationSummary
+     */
+    proxyPorts?: Array<V1ProxyPortConfig>;
 }
 /**
  * Mark the given task as waiting.
@@ -2584,6 +2695,23 @@ export interface V1ExperimentSimulation {
     trials?: Array<V1TrialSimulation>;
 }
 /**
+ * The failure type of a resource.   - FAILURE_TYPE_UNSPECIFIED: UnknownError denotes an internal error that did not map to a know failure type.  - FAILURE_TYPE_RESOURCES_FAILED: ResourcesFailed denotes that the container ran but failed with a non-zero exit code.  - FAILURE_TYPE_RESOURCES_ABORTED: ResourcesAborted denotes the container was canceled before it was started.  - FAILURE_TYPE_RESOURCES_MISSING: ResourcesMissing denotes the resources were missing when the master asked about it.  - FAILURE_TYPE_TASK_ABORTED: TaskAborted denotes that the task was canceled before it was started.  - FAILURE_TYPE_TASK_ERROR: TaskError denotes that the task failed without an associated exit code.  - FAILURE_TYPE_AGENT_FAILED: AgentFailed denotes that the agent failed while the container was running.  - FAILURE_TYPE_AGENT_ERROR: AgentError denotes that the agent failed to launch the container.  - FAILURE_TYPE_RESTORE_ERROR: RestoreError denotes a failure to restore a running allocation on master blip.
+ * @export
+ * @enum {string}
+ */
+export const V1FailureType = {
+    UNSPECIFIED: 'FAILURE_TYPE_UNSPECIFIED',
+    RESOURCESFAILED: 'FAILURE_TYPE_RESOURCES_FAILED',
+    RESOURCESABORTED: 'FAILURE_TYPE_RESOURCES_ABORTED',
+    RESOURCESMISSING: 'FAILURE_TYPE_RESOURCES_MISSING',
+    TASKABORTED: 'FAILURE_TYPE_TASK_ABORTED',
+    TASKERROR: 'FAILURE_TYPE_TASK_ERROR',
+    AGENTFAILED: 'FAILURE_TYPE_AGENT_FAILED',
+    AGENTERROR: 'FAILURE_TYPE_AGENT_ERROR',
+    RESTOREERROR: 'FAILURE_TYPE_RESTORE_ERROR',
+} as const
+export type V1FailureType = ValueOf<typeof V1FailureType>
+/**
  * File is a Unix file.
  * @export
  * @interface V1File
@@ -3766,6 +3894,19 @@ export interface V1GetTaskResponse {
      * @memberof V1GetTaskResponse
      */
     task?: V1Task;
+}
+/**
+ * Response to GetTasksRequest.
+ * @export
+ * @interface V1GetTasksResponse
+ */
+export interface V1GetTasksResponse {
+    /**
+     * Information about a task for external display.
+     * @type {{ [key: string]: V1AllocationSummary; }}
+     * @memberof V1GetTasksResponse
+     */
+    allocationIdToSummary?: { [key: string]: V1AllocationSummary; };
 }
 /**
  * Response to GetTelemetryRequest.
@@ -6687,6 +6828,37 @@ export interface V1Project {
     errorMessage: string;
 }
 /**
+ * ProxyPortConfig configures a proxy the allocation should start.
+ * @export
+ * @interface V1ProxyPortConfig
+ */
+export interface V1ProxyPortConfig {
+    /**
+     * The service id of the proxy port config.
+     * @type {string}
+     * @memberof V1ProxyPortConfig
+     */
+    serviceId?: string;
+    /**
+     * The port of the proxy port config.
+     * @type {number}
+     * @memberof V1ProxyPortConfig
+     */
+    port?: number;
+    /**
+     * True if proxy uses TCP.
+     * @type {boolean}
+     * @memberof V1ProxyPortConfig
+     */
+    proxyTcp?: boolean;
+    /**
+     * True if the proxy is unauthenticated.
+     * @type {boolean}
+     * @memberof V1ProxyPortConfig
+     */
+    unauthenticated?: boolean;
+}
+/**
  * Request for setting project notes.
  * @export
  * @interface V1PutProjectNotesRequest
@@ -7575,6 +7747,112 @@ export const V1ResourcePoolType = {
     K8S: 'RESOURCE_POOL_TYPE_K8S',
 } as const
 export type V1ResourcePoolType = ValueOf<typeof V1ResourcePoolType>
+/**
+ * ResourcesFailure contains information about restored resources' failure.
+ * @export
+ * @interface V1ResourcesFailure
+ */
+export interface V1ResourcesFailure {
+    /**
+     * FailureType denotes the type of failure that resulted in the container stopping.
+     * @type {V1FailureType}
+     * @memberof V1ResourcesFailure
+     */
+    failureType?: V1FailureType;
+    /**
+     * The error message of the failure.
+     * @type {string}
+     * @memberof V1ResourcesFailure
+     */
+    errMsg?: string;
+    /**
+     * The exit code of the failure.
+     * @type {number}
+     * @memberof V1ResourcesFailure
+     */
+    exitCode?: number;
+}
+/**
+ * ResourcesStarted contains the information needed by tasks from container started.
+ * @export
+ * @interface V1ResourcesStarted
+ */
+export interface V1ResourcesStarted {
+    /**
+     * Addresses represents the exposed ports on a container.
+     * @type {Array<V1Address>}
+     * @memberof V1ResourcesStarted
+     */
+    addresses?: Array<V1Address>;
+    /**
+     * NativeResourcesID is the native Docker hex container ID of the Determined container.
+     * @type {string}
+     * @memberof V1ResourcesStarted
+     */
+    nativeResourcesId?: string;
+}
+/**
+ * ResourcesStopped contains the information needed by tasks from container stopped.
+ * @export
+ * @interface V1ResourcesStopped
+ */
+export interface V1ResourcesStopped {
+    /**
+     * ResourcesFailure contains information about restored resources' failure.
+     * @type {V1ResourcesFailure}
+     * @memberof V1ResourcesStopped
+     */
+    failure?: V1ResourcesFailure;
+}
+/**
+ * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted, but for k8s it is granted before being scheduled so it isn't really much and `agent_devices` are missing for k8s.
+ * @export
+ * @interface V1ResourcesSummary
+ */
+export interface V1ResourcesSummary {
+    /**
+     * ResourcesID is the ID of some set of resources.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    resourcesId?: string;
+    /**
+     * ResourcesType is the type of some set of resources. This should be purely informational.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    resourcesType?: string;
+    /**
+     * AllocationID is the ID of an allocation of a task.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    allocationId?: string;
+    /**
+     * ID, an identifier for an agent, maps to the associated devices.
+     * @type {{ [key: string]: ResourcesSummaryDevices; }}
+     * @memberof V1ResourcesSummary
+     */
+    agentDevices?: { [key: string]: ResourcesSummaryDevices; };
+    /**
+     * Available if the RM can give information on the container level.
+     * @type {string}
+     * @memberof V1ResourcesSummary
+     */
+    containerId?: string;
+    /**
+     * Available if the RM knows the resource is already started / exited.
+     * @type {V1ResourcesStarted}
+     * @memberof V1ResourcesSummary
+     */
+    started?: V1ResourcesStarted;
+    /**
+     * ResourcesStopped contains the information needed by tasks from container stopped.
+     * @type {V1ResourcesStopped}
+     * @memberof V1ResourcesSummary
+     */
+    exited?: V1ResourcesStopped;
+}
 /**
  * 
  * @export
@@ -23775,6 +24053,37 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tasks`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -23965,6 +24274,24 @@ export const TasksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTasksResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTasks(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -24045,6 +24372,15 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get all tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasks(options?: any) {
+            return TasksApiFp(configuration).getTasks(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -24108,6 +24444,17 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get all tasks.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTasks(options?: any) {
+        return TasksApiFp(this.configuration).getTasks(options)(this.fetch, this.basePath)
     }
     
     /**

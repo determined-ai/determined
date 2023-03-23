@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 // All the From... methods expose the more abstract representation returned by resource managers
@@ -75,6 +76,24 @@ type ResourcesStarted struct {
 	NativeResourcesID string
 }
 
+// Proto returns the proto representation of ResourcesStarted.
+func (r *ResourcesStarted) Proto() *taskv1.ResourcesStarted {
+	if r == nil {
+		return nil
+	}
+
+	pbAddresses := []*taskv1.Address{}
+
+	for _, address := range r.Addresses {
+		pbAddresses = append(pbAddresses, address.Proto())
+	}
+
+	return &taskv1.ResourcesStarted{
+		Addresses:         pbAddresses,
+		NativeResourcesId: r.NativeResourcesID,
+	}
+}
+
 // FromContainerStarted converts an aproto.ContainerStarted message to ResourcesStarted.
 func FromContainerStarted(cs *aproto.ContainerStarted) *ResourcesStarted {
 	if cs == nil {
@@ -90,6 +109,16 @@ func FromContainerStarted(cs *aproto.ContainerStarted) *ResourcesStarted {
 // ResourcesStopped contains the information needed by tasks from container stopped.
 type ResourcesStopped struct {
 	Failure *ResourcesFailure
+}
+
+// Proto returns the proto representation of ResourcesStopped.
+func (r *ResourcesStopped) Proto() *taskv1.ResourcesStopped {
+	if r == nil {
+		return nil
+	}
+	return &taskv1.ResourcesStopped{
+		Failure: r.Failure.Proto(),
+	}
 }
 
 // FromContainerStopped converts an aproto.ContainerStopped message to ResourcesStopped.
@@ -142,6 +171,25 @@ type ResourcesFailure struct {
 	ExitCode    *ExitCode
 }
 
+// Proto returns the proto representation of ResourcesFailure.
+func (r *ResourcesFailure) Proto() *taskv1.ResourcesFailure {
+	if r == nil {
+		return nil
+	}
+
+	pbResourcesFailure := taskv1.ResourcesFailure{
+		FailureType: r.FailureType.Proto(),
+		ErrMsg:      r.ErrMsg,
+	}
+
+	if r.ExitCode != nil {
+		exitCode := int32(*r.ExitCode)
+		pbResourcesFailure.ExitCode = &exitCode
+	}
+
+	return &pbResourcesFailure
+}
+
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
 func NewResourcesFailure(
 	failureType FailureType, msg string, code *ExitCode,
@@ -153,14 +201,14 @@ func NewResourcesFailure(
 	}
 }
 
-func (f ResourcesFailure) Error() string {
-	if f.ExitCode == nil {
-		if len(f.ErrMsg) > 0 {
-			return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
+func (r ResourcesFailure) Error() string {
+	if r.ExitCode == nil {
+		if len(r.ErrMsg) > 0 {
+			return fmt.Sprintf("%s: %s", r.FailureType, r.ErrMsg)
 		}
-		return fmt.Sprintf("%s", f.FailureType)
+		return fmt.Sprintf("%s", r.FailureType)
 	}
-	return fmt.Sprintf("%s: %s (exit code %d)", f.FailureType, f.ErrMsg, *f.ExitCode)
+	return fmt.Sprintf("%s: %s (exit code %d)", r.FailureType, r.ErrMsg, *r.ExitCode)
 }
 
 // ExitCode is the process exit code of the container.
@@ -213,6 +261,32 @@ const (
 	// UnknownError denotes an internal error that did not map to a know failure type.
 	UnknownError = "unknown agent failure: %s"
 )
+
+// Proto returns the proto representation of the device type.
+func (f FailureType) Proto() taskv1.FailureType {
+	switch f {
+	case ResourcesFailed:
+		return taskv1.FailureType_FAILURE_TYPE_RESOURCES_FAILED
+	case ResourcesAborted:
+		return taskv1.FailureType_FAILURE_TYPE_RESOURCES_ABORTED
+	case ResourcesMissing:
+		return taskv1.FailureType_FAILURE_TYPE_RESOURCES_MISSING
+	case TaskAborted:
+		return taskv1.FailureType_FAILURE_TYPE_TASK_ABORTED
+	case TaskError:
+		return taskv1.FailureType_FAILURE_TYPE_TASK_ERROR
+	case AgentFailed:
+		return taskv1.FailureType_FAILURE_TYPE_AGENT_FAILED
+	case AgentError:
+		return taskv1.FailureType_FAILURE_TYPE_AGENT_ERROR
+	case RestoreError:
+		return taskv1.FailureType_FAILURE_TYPE_RESTORE_ERROR
+	case UnknownError:
+		return taskv1.FailureType_FAILURE_TYPE_UNSPECIFIED
+	default:
+		return taskv1.FailureType_FAILURE_TYPE_UNSPECIFIED
+	}
+}
 
 // FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
 // guaranteed to remain one to one; this conversion may do some level of interpretation.

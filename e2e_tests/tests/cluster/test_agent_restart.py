@@ -56,7 +56,9 @@ def _local_container_ids_for_command(command_id: str) -> Iterator[str]:
 
 def _task_list_json(master_url: str) -> Dict[str, Dict[str, Any]]:
     command = ["det", "-m", master_url, "task", "list", "--json"]
-    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())
+    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())[
+        "allocationIdToSummary"
+    ]
     return tasks_data
 
 
@@ -103,8 +105,8 @@ def test_agent_restart_exp_container_failure(restartable_managed_cluster: Manage
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]
 
-        assert exp_task_before["task_id"] == exp_task_after["task_id"]
-        assert exp_task_before["allocation_id"] != exp_task_after["allocation_id"]
+        assert exp_task_before["taskId"] == exp_task_after["taskId"]
+        assert exp_task_before["allocationId"] != exp_task_after["allocationId"]
 
         exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
 
