@@ -16,11 +16,6 @@ type slotProxy struct {
 	device device.Device
 }
 
-type patchSlot struct {
-	Enabled bool `json:"enabled"`
-	Drain   bool `json:"drain"`
-}
-
 func (s *slotProxy) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *proto.GetSlotRequest:
@@ -36,7 +31,9 @@ func (s *slotProxy) Receive(ctx *actor.Context) error {
 		}
 	case *proto.DisableSlotRequest:
 		enabled := false
-		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID, enabled: &enabled, drain: &msg.Drain})
+		result := s.handlePatchSlotState(ctx, patchSlotState{
+			id: s.device.ID, enabled: &enabled, drain: &msg.Drain,
+		})
 		if result != nil {
 			ctx.Respond(&proto.DisableSlotResponse{Slot: result.ToProto()})
 		}
