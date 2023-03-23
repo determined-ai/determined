@@ -128,12 +128,12 @@ const ModelVersionDetails: React.FC = () => {
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
-        const versionResponse = await patchModelVersion({
+        await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
           modelName: modelId,
           versionNum: parseInt(versionNum),
         });
-        setModelVersion(versionResponse);
+        await fetchModelVersion();
       } catch (e) {
         handleError(e, {
           publicSubject: 'Unable to update notes.',
@@ -142,7 +142,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionNum],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const saveVersionTags = useCallback(
@@ -290,7 +290,7 @@ const ModelVersionDetails: React.FC = () => {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion || !workspace) {
-    return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
+    return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
   return (
