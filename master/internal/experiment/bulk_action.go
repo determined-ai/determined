@@ -311,7 +311,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}
@@ -397,7 +397,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}
@@ -475,7 +475,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	for _, originalID := range experimentIds {
 		if !slices.Contains(visibleIDs, originalID) {
 			results = append(results, ExperimentActionResult{
-				Error: status.Errorf(codes.NotFound, "Experiment not found or missing permission."),
+				Error: status.Errorf(codes.NotFound, "experiment not found: %d", originalID),
 				ID:    originalID,
 			})
 		}

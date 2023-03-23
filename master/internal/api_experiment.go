@@ -824,18 +824,21 @@ func (a *apiServer) PreviewHPSearch(
 
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
-) (*apiv1.ActivateExperimentResponse, error) {
-	results, err := expauth.ActivateExperiments(ctx, a.m.system, []int32{req.Id})
-
-	if err == nil {
-		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during activate query.")
-		} else if results[0].Error != nil {
-			return nil, results[0].Error
-		}
+) (resp *apiv1.ActivateExperimentResponse, err error) {
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
 	}
 
-	return &apiv1.ActivateExperimentResponse{}, err
+	addr := experimentsAddr.Child(req.Id)
+	switch err = a.ask(addr, req, &resp); {
+	case status.Code(err) == codes.NotFound:
+		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+	default:
+		return resp, nil
+	}
 }
 
 func (a *apiServer) ActivateExperiments(
@@ -1857,13 +1860,27 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) MoveExperiment(
 	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	// get experiment info
+	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
+	if exp.Archived {
+		return nil, errors.Errorf("experiment (%v) is archived and cannot be moved.", exp.ID)
+	}
+
+	// check that user can view source project
+	srcProject, err := a.GetProjectByID(ctx, int32(exp.ProjectID), curUser)
+	if err != nil {
+		return nil, err
+	}
+	if srcProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot have experiments moved from it.",
+			srcProject.Id)
+	}
 
 	// check suitable destination project
-	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, *curUser)
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -1872,7 +1889,7 @@ func (a *apiServer) MoveExperiment(
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject,
 		nil); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -1888,8 +1905,7 @@ func (a *apiServer) MoveExperiment(
 		}
 	}
 
-	return &apiv1.MoveExperimentResponse{},
-		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
+	return &apiv1.MoveExperimentResponse{}, err
 }
 
 func (a *apiServer) MoveExperiments(

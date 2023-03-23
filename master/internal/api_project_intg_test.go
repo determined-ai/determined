@@ -208,52 +208,52 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		DestinationProjectId: int32(destProjectID),
 	}
 
-	// Can't view destination project.
+	// Can't view source project.
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(false, nil).Once()
 	_, err := api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
 
-	// Can't view source project
-	resQuery := &bun.SelectQuery{}
-	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		[]rbacv1.PermissionType{
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
-			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
-		}).
-		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(3).(*bun.SelectQuery)
-		*resQuery = *q
-	})
+	// Can't view destination project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(false, nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(nil).Once()
 	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
 
-	// Can't create experiment in new project.
+	// Can't create experiment in destination project.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateExperimentDeny")
-	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		[]rbacv1.PermissionType{
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
-			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
-		}).
-		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(3).(*bun.SelectQuery)
-		*resQuery = *q
-	})
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Twice()
 	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(expectedErr).Once()
+		Return(fmt.Errorf("canCreateExperimentDeny")).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, expectedErr.Error(), err.Error())
 
+	// Can't view and delete experiments from source projects.
+	resQuery := &bun.SelectQuery{}
+	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Twice()
+	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Once()
+	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}).
+		Return(resQuery, expectedErr).Once().Run(func(args mock.Arguments) {
+		q := args.Get(3).(*bun.SelectQuery)
+		*resQuery = *q
+	})
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
