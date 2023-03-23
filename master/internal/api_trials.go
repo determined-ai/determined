@@ -661,7 +661,17 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var err error
 	var metrics []*apiv1.SummarizedMetric
 	var metricMeasurements []db.MetricMeasurements
+
+	// For now "epoch" is the only custom xAxis metric label supported so we
+	// build the `MetricSeriesEpoch` array. In the future this logic should
+	// be updated to support any number of xAxis metric options
 	xAxisLabelMetrics := []string{"epoch"}
+
+	if len(metricNames) > 0 && len(metricIds) > 0 {
+		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify 
+		both metric ids and metric names`)
+	}
+
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
@@ -681,11 +691,6 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 
 			a.formatMetrics(&metric, metricMeasurements)
-
-			// For now "epoch" is the only custom xAxis metric label supported so we
-			// build the `MetricSeriesEpoch` array. In the future this logic should
-			// be updated to support any number of xAxis metric options
-
 			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
@@ -715,13 +720,11 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		}
 		switch rangeType {
 		case apiv1.RangeType_RANGE_TYPE_BATCH:
-			err = db.ValidateInt32FieldFilterComparison(integerRange)
-			if err != nil {
+			if err := db.ValidateInt32FieldFilterComparison(integerRange); err != nil {
 				return nil, err
 			}
 		case apiv1.RangeType_RANGE_TYPE_TIME:
-			err = db.ValidateTimeStampFieldFilterComparison(timeRange)
-			if err != nil {
+			if err := db.ValidateTimeStampFieldFilterComparison(timeRange); err != nil {
 				return nil, err
 			}
 		}
