@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -40,7 +42,7 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = etc.SetRootPath("./master/static/srv"); err != nil {
+	if err = etc.SetRootPath(filepath.Join(masterConfig.Root, "static/srv")); err != nil {
 		return err
 	}
 
@@ -50,7 +52,17 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	err = internal.PopulateExpTrialsMetrics(database, masterConfig)
+	batches, err := strconv.Atoi(args[0])
+	if err != nil {
+		return err
+	}
+	trivial := false
+	fmt.Println(args)
+	if len(args) >= 2 && args[1] == "trivial" {
+		trivial = true
+	}
+
+	err = internal.PopulateExpTrialsMetrics(database, masterConfig, trivial, batches)
 	fmt.Println("total time", time.Since(start))
 	return err
 }

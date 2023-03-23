@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -43,7 +42,8 @@ func makeMetrics() *structpb.Struct {
 	}
 }
 
-func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) error {
+func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
+	fmt.Println("non trivial metrics for", batches, "batches")
 	trainingAvgMetrics := &structpb.Struct{}
 	validationAvgMetrics := &structpb.Struct{}
 
@@ -62,7 +62,6 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 		factors = append(factors, Factor{rand.Float64(), rand.Float64() / 10})
 	}
 
-	batches := 15000
 	printTime := 200
 	start := time.Now()
 	for b := 0; b < batches; b++ {
@@ -77,7 +76,6 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 			losses[i] = losses[i] * (1 - (val)) * rand.Float64() * factors[i].b
 
 		}
-		//fmt.Println("batch: ", b)
 		trainingAvgMetrics = &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
@@ -157,19 +155,14 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32)
 	return nil
 }
 
-func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) error {
-	trainingbBatchMetrics := []*structpb.Struct{}
-	const stepSize = 500
-	for j := 0; j < stepSize; j++ {
-		trainingbBatchMetrics = append(trainingbBatchMetrics, makeMetrics())
-	}
+func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
+	fmt.Println("trivial metrics for", batches, "batches")
 
 	trainingMetrics := trialv1.TrialMetrics{
 		TrialId:        trialID,
-		StepsCompleted: stepSize,
+		StepsCompleted: int32(batches),
 		Metrics: &commonv1.Metrics{
-			AvgMetrics:   makeMetrics(),
-			BatchMetrics: trainingbBatchMetrics,
+			AvgMetrics: makeMetrics(),
 		},
 	}
 
@@ -181,18 +174,11 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) er
 		return err
 	}
 
-	validationBatchMetrics := []*structpb.Struct{}
-
-	for j := 0; j < stepSize; j++ {
-		validationBatchMetrics = append(validationBatchMetrics, makeMetrics())
-	}
-
 	validationMetrics := trialv1.TrialMetrics{
 		TrialId:        trialID,
-		StepsCompleted: stepSize,
+		StepsCompleted: int32(batches),
 		Metrics: &commonv1.Metrics{
-			AvgMetrics:   makeMetrics(),
-			BatchMetrics: validationBatchMetrics,
+			AvgMetrics: makeMetrics(),
 		},
 	}
 
@@ -209,7 +195,7 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32) er
 }
 
 // PopulateExpTrialsMetrics adds metrics for a trial and exp to db.
-func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error {
+func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivialMetrics bool, batches int) error {
 	system := actor.NewSystem("mock")
 	ref, _ := system.ActorOf(sproto.AgentRMAddr, actor.ActorFunc(
 		func(context *actor.Context) error {
@@ -230,11 +216,6 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 			config:          masterConfig,
 			taskSpec:        &tasks.TaskSpec{},
 		},
-	}
-
-	_, err := user.UserByUsername("admin")
-	if err != nil {
-		return err
 	}
 
 	resp, err := api.Login(context.TODO(), &apiv1.LoginRequest{Username: "admin"})
@@ -317,5 +298,8 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config) error 
 		return err
 	}
 
-	return reportNonTrivialMetrics(ctx, api, int32(tr.ID)) // single searcher so there's only one trial
+	if trivialMetrics {
+		return reportTrivialMetrics(ctx, api, int32(tr.ID), batches)
+	}
+	return reportNonTrivialMetrics(ctx, api, int32(tr.ID), batches)
 }
