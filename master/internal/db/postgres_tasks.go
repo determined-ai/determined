@@ -98,14 +98,14 @@ WHERE task_id = $1
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
 INSERT INTO allocations
-	(task_id, allocation_id, slots, resource_pool, start_time, state)
+	(task_id, allocation_id, slots, resource_pool, start_time, state, ports)
 VALUES
-	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state)
+	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state, :ports)
 ON CONFLICT
 	(allocation_id)
 DO UPDATE SET
 	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
-	start_time=EXCLUDED.start_time, state=EXCLUDED.state
+	start_time=EXCLUDED.start_time, state=EXCLUDED.state, ports=EXCLUDED.ports
 `, a)
 }
 
@@ -141,12 +141,9 @@ WHERE a.allocation_id = $1;
 // AllocationByID retrieves an allocation by its ID.
 func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
 	var a model.Allocation
-	if err := db.query(`
-SELECT *
-FROM allocations
-WHERE allocation_id = $1
-`, &a, aID); err != nil {
-		return nil, errors.Wrap(err, "querying allocation")
+	if err := Bun().NewSelect().Model(&a).Where("allocation_id = ?", aID).
+		Scan(context.TODO()); err != nil {
+		return nil, err
 	}
 	return &a, nil
 }
@@ -191,6 +188,15 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 		SET state=$2, is_ready=$3
 		WHERE allocation_id=$1
 	`, a.AllocationID, a.State, a.IsReady)
+	return err
+}
+
+// UpdateAllocationPorts stores the latest task state and readiness.
+func UpdateAllocationPorts(a model.Allocation) error {
+	_, err := Bun().NewUpdate().Table("allocations").
+		Set("ports = ?", a.Ports).
+		Where("allocation_id = ?", a.AllocationID).
+		Exec(context.TODO())
 	return err
 }
 

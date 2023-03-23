@@ -2305,6 +2305,15 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+      
+      - test-e2e:
+          name: test-e2e-port-registry
+          requires: 
+            - build-go
+          parallelism: 1 
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
 
       - test-e2e:
           name: test-e2e-cpu-elastic
