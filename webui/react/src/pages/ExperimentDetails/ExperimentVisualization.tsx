@@ -431,7 +431,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
-    return <Spinner tip="Fetching metrics..." />;
+    return <Spinner spinning tip="Fetching metrics..." />;
   } else if (!hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
       <Message title="No data to plot." type={MessageType.Empty} />
