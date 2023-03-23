@@ -287,6 +287,18 @@ args_description = Cmd(
                             help="zone to create the cluster in (defaults to `region`-b)",
                         ),
                         Arg(
+                            "--disk-size",
+                            type=int,
+                            default=constants.defaults.BOOT_DISK_SIZE,
+                            help="Boot disk size for cluster agents, in GB",
+                        ),
+                        Arg(
+                            "--disk-type",
+                            type=str,
+                            default=constants.defaults.BOOT_DISK_TYPE,
+                            help="Boot disk type for cluster agents",
+                        ),
+                        Arg(
                             "--environment-image",
                             type=str,
                             default=constants.defaults.ENVIRONMENT_IMAGE,

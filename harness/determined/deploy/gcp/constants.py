@@ -3,6 +3,8 @@ class defaults:
     AUX_AGENT_INSTANCE_TYPE = "n1-standard-4"
     COMPUTE_AGENT_INSTANCE_TYPE = "n1-standard-32"
     DB_PASSWORD = "postgres"
+    BOOT_DISK_SIZE = 200
+    BOOT_DISK_TYPE = "pd-standard"
     ENVIRONMENT_IMAGE = "det-environments-9d07809"
     GPU_NUM = 4
     GPU_TYPE = "nvidia-tesla-t4"
