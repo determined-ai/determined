@@ -532,7 +532,7 @@ func (a *apiServer) DeleteModel(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+	if err := modelauth.AuthZProvider.Get().CanDeleteModel(ctx, *curUser, currModel,
 		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
@@ -796,7 +796,7 @@ func (a *apiServer) DeleteModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+	if err := modelauth.AuthZProvider.Get().CanDeleteModel(ctx, *curUser, currModel,
 		currModel.WorkspaceId); err != nil {
 		return nil, err
 	}

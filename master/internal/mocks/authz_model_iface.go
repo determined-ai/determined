@@ -33,6 +33,20 @@ func (_m *ModelAuthZ) CanCreateModel(ctx context.Context, curUser model.User, wo
 	return r0
 }
 
+// CanDeleteModel provides a mock function with given fields: ctx, curUser, m, workspaceID
+func (_m *ModelAuthZ) CanDeleteModel(ctx context.Context, curUser model.User, m *modelv1.Model, workspaceID int32) error {
+	ret := _m.Called(ctx, curUser, m, workspaceID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *modelv1.Model, int32) error); ok {
+		r0 = rf(ctx, curUser, m, workspaceID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanEditModel provides a mock function with given fields: ctx, curUser, m, workspaceID
 func (_m *ModelAuthZ) CanEditModel(ctx context.Context, curUser model.User, m *modelv1.Model, workspaceID int32) error {
 	ret := _m.Called(ctx, curUser, m, workspaceID)
