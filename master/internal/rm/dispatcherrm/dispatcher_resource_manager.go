@@ -668,7 +668,7 @@ func addSlotToAgent(
 	if slotInUse {
 		// Claiming a container causes the DAI GUI dashboard to consider the
 		// slot to be not available; other implications TBD.
-		slot.Container = &containerv1.Container{}
+		slot.Container = &containerv1.Container{Id: "dispatcherrm-inuse-slot-placeholder"}
 		slot.Container.State = containerv1.State_STATE_RUNNING
 	}
 	agent.Slots[slotRef] = &slot
