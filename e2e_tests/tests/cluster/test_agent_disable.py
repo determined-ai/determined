@@ -7,7 +7,8 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 import pytest
 
 from determined.common.api.bindings import experimentv1State, get_GetSlot
-from tests import config as conf, api_utils
+from tests import api_utils
+from tests import config as conf
 from tests import experiment as exp
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
