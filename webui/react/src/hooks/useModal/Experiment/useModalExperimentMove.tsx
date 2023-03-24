@@ -125,9 +125,17 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             rules={[{ message: 'Project is required', required: true }]}>
             {Loadable.match(projects, {
               Loaded: (projects) => (
-                <Select placeholder="Select a destination project.">
+                <Select
+                  filterOption={(input, option) =>
+                    (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  placeholder="Select a destination project.">
                   {projects.map((project) => (
-                    <Option disabled={project.archived} key={project.id} value={project.id}>
+                    <Option
+                      disabled={project.archived}
+                      key={project.id}
+                      title={project.name}
+                      value={project.id}>
                       <div className={project.archived ? css.optionDisabled : undefined}>
                         <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
                         {project.archived && <Icon name="archive" />}
