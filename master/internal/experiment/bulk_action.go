@@ -29,6 +29,7 @@ type archiveExperimentOKResult struct {
 	State    bool
 }
 
+// ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
 // For each experiment, based on the actor, add an error or non-error to results.
@@ -36,7 +37,7 @@ func loadMultiExperimentActionResults(results []ExperimentActionResult,
 	resps map[*actor.Ref]actor.Message,
 ) ([]ExperimentActionResult, error) {
 	for ref, actorResp := range resps {
-		originalID, err := strconv.Atoi(ref.Address().Local())
+		originalID, err := strconv.ParseInt(ref.Address().Local(), 10, 32)
 		if err != nil {
 			return nil, err
 		}
