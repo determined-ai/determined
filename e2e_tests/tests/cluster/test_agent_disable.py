@@ -6,7 +6,8 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 
 import pytest
 
-from determined.common.api.bindings import experimentv1State
+from determined.common.api.bindings import experimentv1State, get_GetSlot
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -29,27 +30,33 @@ def test_disable_and_enable_slots() -> None:
         slots = json.loads(output)
         assert len(slots) == 1
 
-        command = [
-            "det",
-            "-m",
-            conf.make_master_url(),
-            "slot",
-            "disable",
-            slots[0]["agent_id"],
-            slots[0]["slot_id"],
-        ]
-        subprocess.check_call(command)
+        slot_id, agent_id = slots[0]["slot_id"], slots[0]["agent_id"]
 
         command = [
             "det",
             "-m",
             conf.make_master_url(),
             "slot",
-            "enable",
-            slots[0]["agent_id"],
-            slots[0]["slot_id"],
+            "disable",
+            agent_id,
+            slot_id,
         ]
         subprocess.check_call(command)
+
+        slot = get_GetSlot(
+            api_utils.determined_test_session(), agentId=agent_id, slotId=slot_id
+        ).slot
+        assert slot is not None
+        assert slot.enabled is False
+
+        command = ["det", "-m", conf.make_master_url(), "slot", "enable", agent_id, slot_id]
+        subprocess.check_call(command)
+
+        slot = get_GetSlot(
+            api_utils.determined_test_session(), agentId=agent_id, slotId=slot_id
+        ).slot
+        assert slot is not None
+        assert slot.enabled is True
 
 
 def _fetch_slots() -> List[Dict[str, Any]]:
