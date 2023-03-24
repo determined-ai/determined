@@ -70,7 +70,7 @@ export const Modal: React.FC<ModalProps> = ({
   icon,
   key,
   onClose,
-  size = 'large',
+  size = 'small',
   submit,
   title,
   children: modalBody,
