@@ -764,6 +764,7 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 				currState = sproto.SchedulingStateScheduled
 			}
 			if currState != state {
+				p.containerIDToSchedulingState[containerID] = currState
 				ctx.Tell(p.cluster, sproto.UpdatePodStatus{
 					ContainerID: containerID,
 					State:       currState,
