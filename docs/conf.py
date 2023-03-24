@@ -25,9 +25,8 @@ source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
 html_css_files = [
-    "styles/determined.css",
-    "styles/docsearch.sbt.css",
     "https://cdn.jsdelivr.net/npm/@docsearch/css@3",
+    "styles/determined.css",
 ]
 
 html_js_files = [
@@ -69,9 +68,9 @@ html_last_updated_fmt = None
 html_sidebars = {
     "**": [
         "navbar-logo.html",
+        "sbt-sidebar-nav.html",
         "sidebar-version.html",
         "search-field.html",
-        "sbt-sidebar-nav.html",
     ]
 }
 

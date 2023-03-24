@@ -14,12 +14,27 @@ html[data-theme="dark"] {
   --pst-color-inline-code: #cecece;
 }
 
+#site-navigation {
+  overflow: visible;
+}
+
+#search-algolia {
+  display: flex;
+  justify-content: center;
+}
+
+.DocSearch-Button {
+  background-color: var(--pst-color-surface);
+  margin: 0;
+}
+
 .version.centered {
   text-align: center;
 }
 
 .bd-header-article {
   min-width: 488px;
+  z-index: 200; /* sphinx-book-theme default is 1020, lower this enough to stay below algolia modal */
 }
 
 .header-links-left a {
