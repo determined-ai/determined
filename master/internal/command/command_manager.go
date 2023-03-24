@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -49,6 +50,9 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case *apiv1.DeleteWorkspaceRequest:
+		ctx.TellAll(msg, ctx.Children()...)
+
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
@@ -63,7 +67,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		}
 
 	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

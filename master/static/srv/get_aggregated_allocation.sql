@@ -61,16 +61,7 @@ SELECT
         WHERE
             aggregation_type = 'resource_pool'
             AND days.period_start = starts.period_start
-    ) AS by_resource_pool,
-    (
-        SELECT
-            jsonb_object_agg(aggregation_key, seconds)
-        FROM
-            days
-        WHERE
-            aggregation_type = 'agent_label'
-            AND days.period_start = starts.period_start
-    ) AS by_agent_label
+    ) AS by_resource_pool
 FROM
     starts
 ORDER BY

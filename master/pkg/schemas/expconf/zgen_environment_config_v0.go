@@ -31,6 +31,17 @@ func (e *EnvironmentConfigV0) SetEnvironmentVariables(val EnvironmentVariablesMa
 	e.RawEnvironmentVariables = &val
 }
 
+func (e EnvironmentConfigV0) ProxyPorts() ProxyPortsConfigV0 {
+	if e.RawProxyPorts == nil {
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .ProxyPorts")
+	}
+	return *e.RawProxyPorts
+}
+
+func (e *EnvironmentConfigV0) SetProxyPorts(val ProxyPortsConfigV0) {
+	e.RawProxyPorts = &val
+}
+
 func (e EnvironmentConfigV0) Ports() map[string]int {
 	return e.RawPorts
 }

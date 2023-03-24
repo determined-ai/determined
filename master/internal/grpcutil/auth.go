@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	// TODO switch to google.golang.org/protobuf/proto/.
+	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ import (
 )
 
 const (
-	// nolint:gosec // These are not potential hardcoded credentials.
+	//nolint:gosec // These are not potential hardcoded credentials.
 	gatewayTokenHeader    = "grpcgateway-authorization"
 	allocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"
@@ -161,6 +162,26 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	default:
 		return nil, nil, err
 	}
+}
+
+// GetUserExternalToken returns the external token for the currently logged in user.
+func GetUserExternalToken(ctx context.Context) (string, error) {
+	if config.GetMasterConfig().InternalConfig.ExternalSessions.JwtKey == "" {
+		return "", ErrPermissionDenied
+	}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", ErrTokenMissing
+	}
+	tokens := md[gatewayTokenHeader]
+	if len(tokens) == 0 {
+		return "", ErrTokenMissing
+	}
+	token := tokens[0]
+	if !strings.HasPrefix(token, "Bearer ") {
+		return "", ErrInvalidCredentials
+	}
+	return strings.TrimPrefix(token, "Bearer "), nil
 }
 
 // Return error if user cannot be authenticated or lacks authorization.

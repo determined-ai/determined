@@ -20,12 +20,12 @@ func trialNotFoundErrEcho(id int) error {
 }
 
 func TestTrialAuthZEcho(t *testing.T) {
-	api, authZExp, _, curUser, _ := setupExpAuthTestEcho(t)
+	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
 	trial := createTestTrial(t, api, curUser)
 
 	funcCalls := []func(id int) error{
 		func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("trial_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
@@ -33,7 +33,7 @@ func TestTrialAuthZEcho(t *testing.T) {
 			return err
 		},
 		func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("trial_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))

@@ -1,5 +1,6 @@
 // Package command provides utilities for commands. This package comment is to satisfy linters
 // without disabling golint for the file.
+//
 //nolint:dupl // So easy with generics, so hard without; just wait.
 package command
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -50,6 +52,9 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case *apiv1.DeleteWorkspaceRequest:
+		ctx.TellAll(msg, ctx.Children()...)
+
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
@@ -64,7 +69,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 
 	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

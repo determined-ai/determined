@@ -1,15 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { setAuth } from 'stores/auth';
+import { WorkspacesProvider } from 'stores/workspaces';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getModels: () => {
     return Promise.resolve({ models: [] });
   },
@@ -20,11 +23,9 @@ const user = userEvent.setup();
 const ModalTrigger: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
 
-  const storeDispatch = useStoreDispatch();
-
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, []);
 
   return (
     <CheckpointModalTrigger
@@ -37,9 +38,13 @@ const ModalTrigger: React.FC = () => {
 
 const setup = async () => {
   render(
-    <StoreProvider>
-      <ModalTrigger />
-    </StoreProvider>,
+    <BrowserRouter>
+      <UIProvider>
+        <WorkspacesProvider>
+          <ModalTrigger />
+        </WorkspacesProvider>
+      </UIProvider>
+    </BrowserRouter>,
   );
 
   await user.click(screen.getByRole('button'));

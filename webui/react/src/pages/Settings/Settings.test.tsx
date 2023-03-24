@@ -1,13 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
-import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
-import { useCurrentUsers, UsersProvider } from 'stores/users';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';
@@ -16,8 +13,6 @@ const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useCurrentUsers();
-
   const currentUser: DetailedUser = useMemo(
     () => ({
       displayName: DISPLAY_NAME,
@@ -30,8 +25,8 @@ const Container: React.FC = () => {
   );
 
   const loadUser = useCallback(() => {
-    updateCurrentUser(currentUser);
-  }, [updateCurrentUser, currentUser]);
+    usersStore.updateCurrentUser(currentUser.id);
+  }, [currentUser]);
 
   useEffect(() => loadUser(), [loadUser]);
 
@@ -40,19 +35,13 @@ const Container: React.FC = () => {
 
 const setup = () => {
   return render(
-    <StoreProvider>
-      <UsersProvider>
-        <AuthProvider>
-          <UserRolesProvider>
-            <HelmetProvider>
-              <HistoryRouter history={history}>
-                <Container />
-              </HistoryRouter>
-            </HelmetProvider>
-          </UserRolesProvider>
-        </AuthProvider>
-      </UsersProvider>
-    </StoreProvider>,
+    <UIProvider>
+      <HelmetProvider>
+        <BrowserRouter>
+          <Container />
+        </BrowserRouter>
+      </HelmetProvider>
+    </UIProvider>,
   );
 };
 

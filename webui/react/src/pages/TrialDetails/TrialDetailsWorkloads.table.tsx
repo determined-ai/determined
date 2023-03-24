@@ -1,5 +1,4 @@
 import { ColumnType } from 'antd/es/table';
-import React from 'react';
 
 import { Renderer } from 'components/Table/Table';
 import { numericSorter } from 'shared/utils/sort';

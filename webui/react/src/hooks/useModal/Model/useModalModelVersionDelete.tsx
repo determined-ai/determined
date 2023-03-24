@@ -1,15 +1,9 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
-import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
-import useModal, {
-  CANNOT_DELETE_MODAL_PROPS,
-  ModalHooks as Hooks,
-  ModalCloseReason,
-} from 'shared/hooks/useModal/useModal';
-import { clone } from 'shared/utils/data';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
@@ -24,68 +18,57 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const [modelVersion, setModelVersion] = useState<ModelVersion>();
-
-  const { canDeleteModelVersion } = usePermissions();
-
   const handleOnClose = useCallback(() => {
-    setModelVersion(undefined);
     onClose?.(ModalCloseReason.Cancel);
   }, [onClose]);
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleOnClose });
 
-  const handleOk = useCallback(async () => {
-    if (!modelVersion) return Promise.reject();
-
-    try {
-      await deleteModelVersion({
-        modelName: modelVersion.model.name ?? '',
-        versionNum: modelVersion.version ?? 0,
-      });
-      routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: `Unable to delete model version ${modelVersion.version}.`,
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [modelVersion]);
-
-  const getModalProps = useCallback(
-    (modelVersion: ModelVersion): ModalFuncProps => {
-      return canDeleteModelVersion({ modelVersion })
-        ? {
-            closable: true,
-            content: `
+  const getModalProps = useCallback((modelVersion: ModelVersion): ModalFuncProps => {
+    return {
+      closable: true,
+      content: `
         Are you sure you want to delete this version
         "Version ${modelVersion.version}" from this model?
       `,
-            icon: null,
-            maskClosable: true,
-            okButtonProps: { type: 'primary' },
-            okText: 'Delete Version',
-            okType: 'danger',
-            onOk: handleOk,
-            title: 'Confirm Delete',
-          }
-        : clone(CANNOT_DELETE_MODAL_PROPS);
-    },
-    [canDeleteModelVersion, handleOk],
-  );
+      icon: null,
+      maskClosable: true,
+      okButtonProps: { type: 'primary' },
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: async () => {
+        if (!modelVersion) return Promise.reject();
 
-  const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);
+        try {
+          await deleteModelVersion({
+            modelName: modelVersion.model.name ?? '',
+            versionNum: modelVersion.version ?? 0,
+          });
+          routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
+        } catch (e) {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Please try again later.',
+            publicSubject: `Unable to delete model version ${modelVersion.version}.`,
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+      },
+      title: 'Confirm Delete',
+    };
+  }, []);
 
   /**
    * When modal props changes are detected, such as modal content
    * title, and buttons, update the modal.
    */
-  useEffect(() => {
-    if (modelVersion) openOrUpdate(getModalProps(modelVersion));
-  }, [getModalProps, modelVersion, openOrUpdate]);
+  const modalOpen = useCallback(
+    (modelVersion: ModelVersion) => {
+      openOrUpdate(getModalProps(modelVersion));
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   return { modalOpen, ...modalHook };
 };

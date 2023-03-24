@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import Button from 'components/kit/Button';
+import { setAuth } from 'stores/auth';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
@@ -11,27 +11,23 @@ import useModalExperimentCreate, { CreateExperimentType } from './useModalExperi
 const MODAL_TITLE = 'Fork';
 const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';
 
-const MonacoEditorMock: React.FC = () => <></>;
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
-jest.mock('components/MonacoEditor', () => ({
+vi.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => MonacoEditorMock,
+  default: () => <></>,
 }));
 
 const ModalTrigger: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
   const { contextHolder, modalOpen } = useModalExperimentCreate();
   const { experiment, trial } = generateTestExperimentData();
-
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, []);
 
   return (
     <>
@@ -46,13 +42,7 @@ const ModalTrigger: React.FC = () => {
   );
 };
 
-const Container: React.FC = () => {
-  return (
-    <StoreProvider>
-      <ModalTrigger />
-    </StoreProvider>
-  );
-};
+const Container: React.FC = () => <ModalTrigger />;
 
 const setup = async () => {
   const user = userEvent.setup();

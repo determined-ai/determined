@@ -18,6 +18,7 @@ class defaults:
 
 class cloudformation:
     CLUSTER_ID = "ClusterId"
+    EXTRA_TAGS = "ExtraTags"
     KEYPAIR = "Keypair"
     MASTER_ID = "MasterId"
     BASTION_ID = "BastionId"
@@ -67,6 +68,7 @@ class cloudformation:
     AGENT_IMAGE_NAME = "AgentImageName"
     DOCKER_USER = "DockerUser"
     DOCKER_PASS = "DockerPass"
+    NOTEBOOK_TIMEOUT = "NotebookTimeout"
 
 
 class misc:

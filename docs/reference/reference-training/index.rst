@@ -2,41 +2,35 @@
  Training Reference
 ####################
 
-This section includes reference documentation for the Determined training APIs:
+*********************
+ Python Modules APIs
+*********************
 
-+-------------------------------------------------+-----------------------------------------------+
-| Topic                                           | Documentation Content                         |
-+=================================================+===============================================+
-| :doc:`training/api-core-reference`              | Core API reference documentation.             |
-+-------------------------------------------------+-----------------------------------------------+
-| :doc:`training/api-pytorch-reference`           | PyTorch API reference documentation.          |
-+-------------------------------------------------+-----------------------------------------------+
-| :doc:`training/api-pytorch-lightning-reference` | PyTorch Lightning reference documentation.    |
-+-------------------------------------------------+-----------------------------------------------+
-| :doc:`training/api-keras-reference`             | Keras API reference documentation.            |
-+-------------------------------------------------+-----------------------------------------------+
-| :doc:`training/api-deepspeed-reference`         | DeepSpeed API reference documentation.        |
-+-------------------------------------------------+-----------------------------------------------+
-| :doc:`training/api-estimator-reference`         | Estimator API reference documentation.        |
-+-------------------------------------------------+-----------------------------------------------+
+-  :doc:`det <training/api-det-reference>`
+-  :doc:`det.core <training/api-core-reference>`
+-  :doc:`det.pytorch <training/api-pytorch-reference>`
+-  :doc:`det.pytorch.samplers <training/api-pytorch-samplers-reference>`
+-  :doc:`det.pytorch.deepspeed <training/api-deepspeed-reference>`
+-  :doc:`det.pytorch.lightning <training/api-pytorch-lightning-reference>`
+-  :doc:`det.keras <training/api-keras-reference>`
+-  :doc:`det.estimator <training/api-estimator-reference>`
 
-Reference documentation for the experiment configuration file is also covered in this section:
+*******************************
+ Experiment Configuration File
+*******************************
 
-+------------------------------------+------------------------------------------------------------+
-| Topic                              | Documentation Content                                      |
-+====================================+============================================================+
-| :doc:`experiment-config-reference` | The experiment configuration reference describes available |
-|                                    | parameters for specifying experiment behavior.             |
-+------------------------------------+------------------------------------------------------------+
+-  :doc:`experiment-config-reference`
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   Core API Reference <training/api-core-reference>
-   PyTorch API Reference <training/api-pytorch-reference>
-   PyTorch Lightning API Reference <training/api-pytorch-lightning-reference>
-   Keras API Reference <training/api-keras-reference>
-   DeepSpeed API Reference <training/api-deepspeed-reference>
-   Estimator API Reference <training/api-estimator-reference>
+   det <training/api-det-reference>
+   det.core <training/api-core-reference>
+   det.pytorch <training/api-pytorch-reference>
+   det.pytorch.samplers <training/api-pytorch-samplers-reference>
+   det.pytorch.deepspeed <training/api-deepspeed-reference>
+   det.pytorch.lightning <training/api-pytorch-lightning-reference>
+   det.keras <training/api-keras-reference>
+   det.estimator <training/api-estimator-reference>
    Experiment Configuration <experiment-config-reference>

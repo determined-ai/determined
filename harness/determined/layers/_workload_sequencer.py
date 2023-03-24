@@ -3,7 +3,7 @@ import sys
 from typing import Any, Generator, Optional, Tuple
 
 import determined as det
-from determined import core, tensorboard, workload
+from determined import core, util, workload
 from determined.common import check
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
@@ -119,6 +119,19 @@ class WorkloadSequencer(workload.Source):
         # precalculated periods, in batches
         self.records_per_epoch = env.experiment_config.get_records_per_epoch()
         self.global_batch_size = global_batch_size
+        if env.experiment_config.get_min_checkpoint_period().get("epochs") is not None:
+            if self.records_per_epoch is None:
+                raise ValueError(
+                    "records_per_epoch must be specified if min_checkpoint_period is configured "
+                    "in epoch units."
+                )
+
+        if env.experiment_config.get_min_validation_period().get("epochs") is not None:
+            if self.records_per_epoch is None:
+                raise ValueError(
+                    "records_per_epoch must be specified if min_validation_period is configured "
+                    "in epoch units."
+                )
         self.min_val_period_batches = self.as_batches(
             **env.experiment_config.get_min_validation_period()
         )
@@ -164,8 +177,8 @@ class WorkloadSequencer(workload.Source):
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
             return max(records // self.global_batch_size, 1)
         if epochs is not None:
-            check.is_instance(self.records_per_epoch, int, "length must be an integer")
             assert self.records_per_epoch is not None
+            check.is_instance(self.records_per_epoch, int, "length must be an integer")
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
             return max((epochs * self.records_per_epoch) // self.global_batch_size, 1)
         # Make mypy happy.
@@ -267,7 +280,7 @@ class WorkloadSequencer(workload.Source):
         # Check that the searcher metric has a scalar value so that it can be compared for
         # search purposes. Other metrics don't have to be scalars.
         searcher_metric = metrics[searcher_metric_name]
-        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
+        if not util.is_numerical_scalar(searcher_metric):
             raise RuntimeError(
                 f"Searcher validation metric '{searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}"

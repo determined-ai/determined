@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import sys
 
 import determined as det
 
@@ -19,7 +20,7 @@ def load_state(trial_id, checkpoint_directory):
         return x, 0
 
 
-def main(core_context, latest_checkpoint, trial_id, increment_by):
+def main(core_context, latest_checkpoint, trial_id, increment_by, metric_as_dict):
     x = 0
 
     starting_batch = 0
@@ -51,7 +52,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics={"validation_error": x}
         )
-        op.report_completed(x)
+        op.report_completed({"foo": x} if metric_as_dict else x)
 
     if last_checkpoint_batch != steps_completed:
         checkpoint_metadata = {"steps_completed": steps_completed}
@@ -68,5 +69,13 @@ if __name__ == "__main__":
     trial_id = info.trial.trial_id
     hparams = info.trial.hparams
 
+    metric_as_dict = len(sys.argv) > 1 and sys.argv[1] == "dict"
+
     with det.core.init() as core_context:
-        main(core_context, latest_checkpoint, trial_id, increment_by=hparams["increment_by"])
+        main(
+            core_context,
+            latest_checkpoint,
+            trial_id,
+            increment_by=hparams["increment_by"],
+            metric_as_dict=metric_as_dict,
+        )

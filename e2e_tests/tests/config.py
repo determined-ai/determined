@@ -13,18 +13,23 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730"
-DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730"
-DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-096d730"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
+DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-835d8b1"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-835d8b1"
+DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-835d8b1"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-835d8b1"
+DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.8-pytorch-1.12-cpu-835d8b1"
+DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-835d8b1"
 
 TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
 TF1_GPU_IMAGE = os.environ.get("TF1_GPU_IMAGE") or DEFAULT_TF1_GPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
+PT_CPU_IMAGE = os.environ.get("PT_CPU_IMAGE") or DEFAULT_PT_CPU_IMAGE
+PT_GPU_IMAGE = os.environ.get("PT_GPU_IMAGE") or DEFAULT_PT_GPU_IMAGE
 GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 
 PROJECT_ROOT_PATH = Path(__file__).resolve().parents[2]
+EXAMPLES_PATH = PROJECT_ROOT_PATH / "examples"
 
 
 def fixtures_path(path: str) -> str:
@@ -81,6 +86,10 @@ def deepspeed_examples_path(path: str) -> str:
 
 def custom_search_method_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/custom_search_method", path)
+
+
+def integrations_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/integrations", path)
 
 
 def load_config(config_path: str) -> Any:
@@ -159,20 +168,8 @@ def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return set_image(config, TF2_CPU_IMAGE, TF2_GPU_IMAGE)
 
 
-def set_shared_fs_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    config = config.copy()
-    config["data_layer"] = {}
-    config["data_layer"]["type"] = "shared_fs"
-    return config
-
-
-def set_s3_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    config = config.copy()
-    config["data_layer"] = {}
-    config["data_layer"]["type"] = "s3"
-    config["data_layer"]["bucket"] = "yogadl-test"
-    config["data_layer"]["bucket_directory_path"] = "determined_integration_tests"
-    return config
+def set_pt_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
+    return set_image(config, PT_CPU_IMAGE, PT_GPU_IMAGE)
 
 
 def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:

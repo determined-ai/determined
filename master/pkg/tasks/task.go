@@ -31,6 +31,22 @@ const (
 	shadowPath        = "/run/determined/etc/shadow"
 	groupPath         = "/run/determined/etc/group"
 	certPath          = "/run/determined/etc/ssl/master.crt"
+	// DtrainSSHPortBase is starting range for Dtrain ports.
+	DtrainSSHPortBase = 12350
+	// InterTrainProcessCommPort1Base is starting range for intertraincomm1 ports.
+	InterTrainProcessCommPort1Base = 12360
+	// InterTrainProcessCommPort2Base is starting range for intertraincomm2 ports.
+	InterTrainProcessCommPort2Base = 12365
+	// C10DPortBase is starting range for c10D ports.
+	C10DPortBase = 29400
+	// DTrainSSHPort is the name of a port.
+	DTrainSSHPort = "DTRAIN_SSH_PORT"
+	// InterTrainProcessCommPort1 is the name of a port.
+	InterTrainProcessCommPort1 = "INTER_TRAIN_PROCESS_COMM_PORT_1"
+	// InterTrainProcessCommPort2 is the name of a port.
+	InterTrainProcessCommPort2 = "INTER_TRAIN_PROCESS_COMM_PORT_2"
+	// C10DPort is the name of a port.
+	C10DPort = "C10D_PORT"
 )
 
 // TaskSpec defines the spec of a task.
@@ -81,6 +97,14 @@ type TaskSpec struct {
 	TaskType         model.TaskType
 	SlurmConfig      expconf.SlurmConfig
 	PbsConfig        expconf.PbsConfig
+
+	ExtraProxyPorts expconf.ProxyPortsConfig
+
+	Workspace string
+	Project   string
+	Labels    []string
+	// Ports required by trial or commands and their respective base port values.
+	UniqueExposedPortRequests map[string]int
 }
 
 // ResolveWorkDir resolves the work dir.

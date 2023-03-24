@@ -1,9 +1,10 @@
-import { Radio, Tooltip } from 'antd';
+import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Tooltip from 'components/kit/Tooltip';
 import useResize from 'hooks/useResize';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 

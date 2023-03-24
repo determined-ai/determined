@@ -19,9 +19,9 @@ const (
 )
 
 // DefaultAgentConfig returns a default agent config, for tests.
-func DefaultAgentConfig(offset int) options.AgentOptions {
+func DefaultAgentConfig(offset int) options.Options {
 	// Same defaults as set by viper when binding environment variables.
-	return options.AgentOptions{
+	return options.Options{
 		AgentID:             "test-agent" + strconv.Itoa(offset),
 		MasterHost:          "localhost",
 		MasterPort:          defaultMasterPort + offset,

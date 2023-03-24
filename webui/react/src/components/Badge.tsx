@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import React, { CSSProperties, useMemo } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, getCssVar } from 'shared/themes';

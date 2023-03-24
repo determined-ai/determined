@@ -1,7 +1,7 @@
-import { notification as antdNotification } from 'antd';
-import { ArgsProps, NotificationApi } from 'antd/lib/notification';
+import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
+import router from 'router';
 import { paths } from 'routes/utils';
 import {
   DetError,
@@ -11,9 +11,9 @@ import {
   isDetError,
 } from 'shared/utils/error';
 import { LoggerInterface } from 'shared/utils/Logger';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { listToStr } from 'shared/utils/string';
+import { notification as antdNotification } from 'utils/dialogApi';
 
 const errorLevelMap = {
   [ErrorLevel.Error]: 'error',
@@ -22,11 +22,12 @@ const errorLevelMap = {
 };
 
 const openNotification = (e: DetError) => {
-  const key = errorLevelMap[e.level] as keyof NotificationApi;
+  const key = errorLevelMap[e.level] as keyof NotificationInstance;
   const notification = antdNotification[key] as (args: ArgsProps) => void;
 
   notification?.({
     description: e.publicMessage || '',
+    key: e.name,
     message: e.publicSubject || listToStr([e.type, e.level]),
   });
 };
@@ -62,6 +63,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
 
   if (e.isHandled) {
     if (process.env.IS_DEV) {
+      // eslint-disable-next-line no-console
       console.warn(`Error "${e.message}" is handled twice.`);
     }
     return;
@@ -74,7 +76,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
-      routeToReactUrl(paths.logout());
+      router.navigate(`/det${paths.logout()}`);
     }
   }
 

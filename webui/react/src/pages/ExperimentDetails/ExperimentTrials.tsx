@@ -19,10 +19,7 @@ import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
-import {
-  Determinedexperimentv1State,
-  V1GetExperimentTrialsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';
@@ -30,6 +27,7 @@ import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -44,7 +42,12 @@ import { getMetricValue } from 'utils/metric';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import settingsConfig, { isOfSortKey, Settings } from './ExperimentTrials.settings';
+import {
+  configForExperiment,
+  DEFAULT_COLUMNS,
+  isOfSortKey,
+  Settings,
+} from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -67,7 +70,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
@@ -113,9 +117,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
-  const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
-    openCommandResponse(await openOrCreateTensorBoard({ trialIds: [trial.id] }));
-  }, []);
+  const handleOpenTensorBoard = useCallback(
+    async (trial: TrialItem) => {
+      openCommandResponse(
+        await openOrCreateTensorBoard({ trialIds: [trial.id], workspaceId: workspace.id }),
+      );
+    },
+    [workspace.id],
+  );
 
   const handleViewLogs = useCallback(
     (trial: TrialItem) => {
@@ -231,6 +240,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE) {
+        column.render = (value: number) => (value ? humanReadableBytes(value) : '');
       }
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
@@ -281,7 +292,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedexperimentv1State, states),
+          states: validateDetApiEnumList(Experimentv1State, states),
         },
         { signal: canceler.signal },
       );
@@ -303,12 +314,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       if (!settings.row) return;
 
       if (action === Action.OpenTensorBoard) {
-        return await openOrCreateTensorBoard({ trialIds: settings.row });
+        return await openOrCreateTensorBoard({ trialIds: settings.row, workspaceId: workspace.id });
       } else if (action === Action.CompareTrials) {
         return updateSettings({ compare: true });
       }
     },
-    [settings.row, updateSettings],
+    [settings.row, updateSettings, workspace.id],
   );
 
   const submitBatchAction = useCallback(
@@ -456,7 +467,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={settings as InteractiveTableSettings}
+          settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings as UpdateSettings}

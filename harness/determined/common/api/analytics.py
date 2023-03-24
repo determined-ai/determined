@@ -6,8 +6,12 @@ from typing import Any, Dict, Type
 import analytics
 
 enabled = os.environ.get("DET_SEGMENT_ENABLED") == "true"
-analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
 _cluster_id = os.environ.get("DET_CLUSTER_ID")
+
+# Segment.io Configuration
+# https://github.com/segmentio/analytics-python/blob/5d87a9085c18ee25660c8196dd1233100f9b61b6/segment/analytics/__init__.py
+analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+analytics.max_retries = 5
 
 
 def get_library_version_analytics() -> Dict[str, Any]:

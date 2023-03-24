@@ -10,8 +10,8 @@ import (
 )
 
 type requestProcessingWorker struct {
-	podInterface       typedV1.PodInterface
-	configMapInterface typedV1.ConfigMapInterface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
 }
 
 func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
@@ -41,7 +41,7 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	ctx *actor.Context,
 	msg createKubernetesResources,
 ) {
-	configMap, err := r.configMapInterface.Create(
+	configMap, err := r.configMapInterfaces[msg.podSpec.Namespace].Create(
 		context.TODO(), msg.configMapSpec, metaV1.CreateOptions{})
 	if err != nil {
 		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
@@ -53,7 +53,9 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		"created configMap %s", configMap.Name)
 
 	ctx.Log().Debugf("launching pod with spec %v", msg.podSpec)
-	pod, err := r.podInterface.Create(context.TODO(), msg.podSpec, metaV1.CreateOptions{})
+	pod, err := r.podInterfaces[msg.podSpec.Namespace].Create(
+		context.TODO(), msg.podSpec, metaV1.CreateOptions{},
+	)
 	if err != nil {
 		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 			"error creating pod %s", msg.podSpec.Name)
@@ -73,7 +75,7 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	// If resource creation failed, we will still try to delete those resources which
 	// will also result in a failure.
 	if len(msg.podName) > 0 {
-		err = r.podInterface.Delete(
+		err = r.podInterfaces[msg.namespace].Delete(
 			context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if err != nil {
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
@@ -85,7 +87,7 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	}
 
 	if len(msg.configMapName) > 0 {
-		errDeletingConfigMap := r.configMapInterface.Delete(
+		errDeletingConfigMap := r.configMapInterfaces[msg.namespace].Delete(
 			context.TODO(), msg.configMapName,
 			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if errDeletingConfigMap != nil {

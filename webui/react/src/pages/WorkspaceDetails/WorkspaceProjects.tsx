@@ -1,11 +1,15 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InlineEditor from 'components/InlineEditor';
+import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
+import Input from 'components/kit/Input';
+import Select, { Option } from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import ProjectCard from 'components/ProjectCard';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -18,7 +22,7 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
+import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -26,28 +30,24 @@ import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
+import usersStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-
-import ProjectActionDropdown from '../WorkspaceDetails/ProjectActionDropdown';
-import ProjectCard from '../WorkspaceDetails/ProjectCard';
+import { useObservable } from 'utils/observable';
 
 import css from './WorkspaceProjects.module.scss';
-import settingsConfig, {
+import {
+  configForWorkspace,
   DEFAULT_COLUMN_WIDTHS,
   ProjectColumnName,
   WhoseProjects,
   WorkspaceDetailsSettings,
 } from './WorkspaceProjects.settings';
-
-const { Option } = Select;
 
 interface Props {
   id: number;
@@ -56,10 +56,10 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const user = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [projects, setProjects] = useState<Project[]>([]);
@@ -67,8 +67,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const { canCreateProject } = usePermissions();
-
-  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
+  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
+    workspaceId: workspace.id,
+  });
+  const config = useMemo(() => configForWorkspace(id), [id]);
+  const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
   const fetchProjects = useCallback(async () => {
     if (!settings) return;
@@ -100,12 +103,18 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [canceler.signal, id, workspace, settings]);
 
   useEffect(() => {
-    fetchProjects();
+    setIsLoading(true);
+    fetchProjects().then(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleProjectCreateClick = useCallback(() => {
+    openProjectCreate();
+  }, [openProjectCreate]);
+
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseProjects | undefined });
     },
     [updateSettings],
@@ -132,21 +141,24 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     [updateSettings],
   );
 
+  const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (!settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({
+          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
+        });
         break;
     }
-  }, [settings.whose, updateSettings, user, users]);
+  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
     try {
@@ -163,13 +175,17 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
@@ -177,11 +193,21 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
+        title={record.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveProjectDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -219,7 +245,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: userRenderer,
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -247,7 +273,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived]);
+  }, [fetchProjects, saveProjectDescription, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -297,7 +323,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       record: Project;
     }) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
@@ -307,7 +332,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       </ProjectActionDropdown>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, workspace?.archived],
+    [workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
@@ -316,17 +341,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.AutoFill}>
+          <Card.Group size="small">
             {projects.map((project) => (
               <ProjectCard
-                curUser={user}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
               />
             ))}
-          </Grid>
+          </Card.Group>
         );
       case GridListView.List:
         return (
@@ -335,7 +359,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={projects}
-            loading={isLoading}
+            loading={isLoading || Loadable.isLoading(users)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -358,9 +382,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     pageRef,
     projects,
     settings,
+    users,
     total,
     updateSettings,
-    user,
     workspace?.archived,
   ]);
 
@@ -375,28 +399,20 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   return (
     <div className={css.base}>
       <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={140}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
           <Option value={WhoseProjects.All}>All Projects</Option>
           <Option value={WhoseProjects.Mine}>My Projects</Option>
           <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
           {!workspace.archived && (
             <Toggle
               checked={settings.archived}
-              prefixLabel="Show Archived"
+              label="Show Archived"
               onChange={switchShowArchived}
             />
           )}
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
               Last Updated
@@ -404,8 +420,15 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
               Newest to Oldest
             </Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
+          <div className={css.headerButton}>
+            {!workspace.immutable &&
+              !workspace.archived &&
+              canCreateProject({ workspace: workspace }) && (
+                <Button onClick={handleProjectCreateClick}>New Project</Button>
+              )}
+          </div>
         </Space>
       </div>
       <Spinner spinning={isLoading}>
@@ -425,6 +448,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Message title="No projects matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
+      {contextHolder}
     </div>
   );
 };

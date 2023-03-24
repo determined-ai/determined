@@ -1,24 +1,30 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Modal, Space } from 'antd';
+import { Dropdown, Modal, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import InlineEditor from 'components/InlineEditor';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
-import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
-import Avatar from 'components/UserAvatar';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
+import usePermissions from 'hooks/usePermissions';
+import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import { useUsers } from 'stores/users';
-import { ModelVersion } from 'types';
+import usersStore from 'stores/users';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -33,18 +39,19 @@ type Action = {
 
 interface Props {
   modelVersion: ModelVersion;
-  onSaveDescription: (editedNotes: string) => Promise<void>;
-  onSaveName: (editedName: string) => Promise<void>;
+  fetchModelVersion: () => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+  workspace: Workspace;
 }
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
-  onSaveDescription,
+  workspace,
   onUpdateTags,
-  onSaveName,
+  fetchModelVersion,
 }: Props) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -53,18 +60,32 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
     useModalModelVersionDelete();
 
+  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
+    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
+
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
   }, [modelVersion, openModelDownload]);
 
+  const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
+
   const infoRows: InfoRow[] = useMemo(() => {
+    const user = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    }).find((user) => user.id === modelVersion.userId);
+
     return [
       {
         content: (
           <Space>
-            <Avatar userId={modelVersion.userId} />
-            {getDisplayName(users.find((user) => user.id === modelVersion.userId))}
-            on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+              <>
+                <Avatar user={user} />
+                {getDisplayName(user)}
+                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+              </>
+            </Spinner>
           </Space>
         ),
         label: 'Created by',
@@ -77,35 +98,37 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         content: (
-          <InlineEditor
-            disabled={modelVersion.model.archived}
-            placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-            value={modelVersion.comment ?? ''}
-            onSave={onSaveDescription}
-          />
+          <div>
+            {(modelVersion.comment ?? '') || (
+              <Typography.Text
+                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}>
+                N/A
+              </Typography.Text>
+            )}
+          </div>
         ),
         label: 'Description',
       },
       {
         content: (
-          <TagList
-            disabled={modelVersion.model.archived}
+          <Tags
+            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}
-            onChange={onUpdateTags}
+            onAction={tagsActionHelper(modelVersion.labels ?? [], onUpdateTags)}
           />
         ),
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onSaveDescription, onUpdateTags, users]);
+  }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
   }, [openModalVersionDelete, modelVersion]);
 
-  const actions: Action[] = useMemo(
-    () => [
+  const actions: Action[] = useMemo(() => {
+    const items: Action[] = [
       {
         danger: false,
         disabled: false,
@@ -121,35 +144,55 @@ const ModelVersionHeader: React.FC<Props> = ({
         text: 'Use in Notebook',
       },
       {
+        danger: false,
+        disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
+        key: 'edit-model-version-name',
+        onClick: openModelNameEdit,
+        text: 'Edit',
+      },
+    ];
+    if (canDeleteModelVersion({ modelVersion })) {
+      items.push({
         danger: true,
         disabled: false,
         key: 'deregister-version',
         onClick: handleDelete,
         text: 'Deregister Version',
-      },
-    ],
-    [handleDelete, handleDownloadModel],
-  );
+      });
+    }
+    return items;
+  }, [
+    modelVersion,
+    canModifyModelVersion,
+    openModelNameEdit,
+    handleDownloadModel,
+    canDeleteModelVersion,
+    handleDelete,
+  ]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `from determined.experimental import Determined
-client = Determined()
+    return `import determined as det
+from determined.experimental import client
+
 model_entry = client.get_model("${escapedModelName}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
+path = ckpt.download()
 
-################ Approach 1 ################
-# You can load the trial directly without having to instantiate the model.
-# The trial should have the model as an attribute.
-trial = ckpt.load()
+# Load a PyTorchTrial from a checkpoint:
+from determined import pytorch
+my_trial = \\
+    pytorch.load_trial_from_checkpoint_path(path)
 
-################ Approach 2 ################
-# You can download the checkpoint and load the model state manually.
-ckpt_path = ckpt.download()
-ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
-# assuming your model is already instantiated, you can then load the state_dict
-my_model.load_state_dict(ckpt['models_state_dict'][0])`;
+# Load a Keras model from TFKerasTrial checkpoint:
+from determined import keras
+model = keras.load_model_from_checkpoint_path(path)
+
+# Import your checkpointed code:
+with det.import_from_path(path + "/code"):
+    import my_model_def as ckpt_model_def
+`;
   }, [modelVersion]);
 
   const handleCopy = useCallback(async () => {
@@ -183,7 +226,18 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>Model Registry</Link>
+            <Link
+              path={
+                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
+              }>
+              {workspace.name}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Separator />
+          <Breadcrumb.Item>
+            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+              Model Registry
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
@@ -200,19 +254,12 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
           <div className={css.title}>
             <div className={css.versionBox}>V{modelVersion.version}</div>
             <h1 className={css.versionName}>
-              <InlineEditor
-                allowClear={false}
-                disabled={modelVersion.model.archived}
-                placeholder="Add name..."
-                value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
-                onSave={onSaveName}
-              />
+              {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
             </h1>
           </div>
           <div className={css.buttons}>
             {actions.slice(0, 2).map((action) => (
               <Button
-                className={css.buttonAction}
                 danger={action.danger}
                 disabled={action.disabled}
                 key={action.key}
@@ -231,6 +278,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       </div>
       {modalModelDownloadContextHolder}
       {modalModelVersionDeleteContextHolder}
+      {modalModelNameEditContextHolder}
       <Modal
         className={css.useNotebookModal}
         footer={null}

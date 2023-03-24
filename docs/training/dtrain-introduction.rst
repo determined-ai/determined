@@ -1,18 +1,16 @@
 .. _multi-gpu-training:
 
 ######################################
- Introduction to Distributed Training
+ Distributed Training with Determined
 ######################################
 
-This document provides an overview of distributed training concepts followed by an overview of how
-to implement distributed training.
+This overview demonstrates how to perform optimized distributed training with Determined to speed up
+the training of a single trial. The first section conceptually describes distributed training and is
+followed by a section on implementing distributed training.
 
-This document focuses on demonstrating how to perform optimized distributed training with Determined
-to speed up the training of a single trial.
-
-*******************************
- Distributed Training Overview
-*******************************
+******************
+ Concept Overview
+******************
 
 How Determined Distributed Training Works
 =========================================

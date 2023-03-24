@@ -1,3 +1,5 @@
+import { MaybeMocked } from '@vitest/spy';
+
 import { RecordKey } from 'shared/types';
 import { generateUUID } from 'shared/utils/string';
 import { CommandState, CommandTask, CommandType } from 'types';
@@ -26,6 +28,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Queued,
     type: CommandType.JupyterLab,
     userId: 34,
+    workspaceId: 0,
   },
   [CommandType.Shell]: {
     ...SHARED_TASK,
@@ -38,6 +41,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Terminated,
     type: CommandType.Shell,
     userId: 34,
+    workspaceId: 0,
   },
   [CommandType.TensorBoard]: {
     ...SHARED_TASK,
@@ -50,6 +54,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     state: CommandState.Running,
     type: CommandType.TensorBoard,
     userId: 16,
+    workspaceId: 0,
   },
 };
 
@@ -69,21 +74,17 @@ describe('Wait Page Utilities', () => {
   });
 
   describe('openCommand', () => {
-    let globalOpen: typeof global.open;
-    let windowOpen: jest.Mock;
+    let windowOpen: MaybeMocked<typeof global.open>;
 
     beforeEach(() => {
-      // Make sure `windowOpen` is a new `jest.fn()` for each test.
-      windowOpen = jest.fn();
-
-      // Preserve the original `global.open`.
-      globalOpen = global.open;
-      global.open = windowOpen;
+      vi.spyOn(global, 'open');
+      windowOpen = vi.mocked(global.open);
+      windowOpen.mockReset();
     });
 
     afterEach(() => {
       // Restore `global.open` to original function.
-      global.open = globalOpen;
+      vi.mocked(global.open).mockRestore();
     });
 
     it('should open window for JupyterLab task', () => {

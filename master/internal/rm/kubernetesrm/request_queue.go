@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -26,6 +27,7 @@ type (
 
 	deleteKubernetesResources struct {
 		handler       *actor.Ref
+		namespace     string
 		podName       string
 		configMapName string
 	}
@@ -64,60 +66,60 @@ type queuedResourceRequest struct {
 // There are two reasons a queue system is required as opposed to allowing the pod actors
 // to create and delete Kubernetes resources asynchronously themselves:
 //
-//    1) Each pod creation first requires the creation of a configMap, however creating the two
-//       is not an atomic operation. If there is a large number of concurrent creation requests
-//       (e.g., a large HP search experiment) the kubernetes API server ends up processing the
-//       creation of all the configMaps before starting to create pods, which adds significant
-//       latency to the creation of pods.
+//  1. Each pod creation first requires the creation of a configMap, however creating the two
+//     is not an atomic operation. If there is a large number of concurrent creation requests
+//     (e.g., a large HP search experiment) the kubernetes API server ends up processing the
+//     creation of all the configMaps before starting to create pods, which adds significant
+//     latency to the creation of pods.
 //
-//    2) If all creation and deletion requests are submitted asynchronously, it is possible the
-//       Kubernetes API server will temporarily become saturated, and be slower to respond to other
-//       requests.
+//  2. If all creation and deletion requests are submitted asynchronously, it is possible the
+//     Kubernetes API server will temporarily become saturated, and be slower to respond to other
+//     requests.
 //
-//  When requests come in they are buffered by the requestQueue until a worker becomes available
-//  at which point the longest queue request is forwarded to the available. Requests are buffered
-//  rather than forward right away because buffering makes it possible to cancel creation requests
-//  after they are created, but before they are executed. Since the actor system processes messages
-//  in a FIFO order, if all request were forwarded right away any cancellation request would only
-//  be processed after the creation request case already been processed, requiring an unnecessary
-//  resource creation and deletion. An example of this is when a large HP search is created and
-//  then killed moments later. By having requests be buffered, if a deletion request arrives
-//  prior to the creation request being executed, the requestQueue detects this and skips the
-//  unnecessary creation / deletion.
+//     When requests come in they are buffered by the requestQueue until a worker becomes available
+//     at which point the longest queue request is forwarded to the available. Requests are buffered
+//     rather than forward right away because buffering makes it possible to cancel creation
+//     requests after they are created, but before they are executed. Since the actor system
+//     processes messages in a FIFO order, if all request were forwarded right away any cancellation
+//     request would only be processed after the creation request case already been processed,
+//     requiring an unnecessary resource creation and deletion. An example of this is when a
+//     large HP search is created and then killed moments later. By having requests be buffered,
+//     if a deletion request arrives prior to the creation request being executed,
+//     the requestQueue detects this and skips the unnecessary creation / deletion.
 //
-//  The message protocol consists of `createKubernetesResources` and `deleteKubernetesResources`
-//  messages being sent to the requestQueue. If it forwards the request to a worker, the worker
-//  will send the original task handler a `resourceCreationFailed` or a `resourceDeletionFailed`
-//  if an error was encountered while creating / deleting the resources. If a deletion request
-//  arrives before the creation request had been sent to the worker, the `requestQueue` will
-//  notify the task handler of this by sending a `resourceCreationCancelled` message.
-//  requestProcessingWorkers notify the requestQueue that they are available to receive work
-//  by sending a `workerAvailable` message.
+//     The message protocol consists of `createKubernetesResources` and `deleteKubernetesResources`
+//     messages being sent to the requestQueue. If it forwards the request to a worker, the worker
+//     will send the original task handler a `resourceCreationFailed` or a `resourceDeletionFailed`
+//     if an error was encountered while creating / deleting the resources. If a deletion request
+//     arrives before the creation request had been sent to the worker, the `requestQueue` will
+//     notify the task handler of this by sending a `resourceCreationCancelled` message.
+//     requestProcessingWorkers notify the requestQueue that they are available to receive work
+//     by sending a `workerAvailable` message.
 type requestQueue struct {
-	podInterface       typedV1.PodInterface
-	configMapInterface typedV1.ConfigMapInterface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
 	queue                    []*queuedResourceRequest
 	pendingResourceCreations map[*actor.Ref]*queuedResourceRequest
 	availableWorkers         []*actor.Ref
 
-	creationInProgress       map[*actor.Ref]bool
+	creationInProgress       set.Set[*actor.Ref]
 	blockedResourceDeletions map[*actor.Ref]*queuedResourceRequest
 }
 
 func newRequestQueue(
-	podInterface typedV1.PodInterface,
-	configMapInterface typedV1.ConfigMapInterface,
+	podInterfaces map[string]typedV1.PodInterface,
+	configMapInterfaces map[string]typedV1.ConfigMapInterface,
 ) *requestQueue {
 	return &requestQueue{
-		podInterface:       podInterface,
-		configMapInterface: configMapInterface,
+		podInterfaces:       podInterfaces,
+		configMapInterfaces: configMapInterfaces,
 
 		queue:                    make([]*queuedResourceRequest, 0),
 		pendingResourceCreations: make(map[*actor.Ref]*queuedResourceRequest),
 		availableWorkers:         make([]*actor.Ref, 0, numKubernetesWorkers),
 
-		creationInProgress:       make(map[*actor.Ref]bool),
+		creationInProgress:       make(set.Set[*actor.Ref]),
 		blockedResourceDeletions: make(map[*actor.Ref]*queuedResourceRequest),
 	}
 }
@@ -129,8 +131,8 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 			newWorker, ok := ctx.ActorOf(
 				fmt.Sprintf("kubernetes-worker-%d", i),
 				&requestProcessingWorker{
-					podInterface:       r.podInterface,
-					configMapInterface: r.configMapInterface,
+					podInterfaces:       r.podInterfaces,
+					configMapInterfaces: r.configMapInterfaces,
 				},
 			)
 			if !ok {
@@ -170,7 +172,7 @@ func (r *requestQueue) receiveCreateKubernetesResources(
 	}
 
 	if len(r.availableWorkers) > 0 {
-		r.creationInProgress[msg.handler] = true
+		r.creationInProgress.Insert(msg.handler)
 		ctx.Tell(r.availableWorkers[0], msg)
 		r.availableWorkers = r.availableWorkers[1:]
 		return
@@ -196,7 +198,7 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 	// We do not want to trigger resource deletion concurrently with resource creation.
 	// If the creation request is currently being processed, we delay processing the
 	// deletion request.
-	if _, creationInProgress := r.creationInProgress[msg.handler]; creationInProgress {
+	if r.creationInProgress.Contains(msg.handler) {
 		r.blockedResourceDeletions[msg.handler] = &queuedResourceRequest{deleteResources: &msg}
 		return
 	}
@@ -212,7 +214,7 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 
 func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context, msg workerAvailable) {
 	if msg.resourceHandler != nil {
-		delete(r.creationInProgress, msg.resourceHandler)
+		r.creationInProgress.Remove(msg.resourceHandler)
 
 		// Check if any deletions were blocked by this creation.
 		queuedMsg, resourceDeletionWasBlocked := r.blockedResourceDeletions[msg.resourceHandler]
@@ -230,7 +232,7 @@ func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context, msg workerAvai
 		// request was canceled.
 		if nextRequest.createResources != nil {
 			delete(r.pendingResourceCreations, nextRequest.createResources.handler)
-			r.creationInProgress[nextRequest.createResources.handler] = true
+			r.creationInProgress.Insert(nextRequest.createResources.handler)
 			ctx.Tell(ctx.Sender(), *nextRequest.createResources)
 			return
 		} else if nextRequest.deleteResources != nil {

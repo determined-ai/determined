@@ -1,14 +1,17 @@
-import { Form, message, Select } from 'antd';
+import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useFeature from 'hooks/useFeature';
+import Form from 'components/kit/Form';
+import Nameplate from 'components/kit/Nameplate';
+import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group, V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
+import { V1Role } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -25,69 +28,44 @@ interface FormInputs {
   userOrGroupId: string;
 }
 
+interface SearchProp {
+  label: {
+    props: {
+      groupName?: string;
+      user?: User;
+    };
+  };
+}
+
 const useModalWorkspaceAddMember = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
   onClose,
   workspaceId,
 }: Props): ModalHooks => {
-  let knownRoles = rolesAssignableToScope;
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  knownRoles = useMemo(
-    () =>
-      mockWorkspaceMembers
-        ? [
-            {
-              name: 'Editor',
-              permissions: [],
-              roleId: 1,
-            },
-            {
-              name: 'Viewer',
-              permissions: [],
-              roleId: 2,
-            },
-          ]
-        : knownRoles,
-    [knownRoles, mockWorkspaceMembers],
-  );
-
-  const handleFilter = useCallback(
-    (search: string, option: any): boolean => {
-      const label = option.label as string;
-      const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u)) {
-          const user = u as User;
-          return user?.displayName === label || user?.username === label;
-        } else {
-          const group = u as V1Group;
-          return group.name === label;
-        }
-      });
-      if (!userOrGroup) return false;
-      if (isUser(userOrGroup)) {
-        const userOption = userOrGroup as User;
-        return userOption?.displayName?.includes(search) || userOption?.username?.includes(search);
-      } else {
-        const groupOption = userOrGroup as V1Group;
-        return groupOption?.name?.includes(search) || false;
-      }
-    },
-    [addableUsersAndGroups],
-  );
+  const handleFilter = useCallback((search: string, option?: SearchProp): boolean => {
+    if (!option) return false;
+    const label = option.label;
+    return (
+      label.props.groupName?.includes(search) ||
+      label.props.user?.username?.includes(search) ||
+      label.props.user?.displayName?.includes(search) ||
+      false
+    );
+  }, []);
 
   const handleSelect = useCallback(
     (value: string) => {
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u) && value.substring(0, 2) === 'u_') {
-          const user = u as User;
+          const user = u;
           return user.id === Number(value.substring(2));
         } else if (!isUser(u) && value.substring(0, 2) === 'g_') {
-          const group = u as V1Group;
+          const group = u;
           return group.groupId === Number(value.substring(2));
         }
       });
@@ -149,17 +127,15 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  getName(option)
+                  <UserBadge compact user={option as User} />
                 ) : (
-                  <span>
-                    {getName(option)}&nbsp;&nbsp;
-                    <Icon name="group" />
-                  </span>
+                  <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
-              placeholder="Find user or group by display name or username"
+              placeholder="User or Group"
               showSearch
+              size="large"
               onSelect={handleSelect}
             />
           </Form.Item>

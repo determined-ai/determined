@@ -1,8 +1,8 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import {
   camelCaseToSentence,

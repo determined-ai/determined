@@ -55,40 +55,6 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class ExpCompareTrialsSampleResponseExpTrial:
-
-    def __init__(
-        self,
-        *,
-        data: "typing.Sequence[v1DataPoint]",
-        experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
-    ):
-        self.data = data
-        self.experimentId = experimentId
-        self.hparams = hparams
-        self.trialId = trialId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "experimentId": obj["experimentId"],
-            "hparams": obj["hparams"],
-            "trialId": obj["trialId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "data": [x.to_json(omit_unset) for x in self.data],
-            "experimentId": self.experimentId,
-            "hparams": self.hparams,
-            "trialId": self.trialId,
-        }
-        return out
-
 class GetHPImportanceResponseMetricHPImportance:
     error: "typing.Optional[str]" = None
     experimentProgress: "typing.Optional[float]" = None
@@ -229,14 +195,14 @@ class UpdateTrialTagsRequestIds:
             out["ids"] = self.ids
         return out
 
-class determinedcheckpointv1State(enum.Enum):
+class checkpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ACTIVE = "STATE_ACTIVE"
     STATE_COMPLETED = "STATE_COMPLETED"
     STATE_ERROR = "STATE_ERROR"
     STATE_DELETED = "STATE_DELETED"
 
-class determinedcontainerv1State(enum.Enum):
+class containerv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ASSIGNED = "STATE_ASSIGNED"
     STATE_PULLING = "STATE_PULLING"
@@ -244,13 +210,13 @@ class determinedcontainerv1State(enum.Enum):
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
 
-class determineddevicev1Type(enum.Enum):
+class devicev1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_CPU = "TYPE_CPU"
     TYPE_CUDA = "TYPE_CUDA"
     TYPE_ROCM = "TYPE_ROCM"
 
-class determinedexperimentv1State(enum.Enum):
+class experimentv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ACTIVE = "STATE_ACTIVE"
     STATE_PAUSED = "STATE_PAUSED"
@@ -269,13 +235,13 @@ class determinedexperimentv1State(enum.Enum):
     STATE_STARTING = "STATE_STARTING"
     STATE_RUNNING = "STATE_RUNNING"
 
-class determinedjobv1State(enum.Enum):
+class jobv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_QUEUED = "STATE_QUEUED"
     STATE_SCHEDULED = "STATE_SCHEDULED"
     STATE_SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
-class determinedjobv1Type(enum.Enum):
+class jobv1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_EXPERIMENT = "TYPE_EXPERIMENT"
     TYPE_NOTEBOOK = "TYPE_NOTEBOOK"
@@ -283,28 +249,6 @@ class determinedjobv1Type(enum.Enum):
     TYPE_SHELL = "TYPE_SHELL"
     TYPE_COMMAND = "TYPE_COMMAND"
     TYPE_CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
-
-class determinedtaskv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_PULLING = "STATE_PULLING"
-    STATE_STARTING = "STATE_STARTING"
-    STATE_RUNNING = "STATE_RUNNING"
-    STATE_TERMINATED = "STATE_TERMINATED"
-    STATE_TERMINATING = "STATE_TERMINATING"
-    STATE_WAITING = "STATE_WAITING"
-    STATE_QUEUED = "STATE_QUEUED"
-
-class determinedtrialv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ACTIVE = "STATE_ACTIVE"
-    STATE_PAUSED = "STATE_PAUSED"
-    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
-    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
-    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
-    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
-    STATE_CANCELED = "STATE_CANCELED"
-    STATE_COMPLETED = "STATE_COMPLETED"
-    STATE_ERROR = "STATE_ERROR"
 
 class protobufAny:
     typeUrl: "typing.Optional[str]" = None
@@ -451,11 +395,33 @@ class runtimeStreamError:
             out["message"] = self.message
         return out
 
+class taskv1State(enum.Enum):
+    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
+    STATE_PULLING = "STATE_PULLING"
+    STATE_STARTING = "STATE_STARTING"
+    STATE_RUNNING = "STATE_RUNNING"
+    STATE_TERMINATED = "STATE_TERMINATED"
+    STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_WAITING = "STATE_WAITING"
+    STATE_QUEUED = "STATE_QUEUED"
+
+class trialv1State(enum.Enum):
+    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
+    STATE_ACTIVE = "STATE_ACTIVE"
+    STATE_PAUSED = "STATE_PAUSED"
+    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    STATE_CANCELED = "STATE_CANCELED"
+    STATE_COMPLETED = "STATE_COMPLETED"
+    STATE_ERROR = "STATE_ERROR"
+
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
-    latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     runnerState: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
@@ -471,12 +437,12 @@ class trialv1Trial:
         id: int,
         restarts: int,
         startTime: str,
-        state: "determinedexperimentv1State",
+        state: "experimentv1State",
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
@@ -495,10 +461,10 @@ class trialv1Trial:
             self.bestCheckpoint = bestCheckpoint
         if not isinstance(bestValidation, Unset):
             self.bestValidation = bestValidation
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(latestTraining, Unset):
-            self.latestTraining = latestTraining
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
         if not isinstance(runnerState, Unset):
@@ -520,17 +486,17 @@ class trialv1Trial:
             "id": obj["id"],
             "restarts": obj["restarts"],
             "startTime": obj["startTime"],
-            "state": determinedexperimentv1State(obj["state"]),
+            "state": experimentv1State(obj["state"]),
             "totalBatchesProcessed": obj["totalBatchesProcessed"],
         }
         if "bestCheckpoint" in obj:
             kwargs["bestCheckpoint"] = v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj["bestCheckpoint"] is not None else None
         if "bestValidation" in obj:
             kwargs["bestValidation"] = v1MetricsWorkload.from_json(obj["bestValidation"]) if obj["bestValidation"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "latestTraining" in obj:
-            kwargs["latestTraining"] = v1MetricsWorkload.from_json(obj["latestTraining"]) if obj["latestTraining"] is not None else None
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "runnerState" in obj:
@@ -559,10 +525,10 @@ class trialv1Trial:
             out["bestCheckpoint"] = None if self.bestCheckpoint is None else self.bestCheckpoint.to_json(omit_unset)
         if not omit_unset or "bestValidation" in vars(self):
             out["bestValidation"] = None if self.bestValidation is None else self.bestValidation.to_json(omit_unset)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "latestTraining" in vars(self):
-            out["latestTraining"] = None if self.latestTraining is None else self.latestTraining.to_json(omit_unset)
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "runnerState" in vars(self):
@@ -800,7 +766,7 @@ class v1Allocation:
     endTime: "typing.Optional[str]" = None
     isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
-    state: "typing.Optional[determinedtaskv1State]" = None
+    state: "typing.Optional[taskv1State]" = None
     taskId: "typing.Optional[str]" = None
 
     def __init__(
@@ -810,7 +776,7 @@ class v1Allocation:
         endTime: "typing.Union[str, None, Unset]" = _unset,
         isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
-        state: "typing.Union[determinedtaskv1State, None, Unset]" = _unset,
+        state: "typing.Union[taskv1State, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(allocationId, Unset):
@@ -839,7 +805,7 @@ class v1Allocation:
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
         if "state" in obj:
-            kwargs["state"] = determinedtaskv1State(obj["state"]) if obj["state"] is not None else None
+            kwargs["state"] = taskv1State(obj["state"]) if obj["state"] is not None else None
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
@@ -1099,7 +1065,7 @@ class v1AugmentedTrial:
         projectId: int,
         searcherType: str,
         startTime: str,
-        state: "determinedtrialv1State",
+        state: "trialv1State",
         tags: "typing.Dict[str, typing.Any]",
         totalBatches: int,
         trainingMetrics: "typing.Dict[str, typing.Any]",
@@ -1150,7 +1116,7 @@ class v1AugmentedTrial:
             "projectId": obj["projectId"],
             "searcherType": obj["searcherType"],
             "startTime": obj["startTime"],
-            "state": determinedtrialv1State(obj["state"]),
+            "state": trialv1State(obj["state"]),
             "tags": obj["tags"],
             "totalBatches": obj["totalBatches"],
             "trainingMetrics": obj["trainingMetrics"],
@@ -1235,7 +1201,7 @@ class v1Checkpoint:
         *,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
-        state: "determinedcheckpointv1State",
+        state: "checkpointv1State",
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
         allocationId: "typing.Union[str, None, Unset]" = _unset,
@@ -1259,7 +1225,7 @@ class v1Checkpoint:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metadata": obj["metadata"],
             "resources": obj["resources"],
-            "state": determinedcheckpointv1State(obj["state"]),
+            "state": checkpointv1State(obj["state"]),
             "training": v1CheckpointTrainingMetadata.from_json(obj["training"]),
             "uuid": obj["uuid"],
         }
@@ -1370,7 +1336,7 @@ class v1CheckpointWorkload:
     def __init__(
         self,
         *,
-        state: "determinedcheckpointv1State",
+        state: "checkpointv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -1391,7 +1357,7 @@ class v1CheckpointWorkload:
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointWorkload":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "state": determinedcheckpointv1State(obj["state"]),
+            "state": checkpointv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -1493,8 +1459,9 @@ class v1Command:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -1507,6 +1474,7 @@ class v1Command:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -1524,8 +1492,9 @@ class v1Command:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -1546,6 +1515,7 @@ class v1Command:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
@@ -1607,13 +1577,13 @@ class v1CompareTrialsResponse:
 
 class v1CompleteValidateAfterOperation:
     op: "typing.Optional[v1ValidateAfterOperation]" = None
-    searcherMetric: "typing.Optional[float]" = None
+    searcherMetric: "typing.Optional[typing.Any]" = None
 
     def __init__(
         self,
         *,
         op: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[float, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[typing.Any, None, Unset]" = _unset,
     ):
         if not isinstance(op, Unset):
             self.op = op
@@ -1627,7 +1597,7 @@ class v1CompleteValidateAfterOperation:
         if "op" in obj:
             kwargs["op"] = v1ValidateAfterOperation.from_json(obj["op"]) if obj["op"] is not None else None
         if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = float(obj["searcherMetric"]) if obj["searcherMetric"] is not None else None
+            kwargs["searcherMetric"] = obj["searcherMetric"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1636,7 +1606,7 @@ class v1CompleteValidateAfterOperation:
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = None if self.searcherMetric is None else dump_float(self.searcherMetric)
+            out["searcherMetric"] = self.searcherMetric
         return out
 
 class v1Container:
@@ -1647,7 +1617,7 @@ class v1Container:
         self,
         *,
         id: str,
-        state: "determinedcontainerv1State",
+        state: "containerv1State",
         devices: "typing.Union[typing.Sequence[v1Device], None, Unset]" = _unset,
         parent: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -1662,7 +1632,7 @@ class v1Container:
     def from_json(cls, obj: Json) -> "v1Container":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
-            "state": determinedcontainerv1State(obj["state"]),
+            "state": containerv1State(obj["state"]),
         }
         if "devices" in obj:
             kwargs["devices"] = [v1Device.from_json(x) for x in obj["devices"]] if obj["devices"] is not None else None
@@ -1684,9 +1654,14 @@ class v1Container:
 class v1CreateExperimentRequest:
     activate: "typing.Optional[bool]" = None
     config: "typing.Optional[str]" = None
+    gitCommit: "typing.Optional[str]" = None
+    gitCommitDate: "typing.Optional[str]" = None
+    gitCommitter: "typing.Optional[str]" = None
+    gitRemote: "typing.Optional[str]" = None
     modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None
     parentId: "typing.Optional[int]" = None
     projectId: "typing.Optional[int]" = None
+    template: "typing.Optional[str]" = None
     validateOnly: "typing.Optional[bool]" = None
 
     def __init__(
@@ -1694,21 +1669,36 @@ class v1CreateExperimentRequest:
         *,
         activate: "typing.Union[bool, None, Unset]" = _unset,
         config: "typing.Union[str, None, Unset]" = _unset,
+        gitCommit: "typing.Union[str, None, Unset]" = _unset,
+        gitCommitDate: "typing.Union[str, None, Unset]" = _unset,
+        gitCommitter: "typing.Union[str, None, Unset]" = _unset,
+        gitRemote: "typing.Union[str, None, Unset]" = _unset,
         modelDefinition: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         parentId: "typing.Union[int, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
+        template: "typing.Union[str, None, Unset]" = _unset,
         validateOnly: "typing.Union[bool, None, Unset]" = _unset,
     ):
         if not isinstance(activate, Unset):
             self.activate = activate
         if not isinstance(config, Unset):
             self.config = config
+        if not isinstance(gitCommit, Unset):
+            self.gitCommit = gitCommit
+        if not isinstance(gitCommitDate, Unset):
+            self.gitCommitDate = gitCommitDate
+        if not isinstance(gitCommitter, Unset):
+            self.gitCommitter = gitCommitter
+        if not isinstance(gitRemote, Unset):
+            self.gitRemote = gitRemote
         if not isinstance(modelDefinition, Unset):
             self.modelDefinition = modelDefinition
         if not isinstance(parentId, Unset):
             self.parentId = parentId
         if not isinstance(projectId, Unset):
             self.projectId = projectId
+        if not isinstance(template, Unset):
+            self.template = template
         if not isinstance(validateOnly, Unset):
             self.validateOnly = validateOnly
 
@@ -1720,12 +1710,22 @@ class v1CreateExperimentRequest:
             kwargs["activate"] = obj["activate"]
         if "config" in obj:
             kwargs["config"] = obj["config"]
+        if "gitCommit" in obj:
+            kwargs["gitCommit"] = obj["gitCommit"]
+        if "gitCommitDate" in obj:
+            kwargs["gitCommitDate"] = obj["gitCommitDate"]
+        if "gitCommitter" in obj:
+            kwargs["gitCommitter"] = obj["gitCommitter"]
+        if "gitRemote" in obj:
+            kwargs["gitRemote"] = obj["gitRemote"]
         if "modelDefinition" in obj:
             kwargs["modelDefinition"] = [v1File.from_json(x) for x in obj["modelDefinition"]] if obj["modelDefinition"] is not None else None
         if "parentId" in obj:
             kwargs["parentId"] = obj["parentId"]
         if "projectId" in obj:
             kwargs["projectId"] = obj["projectId"]
+        if "template" in obj:
+            kwargs["template"] = obj["template"]
         if "validateOnly" in obj:
             kwargs["validateOnly"] = obj["validateOnly"]
         return cls(**kwargs)
@@ -1737,12 +1737,22 @@ class v1CreateExperimentRequest:
             out["activate"] = self.activate
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
+        if not omit_unset or "gitCommit" in vars(self):
+            out["gitCommit"] = self.gitCommit
+        if not omit_unset or "gitCommitDate" in vars(self):
+            out["gitCommitDate"] = self.gitCommitDate
+        if not omit_unset or "gitCommitter" in vars(self):
+            out["gitCommitter"] = self.gitCommitter
+        if not omit_unset or "gitRemote" in vars(self):
+            out["gitRemote"] = self.gitRemote
         if not omit_unset or "modelDefinition" in vars(self):
             out["modelDefinition"] = None if self.modelDefinition is None else [x.to_json(omit_unset) for x in self.modelDefinition]
         if not omit_unset or "parentId" in vars(self):
             out["parentId"] = self.parentId
         if not omit_unset or "projectId" in vars(self):
             out["projectId"] = self.projectId
+        if not omit_unset or "template" in vars(self):
+            out["template"] = self.template
         if not omit_unset or "validateOnly" in vars(self):
             out["validateOnly"] = self.validateOnly
         return out
@@ -1975,6 +1985,58 @@ class v1DataPoint:
         }
         return out
 
+class v1DataPointEpoch:
+
+    def __init__(
+        self,
+        *,
+        epoch: int,
+        value: float,
+    ):
+        self.epoch = epoch
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointEpoch":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "epoch": obj["epoch"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "epoch": self.epoch,
+            "value": dump_float(self.value),
+        }
+        return out
+
+class v1DataPointTime:
+
+    def __init__(
+        self,
+        *,
+        time: str,
+        value: float,
+    ):
+        self.time = time
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointTime":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "time": obj["time"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "time": self.time,
+            "value": dump_float(self.value),
+        }
+        return out
+
 class v1DeleteCheckpointsRequest:
 
     def __init__(
@@ -2044,7 +2106,7 @@ class v1DeleteWorkspaceResponse:
 class v1Device:
     brand: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
-    type: "typing.Optional[determineddevicev1Type]" = None
+    type: "typing.Optional[devicev1Type]" = None
     uuid: "typing.Optional[str]" = None
 
     def __init__(
@@ -2052,7 +2114,7 @@ class v1Device:
         *,
         brand: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
-        type: "typing.Union[determineddevicev1Type, None, Unset]" = _unset,
+        type: "typing.Union[devicev1Type, None, Unset]" = _unset,
         uuid: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(brand, Unset):
@@ -2073,7 +2135,7 @@ class v1Device:
         if "id" in obj:
             kwargs["id"] = obj["id"]
         if "type" in obj:
-            kwargs["type"] = determineddevicev1Type(obj["type"]) if obj["type"] is not None else None
+            kwargs["type"] = devicev1Type(obj["type"]) if obj["type"] is not None else None
         if "uuid" in obj:
             kwargs["uuid"] = obj["uuid"]
         return cls(**kwargs)
@@ -2149,6 +2211,48 @@ class v1DisableAgentResponse:
         }
         if not omit_unset or "agent" in vars(self):
             out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
+        return out
+
+class v1DisableSlotRequest:
+    agentId: "typing.Optional[str]" = None
+    drain: "typing.Optional[bool]" = None
+    slotId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        drain: "typing.Union[bool, None, Unset]" = _unset,
+        slotId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(drain, Unset):
+            self.drain = drain
+        if not isinstance(slotId, Unset):
+            self.slotId = slotId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DisableSlotRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "drain" in obj:
+            kwargs["drain"] = obj["drain"]
+        if "slotId" in obj:
+            kwargs["slotId"] = obj["slotId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "drain" in vars(self):
+            out["drain"] = self.drain
+        if not omit_unset or "slotId" in vars(self):
+            out["slotId"] = self.slotId
         return out
 
 class v1DisableSlotResponse:
@@ -2283,71 +2387,10 @@ class v1EntityType(enum.Enum):
     ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
     ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
 
-class v1ExpCompareMetricNamesResponse:
-    trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
-    validationMetrics: "typing.Optional[typing.Sequence[str]]" = None
-
-    def __init__(
-        self,
-        *,
-        trainingMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        validationMetrics: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-    ):
-        if not isinstance(trainingMetrics, Unset):
-            self.trainingMetrics = trainingMetrics
-        if not isinstance(validationMetrics, Unset):
-            self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "trainingMetrics" in obj:
-            kwargs["trainingMetrics"] = obj["trainingMetrics"]
-        if "validationMetrics" in obj:
-            kwargs["validationMetrics"] = obj["validationMetrics"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "trainingMetrics" in vars(self):
-            out["trainingMetrics"] = self.trainingMetrics
-        if not omit_unset or "validationMetrics" in vars(self):
-            out["validationMetrics"] = self.validationMetrics
-        return out
-
-class v1ExpCompareTrialsSampleResponse:
-
-    def __init__(
-        self,
-        *,
-        demotedTrials: "typing.Sequence[int]",
-        promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
-    ):
-        self.demotedTrials = demotedTrials
-        self.promotedTrials = promotedTrials
-        self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": obj["demotedTrials"],
-            "promotedTrials": obj["promotedTrials"],
-            "trials": [ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "demotedTrials": self.demotedTrials,
-            "promotedTrials": self.promotedTrials,
-            "trials": [x.to_json(omit_unset) for x in self.trials],
-        }
-        return out
-
 class v1Experiment:
+    bestTrialSearcherMetric: "typing.Optional[float]" = None
+    checkpointCount: "typing.Optional[int]" = None
+    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
@@ -2377,8 +2420,11 @@ class v1Experiment:
         projectOwnerId: int,
         searcherType: str,
         startTime: str,
-        state: "determinedexperimentv1State",
+        state: "experimentv1State",
         username: str,
+        bestTrialSearcherMetric: "typing.Union[float, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
+        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -2407,6 +2453,12 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(bestTrialSearcherMetric, Unset):
+            self.bestTrialSearcherMetric = bestTrialSearcherMetric
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
+        if not isinstance(checkpointSize, Unset):
+            self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -2450,9 +2502,15 @@ class v1Experiment:
             "projectOwnerId": obj["projectOwnerId"],
             "searcherType": obj["searcherType"],
             "startTime": obj["startTime"],
-            "state": determinedexperimentv1State(obj["state"]),
+            "state": experimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "bestTrialSearcherMetric" in obj:
+            kwargs["bestTrialSearcherMetric"] = float(obj["bestTrialSearcherMetric"]) if obj["bestTrialSearcherMetric"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
+        if "checkpointSize" in obj:
+            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -2499,6 +2557,12 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "bestTrialSearcherMetric" in vars(self):
+            out["bestTrialSearcherMetric"] = None if self.bestTrialSearcherMetric is None else dump_float(self.bestTrialSearcherMetric)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
+        if not omit_unset or "checkpointSize" in vars(self):
+            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
@@ -2534,14 +2598,14 @@ class v1ExperimentInactive:
     def __init__(
         self,
         *,
-        experimentState: "determinedexperimentv1State",
+        experimentState: "experimentv1State",
     ):
         self.experimentState = experimentState
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExperimentInactive":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentState": determinedexperimentv1State(obj["experimentState"]),
+            "experimentState": experimentv1State(obj["experimentState"]),
         }
         return cls(**kwargs)
 
@@ -2756,29 +2820,25 @@ class v1GetActiveTasksCountResponse:
         return out
 
 class v1GetAgentResponse:
-    agent: "typing.Optional[v1Agent]" = None
 
     def __init__(
         self,
         *,
-        agent: "typing.Union[v1Agent, None, Unset]" = _unset,
+        agent: "v1Agent",
     ):
-        if not isinstance(agent, Unset):
-            self.agent = agent
+        self.agent = agent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAgentResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "agent": v1Agent.from_json(obj["agent"]),
         }
-        if "agent" in obj:
-            kwargs["agent"] = v1Agent.from_json(obj["agent"]) if obj["agent"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "agent": self.agent.to_json(omit_unset),
         }
-        if not omit_unset or "agent" in vars(self):
-            out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
 class v1GetAgentsRequestSortBy(enum.Enum):
@@ -2787,35 +2847,31 @@ class v1GetAgentsRequestSortBy(enum.Enum):
     SORT_BY_TIME = "SORT_BY_TIME"
 
 class v1GetAgentsResponse:
-    agents: "typing.Optional[typing.Sequence[v1Agent]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        agents: "typing.Union[typing.Sequence[v1Agent], None, Unset]" = _unset,
+        agents: "typing.Sequence[v1Agent]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        if not isinstance(agents, Unset):
-            self.agents = agents
+        self.agents = agents
         if not isinstance(pagination, Unset):
             self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAgentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "agents": [v1Agent.from_json(x) for x in obj["agents"]],
         }
-        if "agents" in obj:
-            kwargs["agents"] = [v1Agent.from_json(x) for x in obj["agents"]] if obj["agents"] is not None else None
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "agents": [x.to_json(omit_unset) for x in self.agents],
         }
-        if not omit_unset or "agents" in vars(self):
-            out["agents"] = None if self.agents is None else [x.to_json(omit_unset) for x in self.agents]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
@@ -2869,37 +2925,29 @@ class v1GetCheckpointResponse:
         return out
 
 class v1GetCommandResponse:
-    command: "typing.Optional[v1Command]" = None
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
         *,
-        command: "typing.Union[v1Command, None, Unset]" = _unset,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        command: "v1Command",
+        config: "typing.Dict[str, typing.Any]",
     ):
-        if not isinstance(command, Unset):
-            self.command = command
-        if not isinstance(config, Unset):
-            self.config = config
+        self.command = command
+        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCommandResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "command": v1Command.from_json(obj["command"]),
+            "config": obj["config"],
         }
-        if "command" in obj:
-            kwargs["command"] = v1Command.from_json(obj["command"]) if obj["command"] is not None else None
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "command": self.command.to_json(omit_unset),
+            "config": self.config,
         }
-        if not omit_unset or "command" in vars(self):
-            out["command"] = None if self.command is None else self.command.to_json(omit_unset)
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
         return out
 
 class v1GetCommandsRequestSortBy(enum.Enum):
@@ -2907,37 +2955,34 @@ class v1GetCommandsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetCommandsResponse:
-    commands: "typing.Optional[typing.Sequence[v1Command]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        commands: "typing.Union[typing.Sequence[v1Command], None, Unset]" = _unset,
+        commands: "typing.Sequence[v1Command]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        if not isinstance(commands, Unset):
-            self.commands = commands
+        self.commands = commands
         if not isinstance(pagination, Unset):
             self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCommandsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "commands": [v1Command.from_json(x) for x in obj["commands"]],
         }
-        if "commands" in obj:
-            kwargs["commands"] = [v1Command.from_json(x) for x in obj["commands"]] if obj["commands"] is not None else None
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "commands": [x.to_json(omit_unset) for x in self.commands],
         }
-        if not omit_unset or "commands" in vars(self):
-            out["commands"] = None if self.commands is None else [x.to_json(omit_unset) for x in self.commands]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
@@ -3078,6 +3123,7 @@ class v1GetExperimentTrialsRequestSortBy(enum.Enum):
     SORT_BY_BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
     SORT_BY_DURATION = "SORT_BY_DURATION"
     SORT_BY_RESTARTS = "SORT_BY_RESTARTS"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
 
 class v1GetExperimentTrialsResponse:
 
@@ -3145,6 +3191,9 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
     SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
+    SORT_BY_SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
 
 class v1GetExperimentsResponse:
 
@@ -3409,6 +3458,7 @@ class v1GetMasterResponse:
     rbacEnabled: "typing.Optional[bool]" = None
     ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None
     telemetryEnabled: "typing.Optional[bool]" = None
+    userManagementEnabled: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -3425,6 +3475,7 @@ class v1GetMasterResponse:
         rbacEnabled: "typing.Union[bool, None, Unset]" = _unset,
         ssoProviders: "typing.Union[typing.Sequence[v1SSOProvider], None, Unset]" = _unset,
         telemetryEnabled: "typing.Union[bool, None, Unset]" = _unset,
+        userManagementEnabled: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
@@ -3446,6 +3497,8 @@ class v1GetMasterResponse:
             self.ssoProviders = ssoProviders
         if not isinstance(telemetryEnabled, Unset):
             self.telemetryEnabled = telemetryEnabled
+        if not isinstance(userManagementEnabled, Unset):
+            self.userManagementEnabled = userManagementEnabled
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
@@ -3471,6 +3524,8 @@ class v1GetMasterResponse:
             kwargs["ssoProviders"] = [v1SSOProvider.from_json(x) for x in obj["ssoProviders"]] if obj["ssoProviders"] is not None else None
         if "telemetryEnabled" in obj:
             kwargs["telemetryEnabled"] = obj["telemetryEnabled"]
+        if "userManagementEnabled" in obj:
+            kwargs["userManagementEnabled"] = obj["userManagementEnabled"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -3496,6 +3551,8 @@ class v1GetMasterResponse:
             out["ssoProviders"] = None if self.ssoProviders is None else [x.to_json(omit_unset) for x in self.ssoProviders]
         if not omit_unset or "telemetryEnabled" in vars(self):
             out["telemetryEnabled"] = self.telemetryEnabled
+        if not omit_unset or "userManagementEnabled" in vars(self):
+            out["userManagementEnabled"] = self.userManagementEnabled
         return out
 
 class v1GetMeResponse:
@@ -3736,6 +3793,7 @@ class v1GetModelsRequestSortBy(enum.Enum):
     SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
     SORT_BY_LAST_UPDATED_TIME = "SORT_BY_LAST_UPDATED_TIME"
     SORT_BY_NUM_VERSIONS = "SORT_BY_NUM_VERSIONS"
+    SORT_BY_WORKSPACE = "SORT_BY_WORKSPACE"
 
 class v1GetModelsResponse:
 
@@ -3764,37 +3822,29 @@ class v1GetModelsResponse:
         return out
 
 class v1GetNotebookResponse:
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    notebook: "typing.Optional[v1Notebook]" = None
 
     def __init__(
         self,
         *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        notebook: "typing.Union[v1Notebook, None, Unset]" = _unset,
+        config: "typing.Dict[str, typing.Any]",
+        notebook: "v1Notebook",
     ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(notebook, Unset):
-            self.notebook = notebook
+        self.config = config
+        self.notebook = notebook
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebookResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "notebook": v1Notebook.from_json(obj["notebook"]),
         }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "notebook" in obj:
-            kwargs["notebook"] = v1Notebook.from_json(obj["notebook"]) if obj["notebook"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "notebook": self.notebook.to_json(omit_unset),
         }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "notebook" in vars(self):
-            out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
 class v1GetNotebooksRequestSortBy(enum.Enum):
@@ -3802,37 +3852,34 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetNotebooksResponse:
-    notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        notebooks: "typing.Union[typing.Sequence[v1Notebook], None, Unset]" = _unset,
+        notebooks: "typing.Sequence[v1Notebook]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        if not isinstance(notebooks, Unset):
-            self.notebooks = notebooks
+        self.notebooks = notebooks
         if not isinstance(pagination, Unset):
             self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebooksResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "notebooks": [v1Notebook.from_json(x) for x in obj["notebooks"]],
         }
-        if "notebooks" in obj:
-            kwargs["notebooks"] = [v1Notebook.from_json(x) for x in obj["notebooks"]] if obj["notebooks"] is not None else None
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "notebooks": [x.to_json(omit_unset) for x in self.notebooks],
         }
-        if not omit_unset or "notebooks" in vars(self):
-            out["notebooks"] = None if self.notebooks is None else [x.to_json(omit_unset) for x in self.notebooks]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
@@ -3883,6 +3930,32 @@ class v1GetProjectResponse:
         out: "typing.Dict[str, typing.Any]" = {
             "project": self.project.to_json(omit_unset),
         }
+        return out
+
+class v1GetProjectsByUserActivityResponse:
+    projects: "typing.Optional[typing.Sequence[v1Project]]" = None
+
+    def __init__(
+        self,
+        *,
+        projects: "typing.Union[typing.Sequence[v1Project], None, Unset]" = _unset,
+    ):
+        if not isinstance(projects, Unset):
+            self.projects = projects
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectsByUserActivityResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "projects" in obj:
+            kwargs["projects"] = [v1Project.from_json(x) for x in obj["projects"]] if obj["projects"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "projects" in vars(self):
+            out["projects"] = None if self.projects is None else [x.to_json(omit_unset) for x in self.projects]
         return out
 
 class v1GetResourcePoolsResponse:
@@ -4046,37 +4119,29 @@ class v1GetSearcherEventsResponse:
         return out
 
 class v1GetShellResponse:
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    shell: "typing.Optional[v1Shell]" = None
 
     def __init__(
         self,
         *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        shell: "typing.Union[v1Shell, None, Unset]" = _unset,
+        config: "typing.Dict[str, typing.Any]",
+        shell: "v1Shell",
     ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(shell, Unset):
-            self.shell = shell
+        self.config = config
+        self.shell = shell
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetShellResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "shell": v1Shell.from_json(obj["shell"]),
         }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "shell" in obj:
-            kwargs["shell"] = v1Shell.from_json(obj["shell"]) if obj["shell"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "shell": self.shell.to_json(omit_unset),
         }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "shell" in vars(self):
-            out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
 
 class v1GetShellsRequestSortBy(enum.Enum):
@@ -4084,39 +4149,36 @@ class v1GetShellsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetShellsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
-    shells: "typing.Optional[typing.Sequence[v1Shell]]" = None
 
     def __init__(
         self,
         *,
+        shells: "typing.Sequence[v1Shell]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        shells: "typing.Union[typing.Sequence[v1Shell], None, Unset]" = _unset,
     ):
+        self.shells = shells
         if not isinstance(pagination, Unset):
             self.pagination = pagination
-        if not isinstance(shells, Unset):
-            self.shells = shells
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetShellsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "shells": [v1Shell.from_json(x) for x in obj["shells"]],
         }
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "shells" in obj:
-            kwargs["shells"] = [v1Shell.from_json(x) for x in obj["shells"]] if obj["shells"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "shells": [x.to_json(omit_unset) for x in self.shells],
         }
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "shells" in vars(self):
-            out["shells"] = None if self.shells is None else [x.to_json(omit_unset) for x in self.shells]
         return out
 
 class v1GetSlotResponse:
@@ -4292,37 +4354,29 @@ class v1GetTemplatesResponse:
         return out
 
 class v1GetTensorboardResponse:
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    tensorboard: "typing.Optional[v1Tensorboard]" = None
 
     def __init__(
         self,
         *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        tensorboard: "typing.Union[v1Tensorboard, None, Unset]" = _unset,
+        config: "typing.Dict[str, typing.Any]",
+        tensorboard: "v1Tensorboard",
     ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(tensorboard, Unset):
-            self.tensorboard = tensorboard
+        self.config = config
+        self.tensorboard = tensorboard
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
         }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "tensorboard" in obj:
-            kwargs["tensorboard"] = v1Tensorboard.from_json(obj["tensorboard"]) if obj["tensorboard"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "tensorboard": self.tensorboard.to_json(omit_unset),
         }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "tensorboard" in vars(self):
-            out["tensorboard"] = None if self.tensorboard is None else self.tensorboard.to_json(omit_unset)
         return out
 
 class v1GetTensorboardsRequestSortBy(enum.Enum):
@@ -4330,39 +4384,36 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetTensorboardsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
-    tensorboards: "typing.Optional[typing.Sequence[v1Tensorboard]]" = None
 
     def __init__(
         self,
         *,
+        tensorboards: "typing.Sequence[v1Tensorboard]",
         pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-        tensorboards: "typing.Union[typing.Sequence[v1Tensorboard], None, Unset]" = _unset,
     ):
+        self.tensorboards = tensorboards
         if not isinstance(pagination, Unset):
             self.pagination = pagination
-        if not isinstance(tensorboards, Unset):
-            self.tensorboards = tensorboards
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "tensorboards": [v1Tensorboard.from_json(x) for x in obj["tensorboards"]],
         }
         if "pagination" in obj:
             kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        if "tensorboards" in obj:
-            kwargs["tensorboards"] = [v1Tensorboard.from_json(x) for x in obj["tensorboards"]] if obj["tensorboards"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "tensorboards": [x.to_json(omit_unset) for x in self.tensorboards],
         }
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        if not omit_unset or "tensorboards" in vars(self):
-            out["tensorboards"] = None if self.tensorboards is None else [x.to_json(omit_unset) for x in self.tensorboards]
         return out
 
 class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
@@ -4589,6 +4640,7 @@ class v1GetUsersRequestSortBy(enum.Enum):
     SORT_BY_ADMIN = "SORT_BY_ADMIN"
     SORT_BY_ACTIVE = "SORT_BY_ACTIVE"
     SORT_BY_MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
+    SORT_BY_NAME = "SORT_BY_NAME"
 
 class v1GetUsersResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -5005,7 +5057,7 @@ class v1Job:
         requestedSlots: int,
         resourcePool: str,
         submissionTime: str,
-        type: "determinedjobv1Type",
+        type: "jobv1Type",
         username: str,
         priority: "typing.Union[int, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
@@ -5045,7 +5097,7 @@ class v1Job:
             "requestedSlots": obj["requestedSlots"],
             "resourcePool": obj["resourcePool"],
             "submissionTime": obj["submissionTime"],
-            "type": determinedjobv1Type(obj["type"]),
+            "type": jobv1Type(obj["type"]),
             "username": obj["username"],
         }
         if "priority" in obj:
@@ -5091,7 +5143,7 @@ class v1JobSummary:
         self,
         *,
         jobsAhead: int,
-        state: "determinedjobv1State",
+        state: "jobv1State",
     ):
         self.jobsAhead = jobsAhead
         self.state = state
@@ -5100,7 +5152,7 @@ class v1JobSummary:
     def from_json(cls, obj: Json) -> "v1JobSummary":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "jobsAhead": obj["jobsAhead"],
-            "state": determinedjobv1State(obj["state"]),
+            "state": jobv1State(obj["state"]),
         }
         return cls(**kwargs)
 
@@ -5254,6 +5306,7 @@ class v1LaunchCommandRequest:
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5262,6 +5315,7 @@ class v1LaunchCommandRequest:
         data: "typing.Union[str, None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5271,6 +5325,8 @@ class v1LaunchCommandRequest:
             self.files = files
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchCommandRequest":
@@ -5284,6 +5340,8 @@ class v1LaunchCommandRequest:
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5297,6 +5355,8 @@ class v1LaunchCommandRequest:
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchCommandResponse:
@@ -5338,6 +5398,7 @@ class v1LaunchNotebookRequest:
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     preview: "typing.Optional[bool]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5346,6 +5407,7 @@ class v1LaunchNotebookRequest:
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         preview: "typing.Union[bool, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5355,6 +5417,8 @@ class v1LaunchNotebookRequest:
             self.preview = preview
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookRequest":
@@ -5368,6 +5432,8 @@ class v1LaunchNotebookRequest:
             kwargs["preview"] = obj["preview"]
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5381,6 +5447,8 @@ class v1LaunchNotebookRequest:
             out["preview"] = self.preview
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchNotebookResponse:
@@ -5422,6 +5490,7 @@ class v1LaunchShellRequest:
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5430,6 +5499,7 @@ class v1LaunchShellRequest:
         data: "typing.Union[str, None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5439,6 +5509,8 @@ class v1LaunchShellRequest:
             self.files = files
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchShellRequest":
@@ -5452,6 +5524,8 @@ class v1LaunchShellRequest:
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5465,6 +5539,8 @@ class v1LaunchShellRequest:
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchShellResponse:
@@ -5507,6 +5583,7 @@ class v1LaunchTensorboardRequest:
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5516,6 +5593,7 @@ class v1LaunchTensorboardRequest:
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5527,6 +5605,8 @@ class v1LaunchTensorboardRequest:
             self.templateName = templateName
         if not isinstance(trialIds, Unset):
             self.trialIds = trialIds
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardRequest":
@@ -5542,6 +5622,8 @@ class v1LaunchTensorboardRequest:
             kwargs["templateName"] = obj["templateName"]
         if "trialIds" in obj:
             kwargs["trialIds"] = obj["trialIds"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5557,6 +5639,8 @@ class v1LaunchTensorboardRequest:
             out["templateName"] = self.templateName
         if not omit_unset or "trialIds" in vars(self):
             out["trialIds"] = self.trialIds
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchTensorboardResponse:
@@ -5654,49 +5738,37 @@ class v1ListRolesResponse:
         return out
 
 class v1LogEntry:
-    level: "typing.Optional[v1LogLevel]" = None
-    message: "typing.Optional[str]" = None
-    timestamp: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: int,
-        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
-        message: "typing.Union[str, None, Unset]" = _unset,
-        timestamp: "typing.Union[str, None, Unset]" = _unset,
+        level: "v1LogLevel",
+        message: str,
+        timestamp: str,
     ):
         self.id = id
-        if not isinstance(level, Unset):
-            self.level = level
-        if not isinstance(message, Unset):
-            self.message = message
-        if not isinstance(timestamp, Unset):
-            self.timestamp = timestamp
+        self.level = level
+        self.message = message
+        self.timestamp = timestamp
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LogEntry":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
+            "level": v1LogLevel(obj["level"]),
+            "message": obj["message"],
+            "timestamp": obj["timestamp"],
         }
-        if "level" in obj:
-            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
-        if "message" in obj:
-            kwargs["message"] = obj["message"]
-        if "timestamp" in obj:
-            kwargs["timestamp"] = obj["timestamp"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
+            "level": self.level.value,
+            "message": self.message,
+            "timestamp": self.timestamp,
         }
-        if not omit_unset or "level" in vars(self):
-            out["level"] = None if self.level is None else self.level.value
-        if not omit_unset or "message" in vars(self):
-            out["message"] = self.message
-        if not omit_unset or "timestamp" in vars(self):
-            out["timestamp"] = self.timestamp
         return out
 
 class v1LogLevel(enum.Enum):
@@ -5799,29 +5871,25 @@ class v1MarkAllocationResourcesDaemonRequest:
         return out
 
 class v1MasterLogsResponse:
-    logEntry: "typing.Optional[v1LogEntry]" = None
 
     def __init__(
         self,
         *,
-        logEntry: "typing.Union[v1LogEntry, None, Unset]" = _unset,
+        logEntry: "v1LogEntry",
     ):
-        if not isinstance(logEntry, Unset):
-            self.logEntry = logEntry
+        self.logEntry = logEntry
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MasterLogsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "logEntry": v1LogEntry.from_json(obj["logEntry"]),
         }
-        if "logEntry" in obj:
-            kwargs["logEntry"] = v1LogEntry.from_json(obj["logEntry"]) if obj["logEntry"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "logEntry": self.logEntry.to_json(omit_unset),
         }
-        if not omit_unset or "logEntry" in vars(self):
-            out["logEntry"] = None if self.logEntry is None else self.logEntry.to_json(omit_unset)
         return out
 
 class v1MetricBatchesResponse:
@@ -5935,13 +6003,11 @@ class v1MetricsWorkload:
         *,
         metrics: "v1Metrics",
         numInputs: int,
-        state: "determinedexperimentv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.metrics = metrics
         self.numInputs = numInputs
-        self.state = state
         self.totalBatches = totalBatches
         if not isinstance(endTime, Unset):
             self.endTime = endTime
@@ -5951,7 +6017,6 @@ class v1MetricsWorkload:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
             "numInputs": obj["numInputs"],
-            "state": determinedexperimentv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -5962,7 +6027,6 @@ class v1MetricsWorkload:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
             "numInputs": self.numInputs,
-            "state": self.state.value,
             "totalBatches": self.totalBatches,
         }
         if not omit_unset or "endTime" in vars(self):
@@ -5986,6 +6050,7 @@ class v1Model:
         numVersions: int,
         userId: int,
         username: str,
+        workspaceId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
@@ -5999,6 +6064,7 @@ class v1Model:
         self.numVersions = numVersions
         self.userId = userId
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(labels, Unset):
@@ -6018,6 +6084,7 @@ class v1Model:
             "numVersions": obj["numVersions"],
             "userId": obj["userId"],
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
@@ -6038,6 +6105,7 @@ class v1Model:
             "numVersions": self.numVersions,
             "userId": self.userId,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
@@ -6171,6 +6239,32 @@ class v1MoveExperimentRequest:
         }
         return out
 
+class v1MoveModelRequest:
+
+    def __init__(
+        self,
+        *,
+        destinationWorkspaceId: int,
+        modelName: str,
+    ):
+        self.destinationWorkspaceId = destinationWorkspaceId
+        self.modelName = modelName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveModelRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": obj["destinationWorkspaceId"],
+            "modelName": obj["modelName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationWorkspaceId": self.destinationWorkspaceId,
+            "modelName": self.modelName,
+        }
+        return out
+
 class v1MoveProjectRequest:
 
     def __init__(
@@ -6238,8 +6332,9 @@ class v1Notebook:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -6253,6 +6348,7 @@ class v1Notebook:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -6272,8 +6368,9 @@ class v1Notebook:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -6296,6 +6393,7 @@ class v1Notebook:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
@@ -6538,6 +6636,8 @@ class v1PatchModel:
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -6547,6 +6647,8 @@ class v1PatchModel:
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
             self.description = description
@@ -6558,6 +6660,10 @@ class v1PatchModel:
             self.name = name
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModel":
@@ -6573,6 +6679,10 @@ class v1PatchModel:
             kwargs["name"] = obj["name"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -6588,6 +6698,10 @@ class v1PatchModel:
             out["name"] = self.name
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
         return out
 
 class v1PatchModelResponse:
@@ -7035,6 +7149,9 @@ class v1PermissionType(enum.Enum):
     PERMISSION_TYPE_UPDATE_EXPERIMENT = "PERMISSION_TYPE_UPDATE_EXPERIMENT"
     PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA = "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA"
     PERMISSION_TYPE_DELETE_EXPERIMENT = "PERMISSION_TYPE_DELETE_EXPERIMENT"
+    PERMISSION_TYPE_CREATE_NSC = "PERMISSION_TYPE_CREATE_NSC"
+    PERMISSION_TYPE_VIEW_NSC = "PERMISSION_TYPE_VIEW_NSC"
+    PERMISSION_TYPE_UPDATE_NSC = "PERMISSION_TYPE_UPDATE_NSC"
     PERMISSION_TYPE_UPDATE_GROUP = "PERMISSION_TYPE_UPDATE_GROUP"
     PERMISSION_TYPE_CREATE_WORKSPACE = "PERMISSION_TYPE_CREATE_WORKSPACE"
     PERMISSION_TYPE_VIEW_WORKSPACE = "PERMISSION_TYPE_VIEW_WORKSPACE"
@@ -7046,8 +7163,12 @@ class v1PermissionType(enum.Enum):
     PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
     PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
     PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
-    PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
+    PERMISSION_TYPE_VIEW_MODEL_REGISTRY = "PERMISSION_TYPE_VIEW_MODEL_REGISTRY"
+    PERMISSION_TYPE_EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
+    PERMISSION_TYPE_CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
+    PERMISSION_TYPE_UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
+    PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     PERMISSION_TYPE_EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
 
 class v1PostAllocationProxyAddressRequest:
@@ -7141,6 +7262,8 @@ class v1PostModelRequest:
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -7150,6 +7273,8 @@ class v1PostModelRequest:
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         if not isinstance(description, Unset):
@@ -7160,6 +7285,10 @@ class v1PostModelRequest:
             self.metadata = metadata
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelRequest":
@@ -7174,6 +7303,10 @@ class v1PostModelRequest:
             kwargs["metadata"] = obj["metadata"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7188,6 +7321,10 @@ class v1PostModelRequest:
             out["metadata"] = self.metadata
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
         return out
 
 class v1PostModelResponse:
@@ -8085,15 +8222,18 @@ class v1RendezvousInfo:
         *,
         addresses: "typing.Sequence[str]",
         rank: int,
+        slots: "typing.Sequence[int]",
     ):
         self.addresses = addresses
         self.rank = rank
+        self.slots = slots
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RendezvousInfo":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "addresses": obj["addresses"],
             "rank": obj["rank"],
+            "slots": obj["slots"],
         }
         return cls(**kwargs)
 
@@ -8101,6 +8241,7 @@ class v1RendezvousInfo:
         out: "typing.Dict[str, typing.Any]" = {
             "addresses": self.addresses,
             "rank": self.rank,
+            "slots": self.slots,
         }
         return out
 
@@ -8327,7 +8468,7 @@ class v1ResourcePool:
         preemptible: bool,
         schedulerFittingPolicy: "v1FittingPolicy",
         schedulerType: "v1SchedulerType",
-        slotType: "determineddevicev1Type",
+        slotType: "devicev1Type",
         slotsAvailable: int,
         slotsUsed: int,
         startupScript: str,
@@ -8403,7 +8544,7 @@ class v1ResourcePool:
             "preemptible": obj["preemptible"],
             "schedulerFittingPolicy": v1FittingPolicy(obj["schedulerFittingPolicy"]),
             "schedulerType": v1SchedulerType(obj["schedulerType"]),
-            "slotType": determineddevicev1Type(obj["slotType"]),
+            "slotType": devicev1Type(obj["slotType"]),
             "slotsAvailable": obj["slotsAvailable"],
             "slotsUsed": obj["slotsUsed"],
             "startupScript": obj["startupScript"],
@@ -9027,6 +9168,66 @@ class v1ScopeTypeMask:
             out["workspace"] = self.workspace
         return out
 
+class v1SearchExperimentExperiment:
+    bestTrial: "typing.Optional[trialv1Trial]" = None
+    experiment: "typing.Optional[v1Experiment]" = None
+
+    def __init__(
+        self,
+        *,
+        bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
+        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
+    ):
+        if not isinstance(bestTrial, Unset):
+            self.bestTrial = bestTrial
+        if not isinstance(experiment, Unset):
+            self.experiment = experiment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "bestTrial" in obj:
+            kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
+        if "experiment" in obj:
+            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "bestTrial" in vars(self):
+            out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
+        if not omit_unset or "experiment" in vars(self):
+            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
+        return out
+
+class v1SearchExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        experiments: "typing.Sequence[v1SearchExperimentExperiment]",
+        pagination: "v1Pagination",
+    ):
+        self.experiments = experiments
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiments": [v1SearchExperimentExperiment.from_json(x) for x in obj["experiments"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experiments": [x.to_json(omit_unset) for x in self.experiments],
+            "pagination": self.pagination.to_json(omit_unset),
+        }
+        return out
+
 class v1SearchRolesAssignableToScopeRequest:
     offset: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -9545,8 +9746,9 @@ class v1Shell:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
+        workspaceId: int,
         addresses: "typing.Union[typing.Sequence[typing.Dict[str, typing.Any]], None, Unset]" = _unset,
         agentUserGroup: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
@@ -9563,6 +9765,7 @@ class v1Shell:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(addresses, Unset):
             self.addresses = addresses
         if not isinstance(agentUserGroup, Unset):
@@ -9588,8 +9791,9 @@ class v1Shell:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "addresses" in obj:
             kwargs["addresses"] = obj["addresses"]
@@ -9618,6 +9822,7 @@ class v1Shell:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "addresses" in vars(self):
             out["addresses"] = self.addresses
@@ -9748,6 +9953,8 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
+    epochs: "typing.Optional[typing.Sequence[v1DataPointEpoch]]" = None
+    time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
         self,
@@ -9755,10 +9962,16 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
+        epochs: "typing.Union[typing.Sequence[v1DataPointEpoch], None, Unset]" = _unset,
+        time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
+        if not isinstance(epochs, Unset):
+            self.epochs = epochs
+        if not isinstance(time, Unset):
+            self.time = time
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
@@ -9767,6 +9980,10 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
+        if "epochs" in obj:
+            kwargs["epochs"] = [v1DataPointEpoch.from_json(x) for x in obj["epochs"]] if obj["epochs"] is not None else None
+        if "time" in obj:
+            kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9775,6 +9992,10 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
+        if not omit_unset or "epochs" in vars(self):
+            out["epochs"] = None if self.epochs is None else [x.to_json(omit_unset) for x in self.epochs]
+        if not omit_unset or "time" in vars(self):
+            out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
 
 class v1Task:
@@ -10018,8 +10239,9 @@ class v1Tensorboard:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -10035,6 +10257,7 @@ class v1Tensorboard:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -10058,8 +10281,9 @@ class v1Tensorboard:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -10086,6 +10310,7 @@ class v1Tensorboard:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
@@ -10288,7 +10513,7 @@ class v1TrialFilters:
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[v1DoubleFieldFilter]" = None
     startTime: "typing.Optional[v1TimestampFieldFilter]" = None
-    states: "typing.Optional[typing.Sequence[determinedtrialv1State]]" = None
+    states: "typing.Optional[typing.Sequence[trialv1State]]" = None
     tags: "typing.Optional[typing.Sequence[v1TrialTag]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[v1ColumnFilter]]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -10308,7 +10533,7 @@ class v1TrialFilters:
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[v1DoubleFieldFilter, None, Unset]" = _unset,
         startTime: "typing.Union[v1TimestampFieldFilter, None, Unset]" = _unset,
-        states: "typing.Union[typing.Sequence[determinedtrialv1State], None, Unset]" = _unset,
+        states: "typing.Union[typing.Sequence[trialv1State], None, Unset]" = _unset,
         tags: "typing.Union[typing.Sequence[v1TrialTag], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[v1ColumnFilter], None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
@@ -10372,7 +10597,7 @@ class v1TrialFilters:
         if "startTime" in obj:
             kwargs["startTime"] = v1TimestampFieldFilter.from_json(obj["startTime"]) if obj["startTime"] is not None else None
         if "states" in obj:
-            kwargs["states"] = [determinedtrialv1State(x) for x in obj["states"]] if obj["states"] is not None else None
+            kwargs["states"] = [trialv1State(x) for x in obj["states"]] if obj["states"] is not None else None
         if "tags" in obj:
             kwargs["tags"] = [v1TrialTag.from_json(x) for x in obj["tags"]] if obj["tags"] is not None else None
         if "trainingMetrics" in obj:
@@ -11416,7 +11641,7 @@ class v1ValidationCompleted:
     def __init__(
         self,
         *,
-        metric: float,
+        metric: typing.Any,
         requestId: str,
         validateAfterLength: str,
     ):
@@ -11427,7 +11652,7 @@ class v1ValidationCompleted:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metric": float(obj["metric"]),
+            "metric": obj["metric"],
             "requestId": obj["requestId"],
             "validateAfterLength": obj["validateAfterLength"],
         }
@@ -11435,7 +11660,7 @@ class v1ValidationCompleted:
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "metric": dump_float(self.metric),
+            "metric": self.metric,
             "requestId": self.requestId,
             "validateAfterLength": self.validateAfterLength,
         }
@@ -11563,6 +11788,7 @@ class v1WorkloadContainer:
 class v1Workspace:
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    pinnedAt: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -11580,6 +11806,7 @@ class v1Workspace:
         username: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        pinnedAt: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
         self.errorMessage = errorMessage
@@ -11596,6 +11823,8 @@ class v1Workspace:
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(pinnedAt, Unset):
+            self.pinnedAt = pinnedAt
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -11616,6 +11845,8 @@ class v1Workspace:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "pinnedAt" in obj:
+            kwargs["pinnedAt"] = obj["pinnedAt"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -11636,6 +11867,8 @@ class v1Workspace:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "pinnedAt" in vars(self):
+            out["pinnedAt"] = self.pinnedAt
         return out
 
 class v1WorkspaceState(enum.Enum):
@@ -11643,6 +11876,12 @@ class v1WorkspaceState(enum.Enum):
     WORKSPACE_STATE_DELETING = "WORKSPACE_STATE_DELETING"
     WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
     WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
+
+class v1XAxis(enum.Enum):
+    X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
+    X_AXIS_BATCH = "X_AXIS_BATCH"
+    X_AXIS_TIME = "X_AXIS_TIME"
+    X_AXIS_EPOCH = "X_AXIS_EPOCH"
 
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
@@ -11964,6 +12203,7 @@ def get_CompareTrials(
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
@@ -11973,6 +12213,7 @@ def get_CompareTrials(
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "trialIds": trialIds,
+        "xAxis": xAxis.value if xAxis is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -12335,6 +12576,7 @@ def post_DisableSlot(
     session: "api.Session",
     *,
     agentId: str,
+    body: "v1DisableSlotRequest",
     slotId: str,
 ) -> "v1DisableSlotResponse":
     _params = None
@@ -12342,7 +12584,7 @@ def post_DisableSlot(
         method="POST",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -12392,82 +12634,6 @@ def post_EnableSlot(
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
-
-def get_ExpCompareMetricNames(
-    session: "api.Session",
-    *,
-    trialId: "typing.Sequence[int]",
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareMetricNamesResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-        "trialId": trialId,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/trials/metrics-stream/metric-names",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareMetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareMetricNamesResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareMetricNames", _resp)
-
-def get_ExpCompareTrialsSample(
-    session: "api.Session",
-    *,
-    experimentIds: "typing.Sequence[int]",
-    metricName: str,
-    metricType: "v1MetricType",
-    endBatches: "typing.Optional[int]" = None,
-    maxDatapoints: "typing.Optional[int]" = None,
-    maxTrials: "typing.Optional[int]" = None,
-    periodSeconds: "typing.Optional[int]" = None,
-    startBatches: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1ExpCompareTrialsSampleResponse]":
-    _params = {
-        "endBatches": endBatches,
-        "experimentIds": experimentIds,
-        "maxDatapoints": maxDatapoints,
-        "maxTrials": maxTrials,
-        "metricName": metricName,
-        "metricType": metricType.value,
-        "periodSeconds": periodSeconds,
-        "startBatches": startBatches,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/experiments-compare",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_ExpCompareTrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1ExpCompareTrialsSampleResponse.from_json(_j["result"])
-        return
-    raise APIHttpError("get_ExpCompareTrialsSample", _resp)
 
 def get_GetActiveTasksCount(
     session: "api.Session",
@@ -12606,6 +12772,7 @@ def get_GetCommands(
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
         "limit": limit,
@@ -12614,6 +12781,7 @@ def get_GetCommands(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
@@ -12677,7 +12845,7 @@ def get_GetExperimentCheckpoints(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -12730,7 +12898,7 @@ def get_GetExperimentTrials(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
     _params = {
         "limit": limit,
@@ -12790,8 +12958,9 @@ def get_GetExperiments(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     projectId: "typing.Optional[int]" = None,
+    showTrialData: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
@@ -12810,6 +12979,7 @@ def get_GetExperiments(
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "projectId": projectId,
+        "showTrialData": str(showTrialData).lower() if showTrialData is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
         "userIds": userIds,
@@ -12912,14 +13082,17 @@ def get_GetHPImportance(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetHPImportance",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetHPImportanceResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetHPImportance",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetHPImportanceResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetHPImportance", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetHPImportance", _resp)
 
@@ -12952,7 +13125,7 @@ def get_GetJobs(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     resourcePool: "typing.Optional[str]" = None,
-    states: "typing.Optional[typing.Sequence[determinedjobv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[jobv1State]]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
         "limit": limit,
@@ -13112,8 +13285,12 @@ def get_GetModelDefTree(
 
 def get_GetModelLabels(
     session: "api.Session",
+    *,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetModelLabelsResponse":
-    _params = None
+    _params = {
+        "workspaceId": workspaceId,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/model/labels",
@@ -13192,6 +13369,8 @@ def get_GetModels(
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
+    workspaceNames: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
@@ -13205,6 +13384,8 @@ def get_GetModels(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceIds": workspaceIds,
+        "workspaceNames": workspaceNames,
     }
     _resp = session._do_request(
         method="GET",
@@ -13249,6 +13430,7 @@ def get_GetNotebooks(
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
         "limit": limit,
@@ -13257,6 +13439,7 @@ def get_GetNotebooks(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
@@ -13309,6 +13492,28 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
+
+def get_GetProjectsByUserActivity(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+) -> "v1GetProjectsByUserActivityResponse":
+    _params = {
+        "limit": limit,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/user/projects/activity",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectsByUserActivityResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectsByUserActivity", _resp)
 
 def get_GetResourcePools(
     session: "api.Session",
@@ -13443,6 +13648,7 @@ def get_GetShells(
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
         "limit": limit,
@@ -13451,6 +13657,7 @@ def get_GetShells(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
@@ -13624,6 +13831,7 @@ def get_GetTensorboards(
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
         "limit": limit,
@@ -13632,6 +13840,7 @@ def get_GetTensorboards(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
@@ -13675,7 +13884,7 @@ def get_GetTrialCheckpoints(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -13718,14 +13927,17 @@ def get_GetTrialProfilerAvailableSeries(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerAvailableSeries",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerAvailableSeries",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerAvailableSeries", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerAvailableSeries", _resp)
 
@@ -13757,14 +13969,17 @@ def get_GetTrialProfilerMetrics(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerMetrics",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
 
@@ -13887,12 +14102,14 @@ def get_GetUsers(
     session: "api.Session",
     *,
     limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
     _params = {
         "limit": limit,
+        "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
@@ -14348,14 +14565,17 @@ def get_MasterLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MasterLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MasterLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MasterLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MasterLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MasterLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MasterLogs", _resp)
 
@@ -14383,14 +14603,17 @@ def get_MetricBatches(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricBatches",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricBatchesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricBatches",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricBatchesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricBatches", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricBatches", _resp)
 
@@ -14414,14 +14637,17 @@ def get_MetricNames(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricNamesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricNames",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricNamesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricNames", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricNames", _resp)
 
@@ -14445,6 +14671,27 @@ def post_MoveExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveModel(
+    session: "api.Session",
+    *,
+    body: "v1MoveModelRequest",
+    modelName: str,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelName}/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveModel", _resp)
 
 def post_MoveProject(
     session: "api.Session",
@@ -15168,13 +15415,13 @@ def post_ResetUserSetting(
 def get_ResourceAllocationAggregated(
     session: "api.Session",
     *,
-    endDate: "typing.Optional[str]" = None,
-    period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
-    startDate: "typing.Optional[str]" = None,
+    endDate: str,
+    period: "v1ResourceAllocationAggregationPeriod",
+    startDate: str,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
-        "period": period.value if period is not None else None,
+        "period": period.value,
         "startDate": startDate,
     }
     _resp = session._do_request(
@@ -15194,8 +15441,8 @@ def get_ResourceAllocationAggregated(
 def get_ResourceAllocationRaw(
     session: "api.Session",
     *,
-    timestampAfter: "typing.Optional[str]" = None,
-    timestampBefore: "typing.Optional[str]" = None,
+    timestampAfter: str,
+    timestampBefore: str,
 ) -> "v1ResourceAllocationRawResponse":
     _params = {
         "timestampAfter": timestampAfter,
@@ -15214,6 +15461,32 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def get_SearchExperiments(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+) -> "v1SearchExperimentsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments-search",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchExperiments", _resp)
 
 def post_SearchRolesAssignableToScope(
     session: "api.Session",
@@ -15417,14 +15690,17 @@ def get_TaskLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogs", _resp)
 
@@ -15448,14 +15724,17 @@ def get_TaskLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogsFields", _resp)
 
@@ -15521,14 +15800,17 @@ def get_TrialLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogs", _resp)
 
@@ -15552,14 +15834,17 @@ def get_TrialLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogsFields", _resp)
 
@@ -15595,14 +15880,17 @@ def get_TrialsSample(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSampleResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSample",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSampleResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSample", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSample", _resp)
 
@@ -15634,14 +15922,17 @@ def get_TrialsSnapshot(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSnapshot",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSnapshot",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSnapshot", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSnapshot", _resp)
 
@@ -15829,5 +16120,6 @@ Paginated = typing.Union[
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
     v1ListRolesResponse,
+    v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
 ]

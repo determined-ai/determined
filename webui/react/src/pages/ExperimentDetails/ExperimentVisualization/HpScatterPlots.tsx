@@ -31,7 +31,7 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: Metric;
+  selectedMetric: Metric | null;
   selectedScale: Scale;
 }
 
@@ -67,7 +67,7 @@ const ScatterPlots: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
   const chartProps = useMemo(() => {
-    if (!chartData) return undefined;
+    if (!chartData || !selectedMetric) return undefined;
 
     return selectedHParams.reduce((acc, hParam) => {
       const xLabel = hParam;
@@ -136,7 +136,7 @@ const ScatterPlots: React.FC<Props> = ({
   }, [selectedHParams]);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
@@ -155,7 +155,7 @@ const ScatterPlots: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const hpMetricMap: Record<string, (number | null)[]> = {};
         const hpValueMap: Record<string, number[]> = {};

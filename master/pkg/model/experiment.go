@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 
@@ -279,12 +280,16 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID             int                      `db:"id"`
-	JobID          JobID                    `db:"job_id"`
-	State          State                    `db:"state"`
-	Notes          string                   `db:"notes"`
-	Config         expconf.ExperimentConfig `db:"config"`
-	OriginalConfig string                   `db:"original_config"`
+	ID    int    `db:"id"`
+	JobID JobID  `db:"job_id"`
+	State State  `db:"state"`
+	Notes string `db:"notes"`
+
+	// Offer a LegacyConfig rather than ExperimentConfig since most of the system is about querying
+	// experiments which ran some time in the past, which is exactly what LegacyConfig is for.
+	Config         expconf.LegacyConfig `db:"config"`
+	OriginalConfig string               `db:"original_config"`
+
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -315,12 +320,13 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		parentID = ptrs.Ptr(int(e.ForkedFrom.Value))
 	}
 
-	bytes, err := json.Marshal(e.Config)
+	byts, err := json.Marshal(e.Config)
 	if err != nil {
 		return nil, err
 	}
-	var config expconf.ExperimentConfig
-	if err = json.Unmarshal(bytes, &config); err != nil {
+
+	config, err := expconf.ParseLegacyConfigJSON(byts)
+	if err != nil {
 		return nil, err
 	}
 
@@ -376,7 +382,7 @@ func NewExperiment(
 	return &Experiment{
 		State:                PausedState,
 		JobID:                NewJobID(),
-		Config:               config,
+		Config:               config.AsLegacy(),
 		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),
@@ -462,7 +468,6 @@ type TrialMetrics struct {
 	TrialID      int        `db:"trial_id" json:"trial_id"`
 	TrialRunID   int        `db:"trial_run_id" json:"-"`
 	TotalBatches int        `db:"total_batches" json:"total_batches"`
-	State        State      `db:"state" json:"state"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
@@ -517,9 +522,10 @@ const (
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
-// CheckpointV1 represents a row from the `checkpoints` table.
+// CheckpointV1 represents a row from the `raw_checkpoints` table.
 type CheckpointV1 struct {
-	ID                int        `db:"id" json:"id"`
+	bun.BaseModel     `bun:"table:raw_checkpoints"`
+	ID                int        `db:"id" json:"id" bun:"id,pk,autoincrement"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
@@ -531,18 +537,21 @@ type CheckpointV1 struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
+	Size              int64      `db:"size"`
 }
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
-	ID           int              `db:"id"`
-	UUID         uuid.UUID        `db:"uuid"`
-	TaskID       TaskID           `db:"task_id"`
-	AllocationID AllocationID     `db:"allocation_id"`
-	ReportTime   time.Time        `db:"report_time"`
-	State        State            `db:"state"`
-	Resources    map[string]int64 `db:"resources"`
-	Metadata     JSONObj          `db:"metadata"`
+	bun.BaseModel `bun:"table:checkpoints_v2"`
+	ID            int                    `db:"id" bun:"id,pk,autoincrement"`
+	UUID          uuid.UUID              `db:"uuid"`
+	TaskID        TaskID                 `db:"task_id"`
+	AllocationID  AllocationID           `db:"allocation_id"`
+	ReportTime    time.Time              `db:"report_time"`
+	State         State                  `db:"state"`
+	Resources     map[string]int64       `db:"resources"`
+	Metadata      map[string]interface{} `db:"metadata"`
+	Size          int64                  `db:"size"`
 }
 
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
@@ -569,6 +578,7 @@ type Checkpoint struct {
 	State        State         `db:"state"`
 	Resources    JSONObj       `db:"resources"`
 	Metadata     JSONObj       `db:"metadata"`
+	Size         int64         `db:"size"`
 
 	CheckpointTrainingMetadata
 
@@ -647,7 +657,7 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	}
 
 	if t.RankID != nil {
-		var id = int32(*t.RankID)
+		id := int32(*t.RankID)
 		resp.RankId = &id
 	}
 

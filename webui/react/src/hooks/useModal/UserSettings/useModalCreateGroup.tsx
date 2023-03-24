@@ -1,11 +1,13 @@
-import { Form, Input, message, Select, Typography } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { paths } from 'routes/utils';
 import {
   assignRolesToGroup,
   createGroup,
@@ -17,8 +19,11 @@ import {
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { RolesStore } from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 export const MODAL_HEADER_LABEL_CREATE = 'Create Group';
@@ -26,7 +31,7 @@ export const MODAL_HEADER_LABEL_EDIT = 'Edit Group';
 export const GROUP_NAME_NAME = 'name';
 export const GROUP_NAME_LABEL = 'Group Name';
 export const GROUP_ROLE_NAME = 'roles';
-export const GROUP_ROLE_LABEL = 'Roles';
+export const GROUP_ROLE_LABEL = 'Global Roles';
 export const USER_ADD_NAME = 'addUsers';
 export const USER_ADD_LABEL = 'Add Users';
 export const USER_REMOVE_LABEL = 'Remove Users';
@@ -47,9 +52,9 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
 
-  const { knownRoles } = useStore();
-
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+
+  const roles = RolesStore.useRoles();
 
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
@@ -87,7 +92,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
           },
         ]}
         validateTrigger={['onSubmit', 'onChange']}>
-        <Input autoFocus maxLength={128} placeholder="Group Name" />
+        <Input autoComplete="off" autoFocus maxLength={128} placeholder="Group Name" />
       </Form.Item>
       {group ? (
         <Form.Item label={USER_ADD_LABEL} name={USER_ADD_NAME}>
@@ -121,22 +126,27 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
         <>
           <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
             <Select
+              loading={Loadable.isLoading(roles)}
               mode="multiple"
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {knownRoles.map((r) => (
-                <Select.Option
-                  disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
-                  key={r.id}
-                  value={r.id}>
-                  {r.name}
-                </Select.Option>
-              ))}
+              {Loadable.isLoaded(roles) ? (
+                <>
+                  {roles.data.map((r) => (
+                    <Select.Option key={r.id} value={r.id}>
+                      {r.name}
+                    </Select.Option>
+                  ))}
+                </>
+              ) : undefined}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
-            Note that roles inherited from workspaces cannot be removed here.
+            Groups may have additional inherited workspace roles not reflected here. &nbsp;
+            <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+              Learn more
+            </Link>
           </Typography.Text>
         </>
       )}
@@ -165,7 +175,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
     if (group?.group.groupId && rbacEnabled) {
       try {
         const roles = await getGroupRoles({ groupId: group.group.groupId });
-        setGroupRoles(roles);
+        setGroupRoles(roles.filter((r) => r.scopeCluster));
       } catch (e) {
         handleError(e, { publicSubject: "Unable to fetch this group's roles." });
       }

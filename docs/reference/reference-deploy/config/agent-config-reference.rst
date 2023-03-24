@@ -15,19 +15,15 @@
 -  ``agent_id``: The ID of this agent; defaults to the hostname of the current machine. Agent IDs
    must be unique within a cluster.
 
--  ``container-master-host``: Master hostname that containers started by this agent will connect to.
+-  ``container_master_host``: Master hostname that containers started by this agent will connect to.
    Defaults to the value of ``master_host``.
 
--  ``container-master-port``: Master port that containers started by this agent will connect to.
+-  ``container_master_port``: Master port that containers started by this agent will connect to.
    Defaults to the value of ``master_port``.
 
 -  ``resource_pool``: Which resource pool the agent should join. Defaults to the value of
    ``default``, which will work if and only if there is a resource pool named ``default``. For more
    information please see :ref:`resource-pools`.
-
--  ``label``: The label to assign to this agent. An agent with a label will only be assigned
-   workloads that have been assigned the same label (e.g., via the :ref:`agent_label
-   <exp-config-agent_label>` field in the experiment configuration).
 
 -  ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A comma-separated list
    of GPUs, each specified by a 0-based index, UUID, PCI bus ID, or board serial number. The 0-based
@@ -106,3 +102,5 @@
       "shutdown", "now"]``, or just ``["shutdown", "now"]`` if the agent is running as root.
       Additional system configuration may be required in order to allow the agent to execute the
       command from inside a Docker container or without the need to enter a password.
+
+-  ``label``: This field has been deprecated and will be ignored. Use ``resource_pool`` instead.

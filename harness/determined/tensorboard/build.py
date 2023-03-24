@@ -45,6 +45,7 @@ def build(
     trial_id: Optional[str],
     checkpoint_config: Dict[str, Any],
     container_path: Optional[str] = None,
+    async_upload: bool = True,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
@@ -76,6 +77,7 @@ def build(
             _full_storage_path(host_path, storage_path, container_path),
             base_path,
             sync_path,
+            async_upload=async_upload,
         )
 
     elif type_name == "gcs":
@@ -84,6 +86,7 @@ def build(
             checkpoint_config.get("prefix", None),
             base_path,
             sync_path,
+            async_upload=async_upload,
         )
 
     elif type_name == "s3":
@@ -95,6 +98,7 @@ def build(
             checkpoint_config.get("prefix", None),
             base_path,
             sync_path,
+            async_upload=async_upload,
         )
 
     elif type_name == "azure":
@@ -110,6 +114,7 @@ def build(
             checkpoint_config.get("credential", None),
             base_path,
             sync_path,
+            async_upload=async_upload,
         )
 
     # Return the base_path.TensorboardManager for known but unsupported storage
@@ -122,6 +127,7 @@ def build(
             checkpoint_config.get("user"),
             base_path,
             sync_path,
+            async_upload=async_upload,
         )
 
     else:

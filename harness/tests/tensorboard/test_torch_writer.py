@@ -12,7 +12,7 @@ def test_torch_writer(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Pa
         return tmp_path
 
     monkeypatch.setattr(tensorboard, "get_base_path", mock_get_base_path)
-    logger = pytorch.TorchWriter()
+    logger = pytorch._TorchWriter()
     logger.add_scalar("foo", 7, 0)
     logger.reset()
     logger.add_scalar("foo", 8, 1)

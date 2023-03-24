@@ -9,6 +9,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from determined import cli
 from determined.cli import render
+from determined.cli.master import format_log_entry
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -25,24 +26,15 @@ def _workload_container_unpack(
     return result
 
 
-def _format_state(
-    state: Union[bindings.determinedcheckpointv1State, bindings.determinedexperimentv1State]
-) -> str:
+def _format_state(state: Union[bindings.checkpointv1State, bindings.experimentv1State]) -> str:
     return str(state.value).replace("STATE_", "")
 
 
-def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> List[Any]:
+def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> Optional[str]:
     if not validation:
-        return [None, None]
+        return None
 
-    # TODO(ilia): Get rid of `constants` in favor of the ones from bindings.
-    state = _format_state(validation.state)
-    if state == constants.COMPLETED:
-        return [constants.COMPLETED, json.dumps(validation.metrics.to_json(), indent=4)]
-    elif state in (constants.ACTIVE, constants.ERROR):
-        return [state, None]
-    else:
-        raise AssertionError("Invalid state: {}".format(validation.state))
+    return json.dumps(validation.metrics.to_json(), indent=4)
 
 
 def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> List[Any]:
@@ -68,12 +60,10 @@ def _workloads_tabulate(
     # Print information about individual steps.
     headers = [
         "# of Batches",
-        "State",
         "Report Time",
         "Checkpoint",
         "Checkpoint UUID",
         "Checkpoint Metadata",
-        "Validation",
         "Validation Metrics",
     ]
 
@@ -94,10 +84,9 @@ def _workloads_tabulate(
         values.append(
             [
                 w_unpacked.totalBatches,
-                _format_state(w_unpacked.state),
                 render.format_time(w_unpacked.endTime),
                 *_format_checkpoint(w.checkpoint),
-                *_format_validation(w.validation),
+                _format_validation(w.validation),
                 *row_metrics,
             ]
         )
@@ -254,11 +243,11 @@ def write_trial_logs(args: Namespace, temp_dir: str) -> str:
 
 
 def write_master_logs(args: Namespace, temp_dir: str) -> str:
-    response = api.get(args.master, "logs")
+    responses = bindings.get_MasterLogs(cli.setup_session(args))
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
-        for log in response.json():
-            f.write("{} [{}]: {}\n".format(log["time"], log["level"], log["message"]))
+        for response in responses:
+            f.write(format_log_entry(response.logEntry) + "\n")
     return file_path
 
 

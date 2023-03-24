@@ -15,7 +15,6 @@ func defaultRPConfig() ResourcePoolConfig {
 		MaxAuxContainersPerAgent: 100,
 		MaxCPUContainersPerAgent: -1,
 		AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
-		AgentReattachEnabled:     false,
 	}
 }
 
@@ -33,6 +32,10 @@ type ResourcePoolConfig struct {
 	// AgentReconnectWait define the time master will wait for agent
 	// before abandoning it.
 	AgentReconnectWait model.Duration `json:"agent_reconnect_wait"`
+
+	// If empty, will behave as if the value is resource_manager.namespace,
+	// which in most cases will be the namespace the helm deployment is in.
+	KubernetesNamespace string `json:"kubernetes_namespace"`
 
 	// Deprecated: Use MaxAuxContainersPerAgent instead.
 	MaxCPUContainersPerAgent int `json:"max_cpu_containers_per_agent,omitempty"`

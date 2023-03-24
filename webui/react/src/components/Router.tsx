@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -5,20 +6,14 @@ import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { useAuth } from 'stores/auth';
-import { Loadable } from 'utils/loadable';
+import { selectIsAuthenticated } from 'stores/auth';
 
 interface Props {
   routes: RouteConfig[];
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const loadableAuth = useAuth();
-  const isAuthenticated = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.isAuthenticated,
-    NotLoaded: () => false,
-  });
-  const authChecked = loadableAuth.authChecked;
+  const isAuthenticated = useObservable(selectIsAuthenticated);
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();
@@ -39,8 +34,6 @@ const Router: React.FC<Props> = (props: Props) => {
         const { element, ...route } = config;
 
         if (route.needAuth && !isAuthenticated) {
-          // Do not mount login page until auth is checked.
-          if (!authChecked) return <Route {...route} element={element} key={route.id} />;
           return (
             <Route
               {...route}

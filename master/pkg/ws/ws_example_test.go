@@ -24,7 +24,11 @@ func Example() {
 		}
 
 		// Send and receive messages from the client.
-		s := ws.Wrap[int, string]("int2str", c)
+		s, err := ws.Wrap[int, string]("int2str", c)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		for {
 			num, ok := <-s.Inbox
 			if !ok {
@@ -43,6 +47,7 @@ func Example() {
 	defer ts.Close()
 
 	// Connect a Websocket to the server with using `github.com/gorilla/websocket`.
+	//nolint: bodyclose
 	c, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(ts.URL, "http"), nil)
 	if err != nil {
 		log.Println(err)
@@ -50,7 +55,11 @@ func Example() {
 	}
 
 	// Use Wrap to wrap the underlying connection.
-	s := ws.Wrap[string, int]("client", c)
+	s, err := ws.Wrap[string, int]("client", c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	defer func() {
 		// Gracefully close our connection, using Close. If it fails, it will forcibly clean up.
 		if err := s.Close(); err != nil {

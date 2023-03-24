@@ -1,6 +1,9 @@
-import { Button, Form, Input } from 'antd';
+import { ConfigProvider } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
@@ -11,9 +14,9 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
-import { useAuth } from 'stores/auth';
-import { useEnsureUserRolesAndAssignmentsFetched } from 'stores/userRoles';
-import { useCurrentUsers } from 'stores/users';
+import { setAuth } from 'stores/auth';
+import { PermissionsStore } from 'stores/permissions';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -30,15 +33,23 @@ interface FromValues {
 const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
+const buttonTheme = {
+  components: {
+    Button: {
+      colorPrimary: 'var(--theme-brand)',
+      colorPrimaryActive: 'var(--theme-brand-strong)',
+      colorPrimaryHover: 'var(--theme-brand-weak)',
+    },
+  },
+};
+
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const { updateCurrentUser } = useCurrentUsers();
-  const { setAuth } = useAuth();
-  const fetchMyRoles = useEnsureUserRolesAndAssignmentsFetched(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -54,9 +65,10 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           { signal: canceler.signal },
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
-        setAuth({ isAuthenticated: true, token, user });
-        updateCurrentUser(user);
+        setAuth({ isAuthenticated: true, token });
+        usersStore.updateCurrentUser(user.id);
         if (rbacEnabled) {
+          // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           await fetchMyRoles();
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
@@ -78,7 +90,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, setAuth, uiActions, fetchMyRoles, updateCurrentUser, rbacEnabled],
+    [canceler, uiActions, fetchMyRoles, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
@@ -89,7 +101,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
 
   const loginForm = (
     <Form
-      className={css.form}
       initialValues={{ username: storage.getWithDefault(STORAGE_KEY_LAST_USERNAME, '') }}
       name="login"
       onFinish={onFinish}
@@ -111,9 +122,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
-          Sign In
-        </Button>
+        <ConfigProvider theme={buttonTheme}>
+          <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
+            Sign In
+          </Button>
+        </ConfigProvider>
       </Form.Item>
     </Form>
   );

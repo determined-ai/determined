@@ -3,15 +3,15 @@ import { debounce } from 'throttle-debounce';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Grid, { GridMode } from 'components/Grid';
+import Empty from 'components/kit/Empty';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { SyncProvider } from 'components/UPlot/SyncableBounds';
+import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import { intersection } from 'shared/utils/set';
 import { Scale } from 'types';
@@ -28,10 +28,12 @@ import css from './TrialsComparison.module.scss';
 
 interface Props {
   projectId: string;
+  workspaceId: number;
 }
 
-const TrialsComparison: React.FC<Props> = ({ projectId }) => {
-  const tableSettingsHook = useSettings<InteractiveTableSettings>(trialsTableSettingsConfig);
+const TrialsComparison: React.FC<Props> = ({ projectId, workspaceId }) => {
+  const config = useMemo(() => trialsTableSettingsConfig(projectId), [projectId]);
+  const tableSettingsHook = useSettings<InteractiveTableSettings>(config);
 
   const collections = useTrialCollections(projectId, tableSettingsHook);
 
@@ -50,6 +52,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
     openCreateModal: collections.openCreateModal,
     refetch,
     sorter: collections.sorter,
+    workspaceId,
   });
 
   const highlights = useHighlight((trial: V1AugmentedTrial): number => trial.trialId);
@@ -79,20 +82,20 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const handleTrialFocus = useMemo(() => debounce(1000, highlights.focus), [highlights.focus]);
 
   return (
-    <Page bodyNoPadding className={css.base} containerRef={containerRef}>
+    <Page className={css.base} containerRef={containerRef}>
       <Section bodyBorder bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>
             {actions.selectedTrials.length === 0 ? (
-              <div className={css.emptyBase}>
-                <div className={css.messageContainer}>
-                  <Icon name="experiment" size="mega" />
-                  <p>No Trials Selected</p>
-                  <p>
+              <Empty
+                description={
+                  <>
                     Choose trials to plot or <a onClick={handleClickFirstFive}>select first five</a>
-                  </p>
-                </div>
-              </div>
+                  </>
+                }
+                icon="experiment"
+                title="No Trials Selected"
+              />
             ) : trials.metrics.length === 0 ? (
               <Message title="No Metrics for Selected Trials" type={MessageType.Empty} />
             ) : (

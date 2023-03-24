@@ -6,8 +6,9 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Union
 import math
+from typing import Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,9 +43,7 @@ class RNNModel(nn.Module):
         # https://arxiv.org/abs/1611.01462
         if tie_weights:
             if nhid != ninp:
-                raise ValueError(
-                    "When using the tied flag, nhid must be equal to emsize"
-                )
+                raise ValueError("When using the tied flag, nhid must be equal to emsize")
             self.decoder.weight = self.encoder.weight
 
         self.init_weights()
@@ -77,9 +76,7 @@ class RNNModel(nn.Module):
         else:
             return weight.new_zeros(self.nlayers, bsz, self.nhid)
 
-    def repackage_hidden(
-        self, h: Union[tuple, torch.Tensor]
-    ) -> Union[tuple, torch.Tensor]:
+    def repackage_hidden(self, h: Union[tuple, torch.Tensor]) -> Union[tuple, torch.Tensor]:
         """Wraps hidden states in new Tensors, to detach them from their history."""
 
         if isinstance(h, torch.Tensor):
@@ -112,9 +109,7 @@ class PositionalEncoding(nn.Module):
 
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(
-            torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model)
-        )
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0).transpose(0, 1)
@@ -151,9 +146,7 @@ class TransformerModel(nn.Module):
         try:
             from torch.nn import TransformerEncoder, TransformerEncoderLayer
         except:
-            raise ImportError(
-                "TransformerEncoder module does not exist in PyTorch 1.1 or lower."
-            )
+            raise ImportError("TransformerEncoder module does not exist in PyTorch 1.1 or lower.")
         self.model_type = "Transformer"
         self.src_mask = None
         self.pos_encoder = PositionalEncoding(ninp, dropout)
@@ -167,11 +160,7 @@ class TransformerModel(nn.Module):
 
     def _generate_square_subsequent_mask(self, sz: int) -> torch.Tensor:
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
-        mask = (
-            mask.float()
-            .masked_fill(mask == 0, float("-inf"))
-            .masked_fill(mask == 1, float(0.0))
-        )
+        mask = mask.float().masked_fill(mask == 0, float("-inf")).masked_fill(mask == 1, float(0.0))
         return mask
 
     def init_weights(self) -> None:

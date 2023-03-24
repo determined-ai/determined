@@ -15,8 +15,10 @@ import (
 )
 
 // traceEnabled configs actors to submit traces to an opentracing backend (specifically Jaeger).
-var traceEnabled = traceEnabledStr == "true"
-var traceEnabledStr = "false"
+var (
+	traceEnabled    = traceEnabledStr == "true"
+	traceEnabledStr = "false"
+)
 
 const (
 	askOperation  = "Ask"
@@ -105,7 +107,8 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer, error) {
 
 // Actors that are too noisy to be worth tracing.
 var noisyActors = []string{
-	"notify-timer-",
+	"/notify-timer-",
+	"/websocket-",
 }
 
 func isNoisy(sender *Ref) bool {

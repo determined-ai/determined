@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--num-rungs", type=int, default=16)
     parser.add_argument("--exception-points", type=str, nargs="+", default=[])
     parser.add_argument("--config-name", type=str, required=True)
+    parser.add_argument("--metric-as-dict", action="store_true", default=False)
     return parser.parse_args()
 
 
@@ -45,6 +46,7 @@ def create_search_method(args, exception_points: Optional[List[str]] = None):
             max_length=args.max_length,
             max_concurrent_trials=args.max_concurrent_trials,
             exception_points=exception_points,
+            metric_as_dict=args.metric_as_dict,
         )
     else:
         raise ValueError("Unknown searcher type")
@@ -94,6 +96,8 @@ if __name__ == "__main__":
 
     config = load_config(args.config_name)
     config["name"] = args.exp_name
+    if args.metric_as_dict:
+        config["entrypoint"] += " dict"
 
     with det.core.init() as core_context:
         search_method = create_search_method(args, args.exception_points)

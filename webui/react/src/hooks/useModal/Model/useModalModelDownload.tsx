@@ -1,6 +1,6 @@
-import { Input } from 'antd';
 import React, { useCallback } from 'react';
 
+import Input from 'components/kit/Input';
 import CopyButton from 'shared/components/CopyButton';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { copyToClipboard } from 'shared/utils/dom';

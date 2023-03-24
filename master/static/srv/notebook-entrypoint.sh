@@ -43,7 +43,9 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy
 
+set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
+set +x
 
 "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 

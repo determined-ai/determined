@@ -1,6 +1,6 @@
 import contextlib
 import pathlib
-from typing import Any, Iterator
+from typing import Any, Callable, Dict, Iterator, List, Optional
 from unittest import mock
 
 import pytest
@@ -18,7 +18,9 @@ def make_mock_storage_manager(basedir: pathlib.Path) -> Any:
         yield pathlib.Path(path)
 
     @contextlib.contextmanager
-    def restore_path(storage_id: str) -> Iterator[pathlib.Path]:
+    def restore_path(
+        storage_id: str, selector: Optional[Callable[[str], bool]] = None
+    ) -> Iterator[pathlib.Path]:
         path = basedir.joinpath("restore-path")
         path.mkdir(exist_ok=True)
         yield pathlib.Path(path)
@@ -141,3 +143,81 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                     pass
             storage_manager.restore_path.assert_called_once()
             storage_manager.restore_path.reset_mock()
+
+
+@pytest.mark.parametrize(
+    "resources,expected_merged,expected_conflicts",
+    [
+        ([{"file0": 0}, {"file1": 0}], {"file0": 0, "file1": 0}, {}),
+        ([{"file0": 0}, {"file0": 0}], {"file0": 0}, {"file0": [0, 1]}),
+        ([{"dir1/": 0}, {"dir1/": 0}], {"dir1/": 0}, {}),
+        ([{"file1/": 0}, {"file1": 0}], {"file1/": 0, "file1": 0}, {"file1": [0, 1]}),
+        ([{"dir1/file1": 0}, {"file1": 0}], {"dir1/file1": 0, "file1": 0}, {}),
+        (
+            [{"dir1/file1": 0}, {"dir1/file1/": 0}],
+            {"dir1/file1": 0, "dir1/file1/": 0},
+            {"dir1/file1": [0, 1]},
+        ),
+    ],
+)
+def test_merge_files(
+    resources: List[Dict[str, int]],
+    expected_merged: Dict[str, int],
+    expected_conflicts: Dict[str, List[int]],
+) -> None:
+    merged, conflicts = core._checkpoint.merge_resources(resources)
+    assert conflicts == expected_conflicts
+    assert merged == expected_merged
+
+
+@pytest.mark.parametrize(
+    "metadata,expected_merged,expected_conflicts",
+    [
+        ([{"a": 0}, {"b": 0}], {"a": 0, "b": 0}, {}),
+        ([{"a": 0}, {"a": 0}], {"a": 0}, {}),
+        ([{"a": 1, "b": 0}, {"a": 0}], {"a": 1, "b": 0}, {"/a": [0, 1]}),
+        (
+            [{"a": {"c": 1}}, {"a": {"d": 2}}],
+            {"a": {"c": 1, "d": 2}},
+            {},
+        ),
+        ([{"a": {"c": 1}}, {"a": 2}], {"a": {"c": 1}}, {"/a": [0, 1]}),
+        ([{"a": {"c": 1}}, {"a": [2]}], {"a": {"c": 1}}, {"/a": [0, 1]}),
+        (
+            [{"a": {"c": 1}}, {"a": {"c": 2}}],
+            {"a": {"c": 1}},
+            {"/a/c": [0, 1]},
+        ),
+        (
+            [{"a": {"c": {"d": 1}}}, {"a": {"d": 2}}],
+            {"a": {"c": {"d": 1}, "d": 2}},
+            {},
+        ),
+        (
+            [
+                {"a": 1, "d": {"a": 1, "d": {"a": 1}}},
+                {"b": 2, "d": {"b": 2, "d": {"a": 1}}},
+                {"c": 3, "d": {"c": 3, "d": {"a": 1}}},
+            ],
+            {"c": 3, "d": {"c": 3, "d": {"a": 1}, "b": 2, "a": 1}, "b": 2, "a": 1},
+            {},
+        ),
+        (
+            [
+                {"a": 1, "d": {"a": 1, "d": {"a": 1}}},
+                {"b": 2, "d": {"b": 2, "d": {"b": 1, "c": 1}}},
+                {"c": 3, "d": {"b": 3, "d": {"c": 2, "a": 2}}},
+            ],
+            {"a": 1, "d": {"a": 1, "d": {"a": 1, "b": 1, "c": 1}, "b": 2}, "b": 2, "c": 3},
+            {"/d/b": [1, 2], "/d/d/c": [1, 2], "/d/d/a": [0, 2]},
+        ),
+    ],
+)
+def test_merge_metadata(
+    metadata: List[Dict[str, Any]],
+    expected_merged: Dict[str, Any],
+    expected_conflicts: Dict[str, List],
+) -> None:
+    merged, conflicts = core._checkpoint.merge_metadata(metadata)
+    assert conflicts == expected_conflicts
+    assert merged == expected_merged

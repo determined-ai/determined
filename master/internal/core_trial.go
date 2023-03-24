@@ -20,7 +20,7 @@ func echoCanGetTrial(c echo.Context, m *Master, trialID string) error {
 
 	curUser := c.(*detContext.DetContext).MustGetUser()
 	trialNotFound := echo.NewHTTPError(http.StatusNotFound, "trial not found: %d", id)
-	exp, err := m.db.ExperimentWithoutConfigByTrialID(id)
+	exp, err := m.db.ExperimentByTrialID(id)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
 	} else if err != nil {

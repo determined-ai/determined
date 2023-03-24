@@ -24,7 +24,7 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -36,7 +36,7 @@ def test_noop_pause() -> None:
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
 
     # Wait at most 20 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
@@ -53,9 +53,7 @@ def test_noop_pause() -> None:
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(
-        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -68,9 +66,7 @@ def test_noop_nan_validations() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(
-        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -101,15 +97,13 @@ def test_noop_pause_of_experiment_without_trials() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
 
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
 
     for _ in range(5):
-        assert (
-            exp.experiment_state(experiment_id) == bindings.determinedexperimentv1State.STATE_QUEUED
-        )
+        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
         time.sleep(1)
 
     exp.cancel_single(experiment_id)
@@ -356,12 +350,20 @@ def test_estimator_rng_restore() -> None:
 
 @pytest.mark.e2e_cpu
 def test_pytorch_cpu_rng_restore() -> None:
-    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand"])
+    # Disable rand_rand test because tensorboard async uploading can mess with random state
+    # in unexpected way.
+    # We should reenable this test when the upcoming feature flag to enable/disable async
+    # tensorboard uploading is released.
+    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand"])
 
 
 @pytest.mark.e2e_gpu
 def test_pytorch_gpu_rng_restore() -> None:
-    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
+    # Disable rand_rand test because tensorboard async uploading can mess with random state
+    # in unexpected way.
+    # We should reenable this test when the upcoming feature flag to enable/disable async
+    # tensorboard uploading is released.
+    _test_rng_restore("pytorch_no_op", ["np_rand", "torch_rand", "gpu_rand"])
 
 
 @pytest.mark.e2e_cpu

@@ -1,0 +1,8 @@
+name: sleep for ten minutes
+searcher:
+  name: single
+  metric: loss
+  max_length:
+    batches: 1
+entrypoint: python3 sleep.py
+max_restarts: 0

@@ -1,14 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import Button from 'components/kit/Button';
+import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { CreateGroupsParams, GetGroupParams } from 'services/types';
-import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
-import { UsersProvider } from 'stores/users';
+import { GetGroupParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { DetailedUser } from 'types';
 
 import useModalCreateGroup, {
@@ -25,8 +23,6 @@ const GROUPNAME = 'test_groupname1';
 
 const user = userEvent.setup();
 
-const mockCreateGroup = jest.fn();
-
 const users: Array<DetailedUser> = [
   {
     id: 1,
@@ -42,10 +38,8 @@ const users: Array<DetailedUser> = [
   },
 ];
 
-jest.mock('services/api', () => ({
-  createGroup: (params: CreateGroupsParams) => {
-    return mockCreateGroup(params);
-  },
+vi.mock('services/api', () => ({
+  createGroup: vi.fn(),
   getGroup: (params: GetGroupParams) => {
     return Promise.resolve({
       group: {
@@ -74,15 +68,9 @@ const Container: React.FC<Props> = ({ group }) => {
 
 const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
-    <StoreProvider>
-      <UsersProvider>
-        <AuthProvider>
-          <UserRolesProvider>
-            <Container group={group} />
-          </UserRolesProvider>
-        </AuthProvider>
-      </UsersProvider>
-    </StoreProvider>,
+    <UIProvider>
+      <Container group={group} />
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -124,16 +112,6 @@ describe('useModalCreateGroup', () => {
       expect(
         screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
       ).not.toBeInTheDocument();
-    });
-  });
-
-  it('should validate the create group request', async () => {
-    await setup();
-
-    await user.click(screen.getByRole('button', { name: MODAL_HEADER_LABEL_CREATE }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(1);
     });
   });
 

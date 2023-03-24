@@ -8,7 +8,6 @@ export interface Settings {
 }
 
 export const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'settings/theme',
   settings: {
     mode: {
       defaultValue: Mode.System,
@@ -17,5 +16,5 @@ export const config: SettingsConfig<Settings> = {
       type: union([literal(Mode.Dark), literal(Mode.Light), literal(Mode.System)]),
     },
   },
-  storagePath: 'settings/theme',
+  storagePath: 'settings-theme',
 };

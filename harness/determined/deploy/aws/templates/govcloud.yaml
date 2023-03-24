@@ -67,7 +67,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.19.9-dev0
+    Default: 0.21.0-dev0
 
   DBPassword:
     Type: String
@@ -161,6 +161,11 @@ Parameters:
     Description: Whether to retain CloudWatch log group after the stack is deleted
     Default: false
 
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -229,6 +234,10 @@ Parameters:
           cpu: {{ .cpu_env_image }}
           gpu: {{ .gpu_env_image }}
         {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0.0 }}
+      notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
   ### END INJECT CODE
 
@@ -530,6 +539,13 @@ Resources:
               - Effect: Allow
                 Action: iam:PassRole
                 Resource: !GetAtt AgentRole.Arn
+        - PolicyName: master-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
@@ -547,7 +563,7 @@ Resources:
         MetadataOptions:
           HttpTokens: required
           HttpPutResponseHopLimit: 2
-          
+
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -661,6 +677,7 @@ Resources:
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

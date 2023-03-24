@@ -1,5 +1,5 @@
 import multiprocessing
-from typing import Callable, Dict
+from typing import Callable
 
 import pytest
 
@@ -173,78 +173,6 @@ def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) ->
     assert len(trials) == 1
     export_and_load_model(experiment_id)
     collect_trial_profiles(trials[0].trial.id)
-
-
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize(
-    "tf2",
-    [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
-)
-def test_tf_keras_mnist_data_layer_lfs(
-    tf2: bool, collect_trial_profiles: Callable[[int], None]
-) -> None:
-    exp_id = run_tf_keras_mnist_data_layer_test(tf2, "lfs")
-    trial_id = exp.experiment_trials(exp_id)[0].trial.id
-    collect_trial_profiles(trial_id)
-
-
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("tf2", [False])
-@pytest.mark.parametrize("storage_type", ["s3"])
-def test_tf_keras_mnist_data_layer_s3(
-    tf2: bool,
-    storage_type: str,
-    secrets: Dict[str, str],
-    collect_trial_profiles: Callable[[int], None],
-) -> None:
-    exp_id = run_tf_keras_mnist_data_layer_test(tf2, storage_type)
-    trial_id = exp.experiment_trials(exp_id)[0].trial.id
-    collect_trial_profiles(trial_id)
-
-
-def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
-    config = conf.load_config(conf.fixtures_path("data_layer_tf_keras/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_min_validation_period(config, {"batches": 1000})
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    config = conf.set_profiling_enabled(config)
-
-    if storage_type == "lfs":
-        config = conf.set_shared_fs_data_layer(config)
-    else:
-        config = conf.set_s3_data_layer(config)
-
-    return exp.run_basic_test_with_temp_config(config, conf.fixtures_path("data_layer_tf_keras"), 1)
-
-
-@pytest.mark.parallel
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("tf2", [False])
-@pytest.mark.parametrize("storage_type", ["lfs", "s3"])
-def test_tf_keras_mnist_data_layer_parallel(
-    tf2: bool,
-    storage_type: str,
-    secrets: Dict[str, str],
-    collect_trial_profiles: Callable[[int], None],
-) -> None:
-    config = conf.load_config(conf.fixtures_path("data_layer_tf_keras/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    config = conf.set_profiling_enabled(config)
-
-    if storage_type == "lfs":
-        config = conf.set_shared_fs_data_layer(config)
-    else:
-        config = conf.set_s3_data_layer(config)
-
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("data_layer_tf_keras"), 1
-    )
-
-    trial_id = exp.experiment_trials(exp_id)[0].trial.id
-    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel

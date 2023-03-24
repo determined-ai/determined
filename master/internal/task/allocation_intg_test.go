@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/google/uuid"
@@ -274,6 +275,7 @@ func setup(t *testing.T) (
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 	allocationmap.InitAllocationMap()
+	portregistry.InitPortRegistry()
 
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}

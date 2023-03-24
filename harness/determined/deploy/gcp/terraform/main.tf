@@ -35,6 +35,7 @@ module "network" {
   project_id = var.project_id
   unique_id = local.unique_id
   network = var.network
+  labels = var.labels
 }
 
 
@@ -73,6 +74,7 @@ module "filestore" {
   source = "./modules/filestore"
 
   project_id = var.project_id
+  labels = var.labels
   zone = var.zone
   network_name = module.network.network_name
 
@@ -99,6 +101,7 @@ module "gcs" {
 
   unique_id = local.unique_id
   gcs_bucket = var.gcs_bucket
+  labels = var.labels
   service_account_email = module.service_account.service_account_email
 }
 
@@ -115,6 +118,7 @@ module "database" {
   db_username = var.db_username
   db_password = var.db_password
   db_version = var.db_version
+  user_labels = var.labels
   network_self_link = module.network.network_self_link
   service_networking_connection = module.network.service_networking_connection
 }
@@ -165,7 +169,6 @@ module "compute" {
   gpu_num = var.gpu_num
   min_dynamic_agents = var.min_dynamic_agents
   max_dynamic_agents = var.max_dynamic_agents
-  static_agents = var.static_agents
   min_cpu_platform_master = var.min_cpu_platform_master
   min_cpu_platform_agent = var.min_cpu_platform_agent
   preemptible = var.preemptible
@@ -176,6 +179,7 @@ module "compute" {
   preemption_enabled = var.preemption_enabled
   cpu_env_image = var.cpu_env_image
   gpu_env_image = var.gpu_env_image
+  labels = var.labels
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name

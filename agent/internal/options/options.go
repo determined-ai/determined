@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AgentOptions stores all the configurable options for the Determined agent.
-type AgentOptions struct {
+// Options stores all the configurable options for the Determined agent.
+type Options struct {
 	ConfigFile string `json:"config_file"`
 
 	MasterHost      string `json:"master_host"`
@@ -46,11 +46,16 @@ type AgentOptions struct {
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
+	AgentReconnectAttempts int `json:"agent_reconnect_attempts"`
+	// TODO(ilia): switch this to better parsing with `model.Duration` similar to
+	// master config.
+	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
+
 	Hooks HooksOptions `json:"hooks"`
 }
 
 // Validate validates the state of the Options struct.
-func (o AgentOptions) Validate() []error {
+func (o Options) Validate() []error {
 	return []error{
 		o.validateTLS(),
 		check.In(o.SlotType, []string{"gpu", "cuda", "rocm", "cpu", "auto", "none"}),
@@ -58,7 +63,7 @@ func (o AgentOptions) Validate() []error {
 	}
 }
 
-func (o AgentOptions) validateTLS() error {
+func (o Options) validateTLS() error {
 	if !o.TLS || !o.APIEnabled {
 		return nil
 	}
@@ -72,7 +77,7 @@ func (o AgentOptions) validateTLS() error {
 }
 
 // Printable returns a printable string.
-func (o AgentOptions) Printable() ([]byte, error) {
+func (o Options) Printable() ([]byte, error) {
 	optJSON, err := json.Marshal(o)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
@@ -81,7 +86,7 @@ func (o AgentOptions) Printable() ([]byte, error) {
 }
 
 // Resolve fully resolves the agent configuration, handling dynamic defaults.
-func (o *AgentOptions) Resolve() {
+func (o *Options) Resolve() {
 	if o.MasterPort == 0 {
 		if o.Security.TLS.Enabled {
 			o.MasterPort = 443

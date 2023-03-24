@@ -1,9 +1,11 @@
+import os
+import shutil
+
+import numpy as np
 import torch
 import torch.nn as nn
-import os, shutil
-import numpy as np
-from torch.autograd import Variable
 import torch.nn.functional as F
+from torch.autograd import Variable
 
 
 def repackage_hidden(h):

@@ -1,30 +1,24 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
-import { PostUserParams } from 'services/types';
-import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
-import { UsersProvider } from 'stores/users';
+import Button from 'components/kit/Button';
+import { postUser as mockCreateUser } from 'services/api';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
   API_SUCCESS_MESSAGE_CREATE,
+  BUTTON_NAME,
   DISPLAY_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
 } from './useModalCreateUser';
 
-const mockCreateUser = jest.fn();
-
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getUserRoles: () => Promise.resolve([]),
-  postUser: (params: PostUserParams) => {
-    mockCreateUser(params);
-    return Promise.resolve({ user: { id: 1 } });
-  },
+  postUser: vi.fn().mockReturnValue({ user: { id: 1 } }),
 }));
 
 const OPEN_MODAL_TEXT = 'Open Modal';
@@ -33,7 +27,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalCreateUser({ groups: [] });
+  const { contextHolder, modalOpen } = useModalCreateUser({});
 
   return (
     <div>
@@ -45,15 +39,11 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    <StoreProvider>
-      <UsersProvider>
-        <AuthProvider>
-          <UserRolesProvider>
-            <Container />
-          </UserRolesProvider>
-        </AuthProvider>
-      </UsersProvider>
-    </StoreProvider>,
+    <UIProvider>
+      <BrowserRouter>
+        <Container />
+      </BrowserRouter>
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -102,21 +92,11 @@ describe('useModalCreateUser', () => {
     });
   });
 
-  it('should validate the create user request', async () => {
-    await setup();
-
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(1);
-    });
-  });
-
   it('should submit a valid create user request', async () => {
     await setup();
 
     await user.type(screen.getByLabelText(USER_NAME_LABEL), USERNAME);
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
+    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     // Check for successful toast message.
     await waitFor(() => {

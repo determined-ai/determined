@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Type
 
 from determined.common.check import check_eq, check_in, check_type
 
-from .base import StorageManager
+from .base import StorageManager, Paths, Selector
 from .cloud import CloudStorageManager
 from .azure import AzureStorageManager
 from .gcs import GCSStorageManager

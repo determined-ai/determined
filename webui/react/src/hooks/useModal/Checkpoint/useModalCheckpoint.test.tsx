@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React, { useCallback } from 'react';
 
-import StoreProvider from 'contexts/Store';
+import Button from 'components/kit/Button';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
@@ -13,7 +13,7 @@ const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const MODAL_TRIGGER_TEXT = 'Open Checkpoint Modal';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getModels: () => {
     return Promise.resolve({ models: [] });
   },
@@ -32,10 +32,10 @@ const Container: React.FC<Partial<Props>> = (props: Partial<Props> = {}) => {
   const handleClick = useCallback(() => modalOpen(), [modalOpen]);
 
   return (
-    <StoreProvider>
+    <UIProvider>
       <Button onClick={handleClick}>{MODAL_TRIGGER_TEXT}</Button>
       {contextHolder}
-    </StoreProvider>
+    </UIProvider>
   );
 };
 
@@ -57,7 +57,7 @@ describe('useModalCheckpoint', () => {
   });
 
   it('should close modal', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);
@@ -72,7 +72,7 @@ describe('useModalCheckpoint', () => {
   });
 
   it('should call `onClose` handler with Okay', async () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);

@@ -1,15 +1,16 @@
-import os
-import filelock
 import datetime
+import os
 from typing import Any, Dict
-from attrdict import AttrDict
+
+import filelock
 import torch
-import torchvision
-import torchvision.transforms as transforms
-import deepspeed
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as transforms
+from attrdict import AttrDict
 
+import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,
@@ -38,10 +39,12 @@ class Net(nn.Module):
                         expert=fc3,
                         num_experts=n_e,
                         ep_size=args.ep_world_size,
-                        use_residual=args.mlp_type == 'residual',
+                        use_residual=args.mlp_type == "residual",
                         k=args.top_k,
                         min_capacity=args.min_capacity,
-                        noisy_gate_policy=args.noisy_gate_policy))
+                        noisy_gate_policy=args.noisy_gate_policy,
+                    )
+                )
             self.moe_layer_list = nn.ModuleList(self.moe_layer_list)
             self.fc4 = nn.Linear(84, 10)
         else:
@@ -65,10 +68,7 @@ class Net(nn.Module):
 def create_moe_param_groups(model):
     from deepspeed.moe.utils import split_params_into_different_moe_groups_for_optimizer
 
-    parameters = {
-        'params': [p for p in model.parameters()],
-        'name': 'parameters'
-    }
+    parameters = {"params": [p for p in model.parameters()], "name": "parameters"}
 
     return split_params_into_different_moe_groups_for_optimizer(parameters)
 
@@ -101,9 +101,7 @@ class CIFARTrial(DeepSpeedTrial):
             for_training=False,
         )
 
-    def train_batch(
-        self, iter_dataloader, epoch_idx, batch_idx
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, iter_dataloader, epoch_idx, batch_idx) -> Dict[str, torch.Tensor]:
         batch = self.context.to_device(next(iter_dataloader))
         inputs, labels = batch[0], batch[1]
         if self.fp16:

@@ -1,24 +1,23 @@
-from typing import Any, Dict, Union, Sequence
 import os
+from typing import Any, Dict, Sequence, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.datasets as dset
-from torch.optim.lr_scheduler import CosineAnnealingLR
-
-from determined.pytorch import (
-    PyTorchTrial,
-    PyTorchTrialContext,
-    DataLoader,
-    LRScheduler,
-    PyTorchCallback
-)
-
 from data import BilevelDataset
 from model_search import Network
 from optimizer import EG
-from utils import AttrDict, data_transforms_cifar10, accuracy
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from utils import AttrDict, accuracy, data_transforms_cifar10
+
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchCallback,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

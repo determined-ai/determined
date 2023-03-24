@@ -1,17 +1,25 @@
-import { Form, Input, ModalFuncProps, notification } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ModalFuncProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import Select from 'components/kit/Select';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
-import EditableTagList from 'components/TagList';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, ErrorType } from 'shared/utils/error';
+import { useWorkspaces } from 'stores/workspaces';
 import { Metadata } from 'types';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalModelCreate.module.scss';
 
@@ -19,11 +27,13 @@ const FORM_ID = 'create-model-form';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
+  workspaceId?: number;
 }
 
 interface FormInputs {
   description?: string;
   modelName: string;
+  workspaceId: number;
 }
 
 interface OpenProps {
@@ -53,12 +63,18 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
+const useModalModelCreate = ({ onClose, workspaceId }: Props = {}): ModalHooks => {
+  const { canCreateModelWorkspace } = usePermissions();
+  const loadableWorkspaces = useWorkspaces();
+  const isWorkspace = workspaceId !== undefined;
+  const workspaces = Loadable.match(loadableWorkspaces, {
+    Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace({ workspaceId: id })),
+    NotLoaded: () => [],
+  });
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
   const [form] = Form.useForm<FormInputs>();
   const modelName = Form.useWatch('modelName', form);
-
   const handleOnClose = useCallback(
     (reason?: ModalCloseReason) => {
       onClose?.(reason, modalState.checkpoints, modalState.modelName || undefined);
@@ -78,7 +94,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState({ ...newState, checkpoints, visible: true });
   }, []);
 
-  const createModel = useCallback(async (state: ModalState) => {
+  const createModel = useCallback(async (state: ModalState, workspaceId: number) => {
     const { modelDescription, tags, metadata, modelName } = state;
     try {
       const response = await postModel({
@@ -86,6 +102,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         labels: tags,
         metadata: metadata,
         name: modelName,
+        workspaceId,
       });
       if (!response?.id) return;
 
@@ -123,11 +140,14 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     async (state: ModalState) => {
       const values = await form.validateFields();
       if (values) {
-        await createModel({
-          ...state,
-          modelDescription: values.description ?? '',
-          modelName: values.modelName,
-        });
+        await createModel(
+          {
+            ...state,
+            modelDescription: values.description ?? '',
+            modelName: values.modelName,
+          },
+          values.workspaceId,
+        );
         form.resetFields();
       }
     },
@@ -154,26 +174,56 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
+  const workspaceItems = useMemo(
+    () =>
+      workspaces.map((ws) => ({
+        label: ws.name,
+        value: ws.id,
+      })),
+    [workspaces],
+  );
+
   const getModalContent = useCallback(
     (state: ModalState): React.ReactNode => {
       const { tags, metadata, expandDetails } = state;
 
       // We always render the form regardless of mode to provide a reference to it.
       return (
-        <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
-          <p className={css.directions}>
-            Create a registered model to organize important checkpoints.
-          </p>
-          <Form.Item
-            label="Model name"
-            name="modelName"
-            rules={[{ message: 'Model name is required ', required: true }]}>
-            <Input onChange={handleNameChange} />
-          </Form.Item>
-          <Form.Item label="Description (optional)" name="description">
-            <Input.TextArea onChange={handleDescriptionChange} />
-          </Form.Item>
-          {expandDetails ? (
+        <>
+          <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+            <p className={css.directions}>
+              Create a registered model to organize important checkpoints.
+            </p>
+            <Form.Item
+              initialValue={workspaceId}
+              label="Workspace"
+              name="workspaceId"
+              rules={[{ message: 'Please select a workspace', required: true }]}>
+              <Select
+                disabled={!workspaces.length || isWorkspace}
+                filterOption={(input, option) =>
+                  (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={workspaceItems}
+                placeholder="Select a workspace"
+              />
+            </Form.Item>
+            <Form.Item
+              label="Model name"
+              name="modelName"
+              rules={[{ message: 'Please input Model name', required: true }]}>
+              <Input onChange={handleNameChange} />
+            </Form.Item>
+            <Form.Item label="Description (optional)" name="description">
+              <Input.TextArea onChange={handleDescriptionChange} />
+            </Form.Item>
+            {!expandDetails && (
+              <p className={css.expandDetails} onClick={openDetails}>
+                Add More Details...
+              </p>
+            )}
+          </Form>
+          {expandDetails && (
             <>
               <div>
                 <h2>
@@ -189,19 +239,19 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                 <h2>
                   Tags <span>(optional)</span>
                 </h2>
-                <EditableTagList tags={tags} onChange={handleTagsChange} />
+                <Tags tags={tags} onAction={tagsActionHelper(tags, handleTagsChange)} />
               </div>
             </>
-          ) : (
-            <p className={css.expandDetails} onClick={openDetails}>
-              Add More Details...
-            </p>
           )}
-        </Form>
+        </>
       );
     },
     [
       form,
+      workspaceId,
+      workspaces.length,
+      isWorkspace,
+      workspaceItems,
       handleDescriptionChange,
       handleMetadataChange,
       handleNameChange,
@@ -212,19 +262,36 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
 
   const getModalProps = useCallback(
     (state: ModalState): Partial<ModalFuncProps> => {
+      const disableWorkspaceModelCreation = isWorkspace
+        ? !canCreateModelWorkspace({ workspaceId })
+        : false;
       return {
         className: css.base,
         closable: true,
         content: getModalContent(state),
         icon: null,
         maskClosable: true,
-        okButtonProps: { disabled: !modelName, form: FORM_ID, htmlType: 'submit' },
-        okText: 'Create Model',
+        okButtonProps: {
+          disabled: !modelName || (isWorkspace && disableWorkspaceModelCreation),
+          form: FORM_ID,
+          htmlType: 'submit',
+        },
+        okText: (
+          <Tooltip
+            placement="bottom"
+            title={
+              disableWorkspaceModelCreation
+                ? 'You do not have permission to create a model in this workspace!'
+                : undefined
+            }>
+            Create Model
+          </Tooltip>
+        ),
         onOk: () => handleOk(state),
-        title: 'Create Model',
+        title: '',
       };
     },
-    [getModalContent, handleOk, modelName],
+    [getModalContent, handleOk, modelName, isWorkspace, workspaceId, canCreateModelWorkspace],
   );
 
   /**

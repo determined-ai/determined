@@ -2,10 +2,10 @@
  Prepare Container Environment
 ###############################
 
-This section covers resources and operations you might need to set up your environment for training:
+Find resources and operations for preparing your container environment.
 
 +-------------------------------+----------------------------------------------------------------+
-| Topic                         | Documentation Content                                          |
+| Title                         | Description                                                    |
 +===============================+================================================================+
 | :doc:`set-environment-images` | Use Determined-provided containers that includes common deep   |
 |                               | learning libraries and frameworks for GPU and CPU training     |

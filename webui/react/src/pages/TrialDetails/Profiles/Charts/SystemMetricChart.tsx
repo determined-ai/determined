@@ -1,14 +1,16 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 
+import { LineChart } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
-import UPlotChart from 'components/UPlot/UPlotChart';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
+import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
@@ -18,8 +20,7 @@ export interface Settings {
   name?: string;
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'profiler-filters',
+const config = (trialId: number): SettingsConfig<Settings> => ({
   settings: {
     agentId: {
       defaultValue: undefined,
@@ -37,11 +38,11 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, string]),
     },
   },
-  storagePath: 'profiler-filters',
-};
+  storagePath: `profiler-filters-${trialId}`,
+});
 
-const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
-  const { settings, updateSettings } = useSettings<Settings>(config);
+const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
+  const { settings, updateSettings } = useSettings<Settings>(config(trial.id));
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
 
@@ -54,10 +55,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     settings.gpuUuid,
   );
 
-  const options = useMemo(
-    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
-    [getOptionsForMetrics, settings.name, systemMetrics.names],
-  );
+  const yLabel = getUnitForMetricName(settings.name ?? '');
 
   useEffect(() => {
     if (!systemSeries || (settings.agentId && settings.name)) return;
@@ -91,7 +89,14 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
         )
       }
       title="System Metrics">
-      <UPlotChart data={systemMetrics.data} options={options} />
+      <LineChart
+        experimentId={trial.id}
+        series={systemMetrics.data}
+        xAxis={XAxisDomain.Time}
+        xLabel="Time"
+        yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
+      />
     </Section>
   );
 };

@@ -1,6 +1,7 @@
-import { Pagination, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Pagination from 'components/kit/Pagination';
+import Tooltip from 'components/kit/Tooltip';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 
 import css from './RoutePagination.module.scss';

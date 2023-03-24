@@ -2,24 +2,17 @@ import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect } from 'react';
-import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
-import history from 'shared/routes/history';
-import { AuthProvider, useAuth } from 'stores/auth';
-import { DetailedUser } from 'types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { setAuth, setAuthChecked } from 'stores/auth';
+import usersStore from 'stores/users';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
 
-jest.mock('services/api', () => ({
-  ...jest.requireActual('services/api'),
+vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
-}));
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 interface Settings {
@@ -57,7 +50,6 @@ type ExtraHookReturn = {
 };
 
 const config: hook.SettingsConfig<Settings> = {
-  applicableRoutespace: 'settings/normal',
   settings: {
     boolean: {
       defaultValue: true,
@@ -90,11 +82,10 @@ const config: hook.SettingsConfig<Settings> = {
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'settings/normal',
+  storagePath: 'settings-normal',
 };
 
 const extraConfig: hook.SettingsConfig<ExtraSettings> = {
-  applicableRoutespace: 'settings/extra',
   settings: {
     extra: {
       defaultValue: 'what',
@@ -102,21 +93,20 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
       type: string,
     },
   },
-  storagePath: 'settings/extra',
+  storagePath: 'settings-extra',
 };
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
-  const { setAuth, setAuthCheck } = useAuth();
-
   useEffect(() => {
     setAuth({ isAuthenticated: true });
-    setAuthCheck();
+    setAuthChecked();
+    usersStore.updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <SettingsProvider>
-      <HistoryRouter history={history}>{children}</HistoryRouter>
+      <BrowserRouter>{children}</BrowserRouter>
     </SettingsProvider>
   );
 };
@@ -129,11 +119,9 @@ const setup = async (
   result: HookReturn;
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-    <StoreProvider>
-      <AuthProvider>
-        <Container>{children}</Container>
-      </AuthProvider>
-    </StoreProvider>
+    <UIProvider>
+      <Container>{children}</Container>
+    </UIProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
     wrapper: RouterWrapper,
@@ -162,7 +150,7 @@ describe('useSettings', () => {
   };
   const newExtraSettings = { extra: 'fancy' };
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it('should have default settings', async () => {
     const { result } = await setup();
@@ -171,24 +159,24 @@ describe('useSettings', () => {
       expect(result.container.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
 
-    expect(history.location.search).toBe('');
+    expect(window.location.search).toBe('');
   });
 
   it('should update settings', async () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
 
-    Object.values(config.settings).forEach((configProp) => {
+    for (const configProp of Object.values(config.settings)) {
       const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() =>
+      await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
-    });
+    }
 
-    waitFor(() => {
-      expect(history.location.search).toContain(
+    await waitFor(() => {
+      expect(window.location.search).toContain(
         [
           'boolean=false',
           'booleanArray=false&booleanArray=true',
@@ -205,7 +193,7 @@ describe('useSettings', () => {
     const { result } = await setup();
     await act(() => result.container.current.updateSettings(newSettings));
 
-    waitFor(() =>
+    await waitFor(() =>
       expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)),
     );
   });
@@ -214,14 +202,14 @@ describe('useSettings', () => {
     const { result } = await setup();
     await act(() => result.container.current.resetSettings());
 
-    Object.values(config.settings).forEach(async (configProp) => {
+    for (const configProp of Object.values(config.settings)) {
       const settingsKey = configProp.storageKey as keyof Settings;
       await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           configProp.defaultValue,
         ),
       );
-    });
+    }
   });
 
   it('should be able to keep track of multiple settings', async () => {
@@ -231,22 +219,18 @@ describe('useSettings', () => {
       extraResult.container.current.updateSettings(newExtraSettings);
     });
 
-    Object.values(config.settings).forEach((configProp) => {
-      const settingsKey = configProp.storageKey as keyof Settings;
-      waitFor(() =>
+    for (const configProp of Object.values(config.settings)) {
+      const settingsKey = configProp.storageKey as keyof Settings & keyof ExtraSettings;
+      await waitFor(() =>
         expect(result.container.current.settings[settingsKey]).toStrictEqual(
           newSettings[settingsKey],
         ),
       );
-    });
-
-    Object.values(config.settings).forEach((configProp) => {
-      const settingsKey = configProp.storageKey as keyof ExtraSettings;
-      waitFor(() =>
+      await waitFor(() =>
         expect(extraResult.container.current.settings[settingsKey]).toStrictEqual(
           newExtraSettings[settingsKey],
         ),
       );
-    });
+    }
   });
 });

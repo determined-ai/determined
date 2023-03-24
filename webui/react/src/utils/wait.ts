@@ -11,9 +11,9 @@ export interface WaitStatus {
 }
 
 export const commandToEventUrl = (command: Command | CommandTask): string => {
-  const kind = isCommandTask(command) ? command.type : command.kind;
+  const type = isCommandTask(command) ? command.type : command.type;
   let path = '';
-  switch (kind) {
+  switch (type) {
     case CommandType.JupyterLab:
       path = `/notebooks/${command.id}/events`;
       break;
@@ -44,8 +44,8 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
   const url = commandToEventUrl(command);
   if (!url || !command.serviceAddress) throw new Error(CANNOT_OPEN_COMMAND_ERROR);
 
-  const kind = isCommandTask(command) ? command.type : command.kind;
-  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind.toLowerCase()}/${command.id}`;
+  const type = isCommandTask(command) ? command.type : command.type;
+  const waitPath = `${process.env.PUBLIC_URL}/wait/${type.toLowerCase()}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   return waitPath + waitParams;
 };

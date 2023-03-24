@@ -39,6 +39,18 @@ You may intentionally leave this section blank and remove the title.
   See [Release Note](https://github.com/determined-ai/determined/blob/master/docs/release-notes/README.md) for details.
 - [ ] Licenses should be included for new code which was copied and/or modified from any external code.
 
+## Ticket
+<!---
+Retain the relevant line and replace 000 with ticket number.
+
+DET-000
+MLG-000
+WEB-000
+DESIGN-000
+No Ticket
+--->
+
+
 <!---
 ## Title
 

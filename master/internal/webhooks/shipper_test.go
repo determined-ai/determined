@@ -72,7 +72,7 @@ func TestShipper(t *testing.T) {
 	}))
 	go func() {
 		defer cancel()
-		if err := http.ListenAndServe(testURL, mux); err != nil {
+		if err := http.ListenAndServe(testURL, mux); err != nil { //nolint: gosec // This is a test.
 			t.Logf("http receiver failed: %v", err)
 		}
 	}()
@@ -133,15 +133,15 @@ func TestShipper(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		var config expconf.ExperimentConfig
+		config = schemas.WithDefaults(config)
 		for id, delay := range schedule {
 			time.Sleep(scheduledWaitToDuration(delay))
 			expected[id] = 3 // 3 sends, one for each trigger.
-			var conf expconf.ExperimentConfig
 			require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-				ID:     id,
-				State:  model.CompletedState,
-				Config: schemas.WithDefaults(conf),
-			}))
+				ID:    id,
+				State: model.CompletedState,
+			}, config))
 			progress.Store(int64(id))
 		}
 	}()

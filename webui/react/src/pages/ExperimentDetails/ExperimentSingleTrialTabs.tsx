@@ -1,13 +1,16 @@
-import { Button, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import Button from 'components/kit/Button';
+import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
+import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
@@ -76,6 +79,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openHyperparameterSearchModal,
   } = useModalHyperparameterSearch({ experiment });
+  const chartFlagOn = useFeature().isOn('chart');
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 
@@ -213,6 +217,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           <Spinner spinning={true} tip="Waiting for trials..." />
         ) : wontHaveTrials ? (
           <NeverTrials />
+        ) : chartFlagOn ? (
+          <F_TrialDetailsOverview experiment={experiment} trial={trialDetails} />
         ) : (
           <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
         ),
@@ -294,6 +300,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     trialDetails,
     waitingForTrials,
     wontHaveTrials,
+    chartFlagOn,
   ]);
 
   return (
@@ -301,7 +308,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <Tabs
+      <Pivot
         activeKey={tabKey}
         items={tabItems}
         tabBarExtraContent={
@@ -311,7 +318,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             </div>
           ) : undefined
         }
-        tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}
       />
       {modalHyperparameterSearchContextHolder}

@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
+import { LineChart } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
-import UPlotChart from 'components/UPlot/UPlotChart';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
+import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
-const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
+const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const throughputMetrics = useFetchProfilerMetrics(
     trial.id,
     trial.state,
@@ -17,14 +19,18 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, tri
     undefined,
   );
 
-  const options = useMemo(
-    () => getOptionsForMetrics('samples_per_second', throughputMetrics.names),
-    [getOptionsForMetrics, throughputMetrics.names],
-  );
+  const yLabel = getUnitForMetricName('samples_per_second');
 
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
-      <UPlotChart data={throughputMetrics.data} options={options} />
+      <LineChart
+        experimentId={trial.id}
+        series={throughputMetrics.data}
+        xAxis={XAxisDomain.Time}
+        xLabel="Time"
+        yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
+      />
     </Section>
   );
 };

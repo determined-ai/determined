@@ -1,17 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { Metadata } from 'types';
 
-import EditableMetadata from './EditableMetadata';
+import EditableMetadata, { ADD_ROW_TEXT } from './EditableMetadata';
+import {
+  DELETE_ROW_LABEL,
+  METADATA_KEY_PLACEHOLDER,
+  METADATA_VALUE_PLACEHOLDER,
+} from './EditableRow';
 
 const initMetadata = { hello: 'world', testing: 'metadata' };
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = (metadata: Metadata = {}, editing = false) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
     <EditableMetadata editing={editing} metadata={metadata} updateMetadata={handleOnChange} />,
   );
@@ -36,15 +40,16 @@ describe('EditableMetadata', () => {
     };
     const { handleOnChange } = setup(initMetadata, true);
 
-    const addRow = screen.getByText('+ Add Row');
+    const addRow = screen.getByText(ADD_ROW_TEXT);
     await user.click(addRow);
 
-    const keyInputs = screen.getAllByPlaceholderText('Enter metadata label');
+    const keyInputs = screen.getAllByPlaceholderText(METADATA_KEY_PLACEHOLDER);
     const keyInput = keyInputs.last();
     await user.click(keyInput);
     await user.type(keyInput, additionKey);
 
-    const valueInput = keyInput.nextSibling as HTMLElement;
+    const valueInputs = screen.getAllByPlaceholderText(METADATA_VALUE_PLACEHOLDER);
+    const valueInput = valueInputs.last();
     await user.click(valueInput);
     await user.type(valueInput, additionValue);
 
@@ -61,7 +66,7 @@ describe('EditableMetadata', () => {
 
     const actionButton = view.getAllByRole('button', { name: 'action' })[removalIndex];
     await user.click(actionButton);
-    user.click(await view.findByText('Delete Row', undefined, { container: actionButton }));
+    user.click(await view.findByText(DELETE_ROW_LABEL, undefined, { container: actionButton }));
 
     await waitFor(() => {
       expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);

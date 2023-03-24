@@ -1,11 +1,10 @@
-import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { relativeTimeRenderer } from 'components/Table/Table';
-import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -176,11 +175,6 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'user',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
     key: 'user',
-    render: (_: unknown, record: Job): ReactNode => (
-      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-        <Avatar userId={record.userId} />
-      </div>
-    ),
     title: 'User',
   },
   {

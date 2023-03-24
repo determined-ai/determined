@@ -2,7 +2,7 @@ $tooltip-offset: 5px;
 
 .point {
   border-radius: 100%;
-  display: none;
+  display: none !important;
   position: absolute;
   transform: translate(-50%, -50%);
 }

@@ -389,6 +389,8 @@ class EstimatorTrialController(det.TrialController):
     ) -> None:
         super().__init__(context, *args, **kwargs)
 
+        self.metric_writer = self._create_metric_writer()
+
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
         # crashes/OOM. We cannot reliable tell the user that this was the cause of
@@ -477,10 +479,7 @@ class EstimatorTrialController(det.TrialController):
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
 
-    @classmethod
-    def create_metric_writer(
-        cls: Type["EstimatorTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
+    def _create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
@@ -540,17 +539,8 @@ class EstimatorTrialController(det.TrialController):
         def wrapper(*args: Any, **kwargs: Any) -> tf.data.Dataset:
             ds = f(*args, **kwargs)
 
-            if self.context.experimental.get_train_cacheable().is_decorator_used():
-                check.false(
-                    self.context.dataset_initialized,
-                    "Please do not use: `context.wrap_dataset(dataset)` if using "
-                    "`@context.experimental.cache_train_dataset(dataset_name, dataset_version)` "
-                    "and `@context.experimental.cache_validation_dataset(dataset_name, "
-                    "dataset_version)`.",
-                )
-            else:
-                check.true(
-                    self.context.dataset_initialized,
+            if not self.context.dataset_initialized:
+                raise RuntimeError(
                     "Please pass your datasets (train and test) into "
                     "`context.wrap_dataset(dataset)` right after creating them.",
                 )
@@ -828,7 +818,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4``).
+    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

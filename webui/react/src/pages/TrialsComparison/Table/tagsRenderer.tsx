@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 
-import TagList, { TagAction } from 'components/Tags';
+import Tags, { TagAction } from 'components/kit/Tags';
 import { updateTrialTags } from 'services/api';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
@@ -28,7 +28,7 @@ interface Props {
   tags: string[];
 }
 
-const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
+const TagList: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
   const [tags, setTags] = useState(_tags);
 
   useEffect(() => setTags(_tags), [_tags]);
@@ -52,11 +52,11 @@ const Tags: React.FC<Props> = ({ tags: _tags, onAdd, onRemove }) => {
     }
   };
 
-  return <TagList compact tags={tags} onAction={handleTagAction} />;
+  return <Tags compact tags={tags} onAction={handleTagAction} />;
 };
 
 const trialTagsRenderer = (value: string, record: V1AugmentedTrial): ReactNode => (
-  <Tags
+  <TagList
     tags={Object.keys(record.tags)}
     onAdd={addTagFunc(record.trialId)}
     onRemove={removeTagFunc(record.trialId)}

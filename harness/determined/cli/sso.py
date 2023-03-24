@@ -13,21 +13,24 @@ from determined.errors import EnterpriseOnlyError
 CLI_REDIRECT_PORT = 49176
 
 
+def handle_token(master_url: str, token: str) -> None:
+    tmp_auth = {"Cookie": "auth={token}".format(token=token)}
+    me = api.get(master_url, "/users/me", headers=tmp_auth, authenticated=False).json()
+
+    token_store = authentication.TokenStore(master_url)
+    token_store.set_token(me["username"], token)
+    token_store.set_active(me["username"])
+
+    print("Authenticated as {}.".format(me["username"]))
+
+
 def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
     class TokenAcceptHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             try:
                 """Serve a GET request."""
                 token = parse_qs(urlparse(self.path).query)["token"][0]
-
-                tmp_auth = {"Cookie": "auth={token}".format(token=token)}
-                me = api.get(master_url, "/users/me", headers=tmp_auth, authenticated=False).json()
-
-                token_store = authentication.TokenStore(master_url)
-                token_store.set_token(me["username"], token)
-                token_store.set_active(me["username"])
-
-                print("Authenticated as {}.".format(me["username"]))
+                handle_token(master_url, token)
 
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
@@ -73,17 +76,36 @@ def sso(parsed_args: Namespace) -> None:
         matched_provider = matching_providers[0]
 
     sso_url = matched_provider["sso_url"] + "?relayState=cli"
-    webbrowser.open(sso_url)
-    print(
-        "Your browser should open and prompt you to sign on;"
-        " if it did not, please visit {}".format(sso_url)
-    )
 
-    with HTTPServer(
-        ("localhost", CLI_REDIRECT_PORT),
-        make_handler(parsed_args.master, lambda code: sys.exit(code)),
-    ) as httpd:
-        httpd.serve_forever()
+    if not parsed_args.headless:
+        if webbrowser.open(sso_url):
+            print(
+                "Your browser should open and prompt you to sign on;"
+                " if it did not, please visit {}".format(sso_url)
+            )
+            with HTTPServer(
+                ("localhost", CLI_REDIRECT_PORT),
+                make_handler(parsed_args.master, lambda code: sys.exit(code)),
+            ) as httpd:
+                return httpd.serve_forever()
+
+        print("Failed to open Web Browser. Falling back to --headless CLI mode.")
+
+    example_url = f"Example: 'http://localhost:{CLI_REDIRECT_PORT}/?token=v2.public.[long_str]'"
+
+    print(
+        f"Please open this URL in your browser: '{sso_url}'\n"
+        "After authenticating, copy/paste the localhost URL "
+        f"from your browser into the prompt.\n{example_url}"
+    )
+    token = None
+    while not token:
+        user_input_url = input("\nlocalhost URL? ")
+        try:
+            token = parse_qs(urlparse(user_input_url).query)["token"][0]
+            handle_token(parsed_args.master, token)
+        except (KeyError, IndexError):
+            print("Could not extract token from localhost URL. {example_url}")
 
 
 def list_providers(parsed_args: Namespace) -> None:
@@ -108,7 +130,8 @@ args_description = [
         Cmd("login", sso, "sign on with an auth provider", [
             Arg("-p", "--provider", type=str,
                 help="auth provider to use (not needed if the Determined master only supports"
-                " one provider)")
+                " one provider)"),
+            Arg("--headless", action="store_true", help="force headless cli auth")
         ]),
         Cmd("list-providers", list_providers, "lists the available auth providers", []),
     ])

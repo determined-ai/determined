@@ -28,7 +28,6 @@ type MockTask struct {
 	Group          *MockGroup
 	SlotsNeeded    int
 	NonPreemptible bool
-	Label          string
 	ResourcePool   string
 	AllocatedAgent *MockAgent
 	// Any test that set this to false is half wrong. It is used as a proxy to oversubscribe agents.
@@ -48,7 +47,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 			Name:              string(t.ID),
 			SlotsNeeded:       t.SlotsNeeded,
 			Preemptible:       !t.NonPreemptible,
-			AgentLabel:        t.Label,
 			ResourcePool:      t.ResourcePool,
 			AllocationRef:     ctx.Self(),
 		}
@@ -133,7 +131,6 @@ func MockTaskToAllocateRequest(
 		AllocationID:      mockTask.ID,
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.SlotsNeeded,
-		AgentLabel:        mockTask.Label,
 		IsUserVisible:     true,
 		AllocationRef:     allocationRef,
 		Preemptible:       !mockTask.NonPreemptible,
@@ -144,7 +141,6 @@ func MockTaskToAllocateRequest(
 
 type MockAgent struct {
 	ID                    string
-	Label                 string
 	Slots                 int
 	SlotsUsed             int
 	MaxZeroSlotContainers int
@@ -153,7 +149,6 @@ type MockAgent struct {
 
 func NewMockAgent(
 	id string,
-	label string,
 	slots int,
 	slotsUsed int,
 	maxZeroSlotContainers int,
@@ -161,7 +156,6 @@ func NewMockAgent(
 ) *MockAgent {
 	return &MockAgent{
 		ID:                    id,
-		Label:                 label,
 		Slots:                 slots,
 		SlotsUsed:             slotsUsed,
 		MaxZeroSlotContainers: maxZeroSlotContainers,

@@ -1,11 +1,14 @@
-import { Button, Select, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Button from 'components/kit/Button';
+import Card from 'components/kit/Card';
+import Empty from 'components/kit/Empty';
+import Select, { Option } from 'components/kit/Select';
+import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -17,26 +20,25 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import Toggle from 'components/Toggle';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
+import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
+import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -44,16 +46,12 @@ import settingsConfig, {
   WorkspaceColumnName,
   WorkspaceListSettings,
 } from './WorkspaceList.settings';
-import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
-import WorkspaceCard from './WorkspaceList/WorkspaceCard';
-
-const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const user = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -133,7 +131,7 @@ const WorkspaceList: React.FC = () => {
 
   const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose || Loadable.isLoading(users)) return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
@@ -143,12 +141,16 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
+        updateSettings({
+          user: users.data.filter((u) => u.id !== user?.id).map((u) => u.id),
+        });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
+    if (Loadable.isLoading(users)) return [];
+
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
     );
@@ -178,7 +180,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.data.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -208,7 +210,7 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [fetchWorkspaces]);
+  }, [fetchWorkspaces, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -273,7 +275,7 @@ const WorkspaceList: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
+          <Card.Group size="medium">
             {workspaces.map((workspace) => (
               <WorkspaceCard
                 fetchWorkspaces={fetchWorkspaces}
@@ -281,7 +283,7 @@ const WorkspaceList: React.FC = () => {
                 workspace={workspace}
               />
             ))}
-          </Grid>
+          </Card.Group>
         );
       case GridListView.List:
         return (
@@ -290,7 +292,7 @@ const WorkspaceList: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={workspaces}
-            loading={isLoading}
+            loading={isLoading || Loadable.isLoading(users)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -311,6 +313,7 @@ const WorkspaceList: React.FC = () => {
     fetchWorkspaces,
     isLoading,
     settings,
+    users,
     total,
     updateSettings,
     workspaces,
@@ -336,39 +339,23 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button
-          className={css.disableOverride}
-          disabled={!canCreateWorkspace}
-          title={canCreateWorkspace ? undefined : 'User lacks permission to create workspace'}
-          onClick={handleWorkspaceCreateClick}>
+        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
           New Workspace
         </Button>
       }
       title="Workspaces">
       <div className={css.controls}>
-        <SelectFilter
-          dropdownMatchSelectWidth={160}
-          showSearch={false}
-          value={settings.whose}
-          onSelect={handleViewSelect}>
+        <Select value={settings.whose} width={180} onSelect={handleViewSelect}>
           <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
           <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
           <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
-        </SelectFilter>
+        </Select>
         <Space wrap>
-          <Toggle
-            checked={settings.archived}
-            prefixLabel="Show Archived"
-            onChange={switchShowArchived}
-          />
-          <SelectFilter
-            dropdownMatchSelectWidth={150}
-            showSearch={false}
-            value={settings.sortKey}
-            onSelect={handleSortSelect}>
+          <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
+          <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
-          </SelectFilter>
+          </Select>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
@@ -376,15 +363,11 @@ const WorkspaceList: React.FC = () => {
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="workspaces" size="mega" />
-            </div>
-            <h4>No Workspaces</h4>
-            <p className={css.description}>
-              Create a workspace to keep track of related projects and experiments.
-            </p>
-          </div>
+          <Empty
+            description="Create a workspace to keep track of related projects and experiments."
+            icon="workspaces"
+            title="No Workspaces"
+          />
         ) : (
           <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
         )}

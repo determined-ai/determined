@@ -5,7 +5,6 @@ import socket
 import tempfile
 from typing import Any, List, Optional
 
-import determined as det
 from determined import constants, ipc
 
 
@@ -61,18 +60,19 @@ class DistributedContext:
         self.cross_rank = cross_rank if cross_rank is not None else 0
         self.cross_size = cross_size if cross_size is not None else 1
 
-        self._pub_port = pub_port + port_offset
-        self._pull_port = pull_port + port_offset
+        self._pub_port = pub_port
+        self._pull_port = pull_port
         self._chief_ip = chief_ip
 
         self._is_chief = self.rank == 0
         self._is_local_chief = self.local_rank == 0
 
-        if self.cross_size > 1:
+        if self.local_size != self.size:
             if chief_ip is None:
                 raise AssertionError(
-                    f"rank_info has cross_size ({self.cross_size}) but chief_ip was not "
-                    "provided.  When cross_size > 1, the chief_ip parameter is required."
+                    f"This is a distributed job (local_size {self.local_size} != size {self.size}) "
+                    "but chief_ip was none provided.  When cross_size > 1, the chief_ip parameter "
+                    "is required."
                 )
             self._chief_ip = chief_ip
         else:
@@ -110,13 +110,13 @@ class DistributedContext:
             )
             self._worker_zmq.safe_start()
 
-        if self.local_size < 2:
-            # No local broadcasting necessary.
-            return
-
         # Local broadcast server.
         self.tempdir = None
-        if self._is_local_chief:
+        if self.local_size < 2:
+            # If local size is less than 2, we don't need a local chief but still need to
+            # participate in the global all gather, otherwise the other participants block forever.
+            _ = self.allgather(None)
+        elif self._is_local_chief:
             pub_url = None
             pull_url = None
             if hasattr(socket, "AF_UNIX") and not force_tcp:
@@ -189,7 +189,6 @@ class DistributedContext:
             cross_rank=hvd.cross_rank(),
             cross_size=hvd.cross_size(),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -210,7 +209,6 @@ class DistributedContext:
             cross_rank=int(os.environ["CROSS_RANK"]),
             cross_size=int(os.environ["CROSS_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -231,7 +229,6 @@ class DistributedContext:
             cross_rank=int(os.environ["GROUP_RANK"]),
             cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     def close(self) -> None:
@@ -419,10 +416,3 @@ class DummyDistributedContext(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
-
-
-def _get_training_port_offset() -> int:
-    info = det.get_cluster_info()
-    if info and info.task_type == "TRIAL":
-        return info.trial._unique_port_offset
-    return 0

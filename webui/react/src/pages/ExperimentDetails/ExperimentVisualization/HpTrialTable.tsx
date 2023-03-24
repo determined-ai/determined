@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { TablePaginationConfig } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -11,7 +12,7 @@ import {
   MINIMUM_PAGE_SIZE,
 } from 'components/Table/Table';
 import { paths } from 'routes/utils';
-import { Primitive, RecordKey } from 'shared/types';
+import { Primitive, UnknownRecord } from 'shared/types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
@@ -32,11 +33,10 @@ interface Props {
   selectedRowKeys?: number[];
   selection?: boolean;
   trialHps: TrialHParams[];
-  trialIds: number[];
 }
 
 export interface TrialHParams {
-  hparams: Record<RecordKey, Primitive>;
+  hparams: UnknownRecord; // With Custom Searchers, our Record could be anything
   id: number;
   metric: number | null;
 }
@@ -50,7 +50,6 @@ const HpTrialTable: React.FC<Props> = ({
   onMouseEnter,
   onMouseLeave,
   trialHps,
-  trialIds,
   experimentId,
   selection,
   handleTableRowSelect,
@@ -65,8 +64,7 @@ const HpTrialTable: React.FC<Props> = ({
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex((trialId) => trialId === record.id);
-      let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      let color = glasbeyColor(record.id);
       if (record.metric != null && colorScale) {
         const scaleRange = colorScale[1].scale - colorScale[0].scale;
         const distance = (record.metric - colorScale[0].scale) / scaleRange;
@@ -136,10 +134,10 @@ const HpTrialTable: React.FC<Props> = ({
     });
 
     return [idColumn, metricColumn, ...hpColumns];
-  }, [colorScale, hyperparameters, metric, trialIds, experimentId]);
+  }, [colorScale, hyperparameters, metric, experimentId]);
 
-  const handleTableChange = useCallback((tablePagination: any) => {
-    setPageSize(tablePagination.pageSize);
+  const handleTableChange = useCallback((tablePagination: TablePaginationConfig) => {
+    setPageSize(tablePagination.pageSize ?? 10);
   }, []);
 
   const handleTableRow = useCallback(

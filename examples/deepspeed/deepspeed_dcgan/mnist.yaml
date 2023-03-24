@@ -15,7 +15,7 @@ environment:
         # You may need to modify this to match your network configuration.                          
         - NCCL_SOCKET_IFNAME=ens,eth,ib
     image:
-        gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-5158dec
+      gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.19.11
 bind_mounts:
     - host_path: /tmp
       container_path: /data

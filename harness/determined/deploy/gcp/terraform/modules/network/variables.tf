@@ -15,3 +15,5 @@ variable "subnetwork" {
   default = null
 }
 
+variable "labels" {
+}

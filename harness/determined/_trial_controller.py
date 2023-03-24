@@ -5,7 +5,6 @@ from typing import Any, Optional, Type
 
 import determined as det
 from determined import profiler, tensorboard, workload
-from determined.tensorboard.util import get_rank_aware_path
 
 
 class _DistributedBackend:
@@ -64,7 +63,6 @@ class TrialController(metaclass=abc.ABCMeta):
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
             logging.getLogger().setLevel(log_level)
-        self.metric_writer = self.create_metric_writer()
 
     @classmethod
     @abc.abstractmethod
@@ -102,16 +100,11 @@ class TrialController(metaclass=abc.ABCMeta):
     def supports_mixed_precision(cls: Type["TrialController"]) -> bool:
         return False
 
-    @classmethod
-    @abc.abstractmethod
-    def create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
-        pass
-
     def close(self) -> None:
         self.context.close()
 
     def upload_tb_files(self) -> None:
         self.context._core.train.upload_tensorboard_files(
             (lambda _: True) if self.is_chief else (lambda p: not p.match("*tfevents*")),
-            get_rank_aware_path,
+            tensorboard.util.get_rank_aware_path,
         )

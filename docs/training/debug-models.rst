@@ -4,7 +4,7 @@
  How to Debug Models
 #####################
 
-This document recommends how to use Determined to debug models depending on your environment.
+Using Determined to debug models depends on your environment.
 
 Your code on a Determined cluster differs from typical training scripts in the following ways:
 
@@ -45,8 +45,8 @@ Successful cluster installation as described in :ref:`Install the Determined clu
  Step 1 - Verify that your code runs locally
 *********************************************
 
-This step assumes you have ported your model from code outside of Determined. Otherwise, skip to
-:ref:`Step 2 <step2>`.
+This step assumes you have ported (converted) your model from code outside of Determined. Otherwise,
+skip to :ref:`Step 2 <step2>`.
 
 Confirm that your code works as expected before continuing.
 

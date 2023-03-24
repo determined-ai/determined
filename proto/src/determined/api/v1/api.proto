@@ -315,6 +315,7 @@ service Determined {
   rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) {
     option (google.api.http) = {
       post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
@@ -1301,6 +1302,16 @@ service Determined {
       tags: "Models"
     };
   }
+  // Move a model into a workspace
+  rpc MoveModel(MoveModelRequest) returns (MoveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_name}/move",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
   // Delete a model
   rpc DeleteModel(DeleteModelRequest) returns (DeleteModelResponse) {
     option (google.api.http) = {
@@ -1450,17 +1461,6 @@ service Determined {
     };
   }
 
-  // Get the set of metric names recorded for a trial.
-  rpc ExpCompareMetricNames(ExpCompareMetricNamesRequest)
-      returns (stream ExpCompareMetricNamesResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/trials/metrics-stream/metric-names"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
   // Get the milestones (in batches processed) at which a metric is recorded by
   // an experiment.
   rpc MetricBatches(MetricBatchesRequest)
@@ -1489,17 +1489,6 @@ service Determined {
   rpc TrialsSample(TrialsSampleRequest) returns (stream TrialsSampleResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-sample"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
-  // Get a sample of the metrics over time for a sample of the trials.
-  rpc ExpCompareTrialsSample(ExpCompareTrialsSampleRequest)
-      returns (stream ExpCompareTrialsSampleResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/experiments-compare"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -1973,6 +1962,28 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
+    };
+  }
+
+  // Get projects by user activity
+  rpc GetProjectsByUserActivity(GetProjectsByUserActivityRequest)
+      returns (GetProjectsByUserActivityResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/projects/activity"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+
+  // Get experiments with grouping and search syntax
+  rpc SearchExperiments(SearchExperimentsRequest)
+      returns (SearchExperimentsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments-search"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Experiments", "Internal" ]
     };
   }
 }

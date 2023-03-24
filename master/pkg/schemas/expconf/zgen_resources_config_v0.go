@@ -65,17 +65,6 @@ func (r *ResourcesConfigV0) SetShmSize(val *int) {
 	r.RawShmSize = val
 }
 
-func (r ResourcesConfigV0) AgentLabel() string {
-	if r.RawAgentLabel == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .AgentLabel")
-	}
-	return *r.RawAgentLabel
-}
-
-func (r *ResourcesConfigV0) SetAgentLabel(val string) {
-	r.RawAgentLabel = &val
-}
-
 func (r ResourcesConfigV0) ResourcePool() string {
 	if r.RawResourcePool == nil {
 		panic("You must call WithDefaults on ResourcesConfigV0 before .ResourcePool")

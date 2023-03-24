@@ -1,13 +1,15 @@
 import copy
 import logging
-import numpy as np
 import pickle
 import random
-import torch.utils.data as data
 
-from detectron2.utils.serialize import PicklableWrapper
+import numpy as np
+import torch.utils.data as data
 from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.utils.serialize import PicklableWrapper
+
 from .utils import *
+
 
 class MapDataset(data.Dataset):
     """
@@ -53,10 +55,12 @@ class MapDataset(data.Dataset):
                     )
                 )
 
+
 class FakeMapperDataset(data.Dataset):
     """
     Used to test implementation with fake data
     """
+
     def __init__(self, map_func):
         _map_func = PicklableWrapper(map_func)  # wrap so that a lambda will work
         mask = make_mask()
@@ -70,6 +74,7 @@ class FakeMapperDataset(data.Dataset):
     def __getitem__(self, idx):
 
         return self.data
+
 
 class DatasetFromList(data.Dataset):
     """
@@ -163,5 +168,3 @@ class AspectRatioGroupedDataset(data.IterableDataset):
             if len(bucket) == self.batch_size:
                 yield bucket[:]
                 del bucket[:]
-
-

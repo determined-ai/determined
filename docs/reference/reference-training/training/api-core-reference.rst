@@ -1,13 +1,13 @@
 .. _core-reference:
 
-####################
- Core API Reference
-####################
+############################
+ ``det.core`` API Reference
+############################
 
 +-----------------------------------------------+
 | User Guide                                    |
 +===============================================+
-| :doc:`/training/apis-howto/api-core/overview` |
+| :doc:`/training/apis-howto/api-core-ug`       |
 +-----------------------------------------------+
 
 **************************
@@ -88,13 +88,6 @@
 *************************************
 
 .. autoclass:: determined.core.TensorboardMode
-
-****************************
- ``determined.ClusterInfo``
-****************************
-
-.. autoclass:: determined.ClusterInfo
-   :members:
 
 **************************
  ``determined.TrialInfo``

@@ -42,7 +42,7 @@ def check_version(parsed_args: argparse.Namespace) -> None:
             termcolor.colored(
                 "Master not found at {}. "
                 "Hint: Remember to set the DET_MASTER environment variable "
-                "to the correct Determined master IP or use the '-m' flag.".format(
+                "to the correct Determined master IP and port or use the '-m' flag.".format(
                     parsed_args.master
                 ),
                 "yellow",

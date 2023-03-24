@@ -5,6 +5,7 @@ from determined.cli._util import (
     setup_session,
     require_feature_flag,
     login_sdk_client,
+    print_warnings,
 )
 from determined.cli import (
     agent,
@@ -16,6 +17,7 @@ from determined.cli import (
     model,
     notebook,
     project,
+    rbac,
     remote,
     render,
     resources,

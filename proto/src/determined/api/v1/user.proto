@@ -23,6 +23,8 @@ message GetUsersRequest {
     SORT_BY_ACTIVE = 4;
     // Returns users sorted by modified time.
     SORT_BY_MODIFIED_TIME = 5;
+    // Returns users sorted by username unless display name exist.
+    SORT_BY_NAME = 6;
   }
   // Sort users by the given field.
   SortBy sort_by = 1;
@@ -34,6 +36,9 @@ message GetUsersRequest {
   int32 offset = 3;
   // Limit the number of projects. A value of 0 denotes no limit.
   int32 limit = 4;
+
+  // Filter by username or display name.
+  string name = 5;
 }
 // Response to GetUsersRequest.
 message GetUsersResponse {

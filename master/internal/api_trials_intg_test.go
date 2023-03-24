@@ -45,7 +45,7 @@ func createTestTrial(
 }
 
 func TestTrialAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	trial := createTestTrial(t, api, curUser)
 
 	cases := []struct {
@@ -168,11 +168,6 @@ func TestTrialAuthZ(t *testing.T) {
 				TrialId: int32(id),
 			})
 			return err
-		}, false},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			return api.ExpCompareMetricNames(&apiv1.ExpCompareMetricNamesRequest{
-				TrialId: []int32{int32(id)},
-			}, mockStream[*apiv1.ExpCompareMetricNamesResponse]{ctx})
 		}, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{

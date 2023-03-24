@@ -38,6 +38,7 @@ type ExperimentPermissionSet = {
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
 };
@@ -148,6 +149,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
 
+  [ExperimentAction.Edit]: (experiment) => !experiment?.parentArchived && !experiment?.archived,
+
   [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.Fork]: isExperimentForkable,
@@ -204,6 +207,11 @@ export const getActionsForExperiment = (
 
         case ExperimentAction.Move:
           return permissions.canMoveExperiment({ experiment });
+
+        case ExperimentAction.Edit:
+          return permissions.canModifyExperimentMetadata({
+            workspace: { id: experiment?.workspaceId },
+          });
 
         case ExperimentAction.Activate:
         case ExperimentAction.Archive:

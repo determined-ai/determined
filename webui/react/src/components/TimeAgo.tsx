@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { ValueOf } from 'shared/types';
 import { isNumber, isString } from 'shared/utils/data';
 import {

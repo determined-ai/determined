@@ -7,6 +7,13 @@
     color: var(--theme-float-on);
     margin-bottom: -8px;
   }
+  .pre {
+    white-space: pre;
+  }
+  :global(mark) {
+    background-color: var(--theme-stage);
+    color: var(--theme-surface-on);
+  }
   :global(p) {
     margin: 0;
   }

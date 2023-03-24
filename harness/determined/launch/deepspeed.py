@@ -62,8 +62,10 @@ def get_hostfile_path(multi_machine: bool, allocation_id: str) -> Optional[str]:
 
 
 def create_hostlist_file(
-    hostfile_path: Optional[str], num_proc_per_machine: int, ip_addresses: List[str]
+    hostfile_path: Optional[str], host_slot_counts: List[int], ip_addresses: List[str]
 ) -> str:
+    assert len(host_slot_counts) == len(ip_addresses), "don't know slots for each node"
+
     trial_runner_hosts = ip_addresses.copy()
     # In the single node case, deepspeed doesn't use pdsh so we don't need to launch sshd.
     # Instead, the deepspeed launcher will use localhost as the chief worker ip.
@@ -73,7 +75,10 @@ def create_hostlist_file(
     if hostfile_path is not None and not os.path.exists(hostfile_path):
         os.makedirs(os.path.dirname(hostfile_path), exist_ok=True)
         with open(hostfile_path, "w") as hostfile:
-            lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
+            lines = [
+                f"{host} slots={slots}\n"
+                for host, slots in zip(trial_runner_hosts, host_slot_counts)
+            ]
             hostfile.writelines(lines)
     return trial_runner_hosts[0]
 
@@ -142,6 +147,8 @@ def create_deepspeed_env_file() -> None:
         "DET_CHIEF_IP",
         "DET_MANUAL_INIT_DISTRIBUTED",
         "DET_DEEPSPEED_HOSTFILE_PATH",
+        "DET_MASTER_CERT_FILE",
+        "DET_MASTER_CERT_NAME",
     ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
@@ -199,7 +206,7 @@ def main(script: List[str]) -> int:
     resources_id = os.environ.get("DET_RESOURCES_ID")
     assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 
-    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    # TODO: refactor websocket and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
     certs.cli_cert = cert
 
@@ -232,7 +239,7 @@ def main(script: List[str]) -> int:
     with filelock.FileLock(lock):
         master_address = create_hostlist_file(
             hostfile_path=hostfile_path,
-            num_proc_per_machine=len(info.slot_ids),
+            host_slot_counts=info.container_slot_counts,
             ip_addresses=info.container_addrs,
         )
 

@@ -3,7 +3,7 @@ import logging
 import os
 import posixpath
 import urllib
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List
 
 from .base import Fetcher
 
@@ -16,44 +16,33 @@ class GCSFetcher(Fetcher):
 
         self.client = google.cloud.storage.Client()
         self.bucket_name = str(storage_config["bucket"])
+        self.bucket = self.client.bucket(self.bucket_name)
 
         self.local_dir = local_dir
         self.storage_paths = storage_paths
         self._file_records = {}  # type: Dict[str, datetime.datetime]
 
-    def _list(self, prefix: str) -> Generator[Tuple[str, datetime.datetime], None, None]:
-        logger.debug(f"Listing keys in bucket '{self.bucket_name}' with '{prefix}'")
-        prefix = urllib.parse.urlparse(prefix).path.lstrip("/")
+    def _list(self, storage_path: str) -> Generator[str, None, None]:
+        logger.debug(
+            f"Listing keys in bucket: '{self.bucket_name}' with storage_path: '{storage_path}'"
+        )
+        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
         blobs = self.client.list_blobs(self.bucket_name, prefix=prefix)
 
         for blob in blobs:
-            yield (blob.name, blob.updated)
+            filepath, mtime = blob.name, blob.updated
+            prev_mtime = self._file_records.get(filepath)
+            if prev_mtime is not None and prev_mtime >= mtime:
+                continue
+            self._file_records[filepath] = mtime
+            yield blob.name
 
-    def fetch_new(self) -> int:
-        new_files = []
-        bucket = self.client.bucket(self.bucket_name)
+    def _fetch(self, filepath: str, new_file_callback: Callable) -> None:
+        local_path = posixpath.join(self.local_dir, self.bucket_name, filepath)
+        dir_path = os.path.dirname(local_path)
+        os.makedirs(dir_path, exist_ok=True)
 
-        # Look at all files in our storage location.
-        for storage_path in self.storage_paths:
-            logger.debug(f"Looking at path: {storage_path}")
+        self.bucket.blob(filepath).download_to_filename(local_path)
 
-            for filepath, mtime in self._list(storage_path):
-                prev_mtime = self._file_records.get(filepath)
-
-                if prev_mtime is not None and prev_mtime >= mtime:
-                    continue
-
-                new_files.append(filepath)
-                self._file_records[filepath] = mtime
-
-        # Download the new or updated files.
-        for filepath in new_files:
-            local_path = posixpath.join(self.local_dir, self.bucket_name, filepath)
-            dir_path = os.path.dirname(local_path)
-            os.makedirs(dir_path, exist_ok=True)
-
-            bucket.blob(filepath).download_to_filename(local_path)
-
-            logger.debug(f"Downloaded file to local: {local_path}")
-
-        return len(new_files)
+        logger.debug(f"Downloaded GCS file to local: {local_path}")
+        new_file_callback()

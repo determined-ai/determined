@@ -2,8 +2,8 @@
  Basic Setup
 #############
 
-This describes the basic steps for setting up your training environment, which can be a local
-development machine, an on-premise GPU cluster, or cloud resources.
+Your training environment can be a local development machine, an on-premise GPU cluster, or cloud
+resources. To set up your training environment, follow the steps below.
 
 **************************************************
  Step 1 - Set ``DET_MASTER`` Environment Variable

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -96,6 +97,11 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		t.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
 
+		rp, err := t.rm.ResolveResourcePool(ctx, "", 0)
+		if err != nil {
+			return fmt.Errorf("resolving resource pool: %w", err)
+		}
+
 		allocation := task.NewAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
@@ -106,6 +112,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 			AllocationRef: ctx.Self(),
+			ResourcePool:  rp,
 		}, t.db, t.rm, t.taskLogger)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
@@ -129,7 +136,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("error converting string list to uuid")
 			return err
 		}
-		if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
+		if err := db.MarkCheckpointsDeleted(context.TODO(), deleteCheckpoints); err != nil {
 			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 			return err
 		}

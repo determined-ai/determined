@@ -1,6 +1,7 @@
 import json
 import subprocess
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import pytest
@@ -119,3 +120,13 @@ def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: in
 
 def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
     return wait_for_task_state("command", command_id, state, ticks)
+
+
+def now_ts() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat()
+
+
+def set_master_port(config: str) -> None:
+    lc = conf.load_config(config_path=config)
+    port = get_master_port(lc)
+    conf.MASTER_PORT = port

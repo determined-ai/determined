@@ -1,10 +1,14 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { LineChart, Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
+import { UPlotPoint } from 'components/UPlot/types';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -13,14 +17,17 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { flattenObject } from 'shared/utils/data';
+import { glasbeyColor } from 'shared/utils/color';
+import { flattenObject, isEqual, isPrimitive } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandResponse,
   ExperimentBase,
+  ExperimentSearcherName,
   Hyperparameter,
+  HyperparameterType,
   Metric,
   metricTypeParamMap,
   RunState,
@@ -39,11 +46,62 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: Metric;
+  selectedMetric: Metric | null;
   selectedScale: Scale;
 }
 
 const MAX_DATAPOINTS = 5000;
+
+export const getCustomSearchVaryingHPs = (
+  trialHps: TrialHParams[],
+): Record<string, Hyperparameter> => {
+  /**
+   * For Custom Searchers, add a hyperparameter's column for params that
+   * 1) Have more than one unique value (it isn't the same in all trials)
+   * 2) Isn't a dictionary of other metrics
+   * This is to bypass the need to rely the on the experiment config's
+   * definition of hyperparameters and determine what should be shown more dynamically.
+   *
+   * Note: If we support the other tabs in the future for Custom Searchers
+   * such as HpParallelCoordinates, HpScatterPlots, and HpHeatMaps, we will need to
+   * generalize this logic a bit.
+   */
+  const uniq = new Set<string>();
+  const check_dict = {} as Record<string, unknown>;
+  trialHps.forEach((d) => {
+    Object.keys(d.hparams).forEach((key: string) => {
+      const value = d.hparams[key];
+      if (!(isPrimitive(value) || Array.isArray(value))) {
+        /**
+         * We have both the flattened and unflattened values in this TrialHParams
+         * From `const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };`
+         * below in the file. Skip the non flattened dictionaries.
+         * Example: {
+         *  "dict": { # This is skipped
+         *    "key": "value"
+         *  },
+         *  "dict.key": "value", # This is allowed
+         * }
+         */
+        return;
+      }
+      if (!(key in check_dict)) {
+        check_dict[key] = value;
+      } else if (!isEqual(check_dict[key], value)) {
+        uniq.add(key);
+      }
+    });
+  });
+
+  // If there's only one result, don't filter by unique results
+  const all_keys = trialHps.length === 1 ? Object.keys(check_dict) : Array.from(uniq);
+  return all_keys.reduce((acc, key) => {
+    acc[key] = {
+      type: HyperparameterType.Constant,
+    };
+    return acc;
+  }, {} as Record<string, Hyperparameter>);
+};
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
@@ -57,22 +115,28 @@ const LearningCurve: React.FC<Props> = ({
   const [trialIds, setTrialIds] = useState<number[]>([]);
   const [batches, setBatches] = useState<number[]>([]);
   const [chartData, setChartData] = useState<(number | null)[][]>([]);
+  const [v2ChartData, setV2ChartData] = useState<Serie[]>([]);
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
   const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
   const [hasLoaded, setHasLoaded] = useState(false);
   const [pageError, setPageError] = useState<Error>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
+  const chartComponent = useFeature().isOn('chart');
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const hyperparameters = useMemo(() => {
-    return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.hyperparameters[key];
-      return acc;
-    }, {} as Record<string, Hyperparameter>);
-  }, [experiment.hyperparameters, fullHParams]);
+    if (experiment.config.searcher.name === ExperimentSearcherName.Custom && trialHps.length > 0) {
+      return getCustomSearchVaryingHPs(trialHps);
+    } else {
+      return fullHParams.reduce((acc, key) => {
+        acc[key] = experiment.hyperparameters[key];
+        return acc;
+      }, {} as Record<string, Hyperparameter>);
+    }
+  }, [experiment.hyperparameters, fullHParams, trialHps, experiment.config]);
 
   const handleTrialClick = useCallback(
     (event: MouseEvent, trialId: number) => {
@@ -87,6 +151,22 @@ const LearningCurve: React.FC<Props> = ({
     setHighlightedTrialId(trialId != null ? trialId : undefined);
   }, []);
 
+  const handlePointClick = useCallback(
+    (e: MouseEvent, point: UPlotPoint) => {
+      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      if (trialId) handleTrialClick(e, trialId);
+    },
+    [handleTrialClick, trialIds],
+  );
+
+  const handlePointFocus = useCallback(
+    (point?: UPlotPoint) => {
+      const trialId = point ? trialIds[point.seriesIdx - 1] : undefined;
+      if (trialId) handleTrialFocus(trialId);
+    },
+    [handleTrialFocus, trialIds],
+  );
+
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setHighlightedTrialId(record.id);
   }, []);
@@ -100,7 +180,7 @@ const LearningCurve: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden) return;
+    if (ui.isPageHidden || !selectedMetric) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -108,6 +188,7 @@ const LearningCurve: React.FC<Props> = ({
     const trialHpMap: Record<number, TrialHParams> = {};
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
+    const v2MetricsMap: Record<number, [number, number][]> = {};
 
     setHasLoaded(false);
 
@@ -124,10 +205,10 @@ const LearningCurve: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         /*
-         * Cache trial ids, hparams, batches and metric values into easily searchable
+         * Cache trial ids, hparams, and metric values into easily searchable
          * dictionaries, then construct the necessary data structures to render the
          * chart and the table.
          */
@@ -152,10 +233,12 @@ const LearningCurve: React.FC<Props> = ({
 
           trialDataMap[id] = trialDataMap[id] || [];
           metricsMap[id] = metricsMap[id] || {};
+          v2MetricsMap[id] = [];
 
           trial.data.forEach((datapoint) => {
             batchesMap[datapoint.batches] = datapoint.batches;
             metricsMap[id][datapoint.batches] = datapoint.value;
+            v2MetricsMap[id].push([datapoint.batches, datapoint.value]);
             trialHpMap[id].metric = datapoint.value;
           });
         });
@@ -178,6 +261,16 @@ const LearningCurve: React.FC<Props> = ({
         );
         setChartData(newChartData);
 
+        const v2NewChartData = newTrialIds
+          .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
+          .map((trialId) => ({
+            color: glasbeyColor(trialId),
+            data: { [XAxisDomain.Batches]: v2MetricsMap[trialId] },
+            key: trialId,
+            name: `trial ${trialId}`,
+          }));
+        setV2ChartData(v2NewChartData);
+
         // One successful event as come through.
         setHasLoaded(true);
       },
@@ -188,17 +281,20 @@ const LearningCurve: React.FC<Props> = ({
     );
 
     return () => canceler.abort();
-  }, [experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden]);
+  }, [experiment.id, selectedMaxTrial, selectedMetric, selectedRowKeys, ui.isPageHidden]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
       if (action === Action.OpenTensorBoard) {
-        return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
+        return await openOrCreateTensorBoard({
+          trialIds: selectedRowKeys,
+          workspaceId: experiment.workspaceId,
+        });
       } else if (action === Action.CompareTrials) {
         return setShowCompareTrials(true);
       }
     },
-    [selectedRowKeys],
+    [selectedRowKeys, experiment],
   );
 
   const submitBatchAction = useCallback(
@@ -237,7 +333,7 @@ const LearningCurve: React.FC<Props> = ({
 
   if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (hasLoaded && !hasTrials) {
+  } else if ((hasLoaded && !hasTrials) || !selectedMetric) {
     return isExperimentTerminal ? (
       <Message title="No learning curve data to show." type={MessageType.Empty} />
     ) : (
@@ -256,17 +352,29 @@ const LearningCurve: React.FC<Props> = ({
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
-            <LearningCurveChart
-              data={chartData}
-              focusedTrialId={highlightedTrialId}
-              selectedMetric={selectedMetric}
-              selectedScale={selectedScale}
-              selectedTrialIds={selectedRowKeys}
-              trialIds={trialIds}
-              xValues={batches}
-              onTrialClick={handleTrialClick}
-              onTrialFocus={handleTrialFocus}
-            />
+            {chartComponent ? (
+              <LineChart
+                focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
+                scale={selectedScale}
+                series={v2ChartData}
+                xLabel="Batches Processed"
+                yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
+                onPointClick={handlePointClick}
+                onPointFocus={handlePointFocus}
+              />
+            ) : (
+              <LearningCurveChart
+                data={chartData}
+                focusedTrialId={highlightedTrialId}
+                selectedMetric={selectedMetric}
+                selectedScale={selectedScale}
+                selectedTrialIds={selectedRowKeys}
+                trialIds={trialIds}
+                xValues={batches}
+                onTrialClick={handleTrialClick}
+                onTrialFocus={handleTrialFocus}
+              />
+            )}
           </div>
           <TableBatch
             actions={[
@@ -286,7 +394,6 @@ const LearningCurve: React.FC<Props> = ({
             selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}
-            trialIds={trialIds}
             onMouseEnter={handleTableMouseEnter}
             onMouseLeave={handleTableMouseLeave}
           />

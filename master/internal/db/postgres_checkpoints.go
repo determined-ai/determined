@@ -1,12 +1,16 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
@@ -31,6 +35,20 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
 	return checkpoints, nil
+}
+
+// GetModelIDsAssociatedWithCheckpoint returns the model ids associated with a checkpoint,
+// returning nil if error.
+func GetModelIDsAssociatedWithCheckpoint(ctx context.Context, ckptUUID uuid.UUID) ([]int32, error) {
+	var modelIDs []int32
+	if err := Bun().NewRaw(`
+	SELECT DISTINCT(model_id) as ID FROM model_versions m INNER JOIN checkpoints_view c
+	ON m.checkpoint_uuid = c.uuid WHERE c.uuid = ?`,
+		ckptUUID.String()).Scan(ctx, &modelIDs); err != nil {
+		return nil, fmt.Errorf("getting model ids associated with checkpoint uuid: %w", err)
+	}
+
+	return modelIDs, nil
 }
 
 // GetRegisteredCheckpoints gets the checkpoints in
@@ -58,19 +76,34 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 }
 
 // MarkCheckpointsDeleted updates the provided delete checkpoints to DELETED state.
-func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
-	_, err := db.sql.Exec(`UPDATE raw_checkpoints c
-    SET state = 'DELETED'
-    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
-	if err != nil {
-		return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
+func MarkCheckpointsDeleted(ctx context.Context, deleteCheckpoints []uuid.UUID) error {
+	if len(deleteCheckpoints) == 0 {
+		return nil
 	}
 
-	_, err = db.sql.Exec(`UPDATE checkpoints_v2 c
-    SET state = 'DELETED'
-    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
+	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().Model(&model.CheckpointV1{}).
+			Set("state = ?", model.DeletedState).
+			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
+		}
+
+		if _, err := tx.NewUpdate().Model(&model.CheckpointV2{}).
+			Set("state = ?", model.DeletedState).
+			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
+		}
+
+		if err := UpdateCheckpointSizeTx(ctx, tx, deleteCheckpoints); err != nil {
+			return fmt.Errorf("updating checkpoints size: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
+		return fmt.Errorf("error adding checkpoint metadata: %w", err)
 	}
 
 	return nil
@@ -97,6 +130,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	if err != nil {
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var eIDcUUIDs ExperimentCheckpointGrouping
@@ -110,4 +144,48 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	}
 
 	return groupeIDcUUIDS, nil
+}
+
+// UpdateCheckpointSizeTx updates checkpoint size and count to experiment and trial.
+func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
+	if idb == nil {
+		idb = Bun()
+	}
+
+	var experimentIDs []int
+	err := idb.NewRaw(`
+UPDATE trials SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT trial_id,
+	COALESCE(SUM(size) FILTER (WHERE state != 'DELETED'), 0) AS size,
+	COUNT(*) FILTER (WHERE state != 'DELETED') AS count
+	FROM checkpoints_view
+	WHERE trial_id IN (
+		SELECT trial_id FROM checkpoints_view WHERE uuid IN (?)
+	)
+	GROUP BY trial_id
+) sub
+WHERE trials.id = sub.trial_id
+RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
+	if err != nil {
+		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
+	}
+	if len(experimentIDs) == 0 { // Checkpoint potentially to non experiment.
+		return nil
+	}
+
+	uniqueExpIDs := maps.Keys(set.FromSlice(experimentIDs))
+	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
+	err = idb.NewRaw(`
+UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
+	WHERE experiment_id IN (?)
+	GROUP BY experiment_id
+) sub
+WHERE experiments.id = sub.experiment_id
+RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
+	if err != nil {
+		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
+	}
+
+	return nil
 }

@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	dclient "github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -214,4 +216,117 @@ func TestContainer(t *testing.T) {
 			require.Contains(t, failure.ErrMsg, tt.failure.ErrMsg)
 		})
 	}
+}
+
+func TestContainerStatus(t *testing.T) {
+	log.SetLevel(log.TraceLevel)
+
+	// setup test parameters
+	testName := "killed after start and before run"
+	dockerEntrypoint := []string{"echo", "hello"}
+	dockerID := cproto.NewID()
+	dockerImage := "ubuntu"
+	dockerEventAction := "create"
+	timeoutDuration := 10 * time.Second
+	signalToSend := syscall.SIGKILL
+	expectedFailure := &aproto.ContainerFailure{
+		FailureType: aproto.ContainerAborted,
+		ErrMsg:      "killed before run",
+	}
+
+	t.Log("building client")
+	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
+	require.NoError(t, err)
+	defer func() {
+		if cErr := rawCl.Close(); cErr != nil {
+			t.Logf("closing docker client: %s", cErr)
+		}
+	}()
+	cl := docker.NewClient(rawCl)
+
+	t.Run(testName, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// create filters for specific event
+		t.Logf("creating %s event listener for %s container", dockerEventAction, dockerID.String())
+		listenerOptions := types.EventsOptions{
+			Filters: filters.NewArgs(
+				filters.KeyValuePair{
+					Key:   "type",
+					Value: "container",
+				},
+				filters.KeyValuePair{
+					Key:   "event",
+					Value: "create",
+				},
+				filters.KeyValuePair{
+					Key:   "event.Actor.ID",
+					Value: dockerID.String(),
+				},
+			),
+		}
+		eventListener, errListener := rawCl.Events(context.Background(), listenerOptions)
+
+		// start container and setup channel to receive returned container
+		containerCh := make(chan *container.Container)
+		go func() {
+			t.Log("creating container")
+			c := container.Start(aproto.StartContainer{
+				Container: cproto.Container{
+					ID:      dockerID,
+					State:   cproto.Assigned,
+					Devices: []device.Device{},
+				},
+				Spec: cproto.Spec{
+					TaskType: string(model.TaskTypeCommand),
+					RunSpec: cproto.RunSpec{
+						ContainerConfig: dcontainer.Config{
+							Image:      dockerImage,
+							Entrypoint: dockerEntrypoint,
+							Labels:     map[string]string{docker.ContainerIDLabel: dockerID.String()},
+							Env:        []string{"DET_EXISTS", "DET_ALLOCATION_ID=3"},
+						},
+						HostConfig: dcontainer.HostConfig{AutoRemove: true},
+					},
+				},
+			}, cl, events.NilPublisher[container.Event]{})
+			defer c.Stop()
+			containerCh <- c
+		}()
+
+		t.Logf("wait for %s event for %s container", dockerEventAction, dockerID.String())
+		timeout := time.After(timeoutDuration)
+		select {
+		case <-eventListener:
+			t.Logf("received %s event for %s container", dockerEventAction, dockerID.String())
+
+			c := <-containerCh
+			t.Logf("sent %s signal to %s container", signalToSend, dockerID.String())
+			c.Signal(ctx, signalToSend)
+
+			t.Log("waiting on container to exit")
+			exit := c.Wait()
+
+			t.Log("interpreting container exit")
+			require.NotNil(t, exit, "container returned without exiting")
+			require.NotNil(t, exit.ContainerStopped, "container exit did not contain a stop")
+			require.Equal(t, cproto.Terminated, exit.Container.State)
+
+			t.Log("confirming container failed for expected reason")
+			failure := exit.ContainerStopped.Failure
+			require.Equal(t, expectedFailure.FailureType, failure.FailureType, failure.Error())
+			require.Equal(t, expectedFailure.ExitCode, failure.ExitCode)
+			require.Contains(t, failure.ErrMsg, expectedFailure.ErrMsg)
+
+			t.Log("checking if docker container was successfully removed")
+			_, err := rawCl.ContainerInspect(context.Background(), dockerID.String())
+			require.Error(t, err, "expected docker container to be removed")
+			require.True(t, dclient.IsErrNotFound(err), "expected error due to not finding container")
+		case err := <-errListener:
+			t.Fatalf("failed while listening for events: %s", err)
+		case <-timeout:
+			t.Fatalf("timed out while listening for events")
+		}
+	})
 }

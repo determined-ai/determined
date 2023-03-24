@@ -4,10 +4,6 @@
  Web Interface (WebUI)
 #######################
 
-.. attention::
-
-   Check back soon for detailed web interface reference and user documentation.
-
 The web interface, WebUI, provides a convenient way to create and monitor experiment progress.
 
 Access WebUI by visiting default URL ``http://master-addr:8080``, where ``master-addr`` is the

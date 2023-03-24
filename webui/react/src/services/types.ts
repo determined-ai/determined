@@ -162,6 +162,12 @@ export interface GetModelsParams extends PaginationParams {
     | 'SORT_BY_LAST_UPDATED_TIME'
     | 'SORT_BY_NUM_VERSIONS';
   users?: string[];
+  workspaceIds?: number[];
+}
+
+export interface MoveModelParams {
+  destinationWorkspaceId: number;
+  modelName: string;
 }
 
 export interface GetModelParams {
@@ -213,6 +219,7 @@ export interface PostModelParams {
   labels?: string[];
   metadata?: Metadata;
   name: string;
+  workspaceId?: number;
 }
 
 export interface PostModelVersionParams {
@@ -247,6 +254,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
 export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
+  workspaceId?: number;
 }
 
 export interface LaunchJupyterLabParams {
@@ -259,26 +267,31 @@ export interface LaunchJupyterLabParams {
   };
   preview?: boolean;
   templateName?: string;
+  workspaceId?: number;
 }
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];
+  workspaceId?: number;
 }
 
 export interface GetJupyterLabsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];
+  workspaceId?: number;
 }
 
 export interface GetShellsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];
+  workspaceId?: number;
 }
 
 export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
   users?: string[];
+  workspaceId?: number;
 }
 export interface GetResourceAllocationAggregatedParams {
   endDate: Dayjs;
@@ -290,7 +303,7 @@ export interface GetResourceAllocationAggregatedParams {
 
 export interface GetJobQParams extends PaginationParams, FetchOptions {
   resourcePool: string;
-  states?: Api.Determinedjobv1State[];
+  states?: Api.Jobv1State[];
 }
 
 export interface GetJobsResponse extends Api.V1GetJobsResponse {
@@ -301,6 +314,7 @@ export interface GetJobQStatsParams extends FetchOptions {
 }
 
 export interface GetUsersParams extends PaginationParams {
+  name?: string;
   sortBy?:
     | 'SORT_BY_UNSPECIFIED'
     | 'SORT_BY_USER_NAME'
@@ -369,7 +383,9 @@ export interface RemoveRolesFromUserParams {
   userId: number;
 }
 
-export type GetGroupsParams = PaginationParams;
+export type GetGroupsParams = PaginationParams & {
+  userId?: number;
+};
 
 export interface AssignRolesToGroupParams {
   groupId: number;
@@ -426,6 +442,10 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   users?: string[];
 }
 
+export interface GetWorkspaceModelsParams {
+  workspaceId?: number;
+}
+
 export interface GetWorkspaceMembersParams {
   nameFilter?: string;
   workspaceId: number;
@@ -473,4 +493,8 @@ export interface SearchRolesAssignableToScopeParams {
   limit?: number;
   offset?: number;
   workspaceId: number;
+}
+
+export interface GetProjectsByUserActivityParams {
+  limit?: number;
 }

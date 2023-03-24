@@ -61,6 +61,8 @@ message GetMasterResponse {
   Product product = 11;
   // List of features that is on.
   repeated string feature_switches = 12;
+  // Feature flag for user management.
+  bool user_management_enabled = 13;
 }
 
 // Get telemetry information.
@@ -99,16 +101,28 @@ message MasterLogsRequest {
 }
 // Response to MasterLogsRequest.
 message MasterLogsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "log_entry" ] }
+  };
   // The log entry.
   determined.log.v1.LogEntry log_entry = 1;
 }
 
 // Get a detailed view of resource allocation during the given time period.
 message ResourceAllocationRawRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "timestamp_after", "timestamp_before" ] }
+  };
   // The start of the period to consider.
-  google.protobuf.Timestamp timestamp_after = 1;
+  google.protobuf.Timestamp timestamp_after = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required: "timestamp_after"
+      }];
   // The end of the period to consider.
-  google.protobuf.Timestamp timestamp_before = 2;
+  google.protobuf.Timestamp timestamp_before = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required: "timestamp_before"
+      }];
 }
 // Response to ResourceAllocationRawRequest.
 message ResourceAllocationRawResponse {
@@ -118,14 +132,26 @@ message ResourceAllocationRawResponse {
 
 // Get an aggregated view of resource allocation during the given time period.
 message ResourceAllocationAggregatedRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "period", "start_date", "end_date" ] }
+  };
   // The first day to consider (the exact time is midnight UTC at the beginning
   // of the day).
-  string start_date = 1;
+  string start_date = 1
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required: "start_date"
+      }];
   // The last day to consider (the exact time is midnight UTC at the end of the
   // day).
-  string end_date = 2;
+  string end_date = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required: "end_date"
+      }];
   // The period over which to perform aggregation.
-  determined.master.v1.ResourceAllocationAggregationPeriod period = 3;
+  determined.master.v1.ResourceAllocationAggregationPeriod period = 3
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required: "period"
+      }];
 }
 // Response to ResourceAllocationAggregatedRequest.
 message ResourceAllocationAggregatedResponse {

@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -99,7 +100,7 @@ func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Ce
 		grpc.WithNoProxy(),
 	}
 	if cert == nil {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
 		// Since this connection is coming directly back to this process, we can skip verification.
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{

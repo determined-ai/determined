@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
@@ -71,15 +72,40 @@ func TestCustomSearchMethod(t *testing.T) {
 	metric := float64(10.3)
 	_, err = customSearchMethod.validationCompleted(ctx, requestID, metric, validateAfterOp)
 	require.NoError(t, err)
+	protoMetric, err := structpb.NewValue(metric)
+	require.NoError(t, err)
 	validationCompletedEvent := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
 			RequestId:           requestID.String(),
-			Metric:              metric,
+			Metric:              protoMetric,
 			ValidateAfterLength: validateAfterOp.ToProto().Length,
 		},
 	}
 	expEvents = append(expEvents, &experimentv1.SearcherEvent{
 		Event: &validationCompletedEvent,
+		Id:    ids.next(),
+	})
+	require.Equal(t, expEvents, queue.GetEvents())
+
+	// Add ValidationCompleted with a dictionary of all metrics.
+	validateAfterOp2 := ValidateAfter{requestID, uint64(300)}
+	allMetrics := map[string]interface{}{
+		"themetric": float64(10.3),
+	}
+	_, err = customSearchMethod.validationCompleted(ctx, requestID, allMetrics, validateAfterOp2)
+	require.NoError(t, err)
+
+	protoAllMetrics, err := structpb.NewValue(allMetrics)
+	require.NoError(t, err)
+	validationCompletedEvent2 := experimentv1.SearcherEvent_ValidationCompleted{
+		ValidationCompleted: &experimentv1.ValidationCompleted{
+			RequestId:           requestID.String(),
+			Metric:              protoAllMetrics,
+			ValidateAfterLength: validateAfterOp2.ToProto().Length,
+		},
+	}
+	expEvents = append(expEvents, &experimentv1.SearcherEvent{
+		Event: &validationCompletedEvent2,
 		Id:    ids.next(),
 	})
 	require.Equal(t, expEvents, queue.GetEvents())

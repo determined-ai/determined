@@ -1,7 +1,8 @@
-import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { getDescriptionText } from 'pages/TrialsComparison/Collections/collections';
 import { createTrialsCollection, updateTrialTags } from 'services/api';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';

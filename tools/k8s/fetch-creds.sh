@@ -148,11 +148,16 @@ server_info="$(
         | jq -r '.clusters[] | select(.name=="'"$context"'")'
 )"
 server_url="$(echo "$server_info" | jq -r '.cluster.server')"
-ca_crt="$(
-    echo "$server_info" \
-        | jq -r '.cluster."certificate-authority-data"' \
-        | base64 -d
-)"
+if echo "$server_info" | jq -e '.cluster."certificate-authority"' >/dev/null; then
+    ca_file="$(echo "$server_info" | jq -r '.cluster."certificate-authority"')"
+    ca_crt="$(<$ca_file)"
+else
+    ca_crt="$(
+        echo "$server_info" \
+            | jq -r '.cluster."certificate-authority-data"' \
+            | base64 -d
+    )"
+fi
 
 mkdir -p "$outdir"
 

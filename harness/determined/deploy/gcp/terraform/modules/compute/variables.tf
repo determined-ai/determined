@@ -76,9 +76,6 @@ variable "min_dynamic_agents" {
 variable "max_dynamic_agents" {
 }
 
-variable "static_agents" {
-}
-
 variable "preemptible" {
 }
 
@@ -137,4 +134,7 @@ variable "gpu_env_image" {
 }
 
 variable "master_config_template" {
+}
+
+variable "labels" {
 }

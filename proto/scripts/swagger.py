@@ -7,7 +7,7 @@ usage: swagger.py GENERATED_JSON PATCH_JSON
 
 import json
 import sys
-from typing import Dict
+from typing import Any, Dict, List
 
 SERVICE_NAME = "Determined"
 
@@ -17,9 +17,14 @@ def merge_dict(d1: Dict, d2: Dict) -> None:
     Modifies d1 in-place to contain values from d2.  If any value
     in d1 is a dictionary (or dict-like), *and* the corresponding
     value in d2 is also a dictionary, then merge them in-place.
+    If a key in d2 has an explicit value of None that key is removed
+    from d1.
     """
 
     for k, v2 in d2.items():
+        if v2 is None:
+            d1.pop(k)
+            continue
         v1 = d1.get(k)
         if isinstance(v1, dict) and isinstance(v2, dict):
             merge_dict(v1, v2)
@@ -42,6 +47,7 @@ def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
         spec = json.load(f)
 
+    keys_to_rename: List[str] = []
     for key, value in spec["definitions"].items():
         # Remove definitions that should be hidden from the user.
         if key == "protobufAny":
@@ -49,12 +55,37 @@ def clean(path: str, patch: str) -> None:
         elif key == "protobufNullValue":
             value["title"] = "NullValue"
 
-        # Clean up titles.
+        # Clean up titles. Title is used in documentation.
         if "title" not in value:
             value["title"] = "".join(capitalize(k) for k in key.split(sep="v1"))
+        elif value["title"].startswith(SERVICE_NAME):
+            value["title"] = value["title"][len(SERVICE_NAME) :].lstrip()
+            value["title"] = capitalize(value["title"])
 
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
+
+        if key.startswith(SERVICE_NAME.lower()):
+            keys_to_rename.append(key)
+
+    for key in keys_to_rename:
+        spec["definitions"][key[len(SERVICE_NAME) :]] = spec["definitions"].pop(key)
+
+    # recursively find any objects with ref to keys_to_rename and rename them
+    def rename_refs(obj: Any):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == "$ref":
+                    for key in keys_to_rename:
+                        if v.endswith(key):
+                            obj[k] = v.replace(key, key[len(SERVICE_NAME) :])
+                else:
+                    rename_refs(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                rename_refs(v)
+
+    rename_refs(spec)
 
     # remove operationId prefix from the main service.
     operationid_prefix = SERVICE_NAME + "_"

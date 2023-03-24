@@ -2,12 +2,11 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Tuple
 
 import pkg_resources
 from termcolor import colored
 
-import determined
 import determined.deploy
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
@@ -61,6 +60,8 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         print("Delete Successful")
         return
 
+    det_configs["labels"] = dict(det_configs.get("add_label", []))
+
     # Handle Up subcommand.
     if (args.cpu_env_image and not args.gpu_env_image) or (
         args.gpu_env_image and not args.cpu_env_image
@@ -93,6 +94,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "master_config_template_path",
         "tf_state_gcs_bucket_name",
         "func",
+        "add_label",
         "_command",
         "_subcommand",
         "_subsubcommand",
@@ -142,6 +144,22 @@ def handle_dump_master_config_template(args: argparse.Namespace) -> None:
     fn = pkg_resources.resource_filename("determined.deploy.gcp", "terraform/master.yaml.tmpl")
     with open(fn, "r") as fin:
         print(fin.read())
+
+
+def parse_add_label() -> Callable:
+    def parse(s: str) -> Tuple[str, str]:
+        try:
+            key, value = s.split("=", 1)
+        except ValueError:
+            raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
+
+        if not key or not value:
+            raise argparse.ArgumentTypeError(
+                "both key and value must be defined in key=value format"
+            )
+        return key, value
+
+    return parse
 
 
 args_description = Cmd(
@@ -361,12 +379,6 @@ args_description = Cmd(
                             help="maximum number of dynamic agent instances at one time",
                         ),
                         Arg(
-                            "--static-agents",
-                            type=int,
-                            default=constants.defaults.STATIC_AGENTS,
-                            help=argparse.SUPPRESS,
-                        ),
-                        Arg(
                             "--min-cpu-platform-master",
                             type=str,
                             default=constants.defaults.MIN_CPU_PLATFORM_MASTER,
@@ -416,6 +428,14 @@ args_description = Cmd(
                             default=None,
                             help="use the GCS bucket to store the terraform state "
                             "instead of a local directory",
+                        ),
+                        Arg(
+                            "--add-label",
+                            type=parse_add_label(),
+                            action="append",
+                            default=None,
+                            help="apply label to master instance in key=value format, "
+                            "can be repeated",
                         ),
                     ],
                 ),

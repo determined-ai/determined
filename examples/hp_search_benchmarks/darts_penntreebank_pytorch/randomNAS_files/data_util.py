@@ -1,7 +1,7 @@
 import os
-import torch
-
 from collections import Counter
+
+import torch
 
 
 class Dictionary(object):

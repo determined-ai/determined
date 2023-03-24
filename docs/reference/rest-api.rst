@@ -6,12 +6,12 @@
  REST API
 ##########
 
-The Determined REST API provides a way to programmatically interact with a Determined cluster. The
-API reference documentation includes detailed information about all of the REST API endpoints and a
+The Determined REST API provides a way to interact with a Determined cluster programmatically. The
+API reference documentation includes detailed information about the REST API endpoints and a
 playground for interacting with the API.
 
-The `protobuf <https://developers.google.com/protocol-buffers>`_ mechanism is used to define
-language-agnostic message structures. These type definitions are used with `gRPC-gateway
+The `protobuf <https://protobuf.dev/>`_ mechanism is used to define language-agnostic message
+structures. These type definitions are used with `gRPC-gateway
 <https://grpc-ecosystem.github.io/grpc-gateway/>`_ to provide consistent REST endpoints that serve
 various needs.
 
@@ -32,8 +32,8 @@ API.
 
 The REST API reference documentation lists available endpoints grouped by workflow. Click an
 endpoint method to see the expected input parameters and response. You can also use **Try it out**
-button to make an HTTP request against the endpoint. For an interactive request, you need to have
-the appropriate cookie set and a running cluster.
+button to make an HTTP request against the endpoint. You need to have the appropriate cookie set and
+a running cluster for an interactive request.
 
 If you have access to a running Determined cluster you can try the live-interact version by clicking
 the API icon from the Determined WebUI or by navigating to `/docs/rest-api/` on your Determined
@@ -90,10 +90,10 @@ header in the ``Bearer $TOKEN`` format.
 
 This example shows how to use the REST API to unarchive a previously archived experiment.
 
-To find an experiment that was archived, look up the ``experiment`` endpoint to find which filtering
-options are provided. They are ``archived`` and ``limit``. Including a bearer token to authenticate
-the request, use the ``archived`` and ``limit`` query parameters to limit the result set to only
-show a single archived experiment:
+To find an archived experiment, look up the ``experiment`` endpoint to find which filtering options
+are provided. They are ``archived`` and ``limit``. Including a bearer token to authenticate the
+request, use the ``archived`` and ``limit`` query parameters to limit the result set to only show a
+single archived experiment:
 
 .. code:: bash
 

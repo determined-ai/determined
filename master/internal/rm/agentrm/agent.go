@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -41,7 +42,6 @@ type (
 		// and not be copied to agents.
 		maxZeroSlotContainers int
 		agentReconnectWait    time.Duration
-		agentReattachEnabled  bool
 		// awaitingReconnect et al contain reconnect related state. The pattern for
 		// reconnecting agents is
 		//  * They have a small window to reconnect.
@@ -56,8 +56,12 @@ type (
 		// Because of all this, for future developers: messages must be replay-able and writes must
 		// get buffered while down.
 		awaitingReconnect bool
-		reconnectBacklog  []interface{}
-		reconnectTimers   []*actor.Ref
+		// awaitingRestore tracks the restoration of agentState.containerAllocation, which must be
+		// restored after allocation refs start and register in allocationmap. It happens in during
+		// websocket connection if the websocket does reconnect and in poststop if it does not.
+		awaitingRestore  bool
+		reconnectBacklog []interface{}
+		reconnectTimers  []*actor.Ref
 		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
 		// pop back to our previous state.
 		preDisconnectEnabled  bool
@@ -110,14 +114,15 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.PreStart:
 		if a.agentState != nil { // not nil agentState on PreStart means it's restored.
 			a.started = true
+			a.awaitingRestore = true
 			a.agentState.Handler = ctx.Self()
 			// Update maxZeroSlotContainers config setting.
 			a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
-			a.socketDisconnected(ctx)
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
 			// agentReconnectWait if it never reconnects.
 			// Ensure RP is aware of the agent.
-			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: a.agentState.Label}).Get()
+			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self()}).Get()
+			a.socketDisconnected(ctx)
 		}
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
@@ -137,18 +142,16 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		var masterSetAgentOptions aproto.AgentMessage
-		// Do container revalidation:
-		// - when reattach is on or off, on all valid reconnects.
-		// - when reattach is on, also do it on initial connect.
-		//   Note: restored agents have their `awaitingReconnect == true`.
-		// Flush them otherwise.
-		reconnect, _ := msg.IsReconnect()
-		if a.awaitingReconnect && (a.agentReattachEnabled || reconnect) {
+		if a.awaitingReconnect {
 			optsCopy := *a.opts
 			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
 		} else {
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
+		}
+
+		if a.awaitingRestore {
+			a.awaitingRestore = false
 		}
 
 		wsm := ws.WriteMessage{Message: masterSetAgentOptions}
@@ -192,6 +195,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.reconnectBacklog = nil
 			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
+
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
@@ -313,6 +317,23 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 		a.socketDisconnected(ctx)
 		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+
+	case actor.ChildStopped:
+		// If the socket has closed gracefully, there are really two cases:
+		//  * the agent is being brought down temporarily (software or config update)
+		//  * the agent is being brought down permanently
+		// Since the former is more frequent and it doesn't really hurt the latter for the agent to
+		// hang around for a bit on our side, we always treat gracefully socket closures as
+		// temporary disconnects.
+		if !a.started {
+			ctx.Self().Stop()
+			return nil
+		}
+
+		ctx.Log().Infof("websocket closed gracefully, awaiting reconnect: %s", msg.Child.Address())
+		a.socketDisconnected(ctx)
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
@@ -371,11 +392,21 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Respond(a.agentState.getSlotsSummary(ctx))
-	case actor.ChildStopped:
-		ctx.Self().Stop()
 	case actor.PostStop:
-		ctx.Log().Infof("agent disconnected")
 		if a.started {
+			// This normally will run on agent WebSocketConnected to populate
+			// agentState.containerAllocation. There is technically still race here
+			// (and also in calling this in WebSocketConnected). We have no synchronization
+			// between allocation actors starting and registering themselves in the
+			// allocationmap and the lookup of allocationmap in restoreContainersField().
+			// Though this will likely run after agentReconnectWait which should
+			// give enough time for this to be populated.
+			// TODO: add explicit synchronization here.
+			err := a.agentState.restoreContainersField()
+			if err != nil {
+				ctx.Log().WithError(err).Error("failed restoreContainersField in shutdown of agent")
+			}
+
 			for cid := range a.agentState.containerAllocation {
 				stopped := aproto.ContainerError(
 					aproto.AgentFailed, errors.New("agent closed with allocated containers"))
@@ -391,6 +422,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			if err := a.agentState.delete(); err != nil {
 				ctx.Log().WithError(err).Warnf("failed to delete agent state")
 			}
+		} else {
+			ctx.Log().Info("agent dsconnected but wasn't started")
 		}
 		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
@@ -495,13 +528,12 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
 	a.agentState = newAgentState(
-		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
+		sproto.AddAgent{Agent: ctx.Self()},
 		a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(ctx, agentStarted)
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
-		Label: agentStarted.Label,
 		Slots: a.agentState.numSlots(),
 	})
 
@@ -557,7 +589,6 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 
 	if a.agentState != nil {
 		result.Slots = a.agentState.getSlotsSummary(ctx)
-		result.Label = a.agentState.Label
 		result.Enabled = a.agentState.enabled
 		result.Draining = a.agentState.draining
 		result.NumContainers = len(a.agentState.containerAllocation)
@@ -649,17 +680,26 @@ func (a *agent) clearNonReattachedContainers(
 			continue
 		}
 
+		var containerState *cproto.Container
 		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
 			ResourcesID: sproto.ResourcesID(cid),
 		})
 		switch {
 		case resp.Error() != nil:
+			// This error can occur when the allocation knowns about our container
+			// but has the ResourcesWithState.Container field nil. We can instead
+			// get the containerState from our agentState and send that.
+			containerState = a.agentState.containerState[cid]
+
 			ctx.Log().Warnf(
 				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
 		case resp.Get() == nil:
 			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
 		default:
-			containerState := resp.Get().(cproto.Container)
+			containerState = ptrs.Ptr(resp.Get().(cproto.Container))
+		}
+
+		if containerState != nil {
 			containerState.State = cproto.Terminated
 
 			var stopped aproto.ContainerStopped
@@ -671,7 +711,7 @@ func (a *agent) clearNonReattachedContainers(
 			}
 
 			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-				Container:        containerState,
+				Container:        *containerState,
 				ContainerStopped: &stopped,
 			})
 		}
@@ -681,11 +721,10 @@ func (a *agent) clearNonReattachedContainers(
 }
 
 func (a *agent) defaultReattachFailureMessage() aproto.ContainerStopped {
-	errorMsg := "container cleaned up on reconnect"
-	if a.agentReattachEnabled {
-		errorMsg = "failed to reattach container on reconnect"
-	}
-	return aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
+	return aproto.ContainerError(
+		aproto.AgentFailed,
+		errors.New("failed to reattach container on reconnect"),
+	)
 }
 
 func (a *agent) socketDisconnected(ctx *actor.Context) {

@@ -2,9 +2,12 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
+import usePermissions from 'hooks/usePermissions';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
+import { ModelVersion } from 'types';
 
 interface Props {
   children?: React.ReactNode;
@@ -14,6 +17,7 @@ interface Props {
   onDownload?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
+  version: ModelVersion;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
@@ -26,10 +30,13 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   onDownload,
   onVisibleChange,
   trigger,
+  version,
 }: Props) => {
   const handleDownloadClick = useCallback(() => onDownload?.(), [onDownload]);
 
   const handleDeleteClick = useCallback(() => onDelete?.(), [onDelete]);
+
+  const { canDeleteModelVersion } = usePermissions();
 
   const ModelVersionActionMenu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
@@ -50,13 +57,13 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
       funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
-    const menuItems: MenuProps['items'] = [
-      { key: MenuKey.Download, label: 'Download' },
-      { danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' },
-    ];
+    const menuItems: MenuProps['items'] = [{ key: MenuKey.Download, label: 'Download' }];
+    if (canDeleteModelVersion({ modelVersion: version })) {
+      menuItems.push({ danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' });
+    }
 
     return { items: menuItems, onClick: onItemClick };
-  }, [handleDeleteClick, handleDownloadClick]);
+  }, [handleDeleteClick, handleDownloadClick, canDeleteModelVersion, version]);
 
   return children ? (
     <Dropdown
@@ -75,9 +82,9 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
         menu={ModelVersionActionMenu}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <button onClick={stopPropagation}>
+        <Button type="text" onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
-        </button>
+        </Button>
       </Dropdown>
     </div>
   );

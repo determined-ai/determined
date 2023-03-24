@@ -1,8 +1,9 @@
-import { Alert, Tabs } from 'antd';
+import { Alert } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
@@ -35,7 +36,6 @@ import {
 
 import { hpImportanceSorter } from '../../utils/experiment';
 
-import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
   ViewType,
@@ -45,6 +45,7 @@ import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
+import css from './ExperimentVisualization.module.scss';
 
 export const ExperimentVisualizationType = {
   HpHeatMap: 'hp-heat-map',
@@ -112,12 +113,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
     }),
   );
+
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: searcherMetric.current,
+    metric: null,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -129,7 +131,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
   const [filters, setFilters] = useState<VisualizationFilters>(initFilters);
-  const [activeMetric, setActiveMetric] = useState<Metric>(initFilters.metric);
+  const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
+  const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
   const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
@@ -143,7 +146,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
-      hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
+      hasData: !!metrics?.length,
       hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
@@ -154,9 +157,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   }, [batches, experiment, metrics]);
 
   const hpImportance = useMemo(() => {
-    if (!hpImportanceMap) return {};
-    return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
-  }, [filters.metric, hpImportanceMap]);
+    if (!hpImportanceMap || !activeMetric) return {};
+    return hpImportanceMap[activeMetric.type][activeMetric.name] || {};
+  }, [activeMetric, hpImportanceMap]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
@@ -173,6 +176,30 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleMetricChange = useCallback((metric: Metric) => {
     setActiveMetric(metric);
   }, []);
+
+  useEffect(() => {
+    if (!hasSearcherMetric) {
+      const activeMetricFound = metrics.find(
+        (metric) =>
+          metric.type === searcherMetric.current.type &&
+          metric.name === searcherMetric.current.name,
+      );
+      if (activeMetricFound) {
+        setHasSearcherMetric(true);
+        setActiveMetric(searcherMetric.current);
+        handleFiltersChange({
+          ...filters,
+          metric: searcherMetric.current,
+        });
+      } else if (metrics.length > 0 && !activeMetric) {
+        setActiveMetric(metrics[0]);
+        handleFiltersChange({
+          ...filters,
+          metric: metrics[0],
+        });
+      }
+    }
+  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics, activeMetric]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -208,7 +235,11 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   ]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    return [
+    /**
+     * In the case of Custom Searchers, all the tabs besides
+     * "Learning Curve" aren't helpful or relevant, so we are hiding them
+     */
+    const tabs: TabsProps['items'] = [
       {
         children: (
           <LearningCurve
@@ -216,70 +247,75 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
             filters={visualizationFilters}
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
+            selectedMetric={activeMetric}
             selectedScale={filters.scale}
           />
         ),
         key: ExperimentVisualizationType.LearningCurve,
         label: 'Learning Curve',
       },
-      {
-        children: (
-          <HpParallelCoordinates
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpParallelCoordinates,
-        label: 'HP Parallel Coordinates',
-      },
-      {
-        children: (
-          <HpScatterPlots
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        ),
-        key: ExperimentVisualizationType.HpScatterPlots,
-        label: 'HP Scatter Plots',
-      },
-      {
-        children: (
-          <HpHeatMaps
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-            selectedView={filters.view}
-          />
-        ),
-        key: ExperimentVisualizationType.HpHeatMap,
-        label: 'HP Heat Map',
-      },
     ];
+    if (experiment.config.searcher.name !== ExperimentSearcherName.Custom) {
+      tabs.push(
+        {
+          children: (
+            <HpParallelCoordinates
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={activeMetric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpParallelCoordinates,
+          label: 'HP Parallel Coordinates',
+        },
+        {
+          children: (
+            <HpScatterPlots
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={activeMetric}
+              selectedScale={filters.scale}
+            />
+          ),
+          key: ExperimentVisualizationType.HpScatterPlots,
+          label: 'HP Scatter Plots',
+        },
+        {
+          children: (
+            <HpHeatMaps
+              experiment={experiment}
+              filters={visualizationFilters}
+              fullHParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={activeMetric}
+              selectedScale={filters.scale}
+              selectedView={filters.view}
+            />
+          ),
+          key: ExperimentVisualizationType.HpHeatMap,
+          label: 'HP Heat Map',
+        },
+      );
+    }
+    return tabs;
   }, [
     experiment,
     filters.batch,
     filters.batchMargin,
     filters.hParams,
     filters.maxTrial,
-    filters.metric,
+    activeMetric,
     filters.scale,
     filters.view,
     visualizationFilters,
@@ -317,7 +353,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
+    if (!isSupported || ui.isPageHidden || !activeMetric) return;
 
     const canceler = new AbortController();
     const metricTypeParam =
@@ -353,23 +389,13 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     });
   }, [batches]);
 
-  // Validate active metric against metrics.
-  useEffect(() => {
-    setActiveMetric((prev) => {
-      const activeMetricFound = metrics.reduce((acc, metric) => {
-        return acc || (metric.type === prev.type && metric.name === prev.name);
-      }, false);
-      return activeMetricFound ? prev : searcherMetric.current;
-    });
-  }, [metrics]);
-
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
 
     setFilters((prev) => {
       if (prev.hParams.length !== 0) return prev;
-      const map = hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {};
+      const map = prev.metric ? hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {} : {};
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));
@@ -405,7 +431,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
-    return <Spinner tip="Fetching metrics..." />;
+    return <Spinner spinning tip="Fetching metrics..." />;
   } else if (!hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
       <Message title="No data to plot." type={MessageType.Empty} />
@@ -422,11 +448,11 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
   return (
     <div className={css.base}>
-      <Tabs
+      <Pivot
         activeKey={typeKey}
         destroyInactiveTabPane
         items={tabItems}
-        type="card"
+        type="secondary"
         onChange={handleTabChange}
       />
     </div>

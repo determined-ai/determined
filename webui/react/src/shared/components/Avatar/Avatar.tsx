@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import React from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { DarkLight } from 'shared/themes';
 import { ClassNameProp, ValueOf } from 'shared/types';
 import { hex2hsl, hsl2str } from 'shared/utils/color';

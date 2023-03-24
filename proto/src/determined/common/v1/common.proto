@@ -33,6 +33,7 @@ message DoubleFieldFilter {
 // Int32 filters.
 message Int32FieldFilter {
   // TODO(ilia): add `exact`.
+
   // Less than.
   optional int32 lt = 2;
   // Less than or equal.

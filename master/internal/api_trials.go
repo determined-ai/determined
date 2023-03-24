@@ -62,7 +62,7 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 	}
 
 	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
-	exp, err := a.m.db.ExperimentWithoutConfigByTrialID(trialID)
+	exp, err := a.m.db.ExperimentByTrialID(trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
 	} else if err != nil {
@@ -216,7 +216,7 @@ func (a *apiServer) TrialLogs(
 					Id:          l.Id,
 					TrialId:     req.TrialId,
 					Timestamp:   l.Timestamp,
-					Message:     l.Message,
+					Message:     l.Message, //nolint: staticcheck // l.Message is deprecated.
 					Level:       l.Level,
 					AgentId:     l.AgentId,
 					ContainerId: l.ContainerId,
@@ -518,7 +518,7 @@ func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (resp *apiv1.GetExperimentTrialsResponse, err error) {
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -541,6 +541,7 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:        "total_batches_processed",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:                 "duration",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_RESTARTS:                 "restarts",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_CHECKPOINT_SIZE:          "checkpoint_size",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -570,7 +571,7 @@ func (a *apiServer) GetExperimentTrials(
 		req.Offset,
 		req.Limit,
 	); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+		return nil, errors.Wrapf(err, "failed to get trial ids for experiment %d", req.ExperimentId)
 	} else if len(resp.Trials) == 0 {
 		return resp, nil
 	}
@@ -594,7 +595,7 @@ func (a *apiServer) GetExperimentTrials(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+		return nil, errors.Wrapf(err, "failed to get trials detail for experiment %d", req.ExperimentId)
 	}
 
 	if err = a.enrichTrialState(resp.Trials...); err != nil {
@@ -632,9 +633,9 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.SummarizedMetric,
-	metricSeries []lttb.Point,
-) []*apiv1.SummarizedMetric {
+func (a *apiServer) formatMetricsBatch(
+	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+) {
 	for _, in := range metricSeries {
 		out := apiv1.DataPoint{
 			Batches: int32(in.X),
@@ -642,21 +643,48 @@ func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.
 		}
 		m.Data = append(m.Data, &out)
 	}
-	if len(m.Data) > 0 {
-		return append(metrics, m)
+}
+
+func timeFromFloat64(ts float64) time.Time {
+	secs := int64(ts)
+	nsecs := int64((ts - float64(secs)) * 1e9)
+	return time.Unix(secs, nsecs)
+}
+
+func (a *apiServer) formatMetricsTime(
+	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+) {
+	for _, in := range metricSeries {
+		out := apiv1.DataPointTime{
+			Time:  timestamppb.New(timeFromFloat64(in.X)),
+			Value: in.Y,
+		}
+		m.Time = append(m.Time, &out)
 	}
-	return metrics
+}
+
+func (a *apiServer) formatMetricsEpoch(
+	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+) {
+	for _, in := range metricSeries {
+		out := apiv1.DataPointEpoch{
+			Epoch: int32(in.X),
+			Value: in.Y,
+		}
+		m.Epochs = append(m.Epochs, &out)
+	}
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool,
+	endBatches int, logScale bool, xAxis apiv1.XAxis,
 ) ([]*apiv1.SummarizedMetric, error) {
-	var metricSeries []lttb.Point
+	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	var startTime time.Time
 	var err error
-
 	var metrics []*apiv1.SummarizedMetric
+	var metricMeasurements db.MetricMeasurements
+	xAxisLabelMetrics := []string{"epoch"}
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
@@ -666,27 +694,51 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeries, _, err = a.m.db.TrainingMetricsSeries(trialID, startTime, name, startBatches,
-				endBatches)
-			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
+			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
-			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
+
+			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
+			a.formatMetricsTime(&metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
+
+			// For now "epoch" is the only custom xAxis metric label supported so we
+			// build the `MetricSeriesEpoch` array. In the future this logic should
+			// be updated to support any number of xAxis metric options
+			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
+				maxDatapoints, logScale)
+			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
+
+			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+				metrics = append(metrics, &metric)
+			}
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,
-				endBatches)
-			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
+				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
-			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+
+			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
+			a.formatMetricsTime(&metric, metricSeriesTime)
+			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
+			a.formatMetricsBatch(&metric, metricSeriesBatch)
+			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
+				maxDatapoints, logScale)
+			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
+
+			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+				metrics = append(metrics, &metric)
+			}
 		}
 	}
 	return metrics, nil
@@ -707,7 +759,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG))
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -736,7 +788,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG))
+			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
@@ -928,6 +980,21 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
+func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
+	for i := 0; i < 60; i++ {
+		var restoring bool
+		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
+			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
+		}
+		if !restoring {
+			return nil
+		}
+
+		time.Sleep(time.Second)
+	}
+	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
+}
+
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
@@ -942,6 +1009,9 @@ func (a *apiServer) AllocationPreemptionSignal(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -977,6 +1047,9 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -1044,6 +1117,9 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	if err != nil {
 		return nil, err
 	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+		return nil, err
+	}
 
 	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
 		AllocationID: allocationID,
@@ -1099,7 +1175,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 
 	if err = a.ask(exp, trialCompleteOperation{
 		requestID: rID,
-		metric:    req.CompletedOperation.SearcherMetric,
+		metric:    req.CompletedOperation.SearcherMetric.AsInterface(),
 		op:        searcher.NewValidateAfter(rID, req.CompletedOperation.Op.Length),
 	}, nil); err != nil {
 		return nil, err
@@ -1198,7 +1274,7 @@ func (a *apiServer) ReportCheckpoint(
 	default:
 	}
 
-	if err := a.m.db.AddCheckpointMetadata(ctx, c); err != nil {
+	if err := db.AddCheckpointMetadata(ctx, c); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportCheckpointResponse{}, nil
@@ -1252,6 +1328,9 @@ func (a *apiServer) AllocationRendezvousInfo(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 

@@ -1,0 +1,27 @@
+.base {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+
+  :global(.ant-select-selection-overflow) {
+    overflow: hidden;
+  }
+  :global(.ant-select-selection-search-input),
+  :global(.ant-select-multiple .ant-select-selection-search-input) {
+    width: auto;
+  }
+}
+.disableTags {
+  :global(.ant-select-multiple .ant-select-selection-item) {
+    background-color: transparent;
+    border: 0;
+  }
+  :global(.ant-select-multiple.ant-select-open .ant-select-selection-item) {
+    display: none;
+  }
+  :global(.ant-select-multiple.ant-select-open .ant-select-selection-search) {
+    margin-left: 8px;
+    max-width: calc(100% - 32px);
+  }
+}

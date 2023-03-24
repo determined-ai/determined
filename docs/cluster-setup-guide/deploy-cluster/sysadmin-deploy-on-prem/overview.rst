@@ -24,3 +24,4 @@ Determined by your preferred method.
    docker
    deploy
    linux-packages
+   homebrew

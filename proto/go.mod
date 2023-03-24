@@ -1,6 +1,6 @@
 module github.com/determined-ai/determined/proto
 
-go 1.18
+go 1.20
 
 require (
 	github.com/golang/protobuf v1.5.2
@@ -11,7 +11,7 @@ require (
 )
 
 require (
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
-	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
-	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 )

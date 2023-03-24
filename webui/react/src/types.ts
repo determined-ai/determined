@@ -28,7 +28,6 @@ export interface DetailedUserList extends WithPagination {
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;
-  user?: DetailedUser;
 }
 
 export interface SsoProvider {
@@ -55,6 +54,7 @@ export interface DeterminedInfo {
   masterId: string;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
   version: string;
 }
 
@@ -198,12 +198,12 @@ export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
   id: string;
-  kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
   registeredTime: string;
   resourcePool: string;
   serviceAddress?: string;
   state: CommandState;
+  type: CommandType;
   user: User;
 }
 
@@ -226,11 +226,6 @@ interface CheckpointStorage {
   saveTrialLatest: number;
   storagePath?: string;
   type?: CheckpointStorageType;
-}
-
-interface DataLayer {
-  containerStoragePath?: string;
-  type: string;
 }
 
 export type HpImportance = Record<string, number>;
@@ -294,7 +289,6 @@ export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
-  dataLayer?: DataLayer;
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];
@@ -312,6 +306,7 @@ export interface ExperimentConfig {
     metric: string;
     name: ExperimentSearcherName;
     smallerIsBetter: boolean;
+    sourceTrialId?: number;
   };
 }
 
@@ -325,6 +320,7 @@ export const ExperimentAction = {
   ContinueTrial: 'Continue Trial',
   Delete: 'Delete',
   DownloadCode: 'Download Experiment Code',
+  Edit: 'Edit',
   Fork: 'Fork',
   HyperparameterSearch: 'Hyperparameter Search',
   Kill: 'Kill',
@@ -494,17 +490,18 @@ export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
+  checkpointCount?: number;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
   totalBatchesProcessed: number;
+  totalCheckpointSize: number;
 }
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  totalCheckpointSize: number;
 }
 
 export interface TrialWorkloads extends WithPagination {
@@ -523,9 +520,21 @@ export interface MetricDatapoint {
   value: number;
 }
 
+export interface MetricDatapointTime {
+  time: Date;
+  value: number;
+}
+
+export interface MetricDatapointEpoch {
+  epoch: number;
+  value: number;
+}
+
 export interface MetricContainer {
   data: MetricDatapoint[];
+  epochs?: MetricDatapointEpoch[];
   name: string;
+  time?: MetricDatapointTime[];
   type: MetricType;
 }
 
@@ -535,6 +544,8 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  checkpointCount?: number;
+  checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
@@ -550,12 +561,16 @@ export interface ExperimentItem {
   numTrials: number;
   progress?: number;
   projectId: number;
+  projectName?: string;
   resourcePool: string;
+  searcherMetricValue?: number;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
+  workspaceId?: number;
+  workspaceName?: string;
 }
 
 export interface ProjectExperiment extends ExperimentItem {
@@ -576,14 +591,6 @@ export interface ExperimentBase extends ProjectExperiment {
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   originalConfig: string;
-}
-
-// TODO we should be able to remove ExperimentOld but leaving this off.
-export interface ExperimentOld extends ExperimentItem {
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
-  url: string;
 }
 
 interface Allocation {
@@ -616,6 +623,7 @@ export interface ModelItem {
   notes?: string;
   numVersions: number;
   userId: number;
+  workspaceId: number;
 }
 
 export interface ModelVersion {
@@ -678,6 +686,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
+  workspaceId: number;
 }
 
 export type RecentEvent = {
@@ -727,6 +736,7 @@ export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   states?: string[];
   types?: T[];
   users?: string[];
+  workspaces?: string[];
 }
 
 export const LogLevel = {
@@ -785,10 +795,10 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 export interface Job extends Api.V1Job {
   summary: Api.V1JobSummary;
 }
-export const JobType = Api.Determinedjobv1Type;
-export type JobType = Api.Determinedjobv1Type;
-export const JobState = Api.Determinedjobv1State;
-export type JobState = Api.Determinedjobv1State;
+export const JobType = Api.Jobv1Type;
+export type JobType = Api.Jobv1Type;
+export const JobState = Api.Jobv1State;
+export type JobState = Api.Jobv1State;
 export type JobSummary = Api.V1JobSummary;
 export type RPStats = Api.V1RPQueueStat;
 
@@ -807,6 +817,7 @@ export type JobAction = ValueOf<typeof JobAction>;
 export interface Workspace {
   agentUserGroup?: V1AgentUserGroup;
   archived: boolean;
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   checkpointStorageConfig?: any;
   id: number;
   immutable: boolean;
@@ -814,6 +825,7 @@ export interface Workspace {
   numExperiments: number;
   numProjects: number;
   pinned: boolean;
+  pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
 }
@@ -866,11 +878,11 @@ export interface Permission {
 }
 
 export interface UserRole {
-  fromGroup?: number[];
-  fromWorkspace?: number[];
+  fromUser?: boolean;
   id: number;
   name: string;
   permissions: Permission[];
+  scopeCluster?: boolean;
 }
 
 export interface UserAssignment {
@@ -911,3 +923,18 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
+
+export type GroupWithRoleInfo = {
+  groupId: Api.V1Group['groupId'];
+  groupName: Api.V1Group['name'];
+  roleAssignment: Api.V1RoleAssignment;
+};
+
+export type UserWithRoleInfo = {
+  displayName: User['displayName'];
+  roleAssignment: Api.V1RoleAssignment;
+  userId: User['id'];
+  username: User['username'];
+};
+
+export type UserOrGroupWithRoleInfo = UserWithRoleInfo | GroupWithRoleInfo;

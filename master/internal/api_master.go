@@ -6,6 +6,8 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -25,21 +27,22 @@ func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
 	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
-	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		product = apiv1.GetMasterResponse_PRODUCT_COMMUNITY
 	}
 	masterResp := &apiv1.GetMasterResponse{
-		Version:           version.Version,
-		MasterId:          a.m.MasterID,
-		ClusterId:         a.m.ClusterID,
-		ClusterName:       a.m.config.ClusterName,
-		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
-		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
-		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
-		Branding:          "determined",
-		RbacEnabled:       config.GetAuthZConfig().IsRBACUIEnabled(),
-		Product:           product,
-		FeatureSwitches:   a.m.config.FeatureSwitches,
+		Version:               version.Version,
+		MasterId:              a.m.MasterID,
+		ClusterId:             a.m.ClusterID,
+		ClusterName:           a.m.config.ClusterName,
+		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
+		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
+		Branding:              "determined",
+		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
+		Product:               product,
+		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
+		FeatureSwitches:       a.m.config.FeatureSwitches,
 	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
@@ -60,8 +63,13 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	if err := userShouldBeAdmin(ctx, a); err != nil {
+	// TODO: migrate to RBAC.
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
 		return nil, err
+	}
+	if !u.Admin {
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	config, err := a.m.config.Printable()
@@ -131,15 +139,15 @@ func (a *apiServer) ResourceAllocationRaw(
 	resp := &apiv1.ResourceAllocationRawResponse{}
 
 	if req.TimestampAfter == nil {
-		return nil, errors.New("no start time provided")
+		return nil, status.Error(codes.InvalidArgument, "no start time provided")
 	}
 	if req.TimestampBefore == nil {
-		return nil, errors.New("no end time provided")
+		return nil, status.Error(codes.InvalidArgument, "no end time provided")
 	}
 	start := time.Unix(req.TimestampAfter.Seconds, int64(req.TimestampAfter.Nanos)).UTC()
 	end := time.Unix(req.TimestampBefore.Seconds, int64(req.TimestampBefore.Nanos)).UTC()
 	if start.After(end) {
-		return nil, errors.New("start time cannot be after end time")
+		return nil, status.Error(codes.InvalidArgument, "start time cannot be after end time")
 	}
 
 	if err := a.m.db.QueryProto(

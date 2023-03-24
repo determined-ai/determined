@@ -4,8 +4,8 @@ const mockNavigatorClipboard = () => {
   Object.defineProperty(navigator, 'clipboard', {
     configurable: true,
     value: {
-      readText: jest.fn(),
-      writeText: jest.fn(),
+      readText: vi.fn(),
+      writeText: vi.fn(),
     },
     writable: true,
   });

@@ -67,6 +67,8 @@ export const isDetError = (error: unknown): error is DetError => {
 /**
  * used to preserve the public message potentially provided by lower levels where the error
  * was generated or rethrowed.
+ *
+ * @param e internal DetError object.
  * @param publicMessage a description of the error at this level.
  * @returns wrapped publicMessage if there was any provided at lower levels.
  */

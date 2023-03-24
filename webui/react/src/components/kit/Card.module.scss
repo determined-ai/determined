@@ -1,0 +1,68 @@
+.cardBase {
+  --transition-duration: 0.25s;
+  --transition-delay: 0.05s;
+  --outside-padding: 16px;
+  background-color: var(--theme-surface);
+  border-radius: var(--theme-border-radius-weak);
+  box-shadow: 0 1.6px 3.6px 1.6px rgb(0 0 0 / 13%);
+  color: var(--theme-surface-on);
+  display: flex;
+  flex-direction: column;
+  max-width: fit-content;
+  padding: var(--outside-padding);
+  position: relative;
+  transition: background-color var(--transition-duration);
+  transition-delay: var(--transition-delay);
+
+  .action {
+    background-color: inherit;
+    opacity: 0;
+    padding-bottom: 2px;
+    padding-left: 2px;
+    position: absolute;
+    right: var(--outside-padding);
+    top: var(--outside-padding);
+    transition: all var(--transition-duration);
+    transition-delay: var(--transition-delay);
+  }
+  .content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+
+    & > * {
+      flex-grow: 1;
+    }
+  }
+  &.clickable {
+    cursor: pointer;
+  }
+  &:hover,
+  &:focus-within {
+    color: var(--theme-surface-on);
+
+    &.clickable {
+      background-color: var(--theme-surface-weak);
+    }
+    .action {
+      opacity: 1;
+    }
+  }
+  &:focus-visible {
+    outline: var(--theme-stroke-width-strong) solid var(--theme-ix-border-active);
+  }
+  &.smallCard {
+    --outside-padding: 8px;
+  }
+  &.mediumCard {
+    --outside-padding: 16px;
+  }
+}
+.groupBase {
+  padding: 4px;
+
+  & > .cardBase {
+    max-width: none;
+    min-width: 100%;
+  }
+}

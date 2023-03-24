@@ -1,16 +1,19 @@
 import { PushpinOutlined } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import { Typography } from 'antd';
+import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
-import Link from 'components/Link';
-import Avatar from 'components/UserAvatar';
+import Card from 'components/kit/Card';
+import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
-import { routeToReactUrl } from 'shared/utils/routes';
+import Spinner from 'shared/components/Spinner';
+import { pluralizer } from 'shared/utils/string';
+import usersStore from 'stores/users';
 import { Workspace } from 'types';
+import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
-import WorkspaceActionDropdown from './WorkspaceActionDropdown';
+import { useWorkspaceActionMenu } from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
 
 interface Props {
@@ -19,47 +22,52 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
-  const handleCardClick = useCallback(() => {
-    routeToReactUrl(paths.workspaceDetails(workspace.id));
-  }, [workspace.id]);
+  const { menuProps, contextHolders } = useWorkspaceActionMenu({
+    onComplete: fetchWorkspaces,
+    workspace,
+  });
+  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
+  const user = Loadable.map(loadableUser, (user) => user);
+
+  const classnames = [css.base];
+  if (workspace.archived) classnames.push(css.archived);
 
   return (
-    <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspaces}>
-      <div className={css.base} onClick={handleCardClick}>
-        <DynamicIcon name={workspace.name} size={70} />
-        <div className={css.info}>
-          <div className={css.nameRow}>
-            <h6 className={css.name}>
-              <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                <Typography.Paragraph ellipsis={true}>{workspace.name}</Typography.Paragraph>
-              </Link>
-            </h6>
-            {workspace.archived && (
-              <Tooltip title="Archived">
-                <div>
-                  <Icon name="archive" size="small" />
-                </div>
-              </Tooltip>
-            )}
+    <>
+      <Card
+        actionMenu={!workspace.immutable ? menuProps : undefined}
+        href={paths.workspaceDetails(workspace.id)}
+        size="medium">
+        <div className={classnames.join(' ')}>
+          <div className={css.icon}>
+            <DynamicIcon name={workspace.name} size={78} />
           </div>
-          <p className={css.projects}>
-            {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
-          </p>
-          <div className={css.avatar}>
-            <Avatar userId={workspace.userId} />
+          <div className={css.info}>
+            <div className={css.nameRow}>
+              <Typography.Title
+                className={css.name}
+                ellipsis={{ rows: 1, tooltip: true }}
+                level={5}>
+                {workspace.name}
+              </Typography.Title>
+              {workspace.pinned && <PushpinOutlined className={css.pinned} />}
+            </div>
+            <p className={css.projects}>
+              {workspace.numProjects} {pluralizer(workspace.numProjects, 'project')}
+            </p>
+            <div className={css.avatarRow}>
+              <div className={css.avatar}>
+                <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
+                  {Loadable.isLoaded(user) && <Avatar user={user.data} />}
+                </Spinner>
+              </div>
+              {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+            </div>
           </div>
         </div>
-        {workspace.pinned && <PushpinOutlined className={css.pinned} />}
-        {!workspace.immutable && (
-          <WorkspaceActionDropdown
-            className={css.action}
-            direction="horizontal"
-            workspace={workspace}
-            onComplete={fetchWorkspaces}
-          />
-        )}
-      </div>
-    </WorkspaceActionDropdown>
+      </Card>
+      {contextHolders}
+    </>
   );
 };
 

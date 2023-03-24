@@ -1,0 +1,55 @@
+.base {
+  display: grid;
+  gap: 16px;
+  grid-template:
+    'header  header' auto
+    'workspace workspace' 20px
+    'footer footer' 20px / auto auto;
+  height: 100%;
+
+  .headerContainer {
+    grid-area: header;
+  }
+  .name {
+    font-size: 13px;
+    margin-bottom: 0;
+    width: fit-content;
+  }
+  .workspaceContainer {
+    grid-area: workspace;
+  }
+  .workspaceIcon {
+    width: fit-content;
+  }
+  .footerContainer {
+    align-items: end;
+    display: flex;
+    font-size: 12px;
+    grid-area: footer;
+    justify-content: space-between;
+
+    .experiments {
+      align-self: end;
+
+      & > span {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+      }
+    }
+    .lastExperiment {
+      margin-left: 6px;
+    }
+    .archivedBadge {
+      background-color: var(--theme-status-inactive);
+      border-radius: var(--theme-border-radius);
+      color: var(--theme-status-warning-on);
+      opacity: 1;
+      padding: 2px 4px;
+    }
+  }
+  &.archived .name,
+  &.archived .experiments {
+    opacity: 0.55;
+  }
+}

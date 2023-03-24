@@ -195,6 +195,7 @@ func newTaskSummary(
 		SlotsNeeded:    request.SlotsNeeded,
 		Resources:      resourcesSummaries,
 		SchedulerType:  schedulerType,
+		ProxyPorts:     request.ProxyPorts,
 	}
 
 	if group, ok := groups[request.Group]; ok {

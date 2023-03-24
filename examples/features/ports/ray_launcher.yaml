@@ -1,0 +1,19 @@
+name: ray_launcher
+entrypoint: python3 ray_launcher.py
+
+resources:
+  slots_per_trial: 1
+
+searcher:
+   name: single
+   metric: x
+   max_length: 10000000
+
+max_restarts: 0
+
+environment:
+  proxy_ports:
+    - proxy_port: 6379
+      proxy_tcp: true
+    - proxy_port: 8265
+      proxy_tcp: true

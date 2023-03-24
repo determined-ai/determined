@@ -33,18 +33,15 @@ type (
 
 type informer struct {
 	podInterface typedV1.PodInterface
-	namespace    string
 	podsHandler  *actor.Ref
 }
 
 func newInformer(
 	podInterface typedV1.PodInterface,
-	namespace string,
 	podsHandler *actor.Ref,
 ) *informer {
 	return &informer{
 		podInterface: podInterface,
-		namespace:    namespace,
 		podsHandler:  podsHandler,
 	}
 }
@@ -99,10 +96,6 @@ func (i *informer) startInformer(ctx *actor.Context) {
 		pod, ok := event.Object.(*k8sV1.Pod)
 		if !ok {
 			ctx.Log().Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
-			continue
-		}
-
-		if pod.Namespace != i.namespace {
 			continue
 		}
 

@@ -21,11 +21,12 @@ def make_mock_cluster_info(
         steps_completed=0,
         trial_run_id=0,
         debug=False,
-        unique_port_offset=0,
         inter_node_network_interface=None,
     )
     rendezvous_info_mock = det.RendezvousInfo(
-        container_addrs=container_addrs, container_rank=container_rank
+        container_addrs=container_addrs,
+        container_rank=container_rank,
+        container_slot_counts=[int(num_slots / len(container_addrs)) for _ in container_addrs],
     )
     cluster_info_mock = det.ClusterInfo(
         master_url="localhost",
@@ -40,6 +41,19 @@ def make_mock_cluster_info(
         trial_info=trial_info_mock,
     )
     return cluster_info_mock
+
+
+@contextlib.contextmanager
+def set_mock_cluster_info(
+    container_addrs: List[str], container_rank: int, num_slots: int
+) -> Iterator[det.ClusterInfo]:
+    old_info = det._info._info
+    info = make_mock_cluster_info(container_addrs, container_rank, num_slots)
+    det._info._info = info
+    try:
+        yield info
+    finally:
+        det._info._info = old_info
 
 
 @contextlib.contextmanager

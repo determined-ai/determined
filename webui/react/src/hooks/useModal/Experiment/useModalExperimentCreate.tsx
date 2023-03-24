@@ -1,13 +1,15 @@
-import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { Alert, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson, ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
@@ -44,9 +46,9 @@ interface ModalState {
   error?: string;
   experiment?: ExperimentBase;
   isAdvancedMode: boolean;
+  open: boolean;
   trial?: TrialItem;
   type: CreateExperimentType;
-  visible: boolean;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -96,12 +98,11 @@ const DEFAULT_MODAL_STATE = {
   config: {},
   configString: '',
   isAdvancedMode: false,
+  open: false,
   type: CreateExperimentType.Fork,
-  visible: false,
 };
 
 const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
-  const formRef = useRef<FormInstance>(null);
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
@@ -111,6 +112,8 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     onClose?.();
   }, [onClose]);
 
+  const [form] = Form.useForm();
+
   const {
     modalClose,
     modalOpen: openOrUpdate,
@@ -118,7 +121,6 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     ...modalHook
   } = useModal({
     onClose: handleModalClose,
-    options: { rawCancel: true },
   });
 
   const handleFieldsChange = useCallback(() => {
@@ -139,6 +141,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
       try {
         yaml.load(newConfigString);
         newModalState.configError = undefined;
+        newModalState.error = undefined;
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }
@@ -147,70 +150,60 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     });
   }, []);
 
-  const handleCancel = useCallback(
-    (close?: () => void) => {
-      /**
-       * 'close' is an indicator for if cancel button (show config) is clicked or not.
-       * If cancel button (show config) is not clicked, 'close' is undefined.
-       */
-      if (!close) {
-        modalClose(ModalCloseReason.Cancel);
-      } else {
-        setModalState((prev) => {
-          if (!prev) return prev;
+  const toggleMode = useCallback(async () => {
+    setModalState((prev) => {
+      if (!prev) return prev;
 
-          if (prev.isAdvancedMode && formRef.current) {
-            try {
-              const newConfig = (yaml.load(prev.configString) || {}) as RawJson;
-              const isFork = prev.type === CreateExperimentType.Fork;
+      if (prev.isAdvancedMode && form) {
+        try {
+          const newConfig = (yaml.load(prev.configString) || {}) as RawJson;
+          const isFork = prev.type === CreateExperimentType.Fork;
 
-              formRef.current.setFields([
-                { name: 'name', value: getExperimentName(newConfig) },
-                {
-                  name: 'maxLength',
-                  value: !isFork ? getMaxLengthValue(newConfig) : undefined,
-                },
-              ]);
-
-              formRef.current.validateFields();
-            } catch (e) {
-              handleError(e, { publicMessage: 'failed to load previous yaml config' });
-            }
-          }
-
-          return {
-            ...prev,
-            configError: undefined,
-            error: undefined,
-            isAdvancedMode: !prev.isAdvancedMode,
-          };
-        });
+          form.setFields([
+            { name: 'name', value: getExperimentName(newConfig) },
+            {
+              name: 'maxLength',
+              value: !isFork ? getMaxLengthValue(newConfig) : undefined,
+            },
+          ]);
+        } catch (e) {
+          handleError(e, { publicMessage: 'failed to load previous yaml config' });
+        }
       }
+
+      return {
+        ...prev,
+        configError: undefined,
+        error: undefined,
+        isAdvancedMode: !prev.isAdvancedMode,
+      };
+    });
+    await form.validateFields();
+  }, [form]);
+
+  const getConfigFromForm = useCallback(
+    (config: RawJson) => {
+      if (!form) return yaml.dump(config);
+
+      const formValues = form.getFieldsValue();
+      const newConfig = clone(config);
+
+      if (formValues.name) {
+        newConfig.name = formValues.name;
+      }
+      if (formValues.maxLength) {
+        const maxLengthType = getMaxLengthType(newConfig);
+        if (maxLengthType === undefined) {
+          // Unitless searcher config.
+          newConfig.searcher.max_length = parseInt(formValues.maxLength);
+        } else {
+          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+        }
+      }
+      return yaml.dump(newConfig);
     },
-    [modalClose],
+    [form],
   );
-
-  const getConfigFromForm = useCallback((config: RawJson) => {
-    if (!formRef.current) return yaml.dump(config);
-
-    const formValues = formRef.current.getFieldsValue();
-    const newConfig = clone(config);
-
-    if (formValues.name) {
-      newConfig.name = formValues.name;
-    }
-    if (formValues.maxLength) {
-      const maxLengthType = getMaxLengthType(newConfig);
-      if (maxLengthType === undefined) {
-        // Unitless searcher config.
-        newConfig.searcher.max_length = parseInt(formValues.maxLength);
-      } else {
-        newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
-      }
-    }
-
-    return yaml.dump(newConfig);
-  }, []);
 
   const submitExperiment = useCallback(
     async (newConfig: string) => {
@@ -266,7 +259,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     if (isAdvancedMode) {
       userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     } else {
-      await formRef.current?.validateFields();
+      await form?.validateFields();
       userConfig = modalState.config;
     }
 
@@ -283,7 +276,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
 
     const configString = isAdvancedMode ? yaml.dump(fullConfig) : getConfigFromForm(fullConfig);
     await submitExperiment(configString);
-  }, [getConfigFromForm, modalState, submitExperiment, registryCredentials]);
+  }, [getConfigFromForm, modalState, submitExperiment, registryCredentials, form]);
 
   const getModalContent = useCallback(
     (state: ModalState) => {
@@ -309,6 +302,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
           )}
           <Form
             className={css.form}
+            form={form}
             hidden={isAdvancedMode}
             initialValues={{
               maxLength: undefined,
@@ -316,7 +310,6 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             }}
             labelCol={{ span: 8 }}
             name="basic"
-            ref={formRef}
             onFieldsChange={handleFieldsChange}>
             <Form.Item
               label="Experiment name"
@@ -346,12 +339,12 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         </>
       );
     },
-    [handleEditorChange, handleFieldsChange],
+    [handleEditorChange, handleFieldsChange, form],
   );
 
   const getModalProps = useCallback(
     (state: ModalState): ModalFuncProps | undefined => {
-      const { experiment, isAdvancedMode, trial, type, visible } = state;
+      const { experiment, isAdvancedMode, trial, type, open } = state;
       const isFork = type === CreateExperimentType.Fork;
       if (!experiment || (!isFork && !trial)) return;
 
@@ -360,6 +353,9 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         : `Continue Trial ${trial?.id}`;
       const props = {
         bodyStyle: { padding: 0 },
+        cancelButtonProps: {
+          onClick: toggleMode,
+        },
         cancelText: isAdvancedMode ? 'Show Simple Config' : 'Show Full Config',
         className: css.base,
         closable: true,
@@ -367,20 +363,19 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         icon: null,
         maskClosable: true,
         okText: type,
-        onCancel: handleCancel,
         onOk: handleOk,
+        open,
         title: (
           <div className={css.title}>
             <Icon name="fork" /> {titleLabel}
           </div>
         ),
-        visible,
-        width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
+        width: isAdvancedMode ? (isFork ? 760 : 1000) : 500,
       };
 
       return props;
     },
-    [getModalContent, handleCancel, handleOk],
+    [getModalContent, toggleMode, handleOk],
   );
 
   const modalOpen = useCallback(({ experiment, trial, type }: OpenProps) => {
@@ -422,9 +417,9 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         configString: yaml.dump(publicConfig),
         experiment,
         isAdvancedMode: false,
+        open: true,
         trial,
         type,
-        visible: true,
       };
       return isEqual(prev, newModalState) ? prev : newModalState;
     });
@@ -442,7 +437,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    if (isEqual(modalState, prevModalState) || !modalState.open) return;
     openOrUpdate(getModalProps(modalState));
   }, [getModalProps, modalRef, modalState, openOrUpdate, prevModalState]);
 

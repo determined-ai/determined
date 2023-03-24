@@ -5,17 +5,10 @@ import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
-export type UserColumnName =
-  | 'action'
-  | 'displayName'
-  | 'username'
-  | 'isActive'
-  | 'isAdmin'
-  | 'modifiedAt';
+export type UserColumnName = 'action' | 'displayName' | 'isActive' | 'isAdmin' | 'modifiedAt';
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
-  'username',
   'isActive',
   'isAdmin',
   'modifiedAt',
@@ -23,20 +16,19 @@ export const DEFAULT_COLUMNS: UserColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   action: 20,
-  displayName: 80,
+  displayName: 60,
   isActive: 40,
   isAdmin: 40,
   modifiedAt: 80,
-  username: 120,
 };
 
 export interface UserManagementSettings extends InteractiveTableSettings {
+  name?: string;
   sortDesc: boolean;
   sortKey: V1GetUsersRequestSortBy;
 }
 
 const config: SettingsConfig<UserManagementSettings> = {
-  applicableRoutespace: 'user-management',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -49,6 +41,11 @@ const config: SettingsConfig<UserManagementSettings> = {
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
       type: array(number),
+    },
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([string, undefinedType]),
     },
     row: {
       defaultValue: undefined,
@@ -70,6 +67,7 @@ const config: SettingsConfig<UserManagementSettings> = {
         literal(V1GetUsersRequestSortBy.MODIFIEDTIME),
         literal(V1GetUsersRequestSortBy.UNSPECIFIED),
         literal(V1GetUsersRequestSortBy.USERNAME),
+        literal(V1GetUsersRequestSortBy.NAME),
       ]),
     },
     tableLimit: {

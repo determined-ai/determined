@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
@@ -33,15 +34,7 @@ type TrialSpec struct {
 func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	// TODO: remove this, but without breaking rendezvous api.
-	ports["trial"] = 1734
-	env.SetPorts(ports)
-	res.Environment = env
+	res.Environment = s.MakeEnvPorts()
 
 	res.ResourcesConfig = s.ExperimentConfig.Resources()
 	res.SlurmConfig = s.ExperimentConfig.SlurmConfig()
@@ -117,10 +110,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"DET_HPARAMS":           jsonify(s.HParams),
 		"DET_STEPS_COMPLETED":   strconv.Itoa(s.StepsCompleted),
 		"DET_TASK_TYPE":         string(model.TaskTypeTrial),
-		// DET_UNIQUE_PORT_OFFSET will be overwritten by the agent resource manager when the
-		// container is started, but only on agent resource pools.  This default value will apply
-		// to k8s and slurm (though slurm will override it in a startup hook).
-		"DET_UNIQUE_PORT_OFFSET": "0",
 	}
 	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
 		envVars["DET_LATEST_CHECKPOINT"] = s.LatestCheckpoint.UUID.String()
@@ -149,23 +138,56 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			&mount.BindOptions{Propagation: expconf.DefaultSharedFSPropagation},
 		)
 	}
-	if c := s.ExperimentConfig.DataLayer().RawSharedFSConfig; c != nil {
-		if c.HostStoragePath() != nil && c.ContainerStoragePath() != nil {
-			addMount(*c.HostStoragePath(), *c.ContainerStoragePath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawS3Config; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawGCSConfig; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
-		}
-	}
 	res.Mounts = mounts
 	res.TaskType = model.TaskTypeTrial
 
 	return res
+}
+
+// MakeEnvPorts fills in `Environment.Ports` i.e. exposed ports for container config.
+func (s *TrialSpec) MakeEnvPorts() expconf.EnvironmentConfigV0 {
+	ppc := s.ProxyPorts()
+	ports := s.ExperimentConfig.Environment().Ports()
+	if ports == nil {
+		ports = map[string]int{}
+	}
+
+	for _, pp := range ppc {
+		port := pp.ProxyPort()
+		ports[strconv.Itoa(port)] = port
+	}
+
+	// TODO: remove this, but without breaking rendezvous api.
+	ports["trial"] = 1734
+
+	env := s.ExperimentConfig.Environment()
+	env.SetPorts(ports)
+
+	return env
+}
+
+// TrialSpecProxyPorts combines user-defined and system proxy configs.
+// This static function is public because trial actor builds `TrialSpec` instances late.
+func TrialSpecProxyPorts(
+	taskSpec *TaskSpec,
+	expConfig expconf.ExperimentConfigV0,
+) expconf.ProxyPortsConfig {
+	env := expConfig.Environment()
+	epp := schemas.WithDefaults(taskSpec.ExtraProxyPorts)
+	out := make(expconf.ProxyPortsConfig, 0, len(epp)+len(env.ProxyPorts()))
+
+	for _, pp := range epp {
+		out = append(out, pp)
+	}
+
+	for _, pp := range env.ProxyPorts() {
+		out = append(out, pp)
+	}
+
+	return out
+}
+
+// ProxyPorts combines user-defined and system proxy configs.
+func (s *TrialSpec) ProxyPorts() expconf.ProxyPortsConfig {
+	return TrialSpecProxyPorts(&s.Base, s.ExperimentConfig)
 }

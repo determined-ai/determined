@@ -20,11 +20,13 @@ import sys
 sys.path.append(".")
 
 import logging
-import determined as det
-from asha import ASHASearchMethod
-from typing import Dict
 import random
 from pathlib import Path
+from typing import Dict
+
+from asha import ASHASearchMethod
+
+import determined as det
 from determined import searcher
 
 

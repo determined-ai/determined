@@ -110,6 +110,9 @@ type KubernetesResourceManagerConfig struct {
 	CredsDir                 string                  `json:"_creds_dir,omitempty"`
 	MasterIP                 string                  `json:"_master_ip,omitempty"`
 	MasterPort               int32                   `json:"_master_port,omitempty"`
+
+	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
+	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -127,6 +130,14 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*k = defaultKubernetesResourceManagerConfig
 	type DefaultParser *KubernetesResourceManagerConfig
 	err := json.Unmarshal(data, DefaultParser(k))
+
+	if k.DefaultComputeResourcePool == "" {
+		k.DefaultComputeResourcePool = defaultResourcePoolName
+	}
+	if k.DefaultAuxResourcePool == "" {
+		k.DefaultAuxResourcePool = defaultResourcePoolName
+	}
+
 	if err == nil && k.SlotType == "gpu" {
 		k.SlotType = device.CUDA
 	}

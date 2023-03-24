@@ -3,15 +3,15 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { setAuth } from 'stores/auth';
 
 import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
+vi.mock('react-router-dom', () => ({
   useParams: () => ({
     taskId: 'task-id',
     taskName: TASK_NAME,
@@ -23,22 +23,20 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const InteractiveTaskPageContainer: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
-
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, []);
 
   return <InteractiveTask />;
 };
 
 const InteractiveTaskContainer: React.FC = () => {
   return (
-    <StoreProvider>
+    <UIProvider>
       <HelmetProvider>
         <InteractiveTaskPageContainer />
       </HelmetProvider>
-    </StoreProvider>
+    </UIProvider>
   );
 };
 

@@ -3,7 +3,7 @@
     "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,

@@ -1,8 +1,9 @@
-import { Button, Dropdown, Select, Tooltip } from 'antd';
+import { Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
-import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
@@ -10,9 +11,10 @@ import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } f
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/auth';
+import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -34,7 +36,6 @@ export interface TrialsCollectionInterface {
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
 const configForProject = (projectId: string): SettingsConfig<{ collection: string }> => ({
-  applicableRoutespace: '/trials',
   settings: {
     collection: {
       defaultValue: '',
@@ -84,9 +85,9 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
+  const user = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
 
@@ -374,11 +375,7 @@ export const useTrialCollections = (
                   ],
             }}
             trigger={['click']}>
-            <Button
-              className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}
-              ghost
-              icon={<Icon name="overflow-vertical" />}
-            />
+            <Button ghost icon={<Icon name="overflow-vertical" />} />
           </Dropdown>
           {viewFiltersContextHolder}
           {collectionContextHolder}

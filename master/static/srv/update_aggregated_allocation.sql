@@ -90,16 +90,6 @@ pool_agg AS (
     GROUP BY
         allocs_in_range.resource_pool
 ),
-agent_label_agg AS (
-    SELECT
-        'agent_label' AS aggregation_type,
-        allocs_in_range.agent_label,
-        sum(allocs_in_range.seconds) AS seconds
-    FROM
-        allocs_in_range
-    GROUP BY
-        allocs_in_range.agent_label
-),
 all_aggs AS (
     SELECT
         *
@@ -115,11 +105,6 @@ all_aggs AS (
         *
     FROM
         pool_agg
-    UNION ALL
-    SELECT
-        *
-    FROM
-        agent_label_agg
     UNION ALL
     SELECT
         'total' AS aggregation_type,

@@ -10,14 +10,12 @@ for training and evaluation respectively.
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import data
 import torch
+from layers import Flatten
 from torch import nn
 
-from layers import Flatten
-
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, PyTorchCallback
-
-import data
+from determined.pytorch import DataLoader, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

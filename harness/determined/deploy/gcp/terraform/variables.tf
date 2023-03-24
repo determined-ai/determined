@@ -85,12 +85,12 @@ variable "compute_agent_instance_type" {
 
 variable "gpu_type" {
   type = string
-  default = "nvidia-tesla-k80"
+  default = "nvidia-tesla-t4"
 }
 
 variable "gpu_num" {
   type = number
-  default = 8
+  default = 4
 }
 
 variable "min_dynamic_agents" {
@@ -101,11 +101,6 @@ variable "min_dynamic_agents" {
 variable "max_dynamic_agents" {
   type = number
   default = 5
-}
-
-variable "static_agents" {
-  type = number
-  default = 0
 }
 
 variable "preemptible" {
@@ -161,6 +156,11 @@ variable "scheduler_type" {
 variable "preemption_enabled" {
   type = bool
   default = false
+}
+
+variable "labels" {
+  type = map
+  default = {}
 }
 
 /******************************************

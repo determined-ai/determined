@@ -28,8 +28,9 @@ const (
 
 // Environment configures the environment of a Determined command or experiment.
 type Environment struct {
-	Image                RuntimeItem  `json:"image"`
-	EnvironmentVariables RuntimeItems `json:"environment_variables,omitempty"`
+	Image                RuntimeItem      `json:"image"`
+	EnvironmentVariables RuntimeItems     `json:"environment_variables,omitempty"`
+	ProxyPorts           ProxyPortsConfig `json:"proxy_ports"`
 
 	Ports          map[string]int    `json:"ports"`
 	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`

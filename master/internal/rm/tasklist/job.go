@@ -32,7 +32,7 @@ func ReduceToJobQInfo(reqs AllocReqs) map[model.JobID]*sproto.RMJobInfo {
 			isAdded[req.JobID] = v1JobInfo
 			jobsAhead++
 		}
-		// Carry over the the highest state.
+		// Carry over the highest state.
 		if v1JobInfo.State < req.State {
 			isAdded[req.JobID].State = req.State
 		}

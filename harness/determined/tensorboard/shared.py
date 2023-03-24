@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 import shutil
-from typing import Any, Callable
+from typing import Any, List
 
 from determined.tensorboard import base
 
@@ -28,15 +28,13 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         # Restore the original umask.
         os.umask(old_umask)
 
-    def sync(
+    def _sync_impl(
         self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
-        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
-        rank: int = 0,
+        path_info_list: List[base.PathUploadInfo],
     ) -> None:
-        for path in self.to_sync(selector):
-            relative_path = path.relative_to(self.base_path)
-            mangled_relative_path = mangler(relative_path, rank)
+        for path_info in path_info_list:
+            path = path_info.path
+            mangled_relative_path = path_info.mangled_relative_path
             mangled_path = self.shared_fs_base.joinpath(mangled_relative_path)
             pathlib.Path.mkdir(mangled_path.parent, parents=True, exist_ok=True)
             logger.debug(f"SharedFSTensorboardManager saving {path} to {mangled_path}")

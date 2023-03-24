@@ -41,7 +41,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         while batch < op.length:
             x += increment_by
             steps_completed = batch + 1
-            time.sleep(.1)
+            time.sleep(0.1)
             logging.info(f"x is now {x}")
             if steps_completed % 10 == 0:
                 core_context.train.report_training_metrics(

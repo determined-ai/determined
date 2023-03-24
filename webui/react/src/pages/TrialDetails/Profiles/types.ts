@@ -1,5 +1,4 @@
-import uPlot from 'uplot';
-
+import { Serie } from 'components/kit/LineChart';
 import { Options } from 'components/UPlot/UPlotChart';
 import {
   V1GetTrialProfilerMetricsResponse,
@@ -22,6 +21,16 @@ export type AvailableSeries = Record<string, AvailableSeriesType>;
 
 export type MetricsAggregateInterface = {
   // group information by { [time]: { [name]: value, ... }, ... }
+  data: Serie[];
+  initialTimestamp?: number;
+  isEmpty: boolean;
+  // set to false when the 1st event is received
+  isLoading: boolean;
+  names: string[];
+};
+
+export type OldMetricsAggregateInterface = {
+  // group information by { [time]: { [name]: value, ... }, ... }
   data?: uPlot.AlignedData;
   initialTimestamp?: number;
   isEmpty: boolean;
@@ -31,6 +40,10 @@ export type MetricsAggregateInterface = {
 };
 
 export interface ChartProps {
+  trial: TrialDetails;
+}
+
+export interface OldChartProps {
   getOptionsForMetrics: (name: string, metricsNames: string[]) => Partial<Options>;
   trial: TrialDetails;
 }

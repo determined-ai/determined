@@ -54,7 +54,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             all_increment_bys = core_context.distributed.allgather(increment_by)
             x += sum(all_increment_bys)
             steps_completed = batch + 1
-            time.sleep(.1)
+            time.sleep(0.1)
             # NEW: some logs are easier to read if you only log from the chief.
             if core_context.distributed.rank == 0:
                 logging.info(f"x is now {x}")
@@ -67,9 +67,10 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                     )
                     op.report_progress(steps_completed)
                     checkpoint_metadata = {"steps_completed": steps_completed}
-                    with core_context.checkpoint.store_path(
-                        checkpoint_metadata
-                    ) as (checkpoint_directory, uuid):
+                    with core_context.checkpoint.store_path(checkpoint_metadata) as (
+                        checkpoint_directory,
+                        uuid,
+                    ):
                         save_state(x, steps_completed, trial_id, checkpoint_directory)
                     last_checkpoint_batch = steps_completed
                 if core_context.preempt.should_preempt():
@@ -195,9 +196,7 @@ if __name__ == "__main__":
         logging.info(f"worker starting")
         rank = int(sys.argv[2])
         local_rank = int(sys.argv[3])
-        exitcode = worker_main(
-            slots_per_node, num_nodes, cross_rank, chief_ip, rank, local_rank
-        )
+        exitcode = worker_main(slots_per_node, num_nodes, cross_rank, chief_ip, rank, local_rank)
         sys.exit(exitcode)
 
     raise ValueError(f"unrecognized first argument: {sys.argv[1]}")

@@ -174,3 +174,15 @@ message UnarchiveProjectRequest {
 
 // Response to UnarchiveProjectRequest.
 message UnarchiveProjectResponse {}
+
+// Get projects based on user activity.
+message GetProjectsByUserActivityRequest {
+  // Limit number of project entries
+  int32 limit = 1;
+}
+
+// Response to GetProjectsByUserActivityRequest.
+message GetProjectsByUserActivityResponse {
+  // A list of projects
+  repeated determined.project.v1.Project projects = 1;
+}

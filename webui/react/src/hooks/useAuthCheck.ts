@@ -1,23 +1,19 @@
+import { Observable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
-import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isAuthFailure } from 'shared/utils/service';
-import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
+import { AUTH_COOKIE_KEY, setAuth, setAuthChecked } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
-import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
-const useAuthCheck = (canceler: AbortController): (() => void) => {
+const useAuthCheck = (): (() => void) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
-  const { setAuth, resetAuth, setAuthCheck } = useAuth();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -30,7 +26,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     routeAll(authUrl);
   }, [info.externalLoginUri]);
 
-  const checkAuth = useCallback(async (): Promise<void> => {
+  const checkAuth = useCallback((): void => {
     /*
      * Check for the auth token from the following sources:
      *   1 - query param jwt from external authentication.
@@ -47,48 +43,20 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
      * If an external login URL is provided, redirect there.
      * Otherwise mark that we checked the auth and skip auth token validation.
      */
+
     if (authToken) {
       updateBearerToken(authToken);
 
-      try {
-        const user = await getCurrentUser({ signal: canceler.signal });
-        setAuth({ isAuthenticated: true, token: authToken, user });
-      } catch (e) {
-        if (isAborted(e)) return;
-
-        const isAuthError = isAuthFailure(e, !!info.externalLoginUri);
-        handleError(e, {
-          isUserTriggered: false,
-          publicMessage: 'Unable to verify current user.',
-          publicSubject: 'GET user failed',
-          silent: true,
-          type: isAuthError ? ErrorType.Auth : ErrorType.Server,
-        });
-
-        if (isAuthError) {
-          updateDetApi({ apiKey: undefined });
-          resetAuth();
-
-          if (info.externalLoginUri) redirectToExternalSignin();
-        }
-      } finally {
-        setAuthCheck();
-      }
+      Observable.batch(() => {
+        setAuth({ isAuthenticated: true, token: authToken });
+        setAuthChecked();
+      });
     } else if (info.externalLoginUri) {
       redirectToExternalSignin();
     } else {
-      setAuthCheck();
+      setAuthChecked();
     }
-  }, [
-    canceler,
-    info.externalLoginUri,
-    location.search,
-    setAuth,
-    resetAuth,
-    setAuthCheck,
-    redirectToExternalSignin,
-    updateBearerToken,
-  ]);
+  }, [info.externalLoginUri, location.search, redirectToExternalSignin, updateBearerToken]);
 
   return checkAuth;
 };

@@ -1,14 +1,12 @@
 import os
 
+import constants
+import download_glue_data
 import torch
 from torch.utils.data import TensorDataset
-
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
 from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
-
-import constants
-import download_glue_data
 
 
 def download_data(task, data_dir, path_to_mrpc) -> None:

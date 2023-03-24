@@ -37,6 +37,7 @@ const DEFAULT_OPTIONS: PollingOptions = {
 
 /**
  * Polling hook that polls a given polling function.
+ *
  * @param pollingFn
  *    The function to poll. Pass an async/await function to ensure
  *    the previous poll resolves first before making a new call.

@@ -18,6 +18,8 @@ import { RunState } from 'types';
 export type ExperimentColumnName =
   | 'action'
   | 'archived'
+  | 'checkpointCount'
+  | 'checkpointSize'
   | 'description'
   | 'duration'
   | 'forkedFrom'
@@ -26,6 +28,7 @@ export type ExperimentColumnName =
   | 'progress'
   | 'resourcePool'
   | 'searcherType'
+  | 'searcherMetricValue'
   | 'startTime'
   | 'state'
   | 'tags'
@@ -47,6 +50,8 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   action: 46,
   archived: 80,
+  checkpointCount: 160,
+  checkpointSize: 160,
   description: 148,
   duration: 96,
   forkedFrom: 100,
@@ -55,6 +60,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   numTrials: 74,
   progress: 111,
   resourcePool: 140,
+  searcherMetricValue: 140,
   searcherType: 140,
   startTime: 118,
   state: 106,
@@ -74,7 +80,6 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   user?: string[];
 }
 export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentListSettings> => ({
-  applicableRoutespace: `projects/${id}/experiments`,
   settings: {
     archived: {
       defaultValue: false,
@@ -89,6 +94,8 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
         union([
           literal('action'),
           literal('archived'),
+          literal('checkpointSize'),
+          literal('checkpointCount'),
           literal('description'),
           literal('duration'),
           literal('forkedFrom'),
@@ -97,6 +104,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
           literal('progress'),
           literal('resourcePool'),
           literal('searcherType'),
+          literal('searcherMetricValue'),
           literal('startTime'),
           literal('state'),
           literal('tags'),
@@ -154,6 +162,9 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
         literal(V1GetExperimentsRequestSortBy.STATE),
         literal(V1GetExperimentsRequestSortBy.UNSPECIFIED),
         literal(V1GetExperimentsRequestSortBy.USER),
+        literal(V1GetExperimentsRequestSortBy.CHECKPOINTSIZE),
+        literal(V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT),
+        literal(V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL),
       ]),
     },
     state: {
@@ -200,5 +211,5 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'project-details',
+  storagePath: `project-details-${id}`,
 });

@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ValueOf } from 'shared/types';
@@ -17,8 +16,8 @@ const TestAction = {
 
 type TestAction = ValueOf<typeof TestAction>;
 
-const handleActionOne = jest.fn();
-const handleActionTwo = jest.fn();
+const handleActionOne = vi.fn();
+const handleActionTwo = vi.fn();
 
 const DropDownContainer = () => {
   const dropDownOnTrigger = () => {

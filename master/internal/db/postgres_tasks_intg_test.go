@@ -78,17 +78,32 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// And an allocation.
+	ports := map[string]int{}
+	ports["dtrain_port"] = 0
+	ports["inter_train_process_comm_port1"] = 0
+	ports["inter_train_process_comm_port2"] = 0
+	ports["c10d_port"] = 0
+
 	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        8,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
+		Ports:        ports,
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
+
+	// Update ports
+	ports["dtrain_port"] = 0
+	ports["inter_train_process_comm_port1"] = 0
+	ports["inter_train_process_comm_port2"] = 0
+	ports["c10d_port"] = 0
+	aIn.Ports = ports
+	err = UpdateAllocationPorts(*aIn)
+	require.NoError(t, err, "failed to update port offset")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
 	aOut, err := db.AllocationByID(aIn.AllocationID)
@@ -206,6 +221,7 @@ func TestExhaustiveEnums(t *testing.T) {
 		q := fmt.Sprintf("SELECT unnest(enum_range(NULL::%s))::text", c.postgresType)
 		rows, err := db.sql.Queryx(q)
 		require.NoError(t, err, "querying postgres enum members")
+		defer rows.Close()
 		for rows.Next() {
 			var text string
 			require.NoError(t, rows.Scan(&text), "scanning enum value")

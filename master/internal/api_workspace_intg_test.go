@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -33,7 +34,7 @@ func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {
 }
 
 func TestPostWorkspace(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t)
+	api, curUser, ctx := setupAPITest(t, nil)
 
 	// Name min error.
 	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
@@ -111,7 +112,7 @@ func TestPostWorkspace(t *testing.T) {
 }
 
 func TestPatchWorkspace(t *testing.T) {
-	api, _, ctx := setupAPITest(t)
+	api, _, ctx := setupAPITest(t, nil)
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
 	workspaceID := resp.Workspace.Id
@@ -184,10 +185,11 @@ func workspaceNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("workspace (%d) not found", id))
 }
 
+// pgdb can be nil to use the singleton database for testing.
 func setupWorkspaceAuthZTest(
-	t *testing.T,
+	t *testing.T, pgdb *db.PgDB,
 ) (*apiServer, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, _, curUser, ctx := setupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t, pgdb)
 
 	if wAuthZ == nil {
 		wAuthZ = &mocks.WorkspaceAuthZ{}
@@ -197,7 +199,7 @@ func setupWorkspaceAuthZTest(
 }
 
 func TestAuthzGetWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	// Deny returns same as 404.
 	_, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: -9999})
 	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
@@ -216,7 +218,7 @@ func TestAuthzGetWorkspace(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaceProjects(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
@@ -239,7 +241,7 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaces(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceError")
@@ -258,7 +260,7 @@ func TestAuthzGetWorkspaces(t *testing.T) {
 }
 
 func TestAuthzPostWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 
 	// Deny returns error wrapped in forbidden.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateWorkspaceDeny")
@@ -285,7 +287,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
 	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig",
 		mock.Anything, mock.Anything).Return(fmt.Errorf("storageConfDeny"))
-	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
 		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
 			"type": "s3",
@@ -295,7 +297,7 @@ func TestAuthzPostWorkspace(t *testing.T) {
 }
 
 func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error

@@ -34,7 +34,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelVersionColumnName, number> = {
 };
 
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelVersionsRequestSortBy => {
-  return Object.values(V1GetModelVersionsRequestSortBy).includes(String(sortKey));
+  return Object.values<string>(V1GetModelVersionsRequestSortBy).includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
@@ -42,8 +42,7 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelVersionsRequestSortBy;
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'model-details',
+const config = (modelId: string | number): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -94,7 +93,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'model-details',
-};
+  storagePath: `model-details-${modelId}`,
+});
 
 export default config;

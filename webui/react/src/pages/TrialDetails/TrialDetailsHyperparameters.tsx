@@ -12,8 +12,7 @@ import { isObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { TrialDetails } from 'types';
 
-import css from './TrialDetailsHyperparameters.module.scss';
-import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';
+import { configForTrial, Settings } from './TrialDetailsHyperparameters.settings';
 
 export interface Props {
   pageRef: React.RefObject<HTMLElement>;
@@ -26,7 +25,8 @@ interface HyperParameter {
 }
 
 const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props) => {
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const config = useMemo(() => configForTrial(trial?.id), [trial?.id]);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const columns: ColumnDef<HyperParameter>[] = useMemo(
     () => [
@@ -61,26 +61,24 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
   }, [trial?.hyperparameters]);
 
   return (
-    <div className={css.base}>
-      <Spinner spinning={!trial}>
-        {trial ? (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            dataSource={dataSource}
-            pagination={false}
-            rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="hyperparameter"
-            settings={settings as InteractiveTableSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings}
-          />
-        ) : (
-          <SkeletonTable columns={columns.length} />
-        )}
-      </Spinner>
-    </div>
+    <Spinner spinning={!trial}>
+      {trial ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={dataSource}
+          pagination={false}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="hyperparameter"
+          settings={settings as InteractiveTableSettings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
+    </Spinner>
   );
 };
 

@@ -1,17 +1,20 @@
-import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
-import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { List, Modal, Select, Typography } from 'antd';
+import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { useResourcePools } from 'stores/resourcePools';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;
@@ -79,10 +82,10 @@ const ManageJob: React.FC<Props> = ({
   initialPool,
   jobCount,
 }) => {
-  const formRef = useRef<FormInstance<FormValues>>(null);
+  const [form] = Form.useForm();
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  useRefetchClusterData();
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {
@@ -95,8 +98,8 @@ const ManageJob: React.FC<Props> = ({
 
     tableKeys.forEach((td) => {
       const col = columns.find((col) => col.key === td);
-      if (!col || !col.render) return;
-      tableDetails[td] = { label: <>{col.title}</>, value: <>col.render(undefined, job, 0)</> };
+      if (!col?.render) return;
+      tableDetails[td] = { label: <>{col.title}</>, value: <>{col.render(undefined, job, 0)}</> };
     });
 
     const items = [
@@ -149,14 +152,14 @@ const ManageJob: React.FC<Props> = ({
     );
   }, [currentPool, currentPoolStats]);
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const handleUpdateResourcePool = useCallback((changedValues: any) => {
     if (changedValues.resourcePool) setSelectedPoolName(changedValues.resourcePool);
   }, []);
 
   const onOk = useCallback(async () => {
     try {
-      const update =
-        formRef.current && (await formValuesToUpdate(formRef.current.getFieldsValue(), job));
+      const update = form && (await formValuesToUpdate(form.getFieldsValue(), job));
       if (update) await updateJobQueue({ updates: [update] });
     } catch (e) {
       handleError(e, {
@@ -167,7 +170,7 @@ const ManageJob: React.FC<Props> = ({
       });
     }
     onFinish?.();
-  }, [formRef, onFinish, job]);
+  }, [form, onFinish, job]);
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
 
@@ -185,7 +188,8 @@ const ManageJob: React.FC<Props> = ({
         </p>
       )}
       <h6>Queue Settings</h6>
-      <Form<FormValues>
+      <Form
+        form={form}
         initialValues={{
           position: job.summary.jobsAhead + 1,
           priority: job.priority,
@@ -194,7 +198,6 @@ const ManageJob: React.FC<Props> = ({
         }}
         labelCol={{ span: 6 }}
         name="form basic"
-        ref={formRef}
         onValuesChange={handleUpdateResourcePool}>
         <Form.Item
           extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."

@@ -1,11 +1,13 @@
-import { Dropdown, Modal, ModalFuncProps } from 'antd';
+import { Dropdown, ModalFuncProps } from 'antd';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
+import Button from 'components/kit/Button';
 import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
+import { modal } from 'utils/dialogApi';
 
 import { Eventually } from '../../types';
 
@@ -111,7 +113,7 @@ const ActionDropdown = <T extends string>({
       };
 
       if (confirmations?.[action]) {
-        Modal.confirm({
+        modal.confirm({
           content: `Are you sure you want to ${action.toLocaleLowerCase()} ${kind} "${id}"?`,
           title: `${capitalize(action)} ${kind}`,
           ...confirmations[action],
@@ -137,9 +139,7 @@ const ActionDropdown = <T extends string>({
   if (menuItems.length === 0) {
     return (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <button disabled>
-          <Icon name="overflow-vertical" />
-        </button>
+        <Button disabled icon={<Icon name="overflow-vertical" />} type="text" />
       </div>
     );
   }
@@ -161,9 +161,7 @@ const ActionDropdown = <T extends string>({
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onOpenChange={onVisibleChange}>
-        <button onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
-        </button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
       </Dropdown>
     </div>
   );

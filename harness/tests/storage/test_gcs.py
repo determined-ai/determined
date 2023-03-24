@@ -7,6 +7,7 @@ import google.auth.exceptions
 import google.cloud.storage
 import pytest
 
+from determined import errors
 from determined.common import storage
 from determined.tensorboard.fetchers.gcs import GCSFetcher
 from tests.storage import util
@@ -65,11 +66,13 @@ def get_live_gcs_manager(
         )
         blob = manager.bucket.blob(CHECK_ACCESS_KEY)
         assert blob.download_as_string() == CHECK_KEY_CONTENT
-    except google.auth.exceptions.DefaultCredentialsError:
+    except errors.NoDirectStorageAccess as e:
         # No access detected.
-        if require_secrets:
-            raise
-        pytest.skip("No GCS access")
+        if (not require_secrets) and isinstance(
+            e.__cause__, google.auth.exceptions.DefaultCredentialsError
+        ):
+            pytest.skip("No GCS access")
+        raise
 
     return manager
 

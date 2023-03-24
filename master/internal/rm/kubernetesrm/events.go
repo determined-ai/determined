@@ -3,17 +3,15 @@ package kubernetesrm
 import (
 	"context"
 
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	k8sClient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
-	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sClient "k8s.io/client-go/kubernetes"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
 
 // Messages that are sent to the event listener.
@@ -30,19 +28,19 @@ type (
 
 type eventListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
+	namespace   string
 }
 
 func newEventListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
+	namespace string,
 ) *eventListener {
 	return &eventListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
+		namespace:   namespace,
 	}
 }
 
@@ -97,6 +95,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
 			continue
 		}
+
 		ctx.Tell(e.podsHandler, podEventUpdate{event: newEvent})
 	}
 

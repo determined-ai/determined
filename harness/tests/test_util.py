@@ -2,10 +2,11 @@ import os
 import pathlib
 from typing import Optional
 
+import numpy as np
 import pytest
 
 import determined as det
-from determined.util import force_create_symlink
+from determined import util
 
 
 def test_list_to_dict() -> None:
@@ -62,7 +63,7 @@ def test_force_create_symlink(whats_there: Optional[str], tmp_path: pathlib.Path
             pass
         os.symlink(another_file, symlink_to_create)
 
-    force_create_symlink(str(symlink_source), str(symlink_to_create))
+    util.force_create_symlink(str(symlink_source), str(symlink_to_create))
 
     expected_entry_found = False
     with os.scandir(tmp_path) as it:
@@ -78,3 +79,25 @@ def test_force_create_symlink(whats_there: Optional[str], tmp_path: pathlib.Path
 
     if whats_there == "symlink":
         assert tmp_path.joinpath("another_file").exists(), "deleted previous symlink source"
+
+
+def test_is_not_numerical_scalar() -> None:
+    # Invalid types
+    assert not util.is_numerical_scalar("foo")
+    assert not util.is_numerical_scalar(np.array("foo"))
+    assert not util.is_numerical_scalar(object())
+
+    # Invalid shapes
+    assert not util.is_numerical_scalar([1])
+    assert not util.is_numerical_scalar(np.array([3.14]))
+    assert not util.is_numerical_scalar(np.ones(shape=(5, 5)))
+
+
+def test_is_numerical_scalar() -> None:
+    assert util.is_numerical_scalar(1)
+    assert util.is_numerical_scalar(1.0)
+    assert util.is_numerical_scalar(-3.14)
+    assert util.is_numerical_scalar(np.ones(shape=()))
+    assert util.is_numerical_scalar(np.array(1))
+    assert util.is_numerical_scalar(np.array(-3.14))
+    assert util.is_numerical_scalar(np.array([1.0])[0])

@@ -1,19 +1,19 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
+import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-import { useAgents, useClusterOverview } from 'stores/agents';
-import { useResourcePools } from 'stores/resourcePools';
-import { Loadable } from 'utils/loadable';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
+import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
-import css from './Clusters.module.scss';
-import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview';
+import ClustersOverview from './Clusters/ClustersOverview';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
@@ -30,22 +30,16 @@ type Params = {
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const Clusters: React.FC = () => {
+  const rbacEnabled = useFeature().isOn('rbac');
+  const { canAdministrateUsers } = usePermissions();
   const { tab } = useParams<Params>();
   const basePath = paths.clusters();
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
-  const overview = useClusterOverview();
-  const agents = useAgents();
 
-  const cluster = useMemo(() => {
-    return Loadable.match(Loadable.all([agents, overview]), {
-      Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-      NotLoaded: () => undefined, // TODO show spinner when this is loading
-    });
-  }, [overview, resourcePools, agents]);
+  useRefetchClusterData();
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -56,33 +50,42 @@ const Clusters: React.FC = () => {
   );
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    return [
-      { children: <ClustersOverview />, key: TabType.Overview, label: 'Overview' },
-      {
-        children: (
-          <div className={css.tab}>
-            <ClusterHistoricalUsage />
-          </div>
-        ),
-        key: TabType.HistoricalUsage,
-        label: 'Historical Usage',
-      },
-      {
-        children: <ClusterLogs />,
-        key: TabType.Logs,
-        label: 'Master Logs',
-      },
-    ];
-  }, []);
+    type Unboxed<T> = T extends (infer U)[] ? U : T;
+    type TabType = Unboxed<TabsProps['items']>;
+
+    const clustersOverview: Readonly<TabType> = {
+      children: <ClustersOverview />,
+      key: TabType.Overview,
+      label: 'Overview',
+    };
+    const historicalUsage: Readonly<TabType> = {
+      children: <ClusterHistoricalUsage />,
+      key: TabType.HistoricalUsage,
+      label: 'Historical Usage',
+    };
+    const masterLogs: Readonly<TabType> = {
+      children: <ClusterLogs />,
+      key: TabType.Logs,
+      label: 'Master Logs',
+    };
+    const tabs: TabsProps['items'] = [];
+
+    if (rbacEnabled) {
+      tabs.push(clustersOverview);
+      if (canAdministrateUsers) {
+        tabs.push(historicalUsage, masterLogs);
+      }
+    } else {
+      // if RBAC is not enabled, show all tabs
+      tabs.push(clustersOverview, historicalUsage, masterLogs);
+    }
+
+    return tabs;
+  }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page bodyNoPadding id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
-      <Tabs
-        className="no-padding"
-        defaultActiveKey={tabKey}
-        items={tabItems}
-        onChange={handleTabChange}
-      />
+    <Page id="cluster" title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
+      <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );
 };

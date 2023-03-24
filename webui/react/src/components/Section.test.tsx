@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import Section from './Section';
 
@@ -14,7 +13,7 @@ const setup = ({
   bodyNoPadding = false,
   divider = false,
 }) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
     <Section
       bodyBorder={bodyBorder}

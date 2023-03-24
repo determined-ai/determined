@@ -241,7 +241,8 @@ func (s *websocketActor) ping() error {
 
 	deadline := time.Now().Add(pingWaitDuration)
 	err := s.conn.WriteControl(websocket.PingMessage, []byte(id), deadline)
-	if e, ok := err.(net.Error); ok && e.Temporary() {
+	if e, ok := err.(net.Error); ok && e.Temporary() { //nolint: staticcheck
+		// Temporary is deprecated but not sure the better alternative.
 		return nil
 	} else if err != nil {
 		return err

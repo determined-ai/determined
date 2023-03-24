@@ -32,7 +32,6 @@ export const generateTestExperimentData = (): {
         storagePath: 'determined-checkpoint',
         type: CheckpointStorageType.SharedFS,
       },
-      dataLayer: { type: 'shared_fs' },
       hyperparameters: {
         categorical: {
           maxval: 64,
@@ -175,7 +174,7 @@ export const generateTestExperimentData = (): {
       searcher: {
         bracket_rungs: [],
         divisor: 4,
-        max_concurrent_trials: 0,
+        max_concurrent_trials: 16,
         max_length: { batches: 937 },
         max_rungs: 5,
         max_trials: 16,

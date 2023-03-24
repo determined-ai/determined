@@ -2,8 +2,10 @@
  Keras API
 ###########
 
+In this guide, you'll learn how to use the Keras API.
+
 +---------------------------------------------------------------------+
-| API reference                                                       |
+| Visit the API reference                                             |
 +=====================================================================+
 | :doc:`/reference/reference-training/training/api-keras-reference`   |
 +---------------------------------------------------------------------+
@@ -71,7 +73,7 @@ A checkpoint includes the model definition (Python source code), experiment conf
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
 optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
-:ref:`Python API <store-checkpoint-metadata>`.
+:ref:`Python SDK <store-checkpoint-metadata>`.
 
 TensorFlow Keras trials are checkpointed to a file named ``determined-keras-model.h5`` using
 ``tf.keras.models.save_model``. You can learn more from the `TF Keras docs

@@ -112,12 +112,6 @@ def make_request_handler(long_poller, directory):
             """
             GET should inject snippets of javascript into static html pages.
             """
-            if self.path == "/":
-                # Redirect to html/
-                self.send_response(301, "moved")
-                self.send_header("Location", "/html")
-                self.end_headers()
-                return
             path = self.translate_path(self.path)
             if path.startswith("site/html/") and os.path.isdir(path):
                 path = os.path.join(path, "index.html")

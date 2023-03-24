@@ -5,6 +5,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
@@ -15,6 +16,23 @@ type State string
 
 func (s State) String() string {
 	return string(s)
+}
+
+// Before returns if our state comes before or is equal to another. Callers have an implicit
+// assumption that states always transition in order.
+func (s State) Before(other State) bool {
+	ordering := []State{
+		Assigned,
+		Pulling,
+		Starting,
+		Running,
+		Terminated,
+	}
+
+	selfPos := slices.Index(ordering, s)
+	otherPos := slices.Index(ordering, other)
+
+	return selfPos <= otherPos
 }
 
 const (

@@ -3,46 +3,46 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-09b18720cb71042df
-      Agent: ami-0f9f90f487608fe99
-      Bastion: ami-09b18720cb71042df
+      Master: ami-0c7cb70d3eb61492b
+      Agent: ami-0991c62696aa7ccfd
+      Bastion: ami-0c7cb70d3eb61492b
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-07d16c043aa8e5153
-    #   Agent: ami-07d607bacc01685db
-    #   Bastion: ami-07d16c043aa8e5153
+    #   Master: ami-003bb1772f36a39a3
+    #   Agent: ami-0e731ff15c9cd271c
+    #   Bastion: ami-003bb1772f36a39a3
     # ap-southeast-1:
-    #   Master: ami-00e912d13fbb4f225
-    #   Agent: ami-00a7448716c007550
-    #   Bastion: ami-00e912d13fbb4f225
+    #   Master: ami-09f03fa5572692399
+    #   Agent: ami-0117b4415fa85f5fd
+    #   Bastion: ami-09f03fa5572692399
     # ap-southeast-2:
-    #   Master: ami-055166f8a8041fbf1
-    #   Agent: ami-0d21deaec03b109ed
-    #   Bastion: ami-055166f8a8041fbf1
+    #   Master: ami-06139e5e22cc2f7b1
+    #   Agent: ami-07f3405e83ad9e60f
+    #   Bastion: ami-06139e5e22cc2f7b1
     eu-central-1:
-      Master: ami-06148e0e81e5187c8
-      Agent: ami-00b8e14625cfffff7
-      Bastion: ami-06148e0e81e5187c8
+      Master: ami-0b81e95bb0a06ea8c
+      Agent: ami-087ce2a855248c888
+      Bastion: ami-0b81e95bb0a06ea8c
     eu-west-1:
-      Master: ami-0fd8802f94ed1c969
-      Agent: ami-0d9b2638b858a0451
-      Bastion: ami-0fd8802f94ed1c969
+      Master: ami-029cfca952b331b52
+      Agent: ami-0554426cc52af7b5c
+      Bastion: ami-029cfca952b331b52
     # eu-west-2:
-    #   Master: ami-04842bc62789b682e
-    #   Agent: ami-08c2f17a10d4b052e
-    #   Bastion: ami-04842bc62789b682e
+    #   Master: ami-035469b606478d63d
+    #   Agent: ami-0b311171d796d1d06
+    #   Bastion: ami-035469b606478d63d
     us-east-1:
-      Master: ami-0149b2da6ceec4bb0
-      Agent: ami-0b2014aa470f13435
-      Bastion: ami-0149b2da6ceec4bb0
+      Master: ami-0b93ce03dcbcb10f6
+      Agent: ami-0fdc0e3d660394d83
+      Bastion: ami-0b93ce03dcbcb10f6
     us-east-2:
-      Master: ami-0d5bf08bc8017c83b
-      Agent: ami-003178452b1145c22
-      Bastion: ami-0d5bf08bc8017c83b
+      Master: ami-0cbea92f2377277a4
+      Agent: ami-0948c4d44ce80874c
+      Bastion: ami-0cbea92f2377277a4
     us-west-2:
-      Master: ami-0c09c7eb16d3e8e70
-      Agent: ami-0c41987fab4c81bc3
-      Bastion: ami-0c09c7eb16d3e8e70
+      Master: ami-0d31d7c9fc9503726
+      Agent: ami-05ee2b3249ae2e713
+      Bastion: ami-0d31d7c9fc9503726
 
 Parameters:
   VpcCIDR:
@@ -82,7 +82,7 @@ Parameters:
   ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of agents in the compute resource pool
-    Default: p2.8xlarge
+    Default: g4dn.metal
 
   BastionInstanceType:
     Type: String
@@ -122,7 +122,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.9-dev0
+    Default: 0.21.0-dev0
 
   DBPassword:
     Type: String
@@ -211,6 +211,11 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -279,6 +284,10 @@ Parameters:
           cpu: {{ .cpu_env_image }}
           gpu: {{ .gpu_env_image }}
         {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0.0 }}
+      notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
   ### END INJECT CODE
 
@@ -735,6 +744,13 @@ Resources:
               - Effect: Allow
                 Action: iam:PassRole
                 Resource: !GetAtt AgentRole.Arn
+        - PolicyName: master-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
@@ -752,7 +768,7 @@ Resources:
         MetadataOptions:
           HttpTokens: required
           HttpPutResponseHopLimit: 2
-        
+
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -867,6 +883,7 @@ Resources:
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

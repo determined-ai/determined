@@ -163,10 +163,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 
 class TFKerasTrialController(det.TrialController):
-    @classmethod
-    def create_metric_writer(
-        cls: Type["TFKerasTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
+    def _create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
@@ -321,6 +318,8 @@ class TFKerasTrialController(det.TrialController):
     ) -> None:
         super().__init__(*args, **kwargs)
 
+        self.metric_writer = self._create_metric_writer()
+
         self.model = model
         self.session = session
         self.trial = trial
@@ -356,8 +355,8 @@ class TFKerasTrialController(det.TrialController):
                 "doing distributed training"
             )
 
-        self._check_training_data()
-        self._check_validation_data()
+        self._check_wrap_dataset(self.training_data)
+        self._check_wrap_dataset(self.validation_data)
 
         self.enqueuers = []  # type: List[keras._Enqueuer]
 
@@ -389,60 +388,13 @@ class TFKerasTrialController(det.TrialController):
 
         self.steps_completed = self.env.steps_completed
 
-    def _check_training_data(self) -> None:
-        cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
-        wrap_used = self.context.dataset_initialized
-
-        # Non-tf.data.Datasets should not have used the data layer.
-        if not isinstance(self.training_data, tf.data.Dataset):
-            if cacheable_used:
-                raise det.errors.InvalidExperimentException(
-                    "Pass in a tf.data.Dataset object for training data if using "
-                    "context.experimental.cache_train_dataset().",
-                )
+    def _check_wrap_dataset(self, ds: Any) -> None:
+        # Ignore non-tf.data.Datasets.
+        if not isinstance(ds, tf.data.Dataset):
             return
-
-        # You can't use data layer and the wrap_dataset.
-        if cacheable_used and wrap_used:
+        if not self.context.dataset_initialized:
             raise det.errors.InvalidExperimentException(
-                "Please do not use: context.wrap_dataset(dataset) if using "
-                "context.experimental.cache_train_dataset() and "
-                "context.experimental.cache_validation_dataset().",
-            )
-
-        # You must use either data layer or wrap_dataset.
-        if not cacheable_used and not wrap_used:
-            raise det.errors.InvalidExperimentException(
-                "Please use either context.wrap_dataset(dataset) or "
-                "context.experimental.cache_train_dataset() for tf.data.dataset inputs"
-            )
-
-    def _check_validation_data(self) -> None:
-        cacheable_used = self.context.experimental.get_validation_cacheable().is_decorator_used()
-        wrap_used = self.context.dataset_initialized
-
-        # Non-tf.data.Datasets should not have used the data layer.
-        if not isinstance(self.validation_data, tf.data.Dataset):
-            if cacheable_used:
-                raise det.errors.InvalidExperimentException(
-                    "Pass in a tf.data.Dataset object for validation data if using "
-                    "context.experimental.cache_validation_dataset().",
-                )
-            return
-
-        # You can't use data layer and the wrap_dataset.
-        if cacheable_used and wrap_used:
-            raise det.errors.InvalidExperimentException(
-                "Please do not use: context.wrap_dataset(dataset) if using "
-                "context.experimental.cache_train_dataset() and "
-                "context.experimental.cache_validation_dataset().",
-            )
-
-        # You must use either data layer or wrap_dataset.
-        if not cacheable_used and not wrap_used:
-            raise det.errors.InvalidExperimentException(
-                "Please use either context.wrap_dataset(dataset) or "
-                "context.experimental.cache_validation_dataset() for tf.data.dataset inputs"
+                "Please use either context.wrap_dataset(dataset) for tf.data.dataset inputs"
             )
 
     def _configure_callbacks(self, user_callbacks: Optional[List]) -> None:
@@ -1021,7 +973,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.19.4``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.0``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

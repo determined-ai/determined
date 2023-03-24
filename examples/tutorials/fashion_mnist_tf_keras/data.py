@@ -11,7 +11,6 @@ import gzip
 import tempfile
 
 import numpy as np
-
 from tensorflow.python.keras.utils.data_utils import get_file
 
 

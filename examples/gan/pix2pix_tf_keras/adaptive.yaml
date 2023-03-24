@@ -6,7 +6,7 @@ data:
   height: 256
   width: 256
 hyperparameters:
-  global_batch_size: 10
+  global_batch_size: 1
   discriminator_lr:
     type: log
     base: 10

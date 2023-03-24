@@ -1,6 +1,7 @@
-import { Breadcrumb, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Tooltip from 'components/kit/Tooltip';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -137,6 +138,8 @@ const BreadcrumbBar: React.FC<Props> = ({
     };
   }, [stopPolling]);
 
+  const projectName = project?.id === 1 ? 'Uncategorized Experiments' : project?.name ?? '...';
+
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
@@ -172,7 +175,7 @@ const BreadcrumbBar: React.FC<Props> = ({
           <Link
             className={css.link}
             path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
-            {project?.name ?? '...'}
+            {projectName}
             {project?.archived && (
               <Tooltip title="Archived">
                 <div>

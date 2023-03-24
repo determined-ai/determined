@@ -4,7 +4,9 @@
  OAuth 2.0 Configuration
 #########################
 
-OAuth 2.0 applies to Determined Enterprise Edition.
+.. attention::
+
+   OAuth 2.0 applies only to Determined Enterprise Edition.
 
 Only the SCIM endpoints are supported.
 

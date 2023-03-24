@@ -36,7 +36,7 @@ def do_enum_test(sdk_enum: Any, bindings_enum: Any, *, ignore: Optional[list] = 
 
 
 def test_experiment_state() -> None:
-    do_enum_test(client.ExperimentState, bindings.determinedexperimentv1State)
+    do_enum_test(client.ExperimentState, bindings.experimentv1State)
 
 
 def test_trial_sort_by() -> None:
@@ -53,7 +53,7 @@ def test_trial_order_by() -> None:
 
 
 def test_checkpoint_state() -> None:
-    do_enum_test(client.CheckpointState, bindings.determinedcheckpointv1State)
+    do_enum_test(client.CheckpointState, bindings.checkpointv1State)
 
 
 def test_model_sort_by() -> None:

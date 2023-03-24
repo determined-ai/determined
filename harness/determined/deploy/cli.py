@@ -51,7 +51,9 @@ def main() -> None:
         parser.exit(2, "{}: no subcommand specified\n".format(parser.prog))
 
     warnings.warn(
-        "`det-deploy` executable is deprecated, please use `det deploy` instead.", FutureWarning
+        "`det-deploy` executable is deprecated, please use `det deploy` instead.",
+        FutureWarning,
+        stacklevel=2,
     )
 
     parsed_args.func(parsed_args)

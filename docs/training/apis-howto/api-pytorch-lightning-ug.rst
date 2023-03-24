@@ -2,8 +2,10 @@
  PyTorch Lightning API
 #######################
 
+In this guide, you'll learn how to use the PyTorch Lightning API.
+
 +-------------------------------------------------------------------------------+
-| API reference                                                                 |
+| Visit the API reference                                                       |
 +===============================================================================+
 | :doc:`/reference/reference-training/training/api-pytorch-lightning-reference` |
 +-------------------------------------------------------------------------------+

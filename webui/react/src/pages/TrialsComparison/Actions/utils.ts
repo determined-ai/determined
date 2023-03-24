@@ -15,13 +15,16 @@ export const TrialAction = {
 
 export type TrialAction = ValueOf<typeof TrialAction>;
 
-type trials = { trials: TrialsSelectionOrCollection };
+type trials = { trials: TrialsSelectionOrCollection; workspaceId: number };
 
 export type TrialsActionHandler = (t: trials) => Promise<void> | void;
 
-export const openTensorBoard = async ({ trials }: trials): Promise<void> => {
+export const openTensorBoard = async ({ trials, workspaceId }: trials): Promise<void> => {
   if ('trialIds' in trials) {
-    const result = await openOrCreateTensorBoard({ trialIds: trials.trialIds });
+    const result = await openOrCreateTensorBoard({
+      trialIds: trials.trialIds,
+      workspaceId: workspaceId,
+    });
     if (result) openCommandResponse(result);
   }
 };
@@ -48,9 +51,10 @@ export const dispatchTrialAction = async (
   action: TrialAction,
   trials: TrialsSelectionOrCollection,
   handler: TrialsActionHandler,
+  workspaceId: number,
 ): Promise<void> => {
   try {
-    await handler({ trials });
+    await handler({ trials, workspaceId });
   } catch (e) {
     const publicSubject =
       action === TrialAction.OpenTensorBoard

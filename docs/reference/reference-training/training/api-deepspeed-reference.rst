@@ -1,8 +1,8 @@
 .. _deepspeed-reference:
 
-#########################
- DeepSpeed API Reference
-#########################
+#########################################
+ ``det.pytorch.deepspeed`` API Reference
+#########################################
 
 +------------------------------------------------+
 | User Guide                                     |
@@ -48,4 +48,3 @@ documentation):
 -  :ref:`determined.pytorch.samplers <pytorch-samplers>`
 -  :ref:`determined.pytorch.MetricReducer <pytorch-metric-reducer>`
 -  :ref:`determined.pytorch.PyTorchCallback <pytorch-callbacks>`
--  :ref:`determined.tensorboard.metric_writers.pytorch.TorchWriter <pytorch-writer>`

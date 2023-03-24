@@ -3,11 +3,11 @@ import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import InlineEditor from 'components/InlineEditor';
+import Input from 'components/kit/Input';
+import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -20,9 +20,9 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
@@ -38,10 +38,13 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
+import usersStore from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
+import { Loadable, NotLoaded } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
-import css from './ModelDetails.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
@@ -49,24 +52,35 @@ import settingsConfig, {
 } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
+import css from './ModelDetails.module.scss';
 
 type Params = {
   modelId: string;
 };
 
 const ModelDetails: React.FC = () => {
+  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const loadableUsers = useObservable(usersStore.getUsers());
+  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const lodableWorkspaces = useWorkspaces();
+  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
+    (ws) => ws.id === model?.model.workspaceId,
+  );
+
+  const { canModifyModel, canModifyModelVersion } = usePermissions();
 
   const {
     settings,
     isLoading: isLoadingSettings,
     updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  } = useSettings<Settings>(settingsConfig(modelId));
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;
@@ -99,6 +113,7 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -159,18 +174,25 @@ const ModelDetails: React.FC = () => {
   );
 
   const columns = useMemo(() => {
+    const matchUsers = Loadable.match(users, {
+      Loaded: (users) => users,
+      NotLoaded: () => [],
+    });
+
     const tagsRenderer = (value: string, record: ModelVersion) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
           ellipsis={{
-            tooltip: <TagList disabled tags={record.labels ?? []} />,
+            tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
-            <TagList
+            <Tags
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
+              onAction={tagsActionHelper(record.labels ?? [], (tags) =>
+                saveModelVersionTags(record.model.name, record.version, tags),
+              )}
             />
           </div>
         </Typography.Text>
@@ -179,17 +201,28 @@ const ModelDetails: React.FC = () => {
 
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
       />
     );
 
     const descriptionRenderer = (value: string, record: ModelVersion) => (
-      <InlineEditor
-        disabled={record.model.archived}
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={record.comment ?? ''}
+        disabled={record.model.archived || !canModifyModelVersion({ modelVersion: record })}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
-        value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
+        title={record.model.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveVersionDescription(newDesc, record.version);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -225,7 +258,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -241,7 +274,18 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription]);
+  }, [
+    deleteModelVersion,
+    downloadModel,
+    saveModelVersionTags,
+    saveVersionDescription,
+    users,
+    canModifyModelVersion,
+  ]);
+  const tableIsLoading = useMemo(
+    () => isLoading || isLoadingSettings,
+    [isLoading, isLoadingSettings],
+  );
 
   const handleTableChange = useCallback(
     (
@@ -288,48 +332,6 @@ const ModelDetails: React.FC = () => {
     [fetchModel, model?.model.name],
   );
 
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { description: editedDescription, name: modelName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        const modelName = model?.model.name;
-        if (modelName) {
-          await patchModel({
-            body: { name: editedName },
-            modelName,
-          });
-        }
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [model?.model.name],
-  );
-
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
@@ -361,7 +363,7 @@ const ModelDetails: React.FC = () => {
             body: { labels: editedTags, name: modelName },
             modelName,
           });
-          fetchModel();
+          await fetchModel();
         }
       } catch (e) {
         handleError(e, {
@@ -397,6 +399,7 @@ const ModelDetails: React.FC = () => {
     }) => (
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
         onVisibleChange={onVisibleChange}>
@@ -408,11 +411,10 @@ const ModelDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model) {
+  } else if (!model || lodableWorkspaces === NotLoaded) {
     return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
@@ -422,14 +424,15 @@ const ModelDetails: React.FC = () => {
       docTitle="Model Details"
       headerComponent={
         <ModelHeader
+          fetchModel={fetchModel}
           model={model.model}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
+          workspace={workspace}
           onSwitchArchive={switchArchive}
           onUpdateTags={saveModelTags}
         />
       }
-      id="modelDetails">
+      id="modelDetails"
+      notFound={pageError && isNotFound(pageError)}>
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
@@ -444,7 +447,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading || isLoadingSettings}
+            loading={tableIsLoading}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -462,12 +465,12 @@ const ModelDetails: React.FC = () => {
           />
         )}
         <NotesCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           notes={model.model.notes ?? ''}
           onSave={saveNotes}
         />
         <MetadataCard
-          disabled={model.model.archived}
+          disabled={model.model.archived || !canModifyModel({ model: model.model })}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />

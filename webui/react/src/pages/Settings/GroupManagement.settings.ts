@@ -18,7 +18,6 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
 export type GroupManagementSettings = Omit<InteractiveTableSettings, 'sortDesc'>;
 
 const config: SettingsConfig<GroupManagementSettings> = {
-  applicableRoutespace: 'group-management',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

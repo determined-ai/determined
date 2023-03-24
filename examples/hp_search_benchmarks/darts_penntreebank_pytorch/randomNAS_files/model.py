@@ -1,11 +1,10 @@
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from randomNAS_files.genotypes import STEPS
-from randomNAS_files.utils import mask2d
-from randomNAS_files.utils import LockedDropout
-from randomNAS_files.utils import embedded_dropout
+from randomNAS_files.utils import LockedDropout, embedded_dropout, mask2d
 from torch.autograd import Variable
 
 INITRANGE = 0.04
@@ -22,14 +21,10 @@ class DARTSCell(nn.Module):
 
         # genotype is None when doing arch search
         steps = len(self.genotype.recurrent) if self.genotype is not None else STEPS
-        self._W0 = nn.Parameter(
-            torch.Tensor(ninp + nhid, 2 * nhid).uniform_(-INITRANGE, INITRANGE)
-        )
+        self._W0 = nn.Parameter(torch.Tensor(ninp + nhid, 2 * nhid).uniform_(-INITRANGE, INITRANGE))
         self._Ws = nn.ParameterList(
             [
-                nn.Parameter(
-                    torch.Tensor(nhid, 2 * nhid).uniform_(-INITRANGE, INITRANGE)
-                )
+                nn.Parameter(torch.Tensor(nhid, 2 * nhid).uniform_(-INITRANGE, INITRANGE))
                 for i in range(steps)
             ]
         )
@@ -91,9 +86,7 @@ class DARTSCell(nn.Module):
             h = fn(h)
             s = s_prev + c * (h - s_prev)
             states += [s]
-        output = torch.mean(
-            torch.stack([states[i] for i in self.genotype.concat], -1), -1
-        )
+        output = torch.mean(torch.stack([states[i] for i in self.genotype.concat], -1), -1)
         return output
 
 
@@ -149,9 +142,7 @@ class RNNModel(nn.Module):
     def forward(self, input, hidden, return_h=False):
         batch_size = input.size(1)
 
-        emb = embedded_dropout(
-            self.encoder, input, dropout=self.dropoute if self.training else 0
-        )
+        emb = embedded_dropout(self.encoder, input, dropout=self.dropoute if self.training else 0)
         emb = self.lockdrop(emb, self.dropouti)
 
         raw_output = emb

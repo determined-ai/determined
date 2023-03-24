@@ -3,20 +3,24 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/json"
+	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
 
 // genericCommandSpecMetadata is GenericCommandSpec.Metadata.
 type genericCommandSpecMetadata struct {
-	PrivateKey    *string `json:"privateKey"`
-	PublicKey     *string `json:"publicKey"`
-	ExperimentIDs []int32 `json:"experiment_ids"`
-	TrialIDs      []int32 `json:"trial_ids"`
+	PrivateKey    *string             `json:"privateKey"`
+	PublicKey     *string             `json:"publicKey"`
+	ExperimentIDs []int32             `json:"experiment_ids"`
+	TrialIDs      []int32             `json:"trial_ids"`
+	WorkspaceID   model.AccessScopeID `json:"workspace_id"`
 }
 
 // MarshalToMap converts typed struct into a map.
@@ -46,10 +50,6 @@ type GenericCommandSpec struct {
 
 	Keys *ssh.PrivateAndPublicKeys
 
-	Port            *int
-	ProxyTCP        bool
-	Unauthenticated bool
-
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
 
@@ -60,6 +60,7 @@ type GenericCommandSpec struct {
 func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
+	s.MakeEnvPorts()
 	res.Environment = s.Config.Environment.ToExpconf()
 
 	res.ResourcesConfig = s.Config.Resources.ToExpconf()
@@ -112,4 +113,39 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 
 	res.TaskType = s.TaskType
 	return res
+}
+
+// TrialSpec has matching `ProxyPorts` and `MakeEnvPorts` methods. Long-term, we should
+// - unify TrialSpec and GenericCommandSpec
+// - move CommandConfig to expconf
+
+// MakeEnvPorts fills in `Environment.Ports` i.e. exposed ports for container config.
+func (s *GenericCommandSpec) MakeEnvPorts() {
+	if s.Config.Environment.Ports != nil {
+		panic("CommandSpec Environment.Ports are only supposed to be generated once.")
+	}
+
+	ppc := s.ProxyPorts()
+	s.Config.Environment.Ports = map[string]int{}
+	for _, pp := range ppc {
+		port := pp.ProxyPort()
+		s.Config.Environment.Ports[strconv.Itoa(port)] = port
+	}
+}
+
+// ProxyPorts combines user-defined and system proxy configs.
+func (s *GenericCommandSpec) ProxyPorts() expconf.ProxyPortsConfig {
+	env := schemas.WithDefaults(s.Config.Environment.ToExpconf())
+	epp := schemas.WithDefaults(s.Base.ExtraProxyPorts)
+	out := make(expconf.ProxyPortsConfig, 0, len(epp)+len(env.ProxyPorts()))
+
+	for _, pp := range epp {
+		out = append(out, pp)
+	}
+
+	for _, pp := range env.ProxyPorts() {
+		out = append(out, pp)
+	}
+
+	return out
 }

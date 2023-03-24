@@ -14,7 +14,6 @@ import (
 
 	back "github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
 	conf "github.com/determined-ai/determined/master/internal/config"
@@ -101,7 +100,7 @@ func newWorker(id int) *worker {
 
 type worker struct {
 	// System dependencies.
-	log *logrus.Entry
+	log *log.Entry
 	cl  *http.Client
 }
 

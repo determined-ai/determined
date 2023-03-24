@@ -5,8 +5,8 @@ import {
   TrialSorter,
 } from 'pages/TrialsComparison/Collections/filters';
 import {
-  Determinedtrialv1State,
   TrialSorterNamespace,
+  Trialv1State,
   V1ColumnFilter,
   V1OrderBy,
   V1TrialFilters,
@@ -113,7 +113,7 @@ export const encodeFilters = (f: TrialFilters): V1TrialFilters => {
         }
       : undefined,
     searcher: f.searcher,
-    states: f.states as unknown as Determinedtrialv1State[],
+    states: f.states as unknown as Trialv1State[],
     tags: f.tags?.map((tag: string) => ({ key: tag })),
     trainingMetrics: encodeNumberRangeDict(f.trainingMetrics ?? {}),
     trialIds: encodeIdList(f.trialIds),

@@ -21,8 +21,8 @@ The master supports the following configuration settings:
 
 .. _master-task-container-defaults:
 
--  ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents
-   a single schedulable unit, such as a trial, command, or tensorboard.
+-  ``task_container_defaults``: Specifies defaults for all task containers. A task represents a
+   single schedulable unit, such as a trial, command, or tensorboard.
 
    -  ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers.
       Defaults to ``4294967296``.
@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.0`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.0`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -119,6 +119,14 @@ The master supports the following configuration settings:
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
+.. _master-config-notebook-timeout:
+
+-  ``notebook_timeout``: Specifies the duration in seconds before idle notebook instances are
+   automatically terminated. A notebook instance is considered to be idle if it is not receiving any
+   HTTP traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in
+   the :ref:`task configuration <command-notebook-configuration>`). Defaults to ``null``, i.e.
+   disabled.
+
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
    -  ``type: agent``: The agent resource manager includes static and dynamic agents.
@@ -158,6 +166,10 @@ The master supports the following configuration settings:
                together on the smallest number of agents.
             -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized
                agents.
+
+         -  ``allow_heterogeneous_fits``: Fit distributed jobs to onto agents of different sizes.
+            When enabled, we still prefer to fit jobs on same sized nodes but will fallback to allow
+            heterogeneous fits. Sizes should be powers of two for the fitting algorithm to work.
 
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
@@ -232,17 +244,17 @@ The master supports the following configuration settings:
 
       -  ``protocol``: The protocol for communicating with the Launcher.
 
-      -  ``security``: Security-related configiruation settings for communicating with the Launcher.
+      -  ``security``: Security-related configuration settings for communicating with the Launcher.
 
-            -  ``tls``: TLS-related configuration settings.
+         -  ``tls``: TLS-related configuration settings.
 
-               -  ``enabled``: Enable TLS.
+            -  ``enabled``: Enable TLS.
 
-               -  ``skip_verify``: Skip server certificate verification.
+            -  ``skip_verify``: Skip server certificate verification.
 
-               -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only
-                  needed if the certificate is not signed by a well-known CA; cannot be specified if
-                  ``skip_verify`` is enabled.
+            -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed
+               if the certificate is not signed by a well-known CA; cannot be specified if
+               ``skip_verify`` is enabled.
 
       -  ``container_run_type``: The type of the container runtime to be used when launching tasks.
          The value may be ``singularity``, ``enroot``, or ``podman``. The default value is
@@ -254,19 +266,25 @@ The master supports the following configuration settings:
          Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Defaults to ``cuda``.
+         in terms of ``slots``. Available values are ``cuda``, ``rocm`` and ``cpu``, where 1
+         ``cuda`` or ``rocm`` slot is 1 GPU. Otherwise, CPU slots are requested. The number of CPUs
+         allocated per node is 1, unless overridden by ``slots_per_node`` in the experiment
+         configuration. Defaults per-partition to ``cuda`` if GPU resources are found within the
+         partition, else ``cpu``. If GPUs cannot be detected automatically, for example when
+         operating with ``gres_supported: false``, then this result may be overridden using
+         ``partition_overrides``.
 
-         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
-            with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Partitions will
+            be represented as a resource pool with slot type ``cuda`` which can be overridden using
+            ``partition_overrides``.
 
-         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Any partitions with
-            GPUs will be represented as a resource pool with slot type ``rocm`` which can be
-            overridden using ``partition_overrides``.
+         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Partitions will be
+            represented as a resource pool with slot type ``rocm`` which can be overridden using
+            ``partition_overrides``.
 
          -  ``slot_type: cpu``: CPU resources will be requested for each compute slot. Partitions
-            that contain no GPUs will default to a resource pool with slot type ``cpu``. One node
-            will be allocated per slot.
+            will be represented as a resource pool with slot type ``cpu``. One node will be
+            allocated per slot.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
          distributed jobs. For example, when using horovod the IP address for the host on this
@@ -274,11 +292,13 @@ The master supports the following configuration settings:
          with ``eth`` if one exists, otherwise the IPv4 resolution of the hostname.
 
       -  ``proxy_network_interface``: The interface used to proxy the master for services running on
-         from compute nodes. The interface Defaults to the IPv4 resolution of the hostname.
+         compute nodes. The interface Defaults to the IPv4 resolution of the hostname.
 
       -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
          something other than ``root``. The user must have a home directory with read permissions
-         for all users to enable access to generated ``sbatch`` scripts and job log files.
+         for all users to enable access to generated ``sbatch`` scripts and job log files. It must
+         have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
+         ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
@@ -319,13 +339,45 @@ The master supports the following configuration settings:
 
       -  ``partition_overrides``: A map of partition/queue names to partition-level overrides. For
          each configuration, if it is set for a given partition, it overrides the setting at the
-         root level.
+         root level and applies to the resource pool resulting from this partition. Partition names
+         are treated as case-insensitive.
 
-         -  ``rendezvous_network_interface``
-         -  ``proxy_network_interface``
-         -  ``slot_type``
+         -  ``description`` Description of the resource pool
+         -  ``rendezvous_network_interface`` Interface used to bootstrap communication between
+            distributed jobs
+         -  ``proxy_network_interface`` Interface used to proxy the master for services running on
+            compute nodes
+         -  ``slot_type`` Resource type used for tasks
          -  ``task_container_defaults`` (See :ref:`top-level setting
             <master-task-container-defaults>`)
+
+         Each ``partition_overrides`` entry may specify a ``task_container_defaults`` that applies
+         additional defaults on top of the :ref:`top-level task_container_defaults
+         <master-task-container-defaults>` for all tasks launched on that partition. When applying
+         the defaults, individual fields override prior values, and list fields are appended. If the
+         partition is referenced in a custom HPC resource pool, an additional
+         ``task_container_defaults`` may be applied by the resource pool.
+
+         .. code::
+
+            partition_overrides:
+               mlde_cuda:
+                  description: Partition for CUDA jobs (tesla cards only)
+                  slot_type: cuda
+                  task_container_defaults:
+                     dtrain_network_interface: hsn0,hsn1,hsn2,hsn3
+                     slurm:
+                        sbatch_args:
+                           - --cpus-per-gpu=16
+                           - --mem-per-gpu=65536
+                        gpu_type: tesla
+               mlde_cpu:
+                  description: Generic CPU job partition (limited to node001)
+                  slot_type: cpu
+                  task_container_defaults:
+                     slurm:
+                        sbatch_args:
+                              --nodelist=node001
 
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to the Slurm/PBS default
@@ -334,6 +386,28 @@ The master supports the following configuration settings:
       -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to the Slurm/PBS default partition
          if it has GPU resources and if no resource pool is specified.
+
+      -  ``job_project_source``: Configures labelling of jobs on the HPC cluster (via Slurm
+         ``--wckey`` or PBS ``-P``). Allowed values are:
+
+         -  ``project``: Use the project name of the experiment (this is the default, if no project
+            nothing is passed to workload manager).
+
+         -  ``workspace``: Use the workspace name of the project (if no workspace, nothing is passed
+            to workload manager).
+
+         -  ``label`` [:``prefix``]: Use the value from the experiment configuration tags list (if
+            no matching tags, nothing is passed to workload manager). If a tag begins with the
+            specified ``prefix``, remove the prefix and use the remainder as the value for the
+            WCKey/Project. If multiple tag values begin with ``prefix``, the remainders are
+            concatenated with a comma (,) separator on Slurm or underscore (_) with PBS. If a
+            ``prefix`` is not specified or empty, all tags will be matched (and therefore
+            concatenated). Workload managers do not generally support multiple WCKey/Project values
+            so it is recommended that ``prefix`` is configured to match a single label to enable use
+            of the workload manager reporting tools that summarize usage by each WCKey/Project
+            value.
+
+.. _cluster-resource-pools:
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -355,10 +429,14 @@ The master supports the following configuration settings:
       within ``agent_reconnect_wait`` period.
 
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
-      overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
-      in that resource pool. There is no merging behavior; when a resource pool's
-      ``task_container_defaults`` is set, tasks launched in that pool will completely ignore the
-      top-level setting.
+      applies additional defaults on top of the :ref:`top-level setting
+      <master-task-container-defaults>` (and ``partition_overrides`` for Slurm/PBS) for all tasks
+      launched in that resource pool. When applying the defaults, individual fields override prior
+      values, and list fields are appended.
+
+   -  ``kubernetes_namespace``: When the Kubernetes resource manager is in use, this specifies a
+      `namespace <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__
+      that tasks in this resource pool will be launched into.
 
    -  ``scheduler``: Specifies how Determined schedules tasks to agents. The scheduler configuration
       on each resource pool will override the global one. For more on scheduling behavior in
@@ -511,7 +589,7 @@ The master supports the following configuration settings:
             ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``,
             ``p3.16xlarge``, ``p3dn.24xlarge``, or ``p4d.24xlarge``. For CPU instances, most general
             purpose instance types are allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
-            variants). Defaults to ``p3.8xlarge``.
+            variants). Defaults to ``g4dn.metal``.
 
          -  ``instance_slots``: The optional number of GPUs for the AWS instance type. This is used
             in conjunction with the ``instance_type`` in order to specify types which are not listed
@@ -603,7 +681,7 @@ The master supports the following configuration settings:
             -  ``machine_type``: Type of machine for the Determined agents. Defaults to
                ``n1-standard-32``.
             -  ``gpu_type``: Type of GPU for the Determined agents. Set it to be an empty string to
-               not use any GPUs. Defaults to ``nvidia-tesla-v100``.
+               not use any GPUs. Defaults to ``nvidia-tesla-t4``.
             -  ``gpu_num``: Number of GPUs for the Determined agents. Defaults to 4.
             -  ``preemptible``: Whether to use preemptible dynamic agent instances. Defaults to
                ``false``.
@@ -617,6 +695,40 @@ The master supports the following configuration settings:
             string is a sequence of decimal numbers, each with optional fraction and a unit suffix,
             such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value
             is ``5m``.
+
+      -  ``type: hpc``: Specifies a custom resource pool that submits work to an underlying
+         Slurm/PBS partition on an HPC cluster. (*Required*)
+
+         One resource pool is automatically created for each Slurm partition or PBS queue on an HPC
+         cluster. This provider enables the creation of additional resource pools with different
+         submission options to those partitions/queues.
+
+         -  ``partition``: The target HPC partition where jobs will be launched when using this
+            resource pool. Add ``task_container_defaults`` to provide a resource pool with
+            additional default options. The ``task_container_defaults`` from the resource pool are
+            applied after any ``task_container_defaults`` from ``partition_overrides``. When
+            applying the defaults, individual fields override prior values, and list fields are
+            appended. This can be used to create a resource pool with homogeneous resources when the
+            underlying partition or queue does not. Consider the following:
+
+         .. code::
+
+            resource_pools:
+              - pool_name: defq_GPU_tesla
+                description: Lands jobs on defq_GPU with tesla GPU selected, XL675d systems
+                task_container_defaults:
+                  slurm:
+                    gpu_type: tesla
+                    sbatch_options:
+                      - -CXL675d
+                provider:
+                  type: hpc
+                  partition: defq_GPU
+
+         In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be
+         executed in the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and
+         Slurm constraint associated with the feature ``XL675d`` used to identify the model type of
+         the compute node.
 
 -  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
    on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the
@@ -746,9 +858,6 @@ The master supports the following configuration settings:
                -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
                -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
                   is the role id of ``WorkspaceAdmin`` role.
-
-         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
-            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
 
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 

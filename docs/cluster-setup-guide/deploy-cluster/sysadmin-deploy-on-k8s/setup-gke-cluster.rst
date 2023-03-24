@@ -39,7 +39,7 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
    GCS_BUCKET_NAME=<any unique name, e.g., "determined-checkpoint-bucket">
 
    # Set the GPU type for your node pool. Other options include p100, p4, and v100.
-   GPU_TYPE=nvidia-tesla-k80
+   GPU_TYPE=nvidia-tesla-t4
 
    # Set the number of GPUs per node.
    GPUS_PER_NODE=4

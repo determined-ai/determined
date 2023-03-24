@@ -1,6 +1,6 @@
-#####################
- Keras API Reference
-#####################
+#############################
+ ``det.keras`` API Reference
+#############################
 
 +------------------------------------------+
 | User Guide                               |
@@ -26,6 +26,7 @@
 .. autoclass:: determined.keras.TFKerasTrialContext
    :members: wrap_model, wrap_dataset, wrap_optimizer, configure_fit
    :member-order: bysource
+   :inherited-members:
 
    TFKerasTrialContext always has a :class:`~determined.core._distributed.DistributedContext`
    accessible via ``context.distributed`` for information related to distributed training.

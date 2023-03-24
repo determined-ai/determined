@@ -18,7 +18,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
   const [viewDays, setViewDays] = useState(7);
 
   const queuedStats = useMemo(() => {
-    if (!poolStats || !poolStats.aggregates) return;
+    if (!poolStats?.aggregates) return;
     const { aggregates } = poolStats;
     const agg = aggregates.filter(
       (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
@@ -33,15 +33,19 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
 
   if (!queuedStats) return <div />;
   return (
-    <Page title="Avg Queue Time">
-      <Section bodyBorder>
-        <Radio.Group
-          className={css.filter}
-          value={viewDays}
-          onChange={(e) => setViewDays(e.target.value)}>
-          <Radio.Button value={7}>7 days</Radio.Button>
-          <Radio.Button value={30}>30 days</Radio.Button>
-        </Radio.Group>
+    <Page bodyNoPadding>
+      <Section
+        bodyBorder
+        options={
+          <Radio.Group
+            className={css.filter}
+            value={viewDays}
+            onChange={(e) => setViewDays(e.target.value)}>
+            <Radio.Button value={7}>7 days</Radio.Button>
+            <Radio.Button value={30}>30 days</Radio.Button>
+          </Radio.Group>
+        }
+        title="Avg Queue Time">
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
           hoursByLabel={queuedStats.hoursAverage}

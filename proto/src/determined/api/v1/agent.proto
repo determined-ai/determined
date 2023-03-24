@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/api/v1/pagination.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/agent/v1/agent.proto";
 
@@ -27,12 +28,15 @@ message GetAgentsRequest {
   int32 offset = 3;
   // Limit the number of agents. A value of 0 denotes no limit.
   int32 limit = 4;
-  // Filter agents by their label. If no label is specified or is empty, all
-  // agents are returned.
+  // This field has been deprecated and will be ignored.
   string label = 5;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "agents" ] }
+  };
+
   // The list of returned agents.
   repeated determined.agent.v1.Agent agents = 1;
   // Pagination information of the full dataset.
@@ -46,6 +50,9 @@ message GetAgentRequest {
 }
 // Response to GetAgentRequest.
 message GetAgentResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "agent" ] }
+  };
   // The requested agent.
   determined.agent.v1.Agent agent = 1;
 }
@@ -117,6 +124,8 @@ message DisableSlotRequest {
   string agent_id = 1;
   // The id of the slot.
   string slot_id = 2;
+  // If true, wait for running task to finish.
+  bool drain = 3;
 }
 // Response to DisableSlotRequest.
 message DisableSlotResponse {

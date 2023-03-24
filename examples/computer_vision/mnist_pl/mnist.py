@@ -15,14 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import data
+import pytorch_lightning as pl
 import torch
+import torchmetrics
 from torch import nn
 from torch.nn import functional as F
 from torchvision import transforms
-import pytorch_lightning as pl
-import torchmetrics
-
-import data
 
 
 class LitMNIST(pl.LightningModule):
@@ -41,10 +40,9 @@ class LitMNIST(pl.LightningModule):
         self.num_classes = 10
         self.dims = (1, 28, 28)
         channels, width, height = self.dims
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])
+        self.transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        )
 
         # Define PyTorch model
         self.model = nn.Sequential(
@@ -55,7 +53,7 @@ class LitMNIST(pl.LightningModule):
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(hidden_size, self.num_classes)
+            nn.Linear(hidden_size, self.num_classes),
         )
 
     def forward(self, x):
@@ -66,8 +64,8 @@ class LitMNIST(pl.LightningModule):
         x, y = batch
         logits = self(x)
         loss = F.nll_loss(logits, y)
-        self.log('train_loss', loss)
-        return {'loss': loss}
+        self.log("train_loss", loss)
+        return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -76,15 +74,17 @@ class LitMNIST(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         acc = self.accuracy(preds, y)
 
-        return {'val_loss': loss, 'accuracy': acc}
+        return {"val_loss": loss, "accuracy": acc}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     model = LitMNIST()
-    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning')
-    dm = data.MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
+    trainer = pl.Trainer(max_epochs=3, default_root_dir="/tmp/lightning")
+    dm = data.MNISTDataModule(
+        "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+    )
     trainer.fit(model, datamodule=dm)

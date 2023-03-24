@@ -5,6 +5,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import pytest
 
 from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -45,7 +46,7 @@ def test_slack_webhook() -> None:
     global request_to_webhook_endpoint
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
-    sess = exp.determined_test_session(admin=True)
+    sess = api_utils.determined_test_session(admin=True)
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
@@ -67,7 +68,7 @@ def test_slack_webhook() -> None:
 
     exp.wait_for_experiment_state(
         experiment_id,
-        bindings.determinedexperimentv1State.STATE_COMPLETED,
+        bindings.experimentv1State.STATE_COMPLETED,
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
     exp_config = exp.experiment_config_json(experiment_id)

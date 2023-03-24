@@ -1,7 +1,7 @@
 import json
-from argparse import Namespace
+from argparse import ArgumentError, Namespace
 from time import sleep
-from typing import Any, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from determined import cli
 from determined.cli.user import AGENT_USER_GROUP_ARGS
@@ -21,6 +21,45 @@ WORKSPACE_HEADERS = [
     "Agent User",
     "Agent Group",
 ]
+
+workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
+
+
+def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
+    workspace_id = None
+    if args.workspace_name:
+        workspace = cli.workspace.get_workspace_by_name(
+            cli.setup_session(args), args.workspace_name
+        )
+        if workspace is None:
+            raise ArgumentError(None, f'Workspace "{args.workspace_name}" not found.')
+        if workspace.archived:
+            raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
+        workspace_id = workspace.id
+    return workspace_id
+
+
+def get_workspace_names(session: api.Session) -> Dict[int, str]:
+    """Get a mapping of workspace IDs to workspace names."""
+    resp = bindings.get_GetWorkspaces(session)
+    mapping = {}
+    for w in resp.workspaces:
+        assert w.id not in mapping, "workspace ids are assumed to be unique."
+        mapping[w.id] = w.name
+    return mapping
+
+
+def get_workspace_by_name(
+    session: api.Session, workspace_name: str
+) -> Optional[bindings.v1Workspace]:
+    """Get a workspace by name."""
+    assert workspace_name, "workspace name cannot be empty"
+    resp = bindings.get_GetWorkspaces(session, name=workspace_name)
+    assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
+    if len(resp.workspaces) == 0:
+        return None
+    workspace = resp.workspaces[0]
+    return workspace
 
 
 def render_workspaces(
@@ -182,7 +221,8 @@ def delete_workspace(args: Namespace) -> None:
     w = workspace_by_name(sess, args.workspace_name)
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
-        "in the unrecoverable deletion of all associated projects and experiments.\n"
+        "in the unrecoverable deletion of all associated projects, experiments,\n"
+        "Notebooks, shells, commands, and Tensorboards.\n"
         "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):

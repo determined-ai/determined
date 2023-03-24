@@ -53,11 +53,11 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-096d730",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-835d8b1",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
-			GPUType:     "nvidia-tesla-v100",
+			GPUType:     "nvidia-tesla-t4",
 			GPUNum:      4,
 		},
 		OperationTimeoutPeriod: model.Duration(5 * time.Minute),
@@ -271,7 +271,6 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p100": {0, 1, 2, 4},
 	"nvidia-tesla-p4":   {0, 1, 2, 4},
 	"nvidia-tesla-v100": {0, 1, 2, 4, 8},
-	"nvidia-tesla-k80":  {0, 1, 2, 4, 8},
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
 }
 

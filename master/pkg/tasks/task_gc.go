@@ -31,11 +31,11 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 
 	// Set Environment.
 	// Keep only the EnvironmentVariables provided by the experiment's config.
-	envVars := g.LegacyConfig.EnvironmentVariables()
+	envVars := g.LegacyConfig.Environment.EnvironmentVariables()
 	//nolint:exhaustivestruct // This has caused an issue before, but is valid as a partial struct.
 	env := expconf.EnvironmentConfig{
 		RawEnvironmentVariables: &envVars,
-		RawPodSpec:              g.LegacyConfig.PodSpec(),
+		RawPodSpec:              g.LegacyConfig.Environment.PodSpec(),
 	}
 	// Fill the rest of the environment with default values.
 	var defaultConfig expconf.ExperimentConfig
@@ -54,7 +54,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0o700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
 					"checkpoint_gc/storage_config.json",
-					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
+					[]byte(jsonify(g.LegacyConfig.CheckpointStorage)),
 					0o600,
 					tar.TypeReg,
 				),
@@ -92,8 +92,8 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}
 
-	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts(), res.WorkDir)
-	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
+	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts, res.WorkDir)
+	if fs := g.LegacyConfig.CheckpointStorage.RawSharedFSConfig; fs != nil {
 		res.Mounts = append(res.Mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: fs.HostPath(),

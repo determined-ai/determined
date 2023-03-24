@@ -1,7 +1,6 @@
 import datetime
 import enum
 import json
-import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common import api, util
@@ -76,30 +75,6 @@ class ModelVersion:
         )
 
     @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
-        return cls(
-            session,
-            model_version_id=data.get("id", 1),
-            checkpoint=checkpoint.Checkpoint._from_json(data["checkpoint"], session),
-            metadata=data.get("metadata", {}),
-            name=data.get("name", ""),
-            comment=data.get("comment", ""),
-            notes=data.get("notes", ""),
-            model_id=data["model"]["id"],
-            model_name=data["model"]["name"],
-            model_version=data["version"],
-        )
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
-        warnings.warn(
-            "ModelVersion.from_json() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-        )
-        return cls._from_json(data, session)
-
-    @classmethod
     def _from_bindings(cls, m: bindings.v1ModelVersion, session: api.Session) -> "ModelVersion":
         return cls(
             session,
@@ -125,6 +100,7 @@ class ModelSortBy(enum.Enum):
         DESCRIPTION
         CREATION_TIME
         LAST_UPDATED_TIME
+        WORKSPACE
     """
 
     UNSPECIFIED = bindings.v1GetModelsRequestSortBy.SORT_BY_UNSPECIFIED.value
@@ -133,6 +109,7 @@ class ModelSortBy(enum.Enum):
     CREATION_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_CREATION_TIME.value
     LAST_UPDATED_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_LAST_UPDATED_TIME.value
     NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.value
+    WORKSPACE = bindings.v1GetModelsRequestSortBy.SORT_BY_WORKSPACE.value
 
     def _to_bindings(self) -> bindings.v1GetModelsRequestSortBy:
         return bindings.v1GetModelsRequestSortBy(self.value)
@@ -186,6 +163,7 @@ class Model:
         labels: List[str],
         username: str,
         archived: bool,
+        workspace_id: Optional[int] = None,
     ):
         self._session = session
         self.model_id = model_id
@@ -196,6 +174,7 @@ class Model:
         self.metadata = metadata or {}
         self.labels = labels
         self.username = username
+        self.workspace_id = workspace_id
         self.archived = archived
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
@@ -305,6 +284,10 @@ class Model:
         req = bindings.v1PatchModel(metadata=self.metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
+    def move_to_workspace(self, workspace_name: str) -> None:
+        req = bindings.v1PatchModel(workspaceName=workspace_name)
+        bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
     def set_labels(self, labels: List[str]) -> None:
         """
         Sets user-defined labels for the model. The ``labels`` argument must be an
@@ -363,30 +346,6 @@ class Model:
         )
 
     @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
-        return cls(
-            session,
-            model_id=data["id"],
-            name=data["name"],
-            description=data.get("description", ""),
-            creation_time=util.parse_protobuf_timestamp(data["creationTime"]),
-            last_updated_time=util.parse_protobuf_timestamp(data["lastUpdatedTime"]),
-            metadata=data.get("metadata", {}),
-            labels=data.get("labels", []),
-            username=data.get("username", ""),
-            archived=data.get("archived", False),
-        )
-
-    @classmethod
-    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
-        warnings.warn(
-            "Model.from_json() is deprecated and will be removed from the public API "
-            "in a future version",
-            FutureWarning,
-        )
-        return cls._from_json(data, session)
-
-    @classmethod
     def _from_bindings(cls, m: bindings.v1Model, session: api.Session) -> "Model":
         return cls(
             session,
@@ -399,4 +358,5 @@ class Model:
             labels=list(m.labels or []),
             username=m.username or "",
             archived=m.archived or False,
+            workspace_id=m.workspaceId,
         )

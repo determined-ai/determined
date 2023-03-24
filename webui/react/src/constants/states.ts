@@ -1,4 +1,4 @@
-import { Determinedtrialv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { Trialv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { StateOfUnion } from 'themes';
 import {
   CheckpointState,
@@ -158,6 +158,7 @@ export const jobStateToLabel: { [key in JobState]: string } = {
   [JobState.SCHEDULED]: 'Scheduled',
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
+  [JobState.UNSPECIFIED]: 'Unspecified',
 };
 
 export const slotStateToLabel: { [key in SlotState]: string } = {
@@ -167,16 +168,17 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Potential]: 'Potential',
 };
 
-export const trialStateTolabel: { [key in Determinedtrialv1State]: string } = {
-  [Determinedtrialv1State.ACTIVE]: 'Active',
-  [Determinedtrialv1State.PAUSED]: 'Paused',
-  [Determinedtrialv1State.STOPPINGCANCELED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGKILLED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGERROR]: 'Error',
-  [Determinedtrialv1State.CANCELED]: 'Canceled',
-  [Determinedtrialv1State.COMPLETED]: 'Completed',
-  [Determinedtrialv1State.ERROR]: 'Error',
+export const trialStateTolabel: { [key in Trialv1State]: string } = {
+  [Trialv1State.ACTIVE]: 'Active',
+  [Trialv1State.PAUSED]: 'Paused',
+  [Trialv1State.STOPPINGCANCELED]: 'Stopping',
+  [Trialv1State.STOPPINGKILLED]: 'Stopping',
+  [Trialv1State.STOPPINGCOMPLETED]: 'Stopping',
+  [Trialv1State.STOPPINGERROR]: 'Error',
+  [Trialv1State.CANCELED]: 'Canceled',
+  [Trialv1State.COMPLETED]: 'Completed',
+  [Trialv1State.ERROR]: 'Error',
+  [Trialv1State.UNSPECIFIED]: 'Unspecified',
 };
 export function stateToLabel(state: StateOfUnion): string {
   return (
@@ -186,7 +188,7 @@ export function stateToLabel(state: StateOfUnion): string {
     checkpointStateToLabel[state as CheckpointState] ||
     jobStateToLabel[state as JobState] ||
     slotStateToLabel[state as SlotState] ||
-    trialStateTolabel[state as Determinedtrialv1State] ||
+    trialStateTolabel[state as Trialv1State] ||
     (state as string)
   );
 }

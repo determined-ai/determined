@@ -3,8 +3,9 @@ import { array, boolean, number, string, undefined, union } from 'io-ts';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig } from 'hooks/useSettings';
 
-export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings> = {
-  applicableRoutespace: '/trials',
+export const trialsTableSettingsConfig = (
+  projectId: string,
+): SettingsConfig<InteractiveTableSettings> => ({
   settings: {
     columns: {
       defaultValue: [],
@@ -43,5 +44,5 @@ export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings>
       type: number,
     },
   },
-  storagePath: 'trial-table',
-};
+  storagePath: `trial-table-${projectId}`,
+});

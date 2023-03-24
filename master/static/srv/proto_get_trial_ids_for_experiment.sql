@@ -20,11 +20,12 @@ WITH searcher_info AS (
         t.restarts,
         t.start_time,
         t.end_time,
+        t.checkpoint_size,
         coalesce(t.end_time, now()) - t.start_time AS duration,
         (
             SELECT coalesce(max(s.total_batches), 0)
             FROM steps s
-            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+            WHERE s.trial_id = t.id
         ) AS total_batches_processed,
         (
            CASE WHEN t.best_validation_id IS NOT NULL THEN
@@ -45,7 +46,6 @@ WITH searcher_info AS (
            SELECT searcher_info.sign * (v.metrics->'validation_metrics'->>searcher_info.metric_name)::float8
            FROM validations v
            WHERE v.trial_id = t.id
-             AND v.state = 'COMPLETED'
            ORDER BY v.id DESC
            LIMIT 1
         ) as latest_signed_search_metric

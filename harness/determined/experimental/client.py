@@ -63,6 +63,8 @@ from determined.common.experimental.experiment import (  # noqa: F401
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import (  # noqa: F401
+    CheckpointOrderBy,
+    CheckpointSortBy,
     TrialOrderBy,
     TrialReference,
     TrialSortBy,
@@ -218,6 +220,15 @@ def get_user_by_name(user_name: str) -> User:
 
 
 @_require_singleton
+def get_session_username() -> str:
+    """
+    Get the username of the currently signed in user.
+    """
+    assert _determined is not None
+    return _determined.get_session_username()
+
+
+@_require_singleton
 def whoami() -> User:
     """
     Get the :class:`~determined.experimental.client.User` representing the
@@ -333,6 +344,7 @@ def get_model_by_id(model_id: int) -> Model:
         "Please call client.get_model() with either a string-type name or "
         "an integer-type model ID.",
         FutureWarning,
+        stacklevel=2,
     )
     assert _determined is not None
     return _determined.get_model(model_id)

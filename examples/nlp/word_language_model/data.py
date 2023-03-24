@@ -6,13 +6,13 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Optional, List
-import torch
-from torch.utils.data import Dataset
-from pathlib import Path
 import urllib.request
 import zipfile
+from pathlib import Path
+from typing import List, Optional
+
 import torch
+from torch.utils.data import Dataset
 
 
 def load_and_cache_dataset(path: Path, use_cached: bool = True) -> "Corpus":

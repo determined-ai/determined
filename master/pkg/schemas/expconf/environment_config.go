@@ -40,11 +40,13 @@ func (p PodSpec) WithDefaults() PodSpec {
 	return PodSpec(*pod.DeepCopy())
 }
 
-//go:generate ../gen.sh --import github.com/docker/docker/api/types
 // EnvironmentConfigV0 configures the environment of a Determined command or experiment.
+//
+//go:generate ../gen.sh --import github.com/docker/docker/api/types
 type EnvironmentConfigV0 struct {
 	RawImage                *EnvironmentImageMapV0     `json:"image"`
 	RawEnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
+	RawProxyPorts           *ProxyPortsConfigV0        `json:"proxy_ports"`
 
 	RawPorts          map[string]int    `json:"ports"`
 	RawRegistryAuth   *types.AuthConfig `json:"registry_auth"`
@@ -55,8 +57,9 @@ type EnvironmentConfigV0 struct {
 	RawDropCapabilities []string `json:"drop_capabilities"`
 }
 
-//go:generate ../gen.sh
 // EnvironmentImageMapV0 configures the runtime image.
+//
+//go:generate ../gen.sh
 type EnvironmentImageMapV0 struct {
 	RawCPU  *string `json:"cpu"`
 	RawCUDA *string `json:"cuda"`
@@ -129,8 +132,9 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 	}
 }
 
-//go:generate ../gen.sh
 // EnvironmentVariablesMapV0 configures the runtime environment variables.
+//
+//go:generate ../gen.sh
 type EnvironmentVariablesMapV0 struct {
 	RawCPU  []string `json:"cpu"`
 	RawCUDA []string `json:"cuda"`
@@ -215,4 +219,37 @@ func (e EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
+}
+
+// ProxyPortV0 configures the master-proxied task ports.
+//
+//go:generate ../gen.sh
+type ProxyPortV0 struct {
+	RawProxyPort        int   `json:"proxy_port"`
+	RawProxyTCP         *bool `json:"proxy_tcp"`
+	RawUnauthenticated  *bool `json:"unauthenticated"`
+	RawDefaultServiceID *bool `json:"default_service_id"`
+}
+
+// ProxyPortsConfigV0 is the configuration for proxy ports.
+//
+//go:generate ../gen.sh
+type ProxyPortsConfigV0 []ProxyPortV0
+
+// Merge implemenets the mergable interface.
+func (b ProxyPortsConfigV0) Merge(other ProxyPortsConfigV0) ProxyPortsConfigV0 {
+	out := ProxyPortsConfigV0{}
+	out = append(out, b...)
+
+	// Prevent duplicate container ports as a result of the merge.
+	ports := map[int]bool{}
+	for _, pp := range b {
+		ports[pp.ProxyPort()] = true
+	}
+	for _, pp := range other {
+		if _, ok := ports[pp.ProxyPort()]; !ok {
+			out = append(out, pp)
+		}
+	}
+	return out
 }

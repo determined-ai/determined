@@ -1,49 +1,25 @@
-import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { observable, Observable, WritableObservable } from 'micro-observables';
 
 import { getActiveTasks } from 'services/api';
 import { TaskCounts } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-type TasksContext = {
-  activeTasks: Loadable<TaskCounts>;
-  updateActiveTasks: (fn: (ws: Loadable<TaskCounts>) => Loadable<TaskCounts>) => void;
-};
+export class TasksStore {
+  static #activeTasks: WritableObservable<Loadable<TaskCounts>> = observable(NotLoaded);
 
-const TasksContext = createContext<TasksContext | null>(null);
-
-export const TasksProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [activeTasks, updateActiveTasks] = useState<Loadable<TaskCounts>>(NotLoaded);
-  return (
-    <TasksContext.Provider value={{ activeTasks, updateActiveTasks }}>
-      {children}
-    </TasksContext.Provider>
-  );
-};
-
-export const useFetchActiveTasks = (canceler: AbortController): (() => Promise<void>) => {
-  const context = useContext(TasksContext);
-  if (context === null) {
-    throw new Error('Attempted to use useFetchTasks outside of Task Context');
-  }
-  const { updateActiveTasks } = context;
-
-  return useCallback(async (): Promise<void> => {
+  // Fetch counts to update the store.
+  static async fetchActiveTasks(canceler: AbortController): Promise<void> {
     try {
       const response = await getActiveTasks({}, { signal: canceler.signal });
-      updateActiveTasks(() => Loaded(response));
+      this.#activeTasks.set(Loaded(response));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, updateActiveTasks]);
-};
-
-export const useActiveTasks = (): Loadable<TaskCounts> => {
-  const context = useContext(TasksContext);
-  if (context === null) {
-    throw new Error('Attempted to use useActiveTasks outside of Task Context');
   }
-  const { activeTasks } = context;
 
-  return activeTasks;
-};
+  // Return the counts of active tasks via observable (receive with useObservable)
+  static getActiveTaskCounts(): Observable<Loadable<TaskCounts>> {
+    return this.#activeTasks;
+  }
+}

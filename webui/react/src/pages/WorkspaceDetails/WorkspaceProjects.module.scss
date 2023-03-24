@@ -5,12 +5,14 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 16px;
-    margin-top: 30px;
   }
-  .grid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  .descriptionRenderer {
+    border: 1px solid transparent;
+
+    &:focus,
+    &:hover {
+      border: 1px solid var(--theme-status-active);
+    }
   }
 }
 
@@ -37,7 +39,4 @@
   line-height: 100%;
   margin-right: 10px;
   vertical-align: middle;
-}
-.membersContainer {
-  margin-top: 30px;
 }

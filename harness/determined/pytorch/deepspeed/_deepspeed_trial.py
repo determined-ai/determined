@@ -6,7 +6,6 @@ import pathlib
 import pickle
 import random
 import time
-import uuid
 import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
@@ -16,10 +15,8 @@ import torch
 from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
-from determined import layers, pytorch, tensorboard, util, workload
-from determined.common import storage
+from determined import layers, pytorch, util, workload
 from determined.pytorch import deepspeed as det_ds
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
@@ -53,6 +50,7 @@ class DeepSpeedTrialController(det.TrialController):
                     "The on_checkpoint_end callback is deprecated, please use "
                     "on_checkpoint_write_end instead",
                     FutureWarning,
+                    stacklevel=2,
                 )
 
         if len(self.context.models) == 0:
@@ -68,13 +66,6 @@ class DeepSpeedTrialController(det.TrialController):
             )
 
         self.steps_completed = self.env.steps_completed
-
-    @classmethod
-    def create_metric_writer(
-        cls: Type["DeepSpeedTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -328,60 +319,19 @@ class DeepSpeedTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
-                    storage_id = ""
-                    # The checkpointing api would have been sufficient if the base_path for the
-                    # storage manager is guaranteed to be a shared file system.
-                    #
-                    # Since we can't guarantee that, we use the base storage_manager instead for
-                    # more flexibility.  Since checkpoints can be distributed across multiple
-                    # nodes, we will use the same uuid and separate path but each node
-                    # will upload its checkpoints to the storage manager individually.
-                    storage_manager = self.context._core.checkpoint._storage_manager
-                    if self.is_chief:
-                        metadata = {
-                            "steps_completed": self.steps_completed,
-                            "framework": f"torch-{torch.__version__}",
-                            "format": "pickle",
-                        }
-                        storage_id = str(uuid.uuid4())
-                        with storage_manager.store_path(storage_id) as path:
-                            # Broadcast checkpoint path to all ranks.
-                            self.context.distributed.broadcast((storage_id, path))
-                            self._save(path)
-                            # If the storage manager is a sharedfs, then the checkpoint directory
-                            # will already contain all the files.  Otherwise, checkpoint files are
-                            # saved to a local directory before being uploaded to cloud storage, so
-                            # we'll need to gather all the files across nodes before reporting the
-                            # checkpoint.
-                            resources = storage.StorageManager._list_directory(path)
-                            if isinstance(storage_manager, storage.SharedFSStorageManager):
-                                all_resources = [resources]
-                            else:
-                                # Gather resources across nodes.
-                                all_resources = self.context.distributed.gather(resources)
-                        resources = {k: v for d in all_resources for k, v in d.items()}
-
-                        self.context._core.checkpoint._report_checkpoint(
-                            storage_id, resources, metadata
-                        )
-                        response = {"uuid": storage_id}
-                    else:
-                        storage_id, path = self.context.distributed.broadcast(None)
+                    metadata = {
+                        "steps_completed": self.steps_completed,
+                        "framework": f"torch-{torch.__version__}",
+                        "format": "pickle",
+                    }
+                    with self.context._core.checkpoint.store_path(metadata, shard=True) as (
+                        path,
+                        storage_id,
+                    ):
                         self._save(path)
-                        if not isinstance(storage_manager, storage.SharedFSStorageManager):
-                            # Gather resources across nodes.
-                            if self.context.distributed.local_rank == 0:
-                                resources = storage.StorageManager._list_directory(path)
-                            else:
-                                resources = {}
-                            _ = self.context.distributed.gather(resources)
-                        if self.context.distributed.local_rank == 0:
-                            storage_manager.post_store_path(str(path), storage_id)
-                        response = {}
-                    storage_id = self.context.distributed.broadcast(storage_id)
+                    response = {"uuid": storage_id}
                     for callback in self.callbacks.values():
                         callback.on_checkpoint_upload_end(uuid=storage_id)
-
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -389,6 +339,7 @@ class DeepSpeedTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.context._maybe_reset_tbd_writer()
             self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
@@ -517,19 +468,24 @@ class DeepSpeedTrialController(det.TrialController):
                 pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
+        if self.is_chief:
+            step_duration = time.time() - step_start_time
+            logging.info(
+                det.util.make_timing_log("trained", step_duration, num_inputs, num_batches)
+            )
+            self.prof.set_training(False)
+
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(),
+                "train",
+                self.steps_completed,
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
+            )
+
         if not self.is_chief:
-            # The training metrics are reported only in the chief process.
             return {}
 
-        step_duration = time.time() - step_start_time
-        logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
-        self.prof.set_training(False)
-
-        self.metric_writer.on_train_step_end(
-            self.steps_completed,
-            metrics["avg_metrics"],
-            metrics["batch_metrics"],
-        )
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -541,14 +497,6 @@ class DeepSpeedTrialController(det.TrialController):
             model.eval()
 
         step_start_time = time.time()
-
-        for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_start is now deprecated, "
-                    "please use on_validation_start instead"
-                )
-                callback.on_validation_step_start()
 
         for callback in self.callbacks.values():
             callback.on_validation_start()
@@ -611,7 +559,6 @@ class DeepSpeedTrialController(det.TrialController):
 
         if self.context.distributed.size > 1 and any(
             util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-            or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
             for c in self.callbacks.values()
         ):
             logging.debug(
@@ -621,28 +568,30 @@ class DeepSpeedTrialController(det.TrialController):
             metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
-            if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
-                logging.warning(
-                    "on_validation_step_end is now deprecated, please use on_validation_end instead"
-                )
-                callback.on_validation_step_end(metrics)
-
-        for callback in self.callbacks.values():
             callback.on_validation_end(metrics)
+
+        if self.is_chief:
+            num_inputs *= self.context._mpu.data_parallel_world_size
+            step_duration = time.time() - step_start_time
+            logging.info(
+                det.util.make_timing_log(
+                    "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
+                )
+            )
+
+            det.pytorch._log_tb_metrics(
+                self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+            )
 
         if not self.is_chief:
             return {}
 
-        num_inputs *= self.context._mpu.data_parallel_world_size
-        step_duration = time.time() - step_start_time
-        logging.info(
-            det.util.make_timing_log(
-                "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
-            )
-        )
-
-        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
+
+    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
+        det.pytorch._log_tb_metrics(
+            self.context.get_tensorboard_writer(), "val", self.steps_completed, metrics
+        )
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Right now we will load all checkpoint shards on each node regardless of which

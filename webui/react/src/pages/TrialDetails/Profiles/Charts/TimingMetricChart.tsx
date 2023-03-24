@@ -1,26 +1,28 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
+import { LineChart } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
-import UPlotChart from 'components/UPlot/UPlotChart';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
+import { getScientificNotationTickValues, getUnitForMetricName } from '../utils';
 
-export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMetrics }) => {
+export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const timingMetrics = useFetchProfilerMetrics(trial.id, trial.state, MetricType.Timing);
 
-  const options = useMemo(
-    () => getOptionsForMetrics('seconds', timingMetrics.names),
-    [getOptionsForMetrics, timingMetrics.names],
-  );
+  const yLabel = getUnitForMetricName('seconds');
 
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">
-      <UPlotChart
-        data={timingMetrics.data}
-        noDataMessage="No data found. Timing metrics may not be available for your framework."
-        options={options}
+      <LineChart
+        experimentId={trial.id}
+        series={timingMetrics.data}
+        xAxis={XAxisDomain.Time}
+        xLabel="Time"
+        yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );

@@ -50,6 +50,7 @@
     pod_spec: '*'
     ports:
       asdf: 1
+    proxy_ports: []
     registry_auth:
       username: samiam
       password: eggsnham
@@ -93,7 +94,7 @@
     source_checkpoint_uuid: "asdf"
   defaulted:
     name: random
-    max_concurrent_trials: 0
+    max_concurrent_trials: 16
     max_length:
       batches: 1000
     max_trials: 1000
@@ -116,7 +117,7 @@
     source_trial_id: 15
   defaulted:
     name: grid
-    max_concurrent_trials: 0
+    max_concurrent_trials: 16
     max_length:
       batches: 1000
     metric: loss
@@ -144,7 +145,7 @@
       batches: 1000
     max_trials: 100
     divisor: 4
-    max_concurrent_trials: 0
+    max_concurrent_trials: 16
     metric: loss
     smaller_is_better: true
     source_trial_id: null
@@ -172,7 +173,7 @@
     divisor: 4
     mode: standard
     max_rungs: 5
-    max_concurrent_trials: 0
+    max_concurrent_trials: 16
     metric: loss
     smaller_is_better: true
     source_trial_id: null
@@ -207,7 +208,6 @@
       - host_path: "/h4"
         container_path: "/c4"
         mode: "mrw"
-    agent_label: ''
     native_parallel: false
     shm_size: null
     slots_per_trial: 1

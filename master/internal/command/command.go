@@ -110,9 +110,10 @@ func commandFromSnapshot(
 	taskType := snapshot.Task.TaskType
 	jobID := snapshot.Task.Job.JobID
 	cmd := &command{
-		db:         db,
-		rm:         rm,
-		taskLogger: taskLogger,
+		db:             db,
+		rm:             rm,
+		taskLogger:     taskLogger,
+		registeredTime: snapshot.RegisteredTime,
 
 		GenericCommandSpec: snapshot.GenericCommandSpec,
 
@@ -147,6 +148,7 @@ func remakeCommandsByType(
 		Relation("Task").
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
+		Where("allocation.state != ?", model.AllocationStateTerminated).
 		Where("task.task_type = ?", taskType).
 		Scan(context.TODO())
 	if err != nil {
@@ -156,8 +158,11 @@ func remakeCommandsByType(
 
 	results := []*command{}
 	for i := range snapshots {
-		cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
-		results = append(results, cmd)
+		if rm.IsReattachEnabledForRP(ctx,
+			snapshots[i].GenericCommandSpec.Config.Resources.ResourcePool) {
+			cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
+			results = append(results, cmd)
+		}
 	}
 
 	return results, nil
@@ -232,8 +237,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
-		c.registeredTime = ctx.Self().RegisteredTime()
 		if !c.restored {
+			c.registeredTime = ctx.Self().RegisteredTime().Truncate(time.Millisecond)
 			if err := c.db.AddJob(&model.Job{
 				JobID:   c.jobID,
 				JobType: c.jobType,
@@ -257,16 +262,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if priority != nil {
 			if err := c.setPriority(ctx, *priority, true); err != nil {
 				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
-			}
-		}
-
-		var proxyPortConf *sproto.ProxyPortConfig
-		if c.GenericCommandSpec.Port != nil {
-			proxyPortConf = &sproto.ProxyPortConfig{
-				ServiceID:       string(c.taskID),
-				Port:            *c.GenericCommandSpec.Port,
-				ProxyTCP:        c.ProxyTCP,
-				Unauthenticated: c.Unauthenticated,
 			}
 		}
 
@@ -301,14 +296,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
-			AgentLabel:   c.Config.Resources.AgentLabel,
 			ResourcePool: c.Config.Resources.ResourcePool,
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
 
 			StreamEvents: eventStreamConfig,
-			ProxyPort:    proxyPortConf,
+			ProxyPorts:   sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),
 			IdleTimeout:  idleWatcherConfig,
 			Restore:      c.restored,
 		}, c.db, c.rm, c.taskLogger)
@@ -474,6 +468,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
+	case *apiv1.DeleteWorkspaceRequest:
+		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
+			ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.KillAllocation,
+				InformationalReason: "user requested workspace delete",
+			})
+		}
+
 	case sproto.NotifyRMPriorityChange:
 		ctx.Respond(c.setPriority(ctx, msg.Priority, false))
 
@@ -568,13 +570,14 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Description:    c.Config.Description,
 		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -586,13 +589,14 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		State:        state,
 		Description:  c.Config.Description,
 		Container:    allo.FirstContainer().ToProto(),
-		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:    protoutils.ToTimestamp(c.registeredTime),
 		Username:     c.Base.Owner.Username,
 		UserId:       int32(c.Base.Owner.ID),
 		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
+		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -603,7 +607,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Id:             c.stringID(),
 		State:          state,
 		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Container:      allo.FirstContainer().ToProto(),
 		PrivateKey:     *c.Metadata.PrivateKey,
 		PublicKey:      *c.Metadata.PublicKey,
@@ -615,6 +619,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Addresses:      toProto(allo.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -625,7 +630,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Id:             c.stringID(),
 		State:          state,
 		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		ExperimentIds:  c.Metadata.ExperimentIDs,
@@ -636,6 +641,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 

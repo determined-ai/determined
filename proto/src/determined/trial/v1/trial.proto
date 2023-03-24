@@ -63,8 +63,6 @@ message MetricsWorkload {
   };
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
-  // The current validation state.
-  determined.experiment.v1.State state = 3;
   // Metrics.
   determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.
@@ -111,8 +109,6 @@ message Trial {
   MetricsWorkload latest_validation = 9;
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
-  // Latest training step.
-  MetricsWorkload latest_training = 16;
   // The last reported state of the trial runner (harness code).
   string runner_state = 11;
   // The wall clock time is all active time of the cluster for the trial,
@@ -124,6 +120,8 @@ message Trial {
   string task_id = 14;
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
+  // The count of checkpoints.
+  int32 checkpoint_count = 18;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
@@ -216,12 +214,14 @@ message TrialMetrics {
 // The rendezvous info for the trial to rendezvous with sibling containers.
 message RendezvousInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "addresses", "rank" ] }
+    json_schema: { required: [ "addresses", "rank", "slots" ] }
   };
   // The rendezvous addresses of the other containers.
   repeated string addresses = 1;
   // The container rank.
   int32 rank = 2;
+  // The slots for each address, respectively.
+  repeated int32 slots = 3;
 }
 
 // The metadata pertaining to the current running task for a trial.

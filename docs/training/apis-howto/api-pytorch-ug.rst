@@ -2,16 +2,23 @@
  PyTorch API
 #############
 
+In this guide, you'll learn how to use :ref:`pytorch_trial_ug` and :ref:`pytorch_trainer_ug`.
+
 +---------------------------------------------------------------------+
-| API reference                                                       |
+| Visit the API reference                                             |
 +=====================================================================+
-| :doc:`/reference/reference-training/training/api-pytorch-reference` |
+| :ref:`pytorch_api_ref`                                              |
 +---------------------------------------------------------------------+
 
-This document guides you through training a PyTorch model in Determined. You need to implement a
+.. _pytorch_trial_ug:
+
+***************
+ PyTorch Trial
+***************
+
+This section guides you through training a PyTorch model in Determined. You need to implement a
 trial class that inherits from :class:`~determined.pytorch.PyTorchTrial` and specify it as the
-entrypoint in the :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>`.
+entrypoint in the :ref:`experiment configuration <experiment-config-reference>`.
 
 To implement a :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions
 that represent the components that are used in the training procedure. It is helpful to work off of
@@ -47,18 +54,17 @@ following examples:
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
-For tips on debugging, see :doc:`/training/debug-models`.
+For tips on debugging, see :ref:`model-debug`.
 
 .. _pytorch-downloading-data:
 
-***************
- Download Data
-***************
+Download Data
+=============
 
 .. note::
 
-   Before continuing, read how to :doc:`/training/load-model-data` to understand how to work with
-   different sources of data.
+   Before continuing, read how to :ref:`prepare-data` to understand how to work with different
+   sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
 
@@ -89,9 +95,8 @@ See the following code as an example:
 
 .. _pytorch-data-loading:
 
-***********
- Load Data
-***********
+Load Data
+=========
 
 Loading data into :class:`~determined.pytorch.PyTorchTrial` models is done by defining two
 functions, :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
@@ -106,8 +111,7 @@ Each :class:`determined.pytorch.DataLoader` will return batches of data, which w
 to the :meth:`~determined.pytorch.PyTorchTrial.train_batch` and
 :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` functions. The batch size of the data loader
 will be set to the per-slot batch size, which is calculated based on ``global_batch_size`` and
-``slots_per_trial`` as defined in the :doc:`experiment configuration
-</reference/reference-training/experiment-config-reference>`.
+``slots_per_trial`` as defined in the :ref:`experiment configuration <experiment-config-reference>`.
 
 See the following code as an example:
 
@@ -162,9 +166,8 @@ the following formats:
        "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
    }
 
-**********************
- Initializing Objects
-**********************
+Initializing Objects
+====================
 
 You need to initialize the objects that will be used in training in the constructor
 :meth:`~determined.pytorch.PyTorchTrial.__init__` of :class:`determined.pytorch.PyTorchTrial` using
@@ -182,7 +185,7 @@ scheduler(s), and custom loss and metric functions. See
    sometimes happen if the PyTorch API is not used correctly.
 
 Optimizers
-==========
+----------
 
 You need to call the :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer` method of the
 :class:`~determined.pytorch.PyTorchTrialContext` to wrap your instantiated optimizers in the
@@ -206,7 +209,7 @@ Then you need to step your optimizer in the :meth:`~determined.pytorch.PyTorchTr
 (see :ref:`pytorch-optimization-step` below).
 
 Learning Rate Schedulers
-========================
+------------------------
 
 Determined has a few ways of managing the learning rate. Determined can automatically update every
 batch or epoch, or you can manage it yourself.
@@ -238,14 +241,13 @@ scheduler in the :meth:`~determined.pytorch.PyTorchTrial.train_batch` method of
        self.lr_sch.step()
        ...
 
-**************************
- Define the Training Loop
-**************************
+Define the Training Loop
+========================
 
 .. _pytorch-optimization-step:
 
 Optimization Step
-=================
+-----------------
 
 You need to implement the :meth:`~determined.pytorch.PyTorchTrial.train_batch` method of your
 ``PyTorchTrial`` subclass.
@@ -315,13 +317,13 @@ The final :meth:`~determined.pytorch.PyTorchTrial.train_batch` will look like:
        return {"loss": loss.item(), "top1": acc1[0], "top5": acc5[0]}
 
 Checkpointing
-=============
+-------------
 
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
 optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
-:ref:`Python API <store-checkpoint-metadata>`.
+:ref:`Python SDK <store-checkpoint-metadata>`.
 
 PyTorch trials are checkpointed as a ``state-dict.pth`` file. This file is created in a similar
 manner to the procedure described in the `PyTorch documentation
@@ -330,9 +332,8 @@ but instead of the fields in that documentation, the dictionary will have four k
 ``models_state_dict``, ``optimizers_state_dict``, ``lr_schedulers_state_dict``, and ``callbacks``,
 which are the ``state_dict`` of the models, optimizers, LR schedulers, and callbacks respectively.
 
-****************************
- Define the Validation Loop
-****************************
+Define the Validation Loop
+==========================
 
 You need to implement either the :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` or
 :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` method. To load data into the
@@ -349,9 +350,8 @@ For example,
        validation_loss = self.criterion(output, target)
        return {"validation_loss": loss.item()}
 
-***********
- Callbacks
-***********
+Callbacks
+=========
 
 To execute arbitrary Python code during the lifecycle of a
 :class:`~determined.pytorch.PyTorchTrial`, implement the
@@ -359,12 +359,11 @@ To execute arbitrary Python code during the lifecycle of a
 :class:`~determined.pytorch.PyTorchTrial` by implementing
 :meth:`~determined.pytorch.PyTorchTrial.build_callbacks`.
 
-****************
- Advanced Usage
-****************
+Advanced Usage
+==============
 
 Gradient Clipping
-=================
+-----------------
 
 Users need to pass a gradient clipping function to
 :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`.
@@ -372,7 +371,7 @@ Users need to pass a gradient clipping function to
 .. _pytorch-custom-reducers:
 
 Reducing Metrics
-================
+----------------
 
 Determined supports proper reduction of arbitrary training and validation metrics, even during
 distributed training, by allowing users to define custom reducers. Custom reducers can be either a
@@ -382,7 +381,7 @@ function or an implementation of the :class:`determined.pytorch.MetricReducer` i
 .. _pytorch-reproducible-dataset:
 
 Customize a Reproducible Dataset
-================================
+--------------------------------
 
 .. note::
 
@@ -506,15 +505,14 @@ you find that the built-in context.DataLoader() does not support your use case.
 
 See the :mod:`determined.pytorch.samplers` for details.
 
-*******************
- Porting Checklist
-*******************
+Porting Checklist
+=================
 
 If you port your code to Determined, you should walk through this checklist to ensure your code does
 not conflict with the Determined library.
 
 Remove Pinned GPUs
-==================
+------------------
 
 Determined handles scheduling jobs on available slots. However, you need to let the Determined
 library handles choosing the GPUs.
@@ -530,7 +528,7 @@ example. It has the following code to configure the GPU:
 Any use of ``args.gpu`` should be removed.
 
 Remove Distributed Training Code
-================================
+--------------------------------
 
 To run distributed training outside Determined, you need to have code that handles the logic of
 launching processes, moving models to pined GPUs, sharding data, and reducing metrics. You need to
@@ -620,7 +618,7 @@ of :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
 :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`.
 
 Get Hyperparameters from PyTorchTrialContext
-============================================
+--------------------------------------------
 
 Take the following code for example.
 
@@ -636,7 +634,235 @@ Take the following code for example.
            model = models.__dict__[args.arch]()
 
 ``args.arch`` is a hyperparameter. You should define the hyperparameter space in the
-:doc:`experiment configuration </reference/reference-training/experiment-config-reference>` and use
-``self.context.get_hparams()``, which gives you access to all the hyperparameters for the current
-trial. By doing so, you get better tracking in the WebUI, especially for experiments that use a
-searcher.
+:ref:`experiment config <experiment-config-reference>`. By doing so, you get better tracking in the
+WebUI, especially for experiments that use a searcher. Depending on how your trial is run, you can
+access all the current hyperparameters from inside the trial by either calling
+``self.context.get_hparams()`` if you submitted your trial with ``entrypoint: model_def:Trial`` or
+passing in hyperparameters directly into the Trial ``__init__`` if using PyTorch Trainer API.
+
+.. _pytorch_trainer_ug:
+
+*****************
+ PyTorch Trainer
+*****************
+
+With the PyTorch Trainer API, you can implement and iterate on model training code locally before
+running on cluster. When you are satisfied with your model code, you configure and submit the code
+on cluster.
+
+The PyTorch Trainer API lets you do the following:
+
+-  Work locally, iterating on your model code.
+-  Debug models in your favorite debug environment (e.g., directly on your machine, IDE, or Jupyter
+   notebook).
+-  Run training scripts without needing to use an experiment configuration file.
+-  Load previously saved checkpoints directly into your model.
+
+Initializing the Trainer
+========================
+
+After defining the PyTorch Trial, initialize the trial and the trainer.
+:meth:`~determined.pytorch.init` returns a :class:`~determined.pytorch.PyTorchTrialContext` for
+instantiating `~determined.pytorch.PyTorchTrial`. Initialize `~determined.pytorch.Trainer` with the
+trial and context.
+
+.. code:: python
+
+   from determined import pytorch
+   def main():
+       with det.pytorch.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det.pytorch.Trainer(trial, train_context)
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+Training is configured with a call to :meth:`~determined.pytorch.Trainer.fit` with training loop
+arguments, such as checkpointing periods, validation periods, and checkpointing policy.
+
+.. code:: diff
+
+   from determined import pytorch
+
+
+   def main():
+       with det.pytorch.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det.pytorch.Trainer(trial, train_context)
+   +       trainer.fit(
+   +           checkpoint_period=pytorch.Batch(100),
+   +           validation_period=pytorch.Batch(100),
+   +           checkpoint_policy="all"
+   +       )
+
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+Run Your Training Script Locally
+================================
+
+Run training scripts locally without submitting to a cluster or defining an experiment configuration
+file. Be sure to specify ``max_length`` in the ``.fit()`` call, which is used in local training mode
+to determine the maximum number of steps to train for.
+
+.. code:: python
+
+   from determined import pytorch
+
+
+   def main():
+       with det.pytorch.init() as train_context:
+           trial = MyTrial(train_context)
+           trainer = det.pytorch.Trainer(trial, train_context)
+           trainer.fit(
+               max_length=pytorch.Epoch(1),
+               checkpoint_period=pytorch.Batch(100),
+               validation_period=pytorch.Batch(100),
+               checkpoint_policy="all",
+           )
+
+
+   if __name__ == "__main__":
+       # Configure logging
+       logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+       main()
+
+You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code
+will train for one epoch, and checkpoint and validate every 100 batches.
+
+Local Distributed Training
+==========================
+
+Local training can utilize multiple GPUs on a single node with a few modifications to the above
+code. Both Horovod and PyTorch Distributed backends are supported.
+
+.. code:: diff
+
+    def main():
+   +     # Initialize distributed backend before pytorch.init()
+   +     dist.init_process_group(backend="gloo|nccl")
+   +     # Set flag used by internal PyTorch training loop
+   +     os.environ["USE_TORCH_DISTRIBUTED"] = "true"
+   +     # Initialize DistributedContext
+         with det.pytorch.init(
+   +       distributed=core.DistributedContext.from_torch_distributed()
+         ) as train_context:
+             trial = MyTrial(train_context)
+             trainer = det.pytorch.Trainer(trial, train_context)
+             trainer.fit(
+                 max_length=pytorch.Epoch(1),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+                 checkpoint_policy="all"
+             )
+
+This code can be directly invoked with your distributed backend's launcher: ``torchrun
+--nproc_per_node=4 train.py``
+
+Test Mode
+=========
+
+Trainer accepts a test_mode parameter which, if true, trains and validates your training code for
+only one batch, checkpoints, then exits. This is helpful for debugging code or writing automated
+tests around your model code.
+
+.. code:: diff
+
+    trainer.fit(
+                 max_length=pytorch.Epoch(1),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+   +             test_mode=True
+             )
+
+Prepare Your Training Code for Deploying to a Determined Cluster
+================================================================
+
+Once you are satisfied with the results of training the model locally, you submit the code to a
+cluster. This example allows for distributed training locally and on cluster without having to make
+code changes.
+
+Example workflow of frequent iterations between local debugging and cluster deployment:
+
+.. code:: diff
+
+    def main():
+   +   local = det.get_cluster_info() is None
+   +   if local:
+   +       # Local: configure local distributed training.
+   +       dist.init_process_group(backend="gloo|nccl")
+   +       os.environ["USE_TORCH_DISTRIBUTED"] = "true"
+   +       distributed_context = core.DistributedContext.from_torch_distributed()
+   +       latest_checkpoint = None
+   +   else:
+   +       # On-cluster: Determined will automatically detect distributed context.
+   +       distributed_context = None
+   +       # On-cluster: configure the latest checkpoint for pause/resume training functionality.
+   +       latest_checkpoint = det.get_cluster_info().latest_checkpoint
+
+   +     with det.pytorch.init(
+   +       distributed=distributed_context
+         ) as train_context:
+             trial = MNistTrial(train_context)
+             trainer = det.pytorch.Trainer(trial, train_context)
+             trainer.fit(
+                 max_length=pytorch.Epoch(1),
+                 checkpoint_period=pytorch.Batch(100),
+                 validation_period=pytorch.Batch(100),
+   +             latest_checkpoint=latest_checkpoint,
+             )
+
+To run Trainer API solely on-cluster, the code is much simpler:
+
+.. code:: python
+
+   def main():
+       with det.pytorch.init() as train_context:
+           trial_inst = model.MNistTrial(train_context)
+           trainer = det.pytorch.Trainer(trial_inst, train_context)
+           trainer.fit(
+               checkpoint_period=pytorch.Batch(100),
+               validation_period=pytorch.Batch(100),
+               latest_checkpoint=det.get_cluster_info().latest_checkpoint,
+           )
+
+Submit Your Trial for Training on Cluster
+=========================================
+
+To run your experiment on cluster, you'll need to create an experiment configuration (YAML) file.
+Your experiment configuration file must contain searcher configuration and entrypoint.
+
+.. code:: python
+
+   name: pytorch_trainer_trial
+   searcher:
+     name: single
+     metric: validation_loss
+     max_length:
+       epochs: 1
+   resources:
+     slots_per_trial: 8
+   entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
+
+Submit the trial to the cluster:
+
+.. code:: bash
+
+   det e create det.yaml .
+
+If your training code needs to read some values from the experiment configuration,
+``pytorch.init()`` accepts an ``exp_conf`` argument which allows calling
+``context.get_experiment_config()`` from ``PyTorchTrialContext``.
+
+Loading Checkpoints
+===================
+
+To load a checkpoint from a checkpoint saved using Trainer, you'll need to download the checkpoint
+to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint_path`. If your
+``Trial`` was instantiated with arguments, you can pass them via the ``trial_kwargs`` parameter of
+``load_trial_from_checkpoint_path``.

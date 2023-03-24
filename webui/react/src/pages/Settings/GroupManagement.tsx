@@ -1,8 +1,11 @@
-import { Button, Dropdown, message, Space, Table } from 'antd';
+import { Dropdown, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Nameplate from 'components/kit/Nameplate';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -10,7 +13,6 @@ import InteractiveTable, {
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
-import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import usePermissions from 'hooks/usePermissions';
@@ -22,7 +24,9 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { RolesStore } from 'stores/roles';
 import { DetailedUser } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './GroupManagement.module.scss';
@@ -84,9 +88,7 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button className={css.overflow} type="text">
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button ghost icon={<Icon name="overflow-vertical" />} />
       </Dropdown>
       {modalEditGroupContextHolder}
       {modalDeleteGroupContextHolder}
@@ -109,8 +111,7 @@ const GroupManagement: React.FC = () => {
   const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
-    if (!settings.tableLimit || !settings.tableOffset) return;
-
+    if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
     try {
       const response = await getGroups(
         {
@@ -130,9 +131,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
-
-  const fetchKnownRoles = useFetchKnownRoles(canceler);
+  }, [canceler.signal, settings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
@@ -165,9 +164,9 @@ const GroupManagement: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
     if (rbacEnabled) {
-      fetchKnownRoles();
+      RolesStore.fetchRoles(canceler);
     }
-  }, [fetchKnownRoles, rbacEnabled]);
+  }, [canceler, rbacEnabled]);
 
   const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
     useModalCreateGroup({ onClose: fetchGroups, users: users });
@@ -269,8 +268,10 @@ const GroupManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: 'name',
         onCell: onRightClickableCell,
-        render: (_: string, r: V1GroupSearchResult) => r.group.name,
-        title: 'Group Name',
+        render: (_: string, r: V1GroupSearchResult) => (
+          <Nameplate icon={<Icon name="group" />} name={r.group.name ?? ''} />
+        ),
+        title: 'Group',
       },
       {
         dataIndex: 'users',
@@ -321,17 +322,18 @@ const GroupManagement: React.FC = () => {
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
-            New Group
-          </Button>
-        </Space>
-      }
-      title="Groups">
-      {canViewGroups && <div className={css.usersTable}>{table}</div>}
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        options={
+          <Space>
+            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+              New Group
+            </Button>
+          </Space>
+        }
+        title="Groups">
+        {canViewGroups && <div className={css.usersTable}>{table}</div>}
+      </Section>
       {modalCreateGroupContextHolder}
     </Page>
   );

@@ -2,10 +2,10 @@
  Deployment Reference
 ######################
 
-This section includes reference documentation for configuring Determined deployment:
+Deloyment Reference includes reference documentation for configuring Determined deployment.
 
 +----------------------------------------+-------------------------------------------------------+
-| Topic                                  | Documentation Content                                 |
+| Title                                  | Description                                           |
 +========================================+=======================================================+
 | :doc:`config/common-config-options`    | Common configuration option reference for security,   |
 |                                        | networking, checkpointing, and telemetry options.     |

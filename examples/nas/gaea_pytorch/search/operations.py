@@ -10,21 +10,11 @@ OPS = {
     "skip_connect": lambda C, stride, affine: Identity()
     if stride == 1
     else FactorizedReduce(C, C, affine=affine),
-    "sep_conv_3x3": lambda C, stride, affine: SepConv(
-        C, C, 3, stride, 1, affine=affine
-    ),
-    "sep_conv_5x5": lambda C, stride, affine: SepConv(
-        C, C, 5, stride, 2, affine=affine
-    ),
-    "sep_conv_7x7": lambda C, stride, affine: SepConv(
-        C, C, 7, stride, 3, affine=affine
-    ),
-    "dil_conv_3x3": lambda C, stride, affine: DilConv(
-        C, C, 3, stride, 2, 2, affine=affine
-    ),
-    "dil_conv_5x5": lambda C, stride, affine: DilConv(
-        C, C, 5, stride, 4, 2, affine=affine
-    ),
+    "sep_conv_3x3": lambda C, stride, affine: SepConv(C, C, 3, stride, 1, affine=affine),
+    "sep_conv_5x5": lambda C, stride, affine: SepConv(C, C, 5, stride, 2, affine=affine),
+    "sep_conv_7x7": lambda C, stride, affine: SepConv(C, C, 7, stride, 3, affine=affine),
+    "dil_conv_3x3": lambda C, stride, affine: DilConv(C, C, 3, stride, 2, 2, affine=affine),
+    "dil_conv_5x5": lambda C, stride, affine: DilConv(C, C, 5, stride, 4, 2, affine=affine),
     "conv_7x1_1x7": lambda C, stride, affine: nn.Sequential(
         nn.ReLU(inplace=False),
         nn.Conv2d(C, C, (1, 7), stride=(1, stride), padding=(0, 3), bias=False),
@@ -39,9 +29,7 @@ class ReLUConvBN(nn.Module):
         super(ReLUConvBN, self).__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
-            nn.Conv2d(
-                C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False
-            ),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False),
             nn.BatchNorm2d(C_out, affine=affine),
         )
 
@@ -50,9 +38,7 @@ class ReLUConvBN(nn.Module):
 
 
 class DilConv(nn.Module):
-    def __init__(
-        self, C_in, C_out, kernel_size, stride, padding, dilation, affine=True
-    ):
+    def __init__(self, C_in, C_out, kernel_size, stride, padding, dilation, affine=True):
         super(DilConv, self).__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),

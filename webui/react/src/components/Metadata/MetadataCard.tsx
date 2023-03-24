@@ -1,7 +1,9 @@
 import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Space, Tooltip } from 'antd';
+import { Card, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
@@ -81,7 +83,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
         <div
           style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
           onClick={editMetadata}>
-          Add Metadata...
+          {disabled ? 'No metadata present.' : 'Add Metadata...'}
         </div>
       ) : (
         <Spinner spinning={isLoading}>

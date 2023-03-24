@@ -1,9 +1,10 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, notification } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
@@ -24,6 +25,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
+import { modal, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
@@ -72,7 +74,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
-      experimentIds: id ? [id] : undefined,
+      experimentIds: [id],
       sourceProjectId: experiment.projectId,
       sourceWorkspaceId: experiment.workspaceId,
     });
@@ -103,7 +105,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.OpenTensorBoard: {
-            const commandResponse = await openOrCreateTensorBoard({ experimentIds: [id] });
+            const commandResponse = await openOrCreateTensorBoard({
+              experimentIds: [id],
+              workspaceId: experiment.workspaceId,
+            });
             openCommandResponse(commandResponse);
             break;
           }
@@ -114,7 +119,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.delete(id);
             } else {
               if (pinSet.size >= 5) {
-                notification.warn({
+                notification.warning({
                   description: 'Up to 5 pinned items',
                   message: 'Unable to pin this item',
                 });
@@ -127,7 +132,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.Kill:
-            Modal.confirm({
+            modal.confirm({
               content: `
               Are you sure you want to kill
               experiment ${id}?
@@ -150,7 +155,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.Delete:
-            Modal.confirm({
+            modal.confirm({
               content: `
             Are you sure you want to delete
             experiment ${id}?
@@ -186,6 +191,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       experiment.projectId,
+      experiment.workspaceId,
       handleExperimentMove,
       handleHyperparameterSearch,
       id,
@@ -217,9 +223,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     return (
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available" onClick={stopPropagation}>
-          <button disabled>
+          <Button disabled ghost type="text">
             <Icon name="overflow-vertical" />
-          </button>
+          </Button>
         </div>
       )
     );
@@ -240,9 +246,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <button onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
-        </button>
+        <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
       {modalExperimentMoveContextHolder}
       {modalHyperparameterSearchContextHolder}

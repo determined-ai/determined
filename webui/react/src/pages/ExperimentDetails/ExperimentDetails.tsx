@@ -2,11 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
-import PageNotFound from 'components/PageNotFound';
 import { terminalRunStates } from 'constants/states';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
+import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
 import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -76,8 +76,7 @@ const ExperimentDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`${INVALID_ID_MESSAGE} ${experimentId}`} />;
-  } else if (pageError) {
-    if (isNotFound(pageError)) return <PageNotFound />;
+  } else if (pageError && !isNotFound(pageError)) {
     const message = `${ERROR_MESSAGE} ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!experiment || isSingleTrial === undefined) {
@@ -86,7 +85,6 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
-      bodyNoPadding
       containerRef={pageRef}
       headerComponent={
         <ExperimentDetailsHeader
@@ -95,6 +93,7 @@ const ExperimentDetails: React.FC = () => {
           trial={trial}
         />
       }
+      notFound={pageError && isNotFound(pageError)}
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
@@ -105,11 +104,14 @@ const ExperimentDetails: React.FC = () => {
           onTrialUpdate={handleSingleTrialUpdate}
         />
       ) : (
-        <ExperimentMultiTrialTabs
-          experiment={experiment}
-          fetchExperimentDetails={fetchExperimentDetails}
-          pageRef={pageRef}
-        />
+        <>
+          <TrialInfoBoxMultiTrial experiment={experiment} />
+          <ExperimentMultiTrialTabs
+            experiment={experiment}
+            fetchExperimentDetails={fetchExperimentDetails}
+            pageRef={pageRef}
+          />
+        </>
       )}
     </Page>
   );

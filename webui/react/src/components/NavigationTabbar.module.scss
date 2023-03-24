@@ -24,7 +24,7 @@
       bottom: 8px;
       color: var(--theme-status-active-on);
       font-size: 11px;
-      height: 0 16px;
+      height: 16px;
       padding: 0 6px;
       position: absolute;
       right: 16px;
@@ -36,6 +36,6 @@
     color: var(--theme-stage-on-strong);
   }
   .user {
-    width: 100%;
+    padding: 9px 16px;
   }
 }

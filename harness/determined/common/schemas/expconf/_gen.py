@@ -178,75 +178,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json",
-    "title": "CheckDataLayerCache",
-    "checks": {
-        "local_cache_container_path must be specified if local_cache_host_path is set": {
-            "not": {
-                "required": [
-                    "local_cache_host_path"
-                ],
-                "properties": {
-                    "local_cache_container_path": {
-                        "type": "null"
-                    },
-                    "local_cache_host_path": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "local_cache_host_path must be specified if local_cache_container_path is set": {
-            "not": {
-                "required": [
-                    "local_cache_container_path"
-                ],
-                "properties": {
-                    "local_cache_container_path": {
-                        "type": "string"
-                    },
-                    "local_cache_host_path": {
-                        "type": "null"
-                    }
-                }
-            }
-        }
-    }
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json",
-    "title": "CheckEpochNotUsed",
-    "additionalProperties": {
-        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-    },
-    "items": {
-        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-    },
-    "checks": {
-        "must specify the top-level records_per_epoch when this field is in terms of epochs": {
-            "properties": {
-                "epochs": {
-                    "not": {
-                        "type": "number"
-                    }
-                }
-            }
-        }
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json": json.loads(
         r"""
 {
@@ -432,232 +363,6 @@ schemas = {
             "default": 1,
             "minimum": 0
         }
-    }
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json",
-    "title": "GCSDataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
-        "bucket",
-        "bucket_directory_path"
-    ],
-    "properties": {
-        "type": {
-            "const": "gcs"
-        },
-        "bucket": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "bucket_directory_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "local_cache_host_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_host_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "local_cache_container_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_container_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        }
-    },
-    "allOf": [
-        {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json"
-        }
-    ]
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/data-layer-s3.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-s3.json",
-    "title": "S3DataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
-        "bucket",
-        "bucket_directory_path"
-    ],
-    "properties": {
-        "type": {
-            "const": "s3"
-        },
-        "bucket": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "bucket_directory_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "local_cache_host_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_host_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "local_cache_container_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_container_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "access_key": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "secret_key": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "endpoint_url": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    },
-    "allOf": [
-        {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json"
-        }
-    ]
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json",
-    "title": "SharedFSDataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "properties": {
-        "type": {
-            "const": "shared_fs"
-        },
-        "host_storage_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "host_storage_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "container_storage_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "container_storage_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        }
-    }
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/data-layer.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer.json",
-    "title": "DataLayerConfig",
-    "union": {
-        "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', or 'gcs'",
-        "items": [
-            {
-                "unionKey": "const:type=shared_fs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json"
-            },
-            {
-                "unionKey": "const:type=gcs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json"
-            },
-            {
-                "unionKey": "const:type=s3",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-s3.json"
-            }
-        ]
     }
 }
 
@@ -904,6 +609,14 @@ schemas = {
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
+        "proxy_ports": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+        },
         "ports": {
             "type": [
                 "object",
@@ -1051,14 +764,12 @@ schemas = {
             "default": {}
         },
         "data_layer": {
+            "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
             "type": [
                 "object",
                 "null"
             ],
-            "default": {
-                "type": "shared_fs"
-            },
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/data-layer.json"
+            "default": null
         },
         "debug": {
             "type": [
@@ -1280,29 +991,6 @@ schemas = {
                         "additionalProperties": {
                             "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "$comment": "when records per epoch not set, forbid epoch lengths",
-                "properties": {
-                    "records_per_epoch": {
-                        "maximum": 0
-                    }
-                }
-            },
-            "then": {
-                "properties": {
-                    "min_validation_period": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                    },
-                    "min_checkpoint_period": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                    },
-                    "searcher": {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }
@@ -2004,6 +1692,61 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/proxy-port.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-port.json",
+    "title": "ProxyPort",
+    "additionalProperties": false,
+    "required": [
+        "proxy_port"
+    ],
+    "type": "object",
+    "properties": {
+        "proxy_port": {
+            "type": "number"
+        },
+        "proxy_tcp": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "unauthenticated": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "default_service_id": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/proxy-ports.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/proxy-ports.json",
+    "title": "ProxyPortsConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/registry-auth.json": json.loads(
         r"""
 {
@@ -2104,11 +1847,12 @@ schemas = {
     "required": [],
     "properties": {
         "agent_label": {
+            "$comment": "the agent_label feature was removed in 0.20.0, and the config is ignored",
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "devices": {
             "type": [
@@ -2363,7 +2107,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2681,7 +2425,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "stop_once": {
             "type": [
@@ -2794,7 +2538,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_length": {
             "type": [
@@ -2888,7 +2632,7 @@ schemas = {
                 "null"
             ],
             "minimum": 0,
-            "default": 0
+            "default": 16
         },
         "max_trials": {
             "type": [

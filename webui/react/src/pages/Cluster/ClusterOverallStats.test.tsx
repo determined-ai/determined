@@ -1,29 +1,24 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 
-import StoreProvider from 'contexts/Store';
-import { ExperimentsProvider } from 'stores/experiments';
-import { ResourcePoolsProvider } from 'stores/resourcePools';
-import { TasksProvider } from 'stores/tasks';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import { ClusterProvider } from 'stores/cluster';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
-jest.mock('services/api', () => ({
+vi.mock('services/api', () => ({
   getActiveTasks: () => Promise.resolve({ commands: 0, notebooks: 0, shells: 0, tensorboards: 0 }),
+  getAgents: () => Promise.resolve([]),
   getExperiments: () => Promise.resolve({ experiments: [], pagination: { total: 0 } }),
+  getResourcePools: () => Promise.resolve({}),
 }));
 
 const setup = () => {
   const view = render(
-    <StoreProvider>
-      <ExperimentsProvider>
-        <TasksProvider>
-          <ResourcePoolsProvider>
-            <ClusterOverallStats />
-          </ResourcePoolsProvider>
-        </TasksProvider>
-      </ExperimentsProvider>
-    </StoreProvider>,
+    <UIProvider>
+      <ClusterProvider>
+        <ClusterOverallStats />
+      </ClusterProvider>
+    </UIProvider>,
   );
   return { view };
 };

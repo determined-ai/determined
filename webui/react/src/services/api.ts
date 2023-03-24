@@ -1,5 +1,6 @@
 import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
+import { V1LaunchWarning } from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
@@ -45,6 +46,12 @@ export const postUser = generateDetApi<
   Api.V1PostUserResponse,
   Api.V1PostUserResponse
 >(Config.postUser);
+
+export const postUserActivity = generateDetApi<
+  Api.V1PostUserActivityRequest,
+  Api.V1PostUserActivityResponse,
+  Api.V1PostUserActivityResponse
+>(Config.postUserActivity);
 
 export const getUsers = generateDetApi<
   Service.GetUsersParams,
@@ -454,6 +461,10 @@ export const unarchiveModel = generateDetApi<
   void
 >(Config.unarchiveModel);
 
+export const moveModel = generateDetApi<Service.MoveModelParams, Api.V1MoveModelResponse, void>(
+  Config.moveModel,
+);
+
 export const deleteModel = generateDetApi<
   Service.DeleteModelParams,
   Api.V1DeleteModelResponse,
@@ -478,9 +489,11 @@ export const postModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.postModelVersion);
 
-export const getModelLabels = generateDetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]>(
-  Config.getModelLabels,
-);
+export const getModelLabels = generateDetApi<
+  Service.GetWorkspaceModelsParams,
+  Api.V1GetModelLabelsResponse,
+  string[]
+>(Config.getModelLabels);
 
 /* Workspaces */
 
@@ -606,6 +619,12 @@ export const unarchiveProject = generateDetApi<
   void
 >(Config.unarchiveProject);
 
+export const getProjectsByUserActivity = generateDetApi<
+  Service.GetProjectsByUserActivityParams,
+  Api.V1GetProjectsByUserActivityResponse,
+  Type.Project[]
+>(Config.getProjectsByUserActivity);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
@@ -685,7 +704,7 @@ export const openOrCreateTensorBoard = async (
       !terminalCommandStates.has(tensorboard.state) &&
       tensorBoardMatchesSource(tensorboard, params),
   );
-  if (match) return { command: match, warnings: [1] };
+  if (match) return { command: match, warnings: [V1LaunchWarning.CURRENTSLOTSEXCEEDED] };
   return launchTensorBoard(params);
 };
 

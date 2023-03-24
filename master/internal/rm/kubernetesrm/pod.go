@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -34,18 +35,24 @@ const (
 	determinedSystemLabel     = "determined-system"
 )
 
+type podSubmissionInfo struct {
+	taskSpec tasks.TaskSpec
+}
+
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
 type pod struct {
-	cluster                  *actor.Ref
-	clusterID                string
-	taskActor                *actor.Ref
-	clientSet                *k8sClient.Clientset
-	namespace                string
-	masterIP                 string
-	masterPort               int32
-	taskSpec                 tasks.TaskSpec
+	cluster    *actor.Ref
+	clusterID  string
+	taskActor  *actor.Ref
+	clientSet  *k8sClient.Clientset
+	namespace  string
+	masterIP   string
+	masterPort int32
+	// submissionInfo will be nil when the pod is restored.
+	// These fields can not be relied on after a pod is submitted.
+	submissionInfo           *podSubmissionInfo
 	masterTLSConfig          model.TLSClientConfig
 	loggingTLSConfig         model.TLSClientConfig
 	loggingConfig            model.LoggingConfig
@@ -68,9 +75,11 @@ type pod struct {
 	ports            []int
 	resourcesDeleted bool
 	testLogStreamer  bool
-	containerNames   map[string]bool
+	containerNames   set.Set[string]
 
 	logCtx logger.Context
+
+	restore bool
 }
 
 type getPodNodeInfo struct{}
@@ -110,10 +119,13 @@ func newPod(
 	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
 	// The lifecycle of the containers specified in this map will be monitored.
-	// As soon as one or more of them exits outs, the pod will be terminated.
-	containerNames := map[string]bool{model.DeterminedK8ContainerName: true}
+	// As soon as one or more of them exits, the pod will be terminated.
+	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	return &pod{
+		submissionInfo: &podSubmissionInfo{
+			taskSpec: msg.Spec,
+		},
 		cluster:                  cluster,
 		clusterID:                clusterID,
 		taskActor:                msg.TaskActor,
@@ -121,7 +133,6 @@ func newPod(
 		namespace:                namespace,
 		masterIP:                 masterIP,
 		masterPort:               masterPort,
-		taskSpec:                 msg.Spec,
 		masterTLSConfig:          masterTLSConfig,
 		loggingTLSConfig:         loggingTLSConfig,
 		loggingConfig:            loggingConfig,
@@ -148,8 +159,20 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabels(p.logCtx)
-		if err := p.createPodSpecAndSubmit(ctx); err != nil {
-			return err
+		if p.restore {
+			if p.container.State == cproto.Running && !p.testLogStreamer {
+				logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+				if err != nil {
+					return err
+				}
+				if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
+					return errors.Errorf("log streamer already exists")
+				}
+			}
+		} else {
+			if err := p.createPodSpecAndSubmit(ctx); err != nil {
+				return errors.Wrap(err, "error creating pod spec")
+			}
 		}
 
 	case resourceCreationFailed:
@@ -276,28 +299,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			}
 		}
 
-		addresses := []cproto.Address{}
-		for _, port := range p.ports {
-			addresses = append(addresses, cproto.Address{
-				ContainerIP:   p.pod.Status.PodIP,
-				ContainerPort: port,
-				HostIP:        p.pod.Status.PodIP,
-				HostPort:      port,
-			})
-		}
-		var taskContainerID string
-		for _, containerStatus := range p.pod.Status.ContainerStatuses {
-			if containerStatus.Name == model.DeterminedK8ContainerName {
-				taskContainerID = containerStatus.ContainerID
-				break
-			}
-		}
-
-		p.informTaskResourcesStarted(ctx, sproto.ResourcesStarted{
-			Addresses:         addresses,
-			NativeResourcesID: taskContainerID,
-		})
-
+		p.informTaskResourcesStarted(ctx, getResourcesStartedForPod(p.pod, p.ports))
 	case cproto.Terminated:
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)
 		if err != nil {
@@ -345,6 +347,7 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 	ctx.Log().Infof("requesting to delete kubernetes resources")
 	ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
 		handler:       ctx.Self(),
+		namespace:     p.namespace,
 		podName:       p.podName,
 		configMapName: p.configMapName,
 	})
@@ -491,7 +494,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 func getPodState(
 	ctx *actor.Context,
 	pod *k8sV1.Pod,
-	containerNames map[string]bool,
+	containerNames set.Set[string],
 ) (cproto.State, error) {
 	switch pod.Status.Phase {
 	case k8sV1.PodPending:
@@ -545,7 +548,7 @@ func getPodState(
 	}
 }
 
-func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int, string, error) {
+func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int, string, error) {
 	if len(pod.Status.InitContainerStatuses) == 0 {
 		return 0, "", errors.Errorf(
 			"unexpected number of init containers when processing exit code for pod %s", pod.Name)
@@ -586,13 +589,38 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int,
 	return 0, "", errors.Errorf("unable to get exit code from pod %s", pod.Name)
 }
 
+func getResourcesStartedForPod(pod *k8sV1.Pod, ports []int) sproto.ResourcesStarted {
+	addresses := []cproto.Address{}
+	for _, port := range ports {
+		addresses = append(addresses, cproto.Address{
+			ContainerIP:   pod.Status.PodIP,
+			ContainerPort: port,
+			HostIP:        pod.Status.PodIP,
+			HostPort:      port,
+		})
+	}
+
+	var taskContainerID string
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if containerStatus.Name == model.DeterminedK8ContainerName {
+			taskContainerID = containerStatus.ContainerID
+			break
+		}
+	}
+
+	return sproto.ResourcesStarted{
+		Addresses:         addresses,
+		NativeResourcesID: taskContainerID,
+	}
+}
+
 func getDeterminedContainersStatus(
 	statuses []k8sV1.ContainerStatus,
-	containerNames map[string]bool,
+	containerNames set.Set[string],
 ) ([]*k8sV1.ContainerStatus, error) {
 	containerStatuses := make([]*k8sV1.ContainerStatus, 0, len(statuses))
 	for idx, containerStatus := range statuses {
-		if _, match := containerNames[containerStatus.Name]; !match {
+		if !containerNames.Contains(containerStatus.Name) {
 			continue
 		}
 		containerStatuses = append(containerStatuses, &statuses[idx])

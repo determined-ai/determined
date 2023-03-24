@@ -1,6 +1,7 @@
+import logging
+
 import torch
 from torch.optim.optimizer import Optimizer
-import logging
 
 
 class HybridSGD(Optimizer):
@@ -36,9 +37,7 @@ class HybridSGD(Optimizer):
         self.defaults = defaults
         params = list(params)
         super(HybridSGD, self).__init__(params, defaults)
-        self.SGD = torch.optim.SGD(
-            params, lr, momentum, dampening, weight_decay, nesterov
-        )
+        self.SGD = torch.optim.SGD(params, lr, momentum, dampening, weight_decay, nesterov)
         self.ASGD = torch.optim.ASGD(params, lr, lambd, alpha, t0, weight_decay)
 
         # Always initialize optimizer to use SGD.

@@ -22,8 +22,18 @@ from determined.pytorch._metric_utils import (
     _prepare_metrics_reducers,
     _reduce_metrics,
     _convert_metrics_to_numpy,
+    _log_tb_metrics,
 )
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
-from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController
-from determined.pytorch._load import load_trial_from_checkpoint_path
+from determined.pytorch._pytorch_trial import (
+    PyTorchTrial,
+    _PyTorchTrialController,
+    TrainUnit,
+    _TrainBoundary,
+    _TrainBoundaryType,
+    Batch,
+    Epoch,
+)
+from determined.pytorch._load import CheckpointLoadContext, load_trial_from_checkpoint_path
+from determined.pytorch._trainer import init, Trainer, _guess_script_importable_name

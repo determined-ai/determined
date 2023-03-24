@@ -20,19 +20,19 @@ type startPreemptionListener struct{}
 
 type preemptionListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
+	namespace   string
 }
 
 func newPreemptionListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
+	namespace string,
 ) *preemptionListener {
 	return &preemptionListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
+		namespace:   namespace,
 	}
 }
 
@@ -55,7 +55,7 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 }
 
 func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
-	// check if there are pods to preempt on startup
+	// Check if there are pods to preempt on startup.
 	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
@@ -94,6 +94,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
 			continue
 		}
+
 		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
 	}
 

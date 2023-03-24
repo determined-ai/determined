@@ -5,7 +5,7 @@ WITH mv AS (
     WHERE model_id = $1 AND model_versions.version = $2
 ),
 m AS (
-  SELECT m.id, m.name, m.description, m.notes, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.user_id, m.archived, COUNT(mv.version) as num_versions
+  SELECT m.id, m.name, m.description, m.notes, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.user_id, m.archived, COUNT(mv.version) as num_versions, m.workspace_id
   FROM models as m
   JOIN users as u ON u.id = m.user_id
   LEFT JOIN model_versions as mv

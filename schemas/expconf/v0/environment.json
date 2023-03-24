@@ -27,6 +27,14 @@
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
+        "proxy_ports": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/proxy-ports.json"
+        },
         "ports": {
             "type": [
                 "object",

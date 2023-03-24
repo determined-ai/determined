@@ -114,11 +114,6 @@ export const ioCheckpointStorage = io.type({
   type: optional(ioCheckpointStorageType),
 });
 
-const ioDataLayer = io.type({
-  container_storage_path: optional(io.string),
-  type: io.string,
-});
-
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
 const hParamTypes: Record<string, null> = Object.values(HyperparameterType).reduce(
@@ -155,7 +150,6 @@ const experimentSearcherName: Record<string, null> = Object.values(ExperimentSea
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
-  data_layer: optional(ioDataLayer),
   description: optional(io.string),
   hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
@@ -167,6 +161,7 @@ export const ioExperimentConfig = io.type({
     metric: io.string,
     name: io.keyof(experimentSearcherName),
     smaller_is_better: io.boolean,
+    source_trial_id: io.union([io.null, io.number]),
   }),
 });
 export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;

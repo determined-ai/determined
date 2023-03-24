@@ -1,11 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-
+from genotypes import PRIMITIVES, Genotype
 from operations import *
-from genotypes import PRIMITIVES
-from genotypes import Genotype
+from torch.nn.parameter import Parameter
 
 
 def channel_shuffle(x, groups):
@@ -52,9 +50,7 @@ class MixedOp(nn.Module):
 
 
 class Cell(nn.Module):
-    def __init__(
-        self, steps, multiplier, C_prev_prev, C_prev, C, reduction, reduction_prev, k=4
-    ):
+    def __init__(self, steps, multiplier, C_prev_prev, C_prev, C, reduction, reduction_prev, k=4):
         super(Cell, self).__init__()
         self.reduction = reduction
 
@@ -215,9 +211,7 @@ class Network(nn.Module):
                 edges = sorted(
                     range(i + 2),
                     key=lambda x: -max(
-                        W[x][k]
-                        for k in range(len(W[x]))
-                        if k != PRIMITIVES.index("none")
+                        W[x][k] for k in range(len(W[x])) if k != PRIMITIVES.index("none")
                     ),
                 )[:2]
 

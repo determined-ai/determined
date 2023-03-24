@@ -24,6 +24,7 @@ import (
 )
 
 func TestExperimentCheckpointsToGCRaw(t *testing.T) {
+	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -36,7 +37,7 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	for i := 1; i <= 3; i++ {
 		ckptUUID := uuid.New()
 		ckpt := MockModelCheckpoint(ckptUUID, tr, a)
-		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+		err := AddCheckpointMetadata(ctx, &ckpt)
 		require.NoError(t, err)
 		if i == 2 { // add this checkpoint to the model registry
 			err = addCheckpointToModelRegistry(db, ckptUUID, user)
@@ -66,12 +67,13 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
+		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes1"
 	var pmdl modelv1.Model
 	if err := db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
 	); err != nil {
 		return fmt.Errorf("inserting a model: %w", err)
 	}
@@ -100,6 +102,7 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 }
 
 func TestCheckpointMetadata(t *testing.T) {
+	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -142,7 +145,7 @@ func TestCheckpointMetadata(t *testing.T) {
 					"steps_completed":    float64(stepsCompleted),
 				},
 			}
-			err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+			err := AddCheckpointMetadata(ctx, &ckpt)
 			require.NoError(t, err)
 
 			var m *trialv1.TrialMetrics
@@ -164,7 +167,7 @@ func TestCheckpointMetadata(t *testing.T) {
 						BatchMetrics: []*structpb.Struct{},
 					},
 				}
-				err = db.AddValidationMetrics(context.TODO(), m)
+				err = db.AddValidationMetrics(ctx, m)
 				require.NoError(t, err)
 			}
 
@@ -179,7 +182,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				require.Equal(t, expected.ReportTime.Truncate(time.Millisecond),
 					actual.ReportTime.AsTime().Truncate(time.Millisecond))
 				require.Equal(t, expected.Resources, actual.Resources)
-				require.Equal(t, expected.Metadata, model.JSONObj(actual.Metadata.AsMap()))
+				require.Equal(t, expected.Metadata, actual.Metadata.AsMap())
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.State, conv.ToCheckpointState(actual.State))
 				if tt.hasValidation {

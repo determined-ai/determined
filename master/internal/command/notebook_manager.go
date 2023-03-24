@@ -1,5 +1,4 @@
 // Package command provides utilities for commands.
-//nolint:dupl
 package command
 
 import (
@@ -7,12 +6,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
@@ -43,11 +42,19 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		}
 		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
 			typed := notebook.(*notebookv1.Notebook)
-			if (len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId] {
-				resp.Notebooks = append(resp.Notebooks, typed)
+			if !((len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId]) {
+				continue
 			}
+			// skip if it doesn't match the requested workspaceID if any.
+			if msg.WorkspaceId != 0 && msg.WorkspaceId != typed.WorkspaceId {
+				continue
+			}
+			resp.Notebooks = append(resp.Notebooks, typed)
 		}
 		ctx.Respond(resp)
+
+	case *apiv1.DeleteWorkspaceRequest:
+		ctx.TellAll(msg, ctx.Children()...)
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
@@ -63,7 +70,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		}
 
 	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

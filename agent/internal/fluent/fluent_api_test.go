@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"sort"
 	"strconv"
@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	dclient "github.com/docker/docker/client"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
@@ -125,13 +124,29 @@ func TestFluentLoggingElastic(t *testing.T) {
 	runContainerWithLogs(t, actual, opts.AgentID, taskID, opts.Fluent.Port)
 
 	t.Log("checking logs in elastic")
-	for {
+	for i := 0; i < 30; i++ {
 		logs, _, err := elastic.TaskLogs(taskID, 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
 		require.NoError(t, err, "failed to retrieve task logs")
 		if len(logs) != len(expected) {
-			t.Logf("checking logs again after delay... (%d/%d found)", len(logs), len(expected))
+			t.Logf("checking logs again after delay... (%d, %d/%d found)", i, len(logs), len(expected))
+
+			for i, l := range expected {
+				j, err := json.MarshalIndent(l, "", "  ")
+				require.NoError(t, err)
+				t.Logf("expected[%d] = %s", i, j)
+			}
+			for i, l := range logs {
+				j, err := json.MarshalIndent(l, "", "  ")
+				require.NoError(t, err)
+				t.Logf("actual[%d] = %s", i, j)
+			}
+
 			time.Sleep(time.Second)
 			continue
+		}
+
+		for i := 0; i < 4; i++ {
+			t.Logf("expected[%d] \n%+v actual[%d] \n%+v", i, expected[i], i, logs[i])
 		}
 
 		expectedFound := true
@@ -141,6 +156,7 @@ func TestFluentLoggingElastic(t *testing.T) {
 		require.True(t, expectedFound, spew.Sdump(logs), spew.Sdump(expected))
 		return
 	}
+	require.FailNow(t, "logs never showed up")
 }
 
 func TestFluentSadPaths(t *testing.T) {
@@ -254,10 +270,12 @@ func makeLogTestCase(taskID model.TaskID, agentID string) ([]model.TaskLog, stri
 			StdType:      ptrs.Ptr("stdout"),
 		},
 	}
+	//nolint:lll
 	actual := `[rank=4] 
 [rank=1] INFO: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)
 [rank=2] ERROR: Workload not complete: <RUN_STEP (100 Batches): (581,6290,5)> (duration 9:99:99)
-[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]` // nolint:lll
+[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]
+`
 	return expected, actual
 }
 
@@ -268,7 +286,7 @@ func mockLogAcceptor(t *testing.T, port int) (chan model.TaskLog, func()) {
 	e.Listener = lis
 	logBuffer := make(chan model.TaskLog)
 	e.POST("/task-logs", func(ctx echo.Context) error {
-		body, err := ioutil.ReadAll(ctx.Request().Body)
+		body, err := io.ReadAll(ctx.Request().Body)
 		if err != nil {
 			return err
 		}
@@ -302,7 +320,7 @@ func mockLogAcceptor(t *testing.T, port int) (chan model.TaskLog, func()) {
 func runContainerWithLogs(
 	t *testing.T, fakeLogs string, aID string, tID model.TaskID, fluentPort int,
 ) {
-	rawCl, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
+	rawCl, err := dclient.NewClientWithOpts(dclient.FromEnv, dclient.WithVersion("1.40"))
 	require.NoError(t, err, "error connecting to Docker daemon")
 	dCli := docker.NewClient(rawCl)
 

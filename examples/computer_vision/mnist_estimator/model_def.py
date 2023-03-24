@@ -4,13 +4,12 @@ Trains a simple DNN on the MNIST dataset using the TensorFlow Estimator API.
 import logging
 import os
 import tarfile
-import requests
 from typing import Callable, Dict, List, Tuple
 
+import requests
 import tensorflow as tf
 
 from determined.estimator import EstimatorTrial, EstimatorTrialContext, ServingInputReceiverFn
-
 
 MNIST_TF_RECORDS_FILE = "mnist-tfrecord.tar.gz"
 MNIST_TF_RECORDS_URL = (

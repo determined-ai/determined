@@ -15,9 +15,9 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/api/compute/v1"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
@@ -116,7 +116,7 @@ func newGCPCluster(
 	return cluster, nil
 }
 
-func (c *gcpCluster) instanceType() instanceType {
+func (c *gcpCluster) instanceType() model.InstanceType {
 	return c.InstanceType
 }
 
@@ -138,22 +138,22 @@ func (c *gcpCluster) agentNameFromInstance(inst *compute.Instance) string {
 }
 
 // See https://cloud.google.com/compute/docs/instances/instance-life-cycle.
-var gceInstanceStates = map[string]InstanceState{
-	"PROVISIONING": Starting,
-	"STAGING":      Starting,
-	"RUNNING":      Running,
-	"STOPPING":     Stopping,
-	"STOPPED":      Stopped,
-	"SUSPENDING":   Stopping,
-	"SUSPENDED":    Stopped,
-	"TERMINATED":   Stopped,
+var gceInstanceStates = map[string]model.InstanceState{
+	"PROVISIONING": model.Starting,
+	"STAGING":      model.Starting,
+	"RUNNING":      model.Running,
+	"STOPPING":     model.Stopping,
+	"STOPPED":      model.Stopped,
+	"SUSPENDING":   model.Stopping,
+	"SUSPENDED":    model.Stopped,
+	"TERMINATED":   model.Stopped,
 }
 
-func (c *gcpCluster) stateFromInstance(inst *compute.Instance) InstanceState {
+func (c *gcpCluster) stateFromInstance(inst *compute.Instance) model.InstanceState {
 	if state, ok := gceInstanceStates[inst.Status]; ok {
 		return state
 	}
-	return Unknown
+	return model.Unknown
 }
 
 func (c *gcpCluster) generateInstanceName() string {
@@ -164,7 +164,7 @@ func (c *gcpCluster) prestart(ctx *actor.Context) {
 	petname.NonDeterministicMode()
 }
 
-func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
+func (c *gcpCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	clientCtx := context.Background()
 	var instances []*compute.Instance
 	filter := fmt.Sprintf(
@@ -183,7 +183,7 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	}
 	res := c.newInstances(instances)
 	for i, inst := range res {
-		if inst.State == Unknown {
+		if inst.State == model.Unknown {
 			ctx.Log().Errorf("unknown instance state for instance %v: %v",
 				inst.ID, instances[i])
 		}
@@ -238,7 +238,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 					"inserted %d/%d GCE instances: %s",
 					len(inserted),
 					instanceNum,
-					fmtInstances(inserted),
+					model.FmtInstances(inserted),
 				)
 			},
 		},
@@ -279,7 +279,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 					"deleted %d/%d GCE instances: %s",
 					len(deleted),
 					len(instances),
-					fmtInstances(deleted),
+					model.FmtInstances(deleted),
 				)
 			},
 		},
@@ -289,8 +289,8 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 	}
 }
 
-func (c *gcpCluster) newInstances(input []*compute.Instance) []*Instance {
-	output := make([]*Instance, 0, len(input))
+func (c *gcpCluster) newInstances(input []*compute.Instance) []*model.Instance {
+	output := make([]*model.Instance, 0, len(input))
 	for _, inst := range input {
 		if inst == nil {
 			continue
@@ -299,7 +299,7 @@ func (c *gcpCluster) newInstances(input []*compute.Instance) []*Instance {
 		if err != nil {
 			panic(errors.Wrap(err, "cannot parse GCE instance launching time"))
 		}
-		output = append(output, &Instance{
+		output = append(output, &model.Instance{
 			ID:         c.idFromInstance(inst),
 			LaunchTime: t,
 			AgentName:  c.agentNameFromInstance(inst),
@@ -309,10 +309,10 @@ func (c *gcpCluster) newInstances(input []*compute.Instance) []*Instance {
 	return output
 }
 
-func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation) []*Instance {
-	instances := make([]*Instance, 0, len(operations))
+func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation) []*model.Instance {
+	instances := make([]*model.Instance, 0, len(operations))
 	for _, op := range operations {
-		instances = append(instances, &Instance{
+		instances = append(instances, &model.Instance{
 			ID: c.idFromOperation(op),
 		})
 	}

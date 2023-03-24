@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -25,13 +26,9 @@ type (
 
 // IdleTimeoutWatcher watches the proxy activity to handle a task actor idle timeout.
 type IdleTimeoutWatcher struct {
-	TickInterval   time.Duration
-	Timeout        time.Duration
-	ServiceID      string
-	UseProxy       bool
-	UseRunnerState bool
-	Debug          bool
-	Action         func(ctx *actor.Context)
+	sproto.IdleTimeoutConfig
+	TickInterval time.Duration
+	Action       func(ctx *actor.Context)
 
 	lastExplicitActivity *time.Time
 }
@@ -39,15 +36,17 @@ type IdleTimeoutWatcher struct {
 // NewIdleTimeoutWatcher creates a new idle timeout watcher.
 func NewIdleTimeoutWatcher(name string, cfg *sproto.IdleTimeoutConfig) *IdleTimeoutWatcher {
 	return &IdleTimeoutWatcher{
-		TickInterval:   5 * time.Second,
-		Timeout:        cfg.TimeoutDuration,
-		UseProxy:       cfg.UseProxyState,
-		UseRunnerState: cfg.UseRunnerState,
-		ServiceID:      cfg.ServiceID,
-		Debug:          cfg.Debug,
+		TickInterval:      5 * time.Second,
+		IdleTimeoutConfig: *cfg,
 		Action: func(ctx *actor.Context) {
 			ctx.Log().Infof("killing %s due to inactivity", name)
-			ctx.Tell(ctx.Self(), sproto.TerminateAllocation)
+			ctx.Tell(ctx.Self(),
+				sproto.AllocationSignalWithReason{
+					AllocationSignal: sproto.TerminateAllocation,
+					InformationalReason: fmt.Sprintf(
+						"inactivity for more than %s",
+						cfg.TimeoutDuration.Round(time.Second)),
+				})
 		},
 	}
 }
@@ -62,7 +61,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case IdleTimeoutWatcherTick:
 		var lastActivity *time.Time
-		if p.UseProxy {
+		if p.UseProxyState {
 			proxyRef := ctx.Self().System().Get(actor.Addr("proxy"))
 			services := ctx.Ask(proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
 			service, ok := services[p.ServiceID]
@@ -82,7 +81,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 		if p.Debug {
 			ctx.Log().WithFields(log.Fields{
 				"lastActivity": lastActivity.Format(time.RFC3339),
-				"timeout":      lastActivity.Add(p.Timeout).Format(time.RFC3339),
+				"timeout":      lastActivity.Add(p.TimeoutDuration).Format(time.RFC3339),
 			}).Infof("idle timeout watcher ticked")
 		}
 
@@ -91,7 +90,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 			return nil
 		}
 
-		if time.Now().After(lastActivity.Add(p.Timeout)) {
+		if time.Now().After(lastActivity.Add(p.TimeoutDuration)) {
 			p.Action(ctx)
 			return nil
 		}

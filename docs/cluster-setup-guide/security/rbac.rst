@@ -4,9 +4,10 @@
  RBAC
 ######
 
-.. note::
+.. attention::
 
-   RBAC feature applies only to Determined Enterprise Edition.
+   RBAC feature applies only to Determined Enterprise Edition. Please see RBAC's current limitations
+   :ref:`here <rbac-limitations>`
 
 *****************
  Getting Started
@@ -237,13 +238,17 @@ To list existing groups, or a particular group membership:
 WebUI
 -----
 
+.. attention::
+
+   Only users with the ClusterAdmin role can add/remove users and groups.
+
 To see user group management UI,
 
 #. Click on your username in the upper left corner.
-#. Click "Settings"
-#. Click "Group Management" tabs up at the top.
+#. Click "Admin".
+#. Click the "Groups" tab at the top.
 
-To create new groups, use "New Group" button at the "Group Management" screen.
+To create new groups, use "New Group" button at the "Groups" screen.
 
 To delete a group,
 
@@ -281,9 +286,14 @@ WebUI
 To assign or unassign a role for a user or a group globally, first go to user or group management
 UI:
 
+.. attention::
+
+   Only users with the ClusterAdmin role can add/edit global role assignments for users and groups
+   from the "Admin" menu as described immediately below.
+
 #. Click on your username in the upper left corner.
-#. Click "Settings"
-#. See "User Management" and "Group Management" tabs up at the top.
+#. Click "Admin".
+#. See "Users" and "Groups" tabs at the top.
 
 Then, for users:
 
@@ -297,11 +307,18 @@ For groups:
 
 To assign or unassign a role for a user or a group on a particular workspace,
 
+.. attention::
+
+   Only users with the WorkspaceAdmin role can add/edit workspaced-scoped role assignments for users
+   and groups.
+
 #. Go to the workspaces page, select the target workspace.
 #. Click "Members" tab at the top.
-
-To create new role assignments, use "Add Members" button at the top To remove existing role
-assignments, click triple-dot menu and select "Remove" option.
+#. To create new role assignments, click the "Add Members" button at the top right.
+#. To remove existing role assignments, click the triple-dot menu for a user/group and select
+   "Remove".
+#. To edit the role, click on the dropdown in the role column for a user/group and make your
+   selection.
 
 .. _rbac-concepts:
 
@@ -358,6 +375,20 @@ action on an entity type, for example:
    scope.
 -  ``PERMISSION_TYPE_ASSIGN_ROLES``: assign roles.
 
+Current Limitations
+===================
+
+.. _rbac-limitations:
+
+As RBAC is progressively rolled out there are various parts of Determined that are not yet gated
+behind RBAC. These currently include:
+
+-  The job queue APIs: Any logged-in user user can see high level metadata about all active jobs in
+   the queue though RBAC is enforced when clicking on a task to access its details and artifacts.
+-  RBAC is not currently applied to Master logs which can contain information about jobs that the
+   user is not authorized to see.
+-  Historical usage shows cluster-wide usage related to other users and workspaces.
+
 *****************
  Usage Reference
 *****************
@@ -393,14 +424,14 @@ To list all existing cluster roles and the concrete permissions they include:
 ``Viewer``
 ==========
 
-``Viewer`` role allows a user to see workspaces, projects, experiments, as well as experiment
-metadata and artifacts within its scope.
+``Viewer`` role allows a user to see workspaces, projects, Notebooks, Tensorboards, Shells, Commands
+(NTSC), experiments, as well as experiment metadata and artifacts within its scope.
 
 ``Editor``
 ==========
 
 ``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or delete
-projects and experiments within its scope.
+projects, NTSC, and experiments within its scope.
 
 ``WorkspaceAdmin``
 ==================
@@ -408,7 +439,7 @@ projects and experiments within its scope.
 ``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or delete
 workspaces, and modify role assignments within its scope.
 
-Users who posess this role on a particular workspace can assign roles to other users on this
+Users who take this role on a particular workspace can assign roles to other users on this
 workspace, that is, add other members (viewers, editors, or workspace admins) to the workspace.
 
 ``WorkspaceCreator``
@@ -485,30 +516,3 @@ all permissions, and can only be assigned globally.
    role assigned for their workspaces.
 
    Users will have no default access otherwise.
-
-*********
- Caveats
-*********
-
-.. _rbac-ntsc:
-
-RBAC Support for Notebooks, Tensorboards, Shells, and Commands
-==============================================================
-
-Currently, only experiments are organized within workspaces and projects. Other task types,
-notebooks, tensorboards, sheels, and commands (NTSC) are global entities. In the future, we plan to
-migrate NTSCs to workspaces to make them covered under RBAC model.
-
-When RBAC is enabled, as an interim measure, NTSC can only be accessed by the user who created the
-task, i.e. its owner, or by the users who have ``ADMINISTRATE_USER`` permission (i.e.
-``ClusterAdmin``).
-
-When RBAC is disabled, by default, every logged in user can access all NTSC on the cluster. We offer
-an option which restricts the access to NTSC only to the admins and the user who created the task,
-i.e. its owner. It can be enabled in the master config:
-
-.. code:: yaml
-
-   security:
-     authz:
-       _strict_ntsc_enabled: true

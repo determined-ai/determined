@@ -47,7 +47,7 @@ message ValidationCompleted {
   // UUID identifying the trial to the searcher.
   string request_id = 1;
   // Value of the validation metric used to direct the search.
-  double metric = 2;
+  google.protobuf.Value metric = 2;
   // Length from ValidateAfterOperation.
   uint64 validate_after_length = 3;
 }
@@ -143,9 +143,9 @@ message SetSearcherProgressOperation {
 message CompleteValidateAfterOperation {
   // The ValidateAfterOperation being completed.
   ValidateAfterOperation op = 1;
-  // The value of searcher metric associated with this completed metric.
+  // The value of searcher metric associated with this completed operation.
   // The metric provided should be the metric used to guide HP search.
-  double searcher_metric = 2;
+  google.protobuf.Value searcher_metric = 2;
 }
 
 // Create a trial with given hyperparameters.

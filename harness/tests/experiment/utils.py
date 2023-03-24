@@ -109,13 +109,18 @@ def make_default_exp_config(
             "tensor_fusion_cycle_time": 3.5,
         },
         "data_layer": {"type": "shared_fs"},
+        "checkpoint_policy": "best",
+        "perform_initial_validation": False,
         "checkpoint_storage": {
             "type": "shared_fs",
             "host_path": checkpoint_dir or "/tmp",
         },
         "searcher": {
             "metric": searcher_metric,
+            "smaller_is_better": True,
         },
+        "min_checkpoint_period": {"batches": 0},
+        "min_validation_period": {"batches": 0},
     }
 
 
@@ -148,7 +153,6 @@ def make_default_env_context(
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        det_trial_unique_port_offset=0,
         det_trial_id="1",
         det_experiment_id="1",
         det_agent_id="1",
@@ -248,7 +252,8 @@ def make_trial_controller_from_trial_implementation(
     )
 
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    core_context = core._dummy_init(storage_manager=storage_manager)
+    tbd_path = pathlib.Path(os.path.join("/tmp", "tensorboard"))
+    core_context = core._dummy_init(storage_manager=storage_manager, tensorboard_path=tbd_path)
 
     distributed_backend = det._DistributedBackend()
 
@@ -431,7 +436,5 @@ def ensure_requires_global_batch_size(
     # Catch missing global_batch_size.
     with pytest.raises(det.errors.InvalidExperimentException, match="is a required hyperparameter"):
         _ = make_trial_controller_from_trial_implementation(
-            trial_class,
-            bad_hparams,
-            make_workloads(),
+            trial_class, workloads=make_workloads(), hparams=bad_hparams
         )

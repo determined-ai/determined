@@ -25,10 +25,10 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/test/testutils"
 
-	"github.com/golang/protobuf/ptypes"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -100,11 +100,11 @@ func trialDetailAPITests(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment, trial := setupTrial(t, pgDB)
+			_, activeConfig, trial := setupTrial(t, pgDB)
 
 			metrics := trialv1.TrialMetrics{
 				TrialId:        int32(trial.ID),
-				StepsCompleted: int32(id * experiment.Config.SchedulingUnit()),
+				StepsCompleted: int32(id * activeConfig.SchedulingUnit()),
 			}
 
 			m := structpb.Struct{}
@@ -162,7 +162,7 @@ func makeMetrics() *structpb.Struct {
 func trialWorkloadsAPIHugeMetrics(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, trial := setupTrial(t, pgDB)
+	_, _, trial := setupTrial(t, pgDB)
 
 	batchMetrics := []*structpb.Struct{}
 	const stepSize = 1
@@ -207,7 +207,7 @@ func trialWorkloadsAPIHugeMetrics(
 func trialProfilerMetricsTests(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, trial := setupTrial(t, pgDB)
+	_, _, trial := setupTrial(t, pgDB)
 
 	// If we begin to stream for metrics.
 	ctx, cancel := context.WithTimeout(creds, time.Minute)
@@ -275,7 +275,7 @@ func trialProfilerMetricsTests(
 func trialProfilerMetricsAvailableSeriesTests(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, trial := setupTrial(t, pgDB)
+	_, _, trial := setupTrial(t, pgDB)
 
 	ctx, cancel := context.WithTimeout(creds, time.Minute)
 	defer cancel()
@@ -358,7 +358,7 @@ func randFloatSlice(n int) []float32 {
 func pbTimestampSlice(n int) []*timestamppb.Timestamp {
 	ts := make([]*timestamppb.Timestamp, n)
 	for i := 0; i < n; i++ {
-		ts[i] = ptypes.TimestampNow()
+		ts[i] = timestamppb.Now()
 		// Round off to millis.
 		ts[i].Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
 			float64(time.Millisecond))
@@ -383,9 +383,11 @@ func randTrialProfilerSystemMetrics(
 	}
 }
 
-func setupTrial(t *testing.T, pgDB *db.PgDB) (*model.Experiment, *model.Trial) {
-	experiment := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment)
+func setupTrial(t *testing.T, pgDB *db.PgDB) (
+	*model.Experiment, expconf.ExperimentConfig, *model.Trial,
+) {
+	experiment, activeConfig := model.ExperimentModel()
+	err := pgDB.AddExperiment(experiment, activeConfig)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
@@ -399,5 +401,5 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (*model.Experiment, *model.Trial) {
 
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
-	return experiment, trial
+	return experiment, activeConfig, trial
 }

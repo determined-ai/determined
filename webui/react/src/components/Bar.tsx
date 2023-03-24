@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import React from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { floatToPercent } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 

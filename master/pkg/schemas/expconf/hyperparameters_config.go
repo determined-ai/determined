@@ -7,8 +7,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-//go:generate ../gen.sh
 // HyperparametersV0 is a versioned hyperparameters config.
+//
+//go:generate ../gen.sh
 type HyperparametersV0 map[string]HyperparameterV0
 
 // FlattenHPs returns a flat dictionary with keys representing nested structure.
@@ -36,8 +37,9 @@ func flattenNestedHP(h HyperparameterV0, prefix string, target *HyperparametersV
 	}
 }
 
-//go:generate ../gen.sh
 // HyperparameterV0 is a sum type for hyperparameters.
+//
+//go:generate ../gen.sh
 type HyperparameterV0 struct {
 	RawConstHyperparameter       *ConstHyperparameterV0       `union:"type,const" json:"-"`
 	RawIntHyperparameter         *IntHyperparameterV0         `union:"type,int" json:"-"`
@@ -134,30 +136,34 @@ func (h HyperparametersV0) Each(f func(name string, param HyperparameterV0)) {
 	}
 }
 
-//go:generate ../gen.sh
 // ConstHyperparameterV0 is a constant.
+//
+//go:generate ../gen.sh
 type ConstHyperparameterV0 struct {
 	RawVal interface{} `json:"val"`
 }
 
-//go:generate ../gen.sh
 // IntHyperparameterV0 is an interval of ints.
+//
+//go:generate ../gen.sh
 type IntHyperparameterV0 struct {
 	RawMinval int  `json:"minval"`
 	RawMaxval int  `json:"maxval"`
 	RawCount  *int `json:"count,omitempty"`
 }
 
-//go:generate ../gen.sh
 // DoubleHyperparameterV0 is an interval of float64s.
+//
+//go:generate ../gen.sh
 type DoubleHyperparameterV0 struct {
 	RawMinval float64 `json:"minval"`
 	RawMaxval float64 `json:"maxval"`
 	RawCount  *int    `json:"count,omitempty"`
 }
 
-//go:generate ../gen.sh
 // LogHyperparameterV0 is a log-uniformly distributed interval of float64s.
+//
+//go:generate ../gen.sh
 type LogHyperparameterV0 struct {
 	// Minimum value is `base ^ minval`.
 	RawMinval float64 `json:"minval"`
@@ -167,8 +173,9 @@ type LogHyperparameterV0 struct {
 	RawCount  *int    `json:"count,omitempty"`
 }
 
-//go:generate ../gen.sh
 // CategoricalHyperparameterV0 is a collection of values (levels) of the category.
+//
+//go:generate ../gen.sh
 type CategoricalHyperparameterV0 struct {
 	RawVals []interface{} `json:"vals"`
 }

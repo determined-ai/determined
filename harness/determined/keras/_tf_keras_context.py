@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, errors, keras, util
+from determined import errors, keras, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -42,11 +42,7 @@ class TFKerasTrialContext(det.TrialContext):
             "TFKerasTrial",
         )
 
-        self.experimental = TFKerasExperimentalContext(
-            self.env,
-            self.distributed,
-            self._per_slot_batch_size,
-        )
+        self.experimental = TFKerasExperimentalContext()
 
         # The following three attributes are initialized during the lifetime of a
         # TFKerasTrialContext instance by the user calling compile() and
@@ -430,7 +426,7 @@ class TFKerasTrialContext(det.TrialContext):
         return self._wrap_model_with_train_fn(model, None)
 
 
-class TFKerasExperimentalContext(_data_layer.DataLayerContext):
+class TFKerasExperimentalContext:
     """
     Context class that contains experimental runtime information and features
     for any Determined workflow that uses the ``tf.keras`` API.
@@ -439,4 +435,16 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    pass
+    def cache_train_dataset(self, *args: Any) -> Any:
+        raise RuntimeError(
+            "cache_train_dataset was deprecated in 0.18.0, and has since been removed. "
+            "Users may use yogadl directly, see the migration guide: "
+            "https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e"
+        )
+
+    def cache_validation_dataset(self, *args: Any) -> Any:
+        raise RuntimeError(
+            "cache_validation_dataset was deprecated in 0.18.0, and has since been removed. "
+            "Users may use yogadl directly, see the migration guide: "
+            "https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e"
+        )

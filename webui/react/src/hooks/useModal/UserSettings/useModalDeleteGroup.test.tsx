@@ -1,20 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import Button from 'components/kit/Button';
+import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { DeleteGroupParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import useModalDeleteGroup, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './useModalDeleteGroup';
 
-const mockDeleteGroup = jest.fn();
-
-jest.mock('services/api', () => ({
-  deleteGroup: (params: DeleteGroupParams) => {
-    return mockDeleteGroup(params);
-  },
+vi.mock('services/api', () => ({
+  deleteGroup: vi.fn(),
 }));
 
 const OPEN_MODAL_TEXT = 'Open Modal';
@@ -46,9 +42,9 @@ const setup = async () => {
     numMembers: 0,
   };
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <Container group={group} />
-    </StoreProvider>,
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

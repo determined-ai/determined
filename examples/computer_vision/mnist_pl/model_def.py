@@ -4,18 +4,18 @@ interface to build a basic MNIST network. LightningAdapter utilizes the provided
 LightningModule with Determined's PyTorch control loop.
 """
 
-from determined.pytorch import PyTorchTrialContext, DataLoader
-from determined.pytorch.lightning import LightningAdapter
-
 import data
 import mnist
+
+from determined.pytorch import DataLoader, PyTorchTrialContext
+from determined.pytorch.lightning import LightningAdapter
 
 
 class MNISTTrial(LightningAdapter):
     def __init__(self, context: PyTorchTrialContext, *args, **kwargs) -> None:
         lm = mnist.LitMNIST(
-            hidden_size=context.get_hparam('hidden_size'),
-            learning_rate=context.get_hparam('learning_rate'),
+            hidden_size=context.get_hparam("hidden_size"),
+            learning_rate=context.get_hparam("learning_rate"),
         )
         data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
         self.dm = data.MNISTDataModule(

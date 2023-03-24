@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -181,15 +183,12 @@ WHERE trial_id = $1
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, trial_run_id, state,
-	 end_time, metrics, total_batches)
+	(trial_id, trial_run_id, end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, :state,
-	 now(), :metrics, :total_batches)
+	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
-			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
 				"avg_metrics":   m.Metrics.AvgMetrics,
 				"batch_metrics": m.Metrics.BatchMetrics,
@@ -230,15 +229,12 @@ WHERE trial_id = $1
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
-	(trial_id, trial_run_id, state, end_time,
-	 metrics, total_batches)
+	(trial_id, trial_run_id, end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, :state, now(),
-	 :metrics, :total_batches)
+	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
-			State:      model.CompletedState,
 			Metrics: map[string]interface{}{
 				"validation_metrics": m.Metrics.AvgMetrics,
 			},
@@ -247,7 +243,10 @@ VALUES
 			return errors.Wrap(err, "inserting validation metrics")
 		}
 
-		if err := setTrialBestValidation(tx, int(m.TrialId)); err != nil {
+		if err := setTrialBestValidation(
+			tx, int(m.TrialId),
+			int(m.TrialRunId),
+			int(m.StepsCompleted)); err != nil {
 			return errors.Wrap(err, "updating trial best validation")
 		}
 
@@ -273,17 +272,16 @@ SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
 
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, trial_run_id, state,
+	(trial_id, trial_run_id,
 	 end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, :state,
+	(:trial_id, :trial_run_id,
 	 :end_time, :metrics, :total_batches)
 ON CONFLICT (trial_id, trial_run_id, total_batches)
 DO NOTHING
 `, model.TrialMetrics{
 		TrialID:    trialID,
 		TrialRunID: trialRunID,
-		State:      model.CompletedState,
 		EndTime:    ptrs.Ptr(time.Now().UTC()),
 		Metrics: map[string]interface{}{
 			"avg_metrics":   struct{}{},
@@ -297,17 +295,26 @@ DO NOTHING
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
-func (db *PgDB) AddCheckpointMetadata(
-	ctx context.Context, m *model.CheckpointV2,
-) error {
-	query := `
-INSERT INTO checkpoints_v2
-	(uuid, task_id, allocation_id, report_time, state, resources, metadata)
-VALUES
-	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)`
+func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+	var size int64
+	for _, v := range m.Resources {
+		size += v
+	}
+	m.Size = size
 
-	if _, err := db.sql.NamedExecContext(ctx, query, m); err != nil {
-		return errors.Wrap(err, "inserting checkpoint")
+	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
+			return errors.Wrap(err, "inserting checkpoint")
+		}
+
+		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
+			return errors.Wrap(err, "updating checkpoint size")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error adding checkpoint metadata: %w", err)
 	}
 
 	return nil
@@ -334,7 +341,7 @@ WHERE id = $1
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, end_time, metrics
+SELECT id, trial_id, total_batches, end_time, metrics
 FROM validations
 WHERE trial_id = $1
 AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
@@ -409,7 +416,7 @@ WHERE id = $1
 
 // setTrialBestValidation sets `public.trials.best_validation_id` to the `id` of the row in
 // `public.validations` corresponding to the trial's best validation.
-func setTrialBestValidation(tx *sqlx.Tx, id int) error {
+func setTrialBestValidation(tx *sqlx.Tx, trialID int, trialRunID int, stepsCompleted int) error {
 	_, err := tx.Exec(`
 WITH const AS (
     SELECT t.id as trial_id,
@@ -424,15 +431,24 @@ WITH const AS (
 ), best_validation AS (
 	SELECT
 		v.id AS id,
-		const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 AS metric
-	FROM validations v, const
+		const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 AS metric,
+		(v.metrics->'validation_metrics'->>const.metric_name)::float8 AS searcher_metric_value
+	FROM (
+		SELECT * FROM validations where id = (select best_validation_id from trials where id = $1)
+		UNION ALL
+		SELECT * FROM validations
+			where trial_id = $1
+			and trial_run_id = $2
+			and total_batches = $3
+	) v, const
 	WHERE v.trial_id = $1
 	ORDER BY metric ASC
 	LIMIT 1
 )
 UPDATE trials t
-SET best_validation_id = (SELECT bv.id FROM best_validation bv)
+SET best_validation_id = (SELECT bv.id FROM best_validation bv),
+searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv)
 WHERE t.id = $1;
-`, id)
-	return errors.Wrapf(err, "error updating best validation for trial %d", id)
+`, trialID, trialRunID, stepsCompleted)
+	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }

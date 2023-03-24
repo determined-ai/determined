@@ -4,10 +4,9 @@
  Submit Experiment
 ###################
 
-This section covers how to run training code by submitting your code to a cluster and running it as
-an experiment.
+You run training code by submitting your code to a cluster and running it as an experiment.
 
-You run an experiment by providing a *launcher* and specify the launcher in the experiment
+To run an experiment, you provide a *launcher* and specify the launcher in the experiment
 configuration ``endpoint`` field. Launcher options are:
 
 -  legacy bare-Trial-class

@@ -24,8 +24,9 @@ schedulers. Those objects should be created and wrapped in the trial class's
 __init__ method. Then in train_batch(), you can run forward and backward passes
 and step the optimizer according to your requirements.
 """
-from typing import Any, Dict, Union, Sequence
+from typing import Any, Dict, Sequence, Union
 
+import data
 import numpy as np
 import torch
 import torch.nn as nn
@@ -33,10 +34,7 @@ import torch.nn.functional as F
 import torchvision
 from torch.optim.lr_scheduler import LambdaLR
 
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader, LRScheduler
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-import data
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -59,7 +57,7 @@ class Generator(nn.Module):
             *block(256, 512),
             *block(512, 1024),
             nn.Linear(1024, int(np.prod(img_shape))),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, z):
@@ -91,7 +89,7 @@ class Discriminator(nn.Module):
 class GANTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
-        self.logger = TorchWriter()
+        self.logger = self.context.get_tensorboard_writer()
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.
@@ -100,18 +98,21 @@ class GANTrial(PyTorchTrial):
 
         # Initialize the models.
         mnist_shape = (1, 28, 28)
-        self.generator = self.context.wrap_model(Generator(latent_dim=self.context.get_hparam("latent_dim"),
-                                                           img_shape=mnist_shape))
+        self.generator = self.context.wrap_model(
+            Generator(latent_dim=self.context.get_hparam("latent_dim"), img_shape=mnist_shape)
+        )
         self.discriminator = self.context.wrap_model(Discriminator(img_shape=mnist_shape))
 
         # Initialize the optimizers and learning rate scheduler.
         lr = self.context.get_hparam("lr")
         b1 = self.context.get_hparam("b1")
         b2 = self.context.get_hparam("b2")
-        self.opt_g = self.context.wrap_optimizer(torch.optim.Adam(self.generator.parameters(),
-                                                                  lr=lr, betas=(b1, b2)))
-        self.opt_d = self.context.wrap_optimizer(torch.optim.Adam(self.discriminator.parameters(),
-                                                                  lr=lr, betas=(b1, b2)))
+        self.opt_g = self.context.wrap_optimizer(
+            torch.optim.Adam(self.generator.parameters(), lr=lr, betas=(b1, b2))
+        )
+        self.opt_d = self.context.wrap_optimizer(
+            torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2))
+        )
         self.lr_g = self.context.wrap_lr_scheduler(
             lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95 ** epoch),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
@@ -158,7 +159,7 @@ class GANTrial(PyTorchTrial):
         # Log sampled images to Tensorboard.
         sample_imgs = generated_imgs[:6]
         grid = torchvision.utils.make_grid(sample_imgs)
-        self.logger.writer.add_image(f'generated_images_epoch_{epoch_idx}', grid, batch_idx)
+        self.logger.add_image(f"generated_images_epoch_{epoch_idx}", grid, batch_idx)
 
         # Calculate generator loss.
         valid = torch.ones(imgs.size(0), 1)
@@ -168,7 +169,6 @@ class GANTrial(PyTorchTrial):
         # Run backward pass and step the optimizer for the generator.
         self.context.backward(g_loss)
         self.context.step_optimizer(self.opt_g)
-
 
         # Train discriminator.
         # Set `requires_grad_` to only update parameters on the discriminator.
@@ -189,9 +189,9 @@ class GANTrial(PyTorchTrial):
         self.context.step_optimizer(self.opt_d)
 
         return {
-            'loss': d_loss,
-            'g_loss': g_loss,
-            'd_loss': d_loss,
+            "loss": d_loss,
+            "g_loss": g_loss,
+            "d_loss": d_loss,
         }
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:

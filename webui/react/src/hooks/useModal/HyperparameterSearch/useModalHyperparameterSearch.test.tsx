@@ -1,76 +1,75 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
 
-import { CreateExperimentParams } from 'services/types';
-import { ResourcePoolsProvider } from 'stores/resourcePools';
+import Button from 'components/kit/Button';
+import { createExperiment as mockCreateExperiment } from 'services/api';
+import { ClusterProvider } from 'stores/cluster';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import type { ResourcePool } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
-const mockCreateExperiment = jest.fn();
+vi.mock('stores/cluster', async (importOriginal) => {
+  const types = await import('types');
+  const sdkTypes = await import('services/api-ts-sdk');
+  const loadable = await import('utils/loadable');
+  const observable = await import('utils/observable');
 
-jest.mock('stores/resourcePools', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const types = require('types');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const sdkTypes = require('services/api-ts-sdk');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const loadable = require('utils/loadable');
-
-  const value: ResourcePool[] = [
-    {
-      agentDockerImage: '',
-      agentDockerNetwork: '',
-      agentDockerRuntime: '',
-      agentFluentImage: '',
-      auxContainerCapacity: 0,
-      auxContainerCapacityPerAgent: 0,
-      auxContainersRunning: 0,
-      containerStartupScript: '',
-      defaultAuxPool: false,
-      defaultComputePool: true,
-      description: '',
-      details: {},
-      imageId: '',
-      instanceType: '',
-      location: '',
-      masterCertName: '',
-      masterUrl: '',
-      maxAgents: 1,
-      maxAgentStartingPeriod: 1000,
-      maxIdleAgentPeriod: 1000,
-      minAgents: 0,
-      name: 'default',
-      numAgents: 1,
-      preemptible: false,
-      schedulerFittingPolicy: sdkTypes.V1FittingPolicy.UNSPECIFIED,
-      schedulerType: sdkTypes.V1SchedulerType.UNSPECIFIED,
-      slotsAvailable: 1,
-      slotsUsed: 0,
-      slotType: types.ResourceType.CUDA,
-      startupScript: '',
-      type: sdkTypes.V1ResourcePoolType.UNSPECIFIED,
-    },
-  ];
+  const store = {
+    resourcePools: observable.observable(
+      loadable.Loaded([
+        {
+          agentDockerImage: '',
+          agentDockerNetwork: '',
+          agentDockerRuntime: '',
+          agentFluentImage: '',
+          auxContainerCapacity: 0,
+          auxContainerCapacityPerAgent: 0,
+          auxContainersRunning: 0,
+          containerStartupScript: '',
+          defaultAuxPool: false,
+          defaultComputePool: true,
+          description: '',
+          details: {},
+          imageId: '',
+          instanceType: '',
+          location: '',
+          masterCertName: '',
+          masterUrl: '',
+          maxAgents: 1,
+          maxAgentStartingPeriod: 1000,
+          maxIdleAgentPeriod: 1000,
+          minAgents: 0,
+          name: 'default',
+          numAgents: 1,
+          preemptible: false,
+          schedulerFittingPolicy: sdkTypes.V1FittingPolicy.UNSPECIFIED,
+          schedulerType: sdkTypes.V1SchedulerType.UNSPECIFIED,
+          slotsAvailable: 1,
+          slotsUsed: 0,
+          slotType: types.ResourceType.CUDA,
+          startupScript: '',
+          type: sdkTypes.V1ResourcePoolType.UNSPECIFIED,
+        },
+      ]),
+    ),
+  };
 
   return {
-    __esModule: true,
-    ...jest.requireActual('stores/resourcePools'),
-    useResourcePools: () => {
-      return loadable.Loaded(value);
-    },
+    ...(await importOriginal<typeof import('stores/cluster')>()),
+    useClusterStore: () => store,
   };
 });
 
-jest.mock('services/api', () => ({
-  createExperiment: (params: CreateExperimentParams) => {
-    return mockCreateExperiment(params);
-  },
+vi.mock('services/api', () => ({
+  createExperiment: vi.fn().mockReturnValue(
+    Promise.resolve({
+      experiment: { id: 1 },
+      maxSlotsExceeded: false,
+    }),
+  ),
   getResourcePools: () => Promise.resolve([]),
 }));
 
@@ -89,9 +88,9 @@ const ModalTrigger: React.FC = () => {
 
 const Container: React.FC = () => {
   return (
-    <ResourcePoolsProvider>
+    <ClusterProvider>
       <ModalTrigger />
-    </ResourcePoolsProvider>
+    </ClusterProvider>
   );
 };
 
@@ -126,7 +125,6 @@ describe('useModalHyperparameterSearch', () => {
     const { view } = await setup();
 
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
-    mockCreateExperiment.mockReturnValue({ experiment: { id: 1 }, maxSlotsExceeded: false });
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
 
     expect(mockCreateExperiment).toHaveBeenCalled();

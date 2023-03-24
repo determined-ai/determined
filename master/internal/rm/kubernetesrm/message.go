@@ -11,10 +11,12 @@ import (
 type (
 	// StartTaskPod notifies the pods actor to start a pod with the task spec.
 	StartTaskPod struct {
-		TaskActor *actor.Ref
-		Spec      tasks.TaskSpec
-		Slots     int
-		Rank      int
+		TaskActor    *actor.Ref
+		Spec         tasks.TaskSpec
+		Slots        int
+		Rank         int
+		ResourcePool string
+		Namespace    string
 
 		LogContext logger.Context
 	}

@@ -3,8 +3,9 @@ Shows an example of how model trained in Determined can be easily exported and u
 """
 
 import argparse
-import tensorflow as tf
+
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 from determined.experimental import client
 
@@ -32,12 +33,8 @@ def export_model(experiment_id: int) -> tf.keras.Model:
 
 def main():
     parser = argparse.ArgumentParser(description="DCGan Model Export")
-    parser.add_argument(
-        "--experiment-id", type=int, required=True, help="Experiment ID to export."
-    )
-    parser.add_argument(
-        "--master-url", type=str, default="", help="URL of the Determined master."
-    )
+    parser.add_argument("--experiment-id", type=int, required=True, help="Experiment ID to export.")
+    parser.add_argument("--master-url", type=str, default="", help="URL of the Determined master.")
     parser.add_argument(
         "--noise-dim",
         type=int,

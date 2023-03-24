@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -15,12 +16,12 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -60,7 +61,7 @@ func expFromAllocationID(
 		return false, nil, err
 	}
 
-	exp, err = m.db.ExperimentWithoutConfigByID(expID)
+	exp, err = m.db.ExperimentByID(expID)
 	if err != nil {
 		return false, nil, err
 	}
@@ -68,7 +69,7 @@ func expFromAllocationID(
 }
 
 func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
-	taskOwnerID, err := db.GetCommandOwnerID(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
 		// TODO(nick) eventually control access to checkpointGC.
@@ -76,7 +77,9 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return user.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
+	return command.AuthZProvider.Get().CanGetNSC(
+		ctx, curUser, spec.WorkspaceID,
+	)
 }
 
 func (a *apiServer) canDoActionsOnTask(
@@ -98,7 +101,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
+		exp, err := db.ExperimentByTaskID(ctx, t.TaskID)
 		if err != nil {
 			return err
 		}
@@ -174,6 +177,9 @@ func (a *apiServer) AllocationReady(
 	if err != nil {
 		return nil, err
 	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
+		return nil, err
+	}
 
 	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
@@ -193,6 +199,9 @@ func (a *apiServer) AllocationWaiting(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
 		return nil, err
 	}
 
@@ -217,6 +226,9 @@ func (a *apiServer) AllocationAllGather(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -263,6 +275,9 @@ func (a *apiServer) PostAllocationProxyAddress(
 	if err != nil {
 		return nil, err
 	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
+		return nil, err
+	}
 
 	if err := a.ask(handler.Address(), task.SetAllocationProxyAddress{
 		ProxyAddress: req.ProxyAddress,
@@ -306,7 +321,7 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
+	if err = command.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -429,10 +444,24 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		}
 	}
 
+	// Allow a value in a list of numbers, or a NULL represented as -1.
+	addNullInclusiveFilter := func(field string, values []int32) {
+		if values == nil || !slices.Contains(values, -1) {
+			addInFilter(field, values, len(values))
+			return
+		}
+		filters = append(filters, api.Filter{
+			Field:     field,
+			Operation: api.FilterOperationInOrNull,
+			Values:    values,
+		})
+	}
+
+	addNullInclusiveFilter("rank_id", req.RankIds)
+
 	addInFilter("allocation_id", req.AllocationIds, len(req.AllocationIds))
 	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
 	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
-	addInFilter("rank_id", req.RankIds, len(req.RankIds))
 	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
 	addInFilter("source", req.Sources, len(req.Sources))
 	addInFilter("level", func() interface{} {

@@ -42,6 +42,8 @@ const (
 	ContainerIDLabel = "ai.determined.container.id"
 	// ContainerDevicesLabel describes the devices allocated to the container.
 	ContainerDevicesLabel = "ai.determined.container.devices"
+	// ContainerDescriptionLabel describes the container.
+	ContainerDescriptionLabel = "ai.determined.container.description"
 	// AgentLabel gives the agent the container is managed by.
 	AgentLabel = "ai.determined.container.agent"
 	// ClusterLabel gives the cluster the container is managed by.
@@ -137,7 +139,7 @@ func (d *Client) ReattachContainer(
 		if !containerInfo.State.Running {
 			return nil, ptrs.Ptr(aproto.ExitCode(containerInfo.State.ExitCode)), nil
 		}
-		return &Container{
+		return &Container{ //nolint: staticcheck // We mean to terminate this loop.
 			ContainerInfo: containerInfo,
 			ContainerWaiter: ContainerWaiter{
 				Waiter: waiter,

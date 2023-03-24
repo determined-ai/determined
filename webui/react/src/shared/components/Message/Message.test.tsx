@@ -1,17 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import { MessageType } from './Message';
 import Message, { Props } from './Message';
 
 const setup = (props: Props) => {
-  const handleOnChange = jest.fn();
+  const handleOnChange = vi.fn();
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <Message {...props} />
-    </StoreProvider>,
+    </UIProvider>,
   );
   return { handleOnChange, view };
 };

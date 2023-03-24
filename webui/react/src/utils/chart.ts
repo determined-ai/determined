@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import uPlot from 'uplot';
+
 import { Theme } from 'shared/themes';
 import { Primitive, Range } from 'shared/types';
 import { ColorScale } from 'shared/utils/color';
@@ -75,3 +78,7 @@ export const normalizeRange = (values: number[], range: Range<number>): number[]
 export function distance(x0: number, y0: number, x1: number, y1: number): number {
   return Math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2);
 }
+
+export const getTimeTickValues: uPlot.Axis.Values = (_self, rawValue) => {
+  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
+};

@@ -60,60 +60,6 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   };
 }
 
-export function generateCommandTask(idx: number): Type.RecentCommandTask {
-  const state = getRandomElementOfEnum(Type.CommandState);
-  const task = generateTask(idx);
-  const user = sampleUsers.random();
-  return {
-    ...task,
-    displayName: user.displayName,
-    state: state as Type.CommandState,
-    type: getRandomElementOfEnum(Type.CommandType),
-    userId: user.id,
-  };
-}
-
-export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
-  const experimentTask = generateExperimentTask(id);
-  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
-  const config = {
-    name: experimentTask.name,
-    resources: {},
-    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-  };
-  const { projectId, ...exp } = generateExperiments(1)[0];
-  return {
-    ...exp,
-    ...experimentTask,
-    config: {
-      checkpointPolicy: 'best',
-      checkpointStorage: {
-        hostPath: '/tmp',
-        saveExperimentBest: 0,
-        saveTrialBest: 1,
-        saveTrialLatest: 1,
-        storagePath: 'determined-integration-checkpoints',
-        type: 'shared_fs',
-      },
-      dataLayer: { type: 'shared_fs' },
-      hyperparameters: {},
-      maxRestarts: 5,
-      name: experimentTask.name,
-      resources: {},
-      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
-    },
-    configRaw: config,
-    hyperparameters: {},
-    id: id,
-    name: experimentTask.name,
-    userId: user.id,
-  } as Type.ExperimentOld;
-};
-
-export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
-  return new Array(Math.floor(count)).fill(null).map((_, idx) => generateOldExperiment(idx));
-};
-
 export const generateExperiment = (id = 1): Type.ExperimentItem => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers.random();
@@ -160,16 +106,6 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
   return new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
 };
 
-export const generateTasks = (count = 10): Type.RecentTask[] => {
-  return new Array(Math.floor(count)).fill(0).map((_, idx) => {
-    if (Math.random() > 0.5) {
-      return generateCommandTask(idx);
-    } else {
-      return generateExperimentTask(idx);
-    }
-  });
-};
-
 // Differentiate Task from Experiment.
 export const isCommandTask = (obj: Type.Command | Type.CommandTask): obj is Type.CommandTask => {
   return 'type' in obj;
@@ -179,10 +115,14 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
   return 'archived' in task && !('type' in task);
 };
 
-export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
+export const isTaskKillable = (
+  task: Type.AnyTask | Type.ExperimentItem,
+  canModifyWorkspaceNSC: boolean,
+): boolean => {
   return (
-    killableRunStates.includes(task.state as Type.RunState) ||
-    killableCommandStates.includes(task.state as Type.CommandState)
+    canModifyWorkspaceNSC &&
+    (killableRunStates.includes(task.state as Type.RunState) ||
+      killableCommandStates.includes(task.state as Type.CommandState))
   );
 };
 
@@ -210,6 +150,15 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
 };
 
+const matchesWorkspace = <T extends Type.AnyTask | Type.ExperimentItem>(
+  task: T,
+  workspaces?: string[],
+): boolean => {
+  if (!Array.isArray(workspaces) || workspaces.length === 0 || workspaces[0] === Type.ALL_VALUE)
+    return true;
+  return workspaces.findIndex((workspace) => task.workspaceId === parseInt(workspace)) !== -1;
+};
+
 export const filterTasks = <
   T extends Type.CommandType | Type.TaskType = Type.TaskType,
   A extends Type.CommandTask | Type.AnyTask = Type.AnyTask,
@@ -226,6 +175,7 @@ export const filterTasks = <
       return (
         (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
+        matchesWorkspace<A>(task, filters.workspaces) &&
         matchesState<A>(task, filters.states || []) &&
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as Type.ExperimentTask).archived)

@@ -156,7 +156,6 @@ The following GPU types are supported by Determined:
 -  ``nvidia-tesla-p100``
 -  ``nvidia-tesla-p4``
 -  ``nvidia-tesla-v100``
--  ``nvidia-tesla-k80``
 -  ``nvidia-tesla-a100``
 
 .. _gcp-cluster-configuration:

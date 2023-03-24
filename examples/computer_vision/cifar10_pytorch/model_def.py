@@ -2,11 +2,11 @@
 CNN on Cifar10 from Keras example:
 https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 """
-import filelock
 import os
 import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import filelock
 import torch
 import torchvision
 from torch import nn

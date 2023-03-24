@@ -24,6 +24,7 @@ import (
 var emptyMetadata = []byte(`{}`)
 
 func TestModels(t *testing.T) {
+	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -58,12 +59,13 @@ func TestModels(t *testing.T) {
 				LastUpdatedTime: now,
 				Labels:          []string{"some other label"},
 				Username:        user.Username,
+				WorkspaceID:     1,
 			}
 			mdlNotes := "some notes"
 			var pmdl modelv1.Model
 			err := db.QueryProto(
 				"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-				strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+				strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
 			)
 			require.NoError(t, err)
 
@@ -85,7 +87,7 @@ func TestModels(t *testing.T) {
 					"steps_completed":    stepsCompleted,
 				},
 			}
-			err = db.AddCheckpointMetadata(context.TODO(), ckpt)
+			err = AddCheckpointMetadata(ctx, ckpt)
 			require.NoError(t, err)
 
 			// Which maybe has some metrics.
@@ -108,7 +110,7 @@ func TestModels(t *testing.T) {
 						BatchMetrics: []*structpb.Struct{},
 					},
 				}
-				err = db.AddValidationMetrics(context.TODO(), m)
+				err = db.AddValidationMetrics(ctx, m)
 				require.NoError(t, err)
 			}
 

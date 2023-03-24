@@ -73,9 +73,7 @@ def _random_jitter(
 ) -> Tuple[tf.Tensor, tf.Tensor]:
     if jitter > 0:
         # Resizing to 286x286
-        input_image, real_image = _resize(
-            input_image, real_image, height + jitter, width + jitter
-        )
+        input_image, real_image = _resize(input_image, real_image, height + jitter, width + jitter)
 
         # Random cropping back to 256x256
         input_image, real_image = _random_crop(input_image, real_image, height, width)

@@ -60,7 +60,6 @@ func createVersionTwoCheckpoint(
 		AllocationID: aID,
 		TaskID:       trial.TaskID,
 		Slots:        1,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
@@ -80,13 +79,13 @@ func createVersionTwoCheckpoint(
 			"steps_completed":    5,
 		},
 	}
-	require.NoError(t, api.m.db.AddCheckpointMetadata(ctx, checkpoint))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, checkpoint))
 
 	return checkpoint.UUID.String()
 }
 
 func TestCheckpointAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
 	cases := []struct {
 		DenyFuncName            string

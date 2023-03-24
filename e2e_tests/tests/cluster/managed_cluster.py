@@ -2,22 +2,20 @@ import json
 import os
 import subprocess
 import time
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Iterator, List, Union, cast
 
 import pytest
 
 from tests import config as conf
 
+from .abstract_cluster import Cluster
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
-from .utils import get_master_port
+from .utils import now_ts, set_master_port
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
-DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
 def get_agent_data(master_url: str) -> List[Dict[str, Any]]:
@@ -27,16 +25,15 @@ def get_agent_data(master_url: str) -> List[Dict[str, Any]]:
     return agent_data
 
 
-class ManagedCluster:
+class ManagedCluster(Cluster):
     # This utility wrapper uses double agent yaml configurations,
     # but provides helpers to run/kill a single agent setup.
 
-    def __init__(self, config: Union[str, Dict[str, Any]], reattach: bool) -> None:
+    def __init__(self, config: Union[str, Dict[str, Any]]) -> None:
         # Strategically only import devcluster on demand to avoid having it as a hard dependency.
         from devcluster import Devcluster
 
         self.dc = Devcluster(config=config)
-        self.reattach = reattach
 
     def __enter__(self) -> "ManagedCluster":
         self.old_cd = os.getcwd()
@@ -77,6 +74,7 @@ class ManagedCluster:
             return
 
         if wait_for_amnesia:
+            print(f"Agent is in state {agent_data}, waiting for amnesia")
             # Currently, we've got to wait for master to "forget" the agent before reconnecting.
             WAIT_FOR_AMNESIA = 60
             for _i in range(WAIT_FOR_AMNESIA):
@@ -145,21 +143,11 @@ class ManagedCluster:
         s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
         return float(s.rstrip("s"))
 
-    def log_marker(self, marker: str) -> None:
-        for log_path in DEVCLUSTER_LOG_PATH.glob("*.log"):
-            with log_path.open("a") as fout:
-                fout.write(marker)
 
-
-@pytest.fixture(scope="session", params=[True, False], ids=["reattach-on", "reattach-off"])
+@pytest.fixture(scope="session")
 def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
-    reattach = cast(bool, request.param)
-    if reattach:
-        config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
-    else:
-        config = str(DEVCLUSTER_REATTACH_OFF_CONFIG_PATH)
-
-    with ManagedCluster(config, reattach=reattach) as mc:
+    config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
+    with ManagedCluster(config) as mc:
         mc.initial_startup()
         yield mc
 
@@ -167,14 +155,9 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
 @pytest.fixture(scope="session")
 def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
-
-    with ManagedCluster(config, reattach=False) as mc:
+    with ManagedCluster(config) as mc:
         mc.initial_startup()
         yield mc
-
-
-def _now_ts() -> str:
-    return datetime.now(timezone.utc).astimezone().isoformat()
 
 
 @pytest.fixture
@@ -182,15 +165,12 @@ def managed_cluster_priority_scheduler(
     managed_cluster_session_priority_scheduler: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
-    lc = conf.load_config(config_path=config)
-    port = get_master_port(lc)
-    set_master_port_conf(port)
-
+    set_master_port(config)
     nodeid = request.node.nodeid
-    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session_priority_scheduler
     managed_cluster_session_priority_scheduler.log_marker(
-        f"pytest [{_now_ts()}] {nodeid} teardown\n"
+        f"pytest [{now_ts()}] {nodeid} teardown\n"
     )
 
 
@@ -200,15 +180,22 @@ def managed_cluster_restarts(
 ) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
     config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
     # port number is same for both reattach on and off config files so you can use either.
-    lc = conf.load_config(config_path=config)
-    port = get_master_port(lc)
-    set_master_port_conf(port)
-
+    set_master_port(config)
     nodeid = request.node.nodeid
-    managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
-    managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} teardown\n")
+    managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} teardown\n")
 
 
-def set_master_port_conf(port: str) -> None:
-    conf.MASTER_PORT = port
+@pytest.fixture
+def restartable_managed_cluster(
+    managed_cluster_restarts: ManagedCluster,
+) -> Iterator[ManagedCluster]:
+    managed_cluster_restarts.wait_for_agent_ok(20)
+    try:
+        yield managed_cluster_restarts
+        managed_cluster_restarts.wait_for_agent_ok(20)
+    except Exception:
+        managed_cluster_restarts.restart_master()
+        managed_cluster_restarts.restart_agent()
+        raise

@@ -63,6 +63,7 @@ def get_data(data_path: str) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.nd
 
     return (train_data, train_labels), (test_data, test_labels)
 
+
 def download_data(download_directory: str, url: str) -> str:
     os.makedirs(download_directory, exist_ok=True)
     filepath = os.path.join(download_directory, "data.tar.gz")
@@ -70,6 +71,7 @@ def download_data(download_directory: str, url: str) -> str:
     tar = tarfile.open(filepath)
     tar.extractall(path=download_directory)
     return os.path.join(download_directory, "cifar-10-batches-py")
+
 
 def get_training_data(
     data_directory, batch_size, width_shift_range, height_shift_range, horizontal_flip
@@ -84,10 +86,9 @@ def get_training_data(
     }
 
     # Returns a tf.keras.Sequence.
-    train = augment_data(
-        train_data, train_labels, batch_size, data_augmentation
-    )
+    train = augment_data(train_data, train_labels, batch_size, data_augmentation)
     return train
+
 
 def get_validation_data(data_directory):
     (_, _), (test_data, test_labels) = get_data(data_directory)
