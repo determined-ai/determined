@@ -3,6 +3,15 @@
    but rather we are just overwriting specific blocks from it. #}
 {% extends "!page.html" %}
 
+{# Include a link tag to the root of the tree from this page.  This is used to
+   calculate the relative search results from Algolia.  Also embed the version,
+   which we also need for configuring algolia search. #}
+{% block linktags %}
+{{ super() }}
+<link rel="root" title="{{ _("Root") }}"
+      version="{{ version }}" href="{{ pathto("index") }}"/>
+{% endblock %}
+
 {# Include an analytics script. #}
 {% block extrahead %}
 {% include "analytics.html" %}
