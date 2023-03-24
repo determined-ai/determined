@@ -54,7 +54,7 @@ const Accordion: React.FC<AccordionProps> & { Group: typeof AccordionGroup } = (
     // handle isActive for single accordions
     let collapseProps = {};
     if (defaultOpen !== undefined) {
-      collapseProps = { defaultActiveKey: key };
+      collapseProps = { defaultActiveKey: defaultOpen ? key : '' };
     }
     if (open !== undefined) {
       collapseProps = { activeKey: open ? key : '' };
