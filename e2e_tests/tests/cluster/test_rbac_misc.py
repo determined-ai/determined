@@ -77,7 +77,9 @@ def test_cluster_admin_only_calls() -> None:
         def disable_slot(creds: authentication.Credentials) -> None:
             session = determined_test_session(creds)
             agent_id, slot_id = get_agent_slot_ids(creds)
-            bindings.post_DisableSlot(session, agentId=agent_id, slotId=slot_id)
+            bindings.post_DisableSlot(
+                session, agentId=agent_id, slotId=slot_id, body=bindings.v1DisableSlotRequest()
+            )
 
         # FIXME: these can potentially affect other tests running against the same cluster.
         # the targeted agent_id and slot_id are not guaranteed to be the same across checks.
