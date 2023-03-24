@@ -2,8 +2,10 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { Workspace } from 'types';
+
+import JupyterLabModalComponent from './JupyterLabModal';
+import { useModal } from './kit/Modal';
 
 interface Props {
   enabled?: boolean;
@@ -11,13 +13,12 @@ interface Props {
 }
 
 const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({ workspace });
+  const JupyterLabModal = useModal(JupyterLabModalComponent);
 
   return (
     <>
       {enabled ? (
-        <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
+        <Button onClick={JupyterLabModal.open}>Launch JupyterLab</Button>
       ) : (
         <Tooltip placement="leftBottom" title="You do not have permission to launch JupyterLab">
           <div>
@@ -25,7 +26,7 @@ const JupyterLabButton: React.FC<Props> = ({ enabled, workspace }: Props) => {
           </div>
         </Tooltip>
       )}
-      {modalJupyterLabContextHolder}
+      <JupyterLabModal.Component workspace={workspace} />
     </>
   );
 };
