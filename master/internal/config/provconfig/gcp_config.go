@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/maps"
-
 	"cloud.google.com/go/compute/metadata"
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -164,7 +162,12 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 		}, rb.Disks...)
 	}
 
-	maps.Copy(rb.Labels, c.Labels)
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
+	}
+	for k, v := range c.Labels {
+		rb.Labels[k] = v
+	}
 	rb.Labels[c.LabelKey] = c.LabelValue
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {
