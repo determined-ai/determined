@@ -5,12 +5,14 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -36,7 +38,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -651,6 +652,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
+  const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
+
   useLayoutEffect(() => {
     // This is the failsafe for when column settings get into a bad shape.
     if (!settings.columns?.length || !settings.columnWidths?.length) {
@@ -829,17 +832,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
-    useModalColumnsCustomize({
-      columns: transferColumns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns,
-      onSave: handleUpdateColumns as (columns: string[]) => void,
-    });
-
   const handleCustomizeColumnsClick = useCallback(() => {
-    openCustomizeColumns({});
-  }, [openCustomizeColumns]);
+    ColumnsCustomizeModal.open();
+  }, [ColumnsCustomizeModal]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -904,7 +899,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           switchShowArchived(!settings.archived);
         },
         [MenuKey.Columns]: () => {
-          handleCustomizeColumnsClick();
+          ColumnsCustomizeModal.open();
         },
         [MenuKey.ResultFilter]: () => {
           resetFilters();
@@ -945,6 +940,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [
     filterCount,
+    ColumnsCustomizeModal,
     handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
@@ -999,7 +995,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           updateSettings={updateSettings as UpdateSettings}
         />
       </>
-      {modalColumnsCustomizeContextHolder}
+      <ColumnsCustomizeModal.Component
+        columns={transferColumns}
+        defaultVisibleColumns={DEFAULT_COLUMNS}
+        initialVisibleColumns={initialVisibleColumns}
+        onSave={handleUpdateColumns as (columns: string[]) => void}
+      />
       {modalExperimentMoveContextHolder}
     </Page>
   );
