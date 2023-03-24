@@ -1,6 +1,5 @@
 import { Alert } from 'antd';
 import type { EChartsOption } from 'echarts';
-import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ReactECharts from 'components/Echarts/ReactEcharts';
@@ -264,26 +263,26 @@ const ScatterPlots: React.FC<Props> = ({
           },
         ],
         series: data.sort((a, b) => ((a.name ?? '') > (b.name ?? '') ? 1 : -1)),
-        title: {
-          left: 'center',
-          subtext: `${metricToStr(selectedMetric)} (y) vs ${hParam} (x)`,
-        },
+        // title: {
+        //   left: 'center',
+        //   subtext: `${metricToStr(selectedMetric)} (y) vs ${hParam} (x)`,
+        // },
         tooltip: {
           axisPointer: {
             type: 'cross',
           },
-          formatter: (params: TopLevelFormatterParams) => {
-            const data = params as CallbackDataParams;
-            const axises = data.data as number[];
-            const tooltip = `
-              <div>
-                <div>${hParam}: ${Number(axises[0]).toFixed(2)}</div>
-                <div>${metricToStr(selectedMetric)}: ${Number(axises[1]).toFixed(2)}</div>
-                <div>Trial ID: ${data.seriesName}</div>
-              </div>
-            `;
-            return tooltip;
-          },
+          // formatter: (params: TopLevelFormatterParams) => {
+          //   const data = params as CallbackDataParams;
+          //   const axises = data.data as number[];
+          //   const tooltip = `
+          //     <div>
+          //       <div>${hParam}: ${Number(axises[0]).toFixed(2)}</div>
+          //       <div>${metricToStr(selectedMetric)}: ${Number(axises[1]).toFixed(2)}</div>
+          //       <div>Trial ID: ${data.seriesName}</div>
+          //     </div>
+          //   `;
+          //   return tooltip;
+          // },
         },
         visualMap: {
           calculable: true,
@@ -322,13 +321,7 @@ const ScatterPlots: React.FC<Props> = ({
         },
       };
     },
-    [
-      chartData?.hpLogScales,
-      chartData?.hpValues,
-      chartData?.metricValues,
-      chartData?.trialIds,
-      selectedMetric,
-    ],
+    [chartData?.hpLogScales, chartData?.hpValues, chartData?.metricValues, chartData?.trialIds],
   );
 
   if (pageError) {

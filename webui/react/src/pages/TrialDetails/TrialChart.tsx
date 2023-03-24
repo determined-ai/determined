@@ -1,6 +1,9 @@
+import { EChartsOption } from 'echarts';
+import { CallbackDataParams } from 'echarts/types/dist/shared';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import ReactECharts from 'components/Echarts/ReactEcharts';
 import Empty from 'components/kit/Empty';
 import MetricSelect from 'components/MetricSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -135,158 +138,158 @@ const TrialChart: React.FC<Props> = ({
     </ResponsiveFilters>
   );
 
-  // const option = useMemo((): EChartsOption => {
-  //   const xValues: number[] = [];
-  //   const yValues: Record<string, Record<string, number | null>> = {};
-  //   let currentYAxis = 0;
+  const option = useMemo((): EChartsOption => {
+    const xValues: number[] = [];
+    const yValues: Record<string, Record<string, number | null>> = {};
+    let currentYAxis = 0;
 
-  //   metrics.forEach((metric, index) => {
-  //     yValues[index] = {};
+    metrics.forEach((metric, index) => {
+      yValues[index] = {};
 
-  //     const mWrapper = trialSumm.find(
-  //       (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
-  //     );
-  //     if (!mWrapper || !mWrapper.data) {
-  //       return;
-  //     }
+      const mWrapper = trialSumm.find(
+        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
+      );
+      if (!mWrapper?.data) {
+        return;
+      }
 
-  //     mWrapper.data.forEach((pt) => {
-  //       if (!xValues.includes(pt.batches)) {
-  //         xValues.push(pt.batches);
-  //       }
-  //       yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
-  //     });
-  //   });
+      mWrapper.data.forEach((pt) => {
+        if (!xValues.includes(pt.batches)) {
+          xValues.push(pt.batches);
+        }
+        yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
+      });
+    });
 
-  //   xValues.sort((a, b) => a - b);
+    xValues.sort((a, b) => a - b);
 
-  //   const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) =>
-  //     xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null)),
-  //   );
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) =>
+      xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null)),
+    );
 
-  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  //   const series: EChartsOption['series'] = yValuesArray.map((y, i) => ({
-  //     connectNulls: true,
-  //     data: y.map((x) => (x == null ? '' : x)),
-  //     emphasis: {
-  //       focus: 'series',
-  //     },
-  //     name: metrics[i].name,
-  //     type: 'line',
-  //   }));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const series: EChartsOption['series'] = yValuesArray.map((y, i) => ({
+      connectNulls: true,
+      data: y.map((x) => (x == null ? '' : x)),
+      emphasis: {
+        focus: 'series',
+      },
+      name: metrics[i].name,
+      type: 'line',
+    }));
 
-  //   const seriesSimilar: EChartsOption['series'] = yValuesArray.map((y, i) => ({
-  //     connectNulls: true,
-  //     data: y.map((x) => (x == null ? '' : x)).map((x, ii) => [xValues[ii], x]),
-  //     emphasis: {
-  //       focus: 'series',
-  //     },
-  //     name: metrics[i].name,
-  //     symbolSize: 8,
-  //     type: 'line',
-  //   }));
+    const seriesSimilar: EChartsOption['series'] = yValuesArray.map((y, i) => ({
+      connectNulls: true,
+      data: y.map((x) => (x == null ? '' : x)).map((x, ii) => [xValues[ii], x]),
+      emphasis: {
+        focus: 'series',
+      },
+      name: metrics[i].name,
+      symbolSize: 8,
+      type: 'line',
+    }));
 
-  //   return {
-  //     animation: false,
-  //     dataZoom: [
-  //       {
-  //         realtime: true,
-  //         show: true,
-  //         type: 'slider',
-  //       },
-  //       {
-  //         realtime: true,
-  //         show: true,
-  //         type: 'inside',
-  //         zoomLock: true,
-  //       },
-  //     ],
-  //     legend: {
-  //       data: metrics.map((metric) => metric.name),
-  //       type: 'scroll',
-  //     },
-  //     series: seriesSimilar,
-  //     toolbox: {
-  //       feature: {
-  //         dataView: {
-  //           readOnly: true,
-  //         },
-  //         magicType: { type: ['line', 'bar'] },
-  //         restore: {},
-  //         saveAsImage: {},
-  //       },
-  //     },
-  //     tooltip: {
-  //       axisPointer: {
-  //         label: {
-  //           formatter: (params) => {
-  //             if (params.axisDimension === 'y') {
-  //               currentYAxis = Number(params.value);
-  //             }
-  //             return String(params.value);
-  //           },
-  //         },
-  //         type: 'cross',
-  //       },
-  //       formatter: (params) => {
-  //         type SeriesType = {
-  //           marker: CallbackDataParams['marker'];
-  //           seriesName: string;
-  //           value: number;
-  //         };
-  //         const data = params as CallbackDataParams[];
+    return {
+      animation: false,
+      dataZoom: [
+        {
+          realtime: true,
+          show: true,
+          type: 'slider',
+        },
+        {
+          realtime: true,
+          show: true,
+          type: 'inside',
+          zoomLock: true,
+        },
+      ],
+      legend: {
+        data: metrics.map((metric) => metric.name),
+        type: 'scroll',
+      },
+      series: seriesSimilar,
+      toolbox: {
+        feature: {
+          dataView: {
+            readOnly: true,
+          },
+          magicType: { type: ['line', 'bar'] },
+          restore: {},
+          saveAsImage: {},
+        },
+      },
+      tooltip: {
+        axisPointer: {
+          label: {
+            formatter: (params) => {
+              if (params.axisDimension === 'y') {
+                currentYAxis = Number(params.value);
+              }
+              return String(params.value);
+            },
+          },
+          type: 'cross',
+        },
+        formatter: (params) => {
+          type SeriesType = {
+            marker: CallbackDataParams['marker'];
+            seriesName: string;
+            value: number;
+          };
+          const data = params as CallbackDataParams[];
 
-  //         const seriesList: SeriesType[] = data
-  //           .filter((d: CallbackDataParams) => d.seriesName)
-  //           .map((d: CallbackDataParams): SeriesType => {
-  //             return {
-  //               marker: d.marker,
-  //               seriesName: d.seriesName ?? '',
-  //               value: (d.value as number[])[1],
-  //             };
-  //           })
-  //           .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
+          const seriesList: SeriesType[] = data
+            .filter((d: CallbackDataParams) => d.seriesName)
+            .map((d: CallbackDataParams): SeriesType => {
+              return {
+                marker: d.marker,
+                seriesName: d.seriesName ?? '',
+                value: (d.value as number[])[1],
+              };
+            })
+            .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
 
-  //         const closestPoint =
-  //           [...seriesList]
-  //             .sort((a: SeriesType, b: SeriesType) => {
-  //               return Math.abs(a.value - currentYAxis) > Math.abs(b.value - currentYAxis) ? 1 : -1;
-  //             })
-  //             .shift() ?? undefined;
+          const closestPoint =
+            [...seriesList]
+              .sort((a: SeriesType, b: SeriesType) => {
+                return Math.abs(a.value - currentYAxis) > Math.abs(b.value - currentYAxis) ? 1 : -1;
+              })
+              .shift() ?? undefined;
 
-  //         let tooltip = '<div>';
-  //         tooltip += `<div>${(data[0].value as number[])[0]}</div>`;
-  //         for (const d of seriesList) {
-  //           const fontWeight = closestPoint?.seriesName === d.seriesName ? 'bold' : 'normal';
-  //           tooltip += `
-  //             <div>
-  //               ${d.marker}
-  //               <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
-  //               ${d.value || '-'}
-  //             </div>
-  //           `;
-  //           tooltip += '</div>';
-  //         }
-  //         return tooltip;
-  //       },
-  //       position: ['30%', '100%'],
-  //       trigger: 'axis',
-  //     },
-  //     xAxis: {
-  //       boundaryGap: false,
-  //       // data: xValues,
-  //       name: 'Batches',
-  //       type: 'value',
-  //     },
-  //     yAxis: {
-  //       minorSplitLine: {
-  //         show: true,
-  //       },
-  //       name: 'Metric Value',
-  //       type: scale === Scale.Log ? 'log' : 'value',
-  //     },
-  //   };
-  // }, [metrics, scale, trialSumm]);
+          let tooltip = '<div>';
+          tooltip += `<div>${(data[0].value as number[])[0]}</div>`;
+          for (const d of seriesList) {
+            const fontWeight = closestPoint?.seriesName === d.seriesName ? 'bold' : 'normal';
+            tooltip += `
+              <div>
+                ${d.marker}
+                <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
+                ${d.value || '-'}
+              </div>
+            `;
+            tooltip += '</div>';
+          }
+          return tooltip;
+        },
+        position: ['30%', '100%'],
+        trigger: 'axis',
+      },
+      xAxis: {
+        boundaryGap: false,
+        // data: xValues,
+        name: 'Batches',
+        type: 'value',
+      },
+      yAxis: {
+        minorSplitLine: {
+          show: true,
+        },
+        name: 'Metric Value',
+        type: scale === Scale.Log ? 'log' : 'value',
+      },
+    };
+  }, [metrics, scale, trialSumm]);
 
   return (
     <Section bodyBorder options={options} title="Metrics">
@@ -298,6 +301,7 @@ const TrialChart: React.FC<Props> = ({
             ) : (
               <UPlotChart data={chartData} options={chartOptions} />
             )}
+            <ReactECharts option={option} style={{ height: '50%' }} />
           </Spinner>
         }
       </div>
