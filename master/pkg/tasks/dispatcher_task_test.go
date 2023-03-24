@@ -862,7 +862,6 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["DET_SLOT_IDS"], "[0,1,2,3]")
 	assert.Equal(t, envVars["SLURM_KILL_BAD_EXIT"], "1")
 	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
-	assert.Equal(t, envVars["DET_AGENT_ID"], "launcher")
 	assert.Equal(t, envVars["DET_MASTER_CERT_NAME"], "certName")
 	assert.Equal(t, envVars["DET_CONTAINER_LOCAL_TMP"], "1")
 	assert.Equal(t, envVars["SINGULARITY_DOCKER_USERNAME"], "user")

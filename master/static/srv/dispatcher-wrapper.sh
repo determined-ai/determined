@@ -97,6 +97,8 @@ convert_to_gpu_numbers() {
     fi
 }
 
+export DET_AGENT_ID=$(hostname)
+
 # Set DET_CONTAINER_ID as the SLURM_PROCID. Usually it would be a Docker container ID.
 export DET_CONTAINER_ID="[cont=$SLURM_PROCID]"
 
