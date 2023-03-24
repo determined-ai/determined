@@ -28,7 +28,7 @@ type archiveExperimentOKResult struct {
 	State    bool
 }
 
-var experimentsAddr = actor.Addr("experiments")
+var ExperimentsAddr = actor.Addr("experiments")
 
 // For each experiment, based on the actor, add an error or non-error to results.
 func loadMultiExperimentActionResults(results []ExperimentActionResult,
@@ -64,7 +64,7 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 	refs := []*actor.Ref{}
 	refExpIDs := []int32{}
 	for _, expID := range expIDs {
-		addr := experimentsAddr.Child(expID)
+		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
 		if ref == nil {
 			results = append(results, ExperimentActionResult{
@@ -171,7 +171,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 	refs := []*actor.Ref{}
 	refExpIDs := []int32{}
 	for _, expID := range expIDs {
-		addr := experimentsAddr.Child(expID)
+		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
 		if ref == nil {
 			// For cancel/kill, it's OK if experiment already terminated.
@@ -211,7 +211,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 	refs := []*actor.Ref{}
 	refExpIDs := []int32{}
 	for _, expID := range expIDs {
-		addr := experimentsAddr.Child(expID)
+		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
 		if ref == nil {
 			// For cancel/kill, it's OK if experiment already terminated.

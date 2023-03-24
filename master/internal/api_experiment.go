@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
@@ -52,8 +52,6 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
-
-var experimentsAddr = actor.Addr("experiments")
 
 // Catches information on active running experiments.
 type experimentAllocation struct {
@@ -138,7 +136,7 @@ func (a *apiServer) getExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if ok, authErr := expauth.AuthZProvider.Get().
+	if ok, authErr := exputil.AuthZProvider.Get().
 		CanGetExperiment(ctx, curUser, modelExp); authErr != nil {
 		return nil, authErr
 	} else if !ok {
@@ -176,7 +174,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	}
 
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
+	if ok, err = exputil.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
 		return nil, model.User{}, err
 	} else if !ok {
 		return nil, model.User{}, expNotFound
@@ -214,7 +212,7 @@ func (a *apiServer) GetSearcherEvents(
 		}, nil
 	}
 
-	addr := experimentsAddr.Child(req.ExperimentId)
+	addr := exputil.ExperimentsAddr.Child(req.ExperimentId)
 	var w searcher.EventsWatcher
 	if err = a.ask(addr, req, &w); err != nil {
 		return nil, status.Errorf(codes.Internal,
@@ -245,13 +243,13 @@ func (a *apiServer) PostSearcherOperations(
 	resp *apiv1.PostSearcherOperationsResponse, err error,
 ) {
 	_, _, err = a.getExperimentAndCheckCanDoActions(
-		ctx, int(req.ExperimentId), expauth.AuthZProvider.Get().CanRunCustomSearch,
+		ctx, int(req.ExperimentId), exputil.AuthZProvider.Get().CanRunCustomSearch,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching experiment from database")
 	}
 
-	addr := experimentsAddr.Child(req.ExperimentId)
+	addr := exputil.ExperimentsAddr.Child(req.ExperimentId)
 	switch err = a.ask(addr, req, &resp); {
 	case err != nil:
 		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
@@ -314,7 +312,7 @@ func (a *apiServer) DeleteExperiment(
 	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
 	e, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanDeleteExperiment)
+		exputil.AuthZProvider.Get().CanDeleteExperiment)
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +582,7 @@ func (a *apiServer) GetExperiments(
 
 		query = query.Where("project_id = ?", req.ProjectId)
 	}
-	if query, err = expauth.AuthZProvider.Get().
+	if query, err = exputil.AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, proj, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 		); err != nil {
@@ -682,7 +680,7 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 		query = query.Where("project_id = ?", req.ProjectId)
 	}
 
-	if query, err = expauth.AuthZProvider.Get().
+	if query, err = exputil.AuthZProvider.Get().
 		FilterExperimentLabelsQuery(ctx, *curUser, proj, query); err != nil {
 		return nil, err
 	}
@@ -715,7 +713,7 @@ func (a *apiServer) GetExperimentValidationHistory(
 	ctx context.Context, req *apiv1.GetExperimentValidationHistoryRequest,
 ) (*apiv1.GetExperimentValidationHistoryResponse, error) {
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -737,7 +735,7 @@ func (a *apiServer) PreviewHPSearch(
 	if err != nil {
 		return nil, err
 	}
-	if err = expauth.AuthZProvider.Get().CanPreviewHPSearch(ctx, *curUser); err != nil {
+	if err = exputil.AuthZProvider.Get().CanPreviewHPSearch(ctx, *curUser); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -826,11 +824,11 @@ func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		exputil.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
-	addr := experimentsAddr.Child(req.Id)
+	addr := exputil.ExperimentsAddr.Child(req.Id)
 	switch err = a.ask(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -844,18 +842,18 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	results, err := expauth.ActivateExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.ActivateExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.ActivateExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	results, err := expauth.PauseExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.PauseExperiments(ctx, a.m.system, []int32{req.Id})
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during pause query.")
+			return nil, errors.Errorf("unknown error during pause query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -867,18 +865,18 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	results, err := expauth.PauseExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.PauseExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.PauseExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	results, err := expauth.CancelExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.CancelExperiments(ctx, a.m.system, []int32{req.Id})
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during cancel query.")
+			return nil, errors.Errorf("unknown error during cancel query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -890,18 +888,18 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	results, err := expauth.CancelExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.CancelExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.CancelExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	results, err := expauth.KillExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.KillExperiments(ctx, a.m.system, []int32{req.Id})
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during kill query.")
+			return nil, errors.Errorf("unknown error during kill query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -913,18 +911,18 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	results, err := expauth.KillExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.KillExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.KillExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	results, err := expauth.ArchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, []int32{req.Id})
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during archive query.")
+			return nil, errors.Errorf("unknown error during archive query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -936,18 +934,18 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
-	results, err := expauth.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.ArchiveExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.ArchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	results, err := expauth.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id})
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during unarchive query.")
+			return nil, errors.Errorf("unknown error during unarchive query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -959,8 +957,8 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
-	results, err := expauth.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds)
-	return &apiv1.UnarchiveExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	return &apiv1.UnarchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PatchExperiment(
@@ -979,7 +977,7 @@ func (a *apiServer) PatchExperiment(
 		return nil, err
 	}
 
-	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(
+	if err = exputil.AuthZProvider.Get().CanEditExperimentsMetadata(
 		ctx, *curUser, modelExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
@@ -1057,7 +1055,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	experimentID := int(req.Id)
 	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
 	if err != nil {
 		return nil, err
 	}
@@ -1173,7 +1171,7 @@ func (a *apiServer) CreateExperiment(
 			return nil, err
 		}
 
-		if err = expauth.AuthZProvider.Get().
+		if err = exputil.AuthZProvider.Get().
 			CanForkFromExperiment(ctx, *user, modelExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
@@ -1196,7 +1194,7 @@ func (a *apiServer) CreateExperiment(
 		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p, dbExp); err != nil {
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -1208,7 +1206,7 @@ func (a *apiServer) CreateExperiment(
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if req.Activate {
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *user, dbExp); err != nil {
+		if err = exputil.AuthZProvider.Get().CanEditExperiment(ctx, *user, dbExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
 	}
@@ -1217,7 +1215,7 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
-	a.m.system.ActorOf(experimentsAddr.Child(e.ID), e)
+	a.m.system.ActorOf(exputil.ExperimentsAddr.Child(e.ID), e)
 
 	if req.Activate {
 		_, err = a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
@@ -1261,7 +1259,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+				exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
 			if err != nil {
 				return err
 			}
@@ -1342,7 +1340,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
 			timeSinceLastAuth = time.Now()
@@ -1433,7 +1431,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
 			timeSinceLastAuth = time.Now()
@@ -1623,7 +1621,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			exp, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+				exputil.AuthZProvider.Get().CanGetExperimentArtifacts)
 			if err != nil {
 				return err
 			}
@@ -1703,7 +1701,7 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context,
 ) (*apiv1.ComputeHPImportanceResponse, error) {
 	experimentID := int(req.ExperimentId)
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+		exputil.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
@@ -1758,7 +1756,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
 			timeSinceLastAuth = time.Now()
@@ -1821,7 +1819,7 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	ctx context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
 ) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -1842,7 +1840,7 @@ func (a *apiServer) GetModelDef(
 	ctx context.Context, req *apiv1.GetModelDefRequest,
 ) (*apiv1.GetModelDefResponse, error) {
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -1889,17 +1887,17 @@ func (a *apiServer) MoveExperiment(
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject,
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, curUser, destProject,
 		nil); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	results, err := expauth.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId},
+	results, err := exputil.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId},
 		req.DestinationProjectId)
 
 	if err == nil {
 		if len(results) == 0 {
-			return nil, errors.Errorf("Unknown error during move query.")
+			return nil, errors.Errorf("unknown error during move query.")
 		} else if results[0].Error != nil {
 			return nil, results[0].Error
 		}
@@ -1926,21 +1924,21 @@ func (a *apiServer) MoveExperiments(
 			req.DestinationProjectId)
 	}
 	// need to update CanCreateExperiment to check project when experiment is nil
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
+	if err = exputil.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject,
 		nil); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	results, err := expauth.MoveExperiments(ctx, a.m.system, req.ExperimentIds,
+	results, err := exputil.MoveExperiments(ctx, a.m.system, req.ExperimentIds,
 		req.DestinationProjectId)
-	return &apiv1.MoveExperimentsResponse{Results: expauth.ToAPIResults(results)}, err
+	return &apiv1.MoveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) GetModelDefTree(
 	ctx context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -1956,7 +1954,7 @@ func (a *apiServer) GetModelDefFile(
 	ctx context.Context, req *apiv1.GetModelDefFileRequest,
 ) (*apiv1.GetModelDefFileResponse, error) {
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 
@@ -1993,8 +1991,10 @@ func (a *apiServer) SearchExperiments(
 
 		experimentQuery = experimentQuery.Where("project_id = ?", req.ProjectId)
 	}
-	if experimentQuery, err = expauth.AuthZProvider.Get().
-		FilterExperimentsQuery(ctx, *curUser, proj, experimentQuery); err != nil {
+	if experimentQuery, err = exputil.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, experimentQuery,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+		); err != nil {
 		return nil, err
 	}
 
