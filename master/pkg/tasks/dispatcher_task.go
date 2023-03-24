@@ -677,11 +677,6 @@ func getEnvVarsForLauncherManifest(
 	if slotsPerNode != unspecifiedSlotsPerNode {
 		m["DET_SLOT_IDS"] = generatesSlotIdsString(slotsPerNode)
 	}
-	// The "entrypoint.sh" script that's mounted by the Singularity task container
-	// will set the DET_SLOT_IDS environment variable when it sees that DET_AGENT_ID is
-	// set to "launcher". So, if you change the value here, you also need to make the
-	// corresponding change to "entrypoint.sh".
-	m["DET_AGENT_ID"] = "launcher"
 
 	// The "master/internal/resourcemanagers/kubernetes/spec.go" checks if the
 	// certificate name is set before assigning it to an environment variable, so
