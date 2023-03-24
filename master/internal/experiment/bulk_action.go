@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"context"
+	"strconv"
 
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
@@ -32,37 +33,38 @@ var ExperimentsAddr = actor.Addr("experiments")
 
 // For each experiment, based on the actor, add an error or non-error to results.
 func loadMultiExperimentActionResults(results []ExperimentActionResult,
-	resps map[*actor.Ref]actor.Message, refExpIDs []int32,
-) []ExperimentActionResult {
-	idx := 0
-	for _, actorResp := range resps {
+	resps map[*actor.Ref]actor.Message,
+) ([]ExperimentActionResult, error) {
+	for ref, actorResp := range resps {
+		originalID, err := strconv.Atoi(ref.Address().Local())
+		if err != nil {
+			return nil, err
+		}
 		if actorResp == nil {
 			results = append(results, ExperimentActionResult{
 				Error: status.Errorf(codes.Internal, "actorResp nil."),
-				ID:    refExpIDs[idx],
+				ID:    int32(originalID),
 			})
 		} else if typed, ok := actorResp.(error); ok && typed != nil {
 			results = append(results, ExperimentActionResult{
 				Error: typed,
-				ID:    refExpIDs[idx],
+				ID:    int32(originalID),
 			})
 		} else {
 			results = append(results, ExperimentActionResult{
 				Error: nil,
-				ID:    refExpIDs[idx],
+				ID:    int32(originalID),
 			})
 		}
-		idx++
 	}
-	return results
+	return results, nil
 }
 
 // For each experiment, try to retrieve an actor or append an error message.
 func nonTerminalExperiments(system *actor.System, expIDs []int32,
 	results []ExperimentActionResult,
-) ([]*actor.Ref, []int32, []ExperimentActionResult) {
+) ([]*actor.Ref, []ExperimentActionResult) {
 	refs := []*actor.Ref{}
-	refExpIDs := []int32{}
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -73,10 +75,9 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 			})
 		} else {
 			refs = append(refs, ref)
-			refExpIDs = append(refExpIDs, expID)
 		}
 	}
-	return refs, refExpIDs, results
+	return refs, results
 }
 
 // A Bun query for editable experiments in multi-experiment actions.
@@ -143,10 +144,9 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs, refExpIDs, results := nonTerminalExperiments(system, expIDs, results)
+	refs, results := nonTerminalExperiments(system, expIDs, results)
 	resps := system.AskAll(&apiv1.ActivateExperimentRequest{}, refs...).GetAll()
-	results = loadMultiExperimentActionResults(results, resps, refExpIDs)
-	return results, nil
+	return loadMultiExperimentActionResults(results, resps)
 }
 
 // CancelExperiments works on one or many experiments.
@@ -169,7 +169,6 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 	}
 
 	refs := []*actor.Ref{}
-	refExpIDs := []int32{}
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -181,12 +180,10 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 			})
 		} else {
 			refs = append(refs, ref)
-			refExpIDs = append(refExpIDs, expID)
 		}
 	}
 	resps := system.AskAll(&apiv1.CancelExperimentRequest{}, refs...).GetAll()
-	results = loadMultiExperimentActionResults(results, resps, refExpIDs)
-	return results, nil
+	return loadMultiExperimentActionResults(results, resps)
 }
 
 // KillExperiments works on one or many experiments.
@@ -209,7 +206,6 @@ func KillExperiments(ctx context.Context, system *actor.System,
 	}
 
 	refs := []*actor.Ref{}
-	refExpIDs := []int32{}
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -221,12 +217,10 @@ func KillExperiments(ctx context.Context, system *actor.System,
 			})
 		} else {
 			refs = append(refs, ref)
-			refExpIDs = append(refExpIDs, expID)
 		}
 	}
 	resps := system.AskAll(&apiv1.KillExperimentRequest{}, refs...).GetAll()
-	results = loadMultiExperimentActionResults(results, resps, refExpIDs)
-	return results, nil
+	return loadMultiExperimentActionResults(results, resps)
 }
 
 // PauseExperiments works on one or many experiments.
@@ -248,10 +242,9 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs, refExpIDs, results := nonTerminalExperiments(system, expIDs, results)
+	refs, results := nonTerminalExperiments(system, expIDs, results)
 	resps := system.AskAll(&apiv1.PauseExperimentRequest{}, refs...).GetAll()
-	results = loadMultiExperimentActionResults(results, resps, refExpIDs)
-	return results, nil
+	return loadMultiExperimentActionResults(results, resps)
 }
 
 // ArchiveExperiments works on one or many experiments.
