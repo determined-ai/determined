@@ -84,7 +84,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	isPbsLauncher bool,
 	labelMode *string,
 	disabledNodes []string,
-) (*launcher.Manifest, string, string, error) {
+) (*launcher.Manifest, string, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
 	 * container as.  Eventually, the impersonated user will likely come from the
@@ -155,7 +155,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	mounts, userWantsDirMountedOnTmp, varTmpExists, err := getDataVolumes(t.Mounts)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", "", err
 	}
 
 	// When the container run type is enroot, we need a binding for the
@@ -210,8 +210,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 		dispatcherArchive(ctx, allocationID, t.AgentUserGroup,
 			generateRunDeterminedLinkNames(allArchives), localTmp+"/"), allArchives)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", "", err
 	}
+
+	warning := warnUnsupportedOptions(t, containerRunType)
+
 	pbsProj, slurmProj := t.jobAndProjectLabels(labelMode)
 
 	resources := t.computeResources(ctx, allocationID, tresSupported, numSlots,
@@ -231,7 +234,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	if len(errList) > 0 {
 		ctx.Log().WithField("allocation-id", allocationID).
 			WithError(errList[0]).Error("Forbidden slurm option specified")
-		return nil, "", "", errList[0]
+		return nil, "", "", warning, errList[0]
 	}
 	slurmArgs = append(slurmArgs, slurmProj...)
 	customParams["slurmArgs"] = slurmArgs
@@ -244,7 +247,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	if len(errList) > 0 {
 		ctx.Log().WithField("allocation-id", allocationID).
 			WithError(errList[0]).Error("Forbidden PBS option specified")
-		return nil, "", "", errList[0]
+		return nil, "", "", warning, errList[0]
 	}
 	pbsArgs = append(pbsArgs, pbsProj...)
 	customParams["pbsArgs"] = pbsArgs
@@ -280,7 +283,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
 		slotType, containerRunType, localTmp, t.slotsPerNode(isPbsLauncher))
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", warning, err
 	}
 
 	launchParameters.SetEnvironment(envVars)
@@ -302,7 +305,52 @@ func (t *TaskSpec) ToDispatcherManifest(
 	warehouseMetadata.SetVersion(uuid.NewString())
 	manifest.SetWarehouseMetadata(*warehouseMetadata)
 
-	return &manifest, impersonatedUser, payloadName, err
+	return &manifest, impersonatedUser, payloadName, warning, err
+}
+
+func warnUnsupportedOptions(t *TaskSpec, containerRunType string) string {
+	var warnings []string
+
+	ignored := "is ignored with the HPC launcher"
+	if t.ResourcesConfig.MaxSlots() != nil {
+		warnings = append(warnings, fmt.Sprintf("resources.max_slots %s", ignored))
+	}
+	if t.ResourcesConfig.Priority() != nil {
+		warnings = append(warnings, fmt.Sprintf("resources.priority %s", ignored))
+	}
+	if t.ResourcesConfig.Weight() != 1 {
+		// DAI set default weight value to 1 when not specified
+		warnings = append(warnings, fmt.Sprintf("resources.weight %s", ignored))
+	}
+
+	notSupported := "is not supported with Singularity"
+	if containerRunType == podman {
+		notSupported = "is not supported with Podman"
+	} else if containerRunType == enroot {
+		notSupported = "is not supported with Enroot"
+	}
+	if len(t.ResourcesConfig.Devices()) > 0 {
+		warnings = append(warnings, fmt.Sprintf("resources.devices %s", notSupported))
+	}
+	if t.ResourcesConfig.ShmSize() != nil {
+		warnings = append(warnings, fmt.Sprintf("resources.shm_size %s", notSupported))
+	}
+
+	if t.Environment.RegistryAuth() != nil {
+		if containerRunType == podman {
+			warnings = append(warnings, fmt.Sprintf("resources.registry_auth %s", notSupported))
+		} else {
+			if len(t.Environment.RegistryAuth().ServerAddress) > 0 {
+				warnings = append(warnings,
+					fmt.Sprintf("resources.registry_auth.serveraddress %s", notSupported))
+			}
+			if len(t.Environment.RegistryAuth().Email) > 0 {
+				warnings = append(warnings, fmt.Sprintf("resources.registry_auth.email %s", notSupported))
+			}
+		}
+	}
+
+	return strings.Join(warnings, "\n")
 }
 
 // jobAndProjectLabels returns as command options the strings necessary to label

@@ -996,7 +996,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	}
 
 	// Create the manifest that will be ultimately sent to the launcher.
-	manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
+	manifest, impersonatedUser, payloadName, warning, err := msg.Spec.ToDispatcherManifest(
 		ctx, string(req.AllocationID),
 		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
@@ -1022,6 +1022,13 @@ func (m *dispatcherResourceManager) startLauncherJob(
 				msg.Spec.Owner.Username, msg.Spec.Owner.Username),
 			msg, "")
 		return
+	}
+
+	if len(warning) > 0 {
+		ctx.Tell(msg.TaskActor, sproto.ContainerLog{
+			AuxMessage: &warning,
+			Level:      ptrs.Ptr("WARNING"),
+		})
 	}
 
 	dispatchID, err := m.sendManifestToDispatcher(ctx, manifest, impersonatedUser)
