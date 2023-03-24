@@ -21,8 +21,8 @@ The master supports the following configuration settings:
 
 .. _master-task-container-defaults:
 
--  ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents
-   a single schedulable unit, such as a trial, command, or tensorboard.
+-  ``task_container_defaults``: Specifies defaults for all task containers. A task represents a
+   single schedulable unit, such as a trial, command, or tensorboard.
 
    -  ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers.
       Defaults to ``4294967296``.
@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.20.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.20.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.20.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.0`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.0`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -246,15 +246,15 @@ The master supports the following configuration settings:
 
       -  ``security``: Security-related configuration settings for communicating with the Launcher.
 
-            -  ``tls``: TLS-related configuration settings.
+         -  ``tls``: TLS-related configuration settings.
 
-               -  ``enabled``: Enable TLS.
+            -  ``enabled``: Enable TLS.
 
-               -  ``skip_verify``: Skip server certificate verification.
+            -  ``skip_verify``: Skip server certificate verification.
 
-               -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only
-                  needed if the certificate is not signed by a well-known CA; cannot be specified if
-                  ``skip_verify`` is enabled.
+            -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed
+               if the certificate is not signed by a well-known CA; cannot be specified if
+               ``skip_verify`` is enabled.
 
       -  ``container_run_type``: The type of the container runtime to be used when launching tasks.
          The value may be ``singularity``, ``enroot``, or ``podman``. The default value is
@@ -292,7 +292,7 @@ The master supports the following configuration settings:
          with ``eth`` if one exists, otherwise the IPv4 resolution of the hostname.
 
       -  ``proxy_network_interface``: The interface used to proxy the master for services running on
-         from compute nodes. The interface Defaults to the IPv4 resolution of the hostname.
+         compute nodes. The interface Defaults to the IPv4 resolution of the hostname.
 
       -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
          something other than ``root``. The user must have a home directory with read permissions
@@ -339,13 +339,45 @@ The master supports the following configuration settings:
 
       -  ``partition_overrides``: A map of partition/queue names to partition-level overrides. For
          each configuration, if it is set for a given partition, it overrides the setting at the
-         root level.
+         root level and applies to the resource pool resulting from this partition. Partition names
+         are treated as case-insensitive.
 
-         -  ``rendezvous_network_interface``
-         -  ``proxy_network_interface``
-         -  ``slot_type``
+         -  ``description`` Description of the resource pool
+         -  ``rendezvous_network_interface`` Interface used to bootstrap communication between
+            distributed jobs
+         -  ``proxy_network_interface`` Interface used to proxy the master for services running on
+            compute nodes
+         -  ``slot_type`` Resource type used for tasks
          -  ``task_container_defaults`` (See :ref:`top-level setting
             <master-task-container-defaults>`)
+
+         Each ``partition_overrides`` entry may specify a ``task_container_defaults`` that applies
+         additional defaults on top of the :ref:`top-level task_container_defaults
+         <master-task-container-defaults>` for all tasks launched on that partition. When applying
+         the defaults, individual fields override prior values, and list fields are appended. If the
+         partition is referenced in a custom HPC resource pool, an additional
+         ``task_container_defaults`` may be applied by the resource pool.
+
+         .. code::
+
+            partition_overrides:
+               mlde_cuda:
+                  description: Partition for CUDA jobs (tesla cards only)
+                  slot_type: cuda
+                  task_container_defaults:
+                     dtrain_network_interface: hsn0,hsn1,hsn2,hsn3
+                     slurm:
+                        sbatch_args:
+                           - --cpus-per-gpu=16
+                           - --mem-per-gpu=65536
+                        gpu_type: tesla
+               mlde_cpu:
+                  description: Generic CPU job partition (limited to node001)
+                  slot_type: cpu
+                  task_container_defaults:
+                     slurm:
+                        sbatch_args:
+                              --nodelist=node001
 
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to the Slurm/PBS default
@@ -397,10 +429,10 @@ The master supports the following configuration settings:
       within ``agent_reconnect_wait`` period.
 
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
-      overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
-      in that resource pool. There is no merging behavior; when a resource pool's
-      ``task_container_defaults`` is set, tasks launched in that pool will completely ignore the
-      top-level setting.
+      applies additional defaults on top of the :ref:`top-level setting
+      <master-task-container-defaults>` (and ``partition_overrides`` for Slurm/PBS) for all tasks
+      launched in that resource pool. When applying the defaults, individual fields override prior
+      values, and list fields are appended.
 
    -  ``kubernetes_namespace``: When the Kubernetes resource manager is in use, this specifies a
       `namespace <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`__
@@ -668,28 +700,35 @@ The master supports the following configuration settings:
          Slurm/PBS partition on an HPC cluster. (*Required*)
 
          One resource pool is automatically created for each Slurm partition or PBS queue on an HPC
-         cluster. This provider enables creation of additional resource pools with different
+         cluster. This provider enables the creation of additional resource pools with different
          submission options to those partitions/queues.
 
          -  ``partition``: The target HPC partition where jobs will be launched when using this
-            resource pool. Add ``task_container_defaults`` to to provide a resource pool with
-            additional default options. This can be used to create a resource pool with homogeneous
-            resources when the underlying partition or queue does not. Consider the following:
+            resource pool. Add ``task_container_defaults`` to provide a resource pool with
+            additional default options. The ``task_container_defaults`` from the resource pool are
+            applied after any ``task_container_defaults`` from ``partition_overrides``. When
+            applying the defaults, individual fields override prior values, and list fields are
+            appended. This can be used to create a resource pool with homogeneous resources when the
+            underlying partition or queue does not. Consider the following:
 
          .. code::
 
             resource_pools:
               - pool_name: defq_GPU_tesla
-                description: Lands jobs on defq_GPU with tesla GPU selected
+                description: Lands jobs on defq_GPU with tesla GPU selected, XL675d systems
                 task_container_defaults:
                   slurm:
                     gpu_type: tesla
+                    sbatch_options:
+                      - -CXL675d
                 provider:
                   type: hpc
                   partition: defq_GPU
 
-         In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will executed
-         in the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set.
+         In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be
+         executed in the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and
+         Slurm constraint associated with the feature ``XL675d`` used to identify the model type of
+         the compute node.
 
 -  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
    on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the

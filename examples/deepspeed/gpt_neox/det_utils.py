@@ -5,9 +5,9 @@ import numpy as np
 from attrdict import AttrMap
 from eval_tasks.eval_adapter import run_eval_harness
 from megatron.neox_arguments import NeoXArgs
+from torch.utils.tensorboard import SummaryWriter
 
 from determined.pytorch import MetricReducer, PyTorchCallback
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
 def get_neox_args(context):
@@ -42,8 +42,8 @@ def get_neox_args(context):
 
 
 class TensorboardWriter(PyTorchCallback):
-    def __init__(self, writer: TorchWriter):
-        self.tb_writer = writer.writer
+    def __init__(self, writer: SummaryWriter):
+        self.tb_writer = writer
 
     def on_validation_end(self, metrics):
         self.tb_writer.flush()

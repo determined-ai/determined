@@ -201,13 +201,13 @@ const UserManagement: React.FC = () => {
 
   const handleNameSearchApply = useCallback(
     (name: string) => {
-      updateSettings({ name: name || undefined, row: undefined });
+      updateSettings({ name: name || undefined, row: undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined, row: undefined });
+    updateSettings({ name: undefined, row: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
@@ -241,6 +241,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         filterDropdown: nameFilterSearch,
         filterIcon: filterIcon,
+        isFiltered: (settings: unknown) => !!(settings as UserManagementSettings)?.name,
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
@@ -332,6 +333,9 @@ const UserManagement: React.FC = () => {
               onClick={onClickCreateUser}>
               {CREATE_USER}
             </Button>
+            {settings.name && (
+              <Button onClick={handleNameSearchReset}>{'Clear Filters (1)'}</Button>
+            )}
           </Space>
         }
         title={USER_TITLE}>

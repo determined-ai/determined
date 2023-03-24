@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Union
 
 import numpy as np
@@ -12,7 +13,21 @@ import distutils.version  # isort:skip  # noqa: F401
 from torch.utils.tensorboard import SummaryWriter  # isort:skip
 
 
-class TorchWriter(tensorboard.MetricWriter):
+class _TorchWriter(tensorboard.MetricWriter):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.writer: Any = SummaryWriter(log_dir=tensorboard.get_base_path({}))  # type: ignore
+
+    def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
+        self.writer.add_scalar(name, value, step)
+
+    def reset(self) -> None:
+        # flush AND close the writer so that the next attempt to write will create a new file
+        self.writer.close()
+
+
+class TorchWriter(_TorchWriter):
     """
     TorchWriter uses PyTorch file writers and summary operations to write
     out tfevent files containing scalar batch metrics. It creates
@@ -33,16 +48,25 @@ class TorchWriter(tensorboard.MetricWriter):
 
             def train_batch(self, batch, epoch_idx, batch_idx):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
+
+    .. warning::
+
+        TorchWriter() has been deprecated and will be removed in a future version.
+
+        Users are encouraged to switch to one of the following depending on use case:
+            - Trials Users, see ``determined.pytorch.PyTorchTrialContext.get_tensorboard_writer()``
+            - CoreAPI Users, create a ``torch.utils.tensorboard.SummaryWriter()`` object
+              and pass ``core_context.train.get_tensorboard_path()`` as the log_dir
     """
 
     def __init__(self) -> None:
+        warnings.warn(
+            "TorchWriter() has been deprecated and will be removed in a future version.\n \
+            Users are encouraged to switch to one of the following depending on use case:\n \
+            - Trials Users, see determined.pytorch.PyTorchTrialContext.get_tensorboard_writer()\n \
+            - CoreAPI Users, create a torch.utils.tensorboard.SummaryWriter() object\n \
+              and pass core_context.train.get_tensorboard_path() as the log_dir",
+            FutureWarning,
+            stacklevel=2,
+        )
         super().__init__()
-
-        self.writer: Any = SummaryWriter(log_dir=tensorboard.get_base_path({}))  # type: ignore
-
-    def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
-        self.writer.add_scalar(name, value, step)
-
-    def reset(self) -> None:
-        # flush AND close the writer so that the next attempt to write will create a new file
-        self.writer.close()

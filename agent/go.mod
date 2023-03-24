@@ -25,7 +25,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )

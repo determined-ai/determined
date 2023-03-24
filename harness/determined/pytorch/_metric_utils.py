@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -171,3 +172,39 @@ def _reduce_metrics(
             return {}
 
     return metrics
+
+
+def _log_tb_metrics(
+    writer: Any,
+    metric_type: str,
+    steps_completed: int,
+    metrics: Dict[str, Any],
+    batch_metrics: Optional[List[Dict[str, Any]]] = None,
+) -> None:
+
+    if metric_type == "val":
+        logging.debug("Write validation metrics for TensorBoard")
+    elif metric_type == "train":
+        logging.debug("Write training metrics for TensorBoard")
+    else:
+        logging.warning("Unrecognized tensorboard metric type: " + metric_type, stacklevel=2)
+
+    metrics_seen = set()
+
+    # Log all batch metrics.
+    if batch_metrics:
+        for batch_idx, batch in enumerate(batch_metrics):
+            batches_seen = steps_completed - len(batch_metrics) + batch_idx
+            for name, value in batch.items():
+                if util.is_numerical_scalar(value):
+                    writer.add_scalar("Determined/" + name, value, batches_seen)
+                metrics_seen.add(name)
+
+    # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
+    for name, value in metrics.items():
+        if name in metrics_seen:
+            continue
+        if metric_type == "val" and not name.startswith("val"):
+            name = "val_" + name
+        if util.is_numerical_scalar(value):
+            writer.add_scalar("Determined/" + name, value, steps_completed)

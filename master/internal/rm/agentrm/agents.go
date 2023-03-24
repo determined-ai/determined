@@ -13,10 +13,10 @@ import (
 
 	"github.com/pkg/errors"
 
+	intApi "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/connsave"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -33,8 +33,9 @@ func initializeAgents(
 	system.Ask(agentsRef, actor.Ping{}).Get()
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
-	e.PATCH("/agents*", api.Route(system, nil),
-		echo.MiddlewareFunc(user.GetService().ProcessAuthentication))
+	e.PATCH("/agents*", func(c echo.Context) error {
+		return intApi.ErrAPIRemoved
+	})
 }
 
 type agents struct {

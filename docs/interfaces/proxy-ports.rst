@@ -24,7 +24,7 @@ config, for example:
        - proxy_port: 8265
          proxy_tcp: true
 
-Launch your task or experiment normally. Than, use the ``det`` CLI to start a tunnel. Running the
+Launch your task or experiment normally. Then, use the ``det`` CLI to start a tunnel. Running the
 following command will setup a tunnel proxying ``localhost:8265`` to port ``8265`` in the task
 container.
 

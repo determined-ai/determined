@@ -2078,6 +2078,31 @@ export interface V1DisableAgentResponse {
     agent?: V1Agent;
 }
 /**
+ * Disable the slot.
+ * @export
+ * @interface V1DisableSlotRequest
+ */
+export interface V1DisableSlotRequest {
+    /**
+     * The id of the agent.
+     * @type {string}
+     * @memberof V1DisableSlotRequest
+     */
+    agentId?: string;
+    /**
+     * The id of the slot.
+     * @type {string}
+     * @memberof V1DisableSlotRequest
+     */
+    slotId?: string;
+    /**
+     * If true, wait for running task to finish.
+     * @type {boolean}
+     * @memberof V1DisableSlotRequest
+     */
+    drain?: boolean;
+}
+/**
  * Response to DisableSlotRequest.
  * @export
  * @interface V1DisableSlotResponse
@@ -4578,19 +4603,19 @@ export interface V1LogEntry {
      * @type {string}
      * @memberof V1LogEntry
      */
-    message?: string;
+    message: string;
     /**
      * The timestamp.
      * @type {Date}
      * @memberof V1LogEntry
      */
-    timestamp?: Date;
+    timestamp: Date;
     /**
      * The log level.
      * @type {V1LogLevel}
      * @memberof V1LogEntry
      */
-    level?: V1LogLevel;
+    level: V1LogLevel;
 }
 /**
  * Login the user.
@@ -4695,7 +4720,7 @@ export interface V1MasterLogsResponse {
      * @type {V1LogEntry}
      * @memberof V1MasterLogsResponse
      */
-    logEntry?: V1LogEntry;
+    logEntry: V1LogEntry;
 }
 /**
  * Response to MetricBatchesRequest.
@@ -5629,7 +5654,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -5656,11 +5681,12 @@ export const V1PermissionType = {
     VIEWPROJECT: 'PERMISSION_TYPE_VIEW_PROJECT',
     UPDATEPROJECT: 'PERMISSION_TYPE_UPDATE_PROJECT',
     DELETEPROJECT: 'PERMISSION_TYPE_DELETE_PROJECT',
+    ASSIGNROLES: 'PERMISSION_TYPE_ASSIGN_ROLES',
     VIEWMODELREGISTRY: 'PERMISSION_TYPE_VIEW_MODEL_REGISTRY',
     EDITMODELREGISTRY: 'PERMISSION_TYPE_EDIT_MODEL_REGISTRY',
     CREATEMODELREGISTRY: 'PERMISSION_TYPE_CREATE_MODEL_REGISTRY',
+    UPDATEAGENTS: 'PERMISSION_TYPE_UPDATE_AGENTS',
     UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES',
-    ASSIGNROLES: 'PERMISSION_TYPE_ASSIGN_ROLES',
     EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
 } as const
 export type V1PermissionType = ValueOf<typeof V1PermissionType>
@@ -7406,6 +7432,44 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     setSearcherProgress?: V1SetSearcherProgressOperation;
+}
+/**
+ * 
+ * @export
+ * @interface V1SearchExperimentExperiment
+ */
+export interface V1SearchExperimentExperiment {
+    /**
+     * The experiment in question
+     * @type {V1Experiment}
+     * @memberof V1SearchExperimentExperiment
+     */
+    experiment?: V1Experiment;
+    /**
+     * The best performing trial associated with the experiment
+     * @type {Trialv1Trial}
+     * @memberof V1SearchExperimentExperiment
+     */
+    bestTrial?: Trialv1Trial;
+}
+/**
+ * 
+ * @export
+ * @interface V1SearchExperimentsResponse
+ */
+export interface V1SearchExperimentsResponse {
+    /**
+     * The list of returned experiments.
+     * @type {Array<V1SearchExperimentExperiment>}
+     * @memberof V1SearchExperimentsResponse
+     */
+    experiments: Array<V1SearchExperimentExperiment>;
+    /**
+     * Pagination information of the full dataset
+     * @type {V1Pagination}
+     * @memberof V1SearchExperimentsResponse
+     */
+    pagination: V1Pagination;
 }
 /**
  * 
@@ -9899,10 +9963,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling disableSlot.');
@@ -9910,6 +9975,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             // verify required parameter 'slotId' is not null or undefined
             if (slotId === null || slotId === undefined) {
                 throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling disableSlot.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling disableSlot.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
@@ -9927,10 +9996,13 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             localVarUrlObj.search = null;
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: url.format(localVarUrlObj),
@@ -10293,13 +10365,25 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options: any = {}): FetchArgs {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options: any = {}): FetchArgs {
+            // verify required parameter 'startDate' is not null or undefined
+            if (startDate === null || startDate === undefined) {
+                throw new RequiredError('startDate','Required parameter startDate was null or undefined when calling resourceAllocationAggregated.');
+            }
+            // verify required parameter 'endDate' is not null or undefined
+            if (endDate === null || endDate === undefined) {
+                throw new RequiredError('endDate','Required parameter endDate was null or undefined when calling resourceAllocationAggregated.');
+            }
+            // verify required parameter 'period' is not null or undefined
+            if (period === null || period === undefined) {
+                throw new RequiredError('period','Required parameter period was null or undefined when calling resourceAllocationAggregated.');
+            }
             const localVarPath = `/api/v1/resources/allocation/aggregated`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -10339,12 +10423,20 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options: any = {}): FetchArgs {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options: any = {}): FetchArgs {
+            // verify required parameter 'timestampAfter' is not null or undefined
+            if (timestampAfter === null || timestampAfter === undefined) {
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling resourceAllocationRaw.');
+            }
+            // verify required parameter 'timestampBefore' is not null or undefined
+            if (timestampBefore === null || timestampBefore === undefined) {
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling resourceAllocationRaw.');
+            }
             const localVarPath = `/api/v1/resources/allocation/raw`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -10411,11 +10503,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, options);
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10606,13 +10699,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated(startDate, endDate, period, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10627,12 +10720,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10669,11 +10762,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
+         * @param {V1DisableSlotRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).disableSlot(agentId, slotId, options)(fetch, basePath);
+        disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any) {
+            return ClusterApiFp(configuration).disableSlot(agentId, slotId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -10774,24 +10868,24 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Get an aggregated view of resource allocation during the given time period.
-         * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-         * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-         * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+         * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+         * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+         * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any) {
+        resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} [timestampAfter] The start of the period to consider.
-         * @param {Date} [timestampBefore] The end of the period to consider.
+         * @param {Date} timestampAfter The start of the period to consider.
+         * @param {Date} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
     }
@@ -10822,12 +10916,13 @@ export class ClusterApi extends BaseAPI {
      * @summary Disable the slot.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
+     * @param {V1DisableSlotRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public disableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, options)(this.fetch, this.basePath)
+    public disableSlot(agentId: string, slotId: string, body: V1DisableSlotRequest, options?: any) {
+        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -10947,27 +11042,27 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Get an aggregated view of resource allocation during the given time period.
-     * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
-     * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
-     * @param {V1ResourceAllocationAggregationPeriod} [period] The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
+     * @param {string} startDate The first day to consider (the exact time is midnight UTC at the beginning of the day).
+     * @param {string} endDate The last day to consider (the exact time is midnight UTC at the end of the day).
+     * @param {V1ResourceAllocationAggregationPeriod} period The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationAggregated(startDate?: string, endDate?: string, period?: V1ResourceAllocationAggregationPeriod, options?: any) {
+    public resourceAllocationAggregated(startDate: string, endDate: string, period: V1ResourceAllocationAggregationPeriod, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationAggregated(startDate, endDate, period, options)(this.fetch, this.basePath)
     }
     
     /**
      * 
      * @summary Get a detailed view of resource allocation during the given time period.
-     * @param {Date} [timestampAfter] The start of the period to consider.
-     * @param {Date} [timestampBefore] The end of the period to consider.
+     * @param {Date} timestampAfter The start of the period to consider.
+     * @param {Date} timestampBefore The end of the period to consider.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+    public resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath)
     }
     
@@ -12586,6 +12681,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments-search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial's id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -13338,6 +13479,27 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial's id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -13723,6 +13885,18 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
             return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -14123,6 +14297,20 @@ export class ExperimentsApi extends BaseAPI {
      */
     public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get experiments with grouping and search syntax
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15720,6 +15908,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/experiments-search`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -16666,6 +16900,27 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -17145,6 +17400,18 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiments with grouping and search syntax
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -17661,6 +17928,20 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get experiments with grouping and search syntax
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public searchExperiments(projectId?: number, offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -2213,6 +2213,48 @@ class v1DisableAgentResponse:
             out["agent"] = None if self.agent is None else self.agent.to_json(omit_unset)
         return out
 
+class v1DisableSlotRequest:
+    agentId: "typing.Optional[str]" = None
+    drain: "typing.Optional[bool]" = None
+    slotId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        drain: "typing.Union[bool, None, Unset]" = _unset,
+        slotId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(drain, Unset):
+            self.drain = drain
+        if not isinstance(slotId, Unset):
+            self.slotId = slotId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DisableSlotRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "drain" in obj:
+            kwargs["drain"] = obj["drain"]
+        if "slotId" in obj:
+            kwargs["slotId"] = obj["slotId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "drain" in vars(self):
+            out["drain"] = self.drain
+        if not omit_unset or "slotId" in vars(self):
+            out["slotId"] = self.slotId
+        return out
+
 class v1DisableSlotResponse:
     slot: "typing.Optional[v1Slot]" = None
 
@@ -5696,49 +5738,37 @@ class v1ListRolesResponse:
         return out
 
 class v1LogEntry:
-    level: "typing.Optional[v1LogLevel]" = None
-    message: "typing.Optional[str]" = None
-    timestamp: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: int,
-        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
-        message: "typing.Union[str, None, Unset]" = _unset,
-        timestamp: "typing.Union[str, None, Unset]" = _unset,
+        level: "v1LogLevel",
+        message: str,
+        timestamp: str,
     ):
         self.id = id
-        if not isinstance(level, Unset):
-            self.level = level
-        if not isinstance(message, Unset):
-            self.message = message
-        if not isinstance(timestamp, Unset):
-            self.timestamp = timestamp
+        self.level = level
+        self.message = message
+        self.timestamp = timestamp
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LogEntry":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
+            "level": v1LogLevel(obj["level"]),
+            "message": obj["message"],
+            "timestamp": obj["timestamp"],
         }
-        if "level" in obj:
-            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
-        if "message" in obj:
-            kwargs["message"] = obj["message"]
-        if "timestamp" in obj:
-            kwargs["timestamp"] = obj["timestamp"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
+            "level": self.level.value,
+            "message": self.message,
+            "timestamp": self.timestamp,
         }
-        if not omit_unset or "level" in vars(self):
-            out["level"] = None if self.level is None else self.level.value
-        if not omit_unset or "message" in vars(self):
-            out["message"] = self.message
-        if not omit_unset or "timestamp" in vars(self):
-            out["timestamp"] = self.timestamp
         return out
 
 class v1LogLevel(enum.Enum):
@@ -5841,29 +5871,25 @@ class v1MarkAllocationResourcesDaemonRequest:
         return out
 
 class v1MasterLogsResponse:
-    logEntry: "typing.Optional[v1LogEntry]" = None
 
     def __init__(
         self,
         *,
-        logEntry: "typing.Union[v1LogEntry, None, Unset]" = _unset,
+        logEntry: "v1LogEntry",
     ):
-        if not isinstance(logEntry, Unset):
-            self.logEntry = logEntry
+        self.logEntry = logEntry
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MasterLogsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "logEntry": v1LogEntry.from_json(obj["logEntry"]),
         }
-        if "logEntry" in obj:
-            kwargs["logEntry"] = v1LogEntry.from_json(obj["logEntry"]) if obj["logEntry"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "logEntry": self.logEntry.to_json(omit_unset),
         }
-        if not omit_unset or "logEntry" in vars(self):
-            out["logEntry"] = None if self.logEntry is None else self.logEntry.to_json(omit_unset)
         return out
 
 class v1MetricBatchesResponse:
@@ -7137,11 +7163,12 @@ class v1PermissionType(enum.Enum):
     PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
     PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
     PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
+    PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
     PERMISSION_TYPE_VIEW_MODEL_REGISTRY = "PERMISSION_TYPE_VIEW_MODEL_REGISTRY"
     PERMISSION_TYPE_EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
     PERMISSION_TYPE_CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
+    PERMISSION_TYPE_UPDATE_AGENTS = "PERMISSION_TYPE_UPDATE_AGENTS"
     PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
-    PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
     PERMISSION_TYPE_EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
 
 class v1PostAllocationProxyAddressRequest:
@@ -9139,6 +9166,66 @@ class v1ScopeTypeMask:
             out["cluster"] = self.cluster
         if not omit_unset or "workspace" in vars(self):
             out["workspace"] = self.workspace
+        return out
+
+class v1SearchExperimentExperiment:
+    bestTrial: "typing.Optional[trialv1Trial]" = None
+    experiment: "typing.Optional[v1Experiment]" = None
+
+    def __init__(
+        self,
+        *,
+        bestTrial: "typing.Union[trialv1Trial, None, Unset]" = _unset,
+        experiment: "typing.Union[v1Experiment, None, Unset]" = _unset,
+    ):
+        if not isinstance(bestTrial, Unset):
+            self.bestTrial = bestTrial
+        if not isinstance(experiment, Unset):
+            self.experiment = experiment
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentExperiment":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "bestTrial" in obj:
+            kwargs["bestTrial"] = trialv1Trial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
+        if "experiment" in obj:
+            kwargs["experiment"] = v1Experiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "bestTrial" in vars(self):
+            out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
+        if not omit_unset or "experiment" in vars(self):
+            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
+        return out
+
+class v1SearchExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        experiments: "typing.Sequence[v1SearchExperimentExperiment]",
+        pagination: "v1Pagination",
+    ):
+        self.experiments = experiments
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experiments": [v1SearchExperimentExperiment.from_json(x) for x in obj["experiments"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experiments": [x.to_json(omit_unset) for x in self.experiments],
+            "pagination": self.pagination.to_json(omit_unset),
+        }
         return out
 
 class v1SearchRolesAssignableToScopeRequest:
@@ -12489,6 +12576,7 @@ def post_DisableSlot(
     session: "api.Session",
     *,
     agentId: str,
+    body: "v1DisableSlotRequest",
     slotId: str,
 ) -> "v1DisableSlotResponse":
     _params = None
@@ -12496,7 +12584,7 @@ def post_DisableSlot(
         method="POST",
         path=f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -12994,14 +13082,17 @@ def get_GetHPImportance(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetHPImportance",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetHPImportanceResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetHPImportance",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetHPImportanceResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetHPImportance", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetHPImportance", _resp)
 
@@ -13836,14 +13927,17 @@ def get_GetTrialProfilerAvailableSeries(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerAvailableSeries",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerAvailableSeries",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerAvailableSeriesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerAvailableSeries", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerAvailableSeries", _resp)
 
@@ -13875,14 +13969,17 @@ def get_GetTrialProfilerMetrics(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_GetTrialProfilerMetrics",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrialProfilerMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrialProfilerMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
 
@@ -14468,14 +14565,17 @@ def get_MasterLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MasterLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MasterLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MasterLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MasterLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MasterLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MasterLogs", _resp)
 
@@ -14503,14 +14603,17 @@ def get_MetricBatches(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricBatches",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricBatchesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricBatches",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricBatchesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricBatches", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricBatches", _resp)
 
@@ -14534,14 +14637,17 @@ def get_MetricNames(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_MetricNames",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1MetricNamesResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_MetricNames",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1MetricNamesResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_MetricNames", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_MetricNames", _resp)
 
@@ -15309,13 +15415,13 @@ def post_ResetUserSetting(
 def get_ResourceAllocationAggregated(
     session: "api.Session",
     *,
-    endDate: "typing.Optional[str]" = None,
-    period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
-    startDate: "typing.Optional[str]" = None,
+    endDate: str,
+    period: "v1ResourceAllocationAggregationPeriod",
+    startDate: str,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
-        "period": period.value if period is not None else None,
+        "period": period.value,
         "startDate": startDate,
     }
     _resp = session._do_request(
@@ -15335,8 +15441,8 @@ def get_ResourceAllocationAggregated(
 def get_ResourceAllocationRaw(
     session: "api.Session",
     *,
-    timestampAfter: "typing.Optional[str]" = None,
-    timestampBefore: "typing.Optional[str]" = None,
+    timestampAfter: str,
+    timestampBefore: str,
 ) -> "v1ResourceAllocationRawResponse":
     _params = {
         "timestampAfter": timestampAfter,
@@ -15355,6 +15461,32 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def get_SearchExperiments(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+) -> "v1SearchExperimentsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments-search",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchExperiments", _resp)
 
 def post_SearchRolesAssignableToScope(
     session: "api.Session",
@@ -15558,14 +15690,17 @@ def get_TaskLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogs", _resp)
 
@@ -15589,14 +15724,17 @@ def get_TaskLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TaskLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TaskLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TaskLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TaskLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TaskLogsFields", _resp)
 
@@ -15662,14 +15800,17 @@ def get_TrialLogs(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogs",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogs",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogs", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogs", _resp)
 
@@ -15693,14 +15834,17 @@ def get_TrialLogsFields(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialLogsFields",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialLogsFields",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialLogsFieldsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialLogsFields", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialLogsFields", _resp)
 
@@ -15736,14 +15880,17 @@ def get_TrialsSample(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSample",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSampleResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSample",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSampleResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSample", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSample", _resp)
 
@@ -15775,14 +15922,17 @@ def get_TrialsSnapshot(
         stream=True,
     )
     if _resp.status_code == 200:
-        for _line in _resp.iter_lines():
-            _j = json.loads(_line)
-            if "error" in _j:
-                raise APIHttpStreamError(
-                    "get_TrialsSnapshot",
-                    runtimeStreamError.from_json(_j["error"])
-            )
-            yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        try:
+            for _line in _resp.iter_lines():
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_TrialsSnapshot",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1TrialsSnapshotResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_TrialsSnapshot", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_TrialsSnapshot", _resp)
 
@@ -15970,5 +16120,6 @@ Paginated = typing.Union[
     v1GetWorkspaceProjectsResponse,
     v1GetWorkspacesResponse,
     v1ListRolesResponse,
+    v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
 ]

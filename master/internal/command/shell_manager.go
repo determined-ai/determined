@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -68,7 +69,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 
 	case echo.Context:
-		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, api.ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

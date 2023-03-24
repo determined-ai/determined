@@ -24,7 +24,16 @@ language = "en"
 source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
-html_css_files = ["styles/determined.css"]
+html_css_files = [
+    "styles/determined.css",
+    "styles/docsearch.sbt.css",
+    "https://cdn.jsdelivr.net/npm/@docsearch/css@3",
+]
+
+html_js_files = [
+    ("https://cdn.jsdelivr.net/npm/@docsearch/js@3", {"defer": "defer"}),
+    ("scripts/docsearch.sbt.js", {"defer": "defer"}),
+]
 
 
 def env_get_outdated(app, env, added, changed, removed):
@@ -42,6 +51,7 @@ exclude_patterns = [
     "examples",
     "requirements.txt",
     "site",
+    "README.md",
     "release-notes/README.md",
 ]
 html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.

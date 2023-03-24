@@ -153,7 +153,6 @@ def make_default_env_context(
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        det_trial_unique_port_offset=0,
         det_trial_id="1",
         det_experiment_id="1",
         det_agent_id="1",
@@ -253,7 +252,8 @@ def make_trial_controller_from_trial_implementation(
     )
 
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    core_context = core._dummy_init(storage_manager=storage_manager)
+    tbd_path = pathlib.Path(os.path.join("/tmp", "tensorboard"))
+    core_context = core._dummy_init(storage_manager=storage_manager, tensorboard_path=tbd_path)
 
     distributed_backend = det._DistributedBackend()
 

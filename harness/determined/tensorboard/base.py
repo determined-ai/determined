@@ -134,7 +134,7 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
         logging.warning("TensorFlow writer not found")
         from determined.tensorboard.metric_writers import pytorch
 
-        writer = pytorch.TorchWriter()
+        writer = pytorch._TorchWriter()
 
     return tensorboard.BatchMetricWriter(writer)
 
