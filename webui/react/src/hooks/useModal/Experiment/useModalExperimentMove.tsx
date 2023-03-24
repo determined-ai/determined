@@ -96,12 +96,19 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true }]}>
           <Select
+            filterOption={(input, option) =>
+              (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+            }
             id="workspace"
             placeholder="Select a destination workspace."
             onChange={() => form.resetFields(['projectId'])}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
-                <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
+                <Option
+                  disabled={workspace.archived}
+                  key={workspace.id}
+                  title={workspace.name}
+                  value={workspace.id}>
                   <div className={workspace.archived ? css.optionDisabled : undefined}>
                     <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
                     {workspace.archived && <Icon name="archive" />}
@@ -118,9 +125,17 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             rules={[{ message: 'Project is required', required: true }]}>
             {Loadable.match(projects, {
               Loaded: (projects) => (
-                <Select placeholder="Select a destination project.">
+                <Select
+                  filterOption={(input, option) =>
+                    (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  placeholder="Select a destination project.">
                   {projects.map((project) => (
-                    <Option disabled={project.archived} key={project.id} value={project.id}>
+                    <Option
+                      disabled={project.archived}
+                      key={project.id}
+                      title={project.name}
+                      value={project.id}>
                       <div className={project.archived ? css.optionDisabled : undefined}>
                         <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
                         {project.archived && <Icon name="archive" />}
