@@ -61,6 +61,7 @@
    :caption: Tools
    :hidden:
 
+   Overview <interfaces/index>
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>
