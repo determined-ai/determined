@@ -91,7 +91,7 @@ def main(
     # We simply have to loop over our data iterator, and feed the inputs to the
     # network and optimize.
 
-    steps_completed = 0
+    steps_completed = 1
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for data in trainloader:
