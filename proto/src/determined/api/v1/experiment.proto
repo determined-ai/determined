@@ -203,6 +203,36 @@ message ActivateExperimentRequest {
 // Response to ActivateExperimentRequest.
 message ActivateExperimentResponse {}
 
+// Message for results of individual experiments in a multi-experiment action.
+message ExperimentActionResult {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "error", "id" ] }
+  };
+  // Optional error message.
+  string error = 1;
+  // Experiment ID.
+  int32 id = 2;
+}
+
+// Activate multiple experiments.
+message ActivateExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Select experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to ActivateExperimentsRequest.
+message ActivateExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
+
 // Pause an experiment.
 message PauseExperimentRequest {
   // The experiment id.
@@ -210,6 +240,25 @@ message PauseExperimentRequest {
 }
 // Response to PauseExperimentRequest.
 message PauseExperimentResponse {}
+
+// Pause multiple experiments.
+message PauseExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to PauseExperimentsRequest.
+message PauseExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
 
 // Cancel an experiment.
 message CancelExperimentRequest {
@@ -219,6 +268,25 @@ message CancelExperimentRequest {
 // Response to CancelExperimentRequest.
 message CancelExperimentResponse {}
 
+// Cancel multiple experiments.
+message CancelExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to CancelExperimentsRequest.
+message CancelExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
+
 // Kill an experiment.
 message KillExperimentRequest {
   // The experiment id.
@@ -226,6 +294,25 @@ message KillExperimentRequest {
 }
 // Response to KillExperimentRequest.
 message KillExperimentResponse {}
+
+// Kill multiple experiments.
+message KillExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to KillExperimentsRequest.
+message KillExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
 
 // Archive an experiment.
 message ArchiveExperimentRequest {
@@ -235,6 +322,25 @@ message ArchiveExperimentRequest {
 // Response to ArchiveExperimentRequest.
 message ArchiveExperimentResponse {}
 
+// Archive multiple experiments.
+message ArchiveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to ArchiveExperimentsRequest.
+message ArchiveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
+
 // Unarchive an experiment.
 message UnarchiveExperimentRequest {
   // The experiment id.
@@ -242,6 +348,25 @@ message UnarchiveExperimentRequest {
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
+
+// Unarchive multiple experiments.
+message UnarchiveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids" ] }
+  };
+
+  // Selecting experiments by id.
+  repeated int32 experiment_ids = 1;
+}
+// Response to UnarchiveExperimentsRequest.
+message UnarchiveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
 
 // Patch an experiment by providing the updated attributes. Only description,
 // label, name, and notes fields will be updated through this endpoint, and
@@ -625,6 +750,28 @@ message MoveExperimentRequest {
 
 // Response to MoveExperimentRequest.
 message MoveExperimentResponse {}
+
+// Request to move an experiment into a project.
+message MoveExperimentsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "destination_project_id", "experiment_ids" ] }
+  };
+
+  // The ids of the experiments being moved.
+  repeated int32 experiment_ids = 1;
+  // The id of the new parent project.
+  int32 destination_project_id = 2;
+}
+
+// Response to MoveExperimentsRequest.
+message MoveExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
 
 // Request to get model definition file tree of an experiment.
 message GetModelDefTreeRequest {

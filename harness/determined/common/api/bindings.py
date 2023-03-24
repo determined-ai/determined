@@ -565,6 +565,50 @@ class v1AckAllocationPreemptionSignalRequest:
         }
         return out
 
+class v1ActivateExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ActivateExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1ActivateExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ActivateExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1ActivityType(enum.Enum):
     ACTIVITY_TYPE_UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
     ACTIVITY_TYPE_GET = "ACTIVITY_TYPE_GET"
@@ -1013,6 +1057,50 @@ class v1AllocationWaitingRequest:
             out["allocationId"] = self.allocationId
         return out
 
+class v1ArchiveExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1ArchiveExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1AssignRolesRequest:
     groupRoleAssignments: "typing.Optional[typing.Sequence[v1GroupRoleAssignment]]" = None
     userRoleAssignments: "typing.Optional[typing.Sequence[v1UserRoleAssignment]]" = None
@@ -1188,6 +1276,50 @@ class v1AwsCustomTag:
         out: "typing.Dict[str, typing.Any]" = {
             "key": self.key,
             "value": self.value,
+        }
+        return out
+
+class v1CancelExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1CancelExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CancelExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -2591,6 +2723,32 @@ class v1Experiment:
             out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
+        return out
+
+class v1ExperimentActionResult:
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
         return out
 
 class v1ExperimentInactive:
@@ -5223,6 +5381,50 @@ class v1KillCommandResponse:
             out["command"] = None if self.command is None else self.command.to_json(omit_unset)
         return out
 
+class v1KillExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1KillExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1KillNotebookResponse:
     notebook: "typing.Optional[v1Notebook]" = None
 
@@ -6239,6 +6441,54 @@ class v1MoveExperimentRequest:
         }
         return out
 
+class v1MoveExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        destinationProjectId: int,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.destinationProjectId = destinationProjectId
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": obj["destinationProjectId"],
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": self.destinationProjectId,
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1MoveExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1MoveModelRequest:
 
     def __init__(
@@ -7099,6 +7349,50 @@ class v1PatchWorkspaceResponse:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "workspace": self.workspace.to_json(omit_unset),
+        }
+        return out
+
+class v1PauseExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1PauseExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -11322,6 +11616,50 @@ class v1TriggerType(enum.Enum):
     TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
 
+class v1UnarchiveExperimentsRequest:
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+        }
+        return out
+
+class v1UnarchiveExperimentsResponse:
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1UpdateGroupRequest:
     addUsers: "typing.Optional[typing.Sequence[int]]" = None
     name: "typing.Optional[str]" = None
@@ -11924,6 +12262,26 @@ def post_ActivateExperiment(
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
 
+def post_ActivateExperiments(
+    session: "api.Session",
+    *,
+    body: "v1ActivateExperimentsRequest",
+) -> "v1ActivateExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/activate",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ActivateExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ActivateExperiments", _resp)
+
 def post_AddProjectNote(
     session: "api.Session",
     *,
@@ -12093,6 +12451,26 @@ def post_ArchiveExperiment(
         return
     raise APIHttpError("post_ArchiveExperiment", _resp)
 
+def post_ArchiveExperiments(
+    session: "api.Session",
+    *,
+    body: "v1ArchiveExperimentsRequest",
+) -> "v1ArchiveExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/archive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ArchiveExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ArchiveExperiments", _resp)
+
 def post_ArchiveModel(
     session: "api.Session",
     *,
@@ -12192,6 +12570,26 @@ def post_CancelExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CancelExperiment", _resp)
+
+def post_CancelExperiments(
+    session: "api.Session",
+    *,
+    body: "v1CancelExperimentsRequest",
+) -> "v1CancelExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/cancel",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CancelExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_CancelExperiments", _resp)
 
 def get_CompareTrials(
     session: "api.Session",
@@ -14302,6 +14700,26 @@ def post_KillExperiment(
         return
     raise APIHttpError("post_KillExperiment", _resp)
 
+def post_KillExperiments(
+    session: "api.Session",
+    *,
+    body: "v1KillExperimentsRequest",
+) -> "v1KillExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/kill",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1KillExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillExperiments", _resp)
+
 def post_KillNotebook(
     session: "api.Session",
     *,
@@ -14672,6 +15090,26 @@ def post_MoveExperiment(
         return
     raise APIHttpError("post_MoveExperiment", _resp)
 
+def post_MoveExperiments(
+    session: "api.Session",
+    *,
+    body: "v1MoveExperimentsRequest",
+) -> "v1MoveExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1MoveExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_MoveExperiments", _resp)
+
 def post_MoveModel(
     session: "api.Session",
     *,
@@ -14901,6 +15339,26 @@ def post_PauseExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
+
+def post_PauseExperiments(
+    session: "api.Session",
+    *,
+    body: "v1PauseExperimentsRequest",
+) -> "v1PauseExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/pause",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PauseExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_PauseExperiments", _resp)
 
 def post_PinWorkspace(
     session: "api.Session",
@@ -15955,6 +16413,26 @@ def post_UnarchiveExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveExperiment", _resp)
+
+def post_UnarchiveExperiments(
+    session: "api.Session",
+    *,
+    body: "v1UnarchiveExperimentsRequest",
+) -> "v1UnarchiveExperimentsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments/unarchive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1UnarchiveExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("post_UnarchiveExperiments", _resp)
 
 def post_UnarchiveModel(
     session: "api.Session",

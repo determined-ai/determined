@@ -39,6 +39,7 @@ import (
 	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -241,6 +242,7 @@ resources:
 	}
 
 	createReq.ProjectId = 1
+
 	resp, err = api.CreateExperiment(ctx, createReq)
 	require.NoError(t, err)
 
@@ -754,14 +756,16 @@ func TestAuthZGetExperiments(t *testing.T) {
 	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).
 		Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
-	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA}).
 		Return(nil, expectedErr).Once()
 	_, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, expectedErr, err)
 
 	// Filter only to only one experiment ID.
 	resQuery := &bun.SelectQuery{}
-	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
 		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("e.id = ?", exp0.ID)
@@ -895,10 +899,16 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
-	cases := []struct {
+	caseIndividualCalls := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error
 	}{
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
 		{"CanDeleteExperiment", func(id int) error {
 			_, err := api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{
 				ExperimentId: int32(id),
@@ -908,42 +918,6 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetExperimentValidationHistory(ctx,
 				&apiv1.GetExperimentValidationHistoryRequest{ExperimentId: int32(id)})
-			return err
-		}},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{
-				Id: int32(id),
-			})
-			return err
-		}},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.PauseExperiment(ctx, &apiv1.PauseExperimentRequest{
-				Id: int32(id),
-			})
-			return err
-		}},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.CancelExperiment(ctx, &apiv1.CancelExperimentRequest{
-				Id: int32(id),
-			})
-			return err
-		}},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.KillExperiment(ctx, &apiv1.KillExperimentRequest{
-				Id: int32(id),
-			})
-			return err
-		}},
-		{"CanEditExperimentsMetadata", func(id int) error {
-			_, err := api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{
-				Id: int32(id),
-			})
-			return err
-		}},
-		{"CanEditExperimentsMetadata", func(id int) error {
-			_, err := api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
-				Id: int32(id),
-			})
 			return err
 		}},
 		{"CanEditExperimentsMetadata", func(id int) error {
@@ -1064,7 +1038,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 	}
 
-	for _, curCase := range cases {
+	for _, curCase := range caseIndividualCalls {
 		// Not found returns same as permission denied.
 		require.Equal(t, expNotFoundErr(-999), curCase.IDToReqCall(-999))
 
@@ -1085,5 +1059,146 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())
+	}
+
+	resQuery := &bun.SelectQuery{}
+	caseIndividualThroughBulkCalls := []struct {
+		DenyFuncName string
+		IDToReqCall  func(id int) error
+	}{
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.PauseExperiment(ctx, &apiv1.PauseExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.CancelExperiment(ctx, &apiv1.CancelExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperiment", func(id int) error {
+			_, err := api.KillExperiment(ctx, &apiv1.KillExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) error {
+			_, err := api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) error {
+			_, err := api.UnarchiveExperiment(ctx, &apiv1.UnarchiveExperimentRequest{
+				Id: int32(id),
+			})
+			return err
+		}},
+	}
+	for _, curCase := range caseIndividualThroughBulkCalls {
+		// Return no results, get not-found error.
+		// permissions could be UpdateExperiment or UpdateExperimentMetadata.
+		authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything).
+			Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
+			*resQuery = *q
+		})
+		require.Equal(t, expNotFoundErr(exp.ID), curCase.IDToReqCall(exp.ID))
+
+		// FilterExperimentsQuery error returned unmodified.
+		expectedErr := fmt.Errorf("canGetExperimentError")
+		authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything).
+			Return(resQuery, expectedErr).Once().Run(func(args mock.Arguments) {
+			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
+			*resQuery = *q
+		})
+		require.Equal(t, expectedErr, curCase.IDToReqCall(exp.ID))
+	}
+
+	caseBulkCalls := []struct {
+		DenyFuncName string
+		IDToReqCall  func(id int) ([]*apiv1.ExperimentActionResult, error)
+	}{
+		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.ActivateExperiments(ctx, &apiv1.ActivateExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.PauseExperiments(ctx, &apiv1.PauseExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.CancelExperiments(ctx, &apiv1.CancelExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.KillExperiments(ctx, &apiv1.KillExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.ArchiveExperiments(ctx, &apiv1.ArchiveExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+		{"CanEditExperimentsMetadata", func(id int) ([]*apiv1.ExperimentActionResult, error) {
+			res, err := api.UnarchiveExperiments(ctx, &apiv1.UnarchiveExperimentsRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			if err != nil {
+				return nil, err
+			}
+			return res.Results, err
+		}},
+	}
+	for _, curCase := range caseBulkCalls {
+		// Return no results, get not-found error in results.
+		// permissions could be UpdateExperiment or UpdateExperimentMetadata.
+		authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything).
+			Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
+			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
+			*resQuery = *q
+		})
+		results, _ := curCase.IDToReqCall(exp.ID)
+		require.Equal(t, expNotFoundErr(exp.ID).Error(), results[0].Error)
+
+		// FilterExperimentsQuery error returned unmodified.
+		expectedErr := fmt.Errorf("canGetExperimentError")
+		authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything).
+			Return(resQuery, expectedErr).Once().Run(func(args mock.Arguments) {
+			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
+			*resQuery = *q
+		})
+		_, apiErr := curCase.IDToReqCall(exp.ID)
+		require.Equal(t, expectedErr, apiErr)
 	}
 }
