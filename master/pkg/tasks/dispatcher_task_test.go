@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/docker/docker/api/types"
@@ -19,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -507,6 +509,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 
 	err := etc.SetRootPath("../../static/srv/")
 	assert.NilError(t, err)
+
 	tests := []struct {
 		name                   string
 		containerRunType       string
@@ -527,6 +530,10 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		wantErr                bool
 		wantData               []launcher.Data
 		errorContains          string
+		resourcesConfig        expconf.ResourcesConfig
+		registryAuth           *types.AuthConfig
+		wantWarn               bool
+		warningContains        []string
 	}{
 		{
 			name:             "Test singularity with Slurm",
@@ -673,6 +680,90 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			wantErr:          true,
 			errorContains:    "is not configurable",
 		},
+		{
+			name:             "Test exp config warnings with Singularity",
+			containerRunType: "singularity",
+			resourcesConfig: expconf.ResourcesConfig{
+				RawSlots:          new(int),
+				RawMaxSlots:       new(int),
+				RawSlotsPerTrial:  new(int),
+				RawWeight:         new(float64),
+				RawNativeParallel: new(bool),
+				RawPriority:       new(int),
+				RawShmSize:        new(int),
+				RawResourcePool:   new(string),
+				RawDevices:        []expconf.DeviceV0{{}},
+			},
+			registryAuth: &types.AuthConfig{
+				ServerAddress: "addr",
+				Email:         "email",
+			},
+			slotType: device.CUDA,
+			wantWarn: true,
+			warningContains: []string{
+				"resources.max_slots is ignored with the HPC launcher",
+				"resources.priority is ignored with the HPC launcher",
+				"resources.weight is ignored with the HPC launcher",
+				"resources.devices is not supported with Singularity",
+				"resources.shm_size is not supported with Singularity",
+				"resources.registry_auth.serveraddress is not supported with Singularity",
+				"resources.registry_auth.email is not supported with Singularity",
+			},
+		},
+		{
+			name:             "Test exp config warnings with Podman",
+			containerRunType: "podman",
+			resourcesConfig: expconf.ResourcesConfig{
+				RawSlots:          new(int),
+				RawMaxSlots:       new(int),
+				RawSlotsPerTrial:  new(int),
+				RawWeight:         new(float64),
+				RawNativeParallel: new(bool),
+				RawPriority:       new(int),
+				RawShmSize:        new(int),
+				RawResourcePool:   new(string),
+				RawDevices:        []expconf.DeviceV0{{}},
+			},
+			registryAuth: &types.AuthConfig{},
+			slotType:     device.CUDA,
+			wantWarn:     true,
+			warningContains: []string{
+				"resources.max_slots is ignored with the HPC launcher",
+				"resources.priority is ignored with the HPC launcher",
+				"resources.weight is ignored with the HPC launcher",
+				"resources.devices is not supported with Podman",
+				"resources.shm_size is not supported with Podman",
+				"resources.registry_auth is not supported with Podman",
+			},
+		},
+		{
+			name:             "Test exp config warnings with Enroot",
+			containerRunType: "enroot",
+			resourcesConfig: expconf.ResourcesConfig{
+				RawSlots:          new(int),
+				RawMaxSlots:       new(int),
+				RawSlotsPerTrial:  new(int),
+				RawWeight:         new(float64),
+				RawNativeParallel: new(bool),
+				RawPriority:       new(int),
+				RawShmSize:        new(int),
+				RawResourcePool:   new(string),
+				RawDevices:        []expconf.DeviceV0{{}},
+			},
+			registryAuth: &types.AuthConfig{
+				ServerAddress: "addr",
+			},
+			slotType: device.CUDA,
+			wantWarn: true,
+			warningContains: []string{
+				"resources.max_slots is ignored with the HPC launcher",
+				"resources.priority is ignored with the HPC launcher",
+				"resources.weight is ignored with the HPC launcher",
+				"resources.devices is not supported with Enroot",
+				"resources.shm_size is not supported with Enroot",
+				"resources.registry_auth.serveraddress is not supported with Enroot",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -688,7 +779,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 				},
 				RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{},
 				RawProxyPorts:           &expconf.ProxyPortsConfigV0{},
-				RawRegistryAuth:         &types.AuthConfig{},
+				RawRegistryAuth:         tt.registryAuth,
 				RawForcePullImage:       &disableImageCache,
 				RawPodSpec:              &expconf.PodSpec{},
 				RawAddCapabilities:      []string{},
@@ -709,15 +800,16 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			}
 
 			ts := &TaskSpec{
-				AgentUserGroup: aug,
-				WorkDir:        "/run/determined/workdir",
-				Environment:    environment,
-				PbsConfig:      pbsOpts,
-				SlurmConfig:    slurmOpts,
-				Mounts:         tt.Mounts,
+				AgentUserGroup:  aug,
+				WorkDir:         "/run/determined/workdir",
+				Environment:     environment,
+				PbsConfig:       pbsOpts,
+				SlurmConfig:     slurmOpts,
+				Mounts:          tt.Mounts,
+				ResourcesConfig: schemas.WithDefaults(tt.resourcesConfig),
 			}
 
-			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
+			manifest, userName, payloadName, warn, err := ts.ToDispatcherManifest(
 				ctx,
 				allocationID,
 				"masterHost", 8888, "certName", 16, tt.slotType,
@@ -799,6 +891,12 @@ func Test_ToDispatcherManifest(t *testing.T) {
 
 				if tt.gresSupported == false {
 					assert.Assert(t, gpus == nil)
+				}
+			}
+
+			if tt.wantWarn {
+				for _, want := range tt.warningContains {
+					assert.Assert(t, strings.Contains(warn, want))
 				}
 			}
 		})
