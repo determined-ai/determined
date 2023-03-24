@@ -683,7 +683,8 @@ func (e *experiment) processOperations(
 	for requestID := range updatedTrials {
 		ref := ctx.Child(requestID)
 		if ref == nil {
-			panic(fmt.Sprintf("invalid request ID: %v", requestID))
+			ctx.Log().Infof("invalid request ID: %v", requestID)
+			continue
 		}
 		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
 	}
