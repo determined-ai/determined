@@ -1,6 +1,6 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
-import { LabeledValue, SelectValue } from 'antd/es/select';
+import { SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -288,8 +288,6 @@ const ButtonsSection: React.FC = () => {
 };
 
 const SelectSection: React.FC = () => {
-  const handleFilter = (input: string, option: LabeledValue | undefined) =>
-    !!(option?.label && option.label.toString().includes(input) === true);
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
@@ -414,7 +412,9 @@ const SelectSection: React.FC = () => {
         />
         <strong>Select with tags and custom search</strong>
         <Select
-          filterOption={handleFilter}
+          filterOption={(input, option) =>
+            !!(option?.label && option.label.toString().includes(input) === true)
+          }
           mode="multiple"
           options={[
             { label: 'Case 1', value: 1 },
@@ -430,9 +430,7 @@ const SelectSection: React.FC = () => {
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
           }
-          filterSort={(a: LabeledValue, b: LabeledValue) =>
-            (a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1
-          }
+          filterSort={(a, b) => ((a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1)}
           mode="multiple"
           options={[
             { label: 'Am', value: 1 },
