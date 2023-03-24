@@ -50,7 +50,7 @@ func (s *slotProxy) handlePatchSlotState(
 	ctx *actor.Context, msg patchSlotState,
 ) *model.SlotSummary {
 	agentRef := ctx.Self().Parent().Parent()
-	resp := ctx.Ask(agentRef, msg)
+	resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID})
 	if err := resp.Error(); err != nil {
 		ctx.Respond(err)
 		return nil
