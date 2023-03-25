@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/mathx"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
 // FilterComparison makes you wish for properties in generic structs/interfaces.
