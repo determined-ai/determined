@@ -53,7 +53,7 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   if (isObject(a) && isObject(b))
     return (
       JSON.stringify(a, Object.keys(a as object).sort()) ===
-      JSON.stringify(Object.keys(b as object).sort())
+      JSON.stringify(b, Object.keys(b as object).sort())
     );
   if (isSet(a) && isSet(b)) {
     if (a.size !== b.size) return false;
