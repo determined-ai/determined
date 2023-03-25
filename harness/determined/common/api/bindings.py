@@ -5934,7 +5934,6 @@ class v1MetricType(enum.Enum):
     METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
     METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
-    METRIC_TYPE_GENERIC = "METRIC_TYPE_GENERIC"
 
 class v1Metrics:
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None

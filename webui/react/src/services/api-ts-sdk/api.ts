@@ -4798,7 +4798,7 @@ export interface V1MetricsWorkload {
     totalBatches: number;
 }
 /**
- * To distinguish the different categories of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+ * To distinguish the different categories of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  * @export
  * @enum {string}
  */
@@ -4806,7 +4806,6 @@ export const V1MetricType = {
     UNSPECIFIED: 'METRIC_TYPE_UNSPECIFIED',
     TRAINING: 'METRIC_TYPE_TRAINING',
     VALIDATION: 'METRIC_TYPE_VALIDATION',
-    GENERIC: 'METRIC_TYPE_GENERIC',
 } as const
 export type V1MetricType = ValueOf<typeof V1MetricType>
 /**
@@ -11609,7 +11608,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
@@ -12677,7 +12676,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12986,7 +12985,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
@@ -13441,7 +13440,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13575,7 +13574,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
          * @param {Array<string>} [metricIds] metric ids for the query.
@@ -13841,7 +13840,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13946,7 +13945,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<string>} [metricNames] The names of selected metrics.
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
      * @param {Array<string>} [metricIds] metric ids for the query.
@@ -14254,7 +14253,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<string>} [metricNames] The names of selected metrics.
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -15186,7 +15185,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15349,7 +15348,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -15844,7 +15843,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -15924,7 +15923,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -16508,7 +16507,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16570,7 +16569,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16790,7 +16789,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -16816,7 +16815,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -17116,7 +17115,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -17151,7 +17150,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17272,7 +17271,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
          * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -17289,7 +17288,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -17605,7 +17604,7 @@ export class InternalApi extends BaseAPI {
      * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
      * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -17646,7 +17645,7 @@ export class InternalApi extends BaseAPI {
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -17789,7 +17788,7 @@ export class InternalApi extends BaseAPI {
      * @summary Get a sample of the metrics over time for a sample of the trials.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {number} [maxTrials] Maximum number of trials to fetch data for.
      * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
      * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
@@ -17808,7 +17807,7 @@ export class InternalApi extends BaseAPI {
      * @summary Get a snapshot of a metric across all trials at a certain point of progress.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {number} batchesProcessed The point of progress at which to query metrics.
      * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -24259,7 +24258,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -24366,7 +24365,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -24626,7 +24625,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -24669,7 +24668,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -24781,7 +24780,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -24806,7 +24805,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
          * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -24896,7 +24895,7 @@ export class TrialsApi extends BaseAPI {
      * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
      * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
@@ -24925,7 +24924,7 @@ export class TrialsApi extends BaseAPI {
      * @param {Array<string>} [metricNames] The names of selected metrics.
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_GENERIC: For metrics emitted during any process.
+     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
      * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

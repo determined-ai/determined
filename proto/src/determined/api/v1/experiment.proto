@@ -394,8 +394,6 @@ enum MetricType {
   METRIC_TYPE_TRAINING = 1;
   // For metrics emitted during validation.
   METRIC_TYPE_VALIDATION = 2;
-  // For metrics emitted during any process.
-  METRIC_TYPE_GENERIC = 3;
 }
 
 // Request the milestones (in batches processed) at which a metric is recorded
