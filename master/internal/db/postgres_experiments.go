@@ -842,12 +842,13 @@ func updateProjectHyperparameters(projectID int, experimentID int) error {
 	), agg AS (
 		SELECT array_to_json(array_agg(DISTINCT flatten.data)) AS adata FROM flatten
 	) 
-	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`, experimentID, projectID, projectID).Scan(context.TODO(), &projectIDs)
+	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`,
+		experimentID, projectID, projectID).Scan(context.TODO(), &projectIDs)
 	if err != nil {
 		return err
 	}
 	if len(projectIDs) != 1 {
-		return errors.New("Unexpected error at updating experiment hyperparameters")
+		return errors.New("unexpected error at updating experiment hyperparameters")
 	}
 	return nil
 }
