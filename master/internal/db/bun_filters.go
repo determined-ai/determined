@@ -2,16 +2,14 @@ package db
 
 import (
 	"fmt"
-	"math"
 	"time"
-	"unsafe"
 
+	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
 )
 
 // FilterComparison makes you wish for properties in generic structs/interfaces.
@@ -158,20 +156,18 @@ func ValidateInt32FieldFilterComparison(
 		return nil
 	}
 	if filter.Lt != nil && filter.Lte != nil { //nolint: gocritic
-		maxValue = int32(math.Min(float64(*((*int32)(unsafe.Pointer(filter.Lt)))), //nolint: gosec
-			float64(*((*int32)(unsafe.Pointer(filter.Lte)))))) //nolint: gosec
+		maxValue = mathx.Max(*filter.Lt, *filter.Lte)
 	} else if filter.Lt != nil {
-		maxValue = *((*int32)(unsafe.Pointer(filter.Lt))) //nolint: gosec
+		maxValue = *filter.Lt
 	} else {
-		maxValue = *((*int32)(unsafe.Pointer(filter.Lte))) //nolint: gosec
+		maxValue = *filter.Lte
 	}
 	if filter.Gt != nil && filter.Gte != nil { //nolint: gocritic
-		minValue = int32(math.Max(float64(*((*int32)(unsafe.Pointer(filter.Gt)))), //nolint: gosec
-			float64(*((*int32)(unsafe.Pointer(filter.Gte)))))) //nolint: gosec
+		minValue = mathx.Min(*filter.Gt, *filter.Gte)
 	} else if filter.Gt != nil {
-		minValue = *((*int32)(unsafe.Pointer(filter.Gt))) //nolint: gosec
+		minValue = *filter.Gt
 	} else {
-		minValue = *((*int32)(unsafe.Pointer(filter.Gte))) //nolint: gosec
+		minValue = *filter.Gte
 	}
 	if minValue > maxValue {
 		return fmt.Errorf("invalid range: start value %v cannot be larger than end value %v",
