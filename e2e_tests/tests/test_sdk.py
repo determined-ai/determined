@@ -66,6 +66,9 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
         ).uuid
         == ckpt.uuid
     )
+    assert len(trial.get_checkpoints()) == 1
+    assert trial.get_checkpoints()[0].uuid == ckpt.uuid
+
     assert exp.top_checkpoint().uuid == ckpt.uuid
     assert ckpt.uuid in (c.uuid for c in exp.top_n_checkpoints(100))
     assert client.get_checkpoint(ckpt.uuid).uuid == ckpt.uuid
@@ -81,6 +84,98 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     ckpt.remove_metadata(["newkey"])
     assert "newkey" not in ckpt.metadata
     assert "newkey" not in client.get_checkpoint(ckpt.uuid).metadata
+
+
+@pytest.mark.e2e_cpu
+def test_checkpoint_apis(client: _client.Determined) -> None:
+    with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
+        config = yaml.safe_load(f)
+
+    # Test for 100 batches/checkpoint every 10 = 10 checkpoints.
+    config["min_checkpoint_period"]["batches"] = 10
+    config["min_validation_period"]["batches"] = 10
+    config["checkpoint_storage"] = {}
+    config["checkpoint_storage"]["save_trial_best"] = 10
+
+    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+
+    # Await first trial is safe to call before a trial has started.
+    trial = exp.await_first_trial()
+
+    assert exp.wait() == _client.ExperimentState.COMPLETED
+    trials = exp.get_trials()
+    assert len(trials) == 1, trials
+
+    checkpoints = trial.get_checkpoints()
+    assert len(checkpoints) == 10
+
+    # Validate end (report) time sorting.
+    checkpoints = trial.get_checkpoints(
+        sort_by=_client.CheckpointSortBy.END_TIME, order_by=_client.CheckpointOrderBy.DESC
+    )
+    end_times = [checkpoint.report_time for checkpoint in checkpoints]
+    assert all(x >= y for x, y in zip(end_times, end_times[1:]))  # type: ignore
+
+    # Validate state sorting.
+    checkpoints = trial.get_checkpoints(
+        sort_by=_client.CheckpointSortBy.STATE, order_by=_client.CheckpointOrderBy.ASC
+    )
+    states = [checkpoint.state.value for checkpoint in checkpoints]
+    assert all(x <= y for x, y in zip(states, states[1:]))
+
+    # Validate UUID sorting.
+    checkpoints = trial.get_checkpoints(
+        sort_by=_client.CheckpointSortBy.UUID, order_by=_client.CheckpointOrderBy.ASC
+    )
+    uuids = [checkpoint.uuid for checkpoint in checkpoints]
+    assert all(x <= y for x, y in zip(uuids, uuids[1:]))
+
+    # Validate batch number sorting.
+    checkpoints = trial.get_checkpoints(
+        sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.CheckpointOrderBy.DESC
+    )
+    batch_numbers = [checkpoint.metadata["steps_completed"] for checkpoint in checkpoints]
+    assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
+
+    # Validate metric sorting.
+    checkpoints = trial.get_checkpoints(
+        sort_by="validation_error", order_by=_client.CheckpointOrderBy.ASC
+    )
+    validation_metrics = [
+        checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
+        for checkpoint in checkpoints
+    ]
+    assert all(x <= y for x, y in zip(validation_metrics, validation_metrics[1:]))
+
+    # Expect 10 completed checkpoints.
+    checkpoints = [
+        checkpoint
+        for checkpoint in checkpoints
+        if checkpoint.state == _client.CheckpointState.COMPLETED
+    ]
+    assert len(checkpoints) == 10
+
+    # Delete first checkpoint.
+    deleted_checkpoint = checkpoints[0]
+    checkpoints[0].delete()
+
+    # Wait for status to be DELETED.
+    start = time.time()
+    deadline = start + 30
+    while True:
+        checkpoints = trial.get_checkpoints()
+        checkpoints = [
+            checkpoint
+            for checkpoint in checkpoints
+            if checkpoint.state == _client.CheckpointState.DELETED
+        ]
+        if checkpoints:
+            break
+        assert time.time() < deadline, "experiment took too long to start trials"
+        time.sleep(0.1)
+
+    assert len(checkpoints) == 1
+    assert checkpoints[0].uuid == deleted_checkpoint.uuid
 
 
 def _make_live_experiment(client: _client.Determined) -> _client.ExperimentReference:

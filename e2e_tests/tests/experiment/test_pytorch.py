@@ -3,7 +3,6 @@ from typing import Callable, List
 
 import pytest
 
-from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
 
@@ -45,33 +44,6 @@ def test_pytorch_11_const(
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
-    )
-    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
-    collect_trial_profiles(trial_id)
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize("image_type", ["PT", "TF2"])
-def test_pytorch_load(image_type: str, collect_trial_profiles: Callable[[int], None]) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
-    config = conf.set_profiling_enabled(config)
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "TF2":
-        config = conf.set_tf2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.tutorials_path("mnist_pytorch"), 1
-    )
-
-    (
-        Determined(conf.make_master_url())
-        .get_experiment(experiment_id)
-        .top_checkpoint()
-        .load(map_location="cpu")
     )
     trial_id = exp.experiment_trials(experiment_id)[0].trial.id
     collect_trial_profiles(trial_id)
@@ -165,15 +137,8 @@ def test_pytorch_cifar10_parallel(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch"), 1
     )
-    trials = exp.experiment_trials(experiment_id)
-    (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0].trial.id)
-        .select_checkpoint(latest=True)
-        .load(map_location="cpu")
-    )
-
-    collect_trial_profiles(trials[0].trial.id)
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel
@@ -196,14 +161,8 @@ def test_pytorch_gan_parallel(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("gan_mnist_pytorch"), 1
     )
-    trials = exp.experiment_trials(experiment_id)
-    (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0].trial.id)
-        .select_checkpoint(latest=True)
-        .load(map_location="cpu")
-    )
-    collect_trial_profiles(trials[0].trial.id)
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel

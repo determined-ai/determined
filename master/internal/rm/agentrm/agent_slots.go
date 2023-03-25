@@ -5,9 +5,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -37,14 +34,6 @@ func (s *slots) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	case echo.GET:
 		result := ctx.Ask(ctx.Self().Parent(), model.SlotsSummary{}).Get().(model.SlotsSummary)
 		ctx.Respond(apiCtx.JSON(http.StatusOK, result))
-	case echo.PATCH:
-		patch := patchSlot{}
-		if err := api.BindPatch(&patch, apiCtx); err != nil {
-			ctx.Respond(errors.Wrap(err, "error patching agent"))
-			return
-		}
-		ctx.Tell(ctx.Self().Parent(), patchSlotState{enabled: &patch.Enabled, drain: &patch.Drain})
-		ctx.Respond(apiCtx.NoContent(http.StatusNoContent))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}

@@ -90,7 +90,7 @@ variable "gpu_type" {
 
 variable "gpu_num" {
   type = number
-  default = 8
+  default = 4
 }
 
 variable "min_dynamic_agents" {
@@ -101,11 +101,6 @@ variable "min_dynamic_agents" {
 variable "max_dynamic_agents" {
   type = number
   default = 5
-}
-
-variable "static_agents" {
-  type = number
-  default = 0
 }
 
 variable "preemptible" {

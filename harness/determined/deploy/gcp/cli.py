@@ -379,12 +379,6 @@ args_description = Cmd(
                             help="maximum number of dynamic agent instances at one time",
                         ),
                         Arg(
-                            "--static-agents",
-                            type=int,
-                            default=constants.defaults.STATIC_AGENTS,
-                            help=argparse.SUPPRESS,
-                        ),
-                        Arg(
                             "--min-cpu-platform-master",
                             type=str,
                             default=constants.defaults.MIN_CPU_PLATFORM_MASTER,

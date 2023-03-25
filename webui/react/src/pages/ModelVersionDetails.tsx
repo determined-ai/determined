@@ -128,12 +128,12 @@ const ModelVersionDetails: React.FC = () => {
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
-        const versionResponse = await patchModelVersion({
+        await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
           modelName: modelId,
           versionNum: parseInt(versionNum),
         });
-        setModelVersion(versionResponse);
+        await fetchModelVersion();
       } catch (e) {
         handleError(e, {
           publicSubject: 'Unable to update notes.',
@@ -142,45 +142,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionNum],
-  );
-
-  const saveDescription = useCallback(
-    async (editedDescription: string) => {
-      try {
-        await patchModelVersion({
-          body: { comment: editedDescription, modelName: modelId },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
-  );
-
-  const saveName = useCallback(
-    async (editedName: string) => {
-      try {
-        await patchModelVersion({
-          body: { modelName: modelId, name: editedName },
-          modelName: modelId,
-          versionNum: parseInt(versionNum),
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save name.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    },
-    [modelId, versionNum],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const saveVersionTags = useCallback(
@@ -328,7 +290,7 @@ const ModelVersionDetails: React.FC = () => {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion || !workspace) {
-    return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
+    return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
   return (
@@ -337,10 +299,9 @@ const ModelVersionDetails: React.FC = () => {
       docTitle="Model Version Details"
       headerComponent={
         <ModelVersionHeader
+          fetchModelVersion={fetchModelVersion}
           modelVersion={modelVersion}
           workspace={workspace}
-          onSaveDescription={saveDescription}
-          onSaveName={saveName}
           onUpdateTags={saveVersionTags}
         />
       }

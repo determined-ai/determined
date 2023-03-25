@@ -7,9 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -17,11 +14,6 @@ import (
 
 type slotProxy struct {
 	device device.Device
-}
-
-type patchSlot struct {
-	Enabled bool `json:"enabled"`
-	Drain   bool `json:"drain"`
 }
 
 func (s *slotProxy) Receive(ctx *actor.Context) error {
@@ -39,9 +31,11 @@ func (s *slotProxy) Receive(ctx *actor.Context) error {
 		}
 	case *proto.DisableSlotRequest:
 		enabled := false
-		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID, enabled: &enabled})
+		result := s.handlePatchSlotState(ctx, patchSlotState{
+			id: s.device.ID, enabled: &enabled, drain: &msg.Drain,
+		})
 		if result != nil {
-			ctx.Respond(&proto.EnableSlotResponse{Slot: result.ToProto()})
+			ctx.Respond(&proto.DisableSlotResponse{Slot: result.ToProto()})
 		}
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
@@ -56,7 +50,7 @@ func (s *slotProxy) handlePatchSlotState(
 	ctx *actor.Context, msg patchSlotState,
 ) *model.SlotSummary {
 	agentRef := ctx.Self().Parent().Parent()
-	resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID})
+	resp := ctx.Ask(agentRef, msg)
 	if err := resp.Error(); err != nil {
 		ctx.Respond(err)
 		return nil
@@ -72,19 +66,6 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID})
 		if result != nil {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, result))
-		}
-	case echo.PATCH:
-		patch := patchSlot{}
-		if err := api.BindPatch(&patch, apiCtx); err != nil {
-			ctx.Respond(errors.Wrap(err, "error patching slot"))
-			return
-		}
-		agentRef := ctx.Self().Parent().Parent()
-		resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID, enabled: &patch.Enabled})
-		if err := resp.Error(); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(apiCtx.NoContent(http.StatusNoContent))
 		}
 	default:
 		if ctx.ExpectingResponse() {

@@ -95,5 +95,3 @@
 
 .. autoclass:: determined.TrialInfo
    :members:
-
-yo yo dawg, this is a test :func:`determined.import_from_path`

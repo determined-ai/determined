@@ -2,7 +2,6 @@ package command
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -10,10 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 )
-
-// ErrAPIRemoved is an error to inform the client they are calling an old, removed API.
-var ErrAPIRemoved = errors.New(`the API being called was removed,
-please ensure the client consuming the API is up to date and report a bug if the problem persists`)
 
 const (
 	// CommandActorPath is the path of the actor that manages commands.

@@ -1,0 +1,16 @@
+:orphan:
+
+**Removed Features**
+
+-  The following methods of :class:`~determined.experimental.client.Checkpoint`,
+   :class:`~determined.experimental.client.Model`, and
+   :class:`~determined.experimental.client.ModelVersion` were deprecated in
+   0.17.9 (Feb 2022) and are now removed:
+
+      -  ``Checkpoint.load()``
+      -  ``Checkpoint.load_from_path()``
+      -  ``Checkpoint.parse_metadata()``
+      -  ``Checkpoint.get_type()``
+      -  ``Checkpoint.from_json()``
+      -  ``Model.from_json()``
+      -  ``ModelVersion.from_json()``

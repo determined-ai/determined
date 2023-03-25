@@ -355,10 +355,10 @@ SELECT t.id FROM (
   SELECT t.id,
     %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
   FROM trials t
-  JOIN validations v ON t.id = v.trial_id
+  LEFT JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
   GROUP BY t.id
-  ORDER BY best_metric %s
+  ORDER BY best_metric %s NULLS LAST
   LIMIT $3
 ) t;`, aggregate, order), metric, experimentID, maxTrials)
 	return trials, err
@@ -946,7 +946,10 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
+WHERE state IN (
+	'ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR',
+	'STOPPING_KILLED'
+)`)
 	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
 	} else if err != nil {

@@ -62,6 +62,7 @@ function quickSort<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: 
  * how `null` values are treated.
  */
 Array.prototype.sortAll = function (compareFn) {
+  if (this.length <= 1) return this;
   return quickSort(this, 0, this.length - 1, compareFn);
 };
 

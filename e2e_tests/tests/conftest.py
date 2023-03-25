@@ -37,6 +37,7 @@ _INTEG_MARKERS = {
     "model_hub_mmdetection",
     "deepspeed",
     "managed_devcluster",
+    "port_registry",
 }
 
 

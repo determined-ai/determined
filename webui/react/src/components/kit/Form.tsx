@@ -10,6 +10,8 @@ import React, { FC, ReactNode, Ref } from 'react';
 
 import { Primitive } from 'shared/types';
 
+import css from './Form.module.scss';
+
 type Rules = AntdFormItemProps['rules']; // https://github.com/ant-design/ant-design/issues/39466
 type GridCol = {
   span: number;
@@ -56,6 +58,7 @@ const FormItem: React.FC<FormItemProps> = ({
 
   return (
     <AntdForm.Item
+      className={css.formItem}
       help={validateMessage}
       label={label}
       labelCol={labelCol}

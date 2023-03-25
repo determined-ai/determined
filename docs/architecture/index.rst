@@ -16,6 +16,12 @@ With Determined you can:
 Determined integrates these features into an easy-to-use, high-performance deep learning environment
 so you can spend your time building models instead of managing infrastructure.
 
+.. image:: /assets/images/det-ai-sys-arch-01-start-dark.png
+   :class: only-dark
+
+.. image:: /assets/images/det-ai-sys-arch-01-start-light.png
+   :class: only-light
+
 Learn more:
 
 -  :doc:`Intro to Determined <introduction>`: Conceptual information about Determined including its

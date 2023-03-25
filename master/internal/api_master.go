@@ -6,6 +6,8 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -61,8 +63,13 @@ func (a *apiServer) GetTelemetry(
 func (a *apiServer) GetMasterConfig(
 	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
 ) (*apiv1.GetMasterConfigResponse, error) {
-	if err := userShouldBeAdmin(ctx, a); err != nil {
+	// TODO: migrate to RBAC.
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
 		return nil, err
+	}
+	if !u.Admin {
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	config, err := a.m.config.Printable()
@@ -132,15 +139,15 @@ func (a *apiServer) ResourceAllocationRaw(
 	resp := &apiv1.ResourceAllocationRawResponse{}
 
 	if req.TimestampAfter == nil {
-		return nil, errors.New("no start time provided")
+		return nil, status.Error(codes.InvalidArgument, "no start time provided")
 	}
 	if req.TimestampBefore == nil {
-		return nil, errors.New("no end time provided")
+		return nil, status.Error(codes.InvalidArgument, "no end time provided")
 	}
 	start := time.Unix(req.TimestampAfter.Seconds, int64(req.TimestampAfter.Nanos)).UTC()
 	end := time.Unix(req.TimestampBefore.Seconds, int64(req.TimestampBefore.Nanos)).UTC()
 	if start.After(end) {
-		return nil, errors.New("start time cannot be after end time")
+		return nil, status.Error(codes.InvalidArgument, "start time cannot be after end time")
 	}
 
 	if err := a.m.db.QueryProto(

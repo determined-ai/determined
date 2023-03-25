@@ -109,19 +109,6 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 	return toProtoUserFromFullUser(*user), nil
 }
 
-// TODO remove this eventually since authz replaces this
-// We can't yet since we use it else where.
-func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
-	u, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return err
-	}
-	if !u.Admin {
-		return grpcutil.ErrPermissionDenied
-	}
-	return nil
-}
-
 func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {

@@ -25,7 +25,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
@@ -163,7 +163,7 @@ require (
 	k8s.io/client-go v0.20.14 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
-	mellium.im/sasl v0.3.0 // indirect
+	mellium.im/sasl v0.3.1 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )

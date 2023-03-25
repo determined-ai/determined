@@ -12,6 +12,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/maps"
 	"gopkg.in/inf.v0"
 	k8sV1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -76,10 +77,10 @@ type pods struct {
 	loggingTLSConfig model.TLSClientConfig
 	loggingConfig    model.LoggingConfig
 
-	informer                     *actor.Ref
+	informers                    []*actor.Ref
 	nodeInformer                 *actor.Ref
-	eventListener                *actor.Ref
-	preemptionListener           *actor.Ref
+	eventListeners               []*actor.Ref
+	preemptionListeners          []*actor.Ref
 	resourceRequestQueue         *actor.Ref
 	podNameToPodHandler          map[string]*actor.Ref
 	podNameToResourcePool        map[string]string
@@ -202,8 +203,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 		p.startPodInformer(ctx)
 		p.startNodeInformer(ctx)
-		p.startEventListener(ctx)
-		p.startPreemptionListener(ctx)
+		p.startEventListeners(ctx)
+		p.startPreemptionListeners(ctx)
 
 	case actor.PostStop:
 
@@ -253,16 +254,25 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case actor.ChildFailed:
 		switch msg.Child {
-		case p.informer:
-			return errors.Errorf("pod informer failed")
 		case p.nodeInformer:
 			return errors.Errorf("node informer failed")
-		case p.eventListener:
-			return errors.Errorf("event listener failed")
-		case p.preemptionListener:
-			return errors.Errorf("preemption listener failed")
 		case p.resourceRequestQueue:
 			return errors.Errorf("resource request actor failed")
+		}
+		for _, informer := range p.informers {
+			if msg.Child == informer {
+				return errors.Errorf("pod informer failed")
+			}
+		}
+		for _, preemptionListener := range p.preemptionListeners {
+			if msg.Child == preemptionListener {
+				return errors.Errorf("preemption listener failed")
+			}
+		}
+		for _, eventListener := range p.eventListeners {
+			if msg.Child == eventListener {
+				return errors.Errorf("event listener failed")
+			}
 		}
 
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
@@ -334,17 +344,10 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
 
-	for ns := range p.namespaceToPoolName {
+	for _, ns := range append(maps.Keys(p.namespaceToPoolName), p.namespace) {
 		p.quotaInterfaces[ns] = p.clientSet.CoreV1().ResourceQuotas(ns)
 		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
-	}
-	for _, ns := range []string{metaV1.NamespaceAll, p.namespace} {
-		if _, ok := p.namespaceToPoolName[ns]; !ok {
-			p.quotaInterfaces[ns] = p.clientSet.CoreV1().ResourceQuotas(ns)
-			p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
-			p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
-		}
 	}
 
 	ctx.Log().Infof("kubernetes clientSet initialized")
@@ -389,12 +392,12 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
 	}
 
-	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing pods checking if they can be restored")
 	}
 
-	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
+	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing config maps checking if they can be restored")
 	}
@@ -594,7 +597,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	}
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
+	pods, err := p.listPodsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing pods")
 	}
@@ -638,7 +641,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 		savedPodNames.Insert(pod.Name)
 	}
 
-	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
+	configMaps, err := p.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing config maps")
 	}
@@ -662,26 +665,32 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 }
 
 func (p *pods) startPodInformer(ctx *actor.Context) {
-	p.informer, _ = ctx.ActorOf(
-		"pod-informer",
-		newInformer(p.podInterfaces[metaV1.NamespaceAll], ctx.Self()),
-	)
+	for namespace := range p.namespaceToPoolName {
+		i, _ := ctx.ActorOf("pod-informer-"+namespace,
+			newInformer(p.podInterfaces[namespace], ctx.Self()),
+		)
+		p.informers = append(p.informers, i)
+	}
 }
 
 func (p *pods) startNodeInformer(ctx *actor.Context) {
 	p.nodeInformer, _ = ctx.ActorOf("node-informer", newNodeInformer(p.clientSet, ctx.Self()))
 }
 
-func (p *pods) startEventListener(ctx *actor.Context) {
-	p.eventListener, _ = ctx.ActorOf(
-		"event-listener", newEventListener(p.clientSet, ctx.Self(),
-			set.FromKeys(p.namespaceToPoolName)))
+func (p *pods) startEventListeners(ctx *actor.Context) {
+	for namespace := range p.namespaceToPoolName {
+		l, _ := ctx.ActorOf("event-listener-"+namespace,
+			newEventListener(p.clientSet, ctx.Self(), namespace))
+		p.eventListeners = append(p.eventListeners, l)
+	}
 }
 
-func (p *pods) startPreemptionListener(ctx *actor.Context) {
-	p.preemptionListener, _ = ctx.ActorOf(
-		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self(),
-			set.FromKeys(p.namespaceToPoolName)))
+func (p *pods) startPreemptionListeners(ctx *actor.Context) {
+	for namespace := range p.namespaceToPoolName {
+		l, _ := ctx.ActorOf("preemption-listener-"+namespace,
+			newPreemptionListener(p.clientSet, ctx.Self(), namespace))
+		p.preemptionListeners = append(p.preemptionListeners, l)
+	}
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
@@ -1232,4 +1241,36 @@ func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
 	}
 
 	return result
+}
+
+func (p *pods) listPodsInAllNamespaces(
+	ctx context.Context, opts metaV1.ListOptions,
+) (*k8sV1.PodList, error) {
+	res := &k8sV1.PodList{}
+	for n, i := range p.podInterfaces {
+		pods, err := i.List(ctx, opts)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error listing pods for namespace %s", n)
+		}
+
+		res.Items = append(res.Items, pods.Items...)
+	}
+
+	return res, nil
+}
+
+func (p *pods) listConfigMapsInAllNamespaces(
+	ctx context.Context, opts metaV1.ListOptions,
+) (*k8sV1.ConfigMapList, error) {
+	res := &k8sV1.ConfigMapList{}
+	for n, i := range p.configMapInterfaces {
+		cms, err := i.List(ctx, opts)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error listing config maps for namespace %s", n)
+		}
+
+		res.Items = append(res.Items, cms.Items...)
+	}
+
+	return res, nil
 }

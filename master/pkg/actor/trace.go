@@ -108,6 +108,7 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer, error) {
 // Actors that are too noisy to be worth tracing.
 var noisyActors = []string{
 	"/notify-timer-",
+	"/websocket-",
 }
 
 func isNoisy(sender *Ref) bool {
