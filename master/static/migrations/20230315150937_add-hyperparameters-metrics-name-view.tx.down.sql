@@ -1,3 +1,4 @@
+ALTER TABLE projects DROP COLUMN hyperparameters;
 DROP TABLE exp_metrics_name;
 
 DROP TRIGGER autoupdate_exp_training_metrics_name ON raw_steps;

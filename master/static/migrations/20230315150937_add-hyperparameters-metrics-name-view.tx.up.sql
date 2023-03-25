@@ -1,3 +1,21 @@
+ALTER TABLE public.projects ADD COLUMN hyperparameters jsonb;
+
+WITH recursive flat (project_id, key, value) AS (
+    SELECT project_id, key, value
+    FROM experiments,
+    jsonb_each(config -> 'hyperparameters')
+UNION
+    SELECT f.project_id, concat(f.key, '.', j.key), j.value
+    FROM flat f,
+    jsonb_each(f.value) j
+    WHERE jsonb_typeof(f.value) = 'object' AND f.value -> 'type' IS NULL
+), flatten AS (
+SELECT project_id, array_to_json(array_agg(DISTINCT key)) AS data
+FROM flat
+WHERE value -> 'type' IS NOT NULL
+GROUP BY project_id)
+UPDATE projects SET hyperparameters = flatten.data FROM flatten WHERE flatten.project_id = projects.id;
+
 CREATE TABLE public.exp_metrics_name (
     id SERIAL PRIMARY KEY,
     project_id INT REFERENCES projects(id),

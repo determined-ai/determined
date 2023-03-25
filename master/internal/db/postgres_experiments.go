@@ -816,8 +816,40 @@ func (db *PgDB) AddExperiment(
 		); err != nil {
 			return errors.Wrapf(err, "error inserting experiment config")
 		}
+		if err = updateProjectHyperparameters(experiment.ProjectID, experiment.ID); err != nil {
+			return errors.Wrapf(err, "error updating hyperparameters")
+		}
 		return nil
 	})
+}
+
+func updateProjectHyperparameters(projectID int, experimentID int) error {
+	var projectIDs []int
+	err := Bun().NewRaw(`WITH recursive flat (key, value) AS (
+		SELECT key, value
+		FROM experiments,
+		jsonb_each(config -> 'hyperparameters')
+		WHERE id = ?
+	UNION
+		SELECT concat(f.key, '.', j.key), j.value
+		FROM flat f,
+		jsonb_each(f.value) j
+		WHERE jsonb_typeof(f.value) = 'object' AND f.value -> 'type' IS NULL
+	), flatten AS (
+	SELECT key AS data
+	FROM flat WHERE value -> 'type' IS NOT NULL 
+	UNION SELECT jsonb_array_elements_text(hyperparameters) FROM projects WHERE id = ?
+	), agg AS (
+		SELECT array_to_json(array_agg(DISTINCT flatten.data)) AS adata FROM flatten
+	) 
+	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`, experimentID, projectID, projectID).Scan(context.TODO(), &projectIDs)
+	if err != nil {
+		return err
+	}
+	if len(projectIDs) != 1 {
+		return errors.New("Unexpected error at updating experiment hyperparameters")
+	}
+	return nil
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.

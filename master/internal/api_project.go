@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -61,28 +60,14 @@ func (a *apiServer) getProjectColumnsByID(
 			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
 	}
 	// Get hyperpatameters columns
-	hyperparameters := []struct {
-		Hyperparameters []expconf.Hyperparameters
+	hyperparameters := struct {
+		Hyperparameters []string
 	}{}
 	err := db.Bun().
-		NewSelect().Table("experiments").ColumnExpr("json_build_array(config->'hyperparameters') AS Hyperparameters").Where(
-		"project_id = ?", id).Scan(ctx, &hyperparameters)
+		NewSelect().Table("projects").Column("hyperparameters").Where(
+		"id = ?", id).Scan(ctx, &hyperparameters)
 	if err != nil {
 		return nil, err
-	}
-	hyperparameterMap := make(map[string]string)
-	for _, hps := range hyperparameters {
-		for _, hp := range hps.Hyperparameters {
-			hpf := expconf.FlattenHPs(hp)
-			for k := range hpf {
-				hyperparameterMap[k] = k
-			}
-		}
-	}
-
-	hyperColumns := make([]string, 0)
-	for _, mn := range hyperparameterMap {
-		hyperColumns = append(hyperColumns, mn)
 	}
 
 	// Get metrics columns
@@ -112,7 +97,7 @@ func (a *apiServer) getProjectColumnsByID(
 	}
 
 	return &apiv1.GetProjectColumnsResponse{
-		General: generalColumns, Hyperparameters: hyperColumns, Metrics: metricColumns,
+		General: generalColumns, Hyperparameters: hyperparameters.Hyperparameters, Metrics: metricColumns,
 	}, nil
 }
 
