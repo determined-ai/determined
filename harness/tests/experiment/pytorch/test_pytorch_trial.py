@@ -1,4 +1,5 @@
 # type: ignore
+import importlib
 import os
 import pathlib
 import random
@@ -958,22 +959,35 @@ class TestPyTorchTrial:
 
 
 @pytest.mark.parametrize(
-    "ckpt,istrial,trial_kwargs",
+    "ckpt,istrial,trial_spec,trial_kwargs",
     [
-        ("0.13.13-pytorch-old", False, {}),
-        ("0.13.13-pytorch-flex", True, {}),
-        ("0.17.6-pytorch", True, {}),
-        ("0.17.7-pytorch", True, {}),
-        ("0.20.0-pytorch", True, {}),
-        ("0.21.0-pytorch", True, {"per_slot_batch_size": 4, "lr": 0.001}),
+        ("0.13.13-pytorch-old", False, None, {}),
+        ("0.13.13-pytorch-flex", True, None, {}),
+        ("0.17.6-pytorch", True, None, {}),
+        ("0.17.7-pytorch", True, None, {}),
+        ("0.20.0-pytorch", True, None, {}),
+        ("0.21.0-pytorch", True, None, {"lr": 0.001}),
+        ("0.21.0-pytorch-main", True, "train:OneVarPytorchTrial", {"lr": 0.001}),
+        # Test overriding the class even when the class is auto-importable:
+        ("0.21.0-pytorch", True, "model_def:OneVarPytorchTrial", {"lr": 0.001}),
     ],
 )
 def test_trial_checkpoint_loading(
-    ckpt: str, istrial: bool, trial_kwargs: typing.Dict[str, typing.Any]
+    ckpt: str,
+    istrial: bool,
+    trial_spec: typing.Optional[str],
+    trial_kwargs: typing.Dict[str, typing.Any],
 ):
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt}")
+    trial_class = None
+    if trial_spec:
+        with det.import_from_path(os.path.join(checkpoint_dir, "code")):
+            file, cls = trial_spec.split(":")
+            module = importlib.import_module(file)
+            trial_class = getattr(module, cls)
     trial = pytorch.load_trial_from_checkpoint_path(
         checkpoint_dir,
+        trial_class=trial_class,
         trial_kwargs=trial_kwargs,
         torch_load_kwargs={"map_location": "cpu"},
     )
@@ -981,15 +995,6 @@ def test_trial_checkpoint_loading(
         assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
     else:
         assert isinstance(trial, torch.nn.Module), type(trial)
-
-
-def test_guess_script_importable_name():
-    assert pytorch._guess_script_importable_name("./train.py") == "train"
-    assert pytorch._guess_script_importable_name("./path/to/train.py") == "path.to.train"
-    assert pytorch._guess_script_importable_name("/tmp/train.py") == ""
-    assert pytorch._guess_script_importable_name("../train.py") == ""
-    assert pytorch._guess_script_importable_name("./train") == ""
-    assert pytorch._guess_script_importable_name("./8mile") == ""
 
 
 def amp_metrics_test(trial_class, training_metrics, agg_freq=1):

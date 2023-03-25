@@ -32,12 +32,15 @@ class CheckpointLoadContext(pytorch.PyTorchTrialContext):
        import determined as det
        from determined import pytorch
        from determined.experimental import client
+
        # Download checkpoint and load training code from checkpoint.
        path = client.get_checkpoint(MY_UUID)
        with det.import_from_path(path + "/code/"):
            import my_model_def
+
        # Create CheckpointLoadContext for instantiating trial.
        context = pytorch.CheckpointLoadContext()
+
        # Instantiate trial with context and any other args.
        my_trial = my_model_def.MyTrial(context, ...)
     """
@@ -64,6 +67,7 @@ class CheckpointLoadContext(pytorch.PyTorchTrialContext):
 
 def load_trial_from_checkpoint_path(
     path: str,
+    trial_class: Optional[Type[pytorch.PyTorchTrial]] = None,
     trial_kwargs: Optional[Dict[str, Any]] = None,
     torch_load_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs: Dict[str, Any],
@@ -78,6 +82,8 @@ def load_trial_from_checkpoint_path(
 
     Arguments:
         path (string): Top level directory to load the checkpoint from.
+        trial_class (optional): Provide your PyTorchTrial class to be loaded.  Only necessary if
+            the automatic import logic is insufficient.
         trial_kwargs (optional): Additional keyword arguments to be passed to your PyTorchTrial
             class, in addition to the context, which will always be the first positional parameter.
         torch_load_kwargs (optional): Keyword arguments for ``torch.load``. See documentation for
@@ -174,7 +180,7 @@ def load_trial_from_checkpoint_path(
     if not is_trainer:
         # Indirect usage of the Trainer API should always have experiment_config and hparams set.
         assert experiment_config is not None and hparams is not None
-        trial_cls, trial_context = _load_pytorch_trial_with_shims(
+        trial_class, trial_context = _load_pytorch_trial_with_shims(
             ckpt_dir.joinpath("code"),
             managed_training=False,
             trial_cls_spec=trial_cls_spec,
@@ -183,12 +189,19 @@ def load_trial_from_checkpoint_path(
         )
     else:
         # Users using the Trainer API directly should not have any legacy shims.
-        with det.import_from_path(ckpt_dir.joinpath("code")):
-            trial_cls = load.trial_class_from_entrypoint(trial_cls_spec)  # type: ignore
+        if trial_class is None:
+            try:
+                with det.import_from_path(ckpt_dir.joinpath("code")):
+                    trial_class = load.trial_class_from_entrypoint(trial_cls_spec)  # type: ignore
+            except Exception as e:
+                raise ValueError(
+                    f"Automatic import logic failed to import Trial class as {trial_cls_spec}. "
+                    "You will need to provide your Trial class via the trial_class argument intead."
+                ) from e
         # Load checkpoint without reading anything from the experiment config.
         trial_context = CheckpointLoadContext(hparams, experiment_config)
 
-    trial = trial_cls(trial_context, **trial_kwargs)  # type: ignore
+    trial = trial_class(trial_context, **trial_kwargs)  # type: ignore
 
     checkpoint = torch.load(  # type: ignore
         str(ckpt_dir.joinpath("state_dict.pth")), **torch_load_kwargs
