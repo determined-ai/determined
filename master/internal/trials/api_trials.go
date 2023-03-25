@@ -359,6 +359,7 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 	var queryColumn, orderColumn string
 	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr("validations").
+		ColumnExpr("setseed(1) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
 		ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).
