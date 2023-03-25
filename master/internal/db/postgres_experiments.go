@@ -447,6 +447,7 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
 	startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) (
 	metricMeasurements []MetricMeasurements, err error,
 ) {
+	db.sql.Query("SELECT setseed(1);")
 	rows, err := db.sql.Query(`
 	SELECT * FROM (
 		SELECT	
