@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
-import { PermissionsStore } from 'stores/permissions';
+import permissionStore from 'stores/permissions';
 import usersStore from 'stores/users';
 import {
   DetailedUser,
@@ -106,18 +106,9 @@ const usePermissions = (): PermissionsHook => {
 
   // Loadables keep track of loading status
   // userAssignments and userRoles should always be an array -- empty arrays until loading is complete.
-  const loadableUserAssignments = useObservable<Loadable<UserAssignment[]>>(
-    PermissionsStore.getMyAssignments(),
-  );
-  const userAssignments = Loadable.match(loadableUserAssignments, {
-    Loaded: (uAssignments) => uAssignments,
-    NotLoaded: () => [],
-  });
-  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(PermissionsStore.getMyRoles());
-  const userRoles = Loadable.match(loadableUserRoles, {
-    Loaded: (uRoles) => uRoles,
-    NotLoaded: () => [],
-  });
+  const loadablePermissions = useObservable(permissionStore.permissions);
+  const myAssignments = Loadable.getOrElse([], useObservable(permissionStore.myAssignments));
+  const myRoles = Loadable.getOrElse([], useObservable(permissionStore.myRoles));
 
   const rbacOpts = useMemo(
     () => ({
@@ -125,10 +116,10 @@ const usePermissions = (): PermissionsHook => {
       rbacEnabled,
       rbacReadPermission,
       user,
-      userAssignments,
-      userRoles,
+      userAssignments: myAssignments,
+      userRoles: myRoles,
     }),
-    [rbacAllPermission, rbacEnabled, rbacReadPermission, user, userAssignments, userRoles],
+    [myAssignments, myRoles, rbacAllPermission, rbacEnabled, rbacReadPermission, user],
   );
 
   const permissions = useMemo(
@@ -198,11 +189,9 @@ const usePermissions = (): PermissionsHook => {
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
       loading:
         rbacOpts.rbacEnabled &&
-        (Loadable.isLoading(loadableCurrentUser) ||
-          Loadable.isLoading(loadableUserAssignments) ||
-          Loadable.isLoading(loadableUserRoles)),
+        Loadable.isLoading(Loadable.all([loadableCurrentUser, loadablePermissions])),
     }),
-    [rbacOpts, loadableUserAssignments, loadableUserRoles, loadableCurrentUser],
+    [rbacOpts, loadableCurrentUser, loadablePermissions],
   );
 
   return permissions;

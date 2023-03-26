@@ -15,7 +15,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import authStore from 'stores/auth';
-import { PermissionsStore } from 'stores/permissions';
+import permissionStore from 'stores/permissions';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 
@@ -49,7 +49,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -69,7 +68,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         usersStore.updateCurrentUser(user.id);
         if (rbacEnabled) {
           // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
-          await fetchMyRoles();
+          permissionStore.fetch(canceler.signal);
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
       } catch (e) {
@@ -90,7 +89,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, uiActions, fetchMyRoles, rbacEnabled],
+    [canceler, uiActions, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
