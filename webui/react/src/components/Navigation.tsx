@@ -4,11 +4,11 @@ import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import usersStore from 'stores/users';
 import { useFetchWorkspaces } from 'stores/workspaces';
-import { BrandingType, ResourceType } from 'types';
+import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
 import { Loadable, NotLoaded } from 'utils/loadable';
@@ -26,6 +26,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   useInitApi();
   const { ui } = useUI();
   const canceler = useRef(new AbortController());
+  const info = useObservable(determinedStore.info);
 
   const info = useObservable(determinedStore.info);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);

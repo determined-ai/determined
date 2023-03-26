@@ -1,10 +1,9 @@
+import { useObservable } from 'micro-observables';
 import React from 'react';
 
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { BrandingType } from 'types';
-import { Loadable } from 'utils/loadable';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
 
 import css from './PageMessage.module.scss';
 
@@ -14,7 +13,7 @@ interface Props {
 }
 
 const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   return (
     <Page docTitle={title}>
       <div className={css.base}>

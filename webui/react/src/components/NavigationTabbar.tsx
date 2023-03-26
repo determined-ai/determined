@@ -13,10 +13,9 @@ import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import authStore from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import usersStore from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
-import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -58,7 +57,7 @@ const NavigationTabbar: React.FC = () => {
 
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const { ui } = useUI();
 
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);

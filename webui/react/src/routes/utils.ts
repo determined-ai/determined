@@ -15,7 +15,8 @@ import {
   routeToExternalUrl,
   routeToReactUrl,
 } from 'shared/utils/routes';
-import { BrandingType, CommandTask } from 'types';
+import { BrandingType } from 'stores/determinedInfo';
+import { CommandTask } from 'types';
 import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';

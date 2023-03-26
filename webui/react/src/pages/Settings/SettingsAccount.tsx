@@ -11,7 +11,7 @@ import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import usersStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -43,7 +43,7 @@ const SettingsAccount: React.FC = () => {
   });
   const [isUsernameEditable, setIsUsernameEditable] = useState<boolean>(false);
   const [isDisplaynameEditable, setIsDisplaynameEditable] = useState<boolean>(false);
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
 

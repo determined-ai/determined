@@ -24,10 +24,8 @@ import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import authStore from 'stores/auth';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { BrandingType } from 'types';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import { notification } from 'utils/dialogApi';
-import { Loadable } from 'utils/loadable';
 
 import css from './SignIn.module.scss';
 
@@ -47,7 +45,7 @@ const SignIn: React.FC = () => {
   const location = useLocation();
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');
 

@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -22,10 +22,9 @@ import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
-import usePolling from 'shared/hooks/usePolling';
 import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
-import { fetchDeterminedInfo, initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import usersStore from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
@@ -43,23 +42,16 @@ const AppView: React.FC = () => {
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
   const loadableUser = useObservable(usersStore.getCurrentUser());
-  const infoLoadable = useDeterminedInfo();
-  const info = Loadable.getOrElse(initInfo, infoLoadable);
-  const [canceler] = useState(new AbortController());
+  const loadableInfo = useObservable(determinedStore.loadableInfo);
+  const isServerReachable = useObservable(determinedStore.isServerReachable);
+  const canceler = useRef(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
 
-  const isServerReachable = useMemo(() => {
-    return Loadable.match(infoLoadable, {
-      Loaded: (info) => !!info.clusterId,
-      NotLoaded: () => undefined,
-    });
-  }, [infoLoadable]);
-
-  const fetchUsers = useCallback(() => usersStore.ensureUsersFetched(canceler), [canceler]);
+  const fetchUsers = useCallback(() => usersStore.ensureUsersFetched(canceler.current), []);
   const fetchCurrentUser = useCallback(
-    () => usersStore.ensureCurrentUserFetched(canceler),
-    [canceler],
+    () => usersStore.ensureCurrentUserFetched(canceler.current),
+    [],
   );
 
   useEffect(() => {
@@ -70,9 +62,6 @@ const AppView: React.FC = () => {
   usePageVisibility();
   useRouteTracker();
 
-  // Poll every 10 minutes
-  usePolling(() => fetchDeterminedInfo(canceler), { interval: 600000 });
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
@@ -80,60 +69,64 @@ const AppView: React.FC = () => {
     }
   }, [isAuthenticated, fetchCurrentUser, fetchUsers]);
 
+  useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
+
   useEffect(() => {
     /*
      * Check to make sure the WebUI version matches the platform version.
      * Skip this check for development version.
      */
-
-    if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
-      const btn = (
-        <Button type="primary" onClick={refreshPage}>
-          Update Now
-        </Button>
-      );
-      const message = 'New WebUI Version';
-      const description = (
-        <div>
-          WebUI version <b>v{info.version}</b> is available. Check out what&apos;s new in our&nbsp;
-          <Link external path={paths.docs('/release-notes.html')}>
-            release notes
-          </Link>
-          .
-        </div>
-      );
-      setTimeout(() => {
-        notification.warning({
-          btn,
-          description,
-          duration: 0,
-          key: 'version-mismatch',
-          message,
-          placement: 'bottomRight',
-        });
-      }, 10);
-    }
-  }, [info]);
+    Loadable.quickMatch(loadableInfo, undefined, (info) => {
+      if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
+        const btn = (
+          <Button type="primary" onClick={refreshPage}>
+            Update Now
+          </Button>
+        );
+        const message = 'New WebUI Version';
+        const description = (
+          <div>
+            WebUI version <b>v{info.version}</b> is available. Check out what&apos;s new in
+            our&nbsp;
+            <Link external path={paths.docs('/release-notes.html')}>
+              release notes
+            </Link>
+            .
+          </div>
+        );
+        setTimeout(() => {
+          notification.warning({
+            btn,
+            description,
+            duration: 0,
+            key: 'version-mismatch',
+            message,
+            placement: 'bottomRight',
+          });
+        }, 10);
+      }
+    });
+  }, [loadableInfo]);
 
   // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
-    Loadable.match(Loadable.all([loadableAuth, loadableUser]), {
-      Loaded: ([auth, user]) => updateTelemetry(auth, user, info),
-      NotLoaded: () => {
-        return;
-      },
-    });
-  }, [loadableAuth, loadableUser, info, updateTelemetry]);
+    Loadable.quickMatch(
+      Loadable.all([loadableAuth, loadableUser, loadableInfo]),
+      undefined,
+      ([auth, user, info]) => updateTelemetry(auth, user, info),
+    );
+  }, [loadableAuth, loadableInfo, loadableUser, updateTelemetry]);
 
   // Abort cancel signal when app unmounts.
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
 
-  return Loadable.match(infoLoadable, {
+  return Loadable.match(Loadable.all([loadableAuth, loadableInfo]), {
     Loaded: () => (
       <div className={css.base}>
         {isAuthChecked ? (

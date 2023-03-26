@@ -3,7 +3,8 @@ import { useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Auth, DetailedUser, DeterminedInfo } from 'types';
+import { DeterminedInfo } from 'stores/determinedInfo';
+import { Auth, DetailedUser } from 'types';
 import handleError from 'utils/error';
 
 /*

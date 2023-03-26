@@ -1,4 +1,4 @@
-import { Observable } from 'micro-observables';
+import { Observable, useObservable } from 'micro-observables';
 import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -7,12 +7,11 @@ import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { updateDetApi } from 'services/apiConfig';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
-import { Loadable } from 'utils/loadable';
 
 const useAuthCheck = (): (() => void) => {
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const location = useLocation();
 
   const updateBearerToken = useCallback((token: string) => {

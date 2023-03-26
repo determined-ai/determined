@@ -33,7 +33,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -172,7 +172,7 @@ const UserManagement: React.FC = () => {
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
 
   const fetchUsers = useCallback((): void => {
     if (!settings) return;

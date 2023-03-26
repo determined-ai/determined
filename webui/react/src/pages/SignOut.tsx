@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -7,18 +8,17 @@ import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
 import authStore from 'stores/auth';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import roleStore from 'stores/roles';
 import usersStore from 'stores/users';
 import { useResetWorkspaces } from 'stores/workspaces';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const resetWorkspaces = useResetWorkspaces();
 
