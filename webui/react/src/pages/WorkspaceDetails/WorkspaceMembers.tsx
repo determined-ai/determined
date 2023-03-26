@@ -256,8 +256,8 @@ const WorkspaceMembers: React.FC<Props> = ({
           {rbacEnabled &&
             canAssignRoles({ workspace }) &&
             !workspace.immutable &&
-            !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
-          {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filters (1)'}</Button>}
+            !workspace.archived && <Button onClick={handleAddMembersClick}> Add Member</Button>}
+          {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
         </Space>
       </div>
       {settings ? (
