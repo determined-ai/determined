@@ -2063,7 +2063,7 @@ const AccordionSection: React.FC = () => {
           You should see me on page load.
         </Accordion>
         <p>
-          By default, the content of an <code>{'<Accordion>'}</code> isn&apost;t mounted until
+          By default, the content of an <code>{'<Accordion>'}</code> isn&apos;t mounted until
           opened, after which, the content stays mounted:
         </p>
         <Accordion title="Child will mount when opened and stay mounted after close">
