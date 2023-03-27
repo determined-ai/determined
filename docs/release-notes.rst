@@ -70,13 +70,13 @@ Version 0.21.0
    :class:`~determined.experimental.client.ModelVersion` were deprecated in 0.17.9 (Feb 2022) and
    are now removed:
 
-      -  ``Checkpoint.load()``
-      -  ``Checkpoint.load_from_path()``
-      -  ``Checkpoint.parse_metadata()``
-      -  ``Checkpoint.get_type()``
-      -  ``Checkpoint.from_json()``
-      -  ``Model.from_json()``
-      -  ``ModelVersion.from_json()``
+   -  ``Checkpoint.load()``
+   -  ``Checkpoint.load_from_path()``
+   -  ``Checkpoint.parse_metadata()``
+   -  ``Checkpoint.get_type()``
+   -  ``Checkpoint.from_json()``
+   -  ``Model.from_json()``
+   -  ``ModelVersion.from_json()``
 
 **************
  Version 0.20
