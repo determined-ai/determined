@@ -28,7 +28,7 @@ def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[N
                 # Only use EBS, not instance-store.
                 line[4] == "ebs-ssd",
                 # Only use HVM virtualization, not paravirtualization.
-                line[8] == "hvm",
+                line[10] == "hvm",
             ]
         )
 
@@ -101,18 +101,18 @@ if __name__ == "__main__":
     parser.add_argument("--packer-json", metavar="/PATH/TO/ENIRONMENTS-PACKER.JSON")
     args = parser.parse_args()
 
-    if not args.bumpenvs_yaml and not args.packer_json:
+    """if not args.bumpenvs_yaml and not args.packer_json:
         parser.print_help(sys.stderr)
-        sys.exit(1)
+        sys.exit(1)"""
 
     req = requests.get("https://cloud-images.ubuntu.com/query/focal/server/released.current.txt")
     req.raise_for_status()
-    table = [re.split(r"\t+", row) for row in re.split(r"\n+", req.text)[:-1]]
+    table = [re.split(r"\t", row) for row in re.split(r"\n", req.text)[:-1]]
     gov_req = requests.get(
         "https://cloud-images.ubuntu.com/query.govcloud/focal/server/released.current.txt"
     )
     gov_req.raise_for_status()
-    gov_table = [re.split(r"\t+", row) for row in re.split(r"\n+", gov_req.text)[:-1]]
+    gov_table = [re.split(r"\t", row) for row in re.split(r"\n", gov_req.text)[:-1]]
     table += gov_table
 
     if args.bumpenvs_yaml:
