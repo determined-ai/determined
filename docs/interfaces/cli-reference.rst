@@ -6,8 +6,6 @@
 
 This reference guide lists the Determined CLI commands, subcommands, and options.
 
-preferrred format Command Name, Abbreviation, Command Description, Subcommands, Example Usage
-
 +------------------------------------------+
 | Visit the CLI User Guide                 |
 +==========================================+
@@ -18,85 +16,7 @@ preferrred format Command Name, Abbreviation, Command Description, Subcommands, 
  Positional Arguments
 **********************
 
-Needs to be: Command, Desc, Subcommands, Usage Example
-
-+-----------------+-------------------------------------------------+--------------------------------+
-| Option          | Purpose                                         | Usage                          |
-+=================+=================================================+================================+
-| ``help``        | Show help for this command                      | det help <command>             |
-+-----------------+-------------------------------------------------+--------------------------------+
-| ``auth``        | Manage auth                                     | det auth <subcommand>          |
-+-----------------+-------------------------------------------------+--------------------------------+
-| agent (a)       | Manage agents                                   | det agent <subcommand>         |
-+-----------------+-------------------------------------------------+--------------------------------+
-| command (cmd)   | Manage commands                                 | det command <subcommand>       |
-+-----------------+-------------------------------------------------+--------------------------------+
-| checkpoint (c)  | Manage checkpoints                              | det checkpoint <subcommand>    |
-+-----------------+-------------------------------------------------+--------------------------------+
-| deploy (d)      | Manage deployments                              | det deploy <subcommand>        |
-+-----------------+-------------------------------------------------+--------------------------------+
-| experiment (e)  | Manage experiments                              | det experiment <subcommand>    |
-+-----------------+-------------------------------------------------+--------------------------------+
-| job (j)         | Manage jobs                                     | det job <subcommand>           |
-+-----------------+-------------------------------------------------+--------------------------------+
-| master          | Manage master                                   | det master <subcommand>        |
-+-----------------+-------------------------------------------------+--------------------------------+
-| model (m)       | Manage models                                   | det model <subcommand>         |
-+-----------------+-------------------------------------------------+--------------------------------+
-| notebook        | Manage notebooks                                | det notebook <subcommand>      |
-+-----------------+-------------------------------------------------+--------------------------------+
-| oauth           | Manage OAuth                                    | det oauth <subcommand>         |
-+-----------------+-------------------------------------------------+--------------------------------+
-| preview-search  | Preview search                                  | det preview-search             |
-|                 |                                                 | <subcommand>                   |
-+-----------------+-------------------------------------------------+--------------------------------+
-| project (p)     | Manage projects                                 | det project <subcommand>       |
-+-----------------+-------------------------------------------------+--------------------------------+
-| rbac            | Manage roles based access controls              | det rbac <subcommand>          |
-+-----------------+-------------------------------------------------+--------------------------------+
-| resources (res) | Query historical resource allocation            | det resources <subcommand>     |
-+-----------------+-------------------------------------------------+--------------------------------+
-| shell           | Manage shells                                   | det shell <subcommand>         |
-+-----------------+-------------------------------------------------+--------------------------------+
-| slot (s)        | Manage slots                                    | det slot <subcommand>          |
-+-----------------+-------------------------------------------------+--------------------------------+
-| task            | Manage tasks (commands, experiments, notebooks, | det task <subcommand>          |
-|                 | shells, tensorboards)                           |                                |
-+-----------------+-------------------------------------------------+--------------------------------+
-| template (tpl)  | Manage config templates                         | det template <subcommand>      |
-+-----------------+-------------------------------------------------+--------------------------------+
-| tensorboard     | Manage TensorBoard instances                    | det tensorboard <subcommand>   |
-+-----------------+-------------------------------------------------+--------------------------------+
-| trial (t)       | Manage trials                                   | det trial <subcommand>         |
-+-----------------+-------------------------------------------------+--------------------------------+
-| user-group      | Manage user groups                              | det user-group <subcommand>    |
-+-----------------+-------------------------------------------------+--------------------------------+
-| user (u)        | Manage users                                    | det user <subcommand>          |
-+-----------------+-------------------------------------------------+--------------------------------+
-| version         | Show version information                        | det version                    |
-+-----------------+-------------------------------------------------+--------------------------------+
-| workspace (w)   | Manage workspaces                               | det workspace <subcommand>     |
-+-----------------+-------------------------------------------------+--------------------------------+
-
-***************************************
- Positional Arguments different format
-***************************************
-
 .. list-table::
-   :header-rows: 1
-   :widths: 25 35 25 15
-
-   -  -  Task
-      -  Example
-      -  Command
-      -  Options
-
-   -  -  List all experiments
-      -  Display a list of all experiments in the cluster.
-      -  ``det experiment list``
-      -
-
-.. list-table:: Determined AI CLI Reference Guide
    :header-rows: 1
    :widths: 20 40 20 20
 
@@ -110,95 +30,95 @@ Needs to be: Command, Desc, Subcommands, Usage Example
       -
       -  ``det help experiment``
 
-   -  -  Auth
+   -  -  ``Auth``
       -  Manage authentication for your Determined cluster.
       -  login, logout, whoami
-      -  det auth login
+      -  ``det auth login``
 
-   -  -  Agent
+   -  -  ``Agent``
       -  Manage agents in your Determined cluster.
       -  list, describe, labels
-      -  det agent list
+      -  ``det agent list``
 
-   -  -  Checkpoint
+   -  -  ``Checkpoint``
       -  Manage checkpoints in your Determined experiments.
       -  list, describe, delete
-      -  det checkpoint list
+      -  ``det checkpoint list``
 
-   -  -  Deploy
+   -  -  ``Deploy``
       -  Manage deployments of Determined on your Kubernetes cluster.
       -  up, down
-      -  det deploy up
+      -  ``det deploy up``
 
-   -  -  Experiment
+   -  -  ``Experiment``
       -  Manage experiments in your Determined cluster.
       -  create, list, describe, stop
-      -  det experiment create config.yaml
+      -  ``det experiment create config.yaml``
 
-   -  -  Job
+   -  -  ``Job``
       -  Manage jobs in your Determined cluster.
       -  list, describe, kill
-      -  det job list
+      -  ``det job list``
 
-   -  -  Master
+   -  -  ``Master``
       -  Manage the Determined master instance in your cluster.
       -  start, stop, upgrade
-      -  det master start
+      -  ``det master start``
 
-   -  -  Model
+   -  -  ``Model``
       -  Manage models in your Determined cluster.
       -  list, describe, delete
-      -  det model list
+      -  ``det model list``
 
-   -  -  Notebook
+   -  -  ``Notebook``
       -  Manage notebooks in your Determined cluster.
       -  list, start, stop
-      -  det notebook start
+      -  ``det notebook start``
 
-   -  -  OAuth
+   -  -  ``OAuth``
       -  Manage OAuth authentication for your Determined cluster.
       -  create, list, delete
-      -  det oauth list
+      -  ``det oauth list``
 
-   -  -  Preview-Search
+   -  -  ``Preview-Search``
       -  Preview search results for your experiments.
       -  up, down, query
-      -  det preview-search query "val_loss < 0.1"
+      -  ``det preview-search query "val_loss < 0.1"``
 
-   -  -  Project
+   -  -  ``Project``
       -  Manage projects in your Determined cluster.
       -  create, list, delete
-      -  det project list
+      -  ``det project list``
 
-   -  -  RBAC
-      -  Manage roles-based access control in your Determined cluster.
+   -  -  ``RBAC``
+      -  Manage role-based access control in your Determined cluster.
       -  create, list, delete
-      -  det rbac list
+      -  ``det rbac list``
 
-   -  -  Resources
+   -  -  ``Resources``
       -  Query historical resource allocation in your Determined cluster.
       -  agents, slurm, kubernetes
-      -  det resources agents
+      -  ``det resources agents``
 
-   -  -  Shell
+   -  -  ``Shell``
       -  Manage shells in your Determined cluster.
       -  start, stop, list
-      -  det shell start
+      -  ``det shell start``
 
-   -  -  Slot
+   -  -  ``Slot``
       -  Manage slots in your Determined cluster.
       -  list, describe, delete
-      -  det slot list
+      -  ``det slot list``
 
-   -  -  Task
+   -  -  ``Task``
       -  Manage tasks in your Determined cluster.
       -  list, describe, kill
-      -  det task list
+      -  ``det task list``
 
-   -  -  Template
+   -  -  ``Template``
       -  Manage configuration templates for your Determined cluster.
       -  list, create
-      -  det template list
+      -  ``det template list``
 
 ********************
  Optional Arguments
@@ -216,9 +136,9 @@ Needs to be: Command, Desc, Subcommands, Usage Example
 | -v, --version                       | Print the CLI version and exit                                |
 +-------------------------------------+---------------------------------------------------------------+
 
-*************************
- COMMANDS TEST OF FORMAT
-*************************
+******************
+ LIST OF COMMANDS
+******************
 
 ``Help``
 ========
