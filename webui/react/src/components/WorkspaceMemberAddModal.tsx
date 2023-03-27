@@ -71,7 +71,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     [addableUsersAndGroups],
   );
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
     try {
       if (values && selectedOption) {
@@ -116,7 +116,7 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
     <Modal
       cancel
       submit={{
-        handler: handleOk,
+        handler: handleSubmit,
         text: 'Add Member',
       }}
       title="Add Member">

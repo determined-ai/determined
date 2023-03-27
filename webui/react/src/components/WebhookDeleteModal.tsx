@@ -13,7 +13,7 @@ interface Props {
 }
 
 const WebhookDeleteModalComponent: React.FC<Props> = ({ webhook }: Props) => {
-  const handleOk = async () => {
+  const handleSubmit = async () => {
     if (!webhook) return;
     try {
       await deleteWebhook({ id: webhook.id });
@@ -34,7 +34,7 @@ const WebhookDeleteModalComponent: React.FC<Props> = ({ webhook }: Props) => {
       cancel
       danger
       submit={{
-        handler: handleOk,
+        handler: handleSubmit,
         text: 'Delete Webhook',
       }}
       title="Confirm Delete">

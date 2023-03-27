@@ -28,7 +28,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
 }: Props) => {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     try {
       setIsDeleting(true);
       isUserWithRoleInfo(userOrGroup)
@@ -64,7 +64,7 @@ const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
       danger
       submit={{
         disabled: isDeleting,
-        handler: handleOk,
+        handler: handleSubmit,
         text: 'Remove',
       }}
       title={`Remove ${name}`}>

@@ -21,7 +21,7 @@ interface FormInputs {
 const WebhookCreateModalComponent: React.FC = () => {
   const [form] = Form.useForm<FormInputs>();
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
 
     try {
@@ -62,7 +62,7 @@ const WebhookCreateModalComponent: React.FC = () => {
     <Modal
       cancel
       submit={{
-        handler: handleOk,
+        handler: handleSubmit,
         text: 'Create Webhook',
       }}
       title="New Webhook">
