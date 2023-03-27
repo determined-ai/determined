@@ -189,13 +189,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           { signal: canceler.signal },
         );
       }
+
+      const pageNumber = settings.tableOffset / settings.tableLimit;
+      const rowsTakenUpByPins = pageNumber * pinnedIds.length;
       const otherExpResponse = await getExperiments(
         {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: settings.tableOffset - rowsTakenUpByPins,
         },
         { signal: canceler.signal },
       );
