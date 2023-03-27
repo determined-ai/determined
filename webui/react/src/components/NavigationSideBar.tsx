@@ -9,7 +9,6 @@ import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -27,9 +26,11 @@ import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
+import { useModal } from './kit/Modal';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreate';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -127,8 +128,9 @@ const NavigationSideBar: React.FC = () => {
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
-    useModalWorkspaceCreate();
+
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -183,8 +185,8 @@ const NavigationSideBar: React.FC = () => {
   }, [settings.navbarCollapsed, updateSettings]);
 
   const handleCreateWorkspace = useCallback(() => {
-    openWorkspaceCreateModal();
-  }, [openWorkspaceCreateModal]);
+    WorkspaceCreateModal.open();
+  }, [WorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
@@ -341,7 +343,7 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {modalWorkspaceCreateContextHolder}
+        <WorkspaceCreateModal.Component />
       </nav>
     </CSSTransition>
   );

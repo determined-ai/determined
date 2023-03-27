@@ -1,5 +1,4 @@
 import { Divider, Switch } from 'antd';
-import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -11,12 +10,13 @@ import { paths } from 'routes/utils';
 import { getWorkspace, patchWorkspace } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
-import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { useCreateWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
+
+import { Modal } from './kit/Modal';
 
 const FORM_ID = 'new-workspace-form';
 
@@ -34,12 +34,12 @@ interface FormInputs {
 
 interface Props {
   onClose?: () => void;
-  workspaceID?: number;
+  workspaceId?: number;
 }
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHooks => {
+const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
     usePermissions();
   const [form] = Form.useForm<FormInputs>();
@@ -47,22 +47,21 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
   const useAgentUser = Form.useWatch('useAgentUser', form);
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const [canceler] = useState(new AbortController());
   const [workspace, setWorkspace] = useState<Workspace>();
   const createWorkspace = useCreateWorkspace();
 
   const fetchWorkspace = useCallback(async () => {
-    if (workspaceID) {
+    if (workspaceId) {
       try {
-        const response = await getWorkspace({ id: workspaceID }, { signal: canceler.signal });
+        const response = await getWorkspace({ id: workspaceId }, { signal: canceler.signal });
         setWorkspace(response);
       } catch (e) {
         handleError(e);
       }
     }
-  }, [workspaceID, canceler.signal]);
+  }, [workspaceId, canceler.signal]);
 
   const initFields = useCallback(
     (ws?: Workspace) => {
@@ -94,6 +93,10 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     initFields(workspace);
   }, [workspace, initFields]);
 
+  useEffect(() => {
+    fetchWorkspace();
+  }, [workspaceId, fetchWorkspace]);
+
   const [canModifyAUG, canModifyCPS] = useMemo(() => {
     return [
       canModifyWorkspaceAgentUserGroup({ workspace }),
@@ -102,7 +105,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
   }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspace]);
 
   const modalContent = useMemo(() => {
-    if (workspaceID && !workspace) return <Spinner />;
+    if (workspaceId && !workspace) return <Spinner />;
     return (
       <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="vertical">
         <Form.Item
@@ -184,8 +187,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
                         } catch (err: unknown) {
                           return Promise.reject(
                             new Error(
-                              `Invalid YAML on line ${
-                                (err as { mark: { line: string } }).mark.line
+                              `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line
                               }.`,
                             ),
                           );
@@ -214,12 +216,12 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     useAgentGroup,
     useCheckpointStorage,
     workspace,
-    workspaceID,
+    workspaceId,
     canModifyAUG,
     canModifyCPS,
   ]);
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
 
     try {
@@ -257,8 +259,8 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           }
         }
 
-        if (workspaceID) {
-          const response = await patchWorkspace({ id: workspaceID, ...body });
+        if (workspaceId) {
+          const response = await patchWorkspace({ id: workspaceId, ...body });
           setWorkspace(response);
         } else {
           const response = await createWorkspace(body);
@@ -285,45 +287,24 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         });
       }
     }
-  }, [form, workspaceID, canModifyAUG, canModifyCPS, createWorkspace]);
+  }, [form, workspaceId, canModifyAUG, canModifyCPS, createWorkspace]);
 
-  const getModalProps = useMemo((): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { disabled: !workspaceName, form: FORM_ID, htmlType: 'submit' },
-      okText: 'Save Workspace',
-      onCancel: () => {
+  return (
+    <Modal
+      cancel
+      size="medium"
+      submit={{
+        handler: handleSubmit,
+        text: 'Save Workspace',
+      }}
+      title={`${workspaceId ? 'Edit' : 'New'} Workspace`}
+      onClose={() => {
         initFields(workspace);
-        modalClose(ModalCloseReason.Cancel);
-      },
-      onOk: handleOk,
-      title: `${workspaceID ? 'Edit' : 'New'} Workspace`,
-      width: 600,
-    };
-  }, [handleOk, modalContent, workspaceName, workspaceID, workspace, modalClose, initFields]);
-
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps, ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
+        onClose?.();
+      }}>
+      {modalContent}
+    </Modal>
   );
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps);
-  }, [getModalProps, modalRef, openOrUpdate]);
-
-  useEffect(() => {
-    modalRef.current && workspaceID !== workspace?.id && fetchWorkspace();
-  });
-
-  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
-export default useModalWorkspaceCreate;
+export default WorkspaceCreateModalComponent;

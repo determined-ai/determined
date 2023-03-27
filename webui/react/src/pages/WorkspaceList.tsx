@@ -5,6 +5,7 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Empty from 'components/kit/Empty';
+import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
@@ -20,7 +21,7 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import WorkspaceCreateModalComponent from 'components/WorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -63,11 +64,11 @@ const WorkspaceList: React.FC = () => {
 
   const { canCreateWorkspace } = usePermissions();
 
-  const { contextHolder, modalOpen } = useModalWorkspaceCreate();
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [modalOpen]);
+  const handleWorkspaceCreateClick = useCallback(() => WorkspaceCreateModal.open(), [WorkspaceCreateModal]);
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -372,7 +373,7 @@ const WorkspaceList: React.FC = () => {
           <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
-      {contextHolder}
+      <WorkspaceCreateModal.Component />
     </Page>
   );
 };

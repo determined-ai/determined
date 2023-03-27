@@ -3,8 +3,9 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
-import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
+import { useModal } from 'components/kit/Modal';
+import WorkspaceCreateModalComponent from 'components/WorkspaceCreate';
+import WorkspaceDeleteModalComponent from 'components/WorkspaceDelete';
 import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -43,19 +44,17 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   returnIndexOnDelete = true,
   workspace,
 }: WorkspaceMenuPropsIn) => {
-  const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
-    useModalWorkspaceDelete({ onClose: onComplete, returnIndexOnDelete, workspace });
-  const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
-    useModalWorkspaceCreate({ onClose: onComplete, workspaceID: workspace.id });
+  const WorkspaceDeleteModal = useModal(WorkspaceDeleteModalComponent);
+  const WorkspaceEditModal = useModal(WorkspaceCreateModalComponent);
 
   const contextHolders = useMemo(() => {
     return (
       <>
-        {modalWorkspaceDeleteContextHolder}
-        {modalWorkspaceEditContextHolder}
+        <WorkspaceDeleteModal.Component returnIndexOnDelete={returnIndexOnDelete} workspace={workspace} onClose={onComplete} />
+        <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
       </>
     );
-  }, [modalWorkspaceDeleteContextHolder, modalWorkspaceEditContextHolder]);
+  }, [WorkspaceDeleteModal, WorkspaceEditModal, onComplete, workspace, returnIndexOnDelete]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -100,12 +99,12 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   }, [onComplete, workspace.id, workspace.pinned, updateWorkspace]);
 
   const handleEditClick = useCallback(() => {
-    openWorkspaceEdit();
-  }, [openWorkspaceEdit]);
+    WorkspaceEditModal.open();
+  }, [WorkspaceEditModal]);
 
   const handleDeleteClick = useCallback(() => {
-    openWorkspaceDelete();
-  }, [openWorkspaceDelete]);
+    WorkspaceDeleteModal.open();
+  }, [WorkspaceDeleteModal]);
 
   const MenuKey = {
     Delete: 'delete',
