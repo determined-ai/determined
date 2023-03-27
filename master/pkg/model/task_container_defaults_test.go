@@ -128,6 +128,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 			RawSbatchArgs:   []string{"--some-pbs-arg=5", "--another"},
 		},
 	}
+	remergedFilledTaskContainerDefaults := filledTaskContainerDefaults
+	remergedFilledTaskContainerDefaults.Slurm.SetSbatchArgs(append(
+		filledTaskContainerDefaults.Slurm.SbatchArgs(),
+		filledTaskContainerDefaults.Slurm.SbatchArgs()...,
+	))
+	remergedFilledTaskContainerDefaults.Pbs.SetSbatchArgs(append(
+		filledTaskContainerDefaults.Pbs.SbatchArgs(),
+		filledTaskContainerDefaults.Pbs.SbatchArgs()...,
+	))
 
 	tests := []struct {
 		name    string
@@ -295,11 +304,11 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				Slurm: expconf.SlurmConfigV0{
 					RawSlotsPerNode: ptrs.Ptr(2),
 					RawGpuType:      ptrs.Ptr("a100:16"),
-					RawSbatchArgs:   []string{"--gpus-per-node=8", "--another2"},
+					RawSbatchArgs:   []string{"--gpus-per-node=8", "--another2", "--gpus-per-node=6", "--another"},
 				},
 				Pbs: expconf.PbsConfigV0{
 					RawSlotsPerNode: ptrs.Ptr(2),
-					RawSbatchArgs:   []string{"--some-pbs-arg=8", "--another2"},
+					RawSbatchArgs:   []string{"--some-pbs-arg=8", "--another2", "--some-pbs-arg=5", "--another"},
 				},
 			},
 			wantErr: false,
@@ -307,7 +316,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 			name:    "merge other has same settings",
 			self:    filledTaskContainerDefaults,
 			other:   filledTaskContainerDefaults,
-			want:    filledTaskContainerDefaults,
+			want:    remergedFilledTaskContainerDefaults,
 			wantErr: false,
 		}, {
 			name:    "merge other has no settings",
