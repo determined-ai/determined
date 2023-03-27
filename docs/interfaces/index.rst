@@ -1,7 +1,6 @@
-
-##########################
- Interfaces
-##########################
+#######
+ Tools
+#######
 
 Learn all about interfaces.
 
@@ -9,7 +8,7 @@ Learn all about interfaces.
    :caption: Interfaces
    :hidden:
 
-   ClI Reference <cli-reference>
+   CLI Reference <cli-reference>
    CLI User Guide <cli-ug>
    Commands and Shells <commands-and-shells>
    WebUI <webui-if>
@@ -17,4 +16,3 @@ Learn all about interfaces.
    Notebooks <notebooks>
    Proxy Ports <proxy-ports>
    Tensorboard Instances <tensorboard>
-   
