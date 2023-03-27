@@ -98,10 +98,10 @@ interface Props {
 
 const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.Element => {
   return (
-    <section>
+    <article>
       <h3 id={id}>{title}</h3>
       {children}
-    </section>
+    </article>
   );
 };
 
@@ -2213,11 +2213,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
+        <article>
           {componentOrder.map((componentId) => (
             <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
           ))}
-        </main>
+        </article>
       </div>
     </Page>
   );
