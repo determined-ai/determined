@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -796,6 +797,98 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		trials = append(trials, container)
 	}
 	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+}
+
+func (a *apiServer) GetTrainingMetrics(
+	req *apiv1.GetTrainingMetricsRequest, resp apiv1.Determined_GetTrainingMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "steps"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *apiServer) GetValidationMetrics(
+	req *apiv1.GetValidationMetricsRequest, resp apiv1.Determined_GetValidationMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validations"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *apiServer) streamMetrics(ctx context.Context,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, table string,
+) error {
+	if len(trialIDs) == 0 {
+		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
+	}
+	ids := make(map[int32]bool)
+	for _, id := range trialIDs {
+		if ids[id] {
+			return status.Errorf(codes.InvalidArgument, "duplicate id=%d specified", id)
+		}
+	}
+	slices.Sort(trialIDs)
+
+	for _, trialID := range trialIDs {
+		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return err
+		}
+	}
+
+	const size = 1000
+
+	trialIDIndex := 0
+	key := -1
+	for {
+		var res []*trialv1.MetricsReport
+		if err := db.Bun().NewSelect().Table(table).
+			Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
+			ColumnExpr("proto_time(end_time) AS end_time").
+			Where("trial_id = ?", trialIDs[trialIDIndex]).
+			Where("total_batches > ?", key).
+			Order("trial_id", "trial_run_id", "total_batches").
+			Limit(size).
+			Scan(ctx, &res); err != nil {
+			return err
+		}
+
+		if len(res) > 0 {
+			for i := 0; i < len(res); i++ {
+				// TODO we are giving too precise timestamps for our Python parsing code somehow.
+				res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
+			}
+
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := sendFunc(res); err != nil {
+				return err
+			}
+			key = int(res[len(res)-1].TotalBatches)
+		}
+
+		if len(res) != size {
+			trialIDIndex++
+			if trialIDIndex >= len(trialIDs) {
+				break
+			}
+
+			key = -1
+		}
+	}
+
+	return nil
 }
 
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (

@@ -374,3 +374,27 @@ class Determined:
             api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
         except api.errors.NotFoundException:
             raise det.errors.EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def stream_trials_training_metrics(
+        self, trial_ids: List[int]
+    ) -> Iterable[trial.TrainingMetrics]:
+        """
+        Streams training metrics for one or more trials sorted by
+        trial_id, trial_run_id and steps_completed.
+
+        Arguments:
+            trial_ids: List of trial IDs to get metrics for.
+        """
+        return trial._stream_training_metrics(self._session, trial_ids)
+
+    def stream_trials_validation_metrics(
+        self, trial_ids: List[int]
+    ) -> Iterable[trial.ValidationMetrics]:
+        """
+        Streams validation metrics for one or more trials sorted by
+        trial_id, trial_run_id and steps_completed.
+
+        Arguments:
+            trial_ids: List of trial IDs to get metrics for.
+        """
+        return trial._stream_validation_metrics(self._session, trial_ids)
