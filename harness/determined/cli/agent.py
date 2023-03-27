@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import typing
 from collections import OrderedDict
 from operator import attrgetter
 from typing import Any, Callable, Dict, List
@@ -12,7 +13,7 @@ from determined.cli import task as cli_task
 from determined.cli.errors import CliError
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.api.bindings import devicev1Type, v1Slot
+from determined.common.api.bindings import devicev1Type, v1Device, v1Slot
 from determined.common.check import check_false
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -79,7 +80,7 @@ def list_slots(args: argparse.Namespace) -> None:
         if r["container_id"]
     }
 
-    def device_type_string(deviceType: devicev1Type) -> str:
+    def device_type_string(deviceType: typing.Optional[devicev1Type]) -> str:
         if deviceType == devicev1Type.TYPE_CUDA:
             return "cuda"
         if deviceType == devicev1Type.TYPE_ROCM:
@@ -116,23 +117,22 @@ def list_slots(args: argparse.Namespace) -> None:
                     "resource_pools",
                     ", ".join(agent.resourcePools) if agent.resourcePools is not None else "",
                 ),
-                ("slot_id", local_id(slot_id)),
-                ("enabled", agent.slots[slot_id].enabled),
-                ("draining", agent.slots[slot_id].draining),
+                ("slot_id", local_id(slot.id or "")),
+                ("enabled", slot.enabled),
+                ("draining", slot.draining),
                 (
                     "allocation_id",
-                    c_names[agent.slots[slot_id].container.id]["allocation_id"]
-                    if agent.slots[slot_id].container
-                    and agent.slots[slot_id].container.id in c_names
-                    else ("OCCUPIED" if agent.slots[slot_id].container else "FREE"),
+                    c_names[slot.container.id]["allocation_id"]
+                    if slot.container and slot.container.id in c_names
+                    else ("OCCUPIED" if slot.container else "FREE"),
                 ),
-                ("task_name", get_task_name(c_names, agent.slots[slot_id])),
-                ("type", device_type_string(agent.slots[slot_id].device.type)),
-                ("device", agent.slots[slot_id].device.brand),
+                ("task_name", get_task_name(c_names, slot)),
+                ("type", device_type_string((slot.device or v1Device()).type)),
+                ("device", (slot.device or v1Device()).brand),
             ]
         )
         for agent in sorted(resp.agents or [], key=attrgetter("id"))
-        for slot_id in sorted(agent.slots or [])
+        for _key, slot in (agent.slots or {}).items()
     ]
 
     headers = [
