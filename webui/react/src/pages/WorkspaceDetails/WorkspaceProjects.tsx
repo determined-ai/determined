@@ -5,11 +5,13 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Link from 'components/Link';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import ProjectCard from 'components/ProjectCard';
+import ProjectCreateModalComponent from 'components/ProjectCreateModal';
 import InteractiveTable, {
   ColumnDef,
   onRightClickableCell,
@@ -22,7 +24,6 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -67,9 +68,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const { canCreateProject } = usePermissions();
-  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
-    workspaceId: workspace.id,
-  });
+  const ProjectCreateModal = useModal(ProjectCreateModalComponent);
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
@@ -109,8 +108,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, []);
 
   const handleProjectCreateClick = useCallback(() => {
-    openProjectCreate();
-  }, [openProjectCreate]);
+    ProjectCreateModal.open();
+  }, [ProjectCreateModal]);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
@@ -125,7 +124,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,
@@ -448,7 +447,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Message title="No projects matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
-      {contextHolder}
+      <ProjectCreateModal.Component workspaceId={workspace.id} />
     </div>
   );
 };

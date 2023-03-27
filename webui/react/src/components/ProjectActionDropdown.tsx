@@ -3,9 +3,6 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
-import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
-import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
-import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -13,6 +10,11 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { Project } from 'types';
 import handleError from 'utils/error';
+
+import { useModal } from './kit/Modal';
+import ProjectDeleteModalComponent from './ProjectDeleteModal';
+import ProjectEditModalComponent from './ProjectEditModal';
+import ProjectMoveModalComponent from './ProjectMoveModal';
 
 interface Props {
   children?: React.ReactNode;
@@ -47,32 +49,25 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
   project,
   workspaceArchived = false,
 }: ProjectMenuPropsIn) => {
-  const { contextHolder: modalProjectMoveContextHolder, modalOpen: openProjectMove } =
-    useModalProjectMove({ onClose: onComplete, project });
-  const { contextHolder: modalProjectDeleteContextHolder, modalOpen: openProjectDelete } =
-    useModalProjectDelete({ onClose: onComplete, onDelete, project });
-  const { contextHolder: modalProjectEditContextHolder, modalOpen: openProjectEdit } =
-    useModalProjectEdit({ onClose: onComplete, project });
+  const ProjectMoveModal = useModal(ProjectMoveModalComponent);
+  const ProjectDeleteModal = useModal(ProjectDeleteModalComponent);
+  const ProjectEditModal = useModal(ProjectEditModalComponent);
 
   const contextHolders = useMemo(() => {
     return (
       <>
-        {modalProjectMoveContextHolder}
-        {modalProjectDeleteContextHolder}
-        {modalProjectEditContextHolder}
+        <ProjectMoveModal.Component project={project} onClose={onComplete} />
+        <ProjectDeleteModal.Component project={project} onClose={onComplete} onDelete={onDelete} />
+        <ProjectEditModal.Component project={project} onClose={onComplete} />
       </>
     );
-  }, [
-    modalProjectDeleteContextHolder,
-    modalProjectEditContextHolder,
-    modalProjectMoveContextHolder,
-  ]);
+  }, [ProjectMoveModal, ProjectEditModal, ProjectDeleteModal, onComplete, onDelete, project]);
 
   const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
-  const handleEditClick = useCallback(() => openProjectEdit(), [openProjectEdit]);
+  const handleEditClick = useCallback(() => ProjectEditModal.open(), [ProjectEditModal]);
 
-  const handleMoveClick = useCallback(() => openProjectMove(), [openProjectMove]);
+  const handleMoveClick = useCallback(() => ProjectMoveModal.open(), [ProjectMoveModal]);
 
   const handleArchiveClick = useCallback(async () => {
     if (project.archived) {
@@ -93,8 +88,8 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
   }, [onComplete, project.archived, project.id]);
 
   const handleDeleteClick = useCallback(() => {
-    openProjectDelete();
-  }, [openProjectDelete]);
+    ProjectDeleteModal.open();
+  }, [ProjectDeleteModal]);
 
   const MenuKey = {
     Delete: 'delete',
