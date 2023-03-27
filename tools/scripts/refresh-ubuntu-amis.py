@@ -105,12 +105,17 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    req = requests.get("https://cloud-images.ubuntu.com/query/focal/server/released.current.txt")
+    release = "focal"
+    req_url = "https://cloud-images.ubuntu.com/query/{}/server/released.current.txt".format(release)
+    gov_req_url = (
+        "https://cloud-images.ubuntu.com/query.govcloud/{}/server/released.current.txt".format(
+            release
+        )
+    )
+    req = requests.get(req_url)
     req.raise_for_status()
     table = [re.split(r"\t", row) for row in re.split(r"\n", req.text)[:-1]]
-    gov_req = requests.get(
-        "https://cloud-images.ubuntu.com/query.govcloud/focal/server/released.current.txt"
-    )
+    gov_req = requests.get(gov_req_url)
     gov_req.raise_for_status()
     gov_table = [re.split(r"\t", row) for row in re.split(r"\n", gov_req.text)[:-1]]
     table += gov_table
