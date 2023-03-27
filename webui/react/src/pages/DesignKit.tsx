@@ -2025,7 +2025,7 @@ const LongLoadingComponent = () => {
     return () => {
       active = false;
     };
-  });
+  }, []);
 
   return <div>This component is {loaded ? 'done loading!!!!!! wowza!!' : 'not loaded :('}</div>;
 };
