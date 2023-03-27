@@ -341,7 +341,12 @@ func (a *apiServer) PostWorkspace(
 	}
 
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
+
 	if err != nil {
+		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
+			return nil,
+				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+		}
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 	}
 
@@ -447,6 +452,10 @@ func (a *apiServer) PatchWorkspace(
 		Where("id = ?", currWorkspace.Id).
 		Exec(ctx)
 	if err != nil {
+		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
+			return nil,
+				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+		}
 		return nil, err
 	}
 
