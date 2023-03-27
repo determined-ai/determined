@@ -5,6 +5,10 @@ import uPlot, { AlignedData } from 'uplot';
 import { generateUUID } from 'shared/utils/string';
 
 type Bounds = {
+  dataBounds: {
+    max: number;
+    min: number;
+  } | null;
   unzoomedBounds: {
     max: number;
     min: number;
@@ -16,7 +20,7 @@ type Bounds = {
 };
 
 class SyncService {
-  bounds = observable<Bounds>({ unzoomedBounds: null, zoomBounds: null });
+  bounds = observable<Bounds>({ dataBounds: null, unzoomedBounds: null, zoomBounds: null });
 
   pubSub: uPlot.SyncPubSub;
 
@@ -55,8 +59,8 @@ class SyncService {
     const dataMax = xValues[lastIdx];
 
     this.bounds.update((b) => {
-      let max = Math.max(b.unzoomedBounds?.max ?? dataMax, dataMax);
-      let min = Math.min(b.unzoomedBounds?.min ?? dataMin, dataMin);
+      let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
+      let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
       const width = max - min;
       if (width <= 0) {
         // default handling of min = max is not great
@@ -67,7 +71,11 @@ class SyncService {
         max = max + margin;
         min = min - margin;
       }
-      return { ...b, unzoomedBounds: { max, min } };
+      return {
+        ...b,
+        dataBounds: { max: dataMax, min: dataMin },
+        unzoomedBounds: { max, min },
+      };
     });
   }
 }
