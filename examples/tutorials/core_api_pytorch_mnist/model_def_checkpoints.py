@@ -4,8 +4,6 @@
 from __future__ import print_function
 
 import argparse
-
-# NEW: import pathlib for opening checkpoint directory
 import pathlib
 
 import torch
