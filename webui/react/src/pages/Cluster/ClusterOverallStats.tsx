@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { ReactNode, useEffect, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
@@ -8,7 +8,6 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
@@ -27,20 +26,7 @@ export const ClusterOverallStats: React.FC = () => {
   const resourcePools = useObservable(useClusterStore().resourcePools);
   const agents = useObservable(useClusterStore().agents);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
-  const canceler = useRef(new AbortController());
-
-  const fetchActiveExperiments = experimentStore.fetchExperiments(
-    ACTIVE_EXPERIMENTS_PARAMS,
-    canceler.current,
-  );
   const activeTasks = useObservable(taskStore.activeTasks);
-
-  const fetchActiveRunning = useCallback(async () => {
-    await fetchActiveExperiments();
-  }, [fetchActiveExperiments]);
-
-  usePolling(fetchActiveRunning);
-
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
@@ -69,6 +55,7 @@ export const ClusterOverallStats: React.FC = () => {
   }, [resourcePools, agents]);
 
   useEffect(() => taskStore.startPolling(), []);
+  useEffect(() => experimentStore.startPolling({ args: [ACTIVE_EXPERIMENTS_PARAMS] }), []);
 
   return (
     <Section hideTitle title="Overview Stats">
