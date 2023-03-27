@@ -242,16 +242,6 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	if len(re.FindAllString(modelName, 1)) > 0 {
 		return status.Errorf(codes.InvalidArgument, "model names cannot be only numbers")
 	}
-
-	getResp := &apiv1.GetModelsResponse{}
-	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", "")
-	if err != nil {
-		return err
-	}
-	if len(getResp.Models) > 0 {
-		return status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
-	}
 	return nil
 }
 
@@ -298,6 +288,10 @@ func (a *apiServer) PostModel(
 		reqLabels, req.Notes, user.User.Id, workspaceID,
 	)
 
+	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
+		return nil,
+			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
+	}
 	return &apiv1.PostModelResponse{Model: m},
 		errors.Wrapf(err, "error creating model %q in database", req.Name)
 }
@@ -420,6 +414,10 @@ func (a *apiServer) PatchModel(
 		"update_model", finalModel, currModel.Id, currModel.Name, currModel.Description,
 		currModel.Notes, currMeta, currLabels, currWorkspaceID)
 
+	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
+		return nil,
+			status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
+	}
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %q in database", currModel.Name)
 }

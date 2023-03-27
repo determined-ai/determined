@@ -1,8 +1,10 @@
 import subprocess
 import uuid
+from http import HTTPStatus
 
 import pytest
 
+from determined.common.api.errors import APIException
 from determined.experimental import Determined, ModelSortBy
 from tests import api_utils
 from tests import config as conf
@@ -33,6 +35,14 @@ def test_model_registry() -> None:
         # Create a model and validate twiddling the metadata.
         mnist = d.create_model("mnist", "simple computer vision model", labels=["a", "b"])
         assert mnist.metadata == {}
+
+        # Attempt to create model with a duplicate name
+        with pytest.raises(APIException) as e:
+            duplicate_model = d.create_model(
+                "mnist", "simple computer vision model", labels=["a", "b"]
+            )
+            assert duplicate_model is None
+        assert e.value.status_code == HTTPStatus.CONFLICT
 
         mnist.add_metadata({"testing": "metadata"})
         db_model = d.get_model(mnist.name)
