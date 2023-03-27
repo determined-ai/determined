@@ -447,7 +447,9 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
 	startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) (
 	metricMeasurements []MetricMeasurements, err error,
 ) {
-	db.sql.Query("SELECT setseed(1);")
+	if _, err := db.sql.Exec("SELECT setseed(1);"); err != nil {
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
 	rows, err := db.sql.Query(`
 	SELECT * FROM (
 		SELECT	
