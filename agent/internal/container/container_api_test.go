@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dclient "github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
+	"github.com/sourcegraph/conc/pool"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/agent/internal/container"
@@ -24,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 func TestContainer(t *testing.T) {
@@ -156,9 +156,9 @@ func TestContainer(t *testing.T) {
 			defer c.Stop()
 
 			t.Log("setup canceler")
-			subg := waitgroupx.WithContext(ctx)
-			subg.Go(func(ctx context.Context) {
-				defer subg.Cancel()
+			subg := pool.New().WithContext(ctx)
+			subg.Go(func(ctx context.Context) error {
+				defer cancel()
 
 				tck := time.NewTicker(10 * time.Millisecond)
 				defer tck.Stop()
@@ -167,22 +167,22 @@ func TestContainer(t *testing.T) {
 					case summary.State == tt.detachAtState:
 						t.Log("detaching container")
 						c.Detach()
-						return
+						return nil
 					case summary.State == tt.signalAtState:
 						t.Logf("signaling container: %s", tt.signal.String())
 						c.Signal(ctx, tt.signal)
-						return
+						return nil
 					}
 
 					select {
 					case <-tck.C:
 					case <-ctx.Done():
-						return
+						return nil
 					}
 				}
 			})
-			defer subg.Wait()
-			defer subg.Cancel()
+			defer func() { _ = subg.Wait() }()
+			defer cancel()
 
 			t.Log("waiting on container")
 			exit := c.Wait()
@@ -191,8 +191,8 @@ func TestContainer(t *testing.T) {
 				require.Nilf(t, exit, "container exited but should've detached: %s", spew.Sdump(exit))
 
 				t.Log("join canceler")
-				subg.Cancel()
-				subg.Wait()
+				cancel()
+				_ = subg.Wait()
 
 				t.Log("reattaching container")
 				c = container.Reattach(c.Summary(), cl, events.NilPublisher[container.Event]{})

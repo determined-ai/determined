@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
@@ -55,8 +55,9 @@ type Fluent struct {
 	// Internal state.
 	fluentLogs      []*aproto.RunMessage
 	fluentLogsCount int
-	wg              errgroupx.Group // Fluentbit-scoped group.
+	wg              *pool.ContextPool // Fluentbit-scoped group.
 	err             error
+	detach          context.CancelFunc
 	Done            chan struct{} // Closed when FluentBit exits.
 }
 
@@ -67,6 +68,8 @@ func Start(
 	mopts aproto.MasterSetAgentOptions,
 	dclient *docker.Client,
 ) (*Fluent, error) {
+	fluentCtx, detach := context.WithCancel(context.Background())
+
 	f := &Fluent{
 		opts:  opts,
 		mopts: mopts,
@@ -75,7 +78,8 @@ func Start(
 		docker: dclient,
 
 		fluentLogs: make([]*aproto.RunMessage, 50),
-		wg:         errgroupx.WithContext(context.Background()),
+		wg:         pool.New().WithContext(fluentCtx).WithCancelOnError(),
+		detach:     detach,
 		Done:       make(chan struct{}),
 	}
 
@@ -85,7 +89,8 @@ func Start(
 	}
 
 	f.wg.Go(func(ctx context.Context) error {
-		defer f.wg.Cancel()
+		defer detach()
+
 		switch err := f.monitor(ctx, cID); {
 		case errors.Is(err, context.Canceled):
 			return nil
@@ -116,7 +121,8 @@ func (f *Fluent) Wait() error {
 
 // Close the Fluent Bit daemon.
 func (f *Fluent) Close() error {
-	return f.wg.Close()
+	f.detach()
+	return f.wg.Wait()
 }
 
 func (f *Fluent) monitor(ctx context.Context, cID string) error {
@@ -127,7 +133,7 @@ func (f *Fluent) monitor(ctx context.Context, cID string) error {
 	)
 
 	logs := make(chan *aproto.ContainerLog, 64)
-	loggroup := errgroupx.WithContext(ctx)
+	loggroup := pool.New().WithContext(ctx).WithCancelOnError()
 	loggroup.Go(func(ctx context.Context) error {
 		defer close(logs)
 		return f.trackLogs(ctx, cID, logs)

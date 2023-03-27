@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/determined-ai/determined/agent/internal/container"
 	"github.com/determined-ai/determined/agent/internal/containers"
@@ -25,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/ws"
 )
 
@@ -48,7 +48,7 @@ type Agent struct {
 	version string
 	opts    options.Options
 	log     *logrus.Entry
-	wg      errgroupx.Group
+	wg      *pool.ContextPool
 }
 
 // NewAgent constructs and runs a new agent according to the provided configuration.
@@ -57,7 +57,7 @@ func NewAgent(parent context.Context, version string, opts options.Options) *Age
 		version: version,
 		opts:    opts,
 		log:     logrus.WithField("component", "agent"),
-		wg:      errgroupx.WithContext(parent),
+		wg:      pool.New().WithContext(parent).WithCancelOnError(),
 	}
 
 	a.wg.Go(func(ctx context.Context) error {

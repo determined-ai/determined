@@ -10,9 +10,9 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/determined-ai/determined/agent/internal/options"
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
 
 // Run runs a new agent system and actor with the provided options.
@@ -26,11 +26,12 @@ func Run(parent context.Context, version string, opts options.Options) error {
 	}
 	log.Infof("agent configuration: %s", printableConfig)
 
-	wg := errgroupx.WithContext(ctx)
+	ctx, cancel := context.WithCancel(ctx)
+	wg := pool.New().WithContext(ctx).WithCancelOnError()
 
 	log.Trace("starting main agent process")
 	wg.Go(func(ctx context.Context) error {
-		defer wg.Cancel()
+		defer cancel()
 
 		err := NewAgent(ctx, version, opts).Wait()
 		if _, ok := err.(masterConnectionError); ok {
@@ -42,7 +43,7 @@ func Run(parent context.Context, version string, opts options.Options) error {
 	if opts.APIEnabled {
 		log.Trace("starting agent apiserver")
 		wg.Go(func(ctx context.Context) error {
-			defer wg.Cancel()
+			defer cancel()
 
 			api := newAgentAPIServer(opts)
 			wg.Go(func(ctx context.Context) error {

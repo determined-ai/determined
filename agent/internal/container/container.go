@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
+	"github.com/sourcegraph/conc/pool"
 	"golang.org/x/exp/slices"
 
 	"github.com/sirupsen/logrus"
@@ -18,8 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 // Container is a layer for managing a single Docker container. It can be constructed by launching
@@ -44,8 +43,9 @@ type Container struct {
 	exit     *aproto.ContainerStateChanged // Always set if the container exits.
 	exitOnce sync.Once
 
-	wg   waitgroupx.Group // A container-scoped goroutine group.
-	done chan struct{}    // Closed after the group terminates and we finalize our state.
+	wg     *pool.ContextPool // A container-scoped goroutine group.
+	detach context.CancelFunc
+	done   chan struct{} // Closed after the group terminates and we finalize our state.
 }
 
 // Start a container asynchronously and receive a handle to interact with it.
@@ -54,6 +54,8 @@ func Start(
 	cl *docker.Client,
 	pub events.Publisher[Event],
 ) *Container {
+	containerCtx, detach := context.WithCancel(context.Background())
+
 	c := &Container{
 		containerID:  req.Container.ID,
 		allocationID: hackAllocationID(&req.Spec),
@@ -69,16 +71,18 @@ func Start(
 		signals: make(chan syscall.Signal),
 		done:    make(chan struct{}),
 
-		wg: waitgroupx.WithContext(context.Background()),
+		wg:     pool.New().WithContext(containerCtx),
+		detach: detach,
 	}
 
-	c.wg.Go(func(ctx context.Context) {
-		defer c.wg.Cancel()
+	c.wg.Go(func(ctx context.Context) error {
+		defer detach()
 		c.finalize(ctx, c.run(ctx))
+		return nil
 	})
 
 	go func() {
-		c.wg.Wait()
+		_ = c.wg.Wait()
 		close(c.done)
 	}()
 
@@ -91,6 +95,8 @@ func Reattach(
 	cl *docker.Client,
 	pub events.Publisher[Event],
 ) *Container {
+	containerCtx, detach := context.WithCancel(context.Background())
+
 	c := &Container{
 		// TODO(Brad): We should be recovering the allocation ID for logging.
 		containerID: container.ID,
@@ -107,16 +113,18 @@ func Reattach(
 		signals: make(chan syscall.Signal, 16), // Not infinite, but large enough to not drop often.
 		done:    make(chan struct{}),
 
-		wg: waitgroupx.WithContext(context.Background()),
+		wg:     pool.New().WithContext(containerCtx),
+		detach: detach,
 	}
 
-	c.wg.Go(func(ctx context.Context) {
-		defer c.wg.Cancel()
+	c.wg.Go(func(ctx context.Context) error {
+		defer detach()
 		c.finalize(ctx, c.reattach(ctx))
+		return nil
 	})
 
 	go func() {
-		c.wg.Wait()
+		_ = c.wg.Wait()
 		close(c.done)
 	}()
 
@@ -133,7 +141,7 @@ func (c *Container) Summary() cproto.Container {
 // Detach the monitoring loops without affecting the Docker container.
 func (c *Container) Detach() {
 	c.log.Trace("detach called")
-	c.wg.Cancel()
+	c.detach()
 	c.Wait()
 }
 
@@ -166,7 +174,8 @@ func (c *Container) Wait() *aproto.ContainerStateChanged {
 // a stack trace or kill result is returned. If the container succeeds, the error will be nil.
 func (c *Container) run(parent context.Context) (err error) {
 	c.log.Trace("starting container launch")
-	launchgroup := errgroupx.WithContext(parent)
+	launchCtx, cancel := context.WithCancel(parent)
+	launchgroup := pool.New().WithContext(launchCtx).WithCancelOnError()
 
 	c.log.Trace("kicking off goroutine shim SIGKILL to cancellations, until we have launched")
 	launchgroup.Go(func(ctx context.Context) error {
@@ -190,7 +199,7 @@ func (c *Container) run(parent context.Context) (err error) {
 	c.log.Trace("kicking off goroutine to launch the container")
 	var dockerContainer *docker.Container
 	launchgroup.Go(func(ctx context.Context) (err error) {
-		defer launchgroup.Cancel()
+		defer cancel()
 
 		c.log.Trace("pulling image")
 		if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
@@ -242,12 +251,13 @@ func (c *Container) run(parent context.Context) (err error) {
 		// successfully ran the container. In this case, just pretend we didn't handle the signal,
 		// give it back to the container, and continue.
 		c.log.Trace("requeuing signal that was shimmed but unacknowledged")
-		c.wg.Go(func(ctx context.Context) {
+		c.wg.Go(func(ctx context.Context) error {
 			select {
 			case c.signals <- syscall.SIGKILL:
 			case <-ctx.Done():
 				c.log.Warnf("unable to re-enqueue signal due to cancellation")
 			}
+			return nil
 		})
 	case err != nil:
 		return err

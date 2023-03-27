@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/sourcegraph/conc"
 	"golang.org/x/exp/maps"
 	"golang.org/x/sys/unix"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 const (
@@ -46,7 +46,7 @@ type Manager struct {
 	// Internal state. Access should be protected.
 	containers  map[cproto.ID]*container.Container
 	recentExits *ring.Ring
-	wg          waitgroupx.Group
+	wg          *conc.WaitGroup
 	mu          sync.RWMutex
 }
 
@@ -67,7 +67,7 @@ func New(
 		pub:         pub,
 		containers:  make(map[cproto.ID]*container.Container),
 		recentExits: ring.New(RecentExitsCacheSize),
-		wg:          waitgroupx.WithContext(context.Background()), // Manager-scoped group.
+		wg:          conc.NewWaitGroup(), // Manager-scoped group.
 	}, nil
 }
 
@@ -214,7 +214,7 @@ func (m *Manager) StartContainer(ctx context.Context, req aproto.StartContainer)
 	m.containers[req.Container.ID] = c
 	m.mu.Unlock()
 
-	m.wg.Go(func(_ context.Context) {
+	m.wg.Go(func() {
 		exit := c.Wait()
 		m.mu.Lock()
 		if exit != nil {
@@ -249,9 +249,7 @@ func (m *Manager) Detach() {
 	m.mu.RLock()
 	for _, c := range m.containers {
 		c := c
-		m.wg.Go(func(_ context.Context) {
-			c.Detach()
-		})
+		m.wg.Go(c.Detach)
 	}
 	m.mu.RUnlock()
 	m.wg.Wait()
@@ -262,9 +260,7 @@ func (m *Manager) Close() {
 	m.mu.RLock()
 	for _, c := range m.containers {
 		c := c
-		m.wg.Go(func(_ context.Context) {
-			c.Stop()
-		})
+		m.wg.Go(c.Stop)
 	}
 	m.mu.RUnlock()
 	m.wg.Wait()
@@ -309,7 +305,7 @@ func (m *Manager) reattachContainer(
 	m.containers[cID] = c
 	m.mu.Unlock()
 
-	m.wg.Go(func(_ context.Context) {
+	m.wg.Go(func() {
 		exit := c.Wait()
 		m.mu.Lock()
 		if exit != nil {
