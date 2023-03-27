@@ -78,7 +78,11 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         onNewPage={handleNewNotesPage}
         onSave={handleSaveNotes}
       />
-      <ProjectNoteDeleteModal.Component pageNumber={pageNumber} project={project} onClose={fetchProject} />
+      <ProjectNoteDeleteModal.Component
+        pageNumber={pageNumber}
+        project={project}
+        onClose={fetchProject}
+      />
     </>
   );
 };

@@ -93,7 +93,9 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
           roleIds,
           scopeWorkspaceId: workspace.id,
           userOrGroup,
-          userOrGroupId: isUserWithRoleInfo(userOrGroup) ? userOrGroup.userId : userOrGroup.groupId ?? 0,
+          userOrGroupId: isUserWithRoleInfo(userOrGroup)
+            ? userOrGroup.userId
+            : userOrGroup.groupId ?? 0,
         }}
       />
     </div>

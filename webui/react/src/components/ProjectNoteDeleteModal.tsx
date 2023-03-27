@@ -13,7 +13,11 @@ interface Props {
   pageNumber: number;
 }
 
-const ProjectNoteDeleteModalComponent: React.FC<Props> = ({ onClose, pageNumber = 0, project }: Props) => {
+const ProjectNoteDeleteModalComponent: React.FC<Props> = ({
+  onClose,
+  pageNumber = 0,
+  project,
+}: Props) => {
   const handleSubmit = useCallback(async () => {
     if (!project?.id) return;
     try {

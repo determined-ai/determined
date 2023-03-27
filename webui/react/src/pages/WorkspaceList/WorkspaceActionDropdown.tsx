@@ -50,7 +50,11 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const contextHolders = useMemo(() => {
     return (
       <>
-        <WorkspaceDeleteModal.Component returnIndexOnDelete={returnIndexOnDelete} workspace={workspace} onClose={onComplete} />
+        <WorkspaceDeleteModal.Component
+          returnIndexOnDelete={returnIndexOnDelete}
+          workspace={workspace}
+          onClose={onComplete}
+        />
         <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
       </>
     );

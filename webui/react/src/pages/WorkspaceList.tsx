@@ -68,7 +68,10 @@ const WorkspaceList: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(() => WorkspaceCreateModal.open(), [WorkspaceCreateModal]);
+  const handleWorkspaceCreateClick = useCallback(
+    () => WorkspaceCreateModal.open(),
+    [WorkspaceCreateModal],
+  );
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
