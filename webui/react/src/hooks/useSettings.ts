@@ -1,6 +1,7 @@
 import * as t from 'io-ts';
+import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -11,7 +12,6 @@ import { ErrorType } from 'shared/utils/error';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
@@ -31,7 +31,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
+export type UpdateSettings = (updates: Settings) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -135,36 +135,41 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
-  const { isLoading, querySettings, state, update } = useContext(UserSettings);
+  const {
+    isLoading: isLoadingOb,
+    querySettings,
+    state: stateOb,
+    clearQuerySettings,
+  } = useContext(UserSettings);
+  const initialLoading = useObservable(isLoadingOb);
+  const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
+  const state = useObservable(derivedOb);
   const navigate = useNavigate();
+  const loadableUser = usersStore.getCurrentUser();
 
   // parse navigation url to state
   useEffect(() => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storagePath) ?? {};
+    const stateSettings = state ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
     Object.keys(settings).forEach((setting) => {
       stateSettings[setting] = settings[setting];
     });
+    stateOb.update((s) => s.set(config.storagePath, stateSettings));
 
-    update(config.storagePath, stateSettings, true);
-  }, [config, querySettings, state, update]);
+    clearQuerySettings();
+  }, [config, querySettings, state, clearQuerySettings, stateOb]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
-        ...(state.get(config.storagePath) ?? {}),
+        ...(state ?? {}),
       } as SettingsRecord<T>),
-    [config, state],
+    [state],
   );
 
   for (const key in config.settings) {
@@ -174,14 +179,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       settings[setting.storageKey as keyof T] = setting.defaultValue;
     }
   }
-
-  useEffect(() => {
-    const mappedSettings = settingsToQuery(config, settings as Settings);
-    const url = `?${mappedSettings}`;
-
-    if (mappedSettings && url !== window.location.search) navigate(url, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   /*
    * A setting is considered active if it is set to a value and the
@@ -205,13 +202,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateDB = useCallback(
-    async (newSettings: Settings) => {
-      if (!settings) return;
+    async (newSettings: Settings, oldSettings: SettingsRecord<T>) => {
+      const user = Loadable.match(loadableUser.get(), {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
-        const stateSetting = settings[setting as keyof T];
-
+        const stateSetting = oldSettings?.[setting as keyof T];
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
             setting: {
@@ -246,53 +245,68 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [user?.id, config.storagePath, settings],
+    [config.storagePath, loadableUser],
   );
 
   const resetSettings = useCallback(
-    async (settingsArray?: string[]) => {
-      if (!settings) return;
+    (settingsArray?: string[]) => {
+      const user = Loadable.match(loadableUser.get(), {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
+      if (!user) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
-      const newSettings = { ...settings };
 
-      array.forEach((setting) => {
-        let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined = undefined;
+      stateOb.update((s) => {
+        const news = s.get(config.storagePath);
+        array.forEach((setting) => {
+          let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+            undefined;
 
-        for (const key in config.settings) {
-          const conf = config.settings[key];
+          for (const key in config.settings) {
+            const conf = config.settings[key];
 
-          if (conf.storageKey === setting) {
-            defaultSetting = conf;
-            break;
+            if (conf.storageKey === setting) {
+              defaultSetting = conf;
+              break;
+            }
           }
-        }
 
-        if (!defaultSetting) return;
+          if (!defaultSetting || !news) return;
 
-        newSettings[setting as keyof T] = defaultSetting.defaultValue;
+          news[setting] = defaultSetting.defaultValue;
+        });
+        return s.set(config.storagePath, news ?? {});
       });
-
-      update(config.storagePath, newSettings);
-
-      await updateDB(newSettings);
-
-      navigate('', { replace: true });
     },
-    [config, update, updateDB, navigate, settings],
+    [config, stateOb, loadableUser],
   );
 
   const updateSettings = useCallback(
-    async (updates: Settings, shouldPush = false) => {
-      if (!settings) return;
+    (updates: Settings) => {
+      stateOb.update((s) =>
+        s.set(
+          config.storagePath,
+          isEqual(s.get(config.storagePath), updates)
+            ? s.get(config.storagePath) ?? {}
+            : { ...s.get(config.storagePath), ...updates },
+        ),
+      );
+    },
+    [config, stateOb],
+  );
 
-      const newSettings = { ...settings, ...updates };
+  useLayoutEffect(() => {
+    if (initialLoading) return;
+    return derivedOb.subscribe(async (cur, prev) => {
+      const user = Loadable.match(loadableUser.get(), {
+        Loaded: (cUser) => cUser,
+        NotLoaded: () => undefined,
+      });
+      if (!cur || !user || isEqual(cur, prev)) return;
 
-      if (isEqual(newSettings, settings)) return;
-
-      update(config.storagePath, newSettings);
-
-      await updateDB(newSettings);
+      await updateDB(cur, prev as unknown as SettingsRecord<T>);
 
       if (
         (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
@@ -301,18 +315,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       ) {
         return;
       }
-
-      const mappedSettings = settingsToQuery(config, newSettings);
-      const url = `?${mappedSettings}`;
-
-      shouldPush ? navigate(url) : navigate(url, { replace: true });
-    },
-    [config, settings, navigate, update, updateDB],
-  );
+      const mappedSettings = settingsToQuery(config, cur);
+      const url = mappedSettings ? `?${mappedSettings}` : '';
+      navigate(url, { replace: true });
+    });
+  }, [derivedOb, navigate, config, updateDB, initialLoading, loadableUser]);
 
   return {
     activeSettings,
-    isLoading,
+    isLoading: initialLoading,
     resetSettings,
     settings,
     updateSettings,
