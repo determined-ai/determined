@@ -1,15 +1,13 @@
-import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { removeRolesFromGroup, removeRolesFromUser } from 'services/api';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroupWithRoleInfo } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { isUserWithRoleInfo } from 'utils/user';
 
-import css from './useModalWorkspaceRemoveMember.module.scss';
+import { Modal } from './kit/Modal';
 
 interface Props {
   name: string;
@@ -20,27 +18,15 @@ interface Props {
   userOrGroupId: number;
 }
 
-const useModalWorkspaceRemoveMember = ({
+const WorkspaceMemberRemoveComponent: React.FC<Props> = ({
   onClose,
   userOrGroup,
   name,
   roleIds,
   scopeWorkspaceId,
   userOrGroupId,
-}: Props): ModalHooks => {
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+}: Props) => {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-
-  const modalContent = useMemo(() => {
-    return (
-      <div className={css.base}>
-        <p>
-          Are you sure you want to remove {name} from this workspace? They will no longer be able to
-          access the contents of this workspace. Nothing will be deleted.
-        </p>
-      </div>
-    );
-  }, [name]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -72,34 +58,22 @@ const useModalWorkspaceRemoveMember = ({
     }
   }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId, onClose]);
 
-  const getModalProps = useCallback((): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okButtonProps: { danger: true, disabled: isDeleting },
-      okText: 'Remove',
-      onOk: handleOk,
-      title: `Remove ${name}`,
-    };
-  }, [handleOk, modalContent, name, isDeleting]);
-
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
+  return (
+    <Modal
+      cancel
+      danger
+      submit={{
+        disabled: isDeleting,
+        handler: handleOk,
+        text: 'Remove',
+      }}
+      title={`Remove ${name}`}>
+      <p>
+        Are you sure you want to remove {name} from this workspace? They will no longer be able to
+        access the contents of this workspace. Nothing will be deleted.
+      </p>
+    </Modal>
   );
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (modalRef.current && !isDeleting) openOrUpdate(getModalProps());
-  }, [getModalProps, isDeleting, modalRef, name, openOrUpdate]);
-
-  return { modalOpen, modalRef, ...modalHook };
 };
 
-export default useModalWorkspaceRemoveMember;
+export default WorkspaceMemberRemoveComponent;

@@ -4,15 +4,16 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
+import WorkspaceMemberAddModalComponent from 'components/WorkspaceMemberAdd';
+import WorkspaceMemberRemoveComponent from 'components/WorkspaceMemberRemove';
 import useFeature from 'hooks/useFeature';
-import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
-import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
@@ -57,17 +58,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   workspace,
   fetchMembers,
 }) => {
-  const {
-    modalOpen: openWorkspaceRemoveMemberModal,
-    contextHolder: openWorkspaceRemoveMemberContextHolder,
-  } = useModalWorkspaceRemoveMember({
-    name,
-    onClose: fetchMembers,
-    roleIds,
-    scopeWorkspaceId: workspace.id,
-    userOrGroup,
-    userOrGroupId: isUserWithRoleInfo(userOrGroup) ? userOrGroup.userId : userOrGroup.groupId ?? 0,
-  });
+  const WorkspaceMemberRemoveModal = useModal(WorkspaceMemberRemoveComponent);
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
@@ -76,7 +67,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
     const funcs = {
       [MenuKey.Remove]: () => {
-        openWorkspaceRemoveMemberModal();
+        WorkspaceMemberRemoveModal.open();
       },
     };
 
@@ -88,14 +79,23 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
       items: [{ danger: true, key: MenuKey.Remove, label: 'Remove' }],
       onClick: onItemClick,
     };
-  }, [openWorkspaceRemoveMemberModal]);
+  }, [WorkspaceMemberRemoveModal]);
 
   return (
     <div className={css.dropdown}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button icon={<Icon name="overflow-vertical" />} type="text" />
       </Dropdown>
-      {openWorkspaceRemoveMemberContextHolder}
+      <WorkspaceMemberRemoveModal.Component
+        {...{
+          name,
+          onClose: fetchMembers,
+          roleIds,
+          scopeWorkspaceId: workspace.id,
+          userOrGroup,
+          userOrGroupId: isUserWithRoleInfo(userOrGroup) ? userOrGroup.userId : userOrGroup.groupId ?? 0,
+        }}
+      />
     </div>
   );
 };
@@ -122,13 +122,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     usersAssignedDirectly,
   );
 
-  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
-    useModalWorkspaceAddMember({
-      addableUsersAndGroups,
-      onClose: fetchMembers,
-      rolesAssignableToScope,
-      workspaceId: workspace.id,
-    });
+  const WorkspaceMemberAddModal = useModal(WorkspaceMemberAddModalComponent);
 
   const rbacEnabled = useFeature().isOn('rbac');
 
@@ -137,8 +131,8 @@ const WorkspaceMembers: React.FC<Props> = ({
   }, [onFilterUpdate, settings.name]);
 
   const handleAddMembersClick = useCallback(() => {
-    openWorkspaceAddMember();
-  }, [openWorkspaceAddMember]);
+    WorkspaceMemberAddModal.open();
+  }, [WorkspaceMemberAddModal]);
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
@@ -276,7 +270,14 @@ const WorkspaceMembers: React.FC<Props> = ({
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      {workspaceAddMemberContextHolder}
+      <WorkspaceMemberAddModal.Component
+        {...{
+          addableUsersAndGroups,
+          onClose: fetchMembers,
+          rolesAssignableToScope,
+          workspaceId: workspace.id,
+        }}
+      />
     </>
   );
 };
