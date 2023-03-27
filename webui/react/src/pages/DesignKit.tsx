@@ -194,9 +194,6 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="link">
             Disabled
           </Button>
-          <Button ghost type="link">
-            Ghost
-          </Button>
           <Button loading type="link">
             Loading
           </Button>
@@ -210,9 +207,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button disabled type="text">
             Disabled
-          </Button>
-          <Button ghost type="text">
-            Ghost
           </Button>
           <Button loading type="text">
             Loading
