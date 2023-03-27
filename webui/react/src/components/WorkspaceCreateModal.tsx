@@ -43,7 +43,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
     usePermissions();
   const [form] = Form.useForm<FormInputs>();
-  const workspaceName = Form.useWatch('workspaceName', form);
   const useAgentUser = Form.useWatch('useAgentUser', form);
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);

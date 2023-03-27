@@ -22,7 +22,7 @@ import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';
-import WorkspaceCreateModalComponent from './WorkspaceCreate';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;

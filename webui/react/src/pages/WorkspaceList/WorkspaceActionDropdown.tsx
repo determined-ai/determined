@@ -4,8 +4,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import WorkspaceCreateModalComponent from 'components/WorkspaceCreate';
-import WorkspaceDeleteModalComponent from 'components/WorkspaceDelete';
+import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
+import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';

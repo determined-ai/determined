@@ -21,7 +21,7 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import WorkspaceCreateModalComponent from 'components/WorkspaceCreate';
+import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';

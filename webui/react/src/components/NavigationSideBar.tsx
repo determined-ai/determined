@@ -30,7 +30,7 @@ import { useModal } from './kit/Modal';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 import UserBadge from './UserBadge';
-import WorkspaceCreateModalComponent from './WorkspaceCreate';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;

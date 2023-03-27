@@ -10,7 +10,7 @@ import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import { Modal } from './kit/Modal';
-import css from './WorkspaceDelete.module.scss';
+import css from './WorkspaceDeleteModal.module.scss';
 
 interface FormInputs {
   workspaceName: string;
