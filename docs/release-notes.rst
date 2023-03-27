@@ -19,50 +19,48 @@ Version 0.21.0
 
 -  Cluster: K80 GPUs are no longer supported.
 
--  Remove all old PATCH endpoints under `/agents*`. This covers the PATCH APIs for enabling and
-   disabling slots. Users should use the new APIs under `/api/v1/agents`
+-  API: Remove all old PATCH endpoints under ``/agents*``, including the APIs for enabling and
+   disabling slots. Users should use the new APIs under ``/api/v1/agents``.
 
--  Trial API: ``on_validation_step_start`` and ``on_validation_step_end`` callbacks on
-   ``PyTorchTrial`` and ``DeepspeedTrial`` were deprecated in 0.12.12 (Jul 2020) and have been
+-  API: The ``on_validation_step_start`` and ``on_validation_step_end`` callbacks on
+   ``PyTorchTrial`` and ``DeepSpeedTrial`` were deprecated in 0.12.12 (Jul 2020) and have been
    removed. Please use ``on_validation_start`` and ``on_validation_end`` instead.
 
--  ``records_per_epoch`` has been dropped from PyTorch code paths. We were previously using this
+-  Trial API: ``records_per_epoch`` has been dropped from PyTorch code paths. We were previously using this
    value internally to estimate epoch lengths. We are now using the chief worker's epoch length as
    the epoch length.
 
--  ``average_training_metrics`` is no longer configurable. This value previously defaulted to false
+-  API: ``average_training_metrics`` is no longer configurable. This value previously defaulted to false
    and was dropped to simplify the training API. We always average training metrics now.
 
--  Trial API: the unused ``latest_training`` field has been removed from ``GetTrial`` and
+-  API: The unused ``latest_training`` field has been removed from the ``GetTrial`` and
    ``GetExperimentTrials`` APIs due to slow performance.
 
 **Bug Fixes**
 
--  CLI: Fix an issue where ``det user change-password`` will return an authentication error when
-   trying to change current user's password.
+-  CLI: Fix an issue where ``det user change-password`` would return an authentication error when
+   trying to change the current user's password.
 
 **Improvements**
 
--  CLI: Default to provisioning Nvidia T4 GPU instances.
-
-   -  Command line deployments will now default to provisioning Nvidia T4 GPU instances instead of
+-  CLI: Command-line deployments will now default to provisioning Nvidia T4 GPU instances instead of
       K80 instances. This change is intended to improve the performance/cost and driver support of
       the default deployment.
 
 -  Kubernetes: Ease permission requirements in Kubernetes so master no longer requires access to all
    Kubernetes namespaces. This only affects custom modified Helm chart configurations.
 
--  Checkpoints: Improved performance of checkpoint insertion and deletion.
+-  Checkpoints: Improve performance of checkpoint insertion and deletion.
 
 **New Feature**
 
--  PyTorchTrial and DeepSpeedTrial APIs: Deprecate ``TorchWriter`` and add a PyTorch
+-  API: Deprecate ``TorchWriter`` and add a PyTorch
    ``SummaryWriter`` object to ``PyTorchTrialContext`` and ``DeepSpeedTrialContext`` that we manage
    on behalf of users. See :func:`~determined.pytorch.PyTorchTrialContext.get_tensorboard_writer`
    for details.
 
--  Introduces :class:`~determined.pytorch.Trainer`, a high-level training API for ``PyTorchTrial``
-   that allows for python-side training loop customizations and includes support for off-cluster
+-  API: Introduce :class:`~determined.pytorch.Trainer`, a high-level training API for ``PyTorchTrial``
+   that allows for Python-side training loop customizations and includes support for off-cluster
    local training.
 
 **Removed Features**
