@@ -17,6 +17,8 @@ class ProjectStore {
     if (force || !this.#projectsByWorkspace.get().has(workspaceKey)) {
       getWorkspaceProjects({ id: workspaceId, limit: 0 }, { signal: signal ?? canceler.signal })
         .then((response) => {
+          // Prevent unnecessary re-renders.
+          if (!force && this.#projectsByWorkspace.get().has(workspaceKey)) return;
           this.#projects.update((prev) =>
             prev.withMutations((map) => {
               response.projects.forEach((project) => map.set(project.id, project));

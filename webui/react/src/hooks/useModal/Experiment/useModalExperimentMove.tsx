@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Form from 'components/kit/Form';
@@ -11,7 +12,7 @@ import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
+import projectStore from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
@@ -62,8 +63,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
-  const projects = useWorkspaceProjects(workspaceId ?? 1);
-  const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
+  const loadableProjects = useObservable(projectStore.getProjectsByWorkspace(workspaceId));
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
@@ -74,9 +74,10 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  useEffect(() => {
-    if (workspaceId !== undefined) ensureProjectsFetched(workspaceId);
-  }, [workspaceId, ensureProjectsFetched]);
+  useEffect(
+    () => (workspaceId === undefined ? undefined : projectStore.fetch(workspaceId)),
+    [workspaceId],
+  );
 
   const modalContent = useMemo(() => {
     return (
@@ -113,7 +114,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             label="Project"
             name="projectId"
             rules={[{ message: 'Project is required', required: true }]}>
-            {Loadable.match(projects, {
+            {Loadable.match(loadableProjects, {
               Loaded: (projects) => (
                 <Select
                   filterOption={(input, option) =>
@@ -140,7 +141,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         )}
       </Form>
     );
-  }, [form, projects, workspaceId, workspaces]);
+  }, [form, loadableProjects, workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
@@ -161,7 +162,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         : `${experimentIds.length} experiments`;
 
     const destinationProjectName =
-      Loadable.getOrElse([], projects).find((p) => p.id === projId)?.name ?? '';
+      Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
 
     if (numFailures === 0) {
       notification.open({
@@ -197,7 +198,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       });
     }
     form.resetFields();
-  }, [closeNotification, experimentIds, form, projects]);
+  }, [closeNotification, experimentIds, form, loadableProjects]);
 
   const getModalProps = useCallback(
     (experimentIds: number[]): ModalFuncProps => {
@@ -239,7 +240,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(experimentIds));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, projects._tag, workspaceId, experimentIds]);
+  }, [projectId, loadableProjects._tag, workspaceId, experimentIds]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

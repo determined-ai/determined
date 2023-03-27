@@ -11,7 +11,6 @@ import {
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ClusterProvider } from 'stores/cluster';
-import { ProjectsProvider } from 'stores/projects';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -58,11 +57,9 @@ const setup = () => {
       <HelmetProvider>
         <WorkspacesProvider>
           <ClusterProvider>
-            <ProjectsProvider>
-              <BrowserRouter>
-                <ExperimentDetails />
-              </BrowserRouter>
-            </ProjectsProvider>
+            <BrowserRouter>
+              <ExperimentDetails />
+            </BrowserRouter>
           </ClusterProvider>
         </WorkspacesProvider>
       </HelmetProvider>
