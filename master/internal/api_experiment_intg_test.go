@@ -46,16 +46,20 @@ import (
 )
 
 type mockStream[T any] struct {
-	ctx context.Context
+	ctx  context.Context
+	data []T
 }
 
-func (m mockStream[T]) Send(resp T) error             { return nil }
-func (m mockStream[T]) SetHeader(metadata.MD) error   { return nil }
-func (m mockStream[T]) SendHeader(metadata.MD) error  { return nil }
-func (m mockStream[T]) SetTrailer(metadata.MD)        {}
-func (m mockStream[T]) Context() context.Context      { return m.ctx }
-func (m mockStream[T]) SendMsg(mes interface{}) error { return nil }
-func (m mockStream[T]) RecvMsg(mes interface{}) error { return nil }
+func (m *mockStream[T]) Send(resp T) error {
+	m.data = append(m.data, resp)
+	return nil
+}
+func (m *mockStream[T]) SetHeader(metadata.MD) error   { return nil }
+func (m *mockStream[T]) SendHeader(metadata.MD) error  { return nil }
+func (m *mockStream[T]) SetTrailer(metadata.MD)        {}
+func (m *mockStream[T]) Context() context.Context      { return m.ctx }
+func (m *mockStream[T]) SendMsg(mes interface{}) error { return nil }
+func (m *mockStream[T]) RecvMsg(mes interface{}) error { return nil }
 
 func expNotFoundErr(expID int) error {
 	return status.Errorf(codes.NotFound, "experiment not found: %d", expID)
@@ -579,7 +583,7 @@ func TestLegacyExperiments(t *testing.T) {
 		req := &apiv1.MetricNamesRequest{
 			ExperimentId: prse.CompletedPBTExpID,
 		}
-		err = api.MetricNames(req, mockStream[*apiv1.MetricNamesResponse]{ctx})
+		err = api.MetricNames(req, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
 		require.NoError(t, err)
 	})
 
@@ -589,7 +593,7 @@ func TestLegacyExperiments(t *testing.T) {
 			MetricName:   "loss",
 			MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 		}
-		err = api.TrialsSample(req, mockStream[*apiv1.TrialsSampleResponse]{ctx})
+		err = api.TrialsSample(req, &mockStream[*apiv1.TrialsSampleResponse]{ctx: ctx})
 		require.NoError(t, err)
 	})
 
@@ -967,28 +971,28 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricNames(&apiv1.MetricNamesRequest{
 				ExperimentId: int32(id),
-			}, mockStream[*apiv1.MetricNamesResponse]{ctx})
+			}, &mockStream[*apiv1.MetricNamesResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.MetricBatches(&apiv1.MetricBatchesRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
-			}, mockStream[*apiv1.MetricBatchesResponse]{ctx})
+			}, &mockStream[*apiv1.MetricBatchesResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSnapshot(&apiv1.TrialsSnapshotRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
-			}, mockStream[*apiv1.TrialsSnapshotResponse]{ctx})
+			}, &mockStream[*apiv1.TrialsSnapshotResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.TrialsSample(&apiv1.TrialsSampleRequest{
 				ExperimentId: int32(id),
 				MetricName:   "name",
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
-			}, mockStream[*apiv1.TrialsSampleResponse]{ctx})
+			}, &mockStream[*apiv1.TrialsSampleResponse]{ctx: ctx})
 		}},
 		{"CanEditExperiment", func(id int) error {
 			_, err := api.ComputeHPImportance(ctx, &apiv1.ComputeHPImportanceRequest{
@@ -999,7 +1003,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			return api.GetHPImportance(&apiv1.GetHPImportanceRequest{
 				ExperimentId: int32(id),
-			}, mockStream[*apiv1.GetHPImportanceResponse]{ctx})
+			}, &mockStream[*apiv1.GetHPImportanceResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetBestSearcherValidationMetric(ctx,

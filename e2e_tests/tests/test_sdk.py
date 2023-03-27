@@ -7,6 +7,7 @@ import pytest
 
 from determined.common import yaml
 from determined.common.api import bindings, errors
+from determined.common.experimental.trial import TrainingMetrics, ValidationMetrics
 from determined.experimental import client as _client
 from tests import config as conf
 
@@ -282,6 +283,50 @@ def test_models(client: _client.Determined) -> None:
 
     with pytest.raises(errors.APIException):
         client.get_model(model_name)
+
+
+@pytest.mark.e2e_cpu
+def test_stream_metrics(client: _client.Determined) -> None:
+    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+        config = yaml.safe_load(f)
+    config["hyperparameters"]["num_validation_metrics"] = 2
+    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+    assert exp.wait() == _client.ExperimentState.COMPLETED
+
+    trials = exp.get_trials()
+    assert len(trials) == 1
+    trial = trials[0]
+
+    for metrics in [
+        list(trial.stream_training_metrics()),
+        list(client.stream_trials_training_metrics([trial.id])),
+    ]:
+        assert len(metrics) == config["searcher"]["max_length"]["batches"]
+        for i, actual in enumerate(metrics):
+            assert actual == TrainingMetrics(
+                trial_id=trial.id,
+                trial_run_id=1,
+                steps_completed=i + 1,
+                end_time=actual.end_time,
+                metrics={"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)},
+                batch_metrics=[{"loss": config["hyperparameters"]["metrics_base"] ** (i + 1)}],
+            )
+
+    for val_metrics in [
+        list(trial.stream_validation_metrics()),
+        list(client.stream_trials_validation_metrics([trial.id])),
+    ]:
+        assert len(val_metrics) == 1
+        assert val_metrics[0] == ValidationMetrics(
+            trial_id=trial.id,
+            trial_run_id=1,
+            steps_completed=100,
+            end_time=val_metrics[0].end_time,
+            metrics={
+                "validation_error": config["hyperparameters"]["metrics_base"] ** 100,
+                "validation_metric_1": config["hyperparameters"]["metrics_base"] ** 100,
+            },
+        )
 
 
 @pytest.mark.e2e_cpu

@@ -344,6 +344,25 @@ export interface StreamResultOfV1GetHPImportanceResponse {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1GetTrainingMetricsResponse
+ */
+export interface StreamResultOfV1GetTrainingMetricsResponse {
+    /**
+     * 
+     * @type {V1GetTrainingMetricsResponse}
+     * @memberof StreamResultOfV1GetTrainingMetricsResponse
+     */
+    result?: V1GetTrainingMetricsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1GetTrainingMetricsResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
  */
 export interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse {
@@ -376,6 +395,25 @@ export interface StreamResultOfV1GetTrialProfilerMetricsResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1GetTrialProfilerMetricsResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1GetValidationMetricsResponse
+ */
+export interface StreamResultOfV1GetValidationMetricsResponse {
+    /**
+     * 
+     * @type {V1GetValidationMetricsResponse}
+     * @memberof StreamResultOfV1GetValidationMetricsResponse
+     */
+    result?: V1GetValidationMetricsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1GetValidationMetricsResponse
      */
     error?: RuntimeStreamError;
 }
@@ -3752,6 +3790,19 @@ export interface V1GetTensorboardsResponse {
     pagination?: V1Pagination;
 }
 /**
+ * Response to GetTrainingMetricsRequest.
+ * @export
+ * @interface V1GetTrainingMetricsResponse
+ */
+export interface V1GetTrainingMetricsResponse {
+    /**
+     * Metric response.
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetTrainingMetricsResponse
+     */
+    metrics: Array<V1MetricsReport>;
+}
+/**
  * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
  * @export
  * @enum {string}
@@ -3926,6 +3977,19 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     pagination?: V1Pagination;
+}
+/**
+ * Response to GetTrainingMetricsRequest.
+ * @export
+ * @interface V1GetValidationMetricsResponse
+ */
+export interface V1GetValidationMetricsResponse {
+    /**
+     * Metric response.
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetValidationMetricsResponse
+     */
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to GetWebhooksRequest.
@@ -4901,6 +4965,55 @@ export interface V1Metrics {
      * @memberof V1Metrics
      */
     batchMetrics?: Array<any>;
+}
+/**
+ * Metrics report.
+ * @export
+ * @interface V1MetricsReport
+ */
+export interface V1MetricsReport {
+    /**
+     * ID of the trial.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    trialId: number;
+    /**
+     * End time of when metric was reported.
+     * @type {Date}
+     * @memberof V1MetricsReport
+     */
+    endTime: Date;
+    /**
+     * Struct of the reported metrics.
+     * @type {any}
+     * @memberof V1MetricsReport
+     */
+    metrics: any;
+    /**
+     * Steps completed in the report.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    totalBatches: number;
+    /**
+     * If metric is archived.
+     * @type {boolean}
+     * @memberof V1MetricsReport
+     */
+    archived: boolean;
+    /**
+     * ID of metric in table.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    id: number;
+    /**
+     * Run ID of trial when metric was reported.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    trialRunId: number;
 }
 /**
  * MetricsWorkload is a workload generating metrics.
@@ -25141,6 +25254,42 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/metrics/training_metrics`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25236,6 +25385,42 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             
             if (metricType !== undefined) {
                 localVarQueryParameter['metricType'] = metricType
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/metrics/validation_metrics`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -25526,6 +25711,25 @@ export const TrialsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrainingMetricsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrainingMetrics(trialIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25559,6 +25763,25 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetValidationMetricsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getValidationMetrics(trialIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25690,6 +25913,16 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options?: any) {
+            return TrialsApiFp(configuration).getTrainingMetrics(trialIds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25714,6 +25947,16 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any) {
             return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options?: any) {
+            return TrialsApiFp(configuration).getValidationMetrics(trialIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -25803,6 +26046,18 @@ export class TrialsApi extends BaseAPI {
     
     /**
      * 
+     * @summary Stream one or more trial's training metrics.
+     * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getTrainingMetrics(trialIds?: Array<number>, options?: any) {
+        return TrialsApiFp(this.configuration).getTrainingMetrics(trialIds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial's id.
      * @param {*} [options] Override http request option.
@@ -25830,6 +26085,18 @@ export class TrialsApi extends BaseAPI {
      */
     public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any) {
         return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Stream one or more trial's validation metrics.
+     * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getValidationMetrics(trialIds?: Array<number>, options?: any) {
+        return TrialsApiFp(this.configuration).getValidationMetrics(trialIds, options)(this.fetch, this.basePath)
     }
     
     /**

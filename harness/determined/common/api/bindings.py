@@ -4574,6 +4574,28 @@ class v1GetTensorboardsResponse:
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
+class v1GetTrainingMetricsResponse:
+
+    def __init__(
+        self,
+        *,
+        metrics: "typing.Sequence[v1MetricsReport]",
+    ):
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrainingMetricsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
+        }
+        return out
+
 class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
     SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     SORT_BY_UUID = "SORT_BY_UUID"
@@ -4832,6 +4854,28 @@ class v1GetUsersResponse:
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         if not omit_unset or "users" in vars(self):
             out["users"] = None if self.users is None else [x.to_json(omit_unset) for x in self.users]
+        return out
+
+class v1GetValidationMetricsResponse:
+
+    def __init__(
+        self,
+        *,
+        metrics: "typing.Sequence[v1MetricsReport]",
+    ):
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetValidationMetricsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metrics": [v1MetricsReport.from_json(x) for x in obj["metrics"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metrics": [x.to_json(omit_unset) for x in self.metrics],
+        }
         return out
 
 class v1GetWebhooksResponse:
@@ -6195,6 +6239,52 @@ class v1Metrics:
         }
         if not omit_unset or "batchMetrics" in vars(self):
             out["batchMetrics"] = self.batchMetrics
+        return out
+
+class v1MetricsReport:
+
+    def __init__(
+        self,
+        *,
+        archived: bool,
+        endTime: str,
+        id: int,
+        metrics: "typing.Dict[str, typing.Any]",
+        totalBatches: int,
+        trialId: int,
+        trialRunId: int,
+    ):
+        self.archived = archived
+        self.endTime = endTime
+        self.id = id
+        self.metrics = metrics
+        self.totalBatches = totalBatches
+        self.trialId = trialId
+        self.trialRunId = trialRunId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MetricsReport":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "archived": obj["archived"],
+            "endTime": obj["endTime"],
+            "id": obj["id"],
+            "metrics": obj["metrics"],
+            "totalBatches": obj["totalBatches"],
+            "trialId": obj["trialId"],
+            "trialRunId": obj["trialRunId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "archived": self.archived,
+            "endTime": self.endTime,
+            "id": self.id,
+            "metrics": self.metrics,
+            "totalBatches": self.totalBatches,
+            "trialId": self.trialId,
+            "trialRunId": self.trialRunId,
+        }
         return out
 
 class v1MetricsWorkload:
@@ -13481,7 +13571,7 @@ def get_GetHPImportance(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -14254,6 +14344,39 @@ def get_GetTensorboards(
         return v1GetTensorboardsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTensorboards", _resp)
 
+def get_GetTrainingMetrics(
+    session: "api.Session",
+    *,
+    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> "typing.Iterable[v1GetTrainingMetricsResponse]":
+    _params = {
+        "trialIds": trialIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics/training_metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        try:
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetTrainingMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetTrainingMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetTrainingMetrics", runtimeStreamError(message="ChunkedEncodingError"))
+        return
+    raise APIHttpError("get_GetTrainingMetrics", _resp)
+
 def get_GetTrial(
     session: "api.Session",
     *,
@@ -14326,7 +14449,7 @@ def get_GetTrialProfilerAvailableSeries(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -14368,7 +14491,7 @@ def get_GetTrialProfilerMetrics(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -14525,6 +14648,39 @@ def get_GetUsers(
     if _resp.status_code == 200:
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
+
+def get_GetValidationMetrics(
+    session: "api.Session",
+    *,
+    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> "typing.Iterable[v1GetValidationMetricsResponse]":
+    _params = {
+        "trialIds": trialIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics/validation_metrics",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=True,
+    )
+    if _resp.status_code == 200:
+        try:
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
+                _j = json.loads(_line)
+                if "error" in _j:
+                    raise APIHttpStreamError(
+                        "get_GetValidationMetrics",
+                        runtimeStreamError.from_json(_j["error"])
+                )
+                yield v1GetValidationMetricsResponse.from_json(_j["result"])
+        except requests.exceptions.ChunkedEncodingError:
+            raise APIHttpStreamError("get_GetValidationMetrics", runtimeStreamError(message="ChunkedEncodingError"))
+        return
+    raise APIHttpError("get_GetValidationMetrics", _resp)
 
 def get_GetWebhooks(
     session: "api.Session",
@@ -14984,7 +15140,7 @@ def get_MasterLogs(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -15022,7 +15178,7 @@ def get_MetricBatches(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -15056,7 +15212,7 @@ def get_MetricNames(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16149,7 +16305,7 @@ def get_TaskLogs(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16183,7 +16339,7 @@ def get_TaskLogsFields(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16259,7 +16415,7 @@ def get_TrialLogs(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16293,7 +16449,7 @@ def get_TrialLogsFields(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16339,7 +16495,7 @@ def get_TrialsSample(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(
@@ -16381,7 +16537,7 @@ def get_TrialsSnapshot(
     )
     if _resp.status_code == 200:
         try:
-            for _line in _resp.iter_lines():
+            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
                 _j = json.loads(_line)
                 if "error" in _j:
                     raise APIHttpStreamError(

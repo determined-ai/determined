@@ -995,6 +995,109 @@ func (x *TrialRunnerMetadata) GetState() string {
 	return ""
 }
 
+// Metrics report.
+type MetricsReport struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// ID of the trial.
+	TrialId int32 `protobuf:"varint,1,opt,name=trial_id,json=trialId,proto3" json:"trial_id,omitempty"`
+	// End time of when metric was reported.
+	EndTime *timestamp.Timestamp `protobuf:"bytes,2,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	// Struct of the reported metrics.
+	Metrics *_struct.Struct `protobuf:"bytes,3,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	// Steps completed in the report.
+	TotalBatches int32 `protobuf:"varint,4,opt,name=total_batches,json=totalBatches,proto3" json:"total_batches,omitempty"`
+	// If metric is archived.
+	Archived bool `protobuf:"varint,5,opt,name=archived,proto3" json:"archived,omitempty"`
+	// ID of metric in table.
+	Id int32 `protobuf:"varint,6,opt,name=id,proto3" json:"id,omitempty"`
+	// Run ID of trial when metric was reported.
+	TrialRunId int32 `protobuf:"varint,7,opt,name=trial_run_id,json=trialRunId,proto3" json:"trial_run_id,omitempty"`
+}
+
+func (x *MetricsReport) Reset() {
+	*x = MetricsReport{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_trial_v1_trial_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MetricsReport) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MetricsReport) ProtoMessage() {}
+
+func (x *MetricsReport) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_trial_v1_trial_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MetricsReport.ProtoReflect.Descriptor instead.
+func (*MetricsReport) Descriptor() ([]byte, []int) {
+	return file_determined_trial_v1_trial_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MetricsReport) GetTrialId() int32 {
+	if x != nil {
+		return x.TrialId
+	}
+	return 0
+}
+
+func (x *MetricsReport) GetEndTime() *timestamp.Timestamp {
+	if x != nil {
+		return x.EndTime
+	}
+	return nil
+}
+
+func (x *MetricsReport) GetMetrics() *_struct.Struct {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *MetricsReport) GetTotalBatches() int32 {
+	if x != nil {
+		return x.TotalBatches
+	}
+	return 0
+}
+
+func (x *MetricsReport) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
+func (x *MetricsReport) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *MetricsReport) GetTrialRunId() int32 {
+	if x != nil {
+		return x.TrialRunId
+	}
+	return 0
+}
+
 var File_determined_trial_v1_trial_proto protoreflect.FileDescriptor
 
 var file_determined_trial_v1_trial_proto_rawDesc = []byte{
@@ -1200,7 +1303,29 @@ var file_determined_trial_v1_trial_proto_rawDesc = []byte{
 	0x72, 0x69, 0x61, 0x6c, 0x52, 0x75, 0x6e, 0x6e, 0x65, 0x72, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
 	0x74, 0x61, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x3a, 0x0d, 0x92, 0x41, 0x0a, 0x0a, 0x08, 0xd2,
-	0x01, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x2a, 0xec, 0x01, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74,
+	0x01, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0xdd, 0x02, 0x0a, 0x0d, 0x4d, 0x65, 0x74, 0x72,
+	0x69, 0x63, 0x73, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x72, 0x69,
+	0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x72, 0x69,
+	0x61, 0x6c, 0x49, 0x64, 0x12, 0x35, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x5f, 0x74, 0x69, 0x6d, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
+	0x6d, 0x70, 0x52, 0x07, 0x65, 0x6e, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x31, 0x0a, 0x07, 0x6d,
+	0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53,
+	0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x07, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12, 0x23,
+	0x0a, 0x0d, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x5f, 0x62, 0x61, 0x74, 0x63, 0x68, 0x65, 0x73, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x61, 0x74, 0x63,
+	0x68, 0x65, 0x73, 0x12, 0x1a, 0x0a, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x12,
+	0x20, 0x0a, 0x0c, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x5f, 0x72, 0x75, 0x6e, 0x5f, 0x69, 0x64, 0x18,
+	0x07, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0a, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x52, 0x75, 0x6e, 0x49,
+	0x64, 0x3a, 0x54, 0x92, 0x41, 0x51, 0x0a, 0x4f, 0xd2, 0x01, 0x08, 0x74, 0x72, 0x69, 0x61, 0x6c,
+	0x5f, 0x69, 0x64, 0xd2, 0x01, 0x08, 0x65, 0x6e, 0x64, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0xd2, 0x01,
+	0x07, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0xd2, 0x01, 0x0d, 0x74, 0x6f, 0x74, 0x61, 0x6c,
+	0x5f, 0x62, 0x61, 0x74, 0x63, 0x68, 0x65, 0x73, 0xd2, 0x01, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69,
+	0x76, 0x65, 0x64, 0xd2, 0x01, 0x02, 0x69, 0x64, 0xd2, 0x01, 0x0c, 0x74, 0x72, 0x69, 0x61, 0x6c,
+	0x5f, 0x72, 0x75, 0x6e, 0x5f, 0x69, 0x64, 0x2a, 0xec, 0x01, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74,
 	0x65, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45,
 	0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x10, 0x0a, 0x0c, 0x53, 0x54, 0x41, 0x54,
 	0x45, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x53, 0x54,
@@ -1235,7 +1360,7 @@ func file_determined_trial_v1_trial_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_trial_v1_trial_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_determined_trial_v1_trial_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_determined_trial_v1_trial_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_determined_trial_v1_trial_proto_goTypes = []interface{}{
 	(State)(0), // 0: determined.trial.v1.State
 	(TrialProfilerMetricLabels_ProfilerMetricType)(0), // 1: determined.trial.v1.TrialProfilerMetricLabels.ProfilerMetricType
@@ -1249,37 +1374,40 @@ var file_determined_trial_v1_trial_proto_goTypes = []interface{}{
 	(*TrialMetrics)(nil),                              // 9: determined.trial.v1.TrialMetrics
 	(*RendezvousInfo)(nil),                            // 10: determined.trial.v1.RendezvousInfo
 	(*TrialRunnerMetadata)(nil),                       // 11: determined.trial.v1.TrialRunnerMetadata
-	nil,                                               // 12: determined.trial.v1.CheckpointWorkload.ResourcesEntry
-	(*timestamp.Timestamp)(nil),                       // 13: google.protobuf.Timestamp
-	(checkpointv1.State)(0),                           // 14: determined.checkpoint.v1.State
-	(*_struct.Struct)(nil),                            // 15: google.protobuf.Struct
-	(*commonv1.Metrics)(nil),                          // 16: determined.common.v1.Metrics
-	(experimentv1.State)(0),                           // 17: determined.experiment.v1.State
+	(*MetricsReport)(nil),                             // 12: determined.trial.v1.MetricsReport
+	nil,                                               // 13: determined.trial.v1.CheckpointWorkload.ResourcesEntry
+	(*timestamp.Timestamp)(nil),                       // 14: google.protobuf.Timestamp
+	(checkpointv1.State)(0),                           // 15: determined.checkpoint.v1.State
+	(*_struct.Struct)(nil),                            // 16: google.protobuf.Struct
+	(*commonv1.Metrics)(nil),                          // 17: determined.common.v1.Metrics
+	(experimentv1.State)(0),                           // 18: determined.experiment.v1.State
 }
 var file_determined_trial_v1_trial_proto_depIdxs = []int32{
-	13, // 0: determined.trial.v1.CheckpointWorkload.end_time:type_name -> google.protobuf.Timestamp
-	14, // 1: determined.trial.v1.CheckpointWorkload.state:type_name -> determined.checkpoint.v1.State
-	12, // 2: determined.trial.v1.CheckpointWorkload.resources:type_name -> determined.trial.v1.CheckpointWorkload.ResourcesEntry
-	15, // 3: determined.trial.v1.CheckpointWorkload.metadata:type_name -> google.protobuf.Struct
-	13, // 4: determined.trial.v1.MetricsWorkload.end_time:type_name -> google.protobuf.Timestamp
-	16, // 5: determined.trial.v1.MetricsWorkload.metrics:type_name -> determined.common.v1.Metrics
-	13, // 6: determined.trial.v1.Trial.start_time:type_name -> google.protobuf.Timestamp
-	13, // 7: determined.trial.v1.Trial.end_time:type_name -> google.protobuf.Timestamp
-	17, // 8: determined.trial.v1.Trial.state:type_name -> determined.experiment.v1.State
-	15, // 9: determined.trial.v1.Trial.hparams:type_name -> google.protobuf.Struct
+	14, // 0: determined.trial.v1.CheckpointWorkload.end_time:type_name -> google.protobuf.Timestamp
+	15, // 1: determined.trial.v1.CheckpointWorkload.state:type_name -> determined.checkpoint.v1.State
+	13, // 2: determined.trial.v1.CheckpointWorkload.resources:type_name -> determined.trial.v1.CheckpointWorkload.ResourcesEntry
+	16, // 3: determined.trial.v1.CheckpointWorkload.metadata:type_name -> google.protobuf.Struct
+	14, // 4: determined.trial.v1.MetricsWorkload.end_time:type_name -> google.protobuf.Timestamp
+	17, // 5: determined.trial.v1.MetricsWorkload.metrics:type_name -> determined.common.v1.Metrics
+	14, // 6: determined.trial.v1.Trial.start_time:type_name -> google.protobuf.Timestamp
+	14, // 7: determined.trial.v1.Trial.end_time:type_name -> google.protobuf.Timestamp
+	18, // 8: determined.trial.v1.Trial.state:type_name -> determined.experiment.v1.State
+	16, // 9: determined.trial.v1.Trial.hparams:type_name -> google.protobuf.Struct
 	4,  // 10: determined.trial.v1.Trial.best_validation:type_name -> determined.trial.v1.MetricsWorkload
 	4,  // 11: determined.trial.v1.Trial.latest_validation:type_name -> determined.trial.v1.MetricsWorkload
 	3,  // 12: determined.trial.v1.Trial.best_checkpoint:type_name -> determined.trial.v1.CheckpointWorkload
 	1,  // 13: determined.trial.v1.TrialProfilerMetricLabels.metric_type:type_name -> determined.trial.v1.TrialProfilerMetricLabels.ProfilerMetricType
-	13, // 14: determined.trial.v1.TrialProfilerMetricsBatch.timestamps:type_name -> google.protobuf.Timestamp
+	14, // 14: determined.trial.v1.TrialProfilerMetricsBatch.timestamps:type_name -> google.protobuf.Timestamp
 	6,  // 15: determined.trial.v1.TrialProfilerMetricsBatch.labels:type_name -> determined.trial.v1.TrialProfilerMetricLabels
 	2,  // 16: determined.trial.v1.TrialEarlyExit.reason:type_name -> determined.trial.v1.TrialEarlyExit.ExitedReason
-	16, // 17: determined.trial.v1.TrialMetrics.metrics:type_name -> determined.common.v1.Metrics
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	17, // 17: determined.trial.v1.TrialMetrics.metrics:type_name -> determined.common.v1.Metrics
+	14, // 18: determined.trial.v1.MetricsReport.end_time:type_name -> google.protobuf.Timestamp
+	16, // 19: determined.trial.v1.MetricsReport.metrics:type_name -> google.protobuf.Struct
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_determined_trial_v1_trial_proto_init() }
@@ -1396,6 +1524,18 @@ func file_determined_trial_v1_trial_proto_init() {
 				return nil
 			}
 		}
+		file_determined_trial_v1_trial_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MetricsReport); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1403,7 +1543,7 @@ func file_determined_trial_v1_trial_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_trial_v1_trial_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
