@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
 // ExperimentAuthZPermissive is the permission implementation.
@@ -39,10 +40,10 @@ func (p *ExperimentAuthZPermissive) CanDeleteExperiment(
 // FilterExperimentsQuery calls RBAC authz but enforces basic authz.
 func (p *ExperimentAuthZPermissive) FilterExperimentsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project,
-	query *bun.SelectQuery,
+	query *bun.SelectQuery, permissions []rbacv1.PermissionType,
 ) (*bun.SelectQuery, error) {
-	_, _ = (&ExperimentAuthZRBAC{}).FilterExperimentsQuery(ctx, curUser, proj, query)
-	return (&ExperimentAuthZBasic{}).FilterExperimentsQuery(ctx, curUser, proj, query)
+	_, _ = (&ExperimentAuthZRBAC{}).FilterExperimentsQuery(ctx, curUser, proj, query, permissions)
+	return (&ExperimentAuthZBasic{}).FilterExperimentsQuery(ctx, curUser, proj, query, permissions)
 }
 
 // FilterExperimentLabelsQuery calls RBAC authz but enforces basic authz.

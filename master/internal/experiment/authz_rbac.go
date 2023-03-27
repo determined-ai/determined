@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -111,15 +112,14 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 // FilterExperimentsQuery filters a query for what experiments a user can view.
 func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+	permissions []rbacv1.PermissionType,
 ) (selectQuery *bun.SelectQuery, err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
 		{
-			PermissionTypes: []rbacv1.PermissionType{
-				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
-			},
-			SubjectType: "experiments",
+			PermissionTypes: permissions,
+			SubjectType:     "experiments",
 		},
 	}
 
@@ -133,19 +133,35 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 	}
 
 	var workspaces []int32
+	neededPermissionsGlobal := []int{}
+	paramPermissions := []int{}
+	for _, p := range permissions {
+		paramPermissions = append(paramPermissions, int(p))
+	}
+	copy(paramPermissions, neededPermissionsGlobal)
 
 	for role, roleAssignments := range assignmentsMap {
-		for _, permission := range role.Permissions {
-			if permission.ID == int(
-				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA) {
-				for _, assignment := range roleAssignments {
+		for _, assignment := range roleAssignments {
+			neededPermissionsLocal := []int{}
+			copy(paramPermissions, neededPermissionsLocal)
+
+			for _, heldPermission := range role.Permissions {
+				if idx := slices.Index(neededPermissionsLocal, heldPermission.ID); idx > -1 {
 					if assignment.Scope.WorkspaceID.Valid {
-						workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
-					} else {
-						// if permission is global, return without filtering
-						return query, nil
+						neededPermissionsLocal = append(neededPermissionsLocal[:idx],
+							neededPermissionsLocal[idx+1:]...)
+					} else if globalIdx := slices.Index(neededPermissionsGlobal,
+						heldPermission.ID); globalIdx > -1 {
+						neededPermissionsGlobal = append(neededPermissionsGlobal[:globalIdx],
+							neededPermissionsGlobal[globalIdx+1:]...)
 					}
 				}
+			}
+
+			if len(neededPermissionsGlobal) == 0 {
+				return query, nil
+			} else if len(neededPermissionsLocal) == 0 {
+				workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
 			}
 		}
 	}
