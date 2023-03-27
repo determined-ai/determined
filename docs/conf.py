@@ -68,9 +68,9 @@ html_last_updated_fmt = None
 html_sidebars = {
     "**": [
         "navbar-logo.html",
-        "sbt-sidebar-nav.html",
-        "sidebar-version.html",
         "search-field.html",
+        "sidebar-version.html",
+        "sbt-sidebar-nav.html",
     ]
 }
 
