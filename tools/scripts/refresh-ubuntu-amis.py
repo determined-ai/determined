@@ -40,7 +40,7 @@ def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[N
         print(f"Failed to find AMI for {region}!", file=sys.stderr)
         return None
 
-    return  results[0][7]
+    return results[0][7]
 
 
 def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
@@ -105,12 +105,14 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    req = requests.get('https://cloud-images.ubuntu.com/query/focal/server/released.current.txt')
+    req = requests.get("https://cloud-images.ubuntu.com/query/focal/server/released.current.txt")
     req.raise_for_status()
-    table = [re.split(r'\t+', row) for row in re.split(r'\n+', req.text)[:-1]]
-    gov_req = requests.get('https://cloud-images.ubuntu.com/query.govcloud/focal/server/released.current.txt')
+    table = [re.split(r"\t+", row) for row in re.split(r"\n+", req.text)[:-1]]
+    gov_req = requests.get(
+        "https://cloud-images.ubuntu.com/query.govcloud/focal/server/released.current.txt"
+    )
     gov_req.raise_for_status()
-    gov_table = [re.split(r'\t+', row) for row in re.split(r'\n+', gov_req.text)[:-1]]
+    gov_table = [re.split(r"\t+", row) for row in re.split(r"\n+", gov_req.text)[:-1]]
     table += gov_table
 
     if args.bumpenvs_yaml:
