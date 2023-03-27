@@ -101,9 +101,9 @@ if __name__ == "__main__":
     parser.add_argument("--packer-json", metavar="/PATH/TO/ENIRONMENTS-PACKER.JSON")
     args = parser.parse_args()
 
-    """if not args.bumpenvs_yaml and not args.packer_json:
+    if not args.bumpenvs_yaml and not args.packer_json:
         parser.print_help(sys.stderr)
-        sys.exit(1)"""
+        sys.exit(1)
 
     req = requests.get("https://cloud-images.ubuntu.com/query/focal/server/released.current.txt")
     req.raise_for_status()
