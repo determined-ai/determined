@@ -323,9 +323,9 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
  PBS Known Issues
 ********************
 
--  With PBS Workload Manager, when users try to view a Resource Pool Configuration, the Accelerator 
-   field might include an ``unconfigured`` value. This happens when the GPU type information is not 
-   set in the PBS ``resources_available`` object. 
+-  With PBS Workload Manager, when users try to view a Resource Pool Configuration, the 
+   Accelerator field might include an ``unconfigured`` value. This happens when the GPU type 
+   information is not set in the PBS ``resources_available`` object. 
    
    Steps to view Resource Pool Configuration: 
 
@@ -348,8 +348,8 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
       -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
 
-   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins can 
-   verify the Accelerator field on the Web UI using the steps mentioned above.
+   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins 
+   can verify the Accelerator field on the Web UI using the steps mentioned above.
 
 ***********************
  AMD/ROCm Known Issues
