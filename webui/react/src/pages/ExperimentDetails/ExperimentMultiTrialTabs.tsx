@@ -16,7 +16,7 @@ import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 
-const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+const CodeViewer = React.lazy(() => import('components/kit/CodeViewer'));
 
 const TabType = {
   Code: 'code',

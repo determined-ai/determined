@@ -30,18 +30,24 @@ import { ErrorType } from 'shared/utils/error';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
-const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
+const JupyterRenderer = lazy(() => import('./CodeViewer/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
 
-import css from './CodeViewer.module.scss';
+import css from './CodeViewer/CodeViewer.module.scss';
 
-import './index.scss';
+import './CodeViewer/index.scss';
+
+type FileInfo = {
+  content: string;
+  name?: string;
+};
 
 export type Props = {
-  experimentId: number;
+  experimentId?: number;
+  files?: FileInfo[];
   runtimeConfig?: RawJson;
-  submittedConfig: string;
+  submittedConfig?: string;
 };
 
 interface TreeNode extends DataNode {
@@ -132,6 +138,8 @@ const isConfig = (key: unknown): key is Config =>
  *
  * experimentID: the experiment ID;
  *
+ * files: an array of one or more files to display code;
+ *
  * submittedConfig: the experiments.original_config property
  *
  * runtimeConfig: the config corresponding to the merged runtime config.
@@ -139,6 +147,7 @@ const isConfig = (key: unknown): key is Config =>
 
 const CodeViewer: React.FC<Props> = ({
   experimentId,
+  files,
   submittedConfig: _submittedConfig,
   runtimeConfig: _runtimeConfig,
 }) => {
@@ -159,7 +168,7 @@ const CodeViewer: React.FC<Props> = ({
   });
 
   const { settings, updateSettings } = useSettings<{ filePath: string }>(
-    configForExperiment(experimentId),
+    configForExperiment(experimentId ?? 0),
   );
 
   const submittedConfig = useMemo(() => {
@@ -242,6 +251,7 @@ const CodeViewer: React.FC<Props> = ({
   }, [downloadInfo.url]);
 
   const fetchFileTree = useCallback(async () => {
+    if (!experimentId) return;
     setIsFetchingTree(true);
     try {
       const fileTree = await getExperimentFileTree({ experimentId });
@@ -357,7 +367,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const handleDownloadClick = useCallback(
     (e: AnyMouseEvent) => {
-      if (!activeFile) return;
+      if (!activeFile || !experimentId) return;
 
       const filePath = String(activeFile?.key);
       if (isConfig(filePath)) {

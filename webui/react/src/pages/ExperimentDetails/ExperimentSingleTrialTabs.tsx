@@ -29,7 +29,7 @@ import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 
-const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+const CodeViewer = React.lazy(() => import('components/kit/CodeViewer'));
 
 const TabType = {
   Checkpoints: 'checkpoints',

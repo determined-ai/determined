@@ -9,6 +9,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
+import CodeViewer from 'components/kit/CodeViewer';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -66,6 +67,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
+  CodeViewer: 'CodeViewer',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -716,6 +718,32 @@ const CheckboxesSection: React.FC = () => {
         <p>Mandatory checkbox - not implemented.</p>
         <p>Mandatory checkbox with info sign - not implemented.</p>
         <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
+const CodeViewerSection: React.FC = () => {
+  return (
+    <ComponentSection id="CodeViewer" title="CodeViewer">
+      <AntDCard>
+        <p>
+          The Code Viewer (<code>{'<CodeViewer>'}</code>) shows Python and YAML files with syntax
+          highlighting. If multiple files are sent, the component shows a file browser.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>One Python file</strong>
+        <CodeViewer files={[{ content: 'import math\nprint(math.pi)', name: 'test.py' }]} />
+        <strong>One YAML file</strong>
+        <CodeViewer files={[{ content: 'testbox', name: 'test.yaml' }]} />
+        <strong>Multiple code files</strong>
+        <CodeViewer
+          files={[
+            { content: 'test1', name: 'test1.yaml' },
+            { content: 'test2', name: 'test2.yaml' },
+          ]}
+        />
       </AntDCard>
     </ComponentSection>
   );
@@ -2209,6 +2237,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
+  CodeViewer: <CodeViewerSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
