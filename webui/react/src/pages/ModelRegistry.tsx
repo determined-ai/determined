@@ -8,6 +8,7 @@ import {
 } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import DeleteModelModal from 'components/DeleteModelModal';
 import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
@@ -37,7 +38,6 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -88,9 +88,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
     useModalModelCreate({ workspaceId: workspace?.id });
 
-  const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
-    useModalModelDelete();
-
+  const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
 
   const settingConfig = useMemo(() => {
@@ -377,13 +375,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [handleLabelFilterApply, handleLabelFilterReset, settings.tags],
   );
 
-  const showConfirmDelete = useCallback(
-    (model: ModelItem) => {
-      openModelDelete(model);
-    },
-    [openModelDelete],
-  );
-
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
@@ -424,7 +415,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           modelMoveModal.open();
         },
         [MenuKey.DeleteModel]: () => {
-          showConfirmDelete(record);
+          setModel(record);
+          deleteModelModal.open();
         },
       };
 
@@ -448,7 +440,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [modelMoveModal, showConfirmDelete, switchArchived],
+    [deleteModelModal, modelMoveModal, switchArchived],
   );
 
   const columns = useMemo(() => {
@@ -775,7 +767,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         />
       )}
       {modalModelCreateContextHolder}
-      {modalModelDeleteContextHolder}
+      {model && <deleteModelModal.Component model={model} />}
       {model && <modelMoveModal.Component model={model} />}
     </Page>
   );

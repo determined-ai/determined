@@ -1,8 +1,9 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Dropdown, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
@@ -12,7 +13,6 @@ import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -46,7 +46,7 @@ const ModelHeader: React.FC<Props> = ({
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
-  const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
+  const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
     useModalModelEdit({ fetchModel, model });
@@ -102,8 +102,6 @@ const ModelHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [model, onUpdateTags, users, canModifyModelFlag]);
 
-  const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
-
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
@@ -123,7 +121,7 @@ const ModelHeader: React.FC<Props> = ({
         modelMoveModal.open();
       },
       [MenuKey.DeleteModel]: () => {
-        handleDelete();
+        deleteModelModal.open();
       },
     };
 
@@ -154,13 +152,13 @@ const ModelHeader: React.FC<Props> = ({
 
     return { items: menuItems, onClick: onItemClick };
   }, [
-    modelMoveModal,
-    canDeleteModelFlag,
-    canModifyModelFlag,
-    handleDelete,
     model.archived,
+    canModifyModelFlag,
+    canDeleteModelFlag,
     onSwitchArchive,
     openModelNameEdit,
+    modelMoveModal,
+    deleteModelModal,
   ]);
 
   return (
@@ -228,7 +226,7 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {modalModelDeleteContextHolder}
+      <deleteModelModal.Component model={model} />
       <modelMoveModal.Component model={model} />
       {modalModelNameEditContextHolder}
     </header>
