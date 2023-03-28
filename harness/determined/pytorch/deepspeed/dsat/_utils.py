@@ -22,31 +22,6 @@ def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
     return config_dict
 
 
-# TODO: The following two dict functions are needed as hacks around the `type` key
-# used by DS for their optimizer with conflicts with our own special usage of this key
-# in the config.
-def upper_case_dict_key(d: Dict[str, Any], key: str) -> Dict[str, Any]:
-    upper_d = {}
-    for k, v in d.items():
-        new_k = k.upper() if key == k else k
-        if isinstance(v, dict):
-            upper_d[new_k] = upper_case_dict_key(v, key)
-        else:
-            upper_d[new_k] = v
-    return upper_d
-
-
-def lower_case_dict_key(d: Dict[str, Any], key: str) -> Dict[str, Any]:
-    lower_d = {}
-    for k, v in d.items():
-        new_k = k.lower() if key == k else k
-        if isinstance(v, dict):
-            lower_d[new_k] = lower_case_dict_key(v, key)
-        else:
-            lower_d[new_k] = v
-    return lower_d
-
-
 def get_non_decimal_number_in_line(line: str) -> float:
     num_str = re.search(r"\b\d+\b", line).group()
     num = float(num_str)
@@ -80,9 +55,8 @@ def dsat_reporting_context(
     except RuntimeError as rte:
         oom_error_string = str(rte)
         if "out of memory" in oom_error_string:
-            report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
-        else:
-            raise rte
+            report_oom(core_context, op, steps_completed, oom_error_string)
+        raise rte
     except SystemExit as se:
         possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
         existing_paths = [path for path in possible_paths if file_or_dir_exists(path)]
@@ -90,18 +64,17 @@ def dsat_reporting_context(
         if len(existing_paths) == 1:
             path = existing_paths[0]
             add_gpu_info = path == _defaults.MODEL_INFO_PROFILING_PATH
-            report_json_results_and_exit(
+            report_json_results(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
                 add_gpu_info=add_gpu_info,
                 path=path,
             )
-        else:
-            raise se
+        raise se
 
 
-def report_oom_and_exit(
+def report_oom(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
@@ -119,10 +92,9 @@ def report_oom_and_exit(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
         op.report_completed(report_oom_dict)
-    exit()
 
 
-def report_json_results_and_exit(
+def report_json_results(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
@@ -148,7 +120,6 @@ def report_json_results_and_exit(
         pass
     else:
         raise AssertionError("Unexpected additional operations found!")
-    exit()
 
 
 def file_or_dir_exists(

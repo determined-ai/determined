@@ -62,7 +62,7 @@ def main(
     # DeepSpeed uses the local_rank as the device, for some reason.
     device = model_engine.device
 
-    steps_completed = 1
+    steps_completed = 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for batch in train_loader:

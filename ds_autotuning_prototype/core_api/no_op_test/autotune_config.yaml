@@ -1,7 +1,11 @@
-name: torchvision_models_dsat
+name: no_op_test_dsat
 workspace: DS_AT_PROTOTYPING
-project: torchvision_models
+project: no_op_test
 max_restarts: 0
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
+    cpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1
 resources:
   slots_per_trial: 2
   # max_slots: 8
@@ -12,7 +16,7 @@ searcher:
   metric: throughput
   smaller_is_better: False
 hyperparameters:
-  model_name: resnet152
   # NOTE: dsat code expects usual DS config dict to appear as in the below.
+  model_name: resnet152
   deepspeed_config: ds_config.json
 entrypoint: python3 -m determined.launch.torch_distributed python3 script.py

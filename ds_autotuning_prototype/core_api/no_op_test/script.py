@@ -1,0 +1,56 @@
+import json
+import logging
+import random
+from typing import Any, Dict
+
+import determined as det
+import torch
+import torch.nn as nn
+from attrdict import AttrDict
+from determined.pytorch.deepspeed import dsat, get_ds_config_from_hparams
+from determined.pytorch.deepspeed.dsat import _defaults
+from torch.utils.data import Dataset
+
+possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
+
+
+def main(
+    core_context: det.core.Context,
+    hparams: Dict[str, Any],
+) -> None:
+    hparams = AttrDict(hparams)
+    # TODO: Remove hack for seeing actual used HPs after Web UI is fixed.
+    logging.info(f"HPs seen by trial: {hparams}")
+    # Hack for clashing 'type' key. Need to change config parsing behavior so that
+    # user scripts don't need to inject helper functions like this.
+    ds_config = get_ds_config_from_hparams(hparams)
+    if ds_config.get("autotuning", {}).get("model_info_path"):
+        path = _defaults.MODEL_INFO_PROFILING_PATH
+        metrics = {
+            "num_params": 1,
+            "trainable_num_params": 1,
+            "activation_mem_per_gpu": 1,
+            "rank": 0,
+        }
+    else:
+        path = _defaults.AUTOTUNING_RESULTS_PATH
+        metrics = {"throughput": random.randint(1, 100)}
+    with open(path, "w") as f:
+        json.dump(metrics, f)
+
+    steps_completed = 0
+    for op in core_context.searcher.operations():
+        steps_completed = op.length
+        with dsat.dsat_reporting_context(core_context, op, steps_completed):
+            exit()
+        if core_context.preempt.should_preempt():
+            return
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+    info = det.get_cluster_info()
+    hparams = info.trial.hparams
+    distributed = det.core.DistributedContext.from_torch_distributed()
+    with det.core.init(distributed=distributed) as core_context:
+        main(core_context, hparams)
