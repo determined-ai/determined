@@ -76,16 +76,6 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-.. raw:: html
-
-    <table border-style=hidden>
-   <tr>
-     <th><a href="cluster-setup-guide/deploy-cluster/index.html"><h4>Set Up</h4></a></th>
-     <th><h4>|</h4></th>
-     <th><a href="reference/overview.html"><h4>Reference</h4></a></th>
-   </tr>
-   </table>
-
 ##########################
  *Welcome to Determined!*
 ##########################
@@ -133,15 +123,4 @@ You can quickly train almost any deep learning model using Determined.
              </a>
          </div>
       </div>
-   </div>
-
-|
-
-.. raw:: html
-
-   <div>
-      <p class="landing-text">
-         New features, upgrades, deprecation notices, known issues, and bug fixes:
-         <a href=release-notes.html>Release Notes</a>
-      </p>
    </div>
