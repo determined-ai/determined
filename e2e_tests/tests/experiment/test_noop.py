@@ -123,12 +123,12 @@ def test_noop_pause_with_multiexperiment() -> None:
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(experiment_ids=[experiment_id])
+    exp.pause_experiments([experiment_id])
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
 
-    exp.activate_experiments(experiment_ids=[experiment_id])
+    exp.activate_experiments([experiment_id])
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
-    exp.cancel_experiments(experiment_ids=[experiment_id])
+    exp.cancel_experiments([experiment_id])
 
 
 @pytest.mark.e2e_cpu
@@ -142,12 +142,13 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
     config_obj["max_restarts"] = 0
     config_obj["resources"] = {"slots_per_trial": impossibly_large}
     with tempfile.NamedTemporaryFile() as tf:
+        config_obj["name"] = tf.name
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(name=tf.name)
+    exp.pause_experiments([], name=tf.name)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
-    exp.cancel_experiments(experiment_ids=[experiment_id])
+    exp.cancel_experiments([experiment_id])
 
 
 @pytest.mark.e2e_cpu

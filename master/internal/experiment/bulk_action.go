@@ -66,7 +66,7 @@ func loadMultiExperimentActionResults(results []ExperimentActionResult,
 func nonTerminalExperiments(system *actor.System, expIDs []int32,
 	results []ExperimentActionResult,
 ) ([]*actor.Ref, []ExperimentActionResult) {
-	refs := []*actor.Ref{}
+	var refs []*actor.Ref
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -82,7 +82,7 @@ func nonTerminalExperiments(system *actor.System, expIDs []int32,
 	return refs, results
 }
 
-// Apply filters to a query
+// Apply filters to a query.
 func queryBulkExperiments(query *bun.SelectQuery,
 	filters *apiv1.BulkExperimentFilters,
 ) *bun.SelectQuery {
@@ -125,9 +125,9 @@ func queryBulkExperiments(query *bun.SelectQuery,
 func filterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
 	error,
 ) {
-	experimentIdList := []int32{}
+	var experimentIDList []int32
 	query := db.Bun().NewSelect().
-		Model(&experimentIdList).
+		Model(&experimentIDList).
 		ModelTableExpr("experiments as e").
 		Column("e.id")
 	query = queryBulkExperiments(query, filters)
@@ -135,7 +135,7 @@ func filterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
-	return experimentIdList, nil
+	return experimentIDList, nil
 }
 
 // A Bun query for editable experiments in multi-experiment actions.
@@ -147,22 +147,22 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		return nil, err
 	}
 
-	experimentIdList := []int32{}
+	var experimentIDList []int32
 	if filters == nil {
-		experimentIdList = inputExpIDs
+		experimentIDList = inputExpIDs
 	} else {
-		experimentIdList, err = filterToExperimentIds(ctx, filters)
+		experimentIDList, err = filterToExperimentIds(ctx, filters)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	expIDs := []int32{}
+	var expIDs []int32
 	query := db.Bun().NewSelect().
 		ModelTableExpr("experiments AS e").
 		Model(&expIDs).
 		Column("e.id").
-		Where("id IN (?)", bun.In(experimentIdList))
+		Where("id IN (?)", bun.In(experimentIDList))
 
 	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -176,7 +176,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 
 // ToAPIResults converts ExperimentActionResult type with error object to error strings.
 func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionResult {
-	apiResults := []*apiv1.ExperimentActionResult{}
+	var apiResults []*apiv1.ExperimentActionResult
 	for _, result := range results {
 		if result.Error == nil {
 			apiResults = append(apiResults, &apiv1.ExperimentActionResult{
@@ -202,7 +202,7 @@ func ActivateExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
+	var results []ExperimentActionResult
 	if filters == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
@@ -228,7 +228,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
+	var results []ExperimentActionResult
 	if filters == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
@@ -240,7 +240,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs := []*actor.Ref{}
+	var refs []*actor.Ref
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -267,7 +267,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
+	var results []ExperimentActionResult
 	if filters == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
@@ -279,7 +279,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 		}
 	}
 
-	refs := []*actor.Ref{}
+	var refs []*actor.Ref
 	for _, expID := range expIDs {
 		addr := ExperimentsAddr.Child(expID)
 		ref := system.Get(addr)
@@ -306,7 +306,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
+	var results []ExperimentActionResult
 	if filters == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
@@ -332,7 +332,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	expChecks := []archiveExperimentOKResult{}
+	var expChecks []archiveExperimentOKResult
 	query := db.Bun().NewSelect().
 		ModelTableExpr("experiments as e").
 		Model(&expChecks).
@@ -362,9 +362,9 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
-	visibleIDs := []int32{}
-	validIDs := []int32{}
+	var results []ExperimentActionResult
+	var visibleIDs []int32
+	var validIDs []int32
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		switch {
@@ -394,7 +394,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 	}
 
 	if len(validIDs) > 0 {
-		acceptedIDs := []int32{}
+		var acceptedIDs []int32
 		_, err = db.Bun().NewUpdate().
 			ModelTableExpr("experiments as e").
 			Set("archived = true").
@@ -425,7 +425,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	expChecks := []archiveExperimentOKResult{}
+	var expChecks []archiveExperimentOKResult
 	query := db.Bun().NewSelect().
 		ModelTableExpr("experiments as e").
 		Model(&expChecks).
@@ -455,9 +455,9 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
-	visibleIDs := []int32{}
-	validIDs := []int32{}
+	var results []ExperimentActionResult
+	var visibleIDs []int32
+	var validIDs []int32
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		switch {
@@ -487,7 +487,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 	}
 
 	if len(validIDs) > 0 {
-		acceptedIDs := []int32{}
+		var acceptedIDs []int32
 		_, err = db.Bun().NewUpdate().
 			ModelTableExpr("experiments as e").
 			Set("archived = false").
@@ -518,7 +518,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	expChecks := []archiveExperimentOKResult{}
+	var expChecks []archiveExperimentOKResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("experiments AS exp").
 		Model(&expChecks).
@@ -546,9 +546,9 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		return nil, err
 	}
 
-	results := []ExperimentActionResult{}
-	visibleIDs := []int32{}
-	validIDs := []int32{}
+	var results []ExperimentActionResult
+	var visibleIDs []int32
+	var validIDs []int32
 	for _, check := range expChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		if check.Archived {
@@ -572,7 +572,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	}
 
 	if len(validIDs) > 0 {
-		acceptedIDs := []int32{}
+		var acceptedIDs []int32
 		_, err = db.Bun().NewUpdate().
 			ModelTableExpr("experiments as e").
 			Set("project_id = ?", destinationProjectID).
