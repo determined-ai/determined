@@ -143,6 +143,10 @@ class Checkpoint:
             mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
                 the definition of DownloadMode for details.
         """
+        if self.state != CheckpointState.COMPLETED:
+            raise errors.CheckpointStateException(
+                f"Only COMPLETED checkpoints can be downloaded. Checkpoint state: {self.state.value}"
+            )
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)
         else:
