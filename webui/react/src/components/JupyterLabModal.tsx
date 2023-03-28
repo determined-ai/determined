@@ -263,7 +263,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           initialValue={currentWorkspace?.id}
           label="Workspace"
           name="workspaceId"
-          required>
+          rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
           <Select allowClear disabled={!!currentWorkspace} placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
