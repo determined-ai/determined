@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -9,7 +10,6 @@ import { useDeleteWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
-import { Modal } from './kit/Modal';
 import css from './WorkspaceDeleteModal.module.scss';
 
 interface FormInputs {

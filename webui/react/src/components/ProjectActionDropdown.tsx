@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -11,7 +12,6 @@ import { ValueOf } from 'shared/types';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
-import { useModal } from './kit/Modal';
 import ProjectDeleteModalComponent from './ProjectDeleteModal';
 import ProjectEditModalComponent from './ProjectEditModal';
 import ProjectMoveModalComponent from './ProjectMoveModal';

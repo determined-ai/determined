@@ -2,6 +2,7 @@ import { Select } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
@@ -12,8 +13,6 @@ import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
-
-import { Modal } from './kit/Modal';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];

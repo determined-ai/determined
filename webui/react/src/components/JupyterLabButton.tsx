@@ -1,11 +1,10 @@
 import React from 'react';
 
+import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import { Workspace } from 'types';
-
-import JupyterLabModalComponent from './JupyterLabModal';
-import { useModal } from './kit/Modal';
 
 interface Props {
   enabled?: boolean;

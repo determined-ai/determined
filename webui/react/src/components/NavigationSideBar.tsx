@@ -7,6 +7,7 @@ import { CSSTransition } from 'react-transition-group';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
@@ -26,7 +27,6 @@ import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import { useModal } from './kit/Modal';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 import UserBadge from './UserBadge';

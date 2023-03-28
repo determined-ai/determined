@@ -2,12 +2,11 @@ import React, { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { Modal } from 'components/kit/Modal';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
 import handleError from 'utils/error';
-
-import { Modal } from './kit/Modal';
 
 const FORM_ID = 'edit-project-form';
 

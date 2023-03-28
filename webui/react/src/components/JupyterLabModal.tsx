@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
+import { Modal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
@@ -19,8 +20,6 @@ import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import { Modal } from './kit/Modal';
 
 const { Option } = Select;
 
@@ -175,9 +174,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       footerLink={
         showFullConfig
           ? {
-              text: 'Read about JupyterLab settings',
-              url: '/docs/reference/api/command-notebook-config.html',
-            }
+            text: 'Read about JupyterLab settings',
+            url: '/docs/reference/api/command-notebook-config.html',
+          }
           : undefined
       }
       size={showFullConfig ? 'large' : 'small'}

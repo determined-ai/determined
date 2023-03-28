@@ -2,6 +2,7 @@ import { Select, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -13,7 +14,6 @@ import { Project, Workspace } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
-import { Modal } from './kit/Modal';
 import css from './ProjectMoveModal.module.scss';
 
 const { Option } = Select;

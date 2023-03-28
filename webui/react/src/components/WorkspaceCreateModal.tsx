@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
+import { Modal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getWorkspace, patchWorkspace } from 'services/api';
@@ -15,8 +16,6 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { useCreateWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-
-import { Modal } from './kit/Modal';
 
 const FORM_ID = 'new-workspace-form';
 

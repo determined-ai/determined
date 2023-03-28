@@ -1,5 +1,6 @@
 import React, { Suspense, useMemo } from 'react';
 
+import Card from 'components/kit/Card';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
@@ -23,7 +24,6 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import Json from './Json';
-import Card from './kit/Card';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {

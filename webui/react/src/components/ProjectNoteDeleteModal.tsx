@@ -1,11 +1,10 @@
 import React, { useCallback } from 'react';
 
+import { Modal } from 'components/kit/Modal';
 import { setProjectNotes } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
 import handleError from 'utils/error';
-
-import { Modal } from './kit/Modal';
 
 interface Props {
   onClose?: () => void;
