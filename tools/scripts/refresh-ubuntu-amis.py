@@ -22,11 +22,11 @@ def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[N
     def filters(line: List[str]) -> bool:
         return all(
             [
-                line[6] == region,
                 line[0] == release,
-                line[5] == "amd64",
                 # Only use EBS, not instance-store.
                 line[4] == "ebs-ssd",
+                line[5] == "amd64",
+                line[6] == region,
                 # Only use HVM virtualization, not paravirtualization.
                 line[10] == "hvm",
             ]
@@ -106,12 +106,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     release = "focal"
-    req_url = "https://cloud-images.ubuntu.com/query/{}/server/released.current.txt".format(release)
+    req_url = f"https://cloud-images.ubuntu.com/query/{release}/server/released.current.txt"
     gov_req_url = (
-        "https://cloud-images.ubuntu.com/query.govcloud/{}/server/released.current.txt".format(
-            release
-        )
+        f"https://cloud-images.ubuntu.com/query.govcloud/{release}/server/released.current.txt"
     )
+
     req = requests.get(req_url)
     req.raise_for_status()
     table = [re.split(r"\t", row) for row in re.split(r"\n", req.text)[:-1]]
