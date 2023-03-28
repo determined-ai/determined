@@ -529,7 +529,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	if filters == nil {
-		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
+		getQ = getQ.Where("exp.id IN (?)", bun.In(experimentIds))
 	} else {
 		getQ = queryBulkExperiments(getQ, filters)
 	}
