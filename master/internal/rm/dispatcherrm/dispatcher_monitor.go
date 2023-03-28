@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -75,22 +74,17 @@ type launcherJob struct {
 type launcherMonitor struct {
 	monitoredJobs         map[string]*launcherJob
 	jobsToRemove          map[string]bool
-	apiClient             *launcher.APIClient
+	apiClient             *launcherAPIClient
 	newLauncherJob        chan launcherJob
 	removeLauncherJob     chan launcherJob
 	checkLauncherJob      chan launcherJob
 	schedulerTick         *time.Ticker
-	authToken             string
-	authFile              string
-	authMu                sync.RWMutex
 	mu                    sync.RWMutex
 	processingWatchedJobs atomic.Bool
 	rm                    *dispatcherResourceManager
 }
 
-func newDispatchWatcher(
-	apiClient *launcher.APIClient, authToken string, authFile string,
-) *launcherMonitor {
+func newDispatchWatcher(apiClient *launcherAPIClient) *launcherMonitor {
 	return &launcherMonitor{
 		monitoredJobs:     map[string]*launcherJob{},
 		jobsToRemove:      map[string]bool{},
@@ -100,8 +94,6 @@ func newDispatchWatcher(
 		checkLauncherJob:  make(chan launcherJob),
 		// Poll job status this often
 		schedulerTick: time.NewTicker(pollLoopInterval),
-		authToken:     authToken,
-		authFile:      authFile,
 	}
 }
 
@@ -132,12 +124,6 @@ func (m *launcherMonitor) checkJob(dispatchID string) {
 	m.checkLauncherJob <- launcherJob{
 		dispatcherID: dispatchID,
 	}
-}
-
-// Return a starting context for the API client call that includes the authToken
-// (may be empty if disabled).
-func (m *launcherMonitor) authContext(ctx *actor.Context) context.Context {
-	return context.WithValue(context.Background(), launcher.ContextAccessToken, m.authToken)
 }
 
 // watch runs asynchronously as a go routine. It receives instructions as
@@ -465,20 +451,23 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 	manifest := *launcher.NewManifest("v1", *clientMetadata)
 	manifest.SetPayloads([]launcher.Payload{*payload})
 
-	dispatchInfo, r, err := m.apiClient.LaunchApi.Launch(m.authContext(ctx)).
+	dispatchInfo, r, err := m.apiClient.LaunchApi.Launch(m.apiClient.withAuth(context.TODO())).
 		Manifest(manifest).
 		Impersonate("").
 		Execute() //nolint:bodyclose
 	if err != nil {
-		m.rm.handleServiceQueryError(r, ctx, err)
+		m.apiClient.handleServiceQueryError(r, err)
 		return result
 	}
 	dispatchID := dispatchInfo.GetDispatchId()
 	defer m.rm.ResourceQueryPostActions(ctx, dispatchID, ownerLauncher)
 
-	resp, _, err := m.apiClient.MonitoringApi.
-		LoadEnvironmentLog(m.authContext(ctx), ownerLauncher, dispatchID, "slurm-queue-info").
-		Execute() //nolint:bodyclose
+	resp, _, err := m.apiClient.MonitoringApi.LoadEnvironmentLog(
+		m.apiClient.withAuth(context.TODO()),
+		ownerLauncher,
+		dispatchID,
+		"slurm-queue-info",
+	).Execute() //nolint:bodyclose
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
 		return result
@@ -606,18 +595,6 @@ func (m *launcherMonitor) getDispatchIDsSortedByLastJobStatusCheckTime(
 	})
 
 	return dispatchIDs
-}
-
-func (m *launcherMonitor) ReloadAuthToken() {
-	m.authMu.Lock()
-	defer m.authMu.Unlock()
-
-	if len(m.authFile) > 0 {
-		authToken, err := os.ReadFile(m.authFile)
-		if err == nil {
-			m.authToken = string(authToken)
-		}
-	}
 }
 
 func getJobID(additionalProperties map[string]interface{}) string {
@@ -786,7 +763,7 @@ func (m *launcherMonitor) getDispatchStatus(
 	dispatchID string,
 ) (dispatchInfo launcher.DispatchInfo, dispatchFound bool) {
 	resp, r, err := m.apiClient.MonitoringApi.
-		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
+		GetEnvironmentStatus(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
 		Refresh(true).
 		Execute() //nolint:bodyclose
 	if err != nil {
@@ -811,8 +788,8 @@ func (m *launcherMonitor) getDispatchStatus(
 				Infof("Failed to `GetEnvironmentStatus` due to error {%v}. "+
 					"Reloaded the auth token file {%s}. If this error persists, restart "+
 					"the launcher service followed by a restart of the determined-master service.",
-					err, m.authFile)
-			m.ReloadAuthToken()
+					err, m.apiClient.authFile)
+			m.apiClient.reloadAuthToken()
 		} else {
 			ctx.Log().WithField("dispatch-id", dispatchID).
 				WithError(err).
@@ -888,8 +865,9 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// So in the rare case that we fail to start and need to display
 	// the log file content, read the payload name from the launcher.
 	if len(job.payloadName) == 0 {
-		manifest, resp, err := m.apiClient.MonitoringApi.GetEnvironmentDetails(
-			m.authContext(ctx), job.user, dispatchID).Execute() //nolint:bodyclose
+		manifest, resp, err := m.apiClient.MonitoringApi.
+			GetEnvironmentDetails(m.apiClient.withAuth(context.TODO()), job.user, dispatchID).
+			Execute() //nolint:bodyclose
 		if err != nil {
 			ctx.Log().WithError(err).Warnf(
 				"For dispatchID %s, unable to access environment details, response {%v}",
@@ -904,9 +882,10 @@ func (m *launcherMonitor) getTaskLogsFromDispatcher(
 	// Compose the file name
 	logFileName := fmt.Sprintf("%s-%s", job.payloadName, baseLogName)
 
-	logFile, httpResponse, err := m.apiClient.MonitoringApi.LoadEnvironmentLog(
-		m.authContext(ctx), job.user, dispatchID, logFileName,
-	).Range_(logRange).Execute() //nolint:bodyclose
+	logFile, httpResponse, err := m.apiClient.MonitoringApi.
+		LoadEnvironmentLog(m.apiClient.withAuth(context.TODO()), job.user, dispatchID, logFileName).
+		Range_(logRange).
+		Execute() //nolint:bodyclose
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("For dispatchID %s, unable to access %s, response {%v}",
 			dispatchID, logFileName, httpResponse)

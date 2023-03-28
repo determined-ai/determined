@@ -7,6 +7,8 @@ import (
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -193,12 +195,12 @@ func getMockActorCtx() *actor.Context {
 
 // getJobWatcher creates an instance of the dispatcher_monitor.
 func getJobWatcher() *launcherMonitor {
-	clientConfiguration := launcher.NewConfiguration()
-	apiClient := launcher.NewAPIClient(clientConfiguration)
-	authToken := "dummyToken"
-	configFile := "dummyConfigFile"
+	jobWatcher := newDispatchWatcher(&launcherAPIClient{
+		log:       logrus.WithField("component", "dispatcher-test"),
+		APIClient: launcher.NewAPIClient(launcher.NewConfiguration()),
+		auth:      "dummyToken",
+	})
 
-	jobWatcher := newDispatchWatcher(apiClient, authToken, configFile)
 	jobWatcher.rm = &dispatcherResourceManager{
 		wlmType: pbsSchedulerType,
 	}

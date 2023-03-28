@@ -22,19 +22,6 @@ import (
 
 const launcherPoolDescription = "launcher-pool-1-description"
 
-func Test_authContext(t *testing.T) {
-	m := &dispatcherResourceManager{
-		authToken: "xyz",
-	}
-	ctx := &actor.Context{}
-	ctxWith := m.authContext(ctx)
-	if authToken := ctxWith.Value(launcher.ContextAccessToken); authToken != nil {
-		assert.Equal(t, authToken, "xyz")
-		return
-	}
-	t.Errorf("authContext failed")
-}
-
 func Test_generateGetAgentsResponse(t *testing.T) {
 	n1 := hpcNodeDetails{
 		Partitions:    []string{"Partition 1"},
@@ -465,7 +452,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	type fields struct {
 		config                   *config.DispatcherResourceManagerConfig
-		apiClient                *launcher.APIClient
+		apiClient                *launcherAPIClient
 		hpcResourcesManifest     *launcher.Manifest
 		reqList                  *tasklist.TaskList
 		groups                   map[*actor.Ref]*tasklist.Group
@@ -473,7 +460,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 		masterTLSConfig          model.TLSClientConfig
 		loggingConfig            model.LoggingConfig
 		jobWatcher               *launcherMonitor
-		authToken                string
 	}
 	type args struct {
 		ctx                *actor.Context
@@ -582,7 +568,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 				masterTLSConfig:          tt.fields.masterTLSConfig,
 				loggingConfig:            tt.fields.loggingConfig,
 				jobWatcher:               tt.fields.jobWatcher,
-				authToken:                tt.fields.authToken,
 			}
 			compute, aux := m.selectDefaultPools(tt.args.ctx, tt.args.hpcResourceDetails)
 			if compute != tt.wantCompute {

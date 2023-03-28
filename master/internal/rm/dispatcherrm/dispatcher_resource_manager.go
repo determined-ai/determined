@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -260,7 +259,7 @@ type dispatcherResourceManager struct {
 	db                            *db.PgDB
 	rmConfig                      *config.DispatcherResourceManagerConfig
 	poolConfig                    []config.ResourcePoolConfig
-	apiClient                     *launcher.APIClient
+	apiClient                     *launcherAPIClient
 	hpcResourcesManifest          *launcher.Manifest
 	reqList                       *tasklist.TaskList
 	groups                        map[*actor.Ref]*tasklist.Group
@@ -268,7 +267,6 @@ type dispatcherResourceManager struct {
 	masterTLSConfig               model.TLSClientConfig
 	loggingConfig                 model.LoggingConfig
 	jobWatcher                    *launcherMonitor
-	authToken                     string
 	resourceDetails               hpcResourceDetailsCache
 	wlmType                       string
 	launcherVersionIsOK           bool
@@ -286,34 +284,18 @@ func newDispatcherResourceManager(
 	loggingConfig model.LoggingConfig,
 	db *db.PgDB,
 ) *dispatcherResourceManager {
-	// Set up the host address and IP address of the "launcher".
-	clientConfiguration := launcher.NewConfiguration()
-
-	// Host, port, and protocol are configured in the "resource_manager" section
-	// of the "tools/devcluster.yaml" file. The host address and port refer to the
-	// system where the "launcher" is running.
-	clientConfiguration.Host = fmt.Sprintf("%s:%d", rmConfig.LauncherHost, rmConfig.LauncherPort)
-	clientConfiguration.Scheme = rmConfig.LauncherProtocol // "http" or "https"
-	if rmConfig.Security != nil {
-		logrus.Debugf("Launcher communications InsecureSkipVerify: %t", rmConfig.Security.TLS.SkipVerify)
-		tlsConfig := tls.Config{InsecureSkipVerify: rmConfig.Security.TLS.SkipVerify} //nolint:gosec
-		transCfg := &http.Transport{
-			TLSClientConfig: &tlsConfig,
-		}
-		clientConfiguration.HTTPClient = &http.Client{Transport: transCfg}
+	apiClient, err := newLauncherAPIClient(rmConfig)
+	if err != nil {
+		// TODO(Brad): Don't panic like this...
+		panic(fmt.Errorf("building dispatcherrm: %w", err))
 	}
-
-	apiClient := launcher.NewAPIClient(clientConfiguration)
 
 	// One time activity to create a manifest using SlurmResources carrier.
 	// This manifest is used on demand to retrieve details regarding HPC resources
 	// e.g., nodes, GPUs etc
 	hpcResourcesManifest := createSlurmResourcesManifest()
 
-	// Authentication token that gets passed to the "launcher" REST API.
-	authToken := loadAuthToken(rmConfig)
-
-	watcher := newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile)
+	watcher := newDispatchWatcher(apiClient)
 	dbState, err := getDispatcherState(context.TODO())
 	if err != nil {
 		panic(errors.Wrap(err, "failed to create state for dispatcher resource manager"))
@@ -331,7 +313,6 @@ func newDispatcherResourceManager(
 		masterTLSConfig:          masterTLSConfig,
 		loggingConfig:            loggingConfig,
 		jobWatcher:               watcher,
-		authToken:                authToken,
 		launcherVersionIsOK:      false,
 		poolConfig:               poolConfig,
 		poolProviderMap:          makeProvidedPoolsMap(poolConfig),
@@ -356,12 +337,6 @@ func makeProvidedPoolsMap(poolConfig []config.ResourcePoolConfig) map[string][]s
 		}
 	}
 	return poolProviderMap
-}
-
-// Return a starting context for the API client call that includes the authToken
-// (may be empty if disabled).
-func (m *dispatcherResourceManager) authContext(ctx *actor.Context) context.Context {
-	return context.WithValue(context.Background(), launcher.ContextAccessToken, m.authToken)
 }
 
 func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
@@ -1550,7 +1525,7 @@ func (m *dispatcherResourceManager) resolveSlotType(
 // retrieves the launcher version and log error if not meeting minimum required version.
 func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Context) {
 	start := time.Now()
-	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).
+	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.apiClient.withAuth(context.TODO())).
 		Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("get_version").Observe(time.Since(start).Seconds())
 	if err == nil {
@@ -1608,14 +1583,14 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	// the manifest is in the RUNNING state on successful completion.
 	start := time.Now()
 	dispatchInfo, r, err := m.apiClient.LaunchApi.
-		Launch(m.authContext(ctx)).
+		Launch(m.apiClient.withAuth(context.TODO())).
 		Manifest(*m.hpcResourcesManifest).
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
 	if err != nil {
 		dispatcherErrors.WithLabelValues("launch").Inc()
-		m.handleServiceQueryError(r, ctx, err)
+		m.apiClient.handleServiceQueryError(r, err)
 		return
 	}
 	ctx.Log().Debugf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId())
@@ -1647,7 +1622,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	// long of a delay for us to deal with.
 	start = time.Now()
 	resp, _, err := m.apiClient.MonitoringApi.
-		LoadEnvironmentLog(m.authContext(ctx), owner, dispatchID, logFileName).
+		LoadEnvironmentLog(m.apiClient.withAuth(context.TODO()), owner, dispatchID, logFileName).
 		Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("load_log").Observe(time.Since(start).Seconds())
 	if err != nil {
@@ -1682,30 +1657,6 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	if !m.launcherVersionIsOK {
 		m.getAndCheckLauncherVersion(ctx)
-	}
-}
-
-// handleServiceQueryError provides common error handling for REST API calls
-// to the launcher in support of RM operations.
-func (m *dispatcherResourceManager) handleServiceQueryError(
-	r *http.Response, ctx *actor.Context, err error,
-) {
-	if r != nil {
-		if r.StatusCode == http.StatusUnauthorized ||
-			r.StatusCode == http.StatusForbidden {
-			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
-				"the launcher service followed by a restart of the determined-master service.",
-				err, m.rmConfig.LauncherAuthFile)
-			m.authToken = loadAuthToken(m.rmConfig)
-			m.jobWatcher.ReloadAuthToken()
-		} else {
-			ctx.Log().Errorf("Failed to retrieve HPC resources or queue data from launcher due to error: "+
-				"{%v}, response: {%v}. ", err, r.Body)
-		}
-	} else {
-		ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
-			"{%v}. Verify that the launcher service is up and reachable.", err)
 	}
 }
 
@@ -1800,8 +1751,9 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 	var err error
 	var response *http.Response
 	start := time.Now()
-	_, response, err = m.apiClient.RunningApi.TerminateRunning(m.authContext(ctx),
-		owner, dispatchID).Force(true).Execute() //nolint:bodyclose
+	_, response, err = m.apiClient.RunningApi.
+		TerminateRunning(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
+		Force(true).Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("terminate").Observe(time.Since(start).Seconds())
 	if err != nil {
 		if response == nil || response.StatusCode != 404 {
@@ -1841,8 +1793,9 @@ func (m *dispatcherResourceManager) removeDispatchEnvironment(
 ) {
 	ctx.Log().Debugf("Deleting environment with DispatchID %s", dispatchID)
 	start := time.Now()
-	response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
-		owner, dispatchID).Execute() //nolint:bodyclose
+	response, err := m.apiClient.MonitoringApi.
+		DeleteEnvironment(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
+		Execute() //nolint:bodyclose
 	dispatcherHistogram.WithLabelValues("delete_env").Observe(time.Since(start).Seconds())
 	if err != nil {
 		if response == nil || response.StatusCode != 404 {
@@ -1884,7 +1837,7 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	 */
 	start := time.Now()
 	dispatchInfo, response, err := m.apiClient.LaunchApi.
-		LaunchAsync(m.authContext(ctx)).
+		LaunchAsync(m.apiClient.withAuth(context.TODO())).
 		Manifest(*manifest).
 		Impersonate(impersonatedUser).
 		Execute() //nolint:bodyclose
@@ -2244,20 +2197,6 @@ func createSlurmResourcesManifest() *launcher.Manifest {
 	manifest.SetPayloads([]launcher.Payload{*payload})
 
 	return &manifest
-}
-
-// If an auth_file was specified, load the content and return it to enable authorization
-//
-//	with the launcher.  If the auth_file is configured, but does not exist we panic.
-func loadAuthToken(config *config.DispatcherResourceManagerConfig) string {
-	if len(config.LauncherAuthFile) > 0 {
-		authToken, err := os.ReadFile(config.LauncherAuthFile)
-		if err != nil {
-			panic("Configuration resource_manager.auth_file not readable: " + config.LauncherAuthFile)
-		}
-		return string(authToken)
-	}
-	return ""
 }
 
 // schedulingStateFromDispatchState returns SchedulingState from DispatchState representation.
