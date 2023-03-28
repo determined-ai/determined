@@ -1806,10 +1806,10 @@ jobs:
             - run:
                 name: "Shutting down master and agent for test coverage"
                 command: |
-                  ps aux | grep -ie "[d]evcluster --oneshot" | awk '{print $2}' | xargs kill -10 || echo "devcluster exited early"
+                  ps aux | grep -ie "[d]evcluster --oneshot" | awk '{print $2}' | xargs kill || echo "devcluster exited early"
                   cd agent
                   go tool covdata textfmt -i=/tmp/gocover/ -o=/tmp/gocover/coverage.out
-                  go tool cover -coverprofile=/tmp/gocover/coverage.out -html -o /tmp/gocover/coverage.html
+                  go tool cover -html /tmp/gocover/coverage.out -o /tmp/gocover/coverage.html
             - store_artifacts:
                 path: /tmp/gocover
                 destination: gocover
