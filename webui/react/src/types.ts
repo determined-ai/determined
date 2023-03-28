@@ -170,8 +170,8 @@ export type State = CommandState | typeof RunState;
 export interface CommandAddress {
   containerIp: string;
   containerPort: number;
-  hostIp: string;
-  hostPort: number;
+  hostIp?: string;
+  hostPort?: number;
   protocol?: string;
 }
 

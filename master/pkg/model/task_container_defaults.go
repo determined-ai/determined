@@ -29,6 +29,7 @@ type TaskContainerDefaultsConfig struct {
 	GLOOPortRange          string                `json:"gloo_port_range,omitempty"`
 	ShmSizeBytes           int64                 `json:"shm_size_bytes,omitempty"`
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
+	DirectConnectivity     bool                  `json:"direct_connectivity,omitentry"`
 	CPUPodSpec             *k8sV1.Pod            `json:"cpu_pod_spec"`
 	GPUPodSpec             *k8sV1.Pod            `json:"gpu_pod_spec"`
 	Image                  *RuntimeItem          `json:"image,omitempty"`

@@ -874,7 +874,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 			ServiceID: pcfg.ServiceID,
 			URL: &url.URL{
 				Scheme: "http",
-				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+				Host:   fmt.Sprintf("%s:%d", address.TargetIP(), address.TargetPort()),
 			},
 			ProxyTCP:        pcfg.ProxyTCP,
 			Unauthenticated: pcfg.Unauthenticated,
@@ -921,8 +921,6 @@ func (a *Allocation) containerProxyAddresses() []cproto.Address {
 		result = append(result, cproto.Address{
 			ContainerIP:   *a.proxyAddress,
 			ContainerPort: pp.Port,
-			HostIP:        *a.proxyAddress,
-			HostPort:      pp.Port,
 		})
 	}
 
