@@ -54,7 +54,11 @@ func (s *System) Ask(actor *Ref, message Message) Response {
 // AskAt sends the specified message to the actor at the provided address, returning a future to the
 // result of the call. The context's sender is set to `nil`.
 func (s *System) AskAt(addr Address, message Message) Response {
-	return s.Ask(s.Get(addr), message)
+	actorAddr := s.Get(addr)
+	if actorAddr == nil {
+		actorAddr = s.Get(addr.Parent().Child("*"))
+	}
+	return s.Ask(actorAddr, message)
 }
 
 // AskAll sends the specified message to all actors, returning a future to all results of the call.
