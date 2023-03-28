@@ -1,3 +1,4 @@
+import { Router } from '@remix-run/router';
 import React from 'react';
 
 import router from 'router';
@@ -306,25 +307,27 @@ describe('Routes Utilities', () => {
   });
 
   describe('routeToReactUrl', () => {
+    let instance: Router;
     beforeEach(() => {
-      vi.spyOn(router, 'navigate');
+      instance = router.getRouter();
+      vi.spyOn(instance, 'navigate');
     });
 
     it('should route to react URL', () => {
       const path = '/clusters';
-      expect(router.navigate).not.toHaveBeenCalled();
+      expect(instance.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(router.navigate).toHaveBeenCalledTimes(1);
-      expect(router.navigate).toHaveBeenCalledWith(path);
+      expect(instance.navigate).toHaveBeenCalledTimes(1);
+      expect(instance.navigate).toHaveBeenCalledWith(path);
     });
 
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
       const path = '/dashboard';
-      expect(router.navigate).not.toHaveBeenCalled();
+      expect(instance.navigate).not.toHaveBeenCalled();
       routes.routeToReactUrl(path);
-      expect(router.navigate).toHaveBeenCalledTimes(1);
-      expect(router.navigate).toHaveBeenCalledWith(path);
+      expect(instance.navigate).toHaveBeenCalledTimes(1);
+      expect(instance.navigate).toHaveBeenCalledWith(path);
     });
   });
 });

@@ -19,7 +19,7 @@ export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
     ...queryString.parse(queries.relayState),
   };
   delete newQueries.relayState;
-  router.navigate(`${window.location.pathname}?${queryString.stringify(newQueries)}`);
+  router.getRouter().navigate(`${window.location.pathname}?${queryString.stringify(newQueries)}`);
 
   return newQueries;
 };
