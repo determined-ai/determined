@@ -52,7 +52,9 @@ func (s *System) Ask(actor *Ref, message Message) Response {
 }
 
 // AskAt sends the specified message to the actor at the provided address, returning a future to the
-// result of the call. The context's sender is set to `nil`.
+// result of the call. The context's sender is set to `nil`. If an actor at the exact address does
+// not exist attempt to lookup and send the message to an actor registered at the sibling wildcard
+// address.
 func (s *System) AskAt(addr Address, message Message) Response {
 	actorAddr := s.Get(addr)
 	if actorAddr == nil {
