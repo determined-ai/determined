@@ -318,24 +318,24 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
       ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
       ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
 
-
-********************
+******************
  PBS Known Issues
-********************
+******************
 
--  With PBS Workload Manager, when users try to view a Resource Pool Configuration, the 
-   Accelerator field might include an ``unconfigured`` value. This happens when the GPU type 
-   information is not set in the PBS ``resources_available`` object. 
-   
-   Steps to view Resource Pool Configuration: 
+-  With PBS Workload Manager, when users try to view a Resource Pool Configuration, the Accelerator
+   field might include an ``unconfigured`` value. This happens when the GPU type information is not
+   set in the PBS ``resources_available`` object.
+
+   Steps to view Resource Pool Configuration:
 
    -  Select the Cluster tab on the Determined Web UI
    -  Click on a Resource Pool Card
-   -  Navigate to the Configuration tab on the Resource Pool Details View. 
+   -  Navigate to the Configuration tab on the Resource Pool Details View.
 
    HPC system administrators can set this information using the following set of commands:
 
    -  Login as a root level user or use ``sudo -i`` to quickly change to a root level user.
+
    -  Verify that ``resources_available.accel_type`` is not set for each node we are going to edit.
 
       -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
@@ -348,8 +348,8 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
       -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
 
-   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins 
-   can verify the Accelerator field on the Web UI using the steps mentioned above.
+   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins can
+   verify the Accelerator field on the Web UI using the steps mentioned above.
 
 ***********************
  AMD/ROCm Known Issues
