@@ -351,12 +351,11 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 func ValidationMetricsSeries(trialID int32, startTime time.Time,
 	metricName string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
-	maxDatapoints int, rangeType apiv1.RangeType,
-	integerRange *commonv1.Int32FieldFilter,
-	timeRange *commonv1.TimestampFieldFilter) (
+	maxDatapoints int, timeSeriesColumn string,
+	timeSeriesFilter *commonv1.PolymorphicFilter) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
-	var queryColumn, orderColumn string
+	var orderColumn string
 	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr("validations").
 		ColumnExpr("setseed(1) as _seed").
@@ -366,30 +365,18 @@ func ValidationMetricsSeries(trialID int32, startTime time.Time,
 		ColumnExpr("(metrics ->'validation_metrics' ->> 'epoch')::float8 as epoch").
 		Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).
 		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
-	switch rangeType {
-	case apiv1.RangeType_RANGE_TYPE_TIME:
-		queryColumn = "end_time"
-		orderColumn = "time"
-		if timeRange != nil {
-			subq, err = db.ApplyTimestampFieldFilter(subq, queryColumn, timeRange)
-		}
-		if err != nil {
-			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-		}
-	case apiv1.RangeType_RANGE_TYPE_BATCH:
-		queryColumn = totalBatches
-		orderColumn = batches
-		if integerRange != nil {
-			subq, err = db.ApplyInt32FieldFilter(subq, queryColumn, integerRange)
-		}
-		if err != nil {
-			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-		}
-	default:
+	switch timeSeriesFilter {
+	case nil:
 		orderColumn = batches
 		subq = subq.Where("total_batches >= ?", startBatches).
 			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
 			Where("end_time > ?", startTime)
+	default:
+		orderColumn = timeSeriesColumn
+		subq, err = db.ApplyPolymorphicFilter(subq, timeSeriesColumn, timeSeriesFilter)
+		if err != nil {
+			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		}
 	}
 	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
 		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)

@@ -171,7 +171,7 @@ func ValidateInt32FieldFilterComparison(
 		minValue = *filter.Gte
 	}
 	if minValue > maxValue {
-		return fmt.Errorf("invalid range: start value %v cannot be larger than end value %v",
+		return fmt.Errorf("invalid integer range: min value %v cannot be larger than max value %v",
 			minValue,
 			maxValue,
 		)
@@ -220,10 +220,100 @@ func ValidateTimeStampFieldFilterComparison(
 		startTime = *tryAsTime(filter.Lte)
 	}
 	if endTime.Before(startTime) {
-		return fmt.Errorf("invalid range: end date %v cannot be earlier than start date %v",
+		return fmt.Errorf("invalid date range: end date %v cannot be earlier than start date %v",
 			endTime,
 			startTime,
 		)
 	}
 	return nil
+}
+
+// ValidateDoubleFieldFilterComparison validates the min and max values in the range.
+func ValidateDoubleFieldFilterComparison(
+	filter *commonv1.DoubleFieldFilter,
+) error {
+	var minValue, maxValue float64
+	if filter == nil {
+		return nil
+	}
+	if filter.Gt == nil && filter.Gte == nil {
+		return nil
+	}
+	if filter.Lt == nil && filter.Lte == nil {
+		return nil
+	}
+	if filter.Lt != nil && filter.Lte != nil { //nolint: gocritic
+		maxValue = mathx.Max(*filter.Lt, *filter.Lte)
+	} else if filter.Lt != nil {
+		maxValue = *filter.Lt
+	} else {
+		maxValue = *filter.Lte
+	}
+	if filter.Gt != nil && filter.Gte != nil { //nolint: gocritic
+		minValue = mathx.Min(*filter.Gt, *filter.Gte)
+	} else if filter.Gt != nil {
+		minValue = *filter.Gt
+	} else {
+		minValue = *filter.Gte
+	}
+	if minValue > maxValue {
+		return fmt.Errorf("invalid double range: min value %v cannot be larger than max value %v",
+			minValue,
+			maxValue,
+		)
+	}
+	return nil
+}
+
+// Ensures that a Polymorphic filter contains at most one valid range.
+func ValidatePolymorphicFilter(
+	filter *commonv1.PolymorphicFilter,
+) error {
+	if filter == nil {
+		return nil
+	}
+	filterCount := 0
+	if filter.TimeRange != nil {
+		filterCount++
+	}
+	if filter.DoubleRange != nil {
+		filterCount++
+	}
+	if filter.IntegerRange != nil {
+		filterCount++
+	}
+	if filterCount > 1 {
+		return fmt.Errorf("invalid filter: only one filter range may be specified however %v filters have beed defined", filterCount)
+	}
+	if filter.TimeRange != nil {
+		return ValidateTimeStampFieldFilterComparison(filter.TimeRange)
+	}
+	if filter.DoubleRange != nil {
+		return ValidateDoubleFieldFilterComparison(filter.DoubleRange)
+	}
+	if filter.IntegerRange != nil {
+		return ValidateInt32FieldFilterComparison(filter.IntegerRange)
+	}
+	return nil
+}
+
+// ApplyPolymorphicFilter applies filtering on a bun query for a polymorphic filter.
+func ApplyPolymorphicFilter(
+	q *bun.SelectQuery,
+	column string,
+	filter *commonv1.PolymorphicFilter,
+) (*bun.SelectQuery, error) {
+	if filter == nil {
+		return q, nil
+	}
+	if filter.TimeRange != nil {
+		return ApplyTimestampFieldFilter(q, column, filter.TimeRange)
+	}
+	if filter.IntegerRange != nil {
+		return ApplyInt32FieldFilter(q, column, filter.IntegerRange)
+	}
+	if filter.DoubleRange != nil {
+		return ApplyDoubleFieldFilter(q, column, filter.DoubleRange)
+	}
+	return q, nil
 }

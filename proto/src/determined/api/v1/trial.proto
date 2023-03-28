@@ -729,16 +729,6 @@ message ComparableTrial {
   repeated SummarizedMetric metrics = 2;
 }
 
-// Enum for supported range query types
-enum RangeType {
-  // Represents an unspecified range type
-  RANGE_TYPE_UNSPECIFIED = 0;
-  // Represents a range of batches
-  RANGE_TYPE_BATCH = 1;
-  // Represents a time range
-  RANGE_TYPE_TIME = 2;
-}
-
 // Get downsampled metrics from multiple trials.
 message CompareTrialsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -762,12 +752,8 @@ message CompareTrialsRequest {
   XAxis x_axis = 8;
   // metric ids for the query
   repeated string metric_ids = 9;
-  // The type of range for the query
-  RangeType range_type = 10;
-  // Integer range for the query
-  determined.common.v1.Int32FieldFilter integer_range = 11;
-  // Time range for the query
-  determined.common.v1.TimestampFieldFilter time_range = 12;
+  // The metric and range filter for a time series
+  determined.common.v1.PolymorphicFilter time_series_filter = 10;
 }
 
 // Response to CompareTrialsRequest.

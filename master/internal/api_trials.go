@@ -652,20 +652,22 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis, rangeType apiv1.RangeType,
-	integerRange *commonv1.Int32FieldFilter,
-	timeRange *commonv1.TimestampFieldFilter,
+	endBatches int, logScale bool, xAxis apiv1.XAxis,
+	timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
 	var startTime time.Time
 	var err error
 	var metrics []*apiv1.SummarizedMetric
 	var metricMeasurements []db.MetricMeasurements
-
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
 	xAxisLabelMetrics := []string{"epoch"}
+
+	if err := db.ValidatePolymorphicFilter(timeSeriesFilter); err != nil {
+		return nil, err
+	}
 
 	if len(metricNames) > 0 && len(metricIds) > 0 {
 		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify 
@@ -701,8 +703,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metric.Name = name
 			metricMeasurements, err = trials.ValidationMetricsSeries(
 				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, rangeType, integerRange,
-				timeRange)
+				xAxisLabelMetrics, maxDatapoints, "", timeSeriesFilter)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
@@ -715,19 +716,16 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		}
 	}
 	if len(metricIds) > 0 {
-		if rangeType == apiv1.RangeType_RANGE_TYPE_UNSPECIFIED {
-			rangeType = apiv1.RangeType_RANGE_TYPE_BATCH
+		var timeSeriesColumn *string
+
+		// If no time series filter column name is supplied then default to batches.
+		defaultTimeSeriesColumn := "total_batches"
+		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+			timeSeriesColumn = &defaultTimeSeriesColumn
+		} else {
+			timeSeriesColumn = timeSeriesFilter.Name
 		}
-		switch rangeType {
-		case apiv1.RangeType_RANGE_TYPE_BATCH:
-			if err := db.ValidateInt32FieldFilterComparison(integerRange); err != nil {
-				return nil, err
-			}
-		case apiv1.RangeType_RANGE_TYPE_TIME:
-			if err := db.ValidateTimeStampFieldFilterComparison(timeRange); err != nil {
-				return nil, err
-			}
-		}
+
 		for _, metricID := range metricIds {
 			nameAndType := strings.SplitN(metricID, ".", 2)
 			if len(nameAndType) < 2 {
@@ -738,25 +736,37 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			}
 			metricIDName := nameAndType[1]
 			metricIDType := nameAndType[0]
+			var metric apiv1.SummarizedMetric
+			metric.Name = metricID
+			metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+			if maxDatapoints == 0 {
+				maxDatapoints = 200
+			}
 			if metricIDType == "validation" {
-				var metric apiv1.SummarizedMetric
-				metric.Name = metricID
-				if maxDatapoints == 0 {
-					maxDatapoints = 200
-				}
 				metricMeasurements, err = trials.ValidationMetricsSeries(
 					trialID, startTime, metricIDName, startBatches, endBatches,
-					xAxisLabelMetrics, maxDatapoints, rangeType, integerRange,
-					timeRange,
+					xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+					timeSeriesFilter,
 				)
 				if err != nil {
 					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 				}
+			}
+			if metricIDType == "training" {
+				// TODO Update training
+				// metricMeasurements, err = trials.TrainingMetricsSeries(
+				// 	trialID, startTime, metricIDName, startBatches, endBatches,
+				// 	xAxisLabelMetrics, maxDatapoints, timeSeriesColumn,
+				// 	timeSeriesFilter,
+				// )
+				// if err != nil {
+				// 	return nil, errors.Wrapf(err, "error fetching time series of training metrics")
+				// }
 				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
-				if len(metricMeasurements) > 0 {
-					a.formatMetrics(&metric, metricMeasurements)
-					metrics = append(metrics, &metric)
-				}
+			}
+			if len(metricMeasurements) > 0 {
+				a.formatMetrics(&metric, metricMeasurements)
+				metrics = append(metrics, &metric)
 			}
 		}
 	}
@@ -781,7 +791,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
-		apiv1.RangeType_RANGE_TYPE_BATCH, nil, nil, metricIds)
+		nil, metricIds)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -811,8 +821,7 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			(req.Scale == apiv1.Scale_SCALE_LOG),
-			req.XAxis, req.RangeType, req.IntegerRange,
-			req.TimeRange, req.MetricIds)
+			req.XAxis, req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}

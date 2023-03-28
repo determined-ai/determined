@@ -59,3 +59,15 @@ message TimestampFieldFilter {
   // Greater than or equal.
   optional google.protobuf.Timestamp gte = 5;
 }
+
+// Range filter for various value types
+message PolymorphicFilter {
+  // metric or column name for the filter
+  optional string name = 1;
+  // double value range for the query
+  optional DoubleFieldFilter double_range = 2;
+  // integer value range for the query
+  optional Int32FieldFilter integer_range = 3;
+  // time value range for the query
+  optional TimestampFieldFilter time_range = 4;
+}
