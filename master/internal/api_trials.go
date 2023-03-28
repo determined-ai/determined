@@ -717,7 +717,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		var timeSeriesColumn *string
 
 		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := "total_batches"
+		defaultTimeSeriesColumn := "batches"
 		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
 			timeSeriesColumn = &defaultTimeSeriesColumn
 		} else {
@@ -746,7 +746,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				timeSeriesFilter, metricIDType,
 			)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %d metrics", metricIDType)
+				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
 			}
 			if len(metricMeasurements) > 0 {
 				a.formatMetrics(&metric, metricMeasurements)

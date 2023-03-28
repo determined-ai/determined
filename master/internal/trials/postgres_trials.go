@@ -329,7 +329,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
-	var metricsObjectName, tableName string
+	var metricsObjectName, tableName, queryColumn, orderColumn string
 	switch metricType {
 	case "training":
 		metricsObjectName = "avg_metrics"
@@ -340,7 +340,16 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	default:
 		panic(fmt.Sprintf("Unsupported metric type %v", metricType))
 	}
-	var orderColumn string
+
+	// The data for batches and column are stored under different column names
+	switch timeSeriesColumn {
+	case "batches":
+		queryColumn = "total_batches"
+	case "time":
+		queryColumn = "end_time"
+	default:
+		queryColumn = timeSeriesColumn
+	}
 	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr(tableName).
 		ColumnExpr("setseed(1) as _seed").
@@ -358,7 +367,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			Where("end_time > ?", startTime)
 	default:
 		orderColumn = timeSeriesColumn
-		subq, err = db.ApplyPolymorphicFilter(subq, timeSeriesColumn, timeSeriesFilter)
+		subq, err = db.ApplyPolymorphicFilter(subq, queryColumn, timeSeriesFilter)
 		if err != nil {
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
