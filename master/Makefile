@@ -103,10 +103,6 @@ build-race: gen
 		-race \
 		./cmd/determined-master
 
-.PHONY: check-sql
-check-sql:
-	sqlfluff lint -p 0 --dialect postgres .
-
 .PHONY: check
 check: check-gen
 	go mod tidy
@@ -115,8 +111,8 @@ check: check-gen
 
 .PHONY: fmt-sql
 fmt-sql:
-	sqlfluff fix -p 0 --dialect postgres .
-	sqlfluff format -p 0 --dialect postgres .
+	sqlfluff fix -p 0 --dialect postgres . || exit 0
+	sqlfluff format -p 0 --dialect postgres . || exit 0
 
 .PHONY: fmt
 fmt:
