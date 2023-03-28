@@ -251,7 +251,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	var defaultDeterminedUID model.UserID = 2
 	exp := &model.Experiment{
 		JobID:                model.NewJobID(),
-		State:                model.ActiveState,
+		State:                model.CompletedState,
 		Config:               activeConfig.AsLegacy(),
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
@@ -291,7 +291,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 		TaskID:       tID,
 		JobID:        exp.JobID,
 		ExperimentID: exp.ID,
-		State:        model.ActiveState,
+		State:        model.CompletedState,
 		StartTime:    time.Now(),
 	}
 	if err = pgdb.AddTrial(&tr); err != nil {

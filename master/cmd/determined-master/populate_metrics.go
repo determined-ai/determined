@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,8 +19,9 @@ import (
 
 func newPopulateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "populate",
-		Short: "populate metrics",
+		Use: "populate batches trivial(?)",
+		Short: `populate metrics with given number of batches. 
+		trivial is an optional arg for trivial metrics rather than more complex ones.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runPopulate(cmd, args); err != nil {
 				log.Error(fmt.Sprintf("%+v", err))
@@ -51,15 +53,19 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 			log.Errorf("error closing pg connection: %s", errd)
 		}
 	}()
-
+	if len(args) < 1 {
+		return errors.New("number of batches needs to be provided as the first argument.")
+	}
 	batches, err := strconv.Atoi(args[0])
 	if err != nil {
 		return err
 	}
 	trivial := false
-	fmt.Println(args)
 	if len(args) >= 2 && args[1] == "trivial" {
 		trivial = true
+	} else if len(args) >= 2 && args[1] != "trivial" {
+		return errors.New(`The second argument is optional. It should be the string: trivial which 
+		indicates the function to populate the db with trivial metrics rather than more complex metrics.`)
 	}
 
 	err = internal.PopulateExpTrialsMetrics(database, masterConfig, trivial, batches)
