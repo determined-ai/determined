@@ -1,0 +1,9 @@
+[tool.sqlfluff.core]
+templater = "jinja"
+sql_file_exts = ".sql,.sql.j2,.dml,.ddl"
+exclude_rules = "L034,layout.spacing"
+
+# https://docs.sqlfluff.com/en/stable/layout.html#configuring-layout-and-spacing
+[tool.sqlfluff.layout.type.statement_terminator]
+spacing_before = "touch"
+# line_position= "alone"
