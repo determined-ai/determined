@@ -103,11 +103,20 @@ build-race: gen
 		-race \
 		./cmd/determined-master
 
+.PHONY: check-sql
+check-sql:
+	sqlfluff lint -p 0 --dialect postgres .
+
 .PHONY: check
 check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m
+
+.PHONY: fmt-sql
+fmt-sql:
+	sqlfluff fix -p 0 --dialect postgres .
+	sqlfluff format -p 0 --dialect postgres .
 
 .PHONY: fmt
 fmt:

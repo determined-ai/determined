@@ -77,20 +77,12 @@ clean-%:
 .PHONY: clean
 clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
 
-.PHONY: check-sql
-check-sql:
-	sqlfluff lint -p 0 --dialect postgres .
 .PHONY: check-%
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
 check: check-common check-proto check-harness check-cli check-deploy check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
 	$(MAKE) check-agent
-
-.PHONY: fmt-sql
-fmt-sql:
-	sqlfluff fix -p 0 --dialect postgres .
-	sqlfluff format -p 0 --dialect postgres .
 
 .PHONY: fmt-%
 fmt-%:
