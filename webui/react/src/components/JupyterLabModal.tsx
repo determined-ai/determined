@@ -174,9 +174,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       footerLink={
         showFullConfig
           ? {
-              text: 'Read about JupyterLab settings',
-              url: '/docs/reference/api/command-notebook-config.html',
-            }
+            text: 'Read about JupyterLab settings',
+            url: '/docs/reference/api/command-notebook-config.html',
+          }
           : undefined
       }
       size={showFullConfig ? 'large' : 'small'}
@@ -202,6 +202,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
           currentWorkspace={workspace}
           defaults={defaults}
           form={form}
+          setButtonDisabled={setButtonDisabled}
           workspaces={workspaces}
         />
       )}
@@ -229,6 +230,12 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
     { name: 'config', value: '' },
     { name: 'workspaceId', value: undefined },
   ]);
+
+  const workspace = Form.useWatch('workspaceId', form);
+
+  useEffect(() => {
+    setButtonDisabled(!workspace);
+  }, [workspace, setButtonDisabled]);
 
   const handleConfigChange = useCallback(
     (_: unknown, allFields: unknown) => {
@@ -311,13 +318,19 @@ const JupyterLabForm: React.FC<{
   currentWorkspace?: Workspace;
   defaults: JupyterLabOptions;
   form: FormInstance<JupyterLabOptions>;
+  setButtonDisabled: (buttonDisabled: boolean) => void;
   workspaces: Workspace[];
-}> = ({ currentWorkspace, form, defaults, workspaces }) => {
+}> = ({ currentWorkspace, form, defaults, setButtonDisabled, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
 
   const selectedPoolName = Form.useWatch('pool', form);
+  const workspace = Form.useWatch('workspaceId', form);
+
+  useEffect(() => {
+    setButtonDisabled(!workspace);
+  }, [workspace, setButtonDisabled]);
 
   const resourceInfo = useMemo(() => {
     const selectedPool = resourcePools.find((pool) => pool.name === selectedPoolName);

@@ -64,17 +64,15 @@ const ModalTrigger: React.FC = () => {
         <Button onClick={() => JupyterLabModal.open()}>Show Jupyter Lab</Button>
         <JupyterLabModal.Component
           workspace={{
-            ...{
-              archived: false,
-              id: 1,
-              immutable: false,
-              name: 'Uncategorized',
-              numExperiments: 0,
-              numProjects: 0,
-              pinned: false,
-              state: WorkspaceState.Unspecified,
-              userId: 1,
-            },
+            archived: false,
+            id: 1,
+            immutable: false,
+            name: 'Uncategorized',
+            numExperiments: 0,
+            numProjects: 0,
+            pinned: false,
+            state: WorkspaceState.Unspecified,
+            userId: 1,
           }}
         />
       </>

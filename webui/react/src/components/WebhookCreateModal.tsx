@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -20,6 +20,13 @@ interface FormInputs {
 
 const WebhookCreateModalComponent: React.FC = () => {
   const [form] = Form.useForm<FormInputs>();
+  const [disabled, setDisabled] = useState<boolean>(true);
+
+  const onChange = useCallback(() => {
+    const fields = form.getFieldsError();
+    const hasError = fields.some((f) => f.errors.length);
+    setDisabled(hasError);
+  }, [form]);
 
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
@@ -62,11 +69,12 @@ const WebhookCreateModalComponent: React.FC = () => {
     <Modal
       cancel
       submit={{
+        disabled,
         handler: handleSubmit,
         text: 'Create Webhook',
       }}
       title="New Webhook">
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} layout="vertical" onFieldsChange={onChange}>
         <Form.Item
           label="URL"
           name="url"
