@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	semvar "github.com/Masterminds/semver/v3"
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	echoV4 "github.com/labstack/echo/v4"
@@ -43,12 +42,11 @@ import (
 
 const maxResourceDetailsSampleAgeSeconds = 60
 const (
-	slurmSchedulerType     = "slurm"
-	pbsSchedulerType       = "pbs"
-	slurmResourcesCarrier  = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
-	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
-	launcherMinimumVersion = "3.2.4"
-	root                   = "root"
+	slurmSchedulerType    = "slurm"
+	pbsSchedulerType      = "pbs"
+	slurmResourcesCarrier = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
+	pbsResourcesCarrier   = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
+	root                  = "root"
 )
 
 // schedulerTick periodically triggers the scheduler to act.
@@ -162,6 +160,7 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 		}
 		name = resp.PoolName
 	}
+
 	providingPartition, err := d.validateResourcePool(ctx, name)
 	if err != nil {
 		return "", fmt.Errorf("validating resource pool: %w", err)
@@ -269,7 +268,6 @@ type dispatcherResourceManager struct {
 	jobWatcher                    *launcherMonitor
 	resourceDetails               hpcResourceDetailsCache
 	wlmType                       string
-	launcherVersionIsOK           bool
 	poolProviderMap               map[string][]string
 	dispatchIDToHPCJobID          map[string]string
 	dispatchIDToAllocationIDMutex sync.RWMutex
@@ -313,7 +311,6 @@ func newDispatcherResourceManager(
 		masterTLSConfig:          masterTLSConfig,
 		loggingConfig:            loggingConfig,
 		jobWatcher:               watcher,
-		launcherVersionIsOK:      false,
 		poolConfig:               poolConfig,
 		poolProviderMap:          makeProvidedPoolsMap(poolConfig),
 		dispatchIDToHPCJobID:     make(map[string]string),
@@ -344,6 +341,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.Log().Info("Starting dispatcher resource manager")
 		go m.killAllInactiveDispatches(ctx, ctx.Self())
+		go periodicallyCheckLauncherVersion(context.TODO(), ctx.Log(), m.apiClient)
 		go m.jobWatcher.watch(ctx)
 
 		// SLURM Resource Manager always fulfills requests for resource pool details using the
@@ -1522,40 +1520,6 @@ func (m *dispatcherResourceManager) resolveSlotType(
 	return device.CUDA, nil
 }
 
-// retrieves the launcher version and log error if not meeting minimum required version.
-func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Context) {
-	start := time.Now()
-	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.apiClient.withAuth(context.TODO())).
-		Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("get_version").Observe(time.Since(start).Seconds())
-	if err == nil {
-		if checkMinimumLauncherVersion(resp) {
-			if !m.launcherVersionIsOK {
-				m.launcherVersionIsOK = true
-				ctx.Log().Infof("Determined HPC launcher %s at %s:%d",
-					resp, m.rmConfig.LauncherHost, m.rmConfig.LauncherPort)
-			}
-		}
-	} else {
-		dispatcherErrors.WithLabelValues("get_version").Inc()
-	}
-
-	if !m.launcherVersionIsOK {
-		ctx.Log().Errorf("Launcher version %s does not meet the required minimum. "+
-			"Upgrade to hpe-hpc-launcher version %s",
-			resp, launcherMinimumVersion)
-	}
-}
-
-func checkMinimumLauncherVersion(version string) bool {
-	c, _ := semvar.NewConstraint(">=" + launcherMinimumVersion)
-	launcherVersion, err := semvar.NewVersion(strings.TrimSuffix(version, "-SNAPSHOT"))
-	if err != nil {
-		return false
-	}
-	return c.Check(launcherVersion)
-}
-
 // fetchHpcResourceDetails retrieves the details about HPC Resources.
 // This function uses HPC Resources manifest to retrieve the required details.
 // This function performs the following steps:
@@ -1654,10 +1618,6 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	ctx.Log().Debugf("default resource pools are '%s', '%s'",
 		m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
-
-	if !m.launcherVersionIsOK {
-		m.getAndCheckLauncherVersion(ctx)
-	}
 }
 
 // determineWlmType determines the WLM type of the cluster from the dispatchInfo response.

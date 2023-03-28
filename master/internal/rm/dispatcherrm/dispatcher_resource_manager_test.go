@@ -662,20 +662,6 @@ func Test_dispatcherResourceManager_determineWlmType(t *testing.T) {
 	}
 }
 
-func Test_dispatcherResourceManager_checkLauncherVersion(t *testing.T) {
-	assert.Equal(t, checkMinimumLauncherVersion("4.1.0"), true)
-	assert.Equal(t, checkMinimumLauncherVersion("4.1.3-SNAPSHOT"), true)
-	assert.Equal(t, checkMinimumLauncherVersion("3.2.4"), true)
-	assert.Equal(t, checkMinimumLauncherVersion("3.2.3"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("3.2.0"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("3.1.3"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("3.1.0"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("2.3.3"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("3.0.3"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("x.y.z"), false)
-	assert.Equal(t, checkMinimumLauncherVersion("abc"), false)
-}
-
 func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T) {
 	type fields struct {
 		poolConfig        []config.ResourcePoolConfig

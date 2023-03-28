@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 
@@ -83,6 +85,24 @@ func (c *launcherAPIClient) reloadAuthToken() {
 		c.log.WithError(err).Errorf("reloading auth token from %s", c.authFile)
 		return
 	}
+}
+
+func (c *launcherAPIClient) getVersion(ctx context.Context) (v *semver.Version, err error) {
+	defer recordAPITiming("get_version")()
+	defer recordAPIErr("get_version")(err)
+
+	resp, _, err := c.InfoApi.
+		GetServerVersion(c.withAuth(ctx)).
+		Execute() //nolint:bodyclose
+	if err != nil {
+		return nil, fmt.Errorf("getting launcher version: %w", err)
+	}
+
+	version, err := semver.NewVersion(strings.TrimSuffix(resp, "-SNAPSHOT"))
+	if err != nil {
+		return nil, fmt.Errorf("parsing semver version %s: %w", resp, err)
+	}
+	return version, nil
 }
 
 // handleServiceQueryError provides common error handling for REST API calls
