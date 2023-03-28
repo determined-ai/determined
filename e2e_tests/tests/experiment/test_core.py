@@ -519,3 +519,25 @@ def test_experiment_list_columns() -> None:
     metrics = columns.metrics
     for mc in exp_metrics:
         assert metrics.index(mc) >= 0
+
+
+@pytest.mark.e2e_cpu
+def test_core_api_arbitrary_workload_order() -> None:
+    experiment_id = exp.run_basic_test(
+        conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=True,
+        expect_checkpoints=True,
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    assert len(trials) == 1
+    trial = trials[0]
+
+    steps = exp.workloads_with_training(trial.workloads)
+    assert len(steps) == 11
+    validations = exp.workloads_with_validation(trial.workloads)
+    assert len(validations) == 11
+    checkpoints = exp.workloads_with_checkpoint(trial.workloads)
+    assert len(checkpoints) == 11
