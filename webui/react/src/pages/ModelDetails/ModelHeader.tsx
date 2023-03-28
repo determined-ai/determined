@@ -6,13 +6,14 @@ import React, { useCallback, useMemo } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
-import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -46,8 +47,7 @@ const ModelHeader: React.FC<Props> = ({
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
   const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
-  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
-    useModalModelMove();
+  const modelMoveModal = useModal(ModelMoveModal);
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
     useModalModelEdit({ fetchModel, model });
   const { canDeleteModel, canModifyModel } = usePermissions();
@@ -104,8 +104,6 @@ const ModelHeader: React.FC<Props> = ({
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
-  const handleMove = useCallback(() => openModelMove(model), [openModelMove, model]);
-
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
@@ -122,7 +120,7 @@ const ModelHeader: React.FC<Props> = ({
         openModelNameEdit();
       },
       [MenuKey.MoveModel]: () => {
-        handleMove();
+        modelMoveModal.open();
       },
       [MenuKey.DeleteModel]: () => {
         handleDelete();
@@ -156,10 +154,10 @@ const ModelHeader: React.FC<Props> = ({
 
     return { items: menuItems, onClick: onItemClick };
   }, [
+    modelMoveModal,
     canDeleteModelFlag,
     canModifyModelFlag,
     handleDelete,
-    handleMove,
     model.archived,
     onSwitchArchive,
     openModelNameEdit,
@@ -231,7 +229,7 @@ const ModelHeader: React.FC<Props> = ({
         <InfoBox rows={infoRows} separator={false} />
       </div>
       {modalModelDeleteContextHolder}
-      {modalModelMoveContextHolder}
+      <modelMoveModal.Component model={model} />
       {modalModelNameEditContextHolder}
     </header>
   );
