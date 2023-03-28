@@ -21,10 +21,12 @@ const ModalTrigger: React.FC = () => {
   const [modalValue, setModalValue] = useState<string>('');
   return (
     <>
-      <Button onClick={() => {
-        setModalValue(MODAL_CONTENT);
-        Modal.open();
-      }}>Open Modal
+      <Button
+        onClick={() => {
+          setModalValue(MODAL_CONTENT);
+          Modal.open();
+        }}>
+        Open Modal
       </Button>
       <Modal.Component value={modalValue} />
     </>
@@ -34,9 +36,7 @@ const ModalTrigger: React.FC = () => {
 const setup = async () => {
   const user = userEvent.setup();
 
-  render(
-    <ModalTrigger />,
-  );
+  render(<ModalTrigger />);
 
   await user.click(await screen.findByRole('button'));
 
