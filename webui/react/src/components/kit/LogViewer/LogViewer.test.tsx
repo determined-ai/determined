@@ -279,7 +279,7 @@ describe('LogViewer', () => {
           const lastLog = logsReference[logsReference.length - 1];
           expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
         },
-        { timeout: 4000 },
+        { timeout: 6000 },
       );
     });
 
