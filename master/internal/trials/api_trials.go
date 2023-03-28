@@ -3,7 +3,6 @@ package trials
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -14,12 +13,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
-)
-
-const (
-	batches      = "batches"
-	totalBatches = "total_batches"
 )
 
 // TrialsAPIServer is an embedded api server struct.
@@ -344,44 +337,4 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 	}
 
 	return &apiv1.DeleteTrialsCollectionResponse{}, nil
-}
-
-// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
-// trial.
-func ValidationMetricsSeries(trialID int32, startTime time.Time,
-	metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string,
-	maxDatapoints int, timeSeriesColumn string,
-	timeSeriesFilter *commonv1.PolymorphicFilter) (
-	metricMeasurements []db.MetricMeasurements, err error,
-) {
-	var orderColumn string
-	measurements := []db.MetricMeasurements{}
-	subq := db.Bun().NewSelect().TableExpr("validations").
-		ColumnExpr("setseed(1) as _seed").
-		ColumnExpr("total_batches as batches").
-		ColumnExpr("trial_id").ColumnExpr("end_time as time").
-		ColumnExpr("(metrics ->'validation_metrics' ->> ?)::float8 as value", metricName).
-		ColumnExpr("(metrics ->'validation_metrics' ->> 'epoch')::float8 as epoch").
-		Where("metrics ->'validation_metrics' ->> ? IS NOT NULL", metricName).
-		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
-	switch timeSeriesFilter {
-	case nil:
-		orderColumn = batches
-		subq = subq.Where("total_batches >= ?", startBatches).
-			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
-			Where("end_time > ?", startTime)
-	default:
-		orderColumn = timeSeriesColumn
-		subq, err = db.ApplyPolymorphicFilter(subq, timeSeriesColumn, timeSeriesFilter)
-		if err != nil {
-			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-		}
-	}
-	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
-		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
-	if err != nil {
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	return measurements, nil
 }

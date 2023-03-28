@@ -8,8 +8,6 @@ import (
 
 	context "context"
 
-	db "github.com/determined-ai/determined/master/internal/db"
-
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	mock "github.com/stretchr/testify/mock"
@@ -1745,32 +1743,6 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 	}
 
 	return r0, r1, r2
-}
-
-// TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints
-func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) ([]db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
-
-	var r0 []db.MetricMeasurements
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) ([]db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
-	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string, int) []db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.MetricMeasurements)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string, int) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels, maxDataPoints)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // TrainingTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime

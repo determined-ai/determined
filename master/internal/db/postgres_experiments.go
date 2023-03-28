@@ -441,40 +441,6 @@ func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
 	return metricMeasurements
 }
 
-// TrainingMetricsSeries returns a time-series of the specified training metric in the specified
-// trial.
-func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string, maxDataPoints int) (
-	metricMeasurements []MetricMeasurements, err error,
-) {
-	if _, err := db.sql.Exec("SELECT setseed(1);"); err != nil {
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	rows, err := db.sql.Query(`
-	SELECT * FROM (
-		SELECT	
-			total_batches AS batches,
-  			s.end_time as end_time,
-  			s.metrics->>'avg_metrics' AS metrics
-		FROM steps s
-		WHERE s.trial_id=$2
-  		AND total_batches >= $3
-  		AND ($4 <= 0 OR total_batches <= $4)
-  		AND s.end_time > $5
-  		AND s.metrics->'avg_metrics'->$1 IS NOT NULL
-		ORDER BY random() LIMIT $6
-	) downsample ORDER BY batches;`, metricName, trialID,
-		startBatches, endBatches, startTime, maxDataPoints,
-	)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
-}
-
 type hpImportanceDataWrapper struct {
 	TrialID int     `db:"trial_id"`
 	Hparams []byte  `db:"hparams"`

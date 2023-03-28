@@ -683,15 +683,14 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
+			metricMeasurements, err = trials.MetricsTimeSeries(
 				trialID, startTime, name, startBatches, endBatches,
 				xAxisLabelMetrics,
-				maxDatapoints)
+				maxDatapoints, "batches", timeSeriesFilter, "training")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-
 			a.formatMetrics(&metric, metricMeasurements)
 			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
@@ -701,15 +700,14 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricMeasurements, err = trials.ValidationMetricsSeries(
+			metricMeasurements, err = trials.MetricsTimeSeries(
 				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, "", timeSeriesFilter)
+				xAxisLabelMetrics, maxDatapoints, "batches", timeSeriesFilter, "validation")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 			a.formatMetrics(&metric, metricMeasurements)
-
 			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
@@ -742,27 +740,13 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if maxDatapoints == 0 {
 				maxDatapoints = 200
 			}
-			if metricIDType == "validation" {
-				metricMeasurements, err = trials.ValidationMetricsSeries(
-					trialID, startTime, metricIDName, startBatches, endBatches,
-					xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-					timeSeriesFilter,
-				)
-				if err != nil {
-					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
-				}
-			}
-			if metricIDType == "training" {
-				// TODO Update training
-				// metricMeasurements, err = trials.TrainingMetricsSeries(
-				// 	trialID, startTime, metricIDName, startBatches, endBatches,
-				// 	xAxisLabelMetrics, maxDatapoints, timeSeriesColumn,
-				// 	timeSeriesFilter,
-				// )
-				// if err != nil {
-				// 	return nil, errors.Wrapf(err, "error fetching time series of training metrics")
-				// }
-				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricIDName, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+				timeSeriesFilter, metricIDType,
+			)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of %d metrics", metricIDType)
 			}
 			if len(metricMeasurements) > 0 {
 				a.formatMetrics(&metric, metricMeasurements)

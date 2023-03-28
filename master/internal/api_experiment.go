@@ -1514,6 +1514,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
+	var metricId string
 	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
@@ -1534,15 +1535,15 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints)
+		metricId = "training"
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricMeasurements, err = trials.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
-			"", nil)
+		metricId = "validation"
 	default:
 		panic("Invalid metric type")
 	}
+	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
+		metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		"batches", nil, metricId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
