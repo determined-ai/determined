@@ -10,6 +10,7 @@ import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
 import ClipboardButton from 'components/kit/ClipboardButton';
+import CodeViewer from 'components/kit/CodeViewer';
 import { Column, Columns } from 'components/kit/Columns';
 import Dropdown, { MenuItem } from 'components/kit/Dropdown';
 import Empty from 'components/kit/Empty';
@@ -65,6 +66,7 @@ const ComponentTitles = {
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   ClipboardButton: 'ClipboardButton',
+  CodeViewer: 'CodeViewer',
   Columns: 'Columns',
   Dropdown: 'Dropdown',
   Empty: 'Empty',
@@ -835,6 +837,33 @@ const DropdownSection: React.FC = () => {
     </ComponentSection>
   );
 };
+
+const CodeViewerSection: React.FC = () => {
+  return (
+    <ComponentSection id="CodeViewer" title="CodeViewer">
+      <AntDCard>
+        <p>
+          The Code Viewer (<code>{'<CodeViewer>'}</code>) shows Python and YAML files with syntax
+          highlighting. If multiple files are sent, the component shows a file browser.
+        </p>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>One Python file</strong>
+        <CodeViewer files={[{ content: 'import math\nprint(math.pi)', name: 'test.py' }]} />
+        <strong>One YAML file</strong>
+        <CodeViewer files={[{ content: 'testbox', name: 'test.yaml' }]} />
+        <strong>Multiple code files</strong>
+        <CodeViewer
+          files={[
+            { content: 'test1', name: 'test1.yaml' },
+            { content: 'test2', name: 'test2.yaml' },
+          ]}
+        />
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 
 const InputSearchSection: React.FC = () => {
   return (
@@ -2414,6 +2443,7 @@ const Components = {
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
   ClipboardButton: <ClipboardButtonSection />,
+  CodeViewer: <CodeViewerSection />,
   Columns: <ColumnsSection />,
   Dropdown: <DropdownSection />,
   Empty: <EmptySection />,
