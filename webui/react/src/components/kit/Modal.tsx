@@ -52,6 +52,7 @@ interface ModalProps {
   headerLink?: LinkParams;
   icon?: string;
   key?: string;
+  onClose?: () => void;
   size?: ModalSize;
   submit?: ModalSubmitParams;
   title: string;
@@ -68,7 +69,8 @@ export const Modal: React.FC<ModalProps> = ({
   headerLink,
   icon,
   key,
-  size = 'large',
+  onClose,
+  size = 'small',
   submit,
   title,
   children: modalBody,
@@ -82,7 +84,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const close = useCallback(() => setIsOpen(false), [setIsOpen]);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    onClose?.();
+  }, [setIsOpen, onClose]);
 
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);

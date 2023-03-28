@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 
+import { Modal } from 'components/kit/Modal';
 import { deleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -10,13 +10,12 @@ import handleError from 'utils/error';
 export const API_SUCCESS_MESSAGE = 'Group deleted.';
 export const MODAL_HEADER = 'Delete Group';
 
-interface ModalProps {
+interface Props {
   group: V1GroupSearchResult;
   onClose?: () => void;
 }
 
-const useModalDeleteGroup = ({ onClose, group }: ModalProps): ModalHooks => {
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
   const onOk = useCallback(async () => {
     if (!group.group.groupId) return;
     try {
@@ -32,19 +31,19 @@ const useModalDeleteGroup = ({ onClose, group }: ModalProps): ModalHooks => {
     }
   }, [onClose, group]);
 
-  const modalOpen = useCallback(() => {
-    openOrUpdate({
-      closable: true,
-      content: `Are you sure you want to delete group ${group.group?.name} (ID: ${group.group?.groupId}).`,
-      icon: null,
-      okButtonProps: { danger: true },
-      okText: 'Delete',
-      onOk: onOk,
-      title: <h5>{MODAL_HEADER}</h5>,
-    });
-  }, [onOk, openOrUpdate, group]);
+  return (
+    <Modal
+      cancel
+      danger
+      submit={{
+        handler: onOk,
+        text: 'Delete',
+      }}
+      title={MODAL_HEADER}>
+      Are you sure you want to delete group ${group.group?.name} (ID: ${group.group?.groupId}).
+    </Modal>
+  );
 
-  return { modalOpen, ...modalHook };
 };
 
-export default useModalDeleteGroup;
+export default DeleteGroupModalComponent;

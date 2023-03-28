@@ -3,7 +3,11 @@ import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
+import CreateUserModalComponent from 'components/CreateUserModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
+import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -20,9 +24,6 @@ import {
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
-import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
-import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
-import useModalManageGroups from 'hooks/useModal/UserSettings/useModalManageGroups';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
@@ -61,12 +62,10 @@ interface DropdownProps {
 }
 
 const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
-  const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
-    useModalCreateUser({ onClose: fetchUsers, user });
-  const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
-    useModalManageGroups({ groups, user });
-  const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
-    useModalConfigureAgent({ onClose: fetchUsers, user });
+  const EditUserModal = useModal(CreateUserModalComponent);
+  const ViewUserModal = useModal(CreateUserModalComponent);
+  const ManageGroupsModal = useModal(ManageGroupsModalComponent);
+  const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
 
   const { canModifyUsers } = usePermissions();
 
@@ -86,19 +85,19 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
   const funcs = {
     [MenuKey.Edit]: () => {
-      openEditUserModal();
+      EditUserModal.open();
     },
     [MenuKey.State]: () => {
       onToggleActive();
     },
     [MenuKey.View]: () => {
-      openEditUserModal(true);
+      ViewUserModal.open();
     },
     [MenuKey.Groups]: () => {
-      openManageGroupsModal();
+      ManageGroupsModal.open();
     },
     [MenuKey.Agent]: () => {
-      openConfigureAgentModal();
+      ConfigureAgentModal.open();
     },
   };
 
@@ -109,11 +108,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const menuItems: MenuProps['items'] =
     userManagementEnabled && canModifyUsers
       ? [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Groups, label: 'Manage Groups' },
-          { key: MenuKey.Agent, label: 'Configure Agent' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+        { key: MenuKey.Edit, label: 'Edit User' },
+        { key: MenuKey.Groups, label: 'Manage Groups' },
+        { key: MenuKey.Agent, label: 'Configure Agent' },
+        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+      ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
@@ -124,9 +123,13 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
         trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} />
       </Dropdown>
-      {modalEditUserContextHolder}
-      {modalManageGroupsContextHolder}
-      {modalConfigureAgentContextHolder}
+      <ViewUserModal.Component user={user} onClose={fetchUsers} />
+      <EditUserModal.Component user={user} viewOnly onClose={fetchUsers} />
+      <ManageGroupsModal.Component groups={groups} user={user} />
+      <ConfigureAgentModal.Component
+        user={user}
+        onClose={fetchUsers}
+      />
     </div>
   );
 };
@@ -192,12 +195,12 @@ const UserManagement: React.FC = () => {
       RolesStore.fetchRoles(canceler);
     }
   }, [canceler, rbacEnabled]);
-  const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
-    useModalCreateUser({ onClose: fetchUsers });
+
+  const CreateUserModal = useModal(CreateUserModalComponent);
 
   const onClickCreateUser = useCallback(() => {
-    openCreateUserModal();
-  }, [openCreateUserModal]);
+    CreateUserModal.open();
+  }, [CreateUserModal]);
 
   const handleNameSearchApply = useCallback(
     (name: string) => {
@@ -339,7 +342,7 @@ const UserManagement: React.FC = () => {
         title={USER_TITLE}>
         {table}
       </Section>
-      {modalCreateUserContextHolder}
+      <CreateUserModal.Component onClose={fetchUsers} />
     </Page>
   );
 };

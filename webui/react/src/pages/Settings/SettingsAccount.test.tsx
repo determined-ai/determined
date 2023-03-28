@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPasswordChange';
+import { NEW_PASSWORD_LABEL } from 'components/PasswordChangeModal';
 import { patchUser as mockPatchUser } from 'services/api';
 import { PatchUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';

@@ -2,8 +2,9 @@ import { Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Form, { FormInstance } from 'components/kit/Form';
+import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -17,7 +18,6 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
@@ -41,15 +41,16 @@ export const API_SUCCESS_MESSAGE_CREATE = 'New group has been created.';
 export const API_SUCCESS_MESSAGE_EDIT = 'Group has been updated.';
 
 interface Props {
-  form: FormInstance;
   group?: V1GroupSearchResult;
-  groupRoles?: UserRole[];
+  onClose?: () => void;
   users: DetailedUser[];
 }
 
-const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
+const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: Props) => {
+  const [form] = Form.useForm();
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyPermissions } = usePermissions();
+  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
@@ -78,94 +79,6 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   useEffect(() => {
     fetchGroup();
   }, [fetchGroup]);
-
-  return (
-    <Form form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
-      <Form.Item
-        label={GROUP_NAME_LABEL}
-        name={GROUP_NAME_NAME}
-        required
-        rules={[
-          {
-            message: 'Please type in your group name.',
-            required: true,
-          },
-        ]}
-        validateTrigger={['onSubmit', 'onChange']}>
-        <Input autoComplete="off" autoFocus maxLength={128} placeholder="Group Name" />
-      </Form.Item>
-      {group ? (
-        <Form.Item label={USER_ADD_LABEL} name={USER_ADD_NAME}>
-          <Select
-            loading={isLoading}
-            mode="multiple"
-            optionFilterProp="children"
-            placeholder="Add Users"
-            showSearch>
-            {users
-              .filter((u) => !groupDetail?.users?.map((gu) => gu.id).includes(u.id))
-              .map((u) => (
-                <Select.Option key={u.id} value={u.id}>
-                  {getDisplayName(u)}
-                </Select.Option>
-              ))}
-          </Select>
-        </Form.Item>
-      ) : (
-        <Form.Item label={USER_LABEL} name={USER_ADD_NAME}>
-          <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
-            {users.map((u) => (
-              <Select.Option key={u.id} value={u.id}>
-                {getDisplayName(u)}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-      )}
-      {rbacEnabled && canModifyPermissions && group && (
-        <>
-          <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
-            <Select
-              loading={Loadable.isLoading(roles)}
-              mode="multiple"
-              optionFilterProp="children"
-              placeholder={'Add Roles'}
-              showSearch>
-              {Loadable.isLoaded(roles) ? (
-                <>
-                  {roles.data.map((r) => (
-                    <Select.Option key={r.id} value={r.id}>
-                      {r.name}
-                    </Select.Option>
-                  ))}
-                </>
-              ) : undefined}
-            </Select>
-          </Form.Item>
-          <Typography.Text type="secondary">
-            Groups may have additional inherited workspace roles not reflected here. &nbsp;
-            <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
-              Learn more
-            </Link>
-          </Typography.Text>
-        </>
-      )}
-    </Form>
-  );
-};
-
-interface ModalProps {
-  group?: V1GroupSearchResult;
-  onClose?: () => void;
-  users: DetailedUser[];
-}
-
-const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks => {
-  const [form] = Form.useForm();
-  const rbacEnabled = useFeature().isOn('rbac');
-  const { canModifyPermissions } = usePermissions();
-  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -228,19 +141,88 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
     }
   }, [form, onClose, group, canModifyPermissions, fetchGroupRoles, groupRoles]);
 
-  const modalOpen = useCallback(() => {
-    openOrUpdate({
-      closable: true,
-      content: <ModalForm form={form} group={group} groupRoles={groupRoles} users={users} />,
-      icon: null,
-      okText: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
-      onCancel: handleCancel,
-      onOk: onOk,
-      title: <h5>{group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
-    });
-  }, [form, handleCancel, onOk, openOrUpdate, users, group, groupRoles]);
-
-  return { modalOpen, ...modalHook };
+  return (
+    <Modal
+      cancel
+      submit={{
+        handler: onOk,
+        text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
+      }}
+      title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
+      onClose={handleCancel}>
+      <Form form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
+        <Form.Item
+          label={GROUP_NAME_LABEL}
+          name={GROUP_NAME_NAME}
+          required
+          rules={[
+            {
+              message: 'Please type in your group name.',
+              required: true,
+            },
+          ]}
+          validateTrigger={['onSubmit', 'onChange']}>
+          <Input autoComplete="off" autoFocus maxLength={128} placeholder="Group Name" />
+        </Form.Item>
+        {group ? (
+          <Form.Item label={USER_ADD_LABEL} name={USER_ADD_NAME}>
+            <Select
+              loading={isLoading}
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder="Add Users"
+              showSearch>
+              {users
+                .filter((u) => !groupDetail?.users?.map((gu) => gu.id).includes(u.id))
+                .map((u) => (
+                  <Select.Option key={u.id} value={u.id}>
+                    {getDisplayName(u)}
+                  </Select.Option>
+                ))}
+            </Select>
+          </Form.Item>
+        ) : (
+          <Form.Item label={USER_LABEL} name={USER_ADD_NAME}>
+            <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>
+              {users?.map((u) => (
+                <Select.Option key={u.id} value={u.id}>
+                  {getDisplayName(u)}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+        {rbacEnabled && canModifyPermissions && group && (
+          <>
+            <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
+              <Select
+                loading={Loadable.isLoading(roles)}
+                mode="multiple"
+                optionFilterProp="children"
+                placeholder={'Add Roles'}
+                showSearch>
+                {Loadable.isLoaded(roles) ? (
+                  <>
+                    {roles.data.map((r) => (
+                      <Select.Option key={r.id} value={r.id}>
+                        {r.name}
+                      </Select.Option>
+                    ))}
+                  </>
+                ) : undefined}
+              </Select>
+            </Form.Item>
+            <Typography.Text type="secondary">
+              Groups may have additional inherited workspace roles not reflected here. &nbsp;
+              <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+                Learn more
+              </Link>
+            </Typography.Text>
+          </>
+        )}
+      </Form>
+    </Modal>
+  );
 };
 
-export default useModalCreateGroup;
+export default CreateGroupModalComponent;

@@ -2,8 +2,9 @@ import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Form, { FormInstance } from 'components/kit/Form';
+import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
@@ -17,7 +18,6 @@ import {
   removeRolesFromUser,
 } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
 import usersStore from 'stores/users';
@@ -42,107 +42,14 @@ const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 
-interface FormValues {
-  [ADMIN_NAME]: boolean;
-  [DISPLAY_NAME_NAME]?: string;
-  [ROLE_NAME]: number[];
-  [USER_NAME_NAME]: string;
-}
-
 interface Props {
-  form: FormInstance<FormValues>;
-  roles: UserRole[] | null;
   user?: DetailedUser;
   viewOnly?: boolean;
-}
-
-const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
-  const rbacEnabled = useFeature().isOn('rbac');
-  const { canAssignRoles, canModifyPermissions } = usePermissions();
-
-  const knownRoles = RolesStore.useRoles();
-
-  useEffect(() => {
-    form.setFieldsValue({
-      [ADMIN_NAME]: user?.isAdmin,
-      [DISPLAY_NAME_NAME]: user?.displayName,
-      [ROLE_NAME]: roles?.map((r) => r.id),
-    });
-  }, [form, user, roles]);
-
-  if (user !== undefined && roles === null && rbacEnabled && canAssignRoles({})) {
-    return <Spinner tip="Loading roles..." />;
-  }
-
-  return (
-    <Form form={form} labelCol={{ span: 24 }}>
-      <Form.Item
-        initialValue={user?.username}
-        label={USER_NAME_LABEL}
-        name={USER_NAME_NAME}
-        required
-        rules={[
-          {
-            message: 'Please type in your username.',
-            required: true,
-          },
-        ]}
-        validateTrigger={['onSubmit']}>
-        <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
-      </Form.Item>
-      <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
-        <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
-      </Form.Item>
-      {!rbacEnabled && (
-        <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
-          <Switch disabled={viewOnly} />
-        </Form.Item>
-      )}
-      {rbacEnabled && canModifyPermissions && (
-        <>
-          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
-            <Select
-              disabled={(user !== undefined && roles === null) || viewOnly}
-              loading={Loadable.isLoading(knownRoles)}
-              mode="multiple"
-              optionFilterProp="children"
-              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
-              showSearch>
-              {Loadable.isLoaded(knownRoles) ? (
-                <>
-                  {knownRoles.data.map((r: UserRole) => (
-                    <Select.Option key={r.id} value={r.id}>
-                      {r.name}
-                    </Select.Option>
-                  ))}
-                </>
-              ) : undefined}
-            </Select>
-          </Form.Item>
-          <Typography.Text type="secondary">
-            Users may have additional inherited global or workspace roles not reflected here. &nbsp;
-            <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
-              Learn more
-            </Link>
-          </Typography.Text>
-        </>
-      )}
-    </Form>
-  );
-};
-
-interface ModalProps {
   onClose?: () => void;
-  user?: DetailedUser;
 }
 
-interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (viewOnly?: boolean) => void;
-}
-
-const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
+const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
   const [form] = Form.useForm();
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   const rbacEnabled = useFeature().isOn('rbac');
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
@@ -155,6 +62,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   });
   const checkAuth = useAuthCheck();
 
+  const knownRoles = RolesStore.useRoles();
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
       try {
@@ -174,7 +82,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
     form.resetFields();
   }, [form]);
 
-  const handleOk = useCallback(
+  const handleSubmit = useCallback(
     async (viewOnly?: boolean) => {
       if (viewOnly) {
         handleCancel();
@@ -234,32 +142,88 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
     ],
   );
 
-  const modalOpen = useCallback(
-    (viewOnly?: boolean) => {
-      openOrUpdate({
-        closable: true,
-        // passing a default brandind due to changes on the initial state
-        content: <ModalForm form={form} roles={userRoles} user={user} viewOnly={viewOnly} />,
-        icon: null,
-        okText: viewOnly ? 'Close' : BUTTON_NAME,
-        onCancel: handleCancel,
-        onOk: () => handleOk(viewOnly),
-        title: (
-          <h5>
-            {user
-              ? viewOnly
-                ? MODAL_HEADER_LABEL_VIEW
-                : MODAL_HEADER_LABEL_EDIT
-              : MODAL_HEADER_LABEL_CREATE}
-          </h5>
-        ),
-        width: 520,
-      });
-    },
-    [form, handleCancel, handleOk, openOrUpdate, user, userRoles],
-  );
+  useEffect(() => {
+    form.setFieldsValue({
+      [ADMIN_NAME]: user?.isAdmin,
+      [DISPLAY_NAME_NAME]: user?.displayName,
+      [ROLE_NAME]: userRoles?.map((r) => r.id),
+    });
+  }, [form, user, userRoles]);
 
-  return { modalOpen, ...modalHook };
+  if (user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})) {
+    return <Spinner tip="Loading roles..." />;
+  }
+
+  return (
+    <Modal
+      cancel
+      submit={{
+        handler: handleSubmit,
+        text: viewOnly ? 'Close' : BUTTON_NAME,
+      }}
+      title={
+        user
+          ? viewOnly
+            ? MODAL_HEADER_LABEL_VIEW
+
+            : MODAL_HEADER_LABEL_EDIT
+          : MODAL_HEADER_LABEL_CREATE}
+      onClose={handleCancel}>
+      <Form form={form} labelCol={{ span: 24 }}>
+        <Form.Item
+          initialValue={user?.username}
+          label={USER_NAME_LABEL}
+          name={USER_NAME_NAME}
+          required
+          rules={[
+            {
+              message: 'Please type in your username.',
+              required: true,
+            },
+          ]}
+          validateTrigger={['onSubmit']}>
+          <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
+        </Form.Item>
+        <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
+          <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
+        </Form.Item>
+        {!rbacEnabled && (
+          <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+            <Switch disabled={viewOnly} />
+          </Form.Item>
+        )}
+        {rbacEnabled && canModifyPermissions && (
+          <>
+            <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+              <Select
+                disabled={(user !== undefined && userRoles === null) || viewOnly}
+                loading={Loadable.isLoading(knownRoles)}
+                mode="multiple"
+                optionFilterProp="children"
+                placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+                showSearch>
+                {Loadable.isLoaded(knownRoles) ? (
+                  <>
+                    {knownRoles.data.map((r: UserRole) => (
+                      <Select.Option key={r.id} value={r.id}>
+                        {r.name}
+                      </Select.Option>
+                    ))}
+                  </>
+                ) : undefined}
+              </Select>
+            </Form.Item>
+            <Typography.Text type="secondary">
+              Users may have additional inherited global or workspace roles not reflected here. &nbsp;
+              <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+                Learn more
+              </Link>
+            </Typography.Text>
+          </>
+        )}
+      </Form>
+    </Modal>
+  );
 };
 
-export default useModalCreateUser;
+export default CreateUserModalComponent;

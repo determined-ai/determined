@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { deleteGroup as mockDeleteGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
-import useModalDeleteGroup, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './useModalDeleteGroup';
+import DeleteGroupModalComponent, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './DeleteGroupModal';
 
 vi.mock('services/api', () => ({
   deleteGroup: vi.fn(),
@@ -23,12 +24,12 @@ interface Props {
 }
 
 const Container: React.FC<Props> = ({ group }) => {
-  const { contextHolder, modalOpen } = useModalDeleteGroup({ group: group });
+  const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
   return (
     <div>
-      <Button onClick={() => modalOpen()}>{OPEN_MODAL_TEXT}</Button>
-      {contextHolder}
+      <Button onClick={() => DeleteGroupModal.open()}>{OPEN_MODAL_TEXT}</Button>
+      <DeleteGroupModal.Component group={group} />
     </div>
   );
 };
@@ -48,42 +49,12 @@ const setup = async () => {
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole('heading', { name: MODAL_HEADER });
+  await view.findByText(MODAL_HEADER);
 
   return view;
 };
 
-describe('useModalCreateGroup', () => {
-  it('should open modal with correct values', async () => {
-    await setup();
-
-    expect(
-      screen.getByText(`Are you sure you want to delete group ${GROUPNAME} (ID: 1).`),
-    ).toBeInTheDocument();
-  });
-
-  it('should close the modal via upper right close button', async () => {
-    await setup();
-
-    await user.click(await screen.findByLabelText('Close'));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER })).not.toBeInTheDocument();
-    });
-  });
-
-  it('should close the modal via cancel button', async () => {
-    await setup();
-
-    await user.click(await screen.findByText('Cancel'));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER })).not.toBeInTheDocument();
-    });
-  });
-
+describe('Delete Group Modal', () => {
   it('should submit a valid delete group request', async () => {
     await setup();
 
