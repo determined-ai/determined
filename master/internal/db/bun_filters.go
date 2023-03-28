@@ -265,7 +265,7 @@ func ValidateDoubleFieldFilterComparison(
 	return nil
 }
 
-// Ensures that a Polymorphic filter contains at most one valid range.
+// ValidatePolymorphicFilter ensures that a Polymorphic filter contains at most one valid range.
 func ValidatePolymorphicFilter(
 	filter *commonv1.PolymorphicFilter,
 ) error {
@@ -283,7 +283,8 @@ func ValidatePolymorphicFilter(
 		filterCount++
 	}
 	if filterCount > 1 {
-		return fmt.Errorf("invalid filter: only one filter range may be specified however %v filters have beed defined", filterCount)
+		return fmt.Errorf(`invalid filter: only one filter 
+		range may be specified however %v filters have beed defined`, filterCount)
 	}
 	if filter.TimeRange != nil {
 		return ValidateTimeStampFieldFilterComparison(filter.TimeRange)

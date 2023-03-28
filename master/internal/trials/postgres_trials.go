@@ -20,8 +20,7 @@ import (
 )
 
 const (
-	batches      = "batches"
-	totalBatches = "total_batches"
+	batches = "batches"
 )
 
 // TrialsAugmented shows provides information about a Trial.

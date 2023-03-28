@@ -399,48 +399,6 @@ type MetricMeasurements struct {
 	TrialID int32
 }
 
-func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
-	metricName string,
-) []MetricMeasurements {
-	var maxEndTime time.Time
-	var metricMeasurements []MetricMeasurements
-	for rows.Next() {
-		var avgMetrics map[string]float64
-		var metricMeasurement MetricMeasurements
-		var batches uint
-		var endTime time.Time
-		var metrics *string
-		err := rows.Scan(&batches, &endTime, &metrics)
-		if err != nil {
-			continue
-		}
-		if metrics != nil {
-			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
-			if err != nil {
-				continue
-			}
-		}
-		value := avgMetrics[metricName]
-		metricMeasurement.Batches = batches
-		metricMeasurement.Time = endTime
-		metricMeasurement.Value = value
-		for _, xAxisLabel := range xAxisMetricLabels {
-			// For now we will always only search for an "epoch" value but this will be updated in the future
-			// to accept or expect a dynamic list of poossible x-axis values.
-			epoch, ok := avgMetrics[xAxisLabel]
-			if ok {
-				epochValue := int32(epoch)
-				metricMeasurement.Epoch = &epochValue
-			}
-			if endTime.After(maxEndTime) {
-				maxEndTime = endTime
-			}
-		}
-		metricMeasurements = append(metricMeasurements, metricMeasurement)
-	}
-	return metricMeasurements
-}
-
 type hpImportanceDataWrapper struct {
 	TrialID int     `db:"trial_id"`
 	Hparams []byte  `db:"hparams"`

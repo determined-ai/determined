@@ -39,6 +39,7 @@ import (
 )
 
 const (
+	batches                       = "batches"
 	trialLogsBatchSize            = 1000
 	trialProfilerMetricsBatchSize = 100
 )
@@ -686,7 +687,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metricMeasurements, err = trials.MetricsTimeSeries(
 				trialID, startTime, name, startBatches, endBatches,
 				xAxisLabelMetrics,
-				maxDatapoints, "batches", timeSeriesFilter, "training")
+				maxDatapoints, batches, timeSeriesFilter, "training")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
@@ -702,7 +703,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metric.Name = name
 			metricMeasurements, err = trials.MetricsTimeSeries(
 				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, "batches", timeSeriesFilter, "validation")
+				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
@@ -717,7 +718,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		var timeSeriesColumn *string
 
 		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := "batches"
+		defaultTimeSeriesColumn := batches
 		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
 			timeSeriesColumn = &defaultTimeSeriesColumn
 		} else {
@@ -830,7 +831,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 	}
 
 	sortCode := "total_batches"
-	if req.SortKey != "" && req.SortKey != "batches" {
+	if req.SortKey != "" && req.SortKey != batches {
 		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'",
 			strings.ReplaceAll(req.SortKey, "'", ""))
 	}
