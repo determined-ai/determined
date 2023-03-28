@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
 // ExperimentAuthZ describes authz methods for experiments.
@@ -54,6 +55,7 @@ type ExperimentAuthZ interface {
 	// "proj" being nil indicates getting experiments from all projects.
 	FilterExperimentsQuery(
 		ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+		permissions []rbacv1.PermissionType,
 	) (*bun.SelectQuery, error)
 
 	// GET /api/v1/experiments/labels

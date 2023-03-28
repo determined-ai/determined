@@ -36,4 +36,4 @@ from determined.pytorch._pytorch_trial import (
     Epoch,
 )
 from determined.pytorch._load import CheckpointLoadContext, load_trial_from_checkpoint_path
-from determined.pytorch._trainer import init, Trainer, _guess_script_importable_name
+from determined.pytorch._trainer import init, Trainer

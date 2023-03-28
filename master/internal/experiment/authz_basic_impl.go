@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
 // ExperimentAuthZBasic is basic OSS controls.
@@ -42,6 +43,7 @@ func (a *ExperimentAuthZBasic) CanDeleteExperiment(
 // FilterExperimentsQuery returns the query unmodified and a nil error.
 func (a *ExperimentAuthZBasic) FilterExperimentsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+	permissions []rbacv1.PermissionType,
 ) (*bun.SelectQuery, error) {
 	return query, nil
 }

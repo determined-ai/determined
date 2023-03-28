@@ -45,12 +45,12 @@ func TestTaskAuthZ(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id string) error {
 			return api.TaskLogs(&apiv1.TaskLogsRequest{
 				TaskId: id,
-			}, mockStream[*apiv1.TaskLogsResponse]{ctx})
+			}, &mockStream[*apiv1.TaskLogsResponse]{ctx: ctx})
 		}},
 		{"CanGetExperimentArtifacts", func(id string) error {
 			return api.TaskLogsFields(&apiv1.TaskLogsFieldsRequest{
 				TaskId: id,
-			}, mockStream[*apiv1.TaskLogsFieldsResponse]{ctx})
+			}, &mockStream[*apiv1.TaskLogsFieldsResponse]{ctx: ctx})
 		}},
 	}
 

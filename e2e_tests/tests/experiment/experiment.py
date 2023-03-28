@@ -58,14 +58,29 @@ def pause_experiment(experiment_id: int) -> None:
     subprocess.check_call(command)
 
 
+def pause_experiments(experiment_ids: List[int]) -> None:
+    body = bindings.v1PauseExperimentsRequest(experimentIds=experiment_ids)
+    bindings.post_PauseExperiments(api_utils.determined_test_session(), body=body)
+
+
 def activate_experiment(experiment_id: int) -> None:
     command = ["det", "-m", conf.make_master_url(), "experiment", "activate", str(experiment_id)]
     subprocess.check_call(command)
 
 
+def activate_experiments(experiment_ids: List[int]) -> None:
+    body = bindings.v1ActivateExperimentsRequest(experimentIds=experiment_ids)
+    bindings.post_ActivateExperiments(api_utils.determined_test_session(), body=body)
+
+
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(api_utils.determined_test_session(), id=experiment_id)
     wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
+
+
+def cancel_experiments(experiment_ids: List[int]) -> None:
+    body = bindings.v1CancelExperimentsRequest(experimentIds=experiment_ids)
+    bindings.post_CancelExperiments(api_utils.determined_test_session(), body=body)
 
 
 def cancel_trial(trial_id: int) -> None:
