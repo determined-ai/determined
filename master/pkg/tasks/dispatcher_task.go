@@ -403,11 +403,21 @@ func computeJobProjectResultForLabels(
 }
 
 func formatPbsLabelResult(label string) string {
-	return fmt.Sprintf("-P %s", label)
+	return fmt.Sprintf("-P %s", addQuotes(label))
 }
 
 func formatSlurmLabelResult(label string) string {
-	return fmt.Sprintf("--wckey=%s", label)
+	return fmt.Sprintf("--wckey=%s", addQuotes(label))
+}
+
+func addQuotes(label string) string {
+	if len(label) > 0 {
+		// Remove any surrounding double quotes.
+		label = strings.Trim(label, "\"")
+	}
+
+	// Surround the string with quotes and escape any embedded quotes.
+	return strconv.Quote(label)
 }
 
 // computeResources calculates the job resource requirements. It also returns any

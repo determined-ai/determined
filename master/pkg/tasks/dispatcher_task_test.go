@@ -1616,8 +1616,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: nil,
 			},
-			wantPbsResult:   []string{"-P project1"},
-			wantSlurmResult: []string{"--wckey=project1"},
+			wantPbsResult:   []string{"-P \"project1\""},
+			wantSlurmResult: []string{"--wckey=\"project1\""},
 		},
 		{
 			name: "Project mode",
@@ -1629,8 +1629,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: ptrs.Ptr("project"),
 			},
-			wantPbsResult:   []string{"-P project1"},
-			wantSlurmResult: []string{"--wckey=project1"},
+			wantPbsResult:   []string{"-P \"project1\""},
+			wantSlurmResult: []string{"--wckey=\"project1\""},
 		},
 		{
 			name: "workspace mode",
@@ -1642,8 +1642,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: ptrs.Ptr("workspace"),
 			},
-			wantPbsResult:   []string{"-P workspace1"},
-			wantSlurmResult: []string{"--wckey=workspace1"},
+			wantPbsResult:   []string{"-P \"workspace1\""},
+			wantSlurmResult: []string{"--wckey=\"workspace1\""},
 		},
 		{
 			name: "label mode",
@@ -1655,8 +1655,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: ptrs.Ptr("label"),
 			},
-			wantPbsResult:   []string{"-P label1_label2"},
-			wantSlurmResult: []string{"--wckey=label1,label2"},
+			wantPbsResult:   []string{"-P \"label1_label2\""},
+			wantSlurmResult: []string{"--wckey=\"label1,label2\""},
 		},
 		{
 			name: "label mode, but no labels specified",
@@ -1681,8 +1681,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: ptrs.Ptr("label:"),
 			},
-			wantPbsResult:   []string{"-P label1_label2"},
-			wantSlurmResult: []string{"--wckey=label1,label2"},
+			wantPbsResult:   []string{"-P \"label1_label2\""},
+			wantSlurmResult: []string{"--wckey=\"label1,label2\""},
 		},
 		{
 			name: "label:prefix mode",
@@ -1694,8 +1694,8 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			args: args{
 				mode: ptrs.Ptr("label:lab"),
 			},
-			wantPbsResult:   []string{"-P el1_el2"},
-			wantSlurmResult: []string{"--wckey=el1,el2"},
+			wantPbsResult:   []string{"-P \"el1_el2\""},
+			wantSlurmResult: []string{"--wckey=\"el1,el2\""},
 		},
 	}
 	for _, tt := range tests {
@@ -1716,6 +1716,26 @@ func TestTaskSpec_jobAndProjectSource(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTaskSpec_addQuotes(t *testing.T) {
+	// If the string has no double quotes, then make sure they are added.
+	assert.Equal(t, addQuotes("HELLO WORLD"), "\"HELLO WORLD\"")
+
+	// If the string has double quotes, make sure they are removed and added
+	// back.
+	assert.Equal(t, addQuotes("\"HELLO WORLD\""), "\"HELLO WORLD\"")
+
+	// If the string has an embedded double quote, then preserve it.
+	assert.Equal(t, addQuotes("\"HELLO\"WORLD\""), "\"HELLO\\\"WORLD\"")
+
+	// Test with non-alphabetic characters.
+	assert.Equal(t,
+		addQuotes("\"ABC!@#$%^&*()_+'{}|:\"?><.XYZ\""),
+		"\"ABC!@#$%^&*()_+'{}|:\\\"?><.XYZ\"")
+
+	// If the string is empty, add double quotes.
+	assert.Equal(t, addQuotes(""), "\"\"")
 }
 
 func getMockActorCtx() *actor.Context {
