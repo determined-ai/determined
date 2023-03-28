@@ -48,5 +48,11 @@
                  <p class="tile-description">Reference documentation for custom search methods.</p>
              </a>
          </div>
+         <div class="tile-container">
+             <a class="tile" href="../interfaces/index.html">
+                 <h2 class="tile-title">Tools</h2>
+                 <p class="tile-description">Get help for using tools and interfaces including the Determined CLI.</p>
+             </a>
+         </div>
       </div>
    </div>
