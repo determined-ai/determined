@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -453,7 +452,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	type fields struct {
 		config                   *config.DispatcherResourceManagerConfig
 		apiClient                *launcherAPIClient
-		hpcResourcesManifest     *launcher.Manifest
 		reqList                  *tasklist.TaskList
 		groups                   map[*actor.Ref]*tasklist.Group
 		dispatchIDToAllocationID map[string]model.AllocationID
@@ -561,7 +559,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 			m := &dispatcherResourceManager{
 				rmConfig:                 tt.fields.config,
 				apiClient:                tt.fields.apiClient,
-				hpcResourcesManifest:     tt.fields.hpcResourcesManifest,
 				reqList:                  tt.fields.reqList,
 				groups:                   tt.fields.groups,
 				dispatchIDToAllocationID: tt.fields.dispatchIDToAllocationID,
