@@ -43,7 +43,6 @@ import SparklineCell from './custom-cells/sparkline-cell';
 import SpinnerCell from './custom-cells/spinner-cell';
 import TagsCell from './custom-cells/tags-cell';
 import UserProfileCell from './custom-cells/user-profile-cell';
-import css from './GlideTable.module.scss';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
 import { MapOfIdsToColors } from './useGlasbey';
 import { getDurationInEnglish, getTheme, getTimeInEnglish, headerIcons } from './utils';
@@ -528,7 +527,7 @@ export const GlideTable: React.FC<Props> = ({
   );
 
   return (
-    <div className={css.base}>
+    <div>
       <DataEditor
         headerIcons={headerIcons}
         customRenderers={cells}
