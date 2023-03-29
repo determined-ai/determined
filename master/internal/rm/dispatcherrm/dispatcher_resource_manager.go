@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -264,7 +263,6 @@ type dispatcherResourceManager struct {
 	rmConfig                      *config.DispatcherResourceManagerConfig
 	poolConfig                    []config.ResourcePoolConfig
 	apiClient                     *launcherAPIClient
-	hpcResourcesManifest          *launcher.Manifest
 	reqList                       *tasklist.TaskList
 	groups                        map[*actor.Ref]*tasklist.Group
 	dispatchIDToAllocationID      map[string]model.AllocationID
@@ -293,11 +291,6 @@ func newDispatcherResourceManager(
 		panic(fmt.Errorf("building dispatcherrm: %w", err))
 	}
 
-	// One time activity to create a manifest using SlurmResources carrier.
-	// This manifest is used on demand to retrieve details regarding HPC resources
-	// e.g., nodes, GPUs etc
-	hpcResourcesManifest := createSlurmResourcesManifest()
-
 	watcher := newDispatchWatcher(apiClient)
 	dbState, err := getDispatcherState(context.TODO())
 	if err != nil {
@@ -310,7 +303,6 @@ func newDispatcherResourceManager(
 		rmConfig: rmConfig,
 
 		apiClient:                apiClient,
-		hpcResourcesManifest:     hpcResourcesManifest,
 		reqList:                  tasklist.New(),
 		groups:                   make(map[*actor.Ref]*tasklist.Group),
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
@@ -1538,9 +1530,6 @@ func (m *dispatcherResourceManager) resolveSlotType(
 // This function also queries launcher version and warns user if minimum required
 // launcher version is not met.
 func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) {
-	impersonatedUser := ""
-	newSample := hpcResources{}
-
 	// Below code will ensure isUpdating flag of the cache is always set to false,
 	// while exiting the function.
 	defer func() {
@@ -1549,26 +1538,15 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 		m.resourceDetails.mu.Unlock()
 	}()
 
-	// Launch the HPC Resources manifest. Launch() method will ensure
-	// the manifest is in the RUNNING state on successful completion.
-	start := time.Now()
-	dispatchInfo, r, err := m.apiClient.LaunchApi.
-		Launch(m.apiClient.withAuth(context.TODO())).
-		Manifest(*m.hpcResourcesManifest).
-		Impersonate(impersonatedUser).
-		Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
+	dispatchInfo, resp, err := m.apiClient.launchHPCResourcesJob() //nolint:bodyclose
 	if err != nil {
-		dispatcherErrors.WithLabelValues("launch").Inc()
-		m.apiClient.handleServiceQueryError(r, err)
+		m.apiClient.handleServiceQueryError(resp, err)
 		return
 	}
-	ctx.Log().Debugf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId())
-
 	dispatchID := dispatchInfo.GetDispatchId()
+	ctx.Log().Debugf("Launched Manifest with DispatchID %s", dispatchID)
 
 	owner := "launcher"
-
 	defer m.ResourceQueryPostActions(ctx, dispatchID, owner)
 
 	logFileName := "slurm-resources-info"
@@ -1588,28 +1566,26 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	// to get the partition info and does not create a job, so no job ID is ever
 	// generated.  Eventually it will timeout waiting and return, but that's too
 	// long of a delay for us to deal with.
-	start = time.Now()
-	resp, _, err := m.apiClient.MonitoringApi.
-		LoadEnvironmentLog(m.apiClient.withAuth(context.TODO()), owner, dispatchID, logFileName).
-		Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("load_log").Observe(time.Since(start).Seconds())
+	log, _, err := m.apiClient.loadEnvironmentLog(owner, dispatchID, logFileName) //nolint:bodyclose
 	if err != nil {
-		dispatcherErrors.WithLabelValues("load_log").Inc()
-		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details. response: {%v}", resp)
+		ctx.Log().Error(err)
 		return
 	}
 
 	// Parse the HPC resources file and extract the details into a
 	// HpcResourceDetails object using YAML package.
-	resourcesBytes, err := io.ReadAll(resp)
+	resourcesBytes, err := io.ReadAll(log)
 	if err != nil {
-		ctx.Log().WithError(err).Errorf("failed to read response")
+		ctx.Log().WithError(err).Errorf("failed to read HPC resources environment log file")
 		return
 	}
+
+	var newSample hpcResources
 	if err = yaml.Unmarshal(resourcesBytes, &newSample); err != nil {
 		ctx.Log().WithError(err).Errorf("failed to parse HPC Resource details")
 		return
 	}
+
 	m.hpcResourcesToDebugLog(ctx, newSample)
 
 	m.resourceDetails.mu.Lock()
@@ -1693,21 +1669,10 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 		return false
 	}
 
-	var err error
-	var response *http.Response
-	start := time.Now()
-	_, response, err = m.apiClient.RunningApi.
-		TerminateRunning(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
-		Force(true).Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("terminate").Observe(time.Since(start).Seconds())
+	_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		if response == nil || response.StatusCode != 404 {
-			ctx.Log().WithError(err).Errorf("Failed to terminate job with Dispatch ID %s, response: {%v}",
-				dispatchID, response)
-			// We failed to delete, and not 404/notfound so leave in DB.
-			dispatcherErrors.WithLabelValues("terminate").Inc()
-			return false
-		}
+		ctx.Log().Error(err)
+		return false
 	}
 
 	if slurmResourcesPolling {
@@ -1736,26 +1701,16 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 func (m *dispatcherResourceManager) removeDispatchEnvironment(
 	ctx *actor.Context, owner string, dispatchID string,
 ) {
-	ctx.Log().Debugf("Deleting environment with DispatchID %s", dispatchID)
-	start := time.Now()
-	response, err := m.apiClient.MonitoringApi.
-		DeleteEnvironment(m.apiClient.withAuth(context.TODO()), owner, dispatchID).
-		Execute() //nolint:bodyclose
-	dispatcherHistogram.WithLabelValues("delete_env").Observe(time.Since(start).Seconds())
+	_, err := m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
 	if err != nil {
-		if response == nil || response.StatusCode != 404 {
-			ctx.Log().WithError(err).Errorf("Failed to remove environment for Dispatch ID %s, response:{%v}",
-				dispatchID, response)
-			dispatcherErrors.WithLabelValues("delete_env").Inc()
-			// We failed to delete, and not 404/notfound so leave in DB for later retry
-			return
-		}
-	} else {
-		ctx.Log().Debugf("Deleted environment with DispatchID %s", dispatchID)
+		ctx.Log().Error(err)
+		return
 	}
+
 	count, err := db.DeleteDispatch(context.TODO(), dispatchID)
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("Failed to delete DispatchID %s from DB", dispatchID)
+		return
 	}
 	// On Slurm resource query there may be no Dispatch in the DB, so only log as trace.
 	ctx.Log().Tracef("Deleted DispatchID %s from DB, count %d", dispatchID, count)
@@ -2118,30 +2073,6 @@ func (r DispatcherResources) Kill(ctx *actor.Context, _ logger.Context) {
 			ResourcesID:  r.id,
 			AllocationID: r.req.AllocationID,
 		})
-}
-
-// CreateSlurmResourcesManifest creates a Manifest for SlurmResources Carrier.
-// This Manifest is used to retrieve information about resources available on the HPC system.
-func createSlurmResourcesManifest() *launcher.Manifest {
-	payload := launcher.NewPayloadWithDefaults()
-	payload.SetName("DAI-HPC-Resources")
-	payload.SetId("com.cray.analytics.capsules.hpc.resources")
-	payload.SetVersion("latest")
-	payload.SetCarriers([]string{slurmResourcesCarrier, pbsResourcesCarrier})
-
-	// Create payload launch parameters
-	launchParameters := launcher.NewLaunchParameters()
-	launchParameters.SetMode("interactive")
-	payload.SetLaunchParameters(*launchParameters)
-
-	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("DAI-HPC-Resources")
-
-	// Create & populate the manifest
-	manifest := *launcher.NewManifest("v1", *clientMetadata)
-	manifest.SetPayloads([]launcher.Payload{*payload})
-
-	return &manifest
 }
 
 // schedulingStateFromDispatchState returns SchedulingState from DispatchState representation.
