@@ -1,4 +1,5 @@
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { useObservable } from 'micro-observables';
 import { useState } from 'react';
 
 import Button from 'components/kit/Button';
@@ -12,7 +13,7 @@ import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorType } from 'shared/utils/error';
-import { useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Metadata } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -41,7 +42,7 @@ interface Props {
 const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
   const { canCreateModelWorkspace } = usePermissions();
   const [isDetailExpanded, setIsDetailExpanded] = useState<boolean>(false);
-  const loadableWorkspaces = useWorkspaces();
+  const loadableWorkspaces = useObservable(workspaceStore.workspaces);
   const isWorkspace = workspaceId !== undefined;
   const workspaces = Loadable.match(loadableWorkspaces, {
     Loaded: (ws) => ws.filter(({ id }) => canCreateModelWorkspace({ workspaceId: id })),

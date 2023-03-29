@@ -22,7 +22,7 @@ import authStore from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import usersStore from 'stores/users';
-import { useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -139,6 +139,8 @@ const NavigationSideBar: React.FC = () => {
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
+  const pinnedWorkspaces = useObservable(workspaceStore.pinned);
+
   const menuConfig = useMemo(() => {
     const topNav = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
@@ -183,7 +185,6 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
-  const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
 
   const menuItems: MenuProps['items'] = useMemo(() => {

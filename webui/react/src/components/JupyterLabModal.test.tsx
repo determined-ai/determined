@@ -9,7 +9,6 @@ import { useModal } from 'components/kit/Modal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
-import { WorkspacesProvider } from 'stores/workspaces';
 import { WorkspaceState } from 'types';
 
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
@@ -21,6 +20,7 @@ vi.mock('services/api', () => ({
   getTaskTemplates: () => Promise.resolve([]),
   getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
+  getWorkspaces: () => Promise.resolve({ workspaces: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
   previewJupyterLab: () =>
     Promise.resolve({
@@ -86,9 +86,7 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <UIProvider>
-        <WorkspacesProvider>
-          <ModalTrigger />
-        </WorkspacesProvider>
+        <ModalTrigger />
       </UIProvider>
     </BrowserRouter>,
   );

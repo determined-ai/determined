@@ -51,7 +51,7 @@ import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import usersStore from 'stores/users';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -73,17 +73,17 @@ interface Props {
 }
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
+  const canceler = useRef(new AbortController());
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [models, setModels] = useState<ModelItem[]>([]);
   const [model, setModel] = useState<ModelItem | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [canceler] = useState(new AbortController());
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
   const modelCreateModal = useModal(ModelCreateModal);
   const deleteModelModal = useModal(DeleteModelModal);
@@ -123,7 +123,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           users: settings.users,
           workspaceIds: workspace?.id ? [workspace.id] : settings.workspace,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
       setTotal(response.pagination.total || 0);
       setModels((prev) => {
@@ -139,34 +139,29 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, workspace?.id, canceler.signal]);
+  }, [settings, workspace?.id]);
 
   const fetchTags = useCallback(async () => {
     try {
       const tags = await getModelLabels(
         { workspaceId: workspace?.id },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, workspace?.id]);
+  }, [workspace?.id]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
       fetchModels(),
       fetchTags(),
-      usersStore.ensureUsersFetched(canceler),
-      fetchWorkspaces(),
+      usersStore.ensureUsersFetched(canceler.current),
+      workspaceStore.fetch(undefined, canceler.current.signal),
     ]);
-  }, [canceler, fetchModels, fetchTags, fetchWorkspaces]);
-
-  const workspaces = Loadable.match(useWorkspaces(), {
-    Loaded: (ws) => ws,
-    NotLoaded: () => [],
-  });
+  }, [fetchModels, fetchTags]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -637,8 +632,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   const showCreateModelModal = useCallback(() => modelCreateModal.open(), [modelCreateModal]);
 

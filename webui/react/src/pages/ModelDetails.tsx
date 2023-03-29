@@ -41,10 +41,10 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
 import usersStore from 'stores/users';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import settingsConfig, {
@@ -61,7 +61,6 @@ type Params = {
 };
 
 const ModelDetails: React.FC = () => {
-  const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
   const [modelVersion, setModelVersion] = useState<ModelVersion | undefined>(undefined);
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
@@ -71,10 +70,10 @@ const ModelDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const lodableWorkspaces = useWorkspaces();
-  const workspace = Loadable.getOrElse([], lodableWorkspaces).find(
-    (ws) => ws.id === model?.model.workspaceId,
+  const workspasces = useObservable(workspaceStore.workspaces);
+  const workspace = Loadable.getOrElse(
+    undefined,
+    useObservable(workspaceStore.getWorkspace(model?.model.workspaceId)),
   );
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
@@ -113,7 +112,9 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-    ensureWorkspacesFetched();
+    const abortFetchWorkspaces = workspaceStore.fetch();
+
+    return () => abortFetchWorkspaces();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -414,7 +415,7 @@ const ModelDetails: React.FC = () => {
     return <Message title={message} type={MessageType.Warning} />;
   } else if (pageError && isNotFound(pageError)) {
     return <PageNotFound />;
-  } else if (!model || lodableWorkspaces === NotLoaded || rbacLoading) {
+  } else if (!model || Loadable.isLoading(workspasces) || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 

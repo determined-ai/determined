@@ -12,7 +12,7 @@ import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import roleStore from 'stores/roles';
 import usersStore from 'stores/users';
-import { useResetWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {
@@ -20,7 +20,6 @@ const SignOut: React.FC = () => {
   const location = useLocation();
   const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const resetWorkspaces = useResetWorkspaces();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
@@ -28,7 +27,7 @@ const SignOut: React.FC = () => {
       roleStore.reset();
       permissionStore.reset();
       usersStore.updateCurrentUser(null);
-      resetWorkspaces();
+      workspaceStore.reset();
       try {
         await logout({});
       } catch (e) {
@@ -52,7 +51,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetWorkspaces]);
+  }, [navigate, info.externalLogoutUri, location.state, isSigningOut]);
 
   return null;
 };

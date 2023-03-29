@@ -7,7 +7,7 @@ import { useClusterStore } from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import usersStore from 'stores/users';
-import { useFetchWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
@@ -25,19 +25,11 @@ interface Props {
 const Navigation: React.FC<Props> = ({ children }) => {
   useInitApi();
   const { ui } = useUI();
-  const canceler = useRef(new AbortController());
-  const info = useObservable(determinedStore.info);
-
   const info = useObservable(determinedStore.info);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
-
-  const fetchWorkspaces = useFetchWorkspaces(canceler.current);
   const currentUser = useObservable(usersStore.getCurrentUser());
 
-  const guardedFetchWorkspaces = useCallback(() => {
-    return currentUser !== NotLoaded && fetchWorkspaces();
-  }, [currentUser, fetchWorkspaces]);
-  usePolling(guardedFetchWorkspaces);
+  useEffect(() => workspaceStore.startPolling(), []);
 
   useEffect(() => {
     updateFaviconType(

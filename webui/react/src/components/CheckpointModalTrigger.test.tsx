@@ -6,7 +6,6 @@ import { BrowserRouter } from 'react-router-dom';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
-import { WorkspacesProvider } from 'stores/workspaces';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
@@ -40,9 +39,7 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <UIProvider>
-        <WorkspacesProvider>
-          <ModalTrigger />
-        </WorkspacesProvider>
+        <ModalTrigger />
       </UIProvider>
     </BrowserRouter>,
   );

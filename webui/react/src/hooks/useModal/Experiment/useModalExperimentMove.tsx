@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Select, { Option } from 'components/kit/Select';
@@ -13,7 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import projectStore from 'stores/projects';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
@@ -52,27 +52,22 @@ const moveExperimentWithHandler = async (
 };
 
 const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
-  const canceler = useRef(new AbortController());
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);
 
   const [experimentIds, setExperimentIds] = useState<number[]>([]);
   const { canMoveExperimentsTo } = usePermissions();
-  const loadableWorkspaces = useWorkspaces({ archived: false });
-  const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
-    ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
+    canMoveExperimentsTo({ destination: { id: w.id } }),
   );
   const loadableProjects = useObservable(projectStore.getProjectsByWorkspace(workspaceId));
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
-  useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+  useEffect(() => workspaceStore.fetch(), []);
 
   useEffect(
     () => (workspaceId === undefined ? undefined : projectStore.fetch(workspaceId)),
@@ -93,7 +88,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             id="workspace"
             placeholder="Select a destination workspace."
             onChange={() => form.resetFields(['projectId'])}>
-            {Loadable.getOrElse([], workspaces).map((workspace) => {
+            {workspaces.map((workspace) => {
               return (
                 <Option
                   disabled={workspace.archived}

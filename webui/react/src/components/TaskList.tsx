@@ -53,7 +53,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import usersStore from 'stores/users';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import {
   ExperimentAction as Action,
@@ -105,8 +105,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const workspaces = useWorkspaces();
   const [canceler] = useState(new AbortController());
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
@@ -115,7 +115,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canModifyWorkspaceNSC } = usePermissions();
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
@@ -191,9 +190,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     await Promise.allSettled([usersStore.ensureUsersFetched(canceler), fetchTasks()]);
   }, [canceler, fetchTasks]);
 
-  useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+  useEffect(() => workspaceStore.fetch(), []);
 
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
@@ -340,10 +337,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       Loaded: (users) => users,
       NotLoaded: () => [],
     });
-    const matchWorkspaces = Loadable.match(workspaces, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
 
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
       if (record.type !== CommandType.TensorBoard || !record.misc) {
@@ -484,17 +477,17 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'workspace',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
-        filters: matchWorkspaces.map((ws) => ({
+        filters: workspaces.map((ws) => ({
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
         key: 'workspace',
-        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, matchWorkspaces),
+        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(
-            matchWorkspaces.find((u) => u.id === a.workspaceId)?.name ?? '',
-            matchWorkspaces.find((u) => u.id === b.workspaceId)?.name ?? '',
+            workspaces.find((w) => w.id === a.workspaceId)?.name ?? '',
+            workspaces.find((w) => w.id === b.workspaceId)?.name ?? '',
           ),
         title: 'Workspace',
       },
