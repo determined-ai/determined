@@ -12,8 +12,8 @@ import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ModelDownloadModal from 'components/ModelDownloadModal';
 import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
+import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -57,9 +57,7 @@ const ModelVersionHeader: React.FC<Props> = ({
 
   const modelDownloadModal = useModal(ModelDownloadModal);
   const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
-
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
+  const modelVersionEditModal = useModal(ModelVersionEditModal);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
@@ -137,7 +135,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: false,
         disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
         key: 'edit-model-version-name',
-        onClick: openModelNameEdit,
+        onClick: () => modelVersionEditModal.open(),
         text: 'Edit',
       },
     ];
@@ -154,9 +152,9 @@ const ModelVersionHeader: React.FC<Props> = ({
   }, [
     modelVersion,
     canModifyModelVersion,
-    openModelNameEdit,
     canDeleteModelVersion,
     modelDownloadModal,
+    modelVersionEditModal,
     modelVersionDeleteModal,
   ]);
 
@@ -268,7 +266,10 @@ with det.import_from_path(path + "/code"):
       </div>
       <modelDownloadModal.Component version={modelVersion} />
       <modelVersionDeleteModal.Component modelVersion={modelVersion} />
-      {modalModelNameEditContextHolder}
+      <modelVersionEditModal.Component
+        fetchModelVersion={fetchModelVersion}
+        modelVersion={modelVersion}
+      />
       <Modal
         className={css.useNotebookModal}
         footer={null}
