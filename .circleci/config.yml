@@ -594,7 +594,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            det deploy aws up \
+            tools/scripts/retry.sh det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
@@ -615,7 +615,7 @@ commands:
           when: always
           no_output_timeout: 20m
           command: |
-            det deploy aws down \
+            tools/scripts/retry.sh det deploy aws down \
               --cluster-id <<parameters.cluster-id>> --yes
 
   setup-aws-cluster:
