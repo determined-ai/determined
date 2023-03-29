@@ -36,6 +36,13 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 
 	res.Environment = s.MakeEnvPorts()
 
+	res.UniqueExposedPortRequests = map[string]int{
+		DTrainSSHPort:              DtrainSSHPortBase,
+		InterTrainProcessCommPort1: InterTrainProcessCommPort1Base,
+		InterTrainProcessCommPort2: InterTrainProcessCommPort2Base,
+		C10DPort:                   C10DPortBase,
+	}
+
 	res.ResourcesConfig = s.ExperimentConfig.Resources()
 	res.SlurmConfig = s.ExperimentConfig.SlurmConfig()
 	res.PbsConfig = s.ExperimentConfig.PbsConfig()

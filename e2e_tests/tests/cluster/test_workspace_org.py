@@ -2,6 +2,7 @@ import contextlib
 import os
 import tempfile
 import uuid
+from http import HTTPStatus
 from typing import Generator, List, Optional
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.api._util import NTSC_Kind, wait_for_ntsc_state
+from determined.common.api.errors import APIException
 from tests import api_utils
 from tests import config as conf
 from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
@@ -362,6 +364,36 @@ def test_workspace_org() -> None:
         bindings.post_ArchiveProject(sess, id=made_project.id)
         with pytest.raises(errors.APIException):
             bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
+
+        # Refuse to create a workspace with a duplicate name
+        r7 = bindings.post_PostWorkspace(
+            sess, body=bindings.v1PostWorkspaceRequest(name="_TestDuplicate")
+        )
+        duplicate_workspace = r7.workspace
+        assert duplicate_workspace is not None
+        test_workspaces.append(duplicate_workspace)
+        with pytest.raises(APIException) as e:
+            r8 = bindings.post_PostWorkspace(
+                sess, body=bindings.v1PostWorkspaceRequest(name="_TestDuplicate")
+            )
+            failed_duplicate_workspace = r8.workspace
+            assert failed_duplicate_workspace is None
+            if failed_duplicate_workspace is not None:
+                test_workspaces.append(failed_duplicate_workspace)
+        assert e.value.status_code == HTTPStatus.CONFLICT
+
+        # Refuse to change a workspace name to an existing name
+        r9 = bindings.post_PostWorkspace(
+            sess, body=bindings.v1PostWorkspaceRequest(name="_TestDuplicatePatch")
+        )
+        duplicate_patch_workspace = r9.workspace
+        assert duplicate_patch_workspace is not None
+        test_workspaces.append(duplicate_patch_workspace)
+        w_patch = bindings.v1PatchWorkspace.from_json(made_workspace.to_json())
+        w_patch.name = "_TestDuplicate"
+        with pytest.raises(APIException) as e:
+            bindings.patch_PatchWorkspace(sess, body=w_patch, id=made_workspace.id)
+        assert e.value.status_code == HTTPStatus.CONFLICT
 
     finally:
         # Clean out workspaces and all dependencies.

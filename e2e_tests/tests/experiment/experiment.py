@@ -58,8 +58,11 @@ def pause_experiment(experiment_id: int) -> None:
     subprocess.check_call(command)
 
 
-def pause_experiments(experiment_ids: List[int]) -> None:
+def pause_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
     body = bindings.v1PauseExperimentsRequest(experimentIds=experiment_ids)
+    if name is not None:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1PauseExperimentsRequest(experimentIds=[], filters=filters)
     bindings.post_PauseExperiments(api_utils.determined_test_session(), body=body)
 
 
@@ -68,8 +71,12 @@ def activate_experiment(experiment_id: int) -> None:
     subprocess.check_call(command)
 
 
-def activate_experiments(experiment_ids: List[int]) -> None:
-    body = bindings.v1ActivateExperimentsRequest(experimentIds=experiment_ids)
+def activate_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    if name is None:
+        body = bindings.v1ActivateExperimentsRequest(experimentIds=experiment_ids)
+    else:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1ActivateExperimentsRequest(experimentIds=[], filters=filters)
     bindings.post_ActivateExperiments(api_utils.determined_test_session(), body=body)
 
 
@@ -78,8 +85,12 @@ def cancel_experiment(experiment_id: int) -> None:
     wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
 
 
-def cancel_experiments(experiment_ids: List[int]) -> None:
-    body = bindings.v1CancelExperimentsRequest(experimentIds=experiment_ids)
+def cancel_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    if name is None:
+        body = bindings.v1CancelExperimentsRequest(experimentIds=experiment_ids)
+    else:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1CancelExperimentsRequest(experimentIds=[], filters=filters)
     bindings.post_CancelExperiments(api_utils.determined_test_session(), body=body)
 
 

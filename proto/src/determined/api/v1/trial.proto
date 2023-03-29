@@ -989,3 +989,37 @@ message PostTrialRunnerMetadataRequest {
 }
 // Response to PatchTrialMetadataRequest
 message PostTrialRunnerMetadataResponse {}
+
+// Stream training metrics.
+message GetTrainingMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_ids" ] }
+  };
+  // Trial IDs to get metrics for.
+  repeated int32 trial_ids = 1;
+}
+// Response to GetTrainingMetricsRequest.
+message GetTrainingMetricsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics" ] }
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
+}
+
+// Stream validation metrics.
+message GetValidationMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_ids" ] }
+  };
+  // Trial IDs to get metrics for.
+  repeated int32 trial_ids = 1;
+}
+// Response to GetTrainingMetricsRequest.
+message GetValidationMetricsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics" ] }
+  };
+  // Metric response.
+  repeated determined.trial.v1.MetricsReport metrics = 1;
+}

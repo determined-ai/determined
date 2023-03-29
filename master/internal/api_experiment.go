@@ -842,14 +842,14 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.ActivateExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	results, err := exputil.PauseExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.PauseExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -865,14 +865,14 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.PauseExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	results, err := exputil.CancelExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.CancelExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -888,14 +888,14 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.CancelExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	results, err := exputil.KillExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.KillExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -911,14 +911,14 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.KillExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	results, err := exputil.ArchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -934,14 +934,14 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
-	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.ArchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -957,7 +957,7 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
-	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.UnarchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -1892,7 +1892,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	results, err := exputil.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId},
+	results, err := exputil.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId}, nil,
 		req.DestinationProjectId)
 
 	if err == nil {
@@ -1930,7 +1930,7 @@ func (a *apiServer) MoveExperiments(
 	}
 
 	results, err := exputil.MoveExperiments(ctx, a.m.system, req.ExperimentIds,
-		req.DestinationProjectId)
+		req.Filters, req.DestinationProjectId)
 	return &apiv1.MoveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 

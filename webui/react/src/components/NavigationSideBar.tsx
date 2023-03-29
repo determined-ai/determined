@@ -237,7 +237,7 @@ const NavigationSideBar: React.FC = () => {
             </div>
           </Dropdown>
         </header>
-        <main>
+        <section>
           <section className={css.top}>
             {menuConfig.top.map((config) => (
               <NavigationItem
@@ -329,7 +329,7 @@ const NavigationSideBar: React.FC = () => {
               onClick={handleCollapse}
             />
           </section>
-        </main>
+        </section>
         <footer>
           <div className={css.version}>
             {isVersionLong && settings.navbarCollapsed ? (

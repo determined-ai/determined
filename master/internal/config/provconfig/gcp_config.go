@@ -33,9 +33,10 @@ type GCPClusterConfig struct {
 	BootDiskSize        int    `json:"boot_disk_size"`
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
 
-	LabelKey   string `json:"label_key"`
-	LabelValue string `json:"label_value"`
-	NamePrefix string `json:"name_prefix"`
+	Labels     map[string]string `json:"labels"`
+	LabelKey   string            `json:"label_key"`
+	LabelValue string            `json:"label_value"`
+	NamePrefix string            `json:"name_prefix"`
 
 	NetworkInterface gceNetworkInterface `json:"network_interface"`
 	NetworkTags      []string            `json:"network_tags"`
@@ -53,7 +54,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-835d8b1",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-9d07809",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -161,12 +162,13 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 		}, rb.Disks...)
 	}
 
-	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
-		rb.Labels[c.LabelKey] = c.LabelValue
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
 	}
+	for k, v := range c.Labels {
+		rb.Labels[k] = v
+	}
+	rb.Labels[c.LabelKey] = c.LabelValue
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {
 		networkInterface := &compute.NetworkInterface{

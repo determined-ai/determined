@@ -159,7 +159,7 @@ variable "preemption_enabled" {
 }
 
 variable "labels" {
-  type = map
+  type = map(string)
   default = {}
 }
 

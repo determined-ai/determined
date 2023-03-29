@@ -407,7 +407,7 @@ const canDeleteModel = (
   return (
     rbacAllPermission ||
     (rbacEnabled
-      ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
+      ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
       : !!user && (user.isAdmin || user.id === model?.userId))
   );
 };
@@ -436,7 +436,7 @@ const canDeleteModelVersion = (
   return (
     rbacAllPermission ||
     (rbacEnabled
-      ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
+      ? permitted.has(V1PermissionType.DELETEMODELREGISTRY)
       : !!user && (user.isAdmin || user.id === modelVersion?.userId))
   );
 };

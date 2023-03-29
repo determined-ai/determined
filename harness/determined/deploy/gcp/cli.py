@@ -61,6 +61,15 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         return
 
     det_configs["labels"] = dict(det_configs.get("add_label", []))
+    reserved_labels = {
+        "determined-master-host",
+        "determined-master-port",
+        "determined-resource-pool",
+        "managed-by",
+    }
+    if reserved_labels.intersection(det_configs["labels"]):
+        print(f"The labels {reserved_labels} are reserved for agents.")
+        sys.exit(1)
 
     # Handle Up subcommand.
     if (args.cpu_env_image and not args.gpu_env_image) or (

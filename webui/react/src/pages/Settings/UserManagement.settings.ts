@@ -49,6 +49,7 @@ const config: SettingsConfig<UserManagementSettings> = {
     },
     row: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'row',
       type: union([array(number), array(string), undefinedType]),
     },

@@ -24,7 +24,7 @@
 
 // Find the path to the root index.html, from the special rel=root link.
 // Example indexpath:  ../../index.html
-const relroot = document.querySelectorAll("[rel=root]")[0]
+const relroot = document.querySelectorAll("[rel=root]")[0];
 // Extract the href as a string literal, to avoid url normalization.
 const indexpath = relroot.attributes["href"].value;
 
@@ -33,42 +33,41 @@ const docroot = indexpath.split("/").slice(0, -1).join("/");
 
 // Extract the version, for filtering Algolia results.
 let version = relroot.attributes["version"].value;
-if(version.includes("-")){
-    /* Dev builds search against the "latest" index, since there's not a
+if (version.includes("-")) {
+  /* Dev builds search against the "latest" index, since there's not a
        great alternative. */
-    version = "latest";
+  version = "latest";
 }
-const searchParameters = {filters: 'version:"' + version + '"'};
+const searchParameters = { filters: 'version:"' + version + '"' };
 
 try {
-    docsearch({
-        container: '#searchbox',
-        appId: '9H1PGK6NP7',
-        indexName: 'determined',
-        apiKey: '18b6f7b0b2e20a6bdb00b660ff45d3b8',
-        transformItems(items) {
-            return items.map((item) => {
-                const itempath = new URL(item.url).pathname;
-                // Get the relative path based on what Algolia indexed.
-                // Example: /latest/path/to/doc -> path/to/doc
-                const itemrel = itempath.split("/").slice(2).join("/");
-                // Point to the locally hosted version of the same document.
-                if(docroot === ""){
-                    item.url = itemrel
-                } else {
-                    item.url = docroot + "/" + itemrel;
-                }
-                return item;
-            })
-        },
-        searchParameters: searchParameters,
-    });
-    // If the call to docsearch worked, hide the sphinx search bar.
-    document.querySelectorAll(
-        "[class=sidebar-search-container]"
-    )[0].style.display = 'none';
-} catch(e) {
-    console.log(
-        "falling back to sphinx search after configuring algolia failed:", e
-    );
+  docsearch({
+    container: "#search-algolia",
+    appId: "9H1PGK6NP7",
+    indexName: "determined",
+    apiKey: "18b6f7b0b2e20a6bdb00b660ff45d3b8",
+    transformItems(items) {
+      return items.map((item) => {
+        const itempath = new URL(item.url).pathname;
+        // Get the relative path based on what Algolia indexed.
+        // Example: /latest/path/to/doc -> path/to/doc
+        const itemrel = itempath.split("/").slice(2).join("/");
+        // Point to the locally hosted version of the same document.
+        if (docroot === "") {
+          item.url = itemrel;
+        } else {
+          item.url = docroot + "/" + itemrel;
+        }
+        return item;
+      });
+    },
+    searchParameters: searchParameters,
+  });
+  // If the call to docsearch worked, hide the sphinx search bar.
+  document.getElementById("search-fallback").style.display = "none";
+} catch (e) {
+  console.log(
+    "falling back to sphinx search after configuring algolia failed:",
+    e
+  );
 }

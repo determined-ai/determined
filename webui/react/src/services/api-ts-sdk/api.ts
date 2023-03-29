@@ -344,6 +344,25 @@ export interface StreamResultOfV1GetHPImportanceResponse {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1GetTrainingMetricsResponse
+ */
+export interface StreamResultOfV1GetTrainingMetricsResponse {
+    /**
+     * 
+     * @type {V1GetTrainingMetricsResponse}
+     * @memberof StreamResultOfV1GetTrainingMetricsResponse
+     */
+    result?: V1GetTrainingMetricsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1GetTrainingMetricsResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
  */
 export interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse {
@@ -376,6 +395,25 @@ export interface StreamResultOfV1GetTrialProfilerMetricsResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1GetTrialProfilerMetricsResponse
+     */
+    error?: RuntimeStreamError;
+}
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1GetValidationMetricsResponse
+ */
+export interface StreamResultOfV1GetValidationMetricsResponse {
+    /**
+     * 
+     * @type {V1GetValidationMetricsResponse}
+     * @memberof StreamResultOfV1GetValidationMetricsResponse
+     */
+    result?: V1GetValidationMetricsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1GetValidationMetricsResponse
      */
     error?: RuntimeStreamError;
 }
@@ -788,6 +826,12 @@ export interface V1ActivateExperimentsRequest {
      * @memberof V1ActivateExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to ActivateExperimentsRequest.
@@ -1134,6 +1178,12 @@ export interface V1ArchiveExperimentsRequest {
      * @memberof V1ArchiveExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1ArchiveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to ArchiveExperimentsRequest.
@@ -1348,6 +1398,55 @@ export interface V1AwsCustomTag {
     value: string;
 }
 /**
+ * Filters to apply actions to multiple experiments.
+ * @export
+ * @interface V1BulkExperimentFilters
+ */
+export interface V1BulkExperimentFilters {
+    /**
+     * Limit experiments to those that match the description.
+     * @type {string}
+     * @memberof V1BulkExperimentFilters
+     */
+    description?: string;
+    /**
+     * Limit experiments to those that match the name.
+     * @type {string}
+     * @memberof V1BulkExperimentFilters
+     */
+    name?: string;
+    /**
+     * Limit experiments to those that match the provided labels.
+     * @type {Array<string>}
+     * @memberof V1BulkExperimentFilters
+     */
+    labels?: Array<string>;
+    /**
+     * Limit experiments to those that are archived.
+     * @type {boolean}
+     * @memberof V1BulkExperimentFilters
+     */
+    archived?: boolean;
+    /**
+     * Limit experiments to those that match the provided state.
+     * @type {Array<Experimentv1State>}
+     * @memberof V1BulkExperimentFilters
+     */
+    states?: Array<Experimentv1State>;
+    /**
+     * Limit experiments to those that are owned by users with the specified userIds.
+     * @type {Array<number>}
+     * @memberof V1BulkExperimentFilters
+     */
+    userIds?: Array<number>;
+    /**
+     * Limit experiments to those within a specified project, or 0 for all projects.
+     * @type {number}
+     * @memberof V1BulkExperimentFilters
+     */
+    projectId?: number;
+}
+/**
  * Response to CancelExperimentRequest.
  * @export
  * @interface V1CancelExperimentResponse
@@ -1366,6 +1465,12 @@ export interface V1CancelExperimentsRequest {
      * @memberof V1CancelExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1CancelExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to CancelExperimentsRequest.
@@ -3801,6 +3906,19 @@ export interface V1GetTensorboardsResponse {
     pagination?: V1Pagination;
 }
 /**
+ * Response to GetTrainingMetricsRequest.
+ * @export
+ * @interface V1GetTrainingMetricsResponse
+ */
+export interface V1GetTrainingMetricsResponse {
+    /**
+     * Metric response.
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetTrainingMetricsResponse
+     */
+    metrics: Array<V1MetricsReport>;
+}
+/**
  * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
  * @export
  * @enum {string}
@@ -3975,6 +4093,19 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     pagination?: V1Pagination;
+}
+/**
+ * Response to GetTrainingMetricsRequest.
+ * @export
+ * @interface V1GetValidationMetricsResponse
+ */
+export interface V1GetValidationMetricsResponse {
+    /**
+     * Metric response.
+     * @type {Array<V1MetricsReport>}
+     * @memberof V1GetValidationMetricsResponse
+     */
+    metrics: Array<V1MetricsReport>;
 }
 /**
  * Response to GetWebhooksRequest.
@@ -4396,6 +4527,12 @@ export interface V1KillExperimentsRequest {
      * @memberof V1KillExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1KillExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to KillExperimentsRequest.
@@ -4952,6 +5089,55 @@ export interface V1Metrics {
     batchMetrics?: Array<any>;
 }
 /**
+ * Metrics report.
+ * @export
+ * @interface V1MetricsReport
+ */
+export interface V1MetricsReport {
+    /**
+     * ID of the trial.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    trialId: number;
+    /**
+     * End time of when metric was reported.
+     * @type {Date}
+     * @memberof V1MetricsReport
+     */
+    endTime: Date;
+    /**
+     * Struct of the reported metrics.
+     * @type {any}
+     * @memberof V1MetricsReport
+     */
+    metrics: any;
+    /**
+     * Steps completed in the report.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    totalBatches: number;
+    /**
+     * If metric is archived.
+     * @type {boolean}
+     * @memberof V1MetricsReport
+     */
+    archived: boolean;
+    /**
+     * ID of metric in table.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    id: number;
+    /**
+     * Run ID of trial when metric was reported.
+     * @type {number}
+     * @memberof V1MetricsReport
+     */
+    trialRunId: number;
+}
+/**
  * MetricsWorkload is a workload generating metrics.
  * @export
  * @interface V1MetricsWorkload
@@ -5207,6 +5393,12 @@ export interface V1MoveExperimentsRequest {
      * @memberof V1MoveExperimentsRequest
      */
     destinationProjectId: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1MoveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to MoveExperimentsRequest.
@@ -5844,6 +6036,12 @@ export interface V1PauseExperimentsRequest {
      * @memberof V1PauseExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1PauseExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to PauseExperimentsRequest.
@@ -5884,7 +6082,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -5915,6 +6113,7 @@ export const V1PermissionType = {
     VIEWMODELREGISTRY: 'PERMISSION_TYPE_VIEW_MODEL_REGISTRY',
     EDITMODELREGISTRY: 'PERMISSION_TYPE_EDIT_MODEL_REGISTRY',
     CREATEMODELREGISTRY: 'PERMISSION_TYPE_CREATE_MODEL_REGISTRY',
+    DELETEMODELREGISTRY: 'PERMISSION_TYPE_DELETE_MODEL_REGISTRY',
     UPDATEAGENTS: 'PERMISSION_TYPE_UPDATE_AGENTS',
     UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES',
     EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
@@ -9146,6 +9345,12 @@ export interface V1UnarchiveExperimentsRequest {
      * @memberof V1UnarchiveExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1UnarchiveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to UnarchiveExperimentsRequest.
@@ -25268,6 +25473,42 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/metrics/training_metrics`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25363,6 +25604,42 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             
             if (metricType !== undefined) {
                 localVarQueryParameter['metricType'] = metricType
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/metrics/validation_metrics`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
             }
             
             localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
@@ -25653,6 +25930,25 @@ export const TrialsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrainingMetricsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrainingMetrics(trialIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25686,6 +25982,25 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetValidationMetricsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getValidationMetrics(trialIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25817,6 +26132,16 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Stream one or more trial's training metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrainingMetrics(trialIds?: Array<number>, options?: any) {
+            return TrialsApiFp(configuration).getTrainingMetrics(trialIds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial's id.
          * @param {*} [options] Override http request option.
@@ -25841,6 +26166,16 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any) {
             return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Stream one or more trial's validation metrics.
+         * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getValidationMetrics(trialIds?: Array<number>, options?: any) {
+            return TrialsApiFp(configuration).getValidationMetrics(trialIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -25930,6 +26265,18 @@ export class TrialsApi extends BaseAPI {
     
     /**
      * 
+     * @summary Stream one or more trial's training metrics.
+     * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getTrainingMetrics(trialIds?: Array<number>, options?: any) {
+        return TrialsApiFp(this.configuration).getTrainingMetrics(trialIds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial's id.
      * @param {*} [options] Override http request option.
@@ -25957,6 +26304,18 @@ export class TrialsApi extends BaseAPI {
      */
     public getTrialWorkloads(trialId: number, orderBy?: V1OrderBy, offset?: number, limit?: number, sortKey?: string, filter?: GetTrialWorkloadsRequestFilterOption, includeBatchMetrics?: boolean, metricType?: V1MetricType, options?: any) {
         return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Stream one or more trial's validation metrics.
+     * @param {Array<number>} [trialIds] Trial IDs to get metrics for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getValidationMetrics(trialIds?: Array<number>, options?: any) {
+        return TrialsApiFp(this.configuration).getValidationMetrics(trialIds, options)(this.fetch, this.basePath)
     }
     
     /**

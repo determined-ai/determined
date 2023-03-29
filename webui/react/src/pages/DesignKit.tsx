@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -57,6 +58,7 @@ import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
+  Accordion: 'Accordion',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -96,10 +98,10 @@ interface Props {
 
 const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.Element => {
   return (
-    <section>
+    <article>
       <h3 id={id}>{title}</h3>
       {children}
-    </section>
+    </article>
   );
 };
 
@@ -192,9 +194,6 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="link">
             Disabled
           </Button>
-          <Button ghost type="link">
-            Ghost
-          </Button>
           <Button loading type="link">
             Loading
           </Button>
@@ -208,9 +207,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button disabled type="text">
             Disabled
-          </Button>
-          <Button ghost type="text">
-            Ghost
           </Button>
           <Button loading type="text">
             Loading
@@ -342,6 +338,16 @@ const SelectSection: React.FC = () => {
           placeholder="Select"
         />
         <strong>Variations</strong>
+        <strong>Loading Select</strong>
+        <Select
+          loading
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
         <strong>Select with default value</strong>
         <Select
           defaultValue={2}
@@ -2011,7 +2017,157 @@ const ModalSection: React.FC = () => {
   );
 };
 
+const LongLoadingComponent = () => {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setTimeout(() => {
+      if (active) setLoaded(true);
+    }, 5000);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return <div>This component is {loaded ? 'done loading!!!!!! wowza!!' : 'not loaded :('}</div>;
+};
+
+const AccordionSection: React.FC = () => {
+  const [controlStateSingle, setControlStateSingle] = useState(false);
+  const [controlStateGroup, setControlStateGroup] = useState(1);
+  return (
+    <ComponentSection id="Accordion" title="Accordion">
+      <AntDCard>
+        <p>
+          An <code>{'<Accordion>'}</code> hides content behind a header. Typically found in forms,
+          they hide complex content until the user interacts with the header.
+        </p>
+      </AntDCard>
+      <AntDCard title="Singular usage">
+        <p>
+          An <code>{'<Accordion>'}</code> requires a title and content to show:
+        </p>
+        <Accordion title="Title">Children</Accordion>
+        <p>
+          By default, <code>{'<Accordion>'}</code> components control their open state themselves,
+          but can be controlled externally:
+        </p>
+        <Checkbox
+          checked={controlStateSingle}
+          onChange={(e) => setControlStateSingle(e.target.checked)}>
+          Check me to open the accordion below!
+        </Checkbox>
+        <Accordion open={controlStateSingle} title="Controlled by the above checkbox">
+          Hello!
+        </Accordion>
+        <p>You can also render an uncontrolled accordion as open by default:</p>
+        <Accordion defaultOpen title="Open by default">
+          You should see me on page load.
+        </Accordion>
+        <p>
+          By default, the content of an <code>{'<Accordion>'}</code> isn&apos;t mounted until
+          opened, after which, the content stays mounted:
+        </p>
+        <Accordion title="Child will mount when opened and stay mounted after close">
+          <LongLoadingComponent />
+        </Accordion>
+        <p>
+          This can be changed to either mount the content along with the rest of the{' '}
+          <code>{'<Accordion>'}</code> or to mount the content each time the component is opened:
+        </p>
+        <Accordion mountChildren="immediately" title="Child is already mounted">
+          <LongLoadingComponent />
+        </Accordion>
+        <Accordion
+          mountChildren="on-open"
+          title="Child will mount when opened and unmount on close">
+          <LongLoadingComponent />
+        </Accordion>
+      </AntDCard>
+      <AntDCard title="Group usage">
+        <p>
+          <code>{'<Accordion>'}</code> components can be grouped together:
+        </p>
+        <Accordion.Group>
+          <Accordion title="First child">One</Accordion>
+          <Accordion title="Second child">Two</Accordion>
+          <Accordion title="Third child">Three</Accordion>
+        </Accordion.Group>
+        <p>
+          When grouped, the <code>{'<Accordion.Group>'}</code> component is responsible for keeping
+          track of which component is open. As before, by default, the component keeps its own
+          internal state, but can be controlled externally, as well as with a default initial state.
+        </p>
+        <Select value={controlStateGroup} onChange={(e) => setControlStateGroup(e as number)}>
+          <Option key={1} value={1}>
+            One
+          </Option>
+          <Option key={2} value={2}>
+            Two
+          </Option>
+          <Option key={3} value={3}>
+            Three
+          </Option>
+        </Select>
+        <Accordion.Group openKey={controlStateGroup}>
+          <Accordion key={1} title="First child">
+            One
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three
+          </Accordion>
+        </Accordion.Group>
+        <Accordion.Group defaultOpenKey={3}>
+          <Accordion key={1} title="First child">
+            One
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m open by default!
+          </Accordion>
+        </Accordion.Group>
+        <p>
+          Controlled/uncontrolled <code>{'<Accordion.Group>'}</code> components can have multiple
+          components open at the same time by default as well:
+        </p>
+        <Accordion.Group defaultOpenKey={[1, 3]}>
+          <Accordion key={1} title="First child">
+            One! I&apos;m open by default!
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m also open by default.
+          </Accordion>
+        </Accordion.Group>
+        <p>
+          You can configure an uncontrolled <code>{'<Accordion.Group>'}</code>
+          component to only be able to have one child open at a time
+        </p>
+        <Accordion.Group exclusive>
+          <Accordion key={1} title="First child">
+            One! I&apos;m open by default!
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m also open by default.
+          </Accordion>
+        </Accordion.Group>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
+  Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Cards: <CardsSection />,
@@ -2061,11 +2217,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
+        <article>
           {componentOrder.map((componentId) => (
             <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
           ))}
-        </main>
+        </article>
       </div>
     </Page>
   );
