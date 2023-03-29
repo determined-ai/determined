@@ -1673,23 +1673,10 @@ const TypographySection: React.FC = () => {
     <ComponentSection id="Typography" title="Typography">
       <AntDCard>
         <p>
-          The (<code>{'<Header>'}</code>) is a reusable header element. The props being:
-          <ul>
-            <li>
-              <code>{'classes // type (optional): string'}</code> being the CSS custom classes for
-              the element
-            </li>
-          </ul>
+          The (<code>{'<Header>'}</code>) is a reusable header element.
         </p>
         <p>
-          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element. The props
-          being:
-          <ul>
-            <li>
-              <code>{'classes // type (optional): string'}</code> being the CSS custom classes for
-              the element
-            </li>
-          </ul>
+          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element.
         </p>
       </AntDCard>
       <AntDCard title="Best practices">
