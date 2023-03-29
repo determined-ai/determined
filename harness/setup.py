@@ -50,8 +50,6 @@ setup(
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
         "tqdm",
         "appdirs",
-        # so we expose that requirement here.
-        "websocket-client<1",
         # Telemetry
         "analytics-python",
     ],
