@@ -1705,12 +1705,9 @@ const TypographySection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Typography - Headers</strong>
+        <strong>Typography - Header</strong>
         <Space>
-          <Header>Header 1</Header>
-        </Space>
-        <Space>
-          <Header subHeader>Header 2</Header>
+          <Header>Header</Header>
         </Space>
         <strong>Typography - paragraph</strong>
         <Space>
