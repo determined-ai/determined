@@ -13,8 +13,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/lttb"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -394,122 +392,11 @@ SELECT t.id FROM (
 // MetricMeasurements represents a metric measured by all possible
 // independent variables.
 type MetricMeasurements struct {
-	AverageMetrics map[string][]lttb.Point
-	Batches        []lttb.Point
-	Time           []lttb.Point
-	MaxEndTime     time.Time
-}
-
-func timeToFloat(t time.Time) float64 {
-	// If time.Time is the empty value, UnixNano will return the farthest back
-	// timestamp a float can represent, which is some large negative value.
-	if t.IsZero() {
-		return 0
-	}
-	return float64(t.UnixNano()) / 1e9
-}
-
-func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
-	metricName string,
-) MetricMeasurements {
-	var maxEndTime time.Time
-	var avgMetrics map[string]float64
-	averageMetricsMap := make(map[string][]lttb.Point)
-	var metricMeasurements MetricMeasurements
-
-	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
-	for rows.Next() {
-		var batches uint
-		var endTime time.Time
-		var metrics *string
-		err := rows.Scan(&batches, &endTime, &metrics)
-		if err != nil {
-			continue
-		}
-		if metrics != nil {
-			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
-			if err != nil {
-				continue
-			}
-		}
-
-		value := avgMetrics[metricName]
-
-		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
-		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-
-		for _, xAxisLabel := range xAxisMetricLabels {
-			// For now we will always only search for an "epoch" value but this will be updated in the future
-			// to accept or expect a dynamic list of poossible x-axis values.
-			epoch, ok := avgMetrics[xAxisLabel]
-			if ok {
-				metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
-			}
-			if endTime.After(maxEndTime) {
-				maxEndTime = endTime
-			}
-		}
-	}
-	averageMetricsMap["epoch"] = metricSeriesEpoch
-	metricMeasurements.AverageMetrics = averageMetricsMap
-	metricMeasurements.Batches = metricSeriesBatch
-	metricMeasurements.Time = metricSeriesTime
-	metricMeasurements.MaxEndTime = maxEndTime
-	return metricMeasurements
-}
-
-// TrainingMetricsSeries returns a time-series of the specified training metric in the specified
-// trial.
-func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string) (
-	metricMeasurements MetricMeasurements, err error,
-) {
-	rows, err := db.sql.Query(`
-SELECT
-  total_batches AS batches,
-  s.end_time as end_time,
-  s.metrics->>'avg_metrics' AS metrics
-FROM steps s
-WHERE s.trial_id=$2
-  AND total_batches >= $3
-  AND ($4 <= 0 OR total_batches <= $4)
-  AND s.end_time > $5
-  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
-ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
-}
-
-// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
-// trial.
-func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string) (
-	metricMeasurements MetricMeasurements, err error,
-) {
-	rows, err := db.sql.Query(`
-SELECT
-  v.total_batches AS batches,
-  v.end_time as end_time,
-  v.metrics->>'validation_metrics' AS metrics
-FROM validations v
-WHERE v.trial_id=$2
-  AND v.total_batches >= $3
-  AND ($4 <= 0 OR v.total_batches <= $4)
-  AND v.end_time > $5
-  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
-ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
+	Value   float64
+	Batches uint
+	Time    time.Time
+	Epoch   *int32 `json:"epoch,omitempty"`
+	TrialID int32
 }
 
 type hpImportanceDataWrapper struct {
