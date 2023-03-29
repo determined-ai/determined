@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
+	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -19,6 +19,12 @@ import (
 
 // ExperimentAuthZRBAC is RBAC enabled controls.
 type ExperimentAuthZRBAC struct{}
+
+// permissionMatch represents workspace IDs and whether all permissions matched.
+type permissionMatch struct {
+	ID        *int
+	Permitted bool
+}
 
 func getWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 ) (int32, error) {
@@ -124,53 +130,38 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 	}
 
 	defer func() {
-		audit.LogFromErr(fields, err)
+		audit.LogFromErr(fields, nil)
 	}()
 
-	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
+	var workspacePermissions []permissionMatch
+	err = db.Bun().NewSelect().
+		ColumnExpr("scope_workspace_id AS id").
+		ColumnExpr("ARRAY_AGG(permission_assignments.permission_id) @> ? AS permitted",
+			pgdialect.Array(permissions)).
+		ModelTableExpr("groups").
+		Model(&workspacePermissions).
+		Join("JOIN role_assignments ON group_id = groups.id").
+		Join("JOIN role_assignment_scopes ON role_assignment_scopes.id = role_assignments.scope_id").
+		Join("JOIN permission_assignments ON permission_assignments.role_id = role_assignments.role_id").
+		Where("groups.user_id = ?", curUser.ID).
+		Group("scope_workspace_id").
+		Scan(ctx)
 	if err != nil {
-		return query, err
+		return nil, err
 	}
 
-	var workspaces []int32
-	neededPermissionsGlobal := []int{}
-	paramPermissions := []int{}
-	for _, p := range permissions {
-		paramPermissions = append(paramPermissions, int(p))
-	}
-	copy(paramPermissions, neededPermissionsGlobal)
-
-	for role, roleAssignments := range assignmentsMap {
-		for _, assignment := range roleAssignments {
-			neededPermissionsLocal := []int{}
-			copy(paramPermissions, neededPermissionsLocal)
-
-			for _, heldPermission := range role.Permissions {
-				if idx := slices.Index(neededPermissionsLocal, heldPermission.ID); idx > -1 {
-					if assignment.Scope.WorkspaceID.Valid {
-						neededPermissionsLocal = append(neededPermissionsLocal[:idx],
-							neededPermissionsLocal[idx+1:]...)
-					} else if globalIdx := slices.Index(neededPermissionsGlobal,
-						heldPermission.ID); globalIdx > -1 {
-						neededPermissionsGlobal = append(neededPermissionsGlobal[:globalIdx],
-							neededPermissionsGlobal[globalIdx+1:]...)
-					}
-				}
-			}
-
-			if len(neededPermissionsGlobal) == 0 {
+	localPermissionWorkspaces := []int{-1}
+	for _, perm := range workspacePermissions {
+		if perm.Permitted {
+			if perm.ID == nil {
+				// global permission
 				return query, nil
-			} else if len(neededPermissionsLocal) == 0 {
-				workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
 			}
+			localPermissionWorkspaces = append(localPermissionWorkspaces, *perm.ID)
 		}
 	}
 
-	if len(workspaces) == 0 {
-		return query.Where("workspace_id = -1"), nil
-	}
-
-	query = query.Where("workspace_id IN (?)", bun.In(workspaces))
+	query = query.Where("workspace_id IN (?)", bun.In(localPermissionWorkspaces))
 
 	return query, nil
 }
