@@ -12,10 +12,10 @@ type Address struct {
 	// HostIP is the IP address from outside the container. This can be
 	// different than the ContainerIP because of network forwarding on the host
 	// machine.
-	HostIP *string `json:"host_ip,omitentry"`
+	HostIP *string `json:"host_ip,omitempty"`
 	// HostPort is the IP port from outside the container. This can be different
 	// than the ContainerPort because of network forwarding on the host machine.
-	HostPort *int `json:"host_port,omitentry"`
+	HostPort *int `json:"host_port,omitempty"`
 }
 
 func (a Address) String() string {
@@ -29,15 +29,13 @@ func (a Address) String() string {
 func (a Address) TargetIP() string {
 	if a.HostIP != nil {
 		return *a.HostIP
-	} else {
-		return a.ContainerIP
 	}
+	return a.ContainerIP
 }
 
 func (a Address) TargetPort() int {
 	if a.HostPort != nil {
 		return *a.HostPort
-	} else {
-		return a.ContainerPort
 	}
+	return a.ContainerPort
 }
