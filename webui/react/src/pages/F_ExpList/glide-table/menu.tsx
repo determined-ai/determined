@@ -2,8 +2,6 @@ import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
-import { Observable, useObservable } from 'utils/observable';
-
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
   useEffect(() => {
@@ -27,7 +25,7 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
 export interface TableActionMenuProps extends MenuProps {
   x: number;
   y: number;
-  open: Observable<boolean>;
+  open: boolean;
   handleClose: () => void;
 }
 
@@ -41,14 +39,12 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
 
-  const menuIsOpen = useObservable(open);
-
   return (
     <div
       ref={containerRef}
       style={{
         border: 'solid 1px gold',
-        display: !menuIsOpen ? 'none' : undefined,
+        display: !open ? 'none' : undefined,
         left: x,
         position: 'fixed',
         top: y,
