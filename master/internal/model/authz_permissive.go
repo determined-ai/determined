@@ -60,6 +60,13 @@ func (a *ModelAuthZPermissive) FilterReadableModelsQuery(
 	return (&ModelAuthZBasic{}).FilterReadableModelsQuery(ctx, curUser, query)
 }
 
+// CanDeleteModel implements ModelAuthZ.
+func (a *ModelAuthZPermissive) CanDeleteModel(ctx context.Context, curUser model.User,
+	m *modelv1.Model, workspaceID int32,
+) error {
+	panic("unimplemented")
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &ModelAuthZPermissive{})
 }

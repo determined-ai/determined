@@ -221,6 +221,13 @@ func (a *ModelAuthZRBAC) FilterReadableModelsQuery(
 	return query, nil
 }
 
+// CanDeleteModel implements ModelAuthZ.
+func (a *ModelAuthZRBAC) CanDeleteModel(ctx context.Context, curUser model.User,
+	m *modelv1.Model, workspaceID int32,
+) error {
+	panic("unimplemented")
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &ModelAuthZRBAC{})
 }
