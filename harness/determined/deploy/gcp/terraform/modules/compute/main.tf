@@ -72,7 +72,7 @@ resource "google_compute_instance" "master_instance" {
       gcp:
         boot_disk_size: ${var.disk_size}
         boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
-        boot_disk_type: ${var.disk_type}
+        boot_disk_type: projects/determined-ai/zones/${var.zone}/diskTypes/${var.disk_type}
         agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
         master_url: ${var.scheme}://internal-ip:${var.port}
         agent_docker_network: ${var.agent_docker_network}
@@ -140,6 +140,7 @@ resource "google_compute_instance" "master_instance" {
         --name determined-master-configurator \
         --rm \
         -v /usr/local/determined/etc/:/etc/determined/ \
+        -v /home/danielrhunter/determined-master:/usr/bin/determined-master \
         --entrypoint /bin/bash \
         ${var.image_repo_prefix}/determined-master:${var.det_version} \
         -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
@@ -152,6 +153,7 @@ resource "google_compute_instance" "master_instance" {
         --log-driver=gcplogs \
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/:/etc/determined/ \
+        -v /home/danielrhunter/determined-master:/usr/bin/determined-master \
         ${var.image_repo_prefix}/determined-master:${var.det_version}
 
   EOT
