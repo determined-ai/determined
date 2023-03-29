@@ -38,12 +38,14 @@ type DispatcherResourceManagerConfig struct {
 	ProxyNetworkInterface      string       `json:"proxy_network_interface"`
 	// Configuration parameters that are proxies for launcher.conf
 	// and will be applied there by the init script.
-	UserName                   string  `json:"user_name"`
-	GroupName                  string  `json:"group_name"`
-	SingularityImageRoot       string  `json:"singularity_image_root"`
-	JobStorageRoot             string  `json:"job_storage_root"`
-	Path                       string  `json:"path"`
-	LdLibraryPath              string  `json:"ld_library_path"`
+	UserName             string `json:"user_name"`
+	GroupName            string `json:"group_name"`
+	SingularityImageRoot string `json:"singularity_image_root"`
+	JobStorageRoot       string `json:"job_storage_root"`
+	Path                 string `json:"path"`
+	LdLibraryPath        string `json:"ld_library_path"`
+	LauncherJvmArgs      string `json:"launcher_jvm_args"`
+	// Configuration parameters handled by DispatchRM within master
 	TresSupported              bool    `json:"tres_supported"`
 	GresSupported              bool    `json:"gres_supported"`
 	DefaultAuxResourcePool     *string `json:"default_aux_resource_pool"`
