@@ -472,7 +472,7 @@ const ModelDetails: React.FC = () => {
           onSave={saveMetadata}
         />
       </div>
-      {modelVersion && <modelDownloadModal.Component version={modelVersion} />}
+      {modelVersion && <modelDownloadModal.Component modelVersion={modelVersion} />}
       {modelVersion && <modelVersionDeleteModal.Component modelVersion={modelVersion} />}
     </Page>
   );

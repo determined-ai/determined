@@ -6,11 +6,11 @@ import { ModelVersion } from 'types';
 import css from './ModelDownloadModal.module.scss';
 
 interface Props {
-  version: ModelVersion;
+  modelVersion: ModelVersion;
 }
 
-const ModelDownloadModal = ({ version }: Props): JSX.Element => {
-  const downloadCommand = `det checkpoint download ${version?.checkpoint.uuid}`;
+const ModelDownloadModal = ({ modelVersion }: Props): JSX.Element => {
+  const downloadCommand = `det checkpoint download ${modelVersion?.checkpoint.uuid}`;
   const handleCopy = async () => await copyToClipboard(downloadCommand);
 
   return (

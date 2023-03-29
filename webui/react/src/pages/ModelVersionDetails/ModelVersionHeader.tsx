@@ -264,7 +264,7 @@ with det.import_from_path(path + "/code"):
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      <modelDownloadModal.Component version={modelVersion} />
+      <modelDownloadModal.Component modelVersion={modelVersion} />
       <modelVersionDeleteModal.Component modelVersion={modelVersion} />
       <modelVersionEditModal.Component
         fetchModelVersion={fetchModelVersion}
