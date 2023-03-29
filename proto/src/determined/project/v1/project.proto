@@ -18,7 +18,7 @@ enum GeneralColumn {
   GENERAL_COLUMN_ID = 1;
   // Column name.
   GENERAL_COLUMN_NAME = 2;
-  // Column discription.
+  // Column description.
   GENERAL_COLUMN_DESCRIPTION = 3;
   // Column tags.
   GENERAL_COLUMN_TAGS = 4;

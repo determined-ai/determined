@@ -33,7 +33,7 @@ const (
 	GeneralColumn_GENERAL_COLUMN_ID GeneralColumn = 1
 	// Column name.
 	GeneralColumn_GENERAL_COLUMN_NAME GeneralColumn = 2
-	// Column discription.
+	// Column description.
 	GeneralColumn_GENERAL_COLUMN_DESCRIPTION GeneralColumn = 3
 	// Column tags.
 	GeneralColumn_GENERAL_COLUMN_TAGS GeneralColumn = 4
