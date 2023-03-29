@@ -60,7 +60,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 				ckpt := uuid.New()
 				checkpointIDs = append(checkpointIDs, ckpt)
 				// Ensure it works with both checkpoint versions.
-				if i == 0 && j == 0 && k == 0 {
+				if i == 0 {
 					checkpointBun := struct {
 						bun.BaseModel `bun:"table:checkpoints"`
 						TrialID       int
@@ -74,7 +74,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 					}{
 						TrialID:      tr.ID,
 						TrialRunID:   1,
-						TotalBatches: 1,
+						TotalBatches: k,
 						State:        model.ActiveState,
 						UUID:         ckpt.String(),
 						EndTime:      time.Now().UTC().Truncate(time.Millisecond),
@@ -84,6 +84,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 
 					_, err := Bun().NewInsert().Model(&checkpointBun).Exec(ctx)
 					require.NoError(t, err)
+					require.NoError(t, UpdateCheckpointSizeTx(ctx, nil, []uuid.UUID{ckpt}))
 				} else {
 					checkpoint := MockModelCheckpoint(ckpt, tr, allocation)
 					checkpoint.Resources = resources[resourcesIndex]
