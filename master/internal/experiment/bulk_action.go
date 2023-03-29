@@ -496,11 +496,11 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 		if err != nil {
 			return nil, err
 		}
-		err = db.RemoveProjectHyperparameters(tx, ctx, validIDs)
+		err = db.RemoveProjectHyperparameters(ctx, tx, validIDs)
 		if err != nil {
 			return nil, err
 		}
-		err = db.AddProjectHyperparameters(tx, ctx, destinationProjectID, validIDs)
+		err = db.AddProjectHyperparameters(ctx, tx, destinationProjectID, validIDs)
 		if err != nil {
 			return nil, err
 		}

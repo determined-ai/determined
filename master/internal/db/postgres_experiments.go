@@ -815,7 +815,22 @@ func (db *PgDB) AddExperiment(
 	VALUES (?, 'null'::jsonb, ?, ?, ?, ?, ?,
 					0, ?, ?, ?, ?, ?,
 					?, ?, ?, ?)
-	RETURNING id`, experiment.State, experiment.ModelDefinitionBytes, experiment.StartTime, experiment.EndTime, experiment.Archived, experiment.ParentID, experiment.GitRemote, experiment.GitCommit, experiment.GitCommitter, experiment.GitCommitDate, experiment.OwnerID, experiment.OriginalConfig, experiment.Notes, experiment.JobID, experiment.ProjectID).Scan(ctx, &experiment.ID)
+	RETURNING id`,
+		experiment.State,
+		experiment.ModelDefinitionBytes,
+		experiment.StartTime,
+		experiment.EndTime,
+		experiment.Archived,
+		experiment.ParentID,
+		experiment.GitRemote,
+		experiment.GitCommit,
+		experiment.GitCommitter,
+		experiment.GitCommitDate,
+		experiment.OwnerID,
+		experiment.OriginalConfig,
+		experiment.Notes,
+		experiment.JobID,
+		experiment.ProjectID).Scan(ctx, &experiment.ID)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", experiment)
 	}
@@ -829,13 +844,16 @@ func (db *PgDB) AddExperiment(
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment config")
 	}
-	if err = AddProjectHyperparameters(tx, ctx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
+	if err = AddProjectHyperparameters(
+		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")
 	}
 	return tx.Commit()
 }
 
-func RemoveProjectHyperparameters(idb bun.IDB, ctx context.Context, experimentIDs []int32) error {
+// RemoveProjectHyperparameters take a list of experiment ids,
+// recalculate their respective project hyper parameters.
+func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentIDs []int32) error {
 	if idb == nil {
 		idb = Bun()
 	}
@@ -855,9 +873,12 @@ func RemoveProjectHyperparameters(idb bun.IDB, ctx context.Context, experimentID
 	FROM flat
 	WHERE value -> 'type' IS NOT NULL
 	GROUP BY project_id), reset_hp AS (
-        UPDATE projects SET hyperparameters = '[]'::jsonb WHERE id IN (SELECT project_id FROM experiments WHERE id IN (?))
+        UPDATE projects SET hyperparameters = '[]'::jsonb 
+		WHERE id IN (SELECT project_id FROM experiments WHERE id IN (?))
     )
-	UPDATE projects SET hyperparameters = flatten.data FROM flatten WHERE flatten.project_id = projects.id`, bun.In(experimentIDs), bun.In(experimentIDs), bun.In(experimentIDs)).Scan(ctx, &projectIDs)
+	UPDATE projects SET hyperparameters = flatten.data FROM flatten 
+	WHERE flatten.project_id = projects.id`,
+		bun.In(experimentIDs), bun.In(experimentIDs), bun.In(experimentIDs)).Scan(ctx, &projectIDs)
 	if err != nil {
 		return err
 	}
@@ -867,7 +888,11 @@ func RemoveProjectHyperparameters(idb bun.IDB, ctx context.Context, experimentID
 	return nil
 }
 
-func AddProjectHyperparameters(idb bun.IDB, ctx context.Context, projectID int32, experimentIDs []int32) error {
+// AddProjectHyperparameters takes a list of project ids,
+// combine their hyper parameters with existing one.
+func AddProjectHyperparameters(
+	ctx context.Context, idb bun.IDB, projectID int32, experimentIDs []int32,
+) error {
 	if idb == nil {
 		idb = Bun()
 	}

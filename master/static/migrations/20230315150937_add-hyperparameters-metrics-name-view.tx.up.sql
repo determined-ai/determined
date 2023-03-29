@@ -31,7 +31,7 @@ INSERT INTO public.exp_metrics_name (project_id, experiment_id, vname) (
         SELECT array_to_json(array_agg(DISTINCT names)) AS name, e.id AS experiment_id
         FROM trials t, experiments e, raw_validations v,
             LATERAL jsonb_object_keys(v.metrics->'validation_metrics') AS names
-        WHERE t.id=v.trial_id AND e.id = t.experiment_id 
+        WHERE t.best_validation_id=v.id AND e.id = t.experiment_id 
         GROUP BY e.id)
     SELECT   
         e.project_id AS project_id, 
