@@ -325,7 +325,8 @@ func (r ResourceManager) TaskContainerDefaults(
 	return fallbackConfig, nil
 }
 
-func slotAddr(agentID, slotID string) actor.Address {
+// SlotAddr calculates and returns a slot address.
+func SlotAddr(agentID, slotID string) actor.Address {
 	return sproto.AgentsAddr.Child(agentID).Child("slots").Child(slotID)
 }
 
@@ -334,7 +335,7 @@ func (r ResourceManager) EnableSlot(
 	m actor.Messenger,
 	req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, AskAt(r.Ref().System(), SlotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 // DisableSlot implements 'det slot disable...' functionality.
@@ -342,5 +343,5 @@ func (r ResourceManager) DisableSlot(
 	m actor.Messenger,
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
-	return resp, AskAt(r.Ref().System(), slotAddr(req.AgentId, req.SlotId), req, &resp)
+	return resp, AskAt(r.Ref().System(), SlotAddr(req.AgentId, req.SlotId), req, &resp)
 }
