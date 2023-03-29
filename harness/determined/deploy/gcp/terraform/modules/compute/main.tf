@@ -140,7 +140,6 @@ resource "google_compute_instance" "master_instance" {
         --name determined-master-configurator \
         --rm \
         -v /usr/local/determined/etc/:/etc/determined/ \
-        -v /home/danielrhunter/determined-master:/usr/bin/determined-master \
         --entrypoint /bin/bash \
         ${var.image_repo_prefix}/determined-master:${var.det_version} \
         -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
@@ -153,7 +152,6 @@ resource "google_compute_instance" "master_instance" {
         --log-driver=gcplogs \
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/:/etc/determined/ \
-        -v /home/danielrhunter/determined-master:/usr/bin/determined-master \
         ${var.image_repo_prefix}/determined-master:${var.det_version}
 
   EOT
