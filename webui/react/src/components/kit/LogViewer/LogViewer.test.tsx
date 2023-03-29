@@ -75,6 +75,7 @@ const generateLogs = (
 const setup = (props: src.Props) => {
   return render(
     <UIProvider>
+      <span>{Math.random()}</span>
       <src.default {...props} />
     </UIProvider>,
   );
@@ -277,9 +278,10 @@ describe('LogViewer', () => {
       await waitFor(
         () => {
           const lastLog = logsReference[logsReference.length - 1];
+          expect(lastLog.message).not.toBeNull();
           expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
         },
-        { timeout: 6000 },
+        { timeout: 4000 },
       );
     });
 
