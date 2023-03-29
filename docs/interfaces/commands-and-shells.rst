@@ -5,19 +5,20 @@
 #####################
 
 Determined Commands and Shells provide support for running a Determined cluster without writing a
-model. This article describes how to manage GPU-powered batch commands and interactive shells.
+model. This page describes how to manage GPU-powered batch commands and interactive shells.
 
-To learn about the Determined Command-Line Interface (CLI) including installation instructions,
-visit the :ref:`cli-ug`.
+Commands and Shells are started through the Determined Command Line Interface (CLI). To learn more,
+including installation instructions, visit the :ref:`Determined CLI User Guide <cli-ug>` or
+:ref:`Determined CLI Reference <cli-reference>`.
 
 Commands execute a user-specified program on the cluster. Commands are useful for running existing
 code in batch mode. Shells start SSH servers that let you use cluster resources interactively.
 Shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
 
-*********************
- Determined Commands
-*********************
+**********
+ Commands
+**********
 
 Determined commands start with ``det command``, abbreviated as ``det cmd``. The main subcommand is
 ``det cmd run``, which runs a command in the cluster and streams its output. For example, the
@@ -49,9 +50,9 @@ UUID, run
 
    <br />
 
-****************
- Shell Commands
-****************
+********
+ Shells
+********
 
 Shell-related CLI commands start with ``det shell``. To start a persistent SSH server container in
 the Determined cluster and connect an interactive session to it, use ``det shell start``:

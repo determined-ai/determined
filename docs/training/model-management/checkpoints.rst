@@ -227,7 +227,8 @@ deleted.
  Downloading Checkpoints using the CLI
 ***************************************
 
-:ref:`The Determined CLI <cli-ug>` can be used to view all the checkpoints associated with an experiment:
+:ref:`The Determined CLI <cli-ug>` can be used to view all the checkpoints associated with an
+experiment:
 
 .. code:: bash
 

@@ -225,7 +225,7 @@ redirects = {
     "reference/api/config-template": "../../architecture/introduction.html",
     "reference/api/experiment-config": "../../reference/reference-training/experiment-config-reference.html",
     "reference/attributions": "../attributions.html",
-    "reference/cli": "../interfaces/cli-ug.html",
+    "reference/cli": "../reference/cli-reference.html",
     "reference/cluster/cluster-config": "../../reference/reference-deploy/index.html",
     "reference/cluster-config": "../reference/reference-deploy/index.html",
     "reference/cluster/helm-config": "../reference-deploy/config/helm-config-reference.html",

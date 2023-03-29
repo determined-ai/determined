@@ -29,8 +29,8 @@ directories into the container and save files in the persistent directories in t
 If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be shut
 down automatically so you need to manually terminate the kernels.
 
-There are two ways to access notebooks in Determined: the command-line interface (CLI) and the
-WebUI. To install the CLI, see :ref:`install-cli`.
+There are two ways to access notebooks in Determined: the :ref:`cli-ug` and the :ref:`web-ui-if`. To
+install the CLI, see :ref:`install-cli`.
 
 **************
  Command Line

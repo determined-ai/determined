@@ -18,9 +18,9 @@ After training, you can archive experiments to clean up your list of experiments
 designed to make it easier to organize experiments by omitting information about experiment runs
 that are no longer relevant (e.g., training jobs that failed with an error or jobs submitted as part
 of the model development process). When an experiment is archived, it is hidden from the default
-view in both the WebUI and :ref:`the Determined CLI <cli-ug>`, but all of the metadata associated with the experiment
-(including checkpoints) is preserved. An experiment can subsequently be unarchived if desired,
-without losing any of the experiment's metadata.
+view in both the WebUI and :ref:`the Determined CLI <cli-ug>`, but all of the metadata associated
+with the experiment (including checkpoints) is preserved. An experiment can subsequently be
+unarchived if desired, without losing any of the experiment's metadata.
 
 ********************
  Delete Checkpoints

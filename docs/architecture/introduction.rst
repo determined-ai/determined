@@ -25,6 +25,31 @@ except a TensorBoard, is launched.
 Options set via ``--config`` take precedence over values specified in the configuration file.
 Configuration settings are compatible with any Determined task unless otherwise specified.
 
+Determined CLI
+==============
+
+One of the key components of the Determined platform is the :ref:`cli-ug`. The CLI serves as a
+primary entry point for interacting with Determined, providing a way to efficiently manage and
+control various aspects of the system.
+
+The capabilities of the Determined CLI extend beyond commands and shells. For example, the CLI lets
+users perform the following tasks:
+
+-  Queue Management: The CLI enables users to manage their job queues, monitor the progress of
+   ongoing tasks, and even prioritize or cancel jobs as needed.
+
+-  Notebook Management: Jupyter notebooks are an essential tool for data scientists and machine
+   learning engineers. The CLI simplifies the process of creating, launching, and managing Jupyter
+   notebooks within the platform.
+
+-  TensorBoard Integration: TensorBoard is a popular visualization tool for TensorFlow projects. The
+   CLI allows users to easily launch and manage TensorBoard instances, making it simple to visualize
+   and analyze the training progress of their models.
+
+-  Experiment Management: Running experiments is a fundamental part of the machine learning process.
+   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   important experiment metrics and logs.
+
 Commands and Shells
 ===================
 
@@ -38,10 +63,6 @@ Commands and shells enable developers to use a Determined cluster and its GPUs w
 write code conforming to the trial APIs. Commands are useful for running existing code in a batch
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
-
-.. note::
-
-   For information about the Determined CLI, visit :ref:`cli-ug`.
 
 Configuration Templates
 =======================

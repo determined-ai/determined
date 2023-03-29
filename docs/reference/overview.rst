@@ -49,9 +49,15 @@
              </a>
          </div>
          <div class="tile-container">
+             <a class="tile" href="cli-reference.html">
+                 <h2 class="tile-title">CLI Reference</h2>
+                 <p class="tile-description">Reference documentation for the Determined CLI.</p>
+             </a>
+         </div>
+         <div class="tile-container">
              <a class="tile" href="../interfaces/index.html">
                  <h2 class="tile-title">Tools</h2>
-                 <p class="tile-description">Get help for using tools and interfaces including the Determined CLI.</p>
+                 <p class="tile-description">Get help for using tools and interfaces including how to install the Determined CLI.</p>
              </a>
          </div>
       </div>

@@ -56,6 +56,7 @@
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
    Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
+   CLI Reference <reference/cli-reference>
 
 .. toctree::
    :caption: Tools

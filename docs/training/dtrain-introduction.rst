@@ -593,7 +593,7 @@ To launch the experiment with the template:
 Using the CLI to Work with Templates
 ------------------------------------
 
-The :ref:`Determined command-line interface <cli-ug>` can be used to list, create, update, and
+The :ref:`Determined Command Line Interface <cli-ug>` can be used to list, create, update, and
 delete configuration templates. This functionality can be accessed through the ``det template``
 sub-command. This command can be abbreviated as ``det tpl``.
 

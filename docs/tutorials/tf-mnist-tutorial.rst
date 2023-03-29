@@ -213,8 +213,8 @@ For more information on experiment configuration, see the :ref:`experiment confi
  Run an Experiment
 *******************
 
-:ref:`The Determined CLI <cli-ug>` can be used to create a new experiment, which will immediately start running on
-the cluster. To do this, we run:
+:ref:`The Determined CLI <cli-ug>` can be used to create a new experiment, which will immediately
+start running on the cluster. To do this, we run:
 
 .. code::
 
