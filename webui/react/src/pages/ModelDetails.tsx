@@ -8,6 +8,7 @@ import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -22,7 +23,6 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
@@ -105,9 +105,7 @@ const ModelDetails: React.FC = () => {
   }, [modelId, pageError, settings]);
 
   const modelDownloadModal = useModal(ModelDownloadModal);
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModelVersionDelete } =
-    useModalModelVersionDelete();
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
 
   usePolling(fetchModel, { rerunOnNewFn: true });
 
@@ -117,13 +115,6 @@ const ModelDetails: React.FC = () => {
     ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const deleteModelVersion = useCallback(
-    (version: ModelVersion) => {
-      openModelVersionDelete(version);
-    },
-    [openModelVersionDelete],
-  );
 
   const saveModelVersionTags = useCallback(
     async (modelName: string, versionNum: number, tags: string[]) => {
@@ -196,7 +187,10 @@ const ModelDetails: React.FC = () => {
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
         version={record}
-        onDelete={() => deleteModelVersion(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
         onDownload={() => {
           setModelVersion(record);
           modelDownloadModal.open();
@@ -274,7 +268,7 @@ const ModelDetails: React.FC = () => {
   }, [
     users,
     saveModelVersionTags,
-    deleteModelVersion,
+    modelVersionDeleteModal,
     modelDownloadModal,
     canModifyModelVersion,
     saveVersionDescription,
@@ -397,7 +391,10 @@ const ModelDetails: React.FC = () => {
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
         version={record}
-        onDelete={() => deleteModelVersion(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
         onDownload={() => {
           setModelVersion(record);
           modelDownloadModal.open();
@@ -406,7 +403,7 @@ const ModelDetails: React.FC = () => {
         {children}
       </ModelVersionActionDropdown>
     ),
-    [deleteModelVersion, modelDownloadModal],
+    [modelDownloadModal, modelVersionDeleteModal],
   );
 
   if (!modelId) {
@@ -476,7 +473,7 @@ const ModelDetails: React.FC = () => {
         />
       </div>
       {modelVersion && <modelDownloadModal.Component version={modelVersion} />}
-      {modalModelVersionDeleteContextHolder}
+      {modelVersion && <modelVersionDeleteModal.Component modelVersion={modelVersion} />}
     </Page>
   );
 };

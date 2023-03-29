@@ -11,8 +11,8 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
 import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
@@ -56,9 +56,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const modelDownloadModal = useModal(ModelDownloadModal);
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
-    useModalModelVersionDelete();
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
 
   const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
     useModalModelVersionEdit({ fetchModelVersion, modelVersion });
@@ -119,10 +117,6 @@ const ModelVersionHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
-  const handleDelete = useCallback(() => {
-    openModalVersionDelete(modelVersion);
-  }, [openModalVersionDelete, modelVersion]);
-
   const actions: Action[] = useMemo(() => {
     const items: Action[] = [
       {
@@ -152,7 +146,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: true,
         disabled: false,
         key: 'deregister-version',
-        onClick: handleDelete,
+        onClick: () => modelVersionDeleteModal.open(),
         text: 'Deregister Version',
       });
     }
@@ -163,7 +157,7 @@ const ModelVersionHeader: React.FC<Props> = ({
     openModelNameEdit,
     canDeleteModelVersion,
     modelDownloadModal,
-    handleDelete,
+    modelVersionDeleteModal,
   ]);
 
   const referenceText = useMemo(() => {
@@ -273,7 +267,7 @@ with det.import_from_path(path + "/code"):
         <InfoBox rows={infoRows} separator={false} />
       </div>
       <modelDownloadModal.Component version={modelVersion} />
-      {modalModelVersionDeleteContextHolder}
+      <modelVersionDeleteModal.Component modelVersion={modelVersion} />
       {modalModelNameEditContextHolder}
       <Modal
         className={css.useNotebookModal}
