@@ -1,5 +1,5 @@
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
@@ -50,7 +50,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
     ? !canCreateModelWorkspace({ workspaceId })
     : false;
 
-  const onCreateModel = useCallback(async () => {
+  const onCreateModel = async () => {
     const values = await form.validateFields();
     const { modelDescription, modelName, workspaceId, metadata, tags } = values;
     const newMetadata: Metadata = {};
@@ -96,7 +96,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         });
       }
     }
-  }, [form]);
+  };
 
   const onCloseModal = () => {
     onClose?.();
