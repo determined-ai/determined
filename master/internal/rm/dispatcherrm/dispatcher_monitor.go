@@ -408,7 +408,7 @@ func (m *launcherMonitor) obtainJobStateFromWlmQueueDetails(
 	dispatchID string, qStats map[string]map[string]string,
 	ctx *actor.Context, job *launcherJob,
 ) bool {
-	hpcJobID := m.rm.dispatchIDToHPCJobID[dispatchID]
+	hpcJobID, _ := m.rm.getHpcJobIDFromDispatchID(dispatchID)
 	nativeState := qStats[hpcJobID]["state"]
 	ctx.Log().WithField("dispatch-id", dispatchID).
 		WithField("hpc-job-id", hpcJobID).
