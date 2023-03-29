@@ -130,19 +130,21 @@ html_title = project + " Documentation"
 copyright = "%Y, HPE"
 author = "HPE Machine Learning Development Environment"
 
+html_css_files = [
+    "https://cdn.jsdelivr.net/npm/@docsearch/css@3",
+    "styles/determined.css",
+    "styles/hpe.css",
+]
 html_favicon = "assets/images/favicon-hpe.ico"
 html_theme_options = {
-    "light_logo": "images/logo-hpe-on-light-horizontal.svg",
-    "dark_logo": "images/logo-hpe-on-dark-horizontal.svg",
-    "sidebar_hide_name": True,
-    "light_css_variables": {
-        "color-brand-primary": "#000000",
-        "color-brand-content": "#008567",
+    "logo": {
+        "image_light": "assets/images/logo-hpe-on-light-horizontal.svg",
+        "image_dark": "assets/images/logo-hpe-on-dark-horizontal.svg",
     },
-    "dark_css_variables": {
-        "color-brand-primary": "#ffffff",
-        "color-brand-content": "#01a982",
-    },
+    "repository_url": "https://github.com/determined-ai/determined",
+    "use_repository_button": True,
+    "use_download_button": False,
+    "use_fullscreen_button": False,
 }
 html_baseurl = "https://hpe-mlde.determined.ai"
 """
