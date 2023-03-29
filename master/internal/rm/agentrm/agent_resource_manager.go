@@ -513,6 +513,9 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
+	// Hide secrets.
+	pool = pool.Printable()
+
 	// Static Pool defaults
 	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC
 	preemptible := false
