@@ -643,9 +643,7 @@ func (a *apiServer) formatMetrics(
 			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
 			Value:   in.Value,
-		}
-		if in.Epoch != nil {
-			out.Epoch = in.Epoch
+			Epoch:   in.Epoch,
 		}
 		m.Data = append(m.Data, &out)
 	}

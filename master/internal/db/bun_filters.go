@@ -142,6 +142,9 @@ func ApplyTimestampFieldFilter[T string | schema.Ident](
 	return q, nil
 }
 
+// TODO: Currently validations will still allow users to specify mutually exclusive ranges
+// we may want to update logic to throw an error in such cases.
+
 // ValidateInt32FieldFilterComparison validates the min and max values in the range.
 func ValidateInt32FieldFilterComparison(
 	filter *commonv1.Int32FieldFilter,
