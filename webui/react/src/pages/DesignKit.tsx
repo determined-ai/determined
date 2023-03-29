@@ -98,10 +98,10 @@ interface Props {
 
 const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.Element => {
   return (
-    <section>
+    <article>
       <h3 id={id}>{title}</h3>
       {children}
-    </section>
+    </article>
   );
 };
 
@@ -194,9 +194,6 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="link">
             Disabled
           </Button>
-          <Button ghost type="link">
-            Ghost
-          </Button>
           <Button loading type="link">
             Loading
           </Button>
@@ -210,9 +207,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button disabled type="text">
             Disabled
-          </Button>
-          <Button ghost type="text">
-            Ghost
           </Button>
           <Button loading type="text">
             Loading
@@ -2223,11 +2217,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
+        <article>
           {componentOrder.map((componentId) => (
             <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
           ))}
-        </main>
+        </article>
       </div>
     </Page>
   );
