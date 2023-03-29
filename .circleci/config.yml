@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.21.0-dev0
+    default: 0.21.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-835d8b1
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-835d8b1
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
 
   login-docker:
     parameters:
@@ -1096,6 +1096,8 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1970,7 +1972,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
         type: string
       accel-node-taints:
         type: string
@@ -2305,6 +2307,15 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+      
+      - test-e2e:
+          name: test-e2e-port-registry
+          requires: 
+            - build-go
+          parallelism: 1 
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
 
       - test-e2e:
           name: test-e2e-cpu-elastic

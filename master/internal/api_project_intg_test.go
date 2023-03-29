@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -23,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
@@ -206,15 +208,15 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		DestinationProjectId: int32(destProjectID),
 	}
 
-	// Can't view destination project.
+	// Can't view source project.
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(false, nil).Once()
 	_, err := api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
 
-	// Can't view source project
+	// Can't view destination project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
@@ -222,16 +224,36 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(false, nil).Once()
 	_, err = api.MoveExperiment(ctx, req)
-	require.Equal(t, projectNotFoundErr(srcProjectID).Error(), err.Error())
+	require.Equal(t, projectNotFoundErr(destProjectID).Error(), err.Error())
 
-	// Can't move experiment.
-	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectExperimentsDeny")
+	// Can't create experiment in destination project.
+	expectedErr := status.Error(codes.PermissionDenied, "canCreateExperimentDeny")
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Once()
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 		Return(true, nil).Twice()
-	projectAuthZ.On("CanMoveProjectExperiments", mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything, mock.Anything).Return(fmt.Errorf("canMoveProjectExperimentsDeny")).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(fmt.Errorf("canCreateExperimentDeny")).Once()
+	_, err = api.MoveExperiment(ctx, req)
+	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// Can't view and delete experiments from source projects.
+	resQuery := &bun.SelectQuery{}
+	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
+	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Twice()
+	authZExp.On("CanCreateExperiment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Once()
+	authZExp.On("FilterExperimentsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}).
+		Return(resQuery, expectedErr).Once().Run(func(args mock.Arguments) {
+		q := args.Get(3).(*bun.SelectQuery)
+		*resQuery = *q
+	})
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 }

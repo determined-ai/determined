@@ -1,8 +1,6 @@
 import contextlib
 import logging
-import os
 import random
-import re
 import sys
 from typing import Any, Dict, Iterator, Optional
 
@@ -13,26 +11,6 @@ import torch.distributed as dist
 import determined as det
 from determined import core, gpu, horovod, profiler, pytorch
 from determined.horovod import hvd
-
-
-def _guess_script_importable_name(script: str) -> str:
-    """
-    To support load_trial_from_checkpoint_path(), we need an importable name.  If somebody defines
-    their Trial directly inside their entrypoint script, we need to guess how it would be imported.
-
-    Returns "" if we can't guess with reasonable confidence.
-    """
-    relpath, ext = os.path.splitext(os.path.relpath(script, "."))
-    # File must be within the working directory and end in ".py".
-    if relpath.startswith("..") or not ext == ".py":
-        return ""
-    relpath
-    # All components of the path must be valid python identifiers.
-    pattern = re.compile("^[a-zA-Z_][a-zA-Z_0-9]*$")
-    sections = relpath.split("/")
-    if not all(pattern.match(s) for s in sections):
-        return ""
-    return ".".join(sections)
 
 
 class Trainer:
@@ -52,26 +30,6 @@ class Trainer:
         self._det_profiler = None  # type: Optional[profiler.ProfilerAgent]
         self._info = det.get_cluster_info()
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
-
-        # Provide a warning as early as we can detect the problem.
-        if type(trial).__module__ == "__main__":
-            clsname = type(trial).__name__
-            script = sys.modules["__main__"].__file__
-            guess_module = pytorch._guess_script_importable_name(script)
-            if not guess_module:
-                logging.warning(
-                    f"detected PyTorchTrial subclass ({clsname}) with module == '__main__', but "
-                    f"unable to guess a valid import path from filename {script}; checkpoint "
-                    "loading via load_trial_from_checkpoint_path() will fail.  Define your Trial "
-                    "class in an importable module instead."
-                )
-            else:
-                logging.warning(
-                    f"detected PyTorchTrial subclass ({clsname}) with module == '__main__'; "
-                    f"guessing that entrypoint file could be imported via `import {guess_module}`, "
-                    "but if that is incorrect then loading via load_trial_from_checkpoint_path() "
-                    "will fail.  Define your Trial class in an importable module instead."
-                )
 
     def configure_profiler(
         self, sync_timings: bool, enabled: bool, begin_on_batch: int, end_after_batch: int

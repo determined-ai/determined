@@ -656,7 +656,7 @@ The PyTorch Trainer API lets you do the following:
 -  Debug models in your favorite debug environment (e.g., directly on your machine, IDE, or Jupyter
    notebook).
 -  Run training scripts without needing to use an experiment configuration file.
--  Load previous saved checkpoints directly into your model.
+-  Load previously saved checkpoints directly into your model.
 
 Initializing the Trainer
 ========================
@@ -708,7 +708,7 @@ Run Your Training Script Locally
 
 Run training scripts locally without submitting to a cluster or defining an experiment configuration
 file. Be sure to specify ``max_length`` in the ``.fit()`` call, which is used in local training mode
-to determined the maximum number of steps to train for.
+to determine the maximum number of steps to train for.
 
 .. code:: python
 

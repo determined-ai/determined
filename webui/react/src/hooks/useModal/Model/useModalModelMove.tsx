@@ -1,5 +1,4 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { LabeledValue } from 'antd/es/select';
 import { useCallback } from 'react';
 
 import Form from 'components/kit/Form';
@@ -81,9 +80,7 @@ const useModalModelMove = ({ onClose }: Props = {}): ModalHooks => {
                 filterOption={(input, option) =>
                   (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                filterSort={(a: LabeledValue, b: LabeledValue) =>
-                  (a?.label ?? '') < (b?.label ?? '') ? 1 : -1
-                }
+                filterSort={(a, b) => ((a?.label ?? '') < (b?.label ?? '') ? 1 : -1)}
                 options={workspaces
                   .filter(
                     (ws) =>

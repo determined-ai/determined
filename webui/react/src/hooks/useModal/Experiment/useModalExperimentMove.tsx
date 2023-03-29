@@ -6,8 +6,6 @@ import Form from 'components/kit/Form';
 import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
-import { useSettings } from 'hooks/useSettings';
-import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
 import { paths } from 'routes/utils';
 import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -15,7 +13,6 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { DetailedUser } from 'types';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
@@ -28,7 +25,6 @@ type FormInputs = {
 
 interface Props {
   onClose?: () => void;
-  user?: DetailedUser;
 }
 
 export interface ShowModalProps {
@@ -60,12 +56,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);
 
-  const id = projectId ?? 1;
-
-  const experimentSettingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
-
-  const { settings: projectSettings, updateSettings: updateProjectSettings } =
-    useSettings<ExperimentListSettings>(experimentSettingsConfig);
   const [experimentIds, setExperimentIds] = useState<number[]>([]);
   const { canMoveExperimentsTo } = usePermissions();
   const loadableWorkspaces = useWorkspaces({ archived: false });
@@ -96,12 +86,19 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true }]}>
           <Select
+            filterOption={(input, option) =>
+              (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+            }
             id="workspace"
             placeholder="Select a destination workspace."
             onChange={() => form.resetFields(['projectId'])}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
-                <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
+                <Option
+                  disabled={workspace.archived}
+                  key={workspace.id}
+                  title={workspace.name}
+                  value={workspace.id}>
                   <div className={workspace.archived ? css.optionDisabled : undefined}>
                     <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
                     {workspace.archived && <Icon name="archive" />}
@@ -118,9 +115,17 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             rules={[{ message: 'Project is required', required: true }]}>
             {Loadable.match(projects, {
               Loaded: (projects) => (
-                <Select placeholder="Select a destination project.">
+                <Select
+                  filterOption={(input, option) =>
+                    (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  placeholder="Select a destination project.">
                   {projects.map((project) => (
-                    <Option disabled={project.archived} key={project.id} value={project.id}>
+                    <Option
+                      disabled={project.archived}
+                      key={project.id}
+                      title={project.name}
+                      value={project.id}>
                       <div className={project.archived ? css.optionDisabled : undefined}>
                         <Typography.Text ellipsis={true}>{project.name}</Typography.Text>
                         {project.archived && <Icon name="archive" />}
@@ -171,15 +176,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ),
         message: 'Move Success',
       });
-      if (projId) {
-        const newPinned = { ...projectSettings.pinned };
-        const pinSet = new Set(newPinned?.[projId] ?? []);
-        for (const experimentId of experimentIds) {
-          pinSet.delete(experimentId);
-        }
-        newPinned[projId] = Array.from(pinSet);
-        updateProjectSettings({ pinned: newPinned });
-      }
     } else if (numFailures === experimentIds.length) {
       notification.warning({
         description: `Unable to move ${experimentText}`,
@@ -201,14 +197,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       });
     }
     form.resetFields();
-  }, [
-    closeNotification,
-    experimentIds,
-    form,
-    projectSettings.pinned,
-    projects,
-    updateProjectSettings,
-  ]);
+  }, [closeNotification, experimentIds, form, projects]);
 
   const getModalProps = useCallback(
     (experimentIds: number[]): ModalFuncProps => {

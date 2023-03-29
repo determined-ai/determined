@@ -32,6 +32,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -46,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -236,14 +239,14 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY:
 		start, err := time.Parse("2006-01-02", req.StartDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid start date")
+			return nil, status.Errorf(codes.InvalidArgument, "invalid start date %s", err.Error())
 		}
 		end, err := time.Parse("2006-01-02", req.EndDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid end date")
+			return nil, status.Errorf(codes.InvalidArgument, "invalid end date %s", err.Error())
 		}
 		if start.After(end) {
-			return nil, errors.New("start date cannot be after end date")
+			return nil, status.Error(codes.InvalidArgument, "start date cannot be after end date")
 		}
 
 		if err := m.db.QueryProto(
@@ -257,15 +260,15 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY:
 		start, err := time.Parse("2006-01", req.StartDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid start date")
+			return nil, status.Error(codes.InvalidArgument, "invalid start date")
 		}
 		end, err := time.Parse("2006-01", req.EndDate)
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid end date")
+			return nil, status.Error(codes.InvalidArgument, "invalid end date")
 		}
 		end = end.AddDate(0, 1, -1)
 		if start.After(end) {
-			return nil, errors.New("start date cannot be after end date")
+			return nil, status.Error(codes.InvalidArgument, "start date cannot be after end date")
 		}
 
 		if err := m.db.QueryProto(
@@ -277,7 +280,7 @@ func (m *Master) fetchAggregatedResourceAllocation(
 		return resp, nil
 
 	default:
-		return nil, errors.New("no aggregation period specified")
+		return nil, status.Error(codes.InvalidArgument, "no aggregation period specified")
 	}
 }
 
@@ -910,6 +913,7 @@ func (m *Master) Run(ctx context.Context) error {
 	})
 
 	allocationmap.InitAllocationMap()
+	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)

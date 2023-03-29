@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 import determined as det
 
-C10D_PORT = 29400
+C10D_PORT = int(str(os.getenv("C10D_PORT", "29400")))
 
 
 def create_launch_cmd(

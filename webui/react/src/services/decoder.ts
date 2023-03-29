@@ -607,7 +607,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     checkpointCount: data.checkpointCount || 0,
     endTime: data.endTime && (data.endTime as unknown as string),
     experimentId: data.experimentId,
-    hyperparameters: flattenObject(data.hparams),
+    hyperparameters: flattenObject(data.hparams || {}),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     startTime: data.startTime as unknown as string,

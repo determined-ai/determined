@@ -73,5 +73,5 @@ export const routeToExternalUrl = (path: string): void => {
 };
 export const routeToReactUrl = (path: string): void => {
   logger.trace('routing to react url', path);
-  router.navigate(`${process.env.PUBLIC_URL}${stripUrl(path)}`);
+  router.getRouter().navigate(`${process.env.PUBLIC_URL}${stripUrl(path)}`);
 };

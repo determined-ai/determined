@@ -22,7 +22,6 @@ def get_dummy_env() -> det.EnvContext:
         slot_ids=[],
         debug=False,
         hparams={"global_batch_size": 1},
-        det_trial_unique_port_offset=0,
         det_trial_id="1",
         det_agent_id="1",
         det_experiment_id="1",

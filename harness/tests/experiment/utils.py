@@ -153,7 +153,6 @@ def make_default_env_context(
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        det_trial_unique_port_offset=0,
         det_trial_id="1",
         det_experiment_id="1",
         det_agent_id="1",

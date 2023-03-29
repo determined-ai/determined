@@ -17,7 +17,6 @@ class EnvContext:
         container_gpus: List[str],
         slot_ids: List[int],
         debug: bool,
-        det_trial_unique_port_offset: int,
         det_trial_id: str,
         det_experiment_id: str,
         det_agent_id: str,
@@ -40,7 +39,6 @@ class EnvContext:
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids
         self.debug = debug
-        self.det_trial_unique_port_offset = det_trial_unique_port_offset
         self.det_trial_id = det_trial_id
         self.det_experiment_id = det_experiment_id
         self.det_agent_id = det_agent_id

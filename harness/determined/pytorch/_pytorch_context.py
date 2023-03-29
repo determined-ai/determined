@@ -967,6 +967,12 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         """
 
         if self._tbd_writer is None:
+            # As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools
+            # 59.6.0.  The bug is that it attempts to import distutils then access distutils.version
+            # without actually importing distutils.version.  We can workaround this by prepopulating
+            # the distutils.version submodule in the distutils module.
+            import distutils.version  # noqa: F401
+
             from torch.utils.tensorboard import SummaryWriter
 
             self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore

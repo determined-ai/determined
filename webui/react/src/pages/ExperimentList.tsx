@@ -117,11 +117,6 @@ interface Props {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -139,14 +134,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);
-
-  const tableOffset = (() => {
-    if (settings.tableOffset > total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-    }
-    return settings.tableOffset;
-  })();
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -197,12 +184,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           { signal: canceler.signal },
         );
       }
+
+      const pageNumber = settings.tableOffset / settings.tableLimit;
+      const rowsTakenUpByPins = pageNumber * pinnedIds.length;
       const otherExpResponse = await getExperiments(
         {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: settings.tableOffset - rowsTakenUpByPins,
         },
         { signal: canceler.signal },
       );
@@ -686,7 +676,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleActionComplete, user });
+    useModalExperimentMove({ onClose: handleActionComplete });
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
@@ -981,7 +971,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit || 0,
-              offset: tableOffset || 0,
+              offset: settings.tableOffset || 0,
             },
             total,
           )}

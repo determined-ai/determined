@@ -90,7 +90,7 @@ variable "gpu_type" {
 
 variable "gpu_num" {
   type = number
-  default = 8
+  default = 4
 }
 
 variable "min_dynamic_agents" {
@@ -159,7 +159,7 @@ variable "preemption_enabled" {
 }
 
 variable "labels" {
-  type = map
+  type = map(string)
   default = {}
 }
 

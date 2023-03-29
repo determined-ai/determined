@@ -243,7 +243,7 @@ def gen_function(func: swagger_parser.Function) -> Code:
             yieldable = load(returntype, '_j["result"]')
             out += [
                 f"        try:",
-                f"            for _line in _resp.iter_lines():",
+                f"            for _line in _resp.iter_lines(chunk_size=1024 * 1024):",
                 f"                _j = json.loads(_line)",
                 f'                if "error" in _j:',
                 f"                    raise APIHttpStreamError(",

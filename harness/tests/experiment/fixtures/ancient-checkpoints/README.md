@@ -19,4 +19,5 @@ with old checkpoints in the future.
 - `0.17.7-keras`: fetch by direct access to checkpoint files
 - `0.17.7-pytorch`: fetch by direct access to checkpoint files
 - `0.20.0-pytorch`: a checkpoint from just before the PyTorchTrial Trainer API
-- `0.21.0-pytorch`: a Trainer checkpoint with guessed import path and Trial kwargs
+- `0.21.0-pytorch`: a Trainer checkpoint with auto-importable Trial with kwargs
+- `0.21.0-pytorch-main`: a Trainer checkpoint with Trial in `__main__` and kwargs

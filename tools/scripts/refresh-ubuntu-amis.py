@@ -22,13 +22,13 @@ def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[N
     def filters(line: List[str]) -> bool:
         return all(
             [
-                line[0] == region,
-                line[1] == release,
-                line[3] == "amd64",
+                line[0] == release,
                 # Only use EBS, not instance-store.
-                line[4] == "hvm:ebs-ssd",
+                line[4] == "ebs-ssd",
+                line[5] == "amd64",
+                line[6] == region,
                 # Only use HVM virtualization, not paravirtualization.
-                line[7] == "hvm",
+                line[10] == "hvm",
             ]
         )
 
@@ -40,17 +40,7 @@ def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[N
         print(f"Failed to find AMI for {region}!", file=sys.stderr)
         return None
 
-    # The only canonical endpoint for that shows us gov endpoints also gives us inline-html we have
-    # to strip to get the actual ami name.
-    href = results[0][6]
-
-    # We'll match the whole <a href=...>AMI</a> string to ensure that if canonical changes their
-    # format that we catch it (by puking).
-    pattern = '^<a href="[a-zA-Z_.:/?#=&-]*">(ami-[0-9a-f]*)</a>$'
-    match = re.match('^<a href="[a-zA-Z0-9_.:/?#=&-]*">(ami-[0-9a-f]*)</a>$', href)
-    assert match, f"failed to match '{pattern}' against '{href}'"
-
-    return match[1]
+    return results[0][7]
 
 
 def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
@@ -115,13 +105,19 @@ if __name__ == "__main__":
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    # Do one fetch for all the ubuntu amis.
-    # Note that this is not a public endpoint, but it's the only one that has the gov amis.
-    req = requests.get("https://cloud-images.ubuntu.com/locator/ec2/releasesTable")
+    release = "focal"
+    req_url = f"https://cloud-images.ubuntu.com/query/{release}/server/released.current.txt"
+    gov_req_url = (
+        f"https://cloud-images.ubuntu.com/query.govcloud/{release}/server/released.current.txt"
+    )
+
+    req = requests.get(req_url)
     req.raise_for_status()
-    table = yaml.safe_load(req.text)
-    # Discard useless layer of data.
-    table = table["aaData"]
+    table = [re.split(r"\t", row) for row in re.split(r"\n", req.text)[:-1]]
+    gov_req = requests.get(gov_req_url)
+    gov_req.raise_for_status()
+    gov_table = [re.split(r"\t", row) for row in re.split(r"\n", gov_req.text)[:-1]]
+    table += gov_table
 
     if args.bumpenvs_yaml:
         update_bumpenvs_yaml(table, args.bumpenvs_yaml)

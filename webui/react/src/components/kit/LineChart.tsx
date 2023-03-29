@@ -356,6 +356,7 @@ export const ChartGrid: React.FC<GroupProps> = React.memo(
                   itemData={{ chartsProps: chartsProps, columnCount, scale, xAxis }}
                   rowCount={Math.ceil(chartsProps.length / columnCount)}
                   rowHeight={480}
+                  style={{ height: '100%' }}
                   width={width}>
                   {VirtualChartRenderer}
                 </FixedSizeGrid>

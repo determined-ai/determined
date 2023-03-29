@@ -83,7 +83,7 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       if (!queries.redirect) {
         routeToReactUrl(
-          locationToPath(location.state?.loginRedirect) ||
+          locationToPath(location.state) ||
             (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
