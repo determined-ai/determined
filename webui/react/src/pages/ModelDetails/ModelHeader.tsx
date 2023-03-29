@@ -11,9 +11,9 @@ import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import ModelEditModal from 'components/ModelEditModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -48,8 +48,8 @@ const ModelHeader: React.FC<Props> = ({
   const users = Loadable.map(loadableUsers, ({ users }) => users);
   const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ fetchModel, model });
+  const modelEditModal = useModal(ModelEditModal);
+
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
@@ -115,7 +115,7 @@ const ModelHeader: React.FC<Props> = ({
         onSwitchArchive();
       },
       [MenuKey.EditModelName]: () => {
-        openModelNameEdit();
+        modelEditModal.open();
       },
       [MenuKey.MoveModel]: () => {
         modelMoveModal.open();
@@ -156,7 +156,7 @@ const ModelHeader: React.FC<Props> = ({
     canModifyModelFlag,
     canDeleteModelFlag,
     onSwitchArchive,
-    openModelNameEdit,
+    modelEditModal,
     modelMoveModal,
     deleteModelModal,
   ]);
@@ -228,7 +228,7 @@ const ModelHeader: React.FC<Props> = ({
       </div>
       <deleteModelModal.Component model={model} />
       <modelMoveModal.Component model={model} />
-      {modalModelNameEditContextHolder}
+      <modelEditModal.Component fetchModel={fetchModel} model={model} />
     </header>
   );
 };

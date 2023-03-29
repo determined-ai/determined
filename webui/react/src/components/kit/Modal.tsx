@@ -1,4 +1,4 @@
-import { Modal as AntdModal } from 'antd';
+import { Modal as AntdModal, ModalProps as AntdModalProps } from 'antd';
 import React, {
   createContext,
   Dispatch,
@@ -56,6 +56,7 @@ interface ModalProps {
   size?: ModalSize;
   submit?: ModalSubmitParams;
   title: string;
+  okButtonProps?: AntdModalProps['okButtonProps'];
   children: ReactNode;
 }
 
@@ -73,6 +74,7 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'large',
   submit,
   title,
+  okButtonProps,
   children: modalBody,
 }: ModalProps) => {
   const modalContext = useContext(ModalContext);
@@ -135,6 +137,7 @@ export const Modal: React.FC<ModalProps> = ({
               loading={isSubmitting}
               tooltip={submit?.disabled ? 'Address validation errors before proceeding' : undefined}
               type="primary"
+              {...okButtonProps}
               onClick={handleSubmit}>
               {submit?.text ?? 'OK'}
             </Button>
