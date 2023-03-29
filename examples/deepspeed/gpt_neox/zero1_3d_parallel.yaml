@@ -1,10 +1,4 @@
 name: gpt-neox-zero1-3d-parallel
-debug: false
-profiling:
-    enabled: true
-    begin_on_batch: 1
-    end_after_batch: 100
-    sync_timings: true
 hyperparameters:
   search_world_size: false
   conf_dir: /gpt-neox/configs
@@ -12,10 +6,6 @@ hyperparameters:
       - determined_cluster.yml
   overwrite_values:
     pipe_parallel_size: 4
-  wandb_group: null
-  wandb_team: null
-  user_script: null
-  eval_tasks: null
 environment:
   environment_variables:
       - NCCL_SOCKET_IFNAME=ens,eth,ib
