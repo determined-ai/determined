@@ -344,6 +344,16 @@ const SelectSection: React.FC = () => {
           placeholder="Select"
         />
         <strong>Variations</strong>
+        <strong>Loading Select</strong>
+        <Select
+          loading
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
         <strong>Select with default value</strong>
         <Select
           defaultValue={2}

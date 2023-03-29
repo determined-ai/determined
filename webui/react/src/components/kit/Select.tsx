@@ -121,7 +121,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
       <AntdSelect
         allowClear={allowClear}
         defaultValue={defaultValue}
-        disabled={disabled}
+        disabled={disabled || loading}
         dropdownMatchSelectWidth
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
         filterSort={filterSort}
@@ -135,7 +135,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         ref={ref}
         showSearch={!!onSearch || !!filterOption || searchable}
         style={{ width }}
-        suffixIcon={<Icon name="arrow-down" size="tiny" />}
+        suffixIcon={!loading ? <Icon name="arrow-down" size="tiny" /> : undefined}
         value={value}
         onBlur={onBlur}
         onChange={onChange}
