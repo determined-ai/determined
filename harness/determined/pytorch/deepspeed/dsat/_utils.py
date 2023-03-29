@@ -1,12 +1,10 @@
 import json
-import logging
 import os
 import pathlib
 import random
-import re
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generator, List, Union
 
 import torch
 from ruamel import yaml
@@ -15,48 +13,11 @@ import determined as det
 from determined.pytorch.deepspeed.dsat import _defaults
 
 
-def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
+def get_config_dict_from_yaml_path(path: str) -> Dict[str, Any]:
     config = yaml.YAML(typ="safe")
     with open(path, "r") as f:
-        config_dict = config.load(f)
+        config_dict: dict = config.load(f)
     return config_dict
-
-
-# TODO: The following two dict functions are needed as hacks around the `type` key
-# used by DS for their optimizer with conflicts with our own special usage of this key
-# in the config.
-def upper_case_dict_key(d: Dict[str, Any], key: str) -> Dict[str, Any]:
-    upper_d = {}
-    for k, v in d.items():
-        new_k = k.upper() if key == k else k
-        if isinstance(v, dict):
-            upper_d[new_k] = upper_case_dict_key(v, key)
-        else:
-            upper_d[new_k] = v
-    return upper_d
-
-
-def lower_case_dict_key(d: Dict[str, Any], key: str) -> Dict[str, Any]:
-    lower_d = {}
-    for k, v in d.items():
-        new_k = k.lower() if key == k else k
-        if isinstance(v, dict):
-            lower_d[new_k] = lower_case_dict_key(v, key)
-        else:
-            lower_d[new_k] = v
-    return lower_d
-
-
-def get_non_decimal_number_in_line(line: str) -> float:
-    num_str = re.search(r"\b\d+\b", line).group()
-    num = float(num_str)
-    return num
-
-
-def get_decimal_number_in_line(line: str) -> float:
-    num_str = re.search(r"\b\d*\.\d+\b", line).group()
-    num = float(num_str)
-    return num
 
 
 @contextmanager
@@ -64,7 +25,7 @@ def dsat_reporting_context(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
-) -> None:
+) -> Generator[None, None, None]:
     """
     Call the DeepSpeed model engine's `forward` method within this context to intercept the `exit`
     call utilized by DS when autotuning and report the results back to Determined.  All other pieces
@@ -80,9 +41,8 @@ def dsat_reporting_context(
     except RuntimeError as rte:
         oom_error_string = str(rte)
         if "out of memory" in oom_error_string:
-            report_oom_and_exit(core_context, op, steps_completed, oom_error_string)
-        else:
-            raise rte
+            report_oom(core_context, op, steps_completed, oom_error_string)
+        raise rte
     except SystemExit as se:
         possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
         existing_paths = [path for path in possible_paths if file_or_dir_exists(path)]
@@ -90,7 +50,7 @@ def dsat_reporting_context(
         if len(existing_paths) == 1:
             path = existing_paths[0]
             add_gpu_info = path == _defaults.MODEL_INFO_PROFILING_PATH
-            report_json_results_and_exit(
+            report_json_results(
                 core_context=core_context,
                 op=op,
                 steps_completed=steps_completed,
@@ -101,7 +61,7 @@ def dsat_reporting_context(
             raise se
 
 
-def report_oom_and_exit(
+def report_oom(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
@@ -109,20 +69,15 @@ def report_oom_and_exit(
 ) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
-        logging.info(
-            "******************* GPU Out of Memory: Shutting down Trial ******************"
-        )
-        logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
         report_oom_dict = {_defaults.OOM_KEY: True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics=report_oom_dict
         )
         op.report_completed(report_oom_dict)
-    exit()
 
 
-def report_json_results_and_exit(
+def report_json_results(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
@@ -148,7 +103,6 @@ def report_json_results_and_exit(
         pass
     else:
         raise AssertionError("Unexpected additional operations found!")
-    exit()
 
 
 def file_or_dir_exists(
@@ -166,11 +120,11 @@ def file_or_dir_exists(
 def get_zero_optim_keys_and_defaults_per_stage(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    keys_and_defaults = default_settings[0]
+    keys_and_defaults: dict = default_settings[0]
     for stage in range(1, zero_stage + 1):
         keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
     return keys_and_defaults

@@ -12,7 +12,7 @@ ALL_SEARCH_METHOD_CLASSES = {
 }
 
 
-def get_parsed_args():
+def get_parsed_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config_path", type=str)
     parser.add_argument("-md", "--model_dir", type=str)

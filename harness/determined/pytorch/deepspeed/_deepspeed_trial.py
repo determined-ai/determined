@@ -312,12 +312,17 @@ class DeepSpeedTrialController(det.TrialController):
             op = next(ops)
             # TODO: read out the actual number of expected batches to run for from the config.
             while True:
-                step_id = self.steps_completed + 1
+                # The `steps_completed` value which is passed in to `dsat_reporting_context` will be
+                # the value used in a `report_validation_metrics` call, hence we don't use the
+                # current value, but the value that `steps_completed` should have when reporting.
                 with dsat.dsat_reporting_context(
-                    core_context=self.context._core, op=op, steps_completed=step_id
+                    core_context=self.context._core, op=op, steps_completed=self.steps_completed + 1
                 ):
+                    # TODO: verify we're using `step_id` as intended.
                     _ = self._train_for_step(
-                        step_id=step_id, num_batches=1, total_batches_processed=self.steps_completed
+                        step_id=self.steps_completed + 1,
+                        num_batches=1,
+                        total_batches_processed=self.steps_completed,
                     )
 
         assert self.workloads is not None

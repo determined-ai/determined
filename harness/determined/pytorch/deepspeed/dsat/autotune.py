@@ -8,7 +8,7 @@ from determined.pytorch.deepspeed.dsat import _utils
 from determined.util import merge_dicts
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     # TODO: Allow for additional includes args to be specified, as in the CLI.
     # TODO: Allow the user to pass an optional `searcher_config` to override default DS AT search.
     parser = argparse.ArgumentParser(description="DS Autotuning")
@@ -22,7 +22,7 @@ def parse_args():
     return args
 
 
-def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
+def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]) -> None:
     config_path_absolute = os.path.abspath(args.config_path)
     model_dir_absolute = os.path.abspath(args.model_dir)
 
@@ -34,7 +34,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     search_runner_overrides = {
         "searcher": {"name": "single", "max_length": 0},
         # TODO: don't hardcode the searcher's max_restarts.
-        "max_restarts": 10,
+        "max_restarts": 3,
         # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assumption
         # e.g. on Grenoble.
         "resources": {"slots_per_trial": 0},
@@ -54,7 +54,6 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     # TODO: early sanity check the submitted config. E.g. makesure that searcher.metric and
     # hyperparameters.ds_config.autotuning.metric coincide.
 
-    # TODO: Account for cases where DS is not initialized with yaml config file.
     # Create empty tempdir as the model_dir and upload everything else as an includes in order to
     # avoid unwanted double directory explosions.
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -64,7 +63,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
         )
 
 
-def run():
+def run() -> None:
     args = parse_args()
     config_dict = _utils.get_config_dict_from_yaml_path(args.config_path)
     run_autotuning(args, config_dict)

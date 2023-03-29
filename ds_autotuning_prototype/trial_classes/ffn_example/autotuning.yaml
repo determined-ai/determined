@@ -3,7 +3,7 @@ workspace: DS_AT_PROTOTYPING
 project: ffn_example
 debug: false
 hyperparameters:
-  dim: 4096
+  dim: 8192
   layers: 8 # Total params will be layers * dim ** 2
   deepspeed_config: ds_config.json
 environment:

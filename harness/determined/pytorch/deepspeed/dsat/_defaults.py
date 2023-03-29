@@ -1,5 +1,5 @@
-WORKDIR_PATH = "/run/determined/workdir/"
-MODEL_INFO_PROFILING_PATH = WORKDIR_PATH + "model_info.json"
+# WORKDIR_PATH = "/run/determined/workdir/"
+MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
 ZERO_STAGE = 0
@@ -51,9 +51,9 @@ AUTOTUNING_DICT = {
     "fast": True,
     "max_train_batch_size": None,
     "mp_size": 1,
-    "num_tuning_micro_batch_sizes": 10,
+    "num_tuning_micro_batch_sizes": 5,
     "tuner_type": "model_based",
-    "tuner_early_stopping": 10,
-    "tuner_num_trials": 50,
+    "tuner_early_stopping": 25,
+    "tuner_num_trials": 25,
     "arg_mappings": None,
 }
