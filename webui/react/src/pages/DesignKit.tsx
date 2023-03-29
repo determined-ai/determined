@@ -27,6 +27,8 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -80,6 +82,7 @@ const ComponentTitles = {
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
+  Typography: 'Typography',
   UserAvatar: 'UserAvatar',
 } as const;
 
@@ -1665,6 +1668,39 @@ const TagsSection: React.FC = () => {
   );
 };
 
+const TypographySection: React.FC = () => {
+  return (
+    <ComponentSection id="Typography" title="Typography">
+      <AntDCard>
+        <p>
+          The (<code>{'<Header>'}</code>) is a reusable header element.
+        </p>
+        <p>
+          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element.
+        </p>
+      </AntDCard>
+      <AntDCard title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>
+            For Headers, <code>{'<h1>'}</code> is the default.
+          </li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Typography - Header</strong>
+        <Space>
+          <Header>Header</Header>
+        </Space>
+        <strong>Typography - paragraph</strong>
+        <Space>
+          <Paragraph>this is a paragraph!</Paragraph>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -2189,6 +2225,7 @@ const Components = {
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
+  Typography: <TypographySection />,
   UserAvatar: <UserAvatarSection />,
 };
 
