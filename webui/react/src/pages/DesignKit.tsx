@@ -27,7 +27,8 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
-import Typography from 'components/kit/Typography';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -1672,17 +1673,22 @@ const TypographySection: React.FC = () => {
     <ComponentSection id="Typography" title="Typography">
       <AntDCard>
         <p>
-          The (<code>{'<Typography>'}</code>) is a reusable element that accomodates two cases (for
-          now), header and paragraph. The props being:
+          The (<code>{'<Header>'}</code>) is a reusable header element that accomodates two cases
+          (for now), main header and secondary header. The props being:
           <ul>
             <li>
-              <code>{"type // type: 'header' | 'paragraph'"}</code> the type of typography element
-              to be rendered
+              <code>{'subHeader // type (optional)'}</code> if true, renders a subheader
             </li>
             <li>
-              <code>{'level // type (optional): 1 | 2 | 3 | 4 | 5'}</code> the type of typography
-              element to be rendered
+              <code>{'classes // type (optional): string'}</code> being the CSS custom classes for
+              the element
             </li>
+          </ul>
+        </p>
+        <p>
+          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element. The props
+          being:
+          <ul>
             <li>
               <code>{'classes // type (optional): string'}</code> being the CSS custom classes for
               the element
@@ -1694,41 +1700,21 @@ const TypographySection: React.FC = () => {
         <strong>Content</strong>
         <ul>
           <li>
-            For Headers, <code>{'<h1>'}</code> is the default, mening that you do not need to pass
-            the <code>{'level'}</code>.
+            For Headers, <code>{'<h1>'}</code> is the default.
           </li>
-          <li>Tags are ordered alphabetically.</li>
-          <li>Individual tags cannot be empty.</li>
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Typography - Headers</strong>
         <Space>
-          <Typography type="header">Title 1</Typography>
+          <Header>Header 1</Header>
         </Space>
         <Space>
-          <Typography level={2} type="header">
-            Title 2
-          </Typography>
-        </Space>
-        <Space>
-          <Typography level={3} type="header">
-            Title 3
-          </Typography>
-        </Space>
-        <Space>
-          <Typography level={4} type="header">
-            Title 4
-          </Typography>
-        </Space>
-        <Space>
-          <Typography level={5} type="header">
-            Title 5
-          </Typography>
+          <Header subHeader>Header 2</Header>
         </Space>
         <strong>Typography - paragraph</strong>
         <Space>
-          <Typography type="paragraph">this is a paragraph!</Typography>
+          <Paragraph>this is a paragraph!</Paragraph>
         </Space>
       </AntDCard>
     </ComponentSection>
