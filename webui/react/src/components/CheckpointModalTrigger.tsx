@@ -1,10 +1,11 @@
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
+import ModelCreateModal from 'components/ModelCreateModal';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import Icon from 'shared/components/Icon/Icon';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
@@ -22,12 +23,15 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   title,
   children,
 }: Props) => {
+  const modelCreateModal = useModal(ModelCreateModal);
+
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
+      // TODO: fix the behavior along with checkpoint modal migration
+      if (checkpoints) modelCreateModal.open();
     },
   });
 
@@ -37,9 +41,6 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     },
     [openModalCheckpointRegister],
   );
-
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
-    useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpoint = useCallback(
     (reason?: ModalCloseReason) => {
@@ -75,7 +76,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
       </span>
       {modalCheckpointContextHolder}
       {modalCheckpointRegisterContextHolder}
-      {modalModelCreateContextHolder}
+      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
     </>
   );
 };

@@ -1,9 +1,9 @@
 import { ReactElement, useCallback, useMemo } from 'react';
 
+import { useModal } from 'components/kit/Modal';
+import ModelCreateModal from 'components/ModelCreateModal';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentConfig } from 'types';
-
-import useModalModelCreate from '../Model/useModalModelCreate';
 
 import useModalCheckpoint from './useModalCheckpoint';
 import useModalCheckpointRegister from './useModalCheckpointRegister';
@@ -11,6 +11,7 @@ import useModalCheckpointRegister from './useModalCheckpointRegister';
 interface Return {
   contextHolders: ReactElement[];
   openCheckpoint: () => void;
+  modelCreateModalComponent: React.ReactNode;
 }
 
 export const useCheckpointFlow = ({
@@ -22,12 +23,14 @@ export const useCheckpointFlow = ({
   config: ExperimentConfig;
   title: string;
 }): Return => {
+  const modelCreateModal = useModal(ModelCreateModal);
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
+      // TODO: fix the behavior along with checkpoint modal migration
+      if (checkpoints) modelCreateModal.open();
     },
   });
 
@@ -37,9 +40,6 @@ export const useCheckpointFlow = ({
     },
     [openModalCheckpointRegister],
   );
-
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
-    useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpoint = useCallback(
     (reason?: ModalCloseReason) => {
@@ -63,20 +63,13 @@ export const useCheckpointFlow = ({
   }, [openModalCheckpoint]);
 
   const contextHolders = useMemo(
-    () => [
-      modalCheckpointContextHolder,
-      modalCheckpointRegisterContextHolder,
-      modalModelCreateContextHolder,
-    ],
-    [
-      modalCheckpointRegisterContextHolder,
-      modalModelCreateContextHolder,
-      modalCheckpointContextHolder,
-    ],
+    () => [modalCheckpointContextHolder, modalCheckpointRegisterContextHolder],
+    [modalCheckpointRegisterContextHolder, modalCheckpointContextHolder],
   );
 
   return {
     contextHolders,
+    modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
     openCheckpoint,
   };
 };

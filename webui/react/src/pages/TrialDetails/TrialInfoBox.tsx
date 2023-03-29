@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
+import { useModal } from 'components/kit/Modal';
+import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { humanReadableBytes } from 'shared/utils/string';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
@@ -35,12 +36,15 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [trial?.totalCheckpointSize]);
 
+  const modelCreateModal = useModal(ModelCreateModal);
+
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
+      // TODO: fix the behavior along with checkpoint modal migration
+      if (checkpoints) modelCreateModal.open();
     },
   });
 
@@ -50,9 +54,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     },
     [openModalCheckpointRegister],
   );
-
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
-    useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const handleOnCloseCheckpoint = useCallback(
     (reason?: ModalCloseReason) => {
@@ -96,7 +97,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             </OverviewStats>
             {modalCheckpointContextHolder}
             {modalCheckpointRegisterContextHolder}
-            {modalModelCreateContextHolder}
+            <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
           </>
         )}
       </Card.Group>

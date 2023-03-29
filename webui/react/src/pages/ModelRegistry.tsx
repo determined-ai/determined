@@ -19,6 +19,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import ModelCreateModal from 'components/ModelCreateModal';
 import ModelMoveModal from 'components/ModelMoveModal';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -37,7 +38,6 @@ import {
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -85,9 +85,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
 
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate({ workspaceId: workspace?.id });
-
+  const modelCreateModal = useModal(ModelCreateModal);
   const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
 
@@ -642,7 +640,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     return () => canceler.abort();
   }, [canceler]);
 
-  const showCreateModelModal = useCallback(() => openModelCreate(), [openModelCreate]);
+  const showCreateModelModal = useCallback(() => modelCreateModal.open(), [modelCreateModal]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -766,7 +764,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           onChange={handleTableChange}
         />
       )}
-      {modalModelCreateContextHolder}
+      <modelCreateModal.Component workspaceId={workspace?.id} />
       {model && <deleteModelModal.Component model={model} />}
       {model && <modelMoveModal.Component model={model} />}
     </Page>
