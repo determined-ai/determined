@@ -87,6 +87,15 @@ type ResourceManager interface {
 	MoveJob(actor.Messenger, sproto.MoveJob) error
 	RecoverJobPosition(actor.Messenger, sproto.RecoverJobPosition)
 
+	EnableSlot(
+		actor.Messenger,
+		*apiv1.EnableSlotRequest,
+	) (*apiv1.EnableSlotResponse, error)
+	DisableSlot(
+		actor.Messenger,
+		*apiv1.DisableSlotRequest,
+	) (*apiv1.DisableSlotResponse, error)
+
 	// Escape hatch, do not use.
 	Ref() *actor.Ref
 }
