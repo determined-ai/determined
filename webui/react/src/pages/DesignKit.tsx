@@ -1673,12 +1673,8 @@ const TypographySection: React.FC = () => {
     <ComponentSection id="Typography" title="Typography">
       <AntDCard>
         <p>
-          The (<code>{'<Header>'}</code>) is a reusable header element that accomodates two cases
-          (for now), main header and secondary header. The props being:
+          The (<code>{'<Header>'}</code>) is a reusable header element. The props being:
           <ul>
-            <li>
-              <code>{'subHeader // type (optional)'}</code> if true, renders a subheader
-            </li>
             <li>
               <code>{'classes // type (optional): string'}</code> being the CSS custom classes for
               the element
