@@ -24,8 +24,6 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router';
 
-import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getColor, getInitials } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
@@ -34,8 +32,10 @@ import usersStore from 'stores/users';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentItem } from 'types';
 import { Loadable } from 'utils/loadable';
-import { observable, useObservable } from 'utils/observable';
+import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
+
+import { ExperimentColumn } from '../F_ExperimentList';
 
 import LinksCell from './custom-cells/links-cell';
 import RangeCell from './custom-cells/range-cell';
@@ -63,38 +63,15 @@ interface Props {
   data: ExperimentItem[];
 
   handleScroll?: (r: Rectangle) => void;
-  settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings;
 
-  columns: string[];
-  setColumns: Dispatch<SetStateAction<string[]>>;
+  sortableColumnIds: ExperimentColumn[];
+  setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
 
-  selectedIds: string[];
-  setSelectedIds: Dispatch<SetStateAction<string[]>>;
+  selectedExperimentIds: string[];
+  setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
+  selectAll: boolean;
+  setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
-
-const experimentColumns = [
-  'archived',
-  'checkpointCount',
-  'checkpointSize',
-  'description',
-  'duration',
-  'forkedFrom',
-  'id',
-  'name',
-  'progress',
-  'resourcePool',
-  'searcherType',
-  'searcherMetricValue',
-  'selected',
-  'startTime',
-  'state',
-  'tags',
-  'numTrials',
-  'user',
-] as const;
-
-type ExperimentColumn = (typeof experimentColumns)[number];
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
@@ -104,32 +81,22 @@ type ColumnDef = SizedGridColumn & {
   renderer: (record: ExperimentItem, idx: number) => GridCell;
 };
 
-const defaultColumns: ExperimentColumn[] = [
-  'id',
-  'description',
-  'tags',
-  'forkedFrom',
-  'progress',
-  'startTime',
-  'state',
-  'searcherType',
-  'user',
-  'duration',
-  'numTrials',
-  'resourcePool',
-  'checkpointSize',
-  'checkpointCount',
-  'searcherMetricValue',
-];
-
-const menuIsOpen = observable(false);
-
-export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, handleScroll }) => {
+export const GlideTable: React.FC<Props> = ({
+  data,
+  setSelectedExperimentIds,
+  sortableColumnIds,
+  setSortableColumnIds,
+  colorMap,
+  selectAll,
+  setSelectAll,
+  handleScroll,
+}) => {
   const gridRef = useRef(null);
-  const [selectAll, setSelectAll] = useState(false);
+
+  const [menuIsOpen, setMenuIsOpen] = useState(false);
 
   const handleMenuClose = useCallback(() => {
-    menuIsOpen.set(false);
+    setMenuIsOpen(false);
   }, []);
 
   const {
@@ -144,11 +111,9 @@ export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, ha
 
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
 
-  const [sortableColumns, setSortableColumns] = useState<ExperimentColumn[]>(defaultColumns);
-
   const columnIds = useMemo<ExperimentColumn[]>(
-    () => [...STATIC_COLUMNS, ...sortableColumns],
-    [sortableColumns],
+    () => [...STATIC_COLUMNS, ...sortableColumnIds],
+    [sortableColumnIds],
   );
   const navigate = useNavigate();
   const bodyStyles = getComputedStyle(document.body);
@@ -170,14 +135,14 @@ export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, ha
 
   useEffect(() => {
     const selectedRowIndices = selection.rows.toArray();
-    setSelectedIds((prevIds) => {
+    setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
         .map((idx) => String(data?.[idx]?.id))
         .filter((x) => x !== undefined);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
-  }, [selection.rows, setSelectedIds, data]);
+  }, [selection.rows, setSelectedExperimentIds, data]);
 
   const theme = getTheme(bodyStyles);
 
@@ -518,9 +483,9 @@ export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, ha
       const x = bounds.x;
       const y = bounds.y + bounds.height;
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
-      menuIsOpen.set(true);
+      setMenuIsOpen(true);
     },
-    [columnIds],
+    [columnIds, setSelectAll],
   );
 
   const getContent = React.useCallback(
@@ -533,7 +498,6 @@ export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, ha
   );
 
   const handleGridSelectionChange = useCallback((newSelection: GridSelection) => {
-    // if (selectAll) return;
     const [, row] = newSelection.current?.cell ?? [undefined, undefined];
     if (row === undefined) return;
     setSelection(({ rows }: GridSelection) => ({
@@ -542,18 +506,21 @@ export const GlideTable: React.FC<Props> = ({ data, setSelectedIds, colorMap, ha
     }));
   }, []);
 
-  const onColumnMoved = useCallback((_startIndex: number, _endIndex: number): void => {
-    const startIndex = _startIndex - STATIC_COLUMNS.length;
-    const endIndex = Math.max(_endIndex - STATIC_COLUMNS.length, 0);
-    if (startIndex > -1) {
-      setSortableColumns((prevCols) => {
-        const newCols = [...prevCols];
-        const [toMove] = newCols.splice(startIndex, 1);
-        newCols.splice(endIndex, 0, toMove);
-        return newCols;
-      });
-    }
-  }, []);
+  const onColumnMoved = useCallback(
+    (_startIndex: number, _endIndex: number): void => {
+      const startIndex = _startIndex - STATIC_COLUMNS.length;
+      const endIndex = Math.max(_endIndex - STATIC_COLUMNS.length, 0);
+      if (startIndex > -1) {
+        setSortableColumnIds((prevCols) => {
+          const newCols = [...prevCols];
+          const [toMove] = newCols.splice(startIndex, 1);
+          newCols.splice(endIndex, 0, toMove);
+          return newCols;
+        });
+      }
+    },
+    [setSortableColumnIds],
+  );
 
   const dataGridColumns = useMemo(
     () => columnIds.map((columnName) => columnDefs[columnName as ExperimentColumn]) as GridColumn[],
