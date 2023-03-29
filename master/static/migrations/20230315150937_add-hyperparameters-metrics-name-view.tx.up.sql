@@ -18,8 +18,8 @@ UPDATE projects SET hyperparameters = flatten.data FROM flatten WHERE flatten.pr
 
 CREATE TABLE public.exp_metrics_name (
     id SERIAL PRIMARY KEY,
-    project_id INT REFERENCES projects(id),
-    experiment_id INT REFERENCES experiments(id),
+    project_id INT REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+    experiment_id INT REFERENCES experiments(id) ON DELETE CASCADE NOT NULL,
     vname JSON
 );
 
