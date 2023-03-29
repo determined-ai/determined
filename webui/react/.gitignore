@@ -6,6 +6,8 @@
 
 # testing
 /coverage
+/screenshots
+screenshot-summary.html
 
 # production
 build/
