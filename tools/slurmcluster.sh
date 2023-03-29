@@ -509,6 +509,8 @@ fi
 
 if [[ -n $DEFAULTIMAGE ]]; then
     OPT_DEFAULTIMAGE=$DEFAULTIMAGE
+else
+    OPT_DEFAULTIMAGE=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-9d07809
 fi
 
 if [[ -n $SLOTTYPE ]]; then
