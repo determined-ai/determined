@@ -56,7 +56,7 @@ const ModelEditModal = ({ model, fetchModel }: Props): JSX.Element => {
           <Input />
         </Form.Item>
         <Form.Item initialValue={model.description} label="Description" name="description">
-          <Input />
+          <Input.TextArea />
         </Form.Item>
       </Form>
     </Modal>

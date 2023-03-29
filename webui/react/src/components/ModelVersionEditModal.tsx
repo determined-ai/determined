@@ -58,7 +58,7 @@ const ModelVersionEditModal = ({ modelVersion, fetchModelVersion }: Props): JSX.
           <Input />
         </Form.Item>
         <Form.Item initialValue={modelVersion.comment} label="Description" name="description">
-          <Input />
+          <Input.TextArea />
         </Form.Item>
       </Form>
     </Modal>
