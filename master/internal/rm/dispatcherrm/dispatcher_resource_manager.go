@@ -42,12 +42,14 @@ import (
 
 const maxResourceDetailsSampleAgeSeconds = 60
 const (
-	slurmSchedulerType    = "slurm"
-	pbsSchedulerType      = "pbs"
-	slurmResourcesCarrier = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
-	pbsResourcesCarrier   = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
-	root                  = "root"
+	slurmSchedulerType    wlmType = "slurm"
+	pbsSchedulerType      wlmType = "pbs"
+	slurmResourcesCarrier         = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
+	pbsResourcesCarrier           = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
+	root                          = "root"
 )
+
+type wlmType string
 
 // schedulerTick periodically triggers the scheduler to act.
 type schedulerTick struct{}
@@ -235,12 +237,14 @@ func New(
 	if config.ResourceManager.DispatcherRM != nil {
 		// slurm type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.DispatcherRM, config.ResourcePools, tlsConfig, opts.LoggingOptions, db,
+			slurmSchedulerType, config.ResourceManager.DispatcherRM, config.ResourcePools,
+			tlsConfig, opts.LoggingOptions, db,
 		)
 	} else {
 		// pbs type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig, opts.LoggingOptions, db,
+			pbsSchedulerType, config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig,
+			opts.LoggingOptions, db,
 		)
 	}
 
@@ -256,6 +260,7 @@ func New(
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
 type dispatcherResourceManager struct {
 	db                            *db.PgDB
+	wlmType                       wlmType
 	rmConfig                      *config.DispatcherResourceManagerConfig
 	poolConfig                    []config.ResourcePoolConfig
 	apiClient                     *launcherAPIClient
@@ -267,7 +272,6 @@ type dispatcherResourceManager struct {
 	loggingConfig                 model.LoggingConfig
 	jobWatcher                    *launcherMonitor
 	resourceDetails               hpcResourceDetailsCache
-	wlmType                       string
 	poolProviderMap               map[string][]string
 	dispatchIDToHPCJobID          map[string]string
 	dispatchIDToAllocationIDMutex sync.RWMutex
@@ -276,6 +280,7 @@ type dispatcherResourceManager struct {
 }
 
 func newDispatcherResourceManager(
+	wlmType wlmType,
 	rmConfig *config.DispatcherResourceManagerConfig,
 	poolConfig []config.ResourcePoolConfig,
 	masterTLSConfig model.TLSClientConfig,
@@ -301,6 +306,7 @@ func newDispatcherResourceManager(
 
 	result := &dispatcherResourceManager{
 		db:       db,
+		wlmType:  wlmType,
 		rmConfig: rmConfig,
 
 		apiClient:                apiClient,
@@ -384,12 +390,12 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(handler)
 
 	case sproto.GetAllocationSummary:
-		if resp := m.reqList.TaskSummary(msg.ID, m.groups, slurmSchedulerType); resp != nil {
+		if resp := m.reqList.TaskSummary(msg.ID, m.groups, string(m.wlmType)); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case sproto.GetAllocationSummaries:
-		ctx.Respond(m.reqList.TaskSummaries(m.groups, slurmSchedulerType))
+		ctx.Respond(m.reqList.TaskSummaries(m.groups, string(m.wlmType)))
 
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := m.summarizeResourcePool(ctx)
@@ -1561,8 +1567,6 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 
 	dispatchID := dispatchInfo.GetDispatchId()
 
-	m.determineWlmType(dispatchInfo, ctx)
-
 	owner := "launcher"
 
 	defer m.ResourceQueryPostActions(ctx, dispatchID, owner)
@@ -1618,25 +1622,6 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 	ctx.Log().Debugf("default resource pools are '%s', '%s'",
 		m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
-}
-
-// determineWlmType determines the WLM type of the cluster from the dispatchInfo response.
-func (m *dispatcherResourceManager) determineWlmType(
-	dispatchInfo launcher.DispatchInfo, ctx *actor.Context,
-) {
-	reporter := ""
-	for _, e := range *dispatchInfo.Events {
-		if strings.HasPrefix(e.GetMessage(), "Successfully launched payload") {
-			reporter = e.GetReporter()
-			break
-		}
-	}
-	switch reporter {
-	case slurmResourcesCarrier:
-		m.wlmType = slurmSchedulerType
-	case pbsResourcesCarrier:
-		m.wlmType = pbsSchedulerType
-	}
 }
 
 // hpcResourcesToDebugLog puts a summary of the available HPC resources to the debug log.

@@ -213,7 +213,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 func Test_summarizeResourcePool(t *testing.T) {
 	type args struct {
 		ctx              *actor.Context
-		wlmType          string
+		wlmType          wlmType
 		launcherPoolName string
 	}
 
@@ -413,12 +413,12 @@ func Test_summarizeResourcePool(t *testing.T) {
 			}
 
 			m := &dispatcherResourceManager{
+				wlmType:  tt.args.wlmType,
 				rmConfig: rmConfig,
 				resourceDetails: hpcResourceDetailsCache{
 					lastSample: *hpcResource,
 					sampleTime: time.Now(),
 				},
-				wlmType:    tt.args.wlmType,
 				poolConfig: dpPools,
 			}
 
@@ -575,88 +575,6 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 			}
 			if aux != tt.wantAux {
 				t.Errorf("selectDefaultPools() aux got = %v, want %v", aux, tt.wantAux)
-			}
-		})
-	}
-}
-
-func Test_dispatcherResourceManager_determineWlmType(t *testing.T) {
-	type fields struct{}
-	type args struct {
-		dispatchInfo  launcher.DispatchInfo
-		ctx           *actor.Context
-		reporter      string
-		message       string
-		wantedWlmType string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		{
-			name:   "Expect Slurm",
-			fields: fields{},
-			args: args{
-				ctx:           &actor.Context{},
-				reporter:      slurmResourcesCarrier,
-				message:       "Successfully launched payload x",
-				wantedWlmType: "slurm",
-			},
-		},
-		{
-			name:   "Expect PBS",
-			fields: fields{},
-			args: args{
-				ctx:           &actor.Context{},
-				reporter:      pbsResourcesCarrier,
-				message:       "Successfully launched payload x",
-				wantedWlmType: "pbs",
-			},
-		},
-		{
-			name:   "PBS ran, but failed",
-			fields: fields{},
-			args: args{
-				ctx:           &actor.Context{},
-				reporter:      pbsResourcesCarrier,
-				message:       "UnSuccessfully launched payload x",
-				wantedWlmType: "",
-			},
-		},
-		{
-			name:   "Neither PBS nor Slurm responded",
-			fields: fields{},
-			args: args{
-				ctx:           &actor.Context{},
-				reporter:      "com.cray.analytics.capsules.carriers.hpc.other.OtherResources",
-				message:       "Successfully launched payload x",
-				wantedWlmType: "",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &dispatcherResourceManager{}
-			someReporter := "someone"
-			someMessage := "the message"
-			event1 := launcher.Event{
-				Reporter: &someReporter,
-				Message:  &someMessage,
-			}
-			event2 := launcher.Event{
-				Reporter: &tt.args.reporter,
-				Message:  &tt.args.message,
-			}
-
-			di := launcher.DispatchInfo{
-				Events: &[]launcher.Event{event1, event2},
-			}
-
-			m.determineWlmType(di, tt.args.ctx)
-
-			if m.wlmType != tt.args.wantedWlmType {
-				t.Errorf("selectDefaultPools() compute got = %v, want %v", m.wlmType, tt.args.wantedWlmType)
 			}
 		})
 	}
