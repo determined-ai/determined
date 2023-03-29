@@ -24,7 +24,11 @@ def main(
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
     ds_config = get_ds_config_from_hparams(hparams)
-    if ds_config.get("autotuning", {}).get("model_info_path"):
+    is_model_profile_info_run = ds_config.get("autotuning", {}).get("model_info_path") is not None
+
+    # We will simulate periodic OOMs.
+    should_oom = False
+    if is_model_profile_info_run:
         path = _defaults.MODEL_INFO_PROFILING_PATH
         metrics = {
             "num_params": 1,
@@ -33,16 +37,21 @@ def main(
             "rank": 0,
         }
     else:
+        should_oom = random.randint(0, 3) == 0
         path = _defaults.AUTOTUNING_RESULTS_PATH
         metrics = {"throughput": random.randint(1, 100)}
-    with open(path, "w") as f:
-        json.dump(metrics, f)
+    if not should_oom:
+        with open(path, "w") as f:
+            json.dump(metrics, f)
 
     steps_completed = 0
     for op in core_context.searcher.operations():
         steps_completed = op.length
         with dsat.dsat_reporting_context(core_context, op, steps_completed):
-            exit()
+            if not is_model_profile_info_run and should_oom:
+                raise RuntimeError("CUDA out of memory.")
+            else:
+                exit()
         if core_context.preempt.should_preempt():
             return
 
