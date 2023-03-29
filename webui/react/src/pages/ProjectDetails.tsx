@@ -26,6 +26,7 @@ import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import ExperimentList from './ExperimentList';
+import F_ExperimentList from './F_ExpList/F_ExperimentList';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
@@ -37,6 +38,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
+  const f_explist = useFeature().isOn('explist_v2') || true;
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -91,7 +93,12 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              <ExperimentList project={project} />
+              <F_ExperimentList project={project} />
+              {/* {f_explist ? (
+                <F_ExperimentList project={project} />
+              ) : (
+                <ExperimentList project={project} />
+              )} */}
             </div>
           </div>
         ),

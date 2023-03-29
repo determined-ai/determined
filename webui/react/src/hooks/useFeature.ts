@@ -11,6 +11,7 @@ export type ValidFeature =
   | 'trials_comparison'
   | 'mock_permissions_all'
   | 'dashboard'
+  | 'explist_v2'
   | 'chart';
 
 const queryParams = queryString.parse(window.location.search);
