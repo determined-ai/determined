@@ -53,7 +53,7 @@ AUTOTUNING_DICT = {
     "mp_size": 1,
     "num_tuning_micro_batch_sizes": 5,
     "tuner_type": "model_based",
-    "tuner_early_stopping": 10,
-    "tuner_num_trials": 20,
+    "tuner_early_stopping": 25,
+    "tuner_num_trials": 25,
     "arg_mappings": None,
 }

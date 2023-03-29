@@ -1,12 +1,10 @@
 import json
-import logging
 import os
 import pathlib
 import random
-import re
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Generator, List, Union
 
 import torch
 from ruamel import yaml
@@ -15,23 +13,11 @@ import determined as det
 from determined.pytorch.deepspeed.dsat import _defaults
 
 
-def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
+def get_config_dict_from_yaml_path(path: str) -> Dict[str, Any]:
     config = yaml.YAML(typ="safe")
     with open(path, "r") as f:
-        config_dict = config.load(f)
+        config_dict: dict = config.load(f)
     return config_dict
-
-
-def get_non_decimal_number_in_line(line: str) -> float:
-    num_str = re.search(r"\b\d+\b", line).group()
-    num = float(num_str)
-    return num
-
-
-def get_decimal_number_in_line(line: str) -> float:
-    num_str = re.search(r"\b\d*\.\d+\b", line).group()
-    num = float(num_str)
-    return num
 
 
 @contextmanager
@@ -39,7 +25,7 @@ def dsat_reporting_context(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
     steps_completed: int,
-) -> None:
+) -> Generator[None, None, None]:
     """
     Call the DeepSpeed model engine's `forward` method within this context to intercept the `exit`
     call utilized by DS when autotuning and report the results back to Determined.  All other pieces
@@ -71,7 +57,8 @@ def dsat_reporting_context(
                 add_gpu_info=add_gpu_info,
                 path=path,
             )
-        raise se
+        else:
+            raise se
 
 
 def report_oom(
@@ -82,10 +69,6 @@ def report_oom(
 ) -> None:
     is_chief = core_context.distributed.rank == 0
     if is_chief:
-        logging.info(
-            "******************* GPU Out of Memory: Shutting down Trial ******************"
-        )
-        logging.info(oom_error_string)
         # TODO: use the information in the error string somehow?
         report_oom_dict = {_defaults.OOM_KEY: True, "OOM_message": oom_error_string}
         core_context.train.report_validation_metrics(
@@ -137,11 +120,11 @@ def file_or_dir_exists(
 def get_zero_optim_keys_and_defaults_per_stage(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
-    default_settings = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    keys_and_defaults = default_settings[0]
+    keys_and_defaults: dict = default_settings[0]
     for stage in range(1, zero_stage + 1):
         keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
     return keys_and_defaults
