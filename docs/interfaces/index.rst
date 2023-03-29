@@ -13,12 +13,6 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="cli-reference.html">
-                 <h2 class="tile-title">CLI Reference</h2>
-                 <p class="tile-description">Reference page for the Determined CLI commands.</p>
-             </a>
-         </div>
-         <div class="tile-container">
              <a class="tile" href="commands-and-shells.html">
                  <h2 class="tile-title">Commands and Shells</h2>
                  <p class="tile-description">You can use a Determined cluster to run free-form programs.</p>

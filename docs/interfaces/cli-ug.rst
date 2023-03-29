@@ -1,21 +1,13 @@
 .. _cli-ug:
 
 ################
- CLI User Guide
+ Determined CLI
 ################
 
-This user guide provides instructions for using the Determined Command-Line Interface (CLI),
-including installion and upgrade.
-
-+------------------------------------------+
-| Visit the CLI reference                  |
-+==========================================+
-| :ref:`cli`                               |
-+------------------------------------------+
-
-To use Determined, you'll need, at minimum, the Determined CLI and a Determined cluster. The
-Determined CLI provides an extensive list of options to manage every aspect of your machine learning
-experiments. Some examples of tasks include managing agents, models, trials, and notebooks.
+To use Determined, you'll need, at minimum, the Determined Command-Line Interface (CLI) and a
+Determined cluster. The Determined CLI includes the ``det`` command line tools for interacting with
+a Determined cluster. This page contains instructions for using the CLI, including installion and
+upgrade.
 
 .. warning::
 
@@ -54,8 +46,41 @@ address. To do this, set the ``DET_MASTER`` environment variable:
 
    export DET_MASTER=<master IP>
 
-You might want to place this into the appropriate configuration file for your login shell, such as
-``.bashrc``.
+Place this into the appropriate configuration file for your login shell, such as ``.bashrc``.
+
+Verifying Installation
+======================
+
+To verify that the Determined CLI has been installed correctly, use the following command:
+
+.. code:: bash
+
+   det --version
+
+This command displays the installed version of the Determined CLI. If the installation was
+successful, you should see the version number in the output.
+
+Uninstalling
+============
+
+If you need to uninstall the Determined CLI, use the following command:
+
+.. code:: bash
+
+   pip uninstall determined-cli
+
+This command uninstalls the Determined CLI from your system.
+
+Upgrading
+=========
+
+To upgrade the Determined CLI to the latest version, use the following command:
+
+.. code:: bash
+
+   pip install --upgrade determined-cli
+
+This command upgrades the Determined CLI to the latest available version.
 
 *****************
  Getting Started
@@ -91,72 +116,85 @@ a missing ``<verb>``:
    $ det slot
    $ det s
 
-**************
- Getting Help
-**************
-
-For a comprehensive list of nouns and abbreviations, use ``det help``. Each noun has a ``help`` verb
-detailing its associated verbs. For example, to view help for the experiment command, use:
-
-.. code:: bash
-
-   det help experiment
-
-Using the ``-h`` or ``--help`` argument on objects or actions prints a help message and exits the
-CLI.
-
-*********
- Upgrade
-*********
-
-To upgrade the Determined CLI to the latest version, use the following command:
-
-.. code:: bash
-
-   pip install --upgrade determined-cli
-
-This command upgrades the Determined CLI to the latest available version.
-
-*********************
- Verify Installation
-*********************
-
-To verify that the Determined CLI has been installed correctly, use the following command:
-
-.. code:: bash
-
-   det --version
-
-This command displays the installed version of the Determined CLI. If the installation was
-successful, you should see the version number in the output.
-
 ***********
- Uninstall
+ CLI Usage
 ***********
 
-If you need to uninstall the Determined CLI, use the following command:
+For a comprehensive list of nouns and abbreviations, use ``det help`` or ``det -h``. Each noun has a
+``help`` verb detailing its associated verbs.
 
 .. code:: bash
 
-   pip uninstall determined-cli
+   usage: det [-h] [-u username] [-m address] [-v] command ...
 
-This command uninstalls the Determined CLI from your system.
+   Determined command-line client
 
-***********************
- Environment Variables
-***********************
+   positional arguments:
+     command
+       help                show help for this command
+       auth                manage auth
+       agent (a)           manage agents
+       command (cmd)       manage commands
+       checkpoint (c)      manage checkpoints
+       deploy (d)          manage deployments
+       experiment (e)      manage experiments
+       job (j)             manage job
+       master (m)          manage master
+       model (m)           manage models
+       notebook            manage notebooks
+       oauth               manage OAuth
+       preview-search      preview search
+       resources (res)     query historical resource allocation
+       shell               manage shells
+       slot (s)            manage slots
+       task                manage tasks (commands, experiments, notebooks,
+                           shells, tensorboards)
+       template (tpl)      manage config templates
+       tensorboard         manage TensorBoard instances
+       trial (t)           manage trials
+       user (u)            manage users
+       version             show version information
 
--  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
-   be overridden using the ``-m`` flag.
+   optional arguments:
+     -h, --help            show this help message and exit
+     -u username, --user username
+                           run as the given user (default: None)
+     -m address, --master address
+                           master address (default: localhost:8080)
+     -v, --version         print CLI version and exit
 
--  ``DET_USER`` and ``DET_PASS``: Specifies the current Determined user and password for use when
-   non-interactive behaviour is required such as scripts. ``det user login`` is preferred for normal
-   usage. Both ``DET_USER`` and ``DET_PASS`` must be set together to take effect. These variables
-   can be overridden by using the ``-u`` flag.
+Syntax
+======
 
-****************
- Usage Examples
-****************
+To use the CLI tool, follow the proper syntax.
+
+``det [-h] [-u username] [-m address] [-v] command ...``
+
+-  det: This is the main command you'll use for interacting with the Determined AI CLI.
+
+-  [-h]: The square brackets indicate that this is an optional argument. ``-h``or ``--help`` can be
+   used to display a help message and exit. If you need information about a specific command, add
+   the ``-h`` flag after the ``det`` command.
+
+-  [-u username]: Another optional argument, ``-u`` or ``--user`` allows you to run the command as a
+   specific user. Replace username with the desired username. For example, to run a command as user
+   "abbie", you would use ``det -u abbie`` command.
+
+-  [-m address]: This optional argument, ``-m`` or ``--master``, lets you specify the master address
+   for the Determined cluster. Replace address with the actual address of the master, e.g.,
+   ``localhost:8080``.
+
+-  [-v]: The ``-v`` or ``--version`` flag is another optional argument that you can use to print the
+   CLI version and exit.
+
+-  command: This represents the specific subcommand you want to execute such as ``list``, ``pause``,
+   ``logs``, or ``kill``. You'll replace command with the actual command you want to run.
+
+-  ...: The ellipsis signifies that you can provide additional arguments, options, or values,
+   depending on the subcommand you choose.
+
+Usage Examples
+==============
 
 .. list-table::
    :header-rows: 1
@@ -179,7 +217,7 @@ This command uninstalls the Determined CLI from your system.
 
    -  -  View a snapshot of logs
       -  Display the most recent logs for a specific command.
-      -  det command logs <command_id>
+      -  ``det command logs <command_id>``
       -  -f, --tail
 
    -  -  View logs for a trial.
@@ -233,13 +271,78 @@ This command uninstalls the Determined CLI from your system.
       -  ``det u create --admin hoid``
       -
 
-*******************
- Related Resources
-*******************
+***********************
+ Environment Variables
+***********************
 
--  :ref:`commands-and-shells`
--  :ref:`notebooks`
--  :ref:`qs-mdldev`
--  :ref:`determined-on-kubernetes`
--  :ref:`security-overview`
--  :ref:`master-config-reference`
+-  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
+   be overridden using the ``-m`` flag.
+
+-  ``DET_USER`` and ``DET_PASS``: Specifies the current Determined user and password for use when
+   non-interactive behaviour is required such as scripts. ``det user login`` is preferred for normal
+   usage. Both ``DET_USER`` and ``DET_PASS`` must be set together to take effect. These variables
+   can be overridden by using the ``-u`` flag.
+
+**************
+ Getting Help
+**************
+
+Using the ``-h`` or ``--help`` argument on objects or actions prints a help message and exits the
+CLI. For example, to print usage for the ``deploy`` command, run the following:
+
+.. code:: bash
+
+   det deploy -h
+
+Similarly, you can get help for a subcommand. For example, to get help for ``deploy aws``:
+
+.. code:: bash
+
+   det deploy aws -h
+
+Use Case: Getting Help for ``experiment`` Command
+=================================================
+
+Let's say we want to discover how to download the checkpoint with the best validation metric for a
+specific trial. We first want to know how to get our trial ID.
+
+-  To find this information, we'll use the ``-h`` option with the ``experiment`` command.
+
+.. code:: bash
+
+   det experiment -h
+
+From the help output, we can see that the ``list`` or ``ls`` command provides a list of experiments.
+
+-  To get usage information for this command, we'll run the following:
+
+.. code:: bash
+
+   det experiment ls -h
+
+-  From the help output, we can see that the ``all`` or ``a`` option shows all experiments.
+-  Now we can run the command to list all experiments including the experiment ID which is the same
+   as the trial ID.
+
+.. code:: bash
+
+   det experiment ls -a
+
+The CLI tool prints a list of all experiments along with the ID for each experiment. Let's say the
+experiment we want to download the checkpoint for has an ID of ``5``.
+
+-  Now that we have our experiment ID, we want to get usage information for the ``download``
+   subcommand of the ``trial`` command:
+
+.. code:: bash
+
+   det trial download -h
+
+The CLI prints usage information for the subcommand.
+
+-  With this usage information, we can write a command to tell the CLI tool to download the
+   checkpoint with the best validation metric for our experiment (trial):
+
+.. code:: bash
+
+   det trial download --best 5

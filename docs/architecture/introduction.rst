@@ -29,7 +29,7 @@ Commands and Shells
 ===================
 
 In addition to structured model training workloads, which are handled using :ref:`experiments
-<experiments>`, Determined also supports more free-form tasks using *commands* and *shells*.
+<experiments>`, Determined also supports more free-form tasks using :ref:`commands-and-shells`.
 
 Commands execute a user-specified program on the cluster. Shells start SSH servers that allow using
 cluster resources interactively.
@@ -39,8 +39,9 @@ write code conforming to the trial APIs. Commands are useful for running existin
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
 
-This document provides an overview of the most common CLI commands related to shells and commands;
-see :ref:`cli` for full documentation.
+.. note::
+
+   For information about the Determined CLI, visit :ref:`cli-ug`.
 
 Configuration Templates
 =======================

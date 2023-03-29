@@ -276,7 +276,7 @@ For more information on experiment configuration, see the :ref:`experiment confi
  Run an Experiment
 *******************
 
-The Determined CLI can be used to create a new experiment, which will immediately start running on
+:ref:`The Determined CLI <cli-ug>` can be used to create a new experiment, which will immediately start running on
 the cluster. To do this, we run:
 
 .. code::
@@ -286,8 +286,7 @@ the cluster. To do this, we run:
 Here, the first argument (``const.yaml``) is the name of the experiment configuration file and the
 second argument (``.``) is the location of the directory that contains our model definition files.
 You may need to configure the CLI with the network address where the Determined master is running,
-via the ``-m`` flag or the ``DET_MASTER`` environment variable. For more information, see the
-:ref:`CLI reference page <cli>`.
+via the ``-m`` flag or the ``DET_MASTER`` environment variable. 
 
 Once the experiment is started, you will see a notification:
 

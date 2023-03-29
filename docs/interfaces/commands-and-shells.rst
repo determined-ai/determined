@@ -8,8 +8,7 @@ Determined Commands and Shells provide support for running a Determined cluster 
 model. This article describes how to manage GPU-powered batch commands and interactive shells.
 
 To learn about the Determined Command-Line Interface (CLI) including installation instructions,
-visit the following resources: - :ref:`the Determined CLI User Guide <cli-ug>` - :ref:`the
-Determined CLI Reference Guide <cli>`
+visit the :ref:`cli-ug`.
 
 Commands execute a user-specified program on the cluster. Commands are useful for running existing
 code in batch mode. Shells start SSH servers that let you use cluster resources interactively.

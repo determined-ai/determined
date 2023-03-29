@@ -63,7 +63,6 @@
 
    Overview <interfaces/index>
    CLI User Guide <interfaces/cli-ug>
-   CLI Reference <interfaces/cli-reference>
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>

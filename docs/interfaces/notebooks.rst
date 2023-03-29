@@ -236,7 +236,7 @@ functionality.
  Use the Determined CLI in Notebooks
 *************************************
 
-The Determined CLI is installed into notebook containers by default. This allows users to interact
+The :ref:`cli-ug` is installed into notebook containers by default. This allows users to interact
 with Determined from inside a notebook---e.g., to launch new deep learning workloads or examine the
 metrics from an active or historical Determined experiment. For example, to list Determined
 experiments from inside a notebook, run the notebook command ``!det experiment list``.
