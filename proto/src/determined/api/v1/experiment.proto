@@ -222,6 +222,8 @@ message ActivateExperimentsRequest {
 
   // Select experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
 // Response to ActivateExperimentsRequest.
 message ActivateExperimentsResponse {
@@ -241,6 +243,26 @@ message PauseExperimentRequest {
 // Response to PauseExperimentRequest.
 message PauseExperimentResponse {}
 
+// Filters to apply actions to multiple experiments.
+message BulkExperimentFilters {
+  // Limit experiments to those that match the description.
+  string description = 1;
+  // Limit experiments to those that match the name.
+  string name = 2;
+  // Limit experiments to those that match the provided labels.
+  repeated string labels = 3;
+  // Limit experiments to those that are archived.
+  google.protobuf.BoolValue archived = 4;
+  // Limit experiments to those that match the provided state.
+  repeated determined.experiment.v1.State states = 5;
+  // Limit experiments to those that are owned by users with the specified
+  // userIds.
+  repeated int32 user_ids = 6;
+  // Limit experiments to those within a specified project, or 0 for all
+  // projects.
+  int32 project_id = 7;
+}
+
 // Pause multiple experiments.
 message PauseExperimentsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -249,7 +271,10 @@ message PauseExperimentsRequest {
 
   // Selecting experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
+
 // Response to PauseExperimentsRequest.
 message PauseExperimentsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -276,6 +301,8 @@ message CancelExperimentsRequest {
 
   // Selecting experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
 // Response to CancelExperimentsRequest.
 message CancelExperimentsResponse {
@@ -303,6 +330,8 @@ message KillExperimentsRequest {
 
   // Selecting experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
 // Response to KillExperimentsRequest.
 message KillExperimentsResponse {
@@ -330,6 +359,8 @@ message ArchiveExperimentsRequest {
 
   // Selecting experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
 // Response to ArchiveExperimentsRequest.
 message ArchiveExperimentsResponse {
@@ -357,6 +388,8 @@ message UnarchiveExperimentsRequest {
 
   // Selecting experiments by id.
   repeated int32 experiment_ids = 1;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 2;
 }
 // Response to UnarchiveExperimentsRequest.
 message UnarchiveExperimentsResponse {
@@ -761,6 +794,8 @@ message MoveExperimentsRequest {
   repeated int32 experiment_ids = 1;
   // The id of the new parent project.
   int32 destination_project_id = 2;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 3;
 }
 
 // Response to MoveExperimentsRequest.

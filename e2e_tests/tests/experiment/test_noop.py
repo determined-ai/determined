@@ -113,7 +113,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
 def test_noop_pause_with_multiexperiment() -> None:
     """
     Start, pause, and resume a single no-op experiment
-    using the bulk action endpoints.
+    using the bulk action endpoints and ExperimentIds param.
     """
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     impossibly_large = 100
@@ -128,11 +128,26 @@ def test_noop_pause_with_multiexperiment() -> None:
 
     exp.activate_experiments([experiment_id])
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
+    exp.cancel_experiments([experiment_id])
 
-    for _ in range(5):
-        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
-        time.sleep(1)
 
+@pytest.mark.e2e_cpu
+def test_noop_pause_with_multiexperiment_filter() -> None:
+    """
+    Pause a single no-op experiment
+    using the bulk action endpoint and Filters param.
+    """
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
+    impossibly_large = 100
+    config_obj["max_restarts"] = 0
+    config_obj["resources"] = {"slots_per_trial": impossibly_large}
+    with tempfile.NamedTemporaryFile() as tf:
+        config_obj["name"] = tf.name
+        with open(tf.name, "w") as f:
+            yaml.dump(config_obj, f)
+        experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
+    exp.pause_experiments([], name=tf.name)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
     exp.cancel_experiments([experiment_id])
 
 

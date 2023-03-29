@@ -826,6 +826,12 @@ export interface V1ActivateExperimentsRequest {
      * @memberof V1ActivateExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to ActivateExperimentsRequest.
@@ -1172,6 +1178,12 @@ export interface V1ArchiveExperimentsRequest {
      * @memberof V1ArchiveExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1ArchiveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to ArchiveExperimentsRequest.
@@ -1386,6 +1398,55 @@ export interface V1AwsCustomTag {
     value: string;
 }
 /**
+ * Filters to apply actions to multiple experiments.
+ * @export
+ * @interface V1BulkExperimentFilters
+ */
+export interface V1BulkExperimentFilters {
+    /**
+     * Limit experiments to those that match the description.
+     * @type {string}
+     * @memberof V1BulkExperimentFilters
+     */
+    description?: string;
+    /**
+     * Limit experiments to those that match the name.
+     * @type {string}
+     * @memberof V1BulkExperimentFilters
+     */
+    name?: string;
+    /**
+     * Limit experiments to those that match the provided labels.
+     * @type {Array<string>}
+     * @memberof V1BulkExperimentFilters
+     */
+    labels?: Array<string>;
+    /**
+     * Limit experiments to those that are archived.
+     * @type {boolean}
+     * @memberof V1BulkExperimentFilters
+     */
+    archived?: boolean;
+    /**
+     * Limit experiments to those that match the provided state.
+     * @type {Array<Experimentv1State>}
+     * @memberof V1BulkExperimentFilters
+     */
+    states?: Array<Experimentv1State>;
+    /**
+     * Limit experiments to those that are owned by users with the specified userIds.
+     * @type {Array<number>}
+     * @memberof V1BulkExperimentFilters
+     */
+    userIds?: Array<number>;
+    /**
+     * Limit experiments to those within a specified project, or 0 for all projects.
+     * @type {number}
+     * @memberof V1BulkExperimentFilters
+     */
+    projectId?: number;
+}
+/**
  * Response to CancelExperimentRequest.
  * @export
  * @interface V1CancelExperimentResponse
@@ -1404,6 +1465,12 @@ export interface V1CancelExperimentsRequest {
      * @memberof V1CancelExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1CancelExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to CancelExperimentsRequest.
@@ -4411,6 +4478,12 @@ export interface V1KillExperimentsRequest {
      * @memberof V1KillExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1KillExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to KillExperimentsRequest.
@@ -5271,6 +5344,12 @@ export interface V1MoveExperimentsRequest {
      * @memberof V1MoveExperimentsRequest
      */
     destinationProjectId: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1MoveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to MoveExperimentsRequest.
@@ -5908,6 +5987,12 @@ export interface V1PauseExperimentsRequest {
      * @memberof V1PauseExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1PauseExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to PauseExperimentsRequest.
@@ -9211,6 +9296,12 @@ export interface V1UnarchiveExperimentsRequest {
      * @memberof V1UnarchiveExperimentsRequest
      */
     experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1UnarchiveExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to UnarchiveExperimentsRequest.
