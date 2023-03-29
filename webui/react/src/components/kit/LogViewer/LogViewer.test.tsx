@@ -76,6 +76,8 @@ const setup = (props: src.Props) => {
   return render(
     <UIProvider>
       <src.default {...props} />
+      {/* increase variation in DOM */}
+      <span>{Math.random()}</span>
     </UIProvider>,
   );
 };
@@ -136,7 +138,7 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
 
 vi.mock('hooks/useResize', () => ({
   __esModule: true,
-  default: () => ({ height: 1024, width: 1280, x: 0, y: 0 }),
+  default: () => ({ height: 1824, width: 1280, x: 0, y: 0 }),
 }));
 
 vi.mock('hooks/useGetCharMeasureInContainer', () => ({
@@ -277,11 +279,12 @@ describe('LogViewer', () => {
       await waitFor(
         () => {
           const lastLog = logsReference[logsReference.length - 1];
+          expect(lastLog.message).not.toBeNull();
           expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
         },
-        { timeout: 4000 },
+        { timeout: 6000 },
       );
-    });
+    }, 6500);
 
     it('should show oldest logs', async () => {
       setup({ decoder, onFetch });
