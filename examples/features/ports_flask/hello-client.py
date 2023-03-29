@@ -26,13 +26,15 @@ def _parse_exp_id(proc: "subprocess.Popen[str]") -> int:
 
 @contextlib.contextmanager
 def launch_server() -> Iterator[None]:
+    print("Starting hello-server...")
     cmd = ["det", "e", "create", "hello-server.yaml", ".", "-f", "-p", "5000"]
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     exp_id = _parse_exp_id(proc)
     print(f"Server experiment id: {exp_id}")
     # TODO: instead of the sleep, we could check if the experiment is running.
     time.sleep(5)
     yield
+    print("Killing hello-server...")
     cmd = ["det", "e", "kill", str(exp_id)]
     subprocess.run(cmd)
 
@@ -51,17 +53,17 @@ if __name__ == "__main__":
     URL = "http://localhost:5000/hello"
     with launch_server():
         # Probe the server liveliness.
-        print("Probing...")
+        print("Probing the server liveliness...")
         for _i in range(3 * 60):
             try:
                 r = requests.get(URL, timeout=3)
                 if r.status_code == 200:
                     break
-                print(f"Bad status code: {r.status_code}")
+                print(f"Bad status code: {r.status_code}, retrying...")
             except requests.exceptions.ConnectionError:
-                print("ConnectionError")
+                print("ConnectionError, retrying...")
             except requests.exceptions.ReadTimeout:
-                print("ReadTimeout")
+                print("ReadTimeout, retrying...")
             time.sleep(1.0)
         else:
             raise ValueError("Probe failure")
@@ -69,5 +71,6 @@ if __name__ == "__main__":
         r = requests.get(URL)
         r.raise_for_status()
         resp_json = r.json()
-        print(resp_json)
+        print("Got server response: ", resp_json)
         assert resp_json["data"] == "Hello World"
+        print("SUCCESS!")

@@ -8,3 +8,10 @@ This example includes two experiments:
 To launch this example:
 
     det e create hello-client.yaml . -f
+
+Upon successful completion, you should see the following in the experiment logs:
+
+    Got server response:  {'data': 'Hello World'}
+    SUCCESS!
+    Killed experiment <hello-server experiment id>
+    hello-server is killed.
