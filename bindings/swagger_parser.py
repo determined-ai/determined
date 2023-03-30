@@ -85,11 +85,11 @@ class Parameter:
         assert self.where in ("query", "body", "path", "definitions"), (self.name, self.where)
         assert self.where != "path" or self.required, self.name
         if self.where == "path":
-            if not isinstance(self.type, (String, Int, Bool)):
+            if not isinstance(self.type, (String, Int)):
                 raise AssertionError(f"bad type in path parameter {self.name}: {self.type}")
         if self.where == "query":
             underlying_typ = self.type.items if isinstance(self.type, Sequence) else self.type
-            if not isinstance(underlying_typ, (String, Int, Bool, DateTime)):
+            if not isinstance(underlying_typ, (String, Int, Bool, DateTime, Float)):
                 if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
                     raise AssertionError(f"bad type in query parameter {self.name}: {self.type}")
 

@@ -321,6 +321,9 @@ The master supports the following configuration settings:
          standard location on the compute node. For example,
          ``LD_LIBRARY_PATH=/cm/shared/apps/slurm/21.08.6/lib:/cm/shared/apps/slurm/21.08.6/lib/slurm:${LD_LIBRARY_PATH}``.
 
+      -  ``launcher_jvm_args``: Provides an override of the default HPC launcher JVM heap
+         configuration.
+
       -  ``tres_supported``: Indicates if ``SelectType=select/cons_tres`` is set in the Slurm
          configuration. Affects how Determined requests GPUs from Slurm. The default is true.
 

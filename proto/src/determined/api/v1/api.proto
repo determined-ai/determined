@@ -1749,6 +1749,16 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Get a list of columns for experiment list table.
+  rpc GetProjectColumns(GetProjectColumnsRequest)
+      returns (GetProjectColumnsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}/columns"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Create a project.
   rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
     option (google.api.http) = {

@@ -27,6 +27,8 @@ import Pivot from 'components/kit/Pivot';
 import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
@@ -80,6 +82,7 @@ const ComponentTitles = {
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
+  Typography: 'Typography',
   UserAvatar: 'UserAvatar',
 } as const;
 
@@ -98,10 +101,10 @@ interface Props {
 
 const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.Element => {
   return (
-    <section>
+    <article>
       <h3 id={id}>{title}</h3>
       {children}
-    </section>
+    </article>
   );
 };
 
@@ -194,9 +197,6 @@ const ButtonsSection: React.FC = () => {
           <Button disabled type="link">
             Disabled
           </Button>
-          <Button ghost type="link">
-            Ghost
-          </Button>
           <Button loading type="link">
             Loading
           </Button>
@@ -210,9 +210,6 @@ const ButtonsSection: React.FC = () => {
           </Button>
           <Button disabled type="text">
             Disabled
-          </Button>
-          <Button ghost type="text">
-            Ghost
           </Button>
           <Button loading type="text">
             Loading
@@ -344,6 +341,16 @@ const SelectSection: React.FC = () => {
           placeholder="Select"
         />
         <strong>Variations</strong>
+        <strong>Loading Select</strong>
+        <Select
+          loading
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
         <strong>Select with default value</strong>
         <Select
           defaultValue={2}
@@ -1661,6 +1668,39 @@ const TagsSection: React.FC = () => {
   );
 };
 
+const TypographySection: React.FC = () => {
+  return (
+    <ComponentSection id="Typography" title="Typography">
+      <AntDCard>
+        <p>
+          The (<code>{'<Header>'}</code>) is a reusable header element.
+        </p>
+        <p>
+          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element.
+        </p>
+      </AntDCard>
+      <AntDCard title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>
+            For Headers, <code>{'<h1>'}</code> is the default.
+          </li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Typography - Header</strong>
+        <Space>
+          <Header>Header</Header>
+        </Space>
+        <strong>Typography - paragraph</strong>
+        <Space>
+          <Paragraph>this is a paragraph!</Paragraph>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -2185,6 +2225,7 @@ const Components = {
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
+  Typography: <TypographySection />,
   UserAvatar: <UserAvatarSection />,
 };
 
@@ -2213,11 +2254,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
+        <article>
           {componentOrder.map((componentId) => (
             <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
           ))}
-        </main>
+        </article>
       </div>
     </Page>
   );

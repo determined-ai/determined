@@ -8,6 +8,7 @@ import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
@@ -74,7 +75,7 @@ const ModelDetails: React.FC = () => {
     (ws) => ws.id === model?.model.workspaceId,
   );
 
-  const { canModifyModel, canModifyModelVersion } = usePermissions();
+  const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
   const {
     settings,
@@ -413,8 +414,10 @@ const ModelDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!model || lodableWorkspaces === NotLoaded) {
-    return <Spinner tip={`Loading model ${modelId} details...`} />;
+  } else if (pageError && isNotFound(pageError)) {
+    return <PageNotFound />;
+  } else if (!model || lodableWorkspaces === NotLoaded || rbacLoading) {
+    return <Spinner spinning tip={`Loading model ${modelId} details...`} />;
   }
 
   return (

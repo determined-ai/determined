@@ -10,6 +10,7 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
@@ -61,7 +62,7 @@ const ModelVersionDetails: React.FC = () => {
 
   const basePath = paths.modelVersionDetails(modelId, versionNum);
 
-  const { canModifyModelVersion } = usePermissions();
+  const { canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -289,7 +290,9 @@ const ModelVersionDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!modelVersion || !workspace) {
+  } else if (pageError && isNotFound(pageError)) {
+    return <PageNotFound />;
+  } else if (!modelVersion || !workspace || rbacLoading) {
     return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 

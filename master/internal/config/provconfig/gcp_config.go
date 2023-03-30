@@ -32,6 +32,7 @@ type GCPClusterConfig struct {
 
 	BootDiskSize        int    `json:"boot_disk_size"`
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
+	BootDiskType        string `json:"boot_disk_type"`
 
 	Labels     map[string]string `json:"labels"`
 	LabelKey   string            `json:"label_key"`
@@ -55,6 +56,7 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
 		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-9d07809",
+		BootDiskType:        "pd-standard",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -156,6 +158,7 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 				InitializeParams: &compute.AttachedDiskInitializeParams{
 					SourceImage: c.BootDiskSourceImage,
 					DiskSizeGb:  int64(c.BootDiskSize),
+					DiskType:    c.BootDiskType,
 				},
 				AutoDelete: true,
 			},
