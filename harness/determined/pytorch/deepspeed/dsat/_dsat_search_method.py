@@ -481,24 +481,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 last_trial=last_trial,
             )
 
-        if self.trial_tracker.should_stop:
-            # Shutdown if `should_stop` is True, once all currently-running trials have completed.
-            # TODO: Remove print tests.
-            logging.info(
-                f"******** Running Trials: {self.trial_tracker.running_trials_dict} ********"
-            )
-            new_ops_list = (
-                [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
-            )
-        else:
-            new_ops_list = self.get_new_searcher_ops_list(
-                searcher_state=searcher_state,
-                request_id=request_id,
-                metric=metric,
-                last_trial=last_trial,
-            )
-
-        return new_ops_list
+        # All DS AT Trials should be closed after validation.
+        return [searcher.Close(request_id)]
 
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
@@ -507,13 +491,28 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         # ends with an `exit` rather than a Close operation.
         # TODO: Remove print tests and error raising.
         logging.info(f"Calling on_trial_closed for {request_id}")
-        trial = self.trial_tracker[request_id]
-        logging.info("********* Checking that the Closed Trial OOMed *********")
-        logging.info(trial.metric)
-        assert trial.metric.get(
-            _defaults.OOM_KEY
-        ), "`on_trial_closed` called for non-OOM-ing trial."
-        return []
+        last_trial = self.trial_tracker[request_id]
+        logging.info(f"metrics for closed trial {last_trial.metric}")
+        self._state_print_checks(searcher_state)
+
+        if self.trial_tracker.should_stop:
+            # Shutdown if `should_stop` is True, once all currently-running trials have completed.
+            completed_trials = searcher_state.trials_closed | searcher_state.failures
+            running_trials = searcher_state.trials_created - completed_trials
+            new_ops_list = [searcher.Shutdown()] if not running_trials else []
+
+            # new_ops_list = (
+            #     [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
+            # )
+        else:
+            new_ops_list = self.get_new_searcher_ops_list(
+                searcher_state=searcher_state,
+                request_id=request_id,
+                metric=last_trial.metric,
+                last_trial=last_trial,
+            )
+
+        return new_ops_list
 
     def on_trial_exited_early(
         self,
@@ -541,12 +540,13 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             # RuntimeError. Handle theses cases.
             if self.trial_tracker.should_stop:
                 # Shutdown if `should_stop` is True, once all currently-running trials have completed.
-                logging.info(
-                    f"******** Running Trials: {self.trial_tracker.running_trials_dict} ********"
-                )
-                new_ops_list = (
-                    [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
-                )
+                self._state_print_checks(searcher_state)
+                completed_trials = searcher_state.trials_closed | searcher_state.failures
+                running_trials = searcher_state.trials_created - completed_trials
+                new_ops_list = [searcher.Shutdown()] if not running_trials else []
+                # new_ops_list = (
+                #     [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
+                # )
             else:
                 new_ops_list = self.get_new_searcher_ops_list(
                     searcher_state=searcher_state,
@@ -597,6 +597,37 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 self.model_profile_info = None
             else:
                 self.model_profile_info = DSATModelProfilingInfo.from_state_dict(model_profile_info)
+
+    def _state_print_checks(self, searcher_state) -> None:
+        running_trials_from_trial_tracker = {u for u in self.trial_tracker.running_trials_dict}
+        running_trials_from_searcher_state = searcher_state.trials_created - (
+            searcher_state.trials_closed | searcher_state.failures
+        )
+        logging.info(
+            f"******** Trial Tracker running trials ({len(running_trials_from_trial_tracker)}): {running_trials_from_trial_tracker} ********"
+        )
+        logging.info(
+            f"SearcherState: Created Trials ({len(searcher_state.trials_created)}) {searcher_state.trials_created}"
+        )
+        logging.info(
+            f"SearcherState: Closed Trials ({len(searcher_state.trials_closed)}) {searcher_state.trials_closed}"
+        )
+        logging.info(
+            f"SearcherState: Failed Trials ({len(searcher_state.failures)}) {searcher_state.failures}"
+        )
+        searcher_state_failed_and_closed = searcher_state.failures & searcher_state.trials_closed
+        logging.info(
+            f"SearcherState: Failed and Closed Trials ({len(searcher_state_failed_and_closed)}) {searcher_state_failed_and_closed}"
+        )
+        logging.info(
+            f"SearcherState: Running Trials ({len(running_trials_from_searcher_state)}) {running_trials_from_searcher_state}"
+        )
+        logging.info(
+            f"searcher_state - trial_tracker: {running_trials_from_searcher_state - running_trials_from_trial_tracker}"
+        )
+        logging.info(
+            f"trial_tracker - searcher_state: {running_trials_from_trial_tracker - running_trials_from_searcher_state}"
+        )
 
 
 class DSATRandomSearchMethod(DSATSearchMethodBase):
