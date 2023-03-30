@@ -248,22 +248,6 @@ func (db *PgDB) namedExecOne(query string, arg interface{}) error {
 	return nil
 }
 
-// namedGet is a convenience method for a named query for a single value.
-func namedGet(tx *sqlx.Tx, dest interface{}, query string, arg interface{}) error {
-	nstmt, err := tx.PrepareNamed(query)
-	if err != nil {
-		return errors.Wrapf(err, "error preparing query %s", query)
-	}
-	if sErr := nstmt.QueryRowx(arg).Scan(dest); sErr != nil {
-		err = errors.Wrapf(sErr, "error scanning query %s", query)
-	}
-	if cErr := nstmt.Close(); cErr != nil && err != nil {
-		err = errors.Wrap(cErr, "error closing named DB statement")
-	}
-
-	return err
-}
-
 // namedExecOne is a convenience method for a NamedExec that should affect only one row.
 func namedExecOne(tx *sqlx.Tx, query string, arg interface{}) error {
 	res, err := tx.NamedExec(query, arg)

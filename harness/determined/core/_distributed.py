@@ -5,7 +5,6 @@ import socket
 import tempfile
 from typing import Any, List, Optional
 
-import determined as det
 from determined import constants, ipc
 
 
@@ -61,8 +60,8 @@ class DistributedContext:
         self.cross_rank = cross_rank if cross_rank is not None else 0
         self.cross_size = cross_size if cross_size is not None else 1
 
-        self._pub_port = pub_port + port_offset
-        self._pull_port = pull_port + port_offset
+        self._pub_port = pub_port
+        self._pull_port = pull_port
         self._chief_ip = chief_ip
 
         self._is_chief = self.rank == 0
@@ -190,7 +189,6 @@ class DistributedContext:
             cross_rank=hvd.cross_rank(),
             cross_size=hvd.cross_size(),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -211,7 +209,6 @@ class DistributedContext:
             cross_rank=int(os.environ["CROSS_RANK"]),
             cross_size=int(os.environ["CROSS_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -232,7 +229,6 @@ class DistributedContext:
             cross_rank=int(os.environ["GROUP_RANK"]),
             cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_training_port_offset(),
         )
 
     def close(self) -> None:
@@ -420,10 +416,3 @@ class DummyDistributedContext(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
-
-
-def _get_training_port_offset() -> int:
-    info = det.get_cluster_info()
-    if info and info.task_type == "TRIAL":
-        return info.trial._unique_port_offset
-    return 0

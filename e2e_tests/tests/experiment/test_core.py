@@ -494,3 +494,28 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
 
     finally:
         exp.cancel_single(experiment_id)
+
+
+@pytest.mark.e2e_cpu
+def test_experiment_list_columns() -> None:
+    exp.create_experiment(
+        conf.fixtures_path("no_op/single-nested-hps.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--project", "1"],
+    )
+    exp_hyperparameters = [
+        "global_batch_size",
+        "metrics_progression",
+        "metrics_base.min_val",
+        "metrics_base.max_val",
+    ]
+    exp_metrics = ["validation.validation_error"]
+    columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
+    assert len(columns.general) == len(bindings.v1GeneralColumn)
+
+    hyperparameters = columns.hyperparameters
+    for hp in exp_hyperparameters:
+        assert hyperparameters.index(hp) >= 0
+    metrics = columns.metrics
+    for mc in exp_metrics:
+        assert metrics.index(mc) >= 0

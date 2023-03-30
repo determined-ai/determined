@@ -1,6 +1,11 @@
 import { Button as AntdButton } from 'antd';
 import React, { MouseEvent, ReactNode } from 'react';
 
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+
+import css from './Button.module.scss';
+import Tooltip from './Tooltip';
+
 interface ButtonProps {
   block?: boolean;
   children?: ReactNode;
@@ -14,22 +19,29 @@ interface ButtonProps {
   shape?: 'circle' | 'default' | 'round';
   size?: 'large' | 'middle' | 'small';
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
+  tooltip?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
   shape = 'default',
   size = 'middle',
   type = 'default',
+  tooltip = '',
   ...props
 }: ButtonProps) => {
   return (
-    <AntdButton
-      shape={shape}
-      size={size}
-      tabIndex={props.disabled ? -1 : 0}
-      type={type}
-      {...props}
-    />
+    <ConditionalWrapper
+      condition={tooltip.length > 0}
+      wrapper={(children) => <Tooltip title={tooltip}>{children}</Tooltip>}>
+      <AntdButton
+        className={css.base}
+        shape={shape}
+        size={size}
+        tabIndex={props.disabled ? -1 : 0}
+        type={type}
+        {...props}
+      />
+    </ConditionalWrapper>
   );
 };
 

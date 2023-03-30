@@ -1,4 +1,4 @@
-import { Dropdown } from 'antd';
+import { Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -142,13 +142,13 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
-      updateSettings({ name: newSearch || undefined });
+      updateSettings({ name: newSearch || undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined });
+    updateSettings({ name: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
@@ -215,6 +215,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
+        isFiltered: (settings: unknown) => !!(settings as WorkspaceMembersSettings)?.name,
         key: 'name',
         render: nameRenderer,
         sorter: (a: Readonly<UserOrGroupWithRoleInfo>, b: Readonly<UserOrGroupWithRoleInfo>) => {
@@ -251,10 +252,13 @@ const WorkspaceMembers: React.FC<Props> = ({
   return (
     <>
       <div className={css.headerButton}>
-        {rbacEnabled &&
-          canAssignRoles({ workspace }) &&
-          !workspace.immutable &&
-          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
+        <Space>
+          {rbacEnabled &&
+            canAssignRoles({ workspace }) &&
+            !workspace.immutable &&
+            !workspace.archived && <Button onClick={handleAddMembersClick}> Add Member</Button>}
+          {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
+        </Space>
       </div>
       {settings ? (
         <InteractiveTable

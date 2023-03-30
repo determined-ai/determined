@@ -163,10 +163,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 
 class TFKerasTrialController(det.TrialController):
-    @classmethod
-    def create_metric_writer(
-        cls: Type["TFKerasTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
+    def _create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
@@ -320,6 +317,8 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+
+        self.metric_writer = self._create_metric_writer()
 
         self.model = model
         self.session = session
@@ -974,7 +973,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.20.1``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

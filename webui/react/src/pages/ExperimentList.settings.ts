@@ -132,6 +132,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
     },
     row: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'row',
       type: union([undefinedType, array(number)]),
     },

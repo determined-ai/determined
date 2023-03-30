@@ -36,6 +36,7 @@ import {
 
 import { hpImportanceSorter } from '../../utils/experiment';
 
+import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
   ViewType,
@@ -45,7 +46,6 @@ import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
-import css from './ExperimentVisualization.module.scss';
 
 export const ExperimentVisualizationType = {
   HpHeatMap: 'hp-heat-map',
@@ -191,9 +191,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
           ...filters,
           metric: searcherMetric.current,
         });
+      } else if (metrics.length > 0 && !activeMetric) {
+        setActiveMetric(metrics[0]);
+        handleFiltersChange({
+          ...filters,
+          metric: metrics[0],
+        });
       }
     }
-  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics]);
+  }, [hasSearcherMetric, setActiveMetric, handleFiltersChange, filters, metrics, activeMetric]);
 
   const handleTabChange = useCallback(
     (type: string) => {
@@ -425,7 +431,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   } else if (pageError !== undefined) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
-    return <Spinner tip="Fetching metrics..." />;
+    return <Spinner spinning tip="Fetching metrics..." />;
   } else if (!hasData) {
     return isExperimentTerminal || experiment.state === RunState.Paused ? (
       <Message title="No data to plot." type={MessageType.Empty} />

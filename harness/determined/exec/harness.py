@@ -64,7 +64,6 @@ def main(train_entrypoint: str) -> int:
         container_gpus=info.gpu_uuids,
         slot_ids=info.slot_ids,
         debug=info.trial._debug,
-        det_trial_unique_port_offset=info.trial._unique_port_offset,
         det_trial_id=str(info.trial.trial_id),
         det_experiment_id=str(info.trial.experiment_id),
         det_agent_id=info.agent_id,
@@ -155,6 +154,7 @@ def _run_pytorch_trial(
 
             train_context._set_default_gradient_compression(fp16_compression)
             train_context._set_default_average_aggregated_gradients(average_aggregated_gradients)
+            train_context._set_is_pre_trainer()
 
             trial_inst = trial_class(train_context)
 

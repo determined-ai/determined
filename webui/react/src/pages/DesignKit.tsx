@@ -1,9 +1,10 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
-import { LabeledValue, SelectValue } from 'antd/es/select';
+import { SelectValue } from 'antd/es/select';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import Accordion from 'components/kit/Accordion';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -19,14 +20,18 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import { useChartGrid } from 'components/kit/LineChart/useChartGrid';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import LogViewer from 'components/kit/LogViewer/LogViewer';
+import { Modal, useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import Select from 'components/kit/Select';
+import Select, { Option } from 'components/kit/Select';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
+import Header from 'components/kit/Typography/Header';
+import Paragraph from 'components/kit/Typography/Paragraph';
 import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
+import Label from 'components/Label';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -55,6 +60,7 @@ import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
+  Accordion: 'Accordion',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Cards: 'Cards',
@@ -68,6 +74,7 @@ const ComponentTitles = {
   InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
+  Modals: 'Modals',
   Nameplate: 'Nameplate',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
@@ -75,6 +82,7 @@ const ComponentTitles = {
   Tags: 'Tags',
   Toggle: 'Toggle',
   Tooltips: 'Tooltips',
+  Typography: 'Typography',
   UserAvatar: 'UserAvatar',
 } as const;
 
@@ -93,10 +101,10 @@ interface Props {
 
 const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.Element => {
   return (
-    <section>
+    <article>
       <h3 id={id}>{title}</h3>
       {children}
-    </section>
+    </article>
   );
 };
 
@@ -154,12 +162,106 @@ const ButtonsSection: React.FC = () => {
         </ul>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Default Button</strong>
+        <strong>Default Button variations</strong>
+        <Space>
+          <Button>Default</Button>
+          <Button danger>Danger</Button>
+          <Button disabled>Disabled</Button>
+          <Button ghost>Ghost</Button>
+          <Button loading>Loading</Button>
+        </Space>
+        <hr />
+        <strong>Primary Button variations</strong>
         <Space>
           <Button type="primary">Primary</Button>
-          <Button>Secondary</Button>
-          <Button loading>Loading</Button>
-          <Button disabled>Disabled</Button>
+          <Button danger type="primary">
+            Danger
+          </Button>
+          <Button disabled type="primary">
+            Disabled
+          </Button>
+          <Button ghost type="primary">
+            Ghost
+          </Button>
+          <Button loading type="primary">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Link Button variations</strong>
+        <Space>
+          <Button type="link">Link</Button>
+          <Button danger type="link">
+            Danger
+          </Button>
+          <Button disabled type="link">
+            Disabled
+          </Button>
+          <Button loading type="link">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Text Button variations</strong>
+        <Space>
+          <Button type="text">Text</Button>
+          <Button danger type="text">
+            Danger
+          </Button>
+          <Button disabled type="text">
+            Disabled
+          </Button>
+          <Button loading type="text">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Ghost Button variations</strong>
+        <Space>
+          <Button type="ghost">Ghost</Button>
+          <Button danger type="ghost">
+            Danger
+          </Button>
+          <Button disabled type="ghost">
+            Disabled
+          </Button>
+          <Button ghost type="ghost">
+            Ghost
+          </Button>
+          <Button loading type="ghost">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Dashed Button variations</strong>
+        <Space>
+          <Button type="dashed">Dashed</Button>
+          <Button danger type="dashed">
+            Danger
+          </Button>
+          <Button disabled type="dashed">
+            Disabled
+          </Button>
+          <Button ghost type="dashed">
+            Ghost
+          </Button>
+          <Button loading type="dashed">
+            Loading
+          </Button>
+        </Space>
+        <hr />
+        <strong>Shapes</strong>
+        <Space>
+          <Button shape="circle">Circle</Button>
+          <Button shape="default">Default</Button>
+          <Button shape="round">Round</Button>
+        </Space>
+        <hr />
+        <strong>Sizes</strong>
+        <Space>
+          <Button size="large">Large</Button>
+          <Button size="middle">Middle</Button>
+          <Button size="small">Small</Button>
         </Space>
         <hr />
         <strong>Default Button with icon</strong>
@@ -185,8 +287,6 @@ const ButtonsSection: React.FC = () => {
 };
 
 const SelectSection: React.FC = () => {
-  const handleFilter = (input: string, option: LabeledValue | undefined) =>
-    !!(option?.label && option.label.toString().includes(input) === true);
   const [multiSelectValues, setMultiSelectValues] = useState<SelectValue>();
   const [clearableSelectValues, setClearableSelectValues] = useState<SelectValue>();
   const [sortedSelectValues, setSortedSelectValues] = useState<SelectValue>();
@@ -241,6 +341,16 @@ const SelectSection: React.FC = () => {
           placeholder="Select"
         />
         <strong>Variations</strong>
+        <strong>Loading Select</strong>
+        <Select
+          loading
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+          placeholder="Select"
+        />
         <strong>Select with default value</strong>
         <Select
           defaultValue={2}
@@ -311,7 +421,9 @@ const SelectSection: React.FC = () => {
         />
         <strong>Select with tags and custom search</strong>
         <Select
-          filterOption={handleFilter}
+          filterOption={(input, option) =>
+            !!(option?.label && option.label.toString().includes(input) === true)
+          }
           mode="multiple"
           options={[
             { label: 'Case 1', value: 1 },
@@ -327,9 +439,7 @@ const SelectSection: React.FC = () => {
           filterOption={(input, option) =>
             (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
           }
-          filterSort={(a: LabeledValue, b: LabeledValue) =>
-            (a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1
-          }
+          filterSort={(a, b) => ((a?.label ? a.label : 0) > (b?.label ? b?.label : 0) ? 1 : -1)}
           mode="multiple"
           options={[
             { label: 'Am', value: 1 },
@@ -1558,6 +1668,39 @@ const TagsSection: React.FC = () => {
   );
 };
 
+const TypographySection: React.FC = () => {
+  return (
+    <ComponentSection id="Typography" title="Typography">
+      <AntDCard>
+        <p>
+          The (<code>{'<Header>'}</code>) is a reusable header element.
+        </p>
+        <p>
+          The (<code>{'<Paragraph>'}</code>) is a reusable simple paragraph element.
+        </p>
+      </AntDCard>
+      <AntDCard title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>
+            For Headers, <code>{'<h1>'}</code> is the default.
+          </li>
+        </ul>
+      </AntDCard>
+      <AntDCard title="Usage">
+        <strong>Typography - Header</strong>
+        <Space>
+          <Header>Header</Header>
+        </Space>
+        <strong>Typography - paragraph</strong>
+        <Space>
+          <Paragraph>this is a paragraph!</Paragraph>
+        </Space>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -1708,7 +1851,359 @@ const ToggleSection: React.FC = () => {
   );
 };
 
+/* modal section */
+
+const handleSubmit = async (fail?: boolean) => {
+  if (fail) throw new Error('Error message');
+  await new Promise((r) => setTimeout(r, 1000));
+  return;
+};
+
+const SmallModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="small" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const MediumModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="medium" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LargeModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal size="large" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const DangerousModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      danger
+      submit={{
+        handler: handleSubmit,
+        text: 'Submit',
+      }}
+      title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const IconModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal icon="experiment" title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const LinksModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <Modal
+      cancel
+      footerLink={{ text: value, url: '/' }}
+      headerLink={{ text: value, url: '/' }}
+      title={value}>
+      <div>{value}</div>
+    </Modal>
+  );
+};
+
+const FormModalComponent: React.FC<{ value: string; fail?: boolean }> = ({ value, fail }) => {
+  return (
+    <Modal
+      cancel
+      submit={{
+        handler: () => handleSubmit(fail),
+        text: 'Submit',
+      }}
+      title={value}>
+      <Form>
+        <Form.Item label="Workspace" name="workspaceId">
+          <Select allowClear defaultValue={1} placeholder="Workspace (required)">
+            <Option key="1" value="1">
+              WS AS
+            </Option>
+            <Option key="2" value="2">
+              Further
+            </Option>
+            <Option key="3" value="3">
+              Whencelan
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Template" name="template">
+          <Select allowClear placeholder="No template (optional)">
+            <Option key="1" value={1}>
+              Default Template
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input defaultValue={value} placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Resource Pool" name="pool">
+          <Select allowClear placeholder="Pick the best option">
+            <Option key="1" value="1">
+              GPU Pool
+            </Option>
+            <Option key="2" value="2">
+              Aux Pool
+            </Option>
+          </Select>
+        </Form.Item>
+        <Form.Item className={css.line} label="Slots" name="slots">
+          <InputNumber max={10} min={0} />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+const ValidationModalComponent: React.FC<{ value: string }> = ({ value }) => {
+  const [form] = Form.useForm();
+  const alias = Form.useWatch('alias', form);
+
+  return (
+    <Modal
+      cancel
+      submit={{
+        disabled: !alias,
+        handler: handleSubmit,
+        text: 'Submit',
+      }}
+      title={value}>
+      <Form form={form}>
+        <Form.Item className={css.line} label="Name" name="name">
+          <Input defaultValue={value} placeholder="Name (optional)" />
+        </Form.Item>
+        <Form.Item className={css.line} label="Alias" name="alias" required>
+          <Input placeholder="Alias" />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
+
+const ModalSection: React.FC = () => {
+  const [text, setText] = useState('State value that gets passed to modal via props');
+  const SmallModal = useModal(SmallModalComponent);
+  const MediumModal = useModal(MediumModalComponent);
+  const LargeModal = useModal(LargeModalComponent);
+  const DangerousModal = useModal(DangerousModalComponent);
+  const FormModal = useModal(FormModalComponent);
+  const FormFailModal = useModal(FormModalComponent);
+  const LinksModal = useModal(LinksModalComponent);
+  const IconModal = useModal(IconModalComponent);
+  const ValidationModal = useModal(ValidationModalComponent);
+
+  return (
+    <ComponentSection id="Modals" title="Modals">
+      <AntDCard>
+        <Label>State value that gets passed to modal via props</Label>
+        <Input value={text} onChange={(s) => setText(String(s.target.value))} />
+        <hr />
+        <strong>Sizes</strong>
+        <Space>
+          <Button onClick={SmallModal.open}>Open Small Modal</Button>
+          <Button onClick={MediumModal.open}>Open Medium Modal</Button>
+          <Button onClick={LargeModal.open}>Open Large Modal</Button>
+        </Space>
+        <hr />
+        <strong>Links and Icons</strong>
+        <Space>
+          <Button onClick={LinksModal.open}>Open Modal with Header and Footer Links</Button>
+          <Button onClick={IconModal.open}>Open Modal with Title Icon</Button>
+        </Space>
+        <hr />
+        <strong>With form submission</strong>
+        <Space>
+          <Button onClick={FormModal.open}>Open Form Modal (Success)</Button>
+          <Button onClick={FormFailModal.open}>Open Form Modal (Failure)</Button>
+        </Space>
+        <hr />
+        <strong>With form validation</strong>
+        <Space>
+          <Button onClick={ValidationModal.open}>Open Modal with Form Validation</Button>
+        </Space>
+        <hr />
+        <strong>Variations</strong>
+        <Space>
+          <Button onClick={DangerousModal.open}>Open Dangerous Modal</Button>
+        </Space>
+      </AntDCard>
+      <SmallModal.Component value={text} />
+      <MediumModal.Component value={text} />
+      <LargeModal.Component value={text} />
+      <DangerousModal.Component value={text} />
+      <FormModal.Component value={text} />
+      <FormFailModal.Component fail value={text} />
+      <LinksModal.Component value={text} />
+      <IconModal.Component value={text} />
+      <ValidationModal.Component value={text} />
+    </ComponentSection>
+  );
+};
+
+const LongLoadingComponent = () => {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setTimeout(() => {
+      if (active) setLoaded(true);
+    }, 5000);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return <div>This component is {loaded ? 'done loading!!!!!! wowza!!' : 'not loaded :('}</div>;
+};
+
+const AccordionSection: React.FC = () => {
+  const [controlStateSingle, setControlStateSingle] = useState(false);
+  const [controlStateGroup, setControlStateGroup] = useState(1);
+  return (
+    <ComponentSection id="Accordion" title="Accordion">
+      <AntDCard>
+        <p>
+          An <code>{'<Accordion>'}</code> hides content behind a header. Typically found in forms,
+          they hide complex content until the user interacts with the header.
+        </p>
+      </AntDCard>
+      <AntDCard title="Singular usage">
+        <p>
+          An <code>{'<Accordion>'}</code> requires a title and content to show:
+        </p>
+        <Accordion title="Title">Children</Accordion>
+        <p>
+          By default, <code>{'<Accordion>'}</code> components control their open state themselves,
+          but can be controlled externally:
+        </p>
+        <Checkbox
+          checked={controlStateSingle}
+          onChange={(e) => setControlStateSingle(e.target.checked)}>
+          Check me to open the accordion below!
+        </Checkbox>
+        <Accordion open={controlStateSingle} title="Controlled by the above checkbox">
+          Hello!
+        </Accordion>
+        <p>You can also render an uncontrolled accordion as open by default:</p>
+        <Accordion defaultOpen title="Open by default">
+          You should see me on page load.
+        </Accordion>
+        <p>
+          By default, the content of an <code>{'<Accordion>'}</code> isn&apos;t mounted until
+          opened, after which, the content stays mounted:
+        </p>
+        <Accordion title="Child will mount when opened and stay mounted after close">
+          <LongLoadingComponent />
+        </Accordion>
+        <p>
+          This can be changed to either mount the content along with the rest of the{' '}
+          <code>{'<Accordion>'}</code> or to mount the content each time the component is opened:
+        </p>
+        <Accordion mountChildren="immediately" title="Child is already mounted">
+          <LongLoadingComponent />
+        </Accordion>
+        <Accordion
+          mountChildren="on-open"
+          title="Child will mount when opened and unmount on close">
+          <LongLoadingComponent />
+        </Accordion>
+      </AntDCard>
+      <AntDCard title="Group usage">
+        <p>
+          <code>{'<Accordion>'}</code> components can be grouped together:
+        </p>
+        <Accordion.Group>
+          <Accordion title="First child">One</Accordion>
+          <Accordion title="Second child">Two</Accordion>
+          <Accordion title="Third child">Three</Accordion>
+        </Accordion.Group>
+        <p>
+          When grouped, the <code>{'<Accordion.Group>'}</code> component is responsible for keeping
+          track of which component is open. As before, by default, the component keeps its own
+          internal state, but can be controlled externally, as well as with a default initial state.
+        </p>
+        <Select value={controlStateGroup} onChange={(e) => setControlStateGroup(e as number)}>
+          <Option key={1} value={1}>
+            One
+          </Option>
+          <Option key={2} value={2}>
+            Two
+          </Option>
+          <Option key={3} value={3}>
+            Three
+          </Option>
+        </Select>
+        <Accordion.Group openKey={controlStateGroup}>
+          <Accordion key={1} title="First child">
+            One
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three
+          </Accordion>
+        </Accordion.Group>
+        <Accordion.Group defaultOpenKey={3}>
+          <Accordion key={1} title="First child">
+            One
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m open by default!
+          </Accordion>
+        </Accordion.Group>
+        <p>
+          Controlled/uncontrolled <code>{'<Accordion.Group>'}</code> components can have multiple
+          components open at the same time by default as well:
+        </p>
+        <Accordion.Group defaultOpenKey={[1, 3]}>
+          <Accordion key={1} title="First child">
+            One! I&apos;m open by default!
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m also open by default.
+          </Accordion>
+        </Accordion.Group>
+        <p>
+          You can configure an uncontrolled <code>{'<Accordion.Group>'}</code>
+          component to only be able to have one child open at a time
+        </p>
+        <Accordion.Group exclusive>
+          <Accordion key={1} title="First child">
+            One! I&apos;m open by default!
+          </Accordion>
+          <Accordion key={2} title="Second child">
+            Two
+          </Accordion>
+          <Accordion key={3} title="Third child">
+            Three! I&apos;m also open by default.
+          </Accordion>
+        </Accordion.Group>
+      </AntDCard>
+    </ComponentSection>
+  );
+};
+
 const Components = {
+  Accordion: <AccordionSection />,
   Breadcrumbs: <BreadcrumbsSection />,
   Buttons: <ButtonsSection />,
   Cards: <CardsSection />,
@@ -1722,6 +2217,7 @@ const Components = {
   InputSearch: <InputSearchSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
+  Modals: <ModalSection />,
   Nameplate: <NameplateSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
@@ -1729,6 +2225,7 @@ const Components = {
   Tags: <TagsSection />,
   Toggle: <ToggleSection />,
   Tooltips: <TooltipsSection />,
+  Typography: <TypographySection />,
   UserAvatar: <UserAvatarSection />,
 };
 
@@ -1743,7 +2240,7 @@ const DesignKit: React.FC = () => {
     <Page bodyNoPadding docTitle="Design Kit">
       <div className={css.base}>
         <nav>
-          <Link reloadDocument to={{}}>
+          <Link reloadDocument to={'/'}>
             <Logo branding={BrandingType.Determined} orientation="horizontal" />
           </Link>
           <ThemeToggle />
@@ -1757,11 +2254,11 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
+        <article>
           {componentOrder.map((componentId) => (
             <React.Fragment key={componentId}>{Components[componentId]}</React.Fragment>
           ))}
-        </main>
+        </article>
       </div>
     </Page>
   );

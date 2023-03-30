@@ -149,6 +149,8 @@ module "compute" {
   project_id = var.project_id
   region = var.region
   zone = var.zone
+  disk_size = var.disk_size
+  disk_type = var.disk_type
   environment_image = var.environment_image
   image_repo_prefix = var.image_repo_prefix
   det_version = var.det_version
@@ -169,7 +171,6 @@ module "compute" {
   gpu_num = var.gpu_num
   min_dynamic_agents = var.min_dynamic_agents
   max_dynamic_agents = var.max_dynamic_agents
-  static_agents = var.static_agents
   min_cpu_platform_master = var.min_cpu_platform_master
   min_cpu_platform_agent = var.min_cpu_platform_agent
   preemptible = var.preemptible

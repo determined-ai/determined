@@ -1,4 +1,5 @@
 import { Map } from 'immutable';
+import { observable, useObservable, WritableObservable } from 'micro-observables';
 import React, { createContext, useEffect, useRef, useState } from 'react';
 
 import { getUserSetting } from 'services/api';
@@ -8,7 +9,6 @@ import { authChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
 
 /*
  * UserSettingsState contains all the settings for a user
@@ -21,17 +21,17 @@ type UserSettingsState = Map<string, Settings>;
 export type Settings = { [key: string]: any }; //TODO: find a way to use a better type here
 
 type UserSettingsContext = {
-  isLoading: boolean;
+  clearQuerySettings: () => void;
+  isLoading: WritableObservable<boolean>;
   querySettings: string;
-  state: UserSettingsState;
-  update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
+  state: WritableObservable<UserSettingsState>;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
-  isLoading: false,
+  clearQuerySettings: () => undefined,
+  isLoading: observable(false),
   querySettings: '',
-  state: Map<string, Settings>(),
-  update: () => undefined,
+  state: observable(Map<string, Settings>()),
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -42,17 +42,17 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   });
   const checked = useObservable(authChecked);
   const [canceler] = useState(new AbortController());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(() => observable(true));
   const querySettings = useRef('');
-  const [settingsState, setSettingsState] = useState(() => Map<string, Settings>());
+  const [settingsState] = useState(() => observable(Map<string, Settings>()));
 
   useEffect(() => {
-    if (!user?.id || !checked) return;
+    if (!checked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
-        setIsLoading(false);
-        setSettingsState((currentState) => {
+        isLoading.set(false);
+        settingsState.update((currentState) => {
           return currentState.withMutations((state) => {
             response.settings.forEach((setting) => {
               const value = setting.value ? JSON.parse(setting.value) : undefined;
@@ -61,27 +61,27 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
               if (key.includes('u:2/')) key = key.replace(/u:2\//g, '');
 
               const entry = state.get(key);
-
               if (!entry) {
                 state.set(key, { [setting.key]: value });
               } else {
-                state.set(key, Object.assign(entry, { [setting.key]: value }));
+                state.set(key, Object.assign({}, entry, { [setting.key]: value }));
               }
             });
           });
         });
       });
     } catch (error) {
-      setIsLoading(false);
       handleError(error, {
         isUserTriggered: false,
         publicMessage: 'Unable to fetch user settings.',
         type: ErrorType.Api,
       });
+    } finally {
+      isLoading.set(false);
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, checked, settingsState]);
+  }, [canceler, checked, settingsState, isLoading]);
 
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
@@ -89,20 +89,18 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const update = (key: string, value: Settings, clearQuerySettings = false) => {
-    setSettingsState((currentState) => currentState.set(key, value));
-
-    if (clearQuerySettings) querySettings.current = '';
+  const clearQuerySettings = () => {
+    querySettings.current = '';
   };
 
   return (
-    <Spinner spinning={isLoading && !(checked && !user)} tip="Loading Page">
+    <Spinner spinning={useObservable(isLoading) && !(checked && !user)} tip="Loading Page">
       <UserSettings.Provider
         value={{
+          clearQuerySettings,
           isLoading: isLoading,
           querySettings: querySettings.current,
           state: settingsState,
-          update,
         }}>
         {children}
       </UserSettings.Provider>

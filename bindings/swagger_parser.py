@@ -85,11 +85,11 @@ class Parameter:
         assert self.where in ("query", "body", "path", "definitions"), (self.name, self.where)
         assert self.where != "path" or self.required, self.name
         if self.where == "path":
-            if not isinstance(self.type, (String, Int, Bool)):
+            if not isinstance(self.type, (String, Int)):
                 raise AssertionError(f"bad type in path parameter {self.name}: {self.type}")
         if self.where == "query":
             underlying_typ = self.type.items if isinstance(self.type, Sequence) else self.type
-            if not isinstance(underlying_typ, (String, Int, Bool, DateTime)):
+            if not isinstance(underlying_typ, (String, Int, Bool, DateTime, Float)):
                 if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
                     raise AssertionError(f"bad type in query parameter {self.name}: {self.type}")
 
@@ -115,8 +115,10 @@ TypeDefs = typing.Dict[str, typing.Optional[TypeDef]]
 
 @dataclass
 class Function:
+    """Remote HTTP-based call"""
+
     name: str
-    method: str
+    method: str  # http method.
     path: str
     params: typing.Dict[str, Parameter]
     responses: typing.Dict[str, TypeAnno]
@@ -136,6 +138,10 @@ class Function:
             out += f"\n       {code} = {resp}"
         out += "\n    }"
         return out
+
+    def operation_name_sc(self) -> str:
+        """Returns the name of the operation in snake_case"""
+        return f"{self.method}_{self.name}"
 
 
 @dataclass

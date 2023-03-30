@@ -113,7 +113,7 @@ class Trainer:
             step_zero_validation: Configures whether or not to perform an initial validation
                 before training.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
-            train and validate one batch. Defaults to false.
+                train and validate one batch. Defaults to false.
         """
         # Set defaults.
         if checkpoint_period is None:
@@ -228,7 +228,7 @@ def init(
     hparams: Optional[Dict] = None,
     exp_conf: Optional[Dict[str, Any]] = None,
     distributed: Optional[core.DistributedContext] = None,
-    aggregation_frequency: int = 1
+    aggregation_frequency: int = 1,
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     """
     Creates a PyTorchTrialContext for use with a PyTorchTrial. All trainer.* calls must be within

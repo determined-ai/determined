@@ -71,7 +71,11 @@ class SyncService {
         max = max + margin;
         min = min - margin;
       }
-      return { ...b, unzoomedBounds: { max, min } };
+      return {
+        ...b,
+        dataBounds: { max: dataMax, min: dataMin },
+        unzoomedBounds: { max, min },
+      };
     });
   }
 }

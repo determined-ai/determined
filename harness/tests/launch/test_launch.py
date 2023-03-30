@@ -1,8 +1,12 @@
+import runpy
 from typing import Any, Dict, List
 from unittest import mock
 
+import pytest
+
 import determined as det
 from determined.exec import launch
+from tests.launch import test_util
 
 
 @mock.patch("subprocess.Popen")
@@ -33,3 +37,21 @@ def test_launch_list() -> None:
     config = {"entrypoint": entrypoint}
     cmd = [*entrypoint]
     do_test_launch(config, cmd)
+
+
+@mock.patch("determined.common.storage.validate_config")
+def test_launch_script(mock_validate_config: mock.MagicMock) -> None:
+    # Use runpy to actually run the whole launch script.
+    with test_util.set_resources_id_env_var():
+        with test_util.set_mock_cluster_info(["0.0.0.1"], 0, 1) as info:
+            # Successful entrypoints exit 0.
+            info.trial._config["entrypoint"] = ["/bin/true"]
+            with pytest.raises(SystemExit) as e:
+                runpy.run_module("determined.exec.launch", run_name="__main__", alter_sys=True)
+            assert e.value.code == 0, e
+
+            # Failing entrypoints exit 1.
+            info.trial._config["entrypoint"] = ["/bin/false"]
+            with pytest.raises(SystemExit) as e:
+                runpy.run_module("determined.exec.launch", run_name="__main__", alter_sys=True)
+            assert e.value.code == 1, e

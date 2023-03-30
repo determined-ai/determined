@@ -32,10 +32,12 @@ type GCPClusterConfig struct {
 
 	BootDiskSize        int    `json:"boot_disk_size"`
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
+	BootDiskType        string `json:"boot_disk_type"`
 
-	LabelKey   string `json:"label_key"`
-	LabelValue string `json:"label_value"`
-	NamePrefix string `json:"name_prefix"`
+	Labels     map[string]string `json:"labels"`
+	LabelKey   string            `json:"label_key"`
+	LabelValue string            `json:"label_value"`
+	NamePrefix string            `json:"name_prefix"`
 
 	NetworkInterface gceNetworkInterface `json:"network_interface"`
 	NetworkTags      []string            `json:"network_tags"`
@@ -53,7 +55,8 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-0e4beb5",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-9d07809",
+		BootDiskType:        "pd-standard",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -155,18 +158,20 @@ func (c *GCPClusterConfig) Merge() *compute.Instance {
 				InitializeParams: &compute.AttachedDiskInitializeParams{
 					SourceImage: c.BootDiskSourceImage,
 					DiskSizeGb:  int64(c.BootDiskSize),
+					DiskType:    c.BootDiskType,
 				},
 				AutoDelete: true,
 			},
 		}, rb.Disks...)
 	}
 
-	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
-		rb.Labels[c.LabelKey] = c.LabelValue
+	if rb.Labels == nil {
+		rb.Labels = make(map[string]string)
 	}
+	for k, v := range c.Labels {
+		rb.Labels[k] = v
+	}
+	rb.Labels[c.LabelKey] = c.LabelValue
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {
 		networkInterface := &compute.NetworkInterface{
@@ -271,7 +276,6 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p100": {0, 1, 2, 4},
 	"nvidia-tesla-p4":   {0, 1, 2, 4},
 	"nvidia-tesla-v100": {0, 1, 2, 4, 8},
-	"nvidia-tesla-k80":  {0, 1, 2, 4, 8},
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
 }
 

@@ -1,0 +1,60 @@
+.modalContent {
+  :global(.ant-modal-content) {
+    padding: 0;
+  }
+  :global(.ant-modal-close) {
+    inset-inline-end: 8px;
+    top: 8px;
+  }
+  :global(.ant-modal-header),
+  :global(.ant-modal-footer) {
+    margin: 0;
+  }
+}
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.header {
+  align-items: center;
+  display: flex;
+  height: 58px;
+  padding: 32px 16px 0;
+
+  .headerTitle,
+  .headerLink {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dangerIcon {
+    color: var(--theme-status-critical);
+  }
+  > * {
+    margin-inline-end: 16px;
+  }
+}
+.footer {
+  align-items: center;
+  background-color: var(--theme-surface);
+  display: flex;
+  height: 70px;
+  justify-content: space-between;
+  padding: 16px;
+  width: 100%;
+
+  .footerLink {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .buttons {
+    white-space: nowrap;
+
+    > * {
+      margin-inline-start: 8px;
+    }
+  }
+}

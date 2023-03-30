@@ -34,10 +34,6 @@ output "B4--Max-Number-of-Dynamic-Agents" {
   value = "      ${var.max_dynamic_agents}"
 }
 
-output "B4--Number-of-Static-Agents" {
-  value = "           ${var.static_agents}"
-}
-
 output "B5--GPUs-per-Agent" {
   value = "                    ${var.gpu_num}\n"
 }
@@ -48,6 +44,10 @@ output "C1--GCS-bucket" {
 
 output "C2--Filestore-address" {
   value = "${local.filestore_address}\n"
+}
+
+output "User-Labels" {
+  value = var.labels
 }
 
 output "NOTE" {

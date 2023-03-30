@@ -251,19 +251,23 @@ func (c TaskContainerDefaultsConfig) Merge(
 		res.WorkDir = &tmp
 	}
 
-	if other.Slurm.GpuType() != nil || other.Slurm.SbatchArgs() != nil ||
-		other.Slurm.SlotsPerNode() != nil {
-		err = copier.CopyWithOption(&res.Slurm, other.Slurm, mergeCopier)
-		if err != nil {
-			return TaskContainerDefaultsConfig{}, fmt.Errorf("merge copying slurm opts: %w", err)
-		}
+	if other.Slurm.GpuType() != nil {
+		res.Slurm.SetGpuType(other.Slurm.GpuType())
+	}
+	if other.Slurm.SlotsPerNode() != nil {
+		res.Slurm.SetSlotsPerNode(other.Slurm.SlotsPerNode())
+	}
+	if len(other.Slurm.SbatchArgs()) > 0 {
+		tmp := slices.Clone(append(other.Slurm.SbatchArgs(), res.Slurm.SbatchArgs()...))
+		res.Slurm.SetSbatchArgs(tmp)
 	}
 
-	if other.Pbs.SlotsPerNode() != nil || other.Pbs.SbatchArgs() != nil {
-		err = copier.CopyWithOption(&res.Pbs, other.Pbs, mergeCopier)
-		if err != nil {
-			return TaskContainerDefaultsConfig{}, fmt.Errorf("merge copying pbs opts: %w", err)
-		}
+	if other.Pbs.SlotsPerNode() != nil {
+		res.Pbs.SetSlotsPerNode(other.Pbs.SlotsPerNode())
+	}
+	if len(other.Pbs.SbatchArgs()) > 0 {
+		tmp := slices.Clone(append(other.Pbs.SbatchArgs(), res.Pbs.SbatchArgs()...))
+		res.Pbs.SetSbatchArgs(tmp)
 	}
 
 	return res, nil

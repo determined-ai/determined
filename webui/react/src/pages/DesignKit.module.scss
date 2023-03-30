@@ -40,7 +40,7 @@
       }
     }
   }
-  & main {
+  & > article {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -48,7 +48,7 @@
     min-width: $breakpoint-mobile;
     padding: 8px;
 
-    section {
+    article {
       display: flex;
       flex-direction: column;
       gap: 8px;

@@ -96,6 +96,7 @@ export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
     },
     row: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'row',
       type: union([undefinedType, array(number)]),
     },

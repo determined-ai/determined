@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
 	"github.com/google/uuid"
@@ -103,6 +104,7 @@ func TestAllocation(t *testing.T) {
 			require.Nil(t, trialImpl.AssertExpectations())
 
 			// Pre-ready stage.
+			first := true
 			for _, r := range resources {
 				summary := r.Summary()
 				containerStateChanged := sproto.ResourcesStateChanged{
@@ -115,10 +117,16 @@ func TestAllocation(t *testing.T) {
 				containerStateChanged.ResourcesState = sproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
-				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
-				require.Falsef(t, outOfRange,
-					"Expected start time of open allocation should be in between %s and %s but it is = %s instead",
-					beforePulling, afterPulling, a.model.StartTime)
+
+				if first {
+					outOfRange := a.model.StartTime.Before(beforePulling) ||
+						a.model.StartTime.After(afterPulling)
+					require.Falsef(t, outOfRange,
+						"Expected start time of open allocation should be in between"+
+							" %s and %s but it is = %s instead",
+						beforePulling, afterPulling, a.model.StartTime)
+					first = false
+				}
 
 				containerStateChanged.ResourcesState = sproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
@@ -274,6 +282,7 @@ func setup(t *testing.T) (
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
 	allocationmap.InitAllocationMap()
+	portregistry.InitPortRegistry()
 
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
