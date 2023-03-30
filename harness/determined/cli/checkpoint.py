@@ -3,7 +3,6 @@ from argparse import Namespace
 from typing import Any, List, Optional
 
 from determined import cli, errors
-from determined.cli.errors import CliError
 from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -100,7 +99,7 @@ def download(args: Namespace) -> None:
     try:
         path = checkpoint.download(path=args.output_dir, mode=args.mode)
     except errors.CheckpointStateException as ex:
-        raise CliError(str(ex))
+        raise cli.errors.CliError(str(ex))
 
     if args.quiet:
         print(path)
