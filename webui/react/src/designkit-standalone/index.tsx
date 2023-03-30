@@ -3,7 +3,7 @@ import { observable } from 'micro-observables';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
-import 'uplot/dist/uplot.min.css';
+import 'uplot/dist/uPlot.min.css';
 
 import css from 'App.module.scss';
 import ThemeProvider from 'components/ThemeProvider';
