@@ -466,7 +466,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         last_trial = self.trial_tracker[request_id]
         # We catch explicit OOMs and report them in `report_completed`, since that information may
         # be useful to inform future search decisions.
-        last_trial.error = _defaults.OOM_KEY in metric
         last_trial.metric = metric
 
         if last_trial.is_model_profiling_info_run:

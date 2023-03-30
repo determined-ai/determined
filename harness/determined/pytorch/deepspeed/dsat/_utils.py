@@ -38,11 +38,6 @@ def dsat_reporting_context(
     """
     try:
         yield
-    except RuntimeError as rte:
-        oom_error_string = str(rte)
-        if "out of memory" in oom_error_string:
-            report_oom(core_context, op, steps_completed, oom_error_string)
-        raise rte
     except SystemExit as se:
         possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
         existing_paths = [path for path in possible_paths if file_or_dir_exists(path)]
@@ -59,22 +54,6 @@ def dsat_reporting_context(
             )
         else:
             raise se
-
-
-def report_oom(
-    core_context: det.core._context.Context,
-    op: det.core._searcher.SearcherOperation,
-    steps_completed: int,
-    oom_error_string: str,
-) -> None:
-    is_chief = core_context.distributed.rank == 0
-    if is_chief:
-        # TODO: use the information in the error string somehow?
-        report_oom_dict = {_defaults.OOM_KEY: True, "OOM_message": oom_error_string}
-        core_context.train.report_validation_metrics(
-            steps_completed=steps_completed, metrics=report_oom_dict
-        )
-        op.report_completed(report_oom_dict)
 
 
 def report_json_results(

@@ -8,7 +8,6 @@ SMALLER_IS_BETTER = True
 USE_DSAT_MODE_KEY = "_use_dsat_mode"
 GAS_DEFAULT = 1
 OVERWRITE_KEY = "overwrite_deepspeed_args"
-OOM_KEY = "OOM"
 
 MODEL_INFO_PROFILING_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
