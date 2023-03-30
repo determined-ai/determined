@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -570,10 +572,37 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			}
 		}
 	}
-
 	if len(validIDs) > 0 {
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				log.WithError(txErr).Error("error rolling back transaction in MoveExperiments")
+			}
+		}()
+
+		_, err = tx.NewUpdate().
+			ModelTableExpr("exp_metrics_name as e").
+			Set("project_id = ?", destinationProjectID).
+			Where("e.experiment_id IN (?)", bun.In(validIDs)).
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = db.RemoveProjectHyperparameters(ctx, tx, validIDs)
+		if err != nil {
+			return nil, err
+		}
+		err = db.AddProjectHyperparameters(ctx, tx, destinationProjectID, validIDs)
+		if err != nil {
+			return nil, err
+		}
+
 		var acceptedIDs []int32
-		_, err = db.Bun().NewUpdate().
+		_, err = tx.NewUpdate().
 			ModelTableExpr("experiments as e").
 			Set("project_id = ?", destinationProjectID).
 			Where("e.id IN (?)", bun.In(validIDs)).
@@ -589,6 +618,9 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 				Error: nil,
 				ID:    acceptID,
 			})
+		}
+		if err = tx.Commit(); err != nil {
+			return nil, err
 		}
 	}
 	return results, nil
