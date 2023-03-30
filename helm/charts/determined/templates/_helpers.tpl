@@ -10,15 +10,24 @@
 spec:
   priorityClassName: determined-system-priority
   enableServiceLinks: false
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: topology.kubernetes.io/region
+              operator: In
+              values:
+                - {{ .Values.region | upper }}
   containers:
   - name: determined-container
     resources:
       requests:
-        memory: {{ .Values.resources.memory }}
-        cpu: {{ .Values.resources.cpu }}
+        memory: 64Gi
+        cpu: 32
       limits:
-        memory: {{ .Values.resources.memory }}
-        cpu: {{ .Values.resources.cpu }}
+        memory: 64Gi
+        cpu: 32
 {{- end -}}
 
 {{- define "determined.gpuPodSpecRTX_A5000" -}}
