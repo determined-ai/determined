@@ -145,7 +145,8 @@ class Checkpoint:
         """
         if self.state != CheckpointState.COMPLETED:
             raise errors.CheckpointStateException(
-                f"Only COMPLETED checkpoints can be downloaded. Checkpoint state: {self.state.value}"
+                "Only COMPLETED checkpoints can be downloaded. "
+                f"Checkpoint state: {self.state.value}"
             )
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)

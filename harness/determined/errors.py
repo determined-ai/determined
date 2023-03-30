@@ -95,6 +95,7 @@ class CheckpointNotFound(Exception):
 
 class CheckpointStateException(Exception):
     """CheckpointStateException indicates a checkpoint is in an inappropriate state."""
+
     pass
 
 
