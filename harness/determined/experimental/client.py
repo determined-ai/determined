@@ -160,7 +160,7 @@ def create_experiment(
         config (str, pathlib.Path, dictionary): Experiment config filename (.yaml)
             or a dict.
         model_dir (str): Directory containing model definition.
-        includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or directories to
+        iterables (Iterable[Union[str, pathlib.Path]], optional): Additional files or directories to
             include in the model definition.  (default: ``None``)
     """
     assert _determined is not None
