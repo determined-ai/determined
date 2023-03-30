@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 """
 connect to Determined's db and replicate various metrics for performance testing purposes.
