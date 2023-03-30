@@ -22,11 +22,13 @@ import css from './ModelCreateModal.module.scss';
 
 const FORM_ID = 'create-model-form';
 
+type MetadataForm = { key: string; value: string }[];
+
 type FormInputs = {
   modelDescription?: string;
   modelName: string;
   workspaceId: number;
-  metadata?: { key: string; value: string }[];
+  metadata?: MetadataForm;
   tags?: string[];
 };
 
@@ -159,15 +161,29 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
               <div className={css.label}>
                 <label>Metadata (optional)</label>
               </div>
-              <Form.List name="metadata">
-                {(fields, { add, remove }) => (
+              <Form.List
+                name="metadata"
+                rules={[
+                  {
+                    validator: async (_, metadata?: MetadataForm) => {
+                      const metadataKeys = metadata?.map((m) => m?.key) ?? [];
+                      const metadataKeySet = new Set(metadataKeys);
+                      if (metadataKeySet.size !== metadataKeys.length) {
+                        return await Promise.reject(new Error('No dupelicate keys'));
+                      }
+                    },
+                  },
+                ]}>
+                {(fields, { add, remove }, { errors }) => (
                   <>
                     {fields.map(({ key, name, ...restField }) => (
                       <div className={css.metadataRow} key={key}>
                         <Form.Item
                           {...restField}
                           name={[name, 'key']}
-                          rules={[{ message: 'Key is required', required: true }]}>
+                          rules={[
+                            { message: 'Key is required', required: true, whitespace: true },
+                          ]}>
                           <Input placeholder="Key" size="small" />
                         </Form.Item>
                         <Form.Item {...restField} name={[name, 'value']}>
@@ -176,6 +192,9 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                         <MinusCircleOutlined onClick={() => remove(name)} />
                       </div>
                     ))}
+                    <div className={css.formError}>
+                      <Form.ErrorList errors={errors} />
+                    </div>
                     <Form.Item>
                       <Button block icon={<PlusOutlined />} type="dashed" onClick={() => add()}>
                         Add metadata
@@ -189,8 +208,19 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
               <div className={css.label}>
                 <label>Tags (optional)</label>
               </div>
-              <Form.List name="tags">
-                {(fields, { add, remove }) => (
+              <Form.List
+                name="tags"
+                rules={[
+                  {
+                    validator: async (_, tags?: string[]) => {
+                      const tagSet = new Set(tags);
+                      if (tags && tagSet.size !== tags.length) {
+                        return await Promise.reject(new Error('No dupelicate tags'));
+                      }
+                    },
+                  },
+                ]}>
+                {(fields, { add, remove }, { errors }) => (
                   <>
                     <div className={css.tagContainer}>
                       {fields.map(({ key, name, ...restField }) => (
@@ -198,12 +228,17 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                           <Form.Item
                             {...restField}
                             name={name}
-                            rules={[{ message: 'Tag is required', required: true }]}>
+                            rules={[
+                              { message: 'Tag is required', required: true, whitespace: true },
+                            ]}>
                             <Input placeholder="Tag" size="small" type="text" />
                           </Form.Item>
                           <MinusCircleOutlined onClick={() => remove(name)} />
                         </div>
                       ))}
+                    </div>
+                    <div className={css.formError}>
+                      <Form.ErrorList errors={errors} />
                     </div>
                     <Form.Item>
                       <Button block icon={<PlusOutlined />} type="dashed" onClick={() => add()}>

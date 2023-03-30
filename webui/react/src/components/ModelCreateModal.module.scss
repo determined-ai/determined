@@ -30,3 +30,7 @@
     justify-content: center;
   }
 }
+.formError {
+  color: var(--theme-status-critical);
+  padding-bottom: 8px;
+}

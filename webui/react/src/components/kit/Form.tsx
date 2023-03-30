@@ -101,6 +101,7 @@ const Form = (props: FormProps): JSX.Element => {
 
 Form.Item = FormItem;
 Form.List = AntdForm.List;
+Form.ErrorList = AntdForm.ErrorList;
 Form.useForm = AntdForm.useForm;
 Form.useWatch = AntdForm.useWatch;
 
