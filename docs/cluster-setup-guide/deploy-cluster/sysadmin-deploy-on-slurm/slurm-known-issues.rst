@@ -318,38 +318,6 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
       ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
       ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
 
-******************
- PBS Known Issues
-******************
-
--  The resource pool card on the Cluster tab shows the ``Accelerator`` field as ``unconfigured``.
-   This happens when the GPU type information is not set in the PBS ``resources_available`` object.
-
-   HPC system administrators can set this information using the following set of commands:
-
-   -  Login as a root level user or use ``sudo -i`` to quickly change to a root level user.
-
-   -  Verify that ``resources_available.accel_type`` is not set for each node we are going to edit.
-
-      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
-
-   -  Set the desired value for ``resources_available.accel_type`` for the nodes containing GPUs.
-
-      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU Type>"``
-      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla"``
-
-   -  If there are multiple types of GPUs on the node, provide a comma separated value.
-
-      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU_Type_1,GPU_Type_2>"``
-      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"``
-
-   -  Verify that the ``resources_available.accel_type`` value is now set.
-
-      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
-
-   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins can
-   verify the Accelerator field on the Cluster tab of the Web UI.
-
 ***********************
  AMD/ROCm Known Issues
 ***********************

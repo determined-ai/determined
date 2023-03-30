@@ -164,7 +164,7 @@ recommended to optimize how Determined interacts with Slurm:
 Determined should function with your existing PBS configuration. The following steps are recommended
 to optimize how Determined interacts with PBS:
 
--  Configure PBS to manage GPU resources.
+-  Configure PBS to report GPU Accelerator type.
 
    Determined works best when allocating GPUs. By default, Determined selects compute nodes with
    GPUs using the option ``-select={slots_per_trial}:ngpus=1``. If PBS cannot be configured to
@@ -180,6 +180,39 @@ to optimize how Determined interacts with PBS:
    utilize a single GPU on each node. To fully utilize multiple GPUs, you must either manually
    define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
    your experiment configuration to indicate how many GPU slots are intended for Determined to use.
+
+   PBS administrators need to set the value for ``resources_available.accel_type`` on each node 
+   that has a GPU. Otherwise, the Cluster tab on the Determined Web UI will show the value 
+   ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
+   
+   PBS administrator can use the following set of commands to set the value for 
+   ``resources_available.accel_type``:
+
+   -  Login as a root level user or use ``sudo -i`` to quickly change to a root level user.
+
+   -  Verify that ``resources_available.accel_type`` is not set for each node we are going to edit.
+
+      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
+      -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
+
+   -  Set the desired value for ``resources_available.accel_type`` for the nodes containing GPUs.
+
+      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU Type>"``
+      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla"``
+
+   -  If there are multiple types of GPUs on the node, provide a comma separated value.
+
+      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU_Type_1,GPU_Type_2>"``
+      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"``
+
+   -  Verify that the ``resources_available.accel_type`` value is now set.
+
+      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
+      -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
+
+   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins can
+   verify the Accelerator field on the Cluster tab of the Web UI.
+
 
 -  Ensure homogeneous PBS queues.
 
