@@ -52,8 +52,7 @@ def dsat_reporting_context(
                 add_gpu_info=add_gpu_info,
                 path=path,
             )
-        else:
-            raise se
+        raise se
 
 
 def report_json_results(
