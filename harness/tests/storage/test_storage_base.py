@@ -84,7 +84,7 @@ def test_azure_shortcut_string(
     )
     if fields:
         shortcut += "?{}".format(",".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
-    with patch("determined.common.storage.azure.AzureStorageManager") as mock:
+    with patch("determined.common.storage.AzureStorageManager") as mock:
         _ = from_string(shortcut)
     assert mock.called_once_with(
         container=container,
@@ -104,7 +104,7 @@ def test_gcs_shortcut_string(prefix: Optional[str], temp_dir: Optional[str]) -> 
         shortcut += f"/{prefix}"
     if temp_dir:
         shortcut += f"?temp_dir={temp_dir}"  # Can be replaced with f"&{temp_dir=}" with Python 3.8
-    with patch("determined.common.storage.gcs.GCSStorageManager") as mock:
+    with patch("determined.common.storage.GCSStorageManager") as mock:
         _ = from_string(shortcut)
     assert mock.called_once_with(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
 
@@ -132,7 +132,7 @@ def test_s3_shortcut_string(
     )
     if fields:
         shortcut += "?{}".format("&".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
-    with patch("determined.common.storage.s3.S3StorageManager") as mock:
+    with patch("determined.common.storage.S3StorageManager") as mock:
         _ = from_string(shortcut)
     assert mock.called_once_with(
         bucket=bucket,

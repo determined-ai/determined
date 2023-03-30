@@ -25,7 +25,7 @@ def from_string(shortcut) -> storage.base.StorageManager:
         kwargs = urllib.parse.parse_qs(p.query)
         temp_dir = kwargs.get("temp_dir", [None])[0]
         print(f"{kwargs=}")
-        return storage.gcs.GCSStorageManager(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
+        return storage.GCSStorageManager(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
     elif p.scheme == "s3":
         bucket = p.netloc
         prefix = p.path.lstrip("/")
@@ -34,7 +34,7 @@ def from_string(shortcut) -> storage.base.StorageManager:
         secret_key = kwargs.get("secret_key", [None])[0]
         endpoint_url = kwargs.get("endpoint_url", [None])[0]
         temp_dir = kwargs.get("temp_dir", [None])[0]
-        return storage.s3.S3StorageManager(
+        return storage.S3StorageManager(
             bucket=bucket,
             prefix=prefix,
             access_key=access_key,
