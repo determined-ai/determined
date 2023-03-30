@@ -187,17 +187,17 @@ to optimize how Determined interacts with PBS:
    that has a GPU. Otherwise, the Cluster tab on the Determined Web UI will show the value 
    ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
    
-   PBS administrator can use the following set of commands to set the value for 
-   ``resources_available.accel_type``:
+   PBS administrator can use the following set of commands to set the value of 
+   ``resources_available.accel_type`` on a single node:
 
    -  Login as a root level user or use ``sudo -i`` to quickly change to a root level user.
 
-   -  Verify that ``resources_available.accel_type`` is not set for each node we are going to edit.
+   -  Check if ``resources_available.accel_type`` is set.
 
       -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
       -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
 
-   -  Set the desired value for ``resources_available.accel_type`` for the nodes containing GPUs.
+   -  If required, set the desired value for ``resources_available.accel_type``.
 
       -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU Type>"``
       -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla"``
@@ -212,8 +212,9 @@ to optimize how Determined interacts with PBS:
       -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
       -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
 
-   Once the ``resources_available.accel_type`` value is set for all the necessary nodes, admins can
-   verify the Accelerator field on the Cluster tab of the Web UI.
+   Repeat the above steps to set the ``resources_available.accel_type`` value for every node 
+   containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary 
+   nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
 
 
 -  Ensure homogeneous PBS queues.
