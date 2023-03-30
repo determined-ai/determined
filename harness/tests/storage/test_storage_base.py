@@ -5,9 +5,7 @@ from unittest import mock
 import pytest
 
 from determined.common import storage
-from determined.common.check import CheckFailedError
-from determined.common.storage import StorageManager
-from determined.common.storage.base import from_string
+from determined.common import check
 
 
 def test_unknown_type() -> None:
@@ -17,13 +15,13 @@ def test_unknown_type() -> None:
 
 
 def test_missing_type() -> None:
-    with pytest.raises(CheckFailedError, match="Missing 'type' parameter"):
+    with pytest.raises(check.CheckFailedError, match="Missing 'type' parameter"):
         storage.build({}, container_path=None)
 
 
 def test_illegal_type() -> None:
     config = {"type": 4}
-    with pytest.raises(CheckFailedError, match="must be a string"):
+    with pytest.raises(check.CheckFailedError, match="must be a string"):
         storage.build(config, container_path=None)
 
 
@@ -38,7 +36,7 @@ def test_build_with_container_path() -> None:
 def test_list_directory() -> None:
     root = os.path.join(os.path.dirname(__file__), "fixtures")
 
-    assert set(StorageManager._list_directory(root)) == {
+    assert set(storage.StorageManager._list_directory(root)) == {
         "root.txt",
         "nested/",
         "nested/nested.txt",
@@ -50,14 +48,14 @@ def test_list_directory_on_file() -> None:
     root = os.path.join(os.path.dirname(__file__), "fixtures", "root.txt")
     assert os.path.exists(root)
     with pytest.raises(NotADirectoryError, match=root):
-        StorageManager._list_directory(root)
+        storage.StorageManager._list_directory(root)
 
 
 def test_list_nonexistent_directory() -> None:
     root = "./non-existent-directory"
     assert not os.path.exists(root)
     with pytest.raises(FileNotFoundError, match=root):
-        StorageManager._list_directory(root)
+        storage.StorageManager._list_directory(root)
 
 
 @pytest.mark.parametrize(
@@ -85,7 +83,7 @@ def test_azure_shortcut_string(
     if fields:
         shortcut += "?{}".format(",".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
     with mock.patch("determined.common.storage.AzureStorageManager") as mocked:
-        _ = from_string(shortcut)
+        _ = storage.from_string(shortcut)
     assert mocked.called_once_with(
         container=container,
         connection_string=connection_string,
@@ -105,7 +103,7 @@ def test_gcs_shortcut_string(prefix: Optional[str], temp_dir: Optional[str]) -> 
     if temp_dir:
         shortcut += f"?temp_dir={temp_dir}"  # Can be replaced with f"&{temp_dir=}" with Python 3.8
     with mock.patch("determined.common.storage.GCSStorageManager") as mocked:
-        _ = from_string(shortcut)
+        _ = storage.from_string(shortcut)
     assert mocked.called_once_with(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
 
 
@@ -133,7 +131,7 @@ def test_s3_shortcut_string(
     if fields:
         shortcut += "?{}".format("&".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
     with mock.patch("determined.common.storage.S3StorageManager") as mocked:
-        _ = from_string(shortcut)
+        _ = storage.from_string(shortcut)
     assert mocked.called_once_with(
         bucket=bucket,
         prefix=prefix,
@@ -144,8 +142,8 @@ def test_s3_shortcut_string(
     )
 
 
-def test_gcs_shortcut_string() -> None:
+def test_shared_fs_shortcut_string() -> None:
     shortcut = "/tmp/somewhere"
     with mock.patch("determined.common.storage.SharedFSStorageManager") as mocked:
-        _ = from_string(shortcut)
+        _ = storage.from_string(shortcut)
     assert mocked.called_once_with(base_path=shortcut)
