@@ -337,8 +337,9 @@ sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
       -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU Type>"``
 
-   -  If there are multiple types of GPUs on the node, provide a comma separated value. - ``qmgr -c
-      "set node <node name> resources_available.accel_type=<GPU_Type_1,GPU_Type_2>"``
+   -  If there are multiple types of GPUs on the node, provide a comma separated value.
+
+      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU_Type_1,GPU_Type_2>"``
 
    -  Verify that the ``resources_available.accel_type`` value is now set.
 
