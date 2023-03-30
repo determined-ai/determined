@@ -1370,8 +1370,8 @@ jobs:
             # BEGIN code to fake diffs. remove before merge
             rm screenshots/MASTER/dark/Accordion.png
             rm screenshots/MASTER/light/Accordion.png
-            rm screenshots/HEAD/dark/Card.png
-            rm screenshots/HEAD/light/Card.png
+            rm screenshots/HEAD/dark/Cards.png
+            rm screenshots/HEAD/light/Cards.png
             # END code to fake diffs. remove before merge
             node scripts/make-screenshot-diff.mjs
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"

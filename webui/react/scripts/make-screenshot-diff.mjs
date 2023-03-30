@@ -61,7 +61,7 @@ const newComponents = await Promise.all(
         const filePath = path.resolve(screenshotFolder, screenshotLabels[0], theme, file);
         const fileBuffer = await fs.readFile(filePath);
         return {
-          component: path.basename(file),
+          name: path.basename(file),
           screenshot: fileBuffer,
           theme,
         };
@@ -87,26 +87,28 @@ const deletedComponents = await Promise.all(
 );
 
 const makeComparisonImgTag = (buf, tag) => `
-<div class="comparison__comparison-box comparison__comparison-box--${tag}">
-  <div class="comparison__comparison_box_tagname">${tag}</div>
+<div class="comparison__image-box comparison__image-box--${tag}">
+  <div class="comparison__image-box-tagname">${tag}</div>
   <img src="data:image/png;base64,${buf.toString('base64')}">
 </div>
 `;
 
-const makeComparison = ({ diff, head, master }, theme) => `
+const makeComparison = ({ component, diff, head, master }, theme) => `
 <div class="comparison__comparison comparison__comparison--${theme} ${
   diff ? 'comparison__comparison--has-diff' : ''
 }">
-  ${makeComparisonImgTag(head, 'head')}
-  ${makeComparisonImgTag(master, 'master')}
-  ${(diff || '') && makeComparisonImgTag(diff, 'diff')}
+  <h3 class="comparison__component-name">${component}</h3>
+  <div class="comparison__comparison-box">
+    ${makeComparisonImgTag(head, 'head')}
+    ${makeComparisonImgTag(master, 'master')}
+    ${(diff || '') && makeComparisonImgTag(diff, 'diff')}
+  </div>
 </div>
 `;
 const comparisons = results.map(([darkComparison, lightComparison]) => {
   const componentName = darkComparison.component;
   return `
 <div class="comparison" id="${componentName.replace(' ', '_')}_diff">
-  <div class="comparison__component-name">${componentName}</div>
   ${makeComparison(darkComparison, 'dark')}
   ${makeComparison(lightComparison, 'light')}
 </div>
@@ -123,7 +125,7 @@ const makeStandaloneComponent = ([darkComponent, lightComponent]) => {
   const { name } = darkComponent;
   return `
 <div class="comparison" id="${name.replace(' ', '_')}_component">
-  <div class="comparison__component-name">${name}</div>
+  <h3 class="comparison__component-name">${name}</h3>
   ${makeStandaloneComponentThemeContainer(darkComponent, 'dark')}
   ${makeStandaloneComponentThemeContainer(lightComponent, 'light')}
 </div>
@@ -160,11 +162,12 @@ const htmlOut = `
 <style>
   html {
     font-family: sans-serif;
+    background-color: #F9F9F9;
   }
   .controls {
     display: flex;
     position: sticky;
-    background-color: white;
+    background-color: #F9F9F9;
     top: 0;
     padding-top: 16px;
     padding-bottom: 8px;
@@ -173,29 +176,57 @@ const htmlOut = `
   .controls label {
     margin-right: 24px;
   }
-  #comparisons {
+  #comparisons,
+  #deleted,
+  #new {
     display: flex;
     flex-wrap: wrap;
   }
-  .comparison__comparison {
-    margin-left: 25px;
+  .comparison {
+    margin-right: 16px;
+    margin-bottom: 16px;
   }
-  .comparison__comparison-box {
-    background-color: white;
+  .comparison__image-box {
+    background-color: #F9F9F9;
   }
-  .comparison__comparison_right,
-  .comparison__comparison_diff {
+  .comparison__image-box-tagname {
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .comparison__image-box--master,
+  .comparison__image-box--diff {
     position: absolute;
     top: 0;
     left: 0;
     display: none;
     pointer-events: none;
   }
-  .comparison__comparison_left:hover ~ .comparison__comparison_right {
+  .comparison__image-box--head:hover ~ .comparison__image-box--master {
     display: inline-block;
   }
   .comparison__comparison--dark {
     display: none;
+  }
+  .comparison__comparison-box {
+    position: relative;
+  }
+  .container {
+    display: flex;
+    position: relative;
+  }
+  nav {
+    position: sticky;
+    top: 3em;
+    margin-right: 16px;
+  }
+  nav ul {
+    list-style: none;
+  }
+  nav ul li {
+    margin-bottom: 8px;
+  }
+  main {
+    padding-right: 16px;
   }
   main.js_show-dark .comparison__comparison--dark {
     display: block;
@@ -203,10 +234,10 @@ const htmlOut = `
   main.js_show-dark .comparison__comparison--light {
     display: none;
   }
-  #comparisons.js_show-diff .comparison__comparison_left:hover ~ .comparison__comparison_diff {
+  #comparisons.js_show-diff .comparison__image-box--head:hover ~ .comparison__image-box--diff {
     display: inline-block;
   }
-  #comparisons.js_show-diff .comparison__comparison_left:hover ~ .comparison__comparison_right {
+  #comparisons.js_show-diff .comparison__image-box--head:hover ~ .comparison__image-box--master {
     display: none;
   }
   #comparisons.js_hide-blanks .comparison__comparison:not(.comparison__comparison--has-diff) {
@@ -220,27 +251,34 @@ const htmlOut = `
   <label >Show diff on hover? <input class="js_diff-switch" type="checkbox" /></label>
   <label >Show components with differences only? <input class="js_hide-switch" type="checkbox"/></label>
 </div>
-<nav>
-  <ul>
-    <li><a href="#comparisons"><em>Comparisons</em></a></li>
-    ${comparisonNavItems.join('')}
-    <li><a href="#new"><em>New Components</em></a></li>
-    ${newNavItems.join('')}
-    <li><a href="#deleted"><em>Deleted Components</em></a></li>
-    ${deletedNavItems.join('')}
-  </ul>
-</nav>
-<main>
-  <div id="comparisons">
-    ${comparisons.join('')}
+<div class="container">
+  <div>
+    <nav>
+      <ul>
+        <li><a href="#comparisons"><strong>Comparisons</strong></a></li>
+        ${comparisonNavItems.join('')}
+        <li><a href="#new"><strong>New Components</strong></a></li>
+        ${newNavItems.join('')}
+        <li><a href="#deleted"><strong>Deleted Components</strong></a></li>
+        ${deletedNavItems.join('')}
+      </ul>
+    </nav>
   </div>
-  <div id="new">
-    ${newSections.join('')}
-  </div>
-  <div id="deleted">
-    ${deletedSections.join('')}
-  </div>
-</main>
+  <main>
+    <h2>Comparisons</h2>
+    <div id="comparisons">
+      ${comparisons.join('')}
+    </div>
+    <h2>New Components</h2>
+    <div id="new">
+      ${newSections.join('')}
+    </div>
+    <h2>Deleted Components</h2>
+    <div id="deleted">
+      ${deletedSections.join('')}
+    </div>
+  </main>
+</div>
 <script type="text/javascript">
   const comparisons = document.querySelector('#comparisons')
   const darkSwitch = document.querySelector('.js_darkmode-switch')
