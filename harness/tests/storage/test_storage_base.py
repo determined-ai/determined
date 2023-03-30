@@ -7,7 +7,7 @@ import pytest
 from determined.common import storage
 from determined.common.check import CheckFailedError
 from determined.common.storage import StorageManager
-from determined.common.storage.util import from_string
+from determined.common.storage.base import from_string
 
 
 def test_unknown_type() -> None:

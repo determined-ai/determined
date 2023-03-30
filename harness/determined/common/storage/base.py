@@ -2,7 +2,10 @@ import abc
 import contextlib
 import os
 import pathlib
+import urllib
 from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
+
+from determined.common import storage
 
 # Paths should be a set of paths relative to the checkpoint root that indicate what paths
 # should be uploaded. A directory should always appear in Paths if any subpath under that directory
@@ -27,7 +30,7 @@ class StorageManager(metaclass=abc.ABCMeta):
        4.  Provide a path to read from, after a download
        5.  Delete a directory in storage
 
-    Advanced methods 3. and 4.  allow shared_fs to do do optimized zero-copy checkpointing.
+    Advanced methods 3. and 4.  allow shared_fs to do optimized zero-copy checkpointing.
     Cloud-based implementations can subclass the CloudStorageManager, which will define 3. and 4. in
     terms of 1. and 2.
 
@@ -38,7 +41,7 @@ class StorageManager(metaclass=abc.ABCMeta):
 
     def __init__(self, base_path: str) -> None:
         if not isinstance(base_path, str):
-            raise ValueError("base_path must be a string, not {type(base_path).__name__}")
+            raise ValueError(f"base_path must be a string, not {type(base_path).__name__}")
         if not base_path:
             raise ValueError("base_path must not be an emtpy string")
         self._base_path = base_path
@@ -104,7 +107,7 @@ class StorageManager(metaclass=abc.ABCMeta):
     def restore_path(self, src: str, selector: Optional[Selector] = None) -> Iterator[pathlib.Path]:
         """
         restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
-        necessary cleanup afterwards. Subclasess of StorageManager must implement this.
+        necessary cleanup afterwards. Subclasses of StorageManager must implement this.
         """
         pass
 
@@ -159,3 +162,46 @@ class StorageManager(metaclass=abc.ABCMeta):
                 result[rel_path] = os.path.getsize(abs_path)
 
         return result
+
+
+def from_string(shortcut) -> StorageManager:
+    p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
+    if p.scheme == "ms":
+        container = p.netloc
+        connection_string = p.fragment
+        kwargs = urllib.parse.parse_qs(p.query)
+        account_url = kwargs.get("account_url", [None])[0]
+        credential = kwargs.get("credential", [None])[0]
+        temp_dir = kwargs.get("temp_dir", [None])[0]
+        return storage.AzureStorageManager(
+            container=container,
+            connection_string=connection_string,
+            account_url=account_url,
+            credential=credential,
+            temp_dir=temp_dir,
+        )
+    elif p.scheme == "gs":
+        bucket = p.netloc
+        prefix = p.path.lstrip("/")
+        kwargs = urllib.parse.parse_qs(p.query)
+        temp_dir = kwargs.get("temp_dir", [None])[0]
+        print(f"{kwargs=}")
+        return storage.GCSStorageManager(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
+    elif p.scheme == "s3":
+        bucket = p.netloc
+        prefix = p.path.lstrip("/")
+        kwargs = urllib.parse.parse_qs(p.query)
+        access_key = kwargs.get("access_key", [None])[0]
+        secret_key = kwargs.get("secret_key", [None])[0]
+        endpoint_url = kwargs.get("endpoint_url", [None])[0]
+        temp_dir = kwargs.get("temp_dir", [None])[0]
+        return storage.S3StorageManager(
+            bucket=bucket,
+            prefix=prefix,
+            access_key=access_key,
+            secret_key=secret_key,
+            endpoint_url=endpoint_url,
+            temp_dir=temp_dir,
+        )
+    else:
+        raise ValueError(f'Could not understand storage manager scheme "{p.scheme}"')
