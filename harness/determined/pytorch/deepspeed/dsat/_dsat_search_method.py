@@ -149,21 +149,6 @@ class DSATTrialTracker:
     def tuner_early_stopping(self) -> int:
         return self.autotuning_config["tuner_early_stopping"]
 
-    @property
-    def successful_trials_dict(self) -> Dict[uuid.UUID, DSATTrial]:
-        return {u: t for u, t in self.all_trials_dict.items() if t.metric and not t.error}
-
-    @property
-    def errored_trials_dict(self) -> Dict[uuid.UUID, DSATTrial]:
-        return {u: t for u, t in self.all_trials_dict.items() if t.error}
-
-    @property
-    def running_trials_dict(self) -> Dict[uuid.UUID, DSATTrial]:
-        # `DSATTrial` instances are initialized with trivial metrics and `errror` False. After
-        # either successfully completing or early exiting, at least one of these fields will be
-        # non-trivially populated.
-        return {u: t for u, t in self.all_trials_dict.items() if not t.metric and not t.error}
-
     def __len__(self) -> int:
         return len(self.all_trials_dict)
 
@@ -225,25 +210,37 @@ class DSATTrialTracker:
                 root_trial_set.add(trial)
         return root_trial_set
 
-    def get_ops_list_from_trial(self, trial: DSATTrial, length: int) -> List[searcher.Operation]:
+    def get_create_val_ops_list_from_trial(
+        self, trial: DSATTrial, length: int
+    ) -> List[searcher.Operation]:
         create_op = searcher.Create(
             request_id=trial.request_id,
             hparams=trial.hparams,
             checkpoint=None,
         )
         validate_after_op = searcher.ValidateAfter(request_id=trial.request_id, length=length)
-        ops = [create_op, validate_after_op]
-        return ops
+        ops_list = [create_op, validate_after_op]
+        return ops_list
 
-    def update_best_trial_info(
+    def update_metrics(
         self,
-        last_trial: DSATTrial,
+        request_id: uuid.UUID,
+        metric: Optional[Dict[str, Any]],
     ) -> None:
-        searcher_metric_value = last_trial.metric.get(self.searcher_metric_name)
+        """
+        Updates the Trial Tracker after metrics have been reported or an error has occurred, in
+        in which case `metrics = None`.
+        """
+        last_trial = self[request_id]
+        last_trial.error = metric is None
+        metric = {} if metric is None else metric
+        last_trial.metric = metric
+
         # TODO: Curently not counting explicit OOMs or other errors (which are sometimes also
         # opaque OOMs) against num_trials_since_best_result
         # because otherwise early Trials can just all OOM, early stopping is triggered, and no
         # non-trivial results are returned. Should discuss, though.
+        searcher_metric_value = metric.get(self.searcher_metric_name)
         if searcher_metric_value is not None:
             last_trial_is_best = self.best_autotuning_metric_val is None or (
                 searcher_metric_value < self.best_autotuning_metric_val
@@ -424,10 +421,12 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self,
         searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
-        last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[searcher.Operation]:
-        """Generates a list of new operations to run based on the results of the last trial."""
+        """
+        Generates a list of new operations to run based on the results of the last trial.
+        Errored trials return `metric = None`.
+        """
         pass
 
     def initial_operations(
@@ -446,7 +445,9 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             hparams=model_profile_info_hps, is_model_profiling_info_run=True
         )
         # Only a single step is required for the model profiling run.
-        ops = self.trial_tracker.get_ops_list_from_trial(trial=model_profile_info_trial, length=1)
+        ops = self.trial_tracker.get_create_val_ops_list_from_trial(
+            trial=model_profile_info_trial, length=1
+        )
         return ops
 
     def on_trial_created(
@@ -463,11 +464,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_validation_completed for {request_id}")
+        self.trial_tracker.update_metrics(request_id=request_id, metric=metric)
         last_trial = self.trial_tracker[request_id]
-        # We catch explicit OOMs and report them in `report_completed`, since that information may
-        # be useful to inform future search decisions.
-        last_trial.metric = metric
-
         if last_trial.is_model_profiling_info_run:
             self.model_profile_info = DSATModelProfilingInfo(
                 request_id=request_id,
@@ -476,10 +474,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 fp16=self.fp16,
                 mp_size=self.mp_size,
             )
-        else:
-            self.trial_tracker.update_best_trial_info(
-                last_trial=last_trial,
-            )
 
         # All DS AT Trials should be closed after validation.
         return [searcher.Close(request_id)]
@@ -487,31 +481,28 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        # GG: This code should only be reached by errored trials, since every successful trial
-        # ends with an `exit` rather than a Close operation.
-        # TODO: Remove print tests and error raising.
+        # TODO: Remove print tests.
         logging.info(f"Calling on_trial_closed for {request_id}")
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
-        self._state_print_checks(searcher_state)
-
+        # NOTE: it seems like you in `on_validation_completed`, you can't reliably determine from
+        # `searcher_state` whether all trials have completed, since they are only marked as closed
+        # after `on_trial_closed` is called. This leads to a little bit of awkwardness below in
+        # we need to contact the trial_tracker to get the metrics to determine our next moves.
         if self.trial_tracker.should_stop:
-            # Shutdown if `should_stop` is True, once all currently-running trials have completed.
+            self._state_print_checks(searcher_state)
+            # Shutdown if `should_stop` is True, and this was the last running trial.
             completed_trials = searcher_state.trials_closed | searcher_state.failures
             running_trials = searcher_state.trials_created - completed_trials
             new_ops_list = [searcher.Shutdown()] if not running_trials else []
 
-            # new_ops_list = (
-            #     [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
-            # )
         else:
+            metric = self.trial_tracker[request_id].metric
             new_ops_list = self.get_new_searcher_ops_list(
                 searcher_state=searcher_state,
                 request_id=request_id,
-                metric=last_trial.metric,
-                last_trial=last_trial,
+                metric=metric,
             )
-
         return new_ops_list
 
     def on_trial_exited_early(
@@ -522,37 +513,26 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_exited_early for {request_id}")
-        last_trial = self.trial_tracker[request_id]
-        last_trial.error = True
-        self.trial_tracker.update_best_trial_info(
-            last_trial=last_trial,
-        )
+        self.trial_tracker.update_metrics(request_id=request_id, metric=None)
 
+        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             logging.info(
                 "**** Shutting down DeepSpeed Autotune: Error in Model Profiling Info Trial ****"
             )
             new_ops_list = [searcher.Shutdown()]
         elif exited_reason == searcher.ExitedReason.ERRORED:
-            # Some early exits are due to OOMs which are caught by the `dsat_reporting_context`
-            # context manager. Handle these cases differently from other errors.
-            # NOTE: some early exits are actually OOMs which take a path other than the standard
-            # RuntimeError. Handle theses cases.
             if self.trial_tracker.should_stop:
                 # Shutdown if `should_stop` is True, once all currently-running trials have completed.
                 self._state_print_checks(searcher_state)
                 completed_trials = searcher_state.trials_closed | searcher_state.failures
                 running_trials = searcher_state.trials_created - completed_trials
                 new_ops_list = [searcher.Shutdown()] if not running_trials else []
-                # new_ops_list = (
-                #     [searcher.Shutdown()] if not self.trial_tracker.running_trials_dict else []
-                # )
             else:
                 new_ops_list = self.get_new_searcher_ops_list(
                     searcher_state=searcher_state,
                     request_id=request_id,
                     metric=None,
-                    last_trial=last_trial,
                 )
         else:
             # TODO: this code should never be reached, except for user error, so it's essentially
@@ -567,9 +547,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         return new_ops_list
 
     def progress(self, searcher_state: searcher.SearcherState) -> float:
-        progress = (
-            len(searcher_state.trials_closed | searcher_state.failures)
-            / self.trial_tracker.tuner_num_trials
+        progress = len(searcher_state.trials_closed | searcher_state.failures) / len(
+            searcher_state.trials_created
         )
         return progress
 
@@ -599,12 +578,8 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 self.model_profile_info = DSATModelProfilingInfo.from_state_dict(model_profile_info)
 
     def _state_print_checks(self, searcher_state) -> None:
-        running_trials_from_trial_tracker = {u for u in self.trial_tracker.running_trials_dict}
         running_trials_from_searcher_state = searcher_state.trials_created - (
             searcher_state.trials_closed | searcher_state.failures
-        )
-        logging.info(
-            f"******** Trial Tracker running trials ({len(running_trials_from_trial_tracker)}): {running_trials_from_trial_tracker} ********"
         )
         logging.info(
             f"SearcherState: Created Trials ({len(searcher_state.trials_created)}) {searcher_state.trials_created}"
@@ -621,12 +596,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         )
         logging.info(
             f"SearcherState: Running Trials ({len(running_trials_from_searcher_state)}) {running_trials_from_searcher_state}"
-        )
-        logging.info(
-            f"searcher_state - trial_tracker: {running_trials_from_searcher_state - running_trials_from_trial_tracker}"
-        )
-        logging.info(
-            f"trial_tracker - searcher_state: {running_trials_from_trial_tracker - running_trials_from_searcher_state}"
         )
 
 
@@ -658,9 +627,9 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         self,
         searcher_state: searcher.SearcherState,
         request_id: uuid.UUID,
-        last_trial: DSATTrial,
         metric: Optional[Union[float, Dict[str, Any]]] = None,
     ) -> List[searcher.Operation]:
+        last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             new_ops_list = self.get_ops_list_after_model_profiling_info_run()
         elif len(searcher_state.trials_created) < self.trial_tracker.tuner_num_trials:
@@ -689,7 +658,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             # TODO: DS has a fixed notion of what a step is while Determined does not. Make sure
             # there are no issues in reconciling this fact.
             end_profile_step = self.autotuning_config["end_profile_step"] + 1
-            new_ops = self.trial_tracker.get_ops_list_from_trial(
+            new_ops = self.trial_tracker.get_create_val_ops_list_from_trial(
                 trial=new_trial, length=end_profile_step
             )
             new_ops_list.extend(new_ops)
@@ -731,7 +700,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
             )
             # A +1 is required to align DS step/DET max_length conventions.
             end_profile_step = self.autotuning_config["end_profile_step"] + 1
-            new_ops_list = self.trial_tracker.get_ops_list_from_trial(
+            new_ops_list = self.trial_tracker.get_create_val_ops_list_from_trial(
                 trial=new_trial, length=end_profile_step
             )
         return new_ops_list
