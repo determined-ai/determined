@@ -2141,3 +2141,19 @@ func (d DispatcherResourceManager) TaskContainerDefaults(
 	request := taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: resourcePoolName}
 	return result, d.Ask(ctx, request, &result)
 }
+
+// EnableSlot implements 'det slot enable...' functionality.
+func (d DispatcherResourceManager) EnableSlot(
+	m actor.Messenger,
+	req *apiv1.EnableSlotRequest,
+) (resp *apiv1.EnableSlotResponse, err error) {
+	return nil, nil
+}
+
+// DisableSlot implements 'det slot disable...' functionality.
+func (d DispatcherResourceManager) DisableSlot(
+	m actor.Messenger,
+	req *apiv1.DisableSlotRequest,
+) (resp *apiv1.DisableSlotResponse, err error) {
+	return nil, nil
+}
