@@ -883,7 +883,7 @@ func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentID
 		return err
 	}
 	if len(projectIDs) > 1 {
-		return errors.New("unexpected error at removing experiment hyperparameters")
+		return errors.New("error removing experiment hyperparameters")
 	}
 	return nil
 }
@@ -920,7 +920,7 @@ func AddProjectHyperparameters(
 		return err
 	}
 	if len(projectIDs) > 1 {
-		return errors.New("unexpected error at adding experiment hyperparameters")
+		return errors.New("error adding experiment hyperparameters")
 	}
 	return nil
 }
