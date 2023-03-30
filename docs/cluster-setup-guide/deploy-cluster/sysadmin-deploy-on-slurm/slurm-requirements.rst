@@ -164,7 +164,7 @@ recommended to optimize how Determined interacts with Slurm:
 Determined should function with your existing PBS configuration. The following steps are recommended
 to optimize how Determined interacts with PBS:
 
--  Configure PBS to report GPU Accelerator type.
+-  Configure PBS to manage GPU resources.
 
    Determined works best when allocating GPUs. By default, Determined selects compute nodes with
    GPUs using the option ``-select={slots_per_trial}:ngpus=1``. If PBS cannot be configured to
@@ -180,6 +180,8 @@ to optimize how Determined interacts with PBS:
    utilize a single GPU on each node. To fully utilize multiple GPUs, you must either manually
    define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
    your experiment configuration to indicate how many GPU slots are intended for Determined to use.
+
+-  Configure PBS to report GPU Accelerator type.
 
    PBS administrators need to set the value for ``resources_available.accel_type`` on each node 
    that has a GPU. Otherwise, the Cluster tab on the Determined Web UI will show the value 
