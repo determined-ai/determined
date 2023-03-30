@@ -206,7 +206,7 @@ def master_up(
         labels={},
         restart_policy={"Name": restart_policy},
         device_requests=None,
-        ports={f"{port}": "8080"},
+        ports={"8080": f"{port}"},
     )
 
     # Connect to the network separately to set alias.
