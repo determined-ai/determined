@@ -7,8 +7,9 @@ connect to Determined's db and replicate various metrics for performance testing
 import psycopg  # pip install "psycopg[binary]"
 import os
 import contextlib
-from typing import Generator, Set, Union
+from typing import Generator, List, Set, Union
 from psycopg.abc import Query
+import concurrent.futures
 import time
 
 DB_NAME = os.environ.get("DET_DB_NAME", "determined")
@@ -130,6 +131,12 @@ JOIN raw_validations rv ON rv.trial_id = %s;
         cur.execute("COMMIT")
 
 
+def submit_db_queries(cursor: psycopg.Cursor, queries: List[str]) -> None:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(cursor.execute, query) for query in queries]  # type: ignore
+        concurrent.futures.wait(futures)
+
+
 def copy_trials(multiplier=1, suffix="") -> dict:
     table = "trials"
     assert multiplier == 1  # disable this for now
@@ -158,7 +165,7 @@ FROM {table}
         steps_cols_str = ", ".join(steps_cols)
         prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
         # replicate raw_steps and update trial_id
-        query = f"""
+        steps_query = f"""
 
 -- replicate raw_steps and keep the new step ids
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
@@ -167,13 +174,13 @@ FROM raw_steps rs
 INNER JOIN trials ON trials.og_id = rs.trial_id
 WHERE trials.og_id IS NOT NULL; -- all trials with og_id are target trials.
 """
-        cur.execute(query)  # type: ignore
-        replicated_steps = cur.rowcount
+        # cur.execute(steps_query)  # type: ignore
+        # replicated_steps = cur.rowcount
 
         validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
         validations_cols_str = ", ".join(validations_cols)
         prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
-        query = f"""
+        validations_query = f"""
 -- replicate raw_validations and keep the new validation ids
 INSERT INTO raw_validations( {validations_cols_str}, trial_id )
 SELECT {prefixed_validations_cols}, trials.id
@@ -182,8 +189,10 @@ INNER JOIN trials ON trials.og_id = rv.trial_id
 WHERE trials.og_id IS NOT NULL;
 """
 
-        cur.execute(query)  # type: ignore
-        replicated_validations = cur.rowcount
+        # cur.execute(validations_query)  # type: ignore
+        # replicated_validations = cur.rowcount
+
+        submit_db_queries(cur, [steps_query, validations_query])
 
         query = f""" 
 -- drop the added column
@@ -193,8 +202,8 @@ ALTER TABLE {table} DROP COLUMN og_id;
         cur.execute("COMMIT")
         return {
             "trials": replicated_trials,
-            "steps": replicated_steps,
-            "validations": replicated_validations,
+            # "steps": replicated_steps,
+            # "validations": replicated_validations,
         }
 
 
