@@ -34,6 +34,7 @@ for (const theme of THEMES) {
     // playwright hangs if height is a non-int
     const height = Math.ceil((await section.boundingBox()).height);
     await page.setViewportSize({ height, width: 1280 });
+    console.error(`outputting ${path.resolve(themePath, `${header}.png`)}`);
     await section.screenshot({
       animations: 'disabled',
       path: path.resolve(themePath, `${header}.png`),
