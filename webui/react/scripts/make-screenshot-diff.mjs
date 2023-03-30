@@ -2,53 +2,64 @@
  * Extracting the visual regression stuff from playwright so we can diff without
  * having to manually generate target snapshots
  */
-import fs from 'fs/promises'
-import path from 'path'
+import fs from 'fs/promises';
+import path from 'path';
+
 // wonky import here bc this module isn't declared as an export -- tread lightly.
 import { getComparator } from '../node_modules/playwright-core/lib/utils/comparators.js';
 
-const comparator = getComparator('image/png')
-const screenshotFolder = path.resolve(process.cwd(), 'screenshots')
+const comparator = getComparator('image/png');
+const screenshotFolder = path.resolve(process.cwd(), 'screenshots');
 
 const screenshotLabels = (await fs.readdir(screenshotFolder)).slice(0, 2);
 
 // assuming that the files for each theme are the same.
-const [oneList, twoList] = await Promise.all(screenshotLabels.map((folder) => {
-  const dirPath = path.resolve(screenshotFolder, folder, 'light')
-  return fs.readdir(dirPath)
-}))
+const [oneList, twoList] = await Promise.all(
+  screenshotLabels.map((folder) => {
+    const dirPath = path.resolve(screenshotFolder, folder, 'light');
+    return fs.readdir(dirPath);
+  }),
+);
 
-const oneFilesOnlySet = new Set(oneList)
-const twoFilesOnlySet = new Set(twoList)
+const oneFilesOnlySet = new Set(oneList);
+const twoFilesOnlySet = new Set(twoList);
 const compFiles = [];
 for (const file of oneFilesOnlySet) {
   if (twoFilesOnlySet.has(file)) {
-    oneFilesOnlySet.delete(file)
-    twoFilesOnlySet.delete(file)
-    compFiles.push(file)
+    oneFilesOnlySet.delete(file);
+    twoFilesOnlySet.delete(file);
+    compFiles.push(file);
   }
 }
 
-const results = await Promise.all(compFiles.map(async (file) => {
-  return Promise.all(['dark', 'light'].map(async (theme) => {
-    const filePaths = screenshotLabels.map((folder) => path.resolve(screenshotFolder, folder, theme, file))
-    const [oneFile, twoFile] = await Promise.all(filePaths.map(f => fs.readFile(f)))
-    const comparisonResult = comparator(oneFile, twoFile, { maxDiffPixels: 1 })
-    return {
-      theme,
-      component: path.basename(file, '.png'),
-      left: oneFile,
-      right: twoFile,
-      diff: comparisonResult?.diff
-    }
-  }))
-}))
+const results = await Promise.all(
+  compFiles.map((file) =>
+    Promise.all(
+      ['dark', 'light'].map(async (theme) => {
+        const filePaths = screenshotLabels.map((folder) =>
+          path.resolve(screenshotFolder, folder, theme, file),
+        );
+        const [oneFile, twoFile] = await Promise.all(filePaths.map((f) => fs.readFile(f)));
+        const comparisonResult = comparator(oneFile, twoFile, { maxDiffPixels: 1 });
+        return {
+          component: path.basename(file, '.png'),
+          diff: comparisonResult?.diff,
+          left: oneFile,
+          right: twoFile,
+          theme,
+        };
+      }),
+    ),
+  ),
+);
 
 const makeComparisonImgTag = (buf, tag) => `
-<img class="comparison__comparison_${tag}" src="data:image/png;base64,${buf.toString('base64')}">`
+<img class="comparison__comparison_${tag}" src="data:image/png;base64,${buf.toString('base64')}">`;
 
 const makeComparison = (comparison, theme) => `
-<div class="comparison__comparison comparison__comparison--${theme} ${comparison.diff ? 'comparison__comparison--has-diff': ''}">
+<div class="comparison__comparison comparison__comparison--${theme} ${
+  comparison.diff ? 'comparison__comparison--has-diff' : ''
+}">
     <div class="comparison__component-name">${comparison.component}</div>
     <div class="comparison__comparison-box">
         ${makeComparisonImgTag(comparison.left, 'left')}
@@ -56,16 +67,16 @@ const makeComparison = (comparison, theme) => `
         ${(comparison.diff || '') && makeComparisonImgTag(comparison.diff, 'diff')}
     </div>
 </div>
-`
+`;
 const comparisons = results.map((result) => {
-  const [darkComparison, lightComparison] = result
+  const [darkComparison, lightComparison] = result;
   return `
 <div class="comparison">
     ${makeComparison(darkComparison, 'dark')}
     ${makeComparison(lightComparison, 'light')}
 </div>
-`
-})
+`;
+});
 
 const prelude = `
 <!DOCTYPE html>
@@ -136,8 +147,8 @@ const prelude = `
 </div>
 
 <div id="comparisons">
-`
-const controlScript =`
+`;
+const controlScript = `
 <script type="text/javascript">
     const comparisons = document.querySelector('#comparisons')
     const darkSwitch = document.querySelector('.js_darkmode-switch')
@@ -156,12 +167,8 @@ const controlScript =`
     comparisons.classList.toggle('js_show-diff', diffSwitch.checked)
     comparisons.classList.toggle('js_hide-blanks', hideSwitch.checked)
 </script>
-`
-const htmlOut = prelude + comparisons.join('') + '</div>' + controlScript
+`;
+const htmlOut = prelude + comparisons.join('') + '</div>' + controlScript;
 
-const htmlPath = path.resolve(process.cwd(), 'screenshot-summary.html')
-await fs.writeFile(htmlPath, htmlOut)
-
-if (process.env['CI']) {
-
-}
+const htmlPath = path.resolve(process.cwd(), 'screenshot-summary.html');
+await fs.writeFile(htmlPath, htmlOut);
