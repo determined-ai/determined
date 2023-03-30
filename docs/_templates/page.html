@@ -15,4 +15,7 @@
 {# Include an analytics script. #}
 {% block extrahead %}
 {% include "analytics.html" %}
+
+{# Provide a location for the `make live` to inject a reload script. #}
+<!--dev-reload-script-location-->
 {% endblock %}
