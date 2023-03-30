@@ -24,7 +24,10 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto('http:localhost:3456/src/designkit-standalone/');
 // take screenshots of each section
-const sections = await page.locator('article > section').all();
+const sections = await page.locator('article > article').all();
+if (sections.length === 0) {
+  console.error('WARNING: No sections found');
+}
 for (const theme of THEMES) {
   const themePath = path.resolve(screenPath, theme);
   await fs.mkdir(themePath, { recursive: true });
