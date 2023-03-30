@@ -1753,6 +1753,12 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 			return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
 				"Verify that the launcher service is up and reachable.", httpStatus, response.Body)
 		}
+		if strings.Contains(err.Error(), "EOF") {
+			return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error. "+
+				"Verify that the default HPC launcher JVM heap configuration is appropriate. "+
+				"The master configuration resource_manager.launcher_jvm_args can be used to "+
+				"override the default HPC launcher JVM heap configuration.")
+		}
 		return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error. "+
 			"Verify that the launcher service is up and reachable.")
 	}
