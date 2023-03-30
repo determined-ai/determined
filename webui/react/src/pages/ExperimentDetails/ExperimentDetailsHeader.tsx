@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
+import InfoBox, { InfoRow } from 'components/InfoBox';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -418,72 +419,79 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     [experiment.state],
   );
 
+  const foldableRows: InfoRow[] = useMemo(() => {
+    const rows = [
+      {
+        content: experiment.description || <Typography.Text disabled>N/A</Typography.Text>,
+        label: 'Description',
+      },
+    ];
+    if (experiment.forkedFrom && experiment.config.searcher.sourceTrialId) {
+      rows.push({
+        content: (
+          <Link
+            className={css.link}
+            path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
+            Trial {experiment.config.searcher.sourceTrialId}
+          </Link>
+        ),
+        label: 'Continued from',
+      });
+    }
+    if (experiment.forkedFrom && !experiment.config.searcher.sourceTrialId) {
+      rows.push({
+        content: (
+          <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
+            Experiment {experiment.forkedFrom}
+          </Link>
+        ),
+        label: 'Forked from',
+      });
+    }
+    rows.push({ content: <TimeAgo datetime={experiment.startTime} long />, label: 'Started' });
+    if (experiment.endTime != null) {
+      rows.push({
+        content: <TimeDuration duration={getDuration(experiment)} />,
+        label: 'Duration',
+      });
+    }
+    if (experiment.jobSummary && !terminalRunStates.has(experiment.state)) {
+      rows.push({
+        content: (
+          <Link className={css.link} path={paths.jobs()}>
+            {jobInfoLinkText}
+          </Link>
+        ),
+        label: 'Job info',
+      });
+    }
+    rows.push({
+      content: `${autoRestarts}${maxRestarts ? `/${maxRestarts}` : ''}`,
+      label: 'Auto restarts',
+    });
+    rows.push({
+      content: (
+        <Tags
+          disabled={disabled}
+          ghost={true}
+          tags={experiment.config.labels || []}
+          onAction={experimentTags.handleTagListChange(
+            experiment.id,
+            experiment.config.labels || [],
+          )}
+        />
+      ),
+      label: 'Tags',
+    });
+
+    return rows;
+  }, [autoRestarts, disabled, experiment, experimentTags, jobInfoLinkText, maxRestarts]);
+
   return (
     <>
       <BreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
       <PageHeaderFoldable
-        foldableContent={
-          <div className={css.foldableSection}>
-            <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Description:</span>
-              <div className={css.description}>
-                {experiment.description || <Typography.Text disabled>N/A</Typography.Text>}
-              </div>
-            </div>
-            {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
-              <div className={css.foldableItem}>
-                <span className={css.foldableItemLabel}>Continued from:</span>
-                <Link
-                  className={css.link}
-                  path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
-                  Trial {experiment.config.searcher.sourceTrialId}
-                </Link>
-              </div>
-            )}
-            {experiment.forkedFrom && !experiment.config.searcher.sourceTrialId && (
-              <div className={css.foldableItem}>
-                <span className={css.foldableItemLabel}>Forked from:</span>
-                <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
-                  Experiment {experiment.forkedFrom}
-                </Link>
-              </div>
-            )}
-            <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Started:</span>
-              <TimeAgo datetime={experiment.startTime} long />
-            </div>
-            {experiment.endTime != null && (
-              <div className={css.foldableItem}>
-                <span className={css.foldableItemLabel}>Duration:</span>
-                <TimeDuration duration={getDuration(experiment)} />
-              </div>
-            )}
-            {experiment.jobSummary && !terminalRunStates.has(experiment.state) && (
-              <div className={css.foldableItem}>
-                <span className={css.foldableItemLabel}>Job Info:</span>
-                <Link className={css.link} path={paths.jobs()}>
-                  {jobInfoLinkText}
-                </Link>
-              </div>
-            )}
-            <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Auto Restarts:</span>
-              <span>
-                {autoRestarts}
-                {maxRestarts ? `/${maxRestarts}` : ''}
-              </span>
-            </div>
-            <Tags
-              disabled={disabled}
-              ghost={true}
-              tags={experiment.config.labels || []}
-              onAction={experimentTags.handleTagListChange(
-                experiment.id,
-                experiment.config.labels || [],
-              )}
-            />
-          </div>
-        }
+        foldableContent={<InfoBox rows={foldableRows} />}
         leftContent={
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
