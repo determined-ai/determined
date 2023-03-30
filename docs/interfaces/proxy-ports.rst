@@ -30,7 +30,7 @@ container.
 
 .. code:: bash
 
-   det -m determined.cli.tunnel --listener 8265 --auth $DET_MASTER $TASK_ID:8265
+   python -m determined.cli.tunnel --listener 8265 --auth $DET_MASTER $TASK_ID:8265
 
 where $DET_MASTER is your Determined master address, and $TASK_ID is the task id of the launched
 task or experiment. You can look up the task id using CLI command ``det task list``.
