@@ -245,25 +245,35 @@ const Dashboard: React.FC = () => {
                 render: (projectId, row) => {
                   if (row.workspaceId && row.projectId !== 1) {
                     return (
-                      <Breadcrumb>
-                        <Breadcrumb.Item>
-                          <Link path={paths.workspaceDetails(row.workspaceId)}>
-                            {row.workspaceName}
-                          </Link>
-                        </Breadcrumb.Item>
-                        <Breadcrumb.Item>
-                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                        </Breadcrumb.Item>
-                      </Breadcrumb>
+                      <Breadcrumb
+                        items={[
+                          {
+                            title: (
+                              <Link path={paths.workspaceDetails(row.workspaceId)}>
+                                {row.workspaceName}
+                              </Link>
+                            ),
+                          },
+                          {
+                            title: (
+                              <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                            ),
+                          },
+                        ]}
+                      />
                     );
                   }
                   if (row.projectName) {
                     return (
-                      <Breadcrumb>
-                        <Breadcrumb.Item>
-                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                        </Breadcrumb.Item>
-                      </Breadcrumb>
+                      <Breadcrumb
+                        items={[
+                          {
+                            title: (
+                              <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                            ),
+                          },
+                        ]}
+                      />
                     );
                   }
                 },

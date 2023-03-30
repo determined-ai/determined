@@ -987,11 +987,9 @@ const BreadcrumbsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Breadcrumb</strong>
-        <Breadcrumb>
-          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
-          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
-          <Breadcrumb.Item>Level 2</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb
+          items={[{ title: <>Level 0</> }, { title: <>Level 1</> }, { title: <>Level 2</> }]}
+        />
       </AntDCard>
     </ComponentSection>
   );

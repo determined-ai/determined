@@ -1,3 +1,4 @@
+import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import React, { useMemo } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
@@ -25,25 +26,25 @@ const PageHeader: React.FC<Props> = (props: Props) => {
 
   if (props.sticky) classes.push(css.sticky);
 
-  const breadcrumbItems = useMemo(() => {
+  const breadcrumbItems: ItemType[] = useMemo(() => {
     const routes = props.breadcrumb ?? [];
     return routes.map((route) => {
       const last = routes.indexOf(route) === routes.length - 1;
-      return last ? (
-        <Breadcrumb.Item>{route.breadcrumbName}</Breadcrumb.Item>
-      ) : (
-        <Breadcrumb.Item>
-          <Link path={route.path}>
-            {route.breadcrumbTooltip ? (
-              <Tooltip title={route.breadcrumbTooltip}>
-                <span>{route.breadcrumbName}</span>
-              </Tooltip>
-            ) : (
-              route.breadcrumbName
-            )}
-          </Link>
-        </Breadcrumb.Item>
-      );
+      return last
+        ? { title: <>{route.breadcrumbName}</> }
+        : {
+            title: (
+              <Link path={route.path}>
+                {route.breadcrumbTooltip ? (
+                  <Tooltip title={route.breadcrumbTooltip}>
+                    <span>{route.breadcrumbName}</span>
+                  </Tooltip>
+                ) : (
+                  route.breadcrumbName
+                )}
+              </Link>
+            ),
+          };
     });
   }, [props.breadcrumb]);
 
@@ -51,7 +52,8 @@ const PageHeader: React.FC<Props> = (props: Props) => {
     <div className={classes.join(' ')}>
       {props.breadcrumb && (
         <div className={css.breadcrumbs}>
-          <Breadcrumb>{breadcrumbItems}</Breadcrumb>
+          sdf
+          <Breadcrumb items={breadcrumbItems} />
         </div>
       )}
       {showHeader && (

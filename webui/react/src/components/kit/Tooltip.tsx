@@ -18,7 +18,7 @@ export interface TooltipProps {
     | 'rightTop'
     | 'rightBottom';
   title?: ReactNode;
-  trigger?: 'hover' | 'focus' | 'click' | 'contextMenu' | Array<string>;
+  trigger?: 'hover' | 'focus' | 'click' | 'contextMenu';
 }
 
 const Tooltip: React.FC<TooltipProps> = ({

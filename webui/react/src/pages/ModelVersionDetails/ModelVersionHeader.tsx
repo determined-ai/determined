@@ -207,35 +207,58 @@ with det.import_from_path(path + "/code"):
   return (
     <header className={css.base}>
       <div className={css.breadcrumbs}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              <LeftOutlined style={{ marginRight: 10 }} />
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link
-              path={
-                workspace.id === 1 ? paths.projectDetails(1) : paths.workspaceDetails(workspace.id)
-              }>
-              {workspace.name}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
-              Model Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
-              {modelVersion.model.name} ({modelVersion.model.id})
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb
+          items={[
+            {
+              title: (
+                <Link path={paths.modelDetails(String(modelVersion.model.id))}>
+                  <LeftOutlined style={{ marginRight: 10 }} />
+                </Link>
+              ),
+            },
+            {
+              title: (
+                <Link
+                  path={
+                    workspace.id === 1
+                      ? paths.projectDetails(1)
+                      : paths.workspaceDetails(workspace.id)
+                  }>
+                  {workspace.name}
+                </Link>
+              ),
+            },
+            {
+              separator: '/',
+              type: 'separator',
+            },
+            {
+              title: (
+                <Link
+                  path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+                  Model Registry
+                </Link>
+              ),
+            },
+            {
+              separator: '/',
+              type: 'separator',
+            },
+            {
+              title: (
+                <Link path={paths.modelDetails(String(modelVersion.model.id))}>
+                  {modelVersion.model.name} ({modelVersion.model.id})
+                </Link>
+              ),
+            },
+            {
+              separator: '/',
+              type: 'separator',
+            },
+            { title: <>Version {modelVersion.version}</> },
+          ]}
+          separator=""
+        />
       </div>
       <div className={css.headerContent}>
         <div className={css.mainRow}>

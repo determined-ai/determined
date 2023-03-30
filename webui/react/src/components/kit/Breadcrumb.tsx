@@ -1,25 +1,14 @@
 import { Breadcrumb as AntdBreadcrumb } from 'antd';
+import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import React, { ReactNode } from 'react';
 
 interface BreadcrumbProps {
-  children?: ReactNode;
+  items: ItemType[];
   separator?: ReactNode;
 }
 
-interface BreadcrumbItemProps {
-  children?: ReactNode;
-}
-
-type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
-type BreadcrumbSeparator = React.FC;
-type Breadcrumb = React.FC<BreadcrumbProps> & {
-  Item: BreadcrumbItem;
-  Separator: BreadcrumbSeparator;
-};
+type Breadcrumb = React.FC<BreadcrumbProps>;
 
 const Breadcrumb: Breadcrumb = AntdBreadcrumb;
-
-Breadcrumb.Item = AntdBreadcrumb.Item;
-Breadcrumb.Separator = AntdBreadcrumb.Separator;
 
 export default Breadcrumb;

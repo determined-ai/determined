@@ -31,7 +31,7 @@
   "dependencies": {
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
     "ansi-to-html": "^0.7.2",
-    "antd": "^5.1.7",
+    "antd": "^5.3.3",
     "dayjs": "^1.11.7",
     "debug": "^4.3.4",
     "events": "^3.3.0",

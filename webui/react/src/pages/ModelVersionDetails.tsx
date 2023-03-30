@@ -186,31 +186,35 @@ const ModelVersionDetails: React.FC = () => {
     return [
       {
         content: hasExperiment ? (
-          <Breadcrumb>
-            <Breadcrumb.Item>
-              <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
-                Experiment {modelVersion.checkpoint.experimentId}
-              </Link>
-            </Breadcrumb.Item>
-            {!!modelVersion.checkpoint.trialId && (
-              <Breadcrumb.Item>
-                <Link
-                  path={paths.trialDetails(
-                    modelVersion.checkpoint.trialId,
-                    modelVersion.checkpoint.experimentId,
-                  )}>
-                  Trial {modelVersion.checkpoint.trialId}
-                </Link>
-              </Breadcrumb.Item>
-            )}
-            {!!modelVersion.checkpoint.totalBatches && (
-              <Breadcrumb.Item>Batch {modelVersion.checkpoint.totalBatches}</Breadcrumb.Item>
-            )}
-          </Breadcrumb>
+          <Breadcrumb
+            items={[
+              {
+                title: (
+                  <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
+                    Experiment {modelVersion.checkpoint.experimentId}
+                  </Link>
+                ),
+              },
+              {
+                title: !!modelVersion.checkpoint.trialId && (
+                  <Link
+                    path={paths.trialDetails(
+                      modelVersion.checkpoint.trialId,
+                      modelVersion.checkpoint.experimentId,
+                    )}>
+                    Trial {modelVersion.checkpoint.trialId}
+                  </Link>
+                ),
+              },
+              {
+                title: !!modelVersion.checkpoint.totalBatches && (
+                  <>Batch {modelVersion.checkpoint.totalBatches}</>
+                ),
+              },
+            ]}
+          />
         ) : (
-          <Breadcrumb>
-            <Breadcrumb.Item>Task {modelVersion.checkpoint.taskId}</Breadcrumb.Item>
-          </Breadcrumb>
+          <Breadcrumb items={[{ title: <>Task {modelVersion.checkpoint.taskId}</> }]} />
         ),
         label: 'Source',
       },

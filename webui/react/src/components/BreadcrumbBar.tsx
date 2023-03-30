@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Tooltip from 'components/kit/Tooltip';
@@ -140,43 +141,27 @@ const BreadcrumbBar: React.FC<Props> = ({
 
   const projectName = project?.id === 1 ? 'Uncategorized Experiments' : project?.name ?? '...';
 
-  return (
-    <div className={css.base}>
-      <Breadcrumb separator="">
-        {experiment?.projectId !== 1 && !project?.immutable && (
-          <>
-            <Breadcrumb.Item>
-              <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
-                <DynamicIcon
-                  name={workspace?.name}
-                  size={24}
-                  style={{ color: 'black', marginRight: 10 }}
-                />
-              </Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item>
-              <Link
-                className={css.link}
-                path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
-                {workspace?.name ?? '...'}
-                {workspace?.archived && (
-                  <Tooltip title="Archived">
-                    <div>
-                      <Icon name="archive" />
-                    </div>
-                  </Tooltip>
-                )}
-              </Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Separator />
-          </>
-        )}
-        <Breadcrumb.Item>
+  const breadcrumbItems: ItemType[] = useMemo(() => {
+    const items: ItemType[] = [];
+    if (experiment?.projectId !== 1 && !project?.immutable) {
+      items.push({
+        title: (
+          <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
+            <DynamicIcon
+              name={workspace?.name}
+              size={24}
+              style={{ color: 'black', marginRight: 10 }}
+            />
+          </Link>
+        ),
+      });
+      items.push({
+        title: (
           <Link
             className={css.link}
-            path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
-            {projectName}
-            {project?.archived && (
+            path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
+            {workspace?.name ?? '...'}
+            {workspace?.archived && (
               <Tooltip title="Archived">
                 <div>
                   <Icon name="archive" />
@@ -184,33 +169,68 @@ const BreadcrumbBar: React.FC<Props> = ({
               </Tooltip>
             )}
           </Link>
-        </Breadcrumb.Item>
-        {(type === 'experiment' || type === 'trial') && (
-          <>
-            <Breadcrumb.Separator />
-            <Breadcrumb.Item>
-              <Link
-                className={css.link}
-                path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
-                {experiment?.name ?? '...'}
-                {experiment?.archived && (
-                  <Tooltip title="Archived">
-                    <div>
-                      <Icon name="archive" />
-                    </div>
-                  </Tooltip>
-                )}
-              </Link>
-            </Breadcrumb.Item>
-          </>
-        )}
-        {type === 'trial' && (
-          <>
-            <Breadcrumb.Separator />
-            <Breadcrumb.Item>{id ?? '...'}</Breadcrumb.Item>
-          </>
-        )}
-      </Breadcrumb>
+        ),
+      });
+      items.push({
+        separator: '/',
+        type: 'separator',
+      });
+    }
+
+    items.push({
+      title: (
+        <Link
+          className={css.link}
+          path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
+          {projectName}
+          {project?.archived && (
+            <Tooltip title="Archived">
+              <div>
+                <Icon name="archive" />
+              </div>
+            </Tooltip>
+          )}
+        </Link>
+      ),
+    });
+
+    if (type === 'experiment' || type === 'trial') {
+      items.push({
+        separator: '/',
+        type: 'separator',
+      });
+      items.push({
+        title: (
+          <Link
+            className={css.link}
+            path={trial ? paths.experimentDetails(trial.experimentId) : undefined}>
+            {experiment?.name ?? '...'}
+            {experiment?.archived && (
+              <Tooltip title="Archived">
+                <div>
+                  <Icon name="archive" />
+                </div>
+              </Tooltip>
+            )}
+          </Link>
+        ),
+      });
+    }
+
+    if (type === 'trial') {
+      items.push({
+        separator: '/',
+        type: 'separator',
+      });
+      items.push({ title: <>{id ?? '...'}</> });
+    }
+
+    return items;
+  }, [experiment, id, project, projectName, trial, type, workspace?.archived, workspace?.name]);
+
+  return (
+    <div className={css.base}>
+      <Breadcrumb items={breadcrumbItems} separator="" />
       {extra}
     </div>
   );
