@@ -422,7 +422,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const foldableRows: InfoRow[] = useMemo(() => {
     const rows = [
       {
-        content: experiment.description || <Typography.Text disabled>N/A</Typography.Text>,
+        content: (
+          <Typography.Paragraph
+            disabled={!experiment.description}
+            ellipsis={{ rows: 1, tooltip: true }}
+            style={{ margin: 0 }}>
+            {experiment.description || 'N/A'}
+          </Typography.Paragraph>
+        ),
         label: 'Description',
       },
     ];
@@ -466,7 +473,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       });
     }
     rows.push({
-      content: `${autoRestarts}${maxRestarts ? `/${maxRestarts}` : ''}`,
+      content: (
+        <div>
+          {autoRestarts}
+          {maxRestarts ? `/${maxRestarts}` : ''}
+        </div>
+      ),
       label: 'Auto restarts',
     });
     rows.push({
