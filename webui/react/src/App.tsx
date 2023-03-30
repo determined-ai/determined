@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -25,7 +25,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { StoreProvider } from 'stores';
 import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
@@ -41,18 +41,12 @@ const AppView: React.FC = () => {
   const loadableAuth = useObservable(authStore.auth);
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  const loadableUser = useObservable(usersStore.getCurrentUser());
+  const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
   const canceler = useRef(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
-
-  const fetchUsers = useCallback(() => usersStore.ensureUsersFetched(canceler.current), []);
-  const fetchCurrentUser = useCallback(
-    () => usersStore.ensureCurrentUserFetched(canceler.current),
-    [],
-  );
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -62,13 +56,8 @@ const AppView: React.FC = () => {
   usePageVisibility();
   useRouteTracker();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUsers();
-      fetchCurrentUser();
-    }
-  }, [isAuthenticated, fetchCurrentUser, fetchUsers]);
-
+  useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
+  useEffect(() => (isAuthenticated ? userStore.fetchUsers() : undefined), [isAuthenticated]);
   useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
 
   useEffect(() => {

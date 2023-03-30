@@ -9,7 +9,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -145,7 +145,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
-  const loadableUser = usersStore.getCurrentUser();
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
   // parse navigation url to state
   useEffect(() => {
@@ -203,15 +203,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateDB = useCallback(
     async (newSettings: Settings, oldSettings: SettingsRecord<T>) => {
-      const user = Loadable.match(loadableUser.get(), {
-        Loaded: (cUser) => cUser,
-        NotLoaded: () => undefined,
-      });
-
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
         const stateSetting = oldSettings?.[setting as keyof T];
-        if (user?.id && !isEqual(newSetting, stateSetting)) {
+        if (currentUser?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
             setting: {
               key: setting,
@@ -219,7 +214,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
               value: JSON.stringify(newSettings[setting]),
             },
             storagePath: config.storagePath,
-            userId: user.id,
+            userId: currentUser.id,
           });
         }
 
@@ -245,16 +240,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [config.storagePath, loadableUser],
+    [config.storagePath, currentUser],
   );
 
   const resetSettings = useCallback(
     (settingsArray?: string[]) => {
-      const user = Loadable.match(loadableUser.get(), {
-        Loaded: (cUser) => cUser,
-        NotLoaded: () => undefined,
-      });
-      if (!user) return;
+      if (!currentUser) return;
 
       const array = settingsArray ?? Object.keys(config.settings);
 
@@ -280,7 +271,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return s.set(config.storagePath, news ?? {});
       });
     },
-    [config, stateOb, loadableUser],
+    [config, currentUser, stateOb],
   );
 
   const updateSettings = useCallback(
@@ -300,11 +291,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useLayoutEffect(() => {
     if (initialLoading) return;
     return derivedOb.subscribe(async (cur, prev) => {
-      const user = Loadable.match(loadableUser.get(), {
-        Loaded: (cUser) => cUser,
-        NotLoaded: () => undefined,
-      });
-      if (!cur || !user || isEqual(cur, prev)) return;
+      if (!cur || !currentUser || isEqual(cur, prev)) return;
 
       await updateDB(cur, prev as unknown as SettingsRecord<T>);
 
@@ -319,7 +306,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [derivedOb, navigate, config, updateDB, initialLoading, loadableUser]);
+  }, [currentUser, derivedOb, navigate, config, updateDB, initialLoading]);
 
   return {
     activeSettings,

@@ -14,7 +14,7 @@ import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import authStore from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -49,11 +49,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
 const NavigationTabbar: React.FC = () => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const authUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
@@ -120,7 +116,7 @@ const NavigationTabbar: React.FC = () => {
     {
       render: () => (
         <div className={css.user}>
-          <UserBadge compact key="avatar" user={authUser} />
+          <UserBadge compact key="avatar" user={currentUser} />
         </div>
       ),
     },

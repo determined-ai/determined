@@ -1,30 +1,32 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
-import { observable, Observable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
-import usersStore from 'stores/users';
-import { DetailedUser } from 'types';
-import { Loadable, Loaded } from 'utils/loadable';
+import userStore from 'stores/users';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
 
-vi.mock('stores/users', async () => {
-  const actual: { default: object } = await vi.importActual('stores/users');
-  const getCurrentUser = (): Observable<Loadable<DetailedUser>> => {
-    return observable(
-      Loaded({
-        id: 1,
-      } as DetailedUser),
-    );
+const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
+
+vi.mock('stores/users', async (importOriginal) => {
+  // Repeat needed due to hoisting, making this not available in this arrow function.
+  const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
+  const loadable = await import('utils/loadable');
+  const observable = await import('utils/observable');
+
+  const store = {
+    currentUser: observable.observable(loadable.Loaded(CURRENT_USER)),
   };
-  actual.default = { ...actual.default, getCurrentUser };
-  return { ...actual, getCurrentUser };
+
+  return {
+    ...(await importOriginal<typeof import('stores/users')>()),
+    userStore: store,
+  };
 });
 
 vi.mock('services/api', () => ({
@@ -116,8 +118,7 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   useEffect(() => {
     authStore.setAuth({ isAuthenticated: true });
     authStore.setAuthChecked();
-    usersStore.updateCurrentUser(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    userStore.updateCurrentUser(CURRENT_USER);
   }, []);
 
   return (

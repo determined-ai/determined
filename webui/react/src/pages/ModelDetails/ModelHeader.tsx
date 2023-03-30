@@ -21,7 +21,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -44,27 +44,23 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], loadableUsers);
   const deleteModelModal = useModal(DeleteModelModal);
   const modelMoveModal = useModal(ModelMoveModal);
   const modelEditModal = useModal(ModelEditModal);
-
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    }).find((user) => user.id === model.userId);
+    const user = users.find((user) => user.id === model.userId);
 
     return [
       {
         content: (
           <Space>
-            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+            <Spinner conditionalRender spinning={Loadable.isLoading(loadableUsers)}>
               <>
                 <Avatar user={user} />
                 {`${getDisplayName(user)} on
@@ -100,7 +96,7 @@ const ModelHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [model, onUpdateTags, users, canModifyModelFlag]);
+  }, [canModifyModelFlag, loadableUsers, model, onUpdateTags, users]);
 
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {

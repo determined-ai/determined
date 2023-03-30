@@ -21,7 +21,7 @@ import useUI from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import { useClusterStore } from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -118,11 +118,8 @@ const NavigationSideBar: React.FC = () => {
   const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const currentUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+
   const info = useObservable(determinedStore.info);
   const { ui } = useUI();
 

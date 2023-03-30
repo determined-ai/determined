@@ -50,7 +50,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ModelItem, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -74,8 +74,7 @@ interface Props {
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [models, setModels] = useState<ModelItem[]>([]);
   const [model, setModel] = useState<ModelItem | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -155,15 +154,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, [workspace?.id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([
-      fetchModels(),
-      fetchTags(),
-      usersStore.ensureUsersFetched(canceler.current),
-      workspaceStore.fetch(undefined, canceler.current.signal),
-    ]);
+    await Promise.allSettled([fetchModels(), fetchTags()]);
   }, [fetchModels, fetchTags]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
+
+  useEffect(() => userStore.startPolling(), []);
+  useEffect(() => workspaceStore.startPolling(), []);
 
   /**
    * Get new models based on changes to the pagination and sorter.
@@ -437,11 +434,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const columns = useMemo(() => {
-    const matchUsers = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    });
-
     const tagsRenderer = (value: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
         <Typography.Text
@@ -573,10 +565,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: matchUsers.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: (_, r) => userRenderer(matchUsers.find((u) => u.id === r.userId)),
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

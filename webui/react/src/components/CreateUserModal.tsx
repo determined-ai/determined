@@ -20,7 +20,7 @@ import {
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import roleStore from 'stores/roles';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -64,11 +64,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const canAssignRolesFlag: boolean = canAssignRoles({});
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const currentUser = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const checkAuth = useAuthCheck();
 
   const username = Form.useWatch(USER_NAME_NAME, form);

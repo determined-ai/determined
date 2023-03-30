@@ -16,7 +16,7 @@ import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import authStore from 'stores/auth';
 import permissionStore from 'stores/permissions';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -65,7 +65,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
         authStore.setAuth({ isAuthenticated: true, token });
-        usersStore.updateCurrentUser(user.id);
+        userStore.updateCurrentUser(user);
         if (rbacEnabled) {
           // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           permissionStore.fetch(canceler.signal);

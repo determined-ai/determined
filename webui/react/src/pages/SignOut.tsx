@@ -11,7 +11,7 @@ import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import roleStore from 'stores/roles';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import handleError from 'utils/error';
 
@@ -26,7 +26,7 @@ const SignOut: React.FC = () => {
       setIsSigningOut(true);
       roleStore.reset();
       permissionStore.reset();
-      usersStore.updateCurrentUser(null);
+      userStore.reset();
       workspaceStore.reset();
       try {
         await logout({});

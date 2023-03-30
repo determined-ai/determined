@@ -6,12 +6,12 @@ import useUI from 'shared/contexts/stores/UI';
 import { useClusterStore } from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './Navigation.module.scss';
@@ -27,7 +27,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useUI();
   const info = useObservable(determinedStore.info);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
-  const currentUser = useObservable(usersStore.getCurrentUser());
+  const loadableCurrentUser = useObservable(userStore.currentUser);
 
   useEffect(() => workspaceStore.startPolling(), []);
 
@@ -44,9 +44,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     const shouldPoll =
-      rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded;
+      rbacEnabled &&
+      !mockAllPermission &&
+      !mockReadPermission &&
+      Loadable.isLoaded(loadableCurrentUser);
     return permissionStore.startPolling({ condition: shouldPoll, delay: 120_000 });
-  }, [currentUser, mockAllPermission, mockReadPermission, rbacEnabled]);
+  }, [loadableCurrentUser, mockAllPermission, mockReadPermission, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>
