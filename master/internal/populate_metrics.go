@@ -7,7 +7,6 @@ import (
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/shopspring/decimal"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -73,7 +72,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			if rand.Float64() <= factors[i].a {
 				val = float64(-1)
 			}
-			losses[i] = losses[i] * (1 - (val)) * rand.Float64() * factors[i].b
+			losses[i] = losses[i] * (1 - (val * rand.Float64() * factors[i].b))
 
 		}
 		trainingAvgMetrics = &structpb.Struct{
@@ -249,8 +248,9 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	model.DefaultTaskContainerDefaults().MergeIntoExpConfig(&activeConfig)
 
 	var defaultDeterminedUID model.UserID = 2
+	jID := model.NewJobID()
 	exp := &model.Experiment{
-		JobID:                model.NewJobID(),
+		JobID:                jID,
 		State:                model.CompletedState,
 		Config:               activeConfig.AsLegacy(),
 		StartTime:            time.Now(),
@@ -262,18 +262,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	if err != nil {
 		return err
 	}
-	// create job and task
-	jID := model.NewJobID()
-	jIn := &model.Job{
-		JobID:   jID,
-		JobType: model.JobTypeExperiment,
-		OwnerID: exp.OwnerID,
-		QPos:    decimal.New(0, 0),
-	}
-	err = pgdb.AddJob(jIn)
-	if err != nil {
-		return err
-	}
+	// create task
 	tID := model.NewTaskID()
 	tIn := &model.Task{
 		TaskID:    tID,
@@ -297,7 +286,6 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	if err = pgdb.AddTrial(&tr); err != nil {
 		return err
 	}
-
 	if trivialMetrics {
 		return reportTrivialMetrics(ctx, api, int32(tr.ID), batches)
 	}
