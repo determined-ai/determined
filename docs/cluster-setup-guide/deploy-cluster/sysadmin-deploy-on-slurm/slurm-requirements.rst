@@ -216,7 +216,6 @@ to optimize how Determined interacts with PBS:
    containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary 
    nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
 
-
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
