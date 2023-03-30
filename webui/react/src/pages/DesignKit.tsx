@@ -488,6 +488,8 @@ const SelectSection: React.FC = () => {
   );
 };
 
+// TODO: remove randomness here -- it causes false positives on visual
+// regression testing
 const line1BatchesDataRaw: [number, number][] = [
   [0, -2],
   [2, Math.random() * 12],

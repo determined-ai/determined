@@ -1360,11 +1360,19 @@ jobs:
             npx playwright install --with-deps
             node scripts/designkit-screenshot.mjs HEAD
             git checkout master
+            # BEGIN code to fake diffs. remove before merge
             git checkout - -- src/designkit-standalone
             git checkout - -- scripts
             git checkout - -- src/components/ThemeProvider.tsx
             sed -i '117d' src/pages/DesignKit.tsx
+            # END code to fake diffs. remove before merge
             node scripts/designkit-screenshot.mjs MASTER
+            # BEGIN code to fake diffs. remove before merge
+            rm screenshots/MASTER/dark/Accordion.png
+            rm screenshots/MASTER/light/Accordion.png
+            rm screenshots/HEAD/dark/Card.png
+            rm screenshots/HEAD/light/Card.png
+            # END code to fake diffs. remove before merge
             node scripts/make-screenshot-diff.mjs
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
             node scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
