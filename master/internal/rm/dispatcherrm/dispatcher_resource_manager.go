@@ -967,7 +967,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	}
 
 	// Create the manifest that will be ultimately sent to the launcher.
-	manifest, impersonatedUser, payloadName, warning, err := msg.Spec.ToDispatcherManifest(
+	manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 		ctx, string(req.AllocationID),
 		m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 		req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
@@ -994,6 +994,8 @@ func (m *dispatcherResourceManager) startLauncherJob(
 			msg, "")
 		return
 	}
+
+	warning := msg.OrigSpec.WarnUnsupportedOptions(m.rmConfig.LauncherContainerRunType)
 
 	if len(warning) > 0 {
 		ctx.Tell(msg.TaskActor, sproto.ContainerLog{
@@ -2003,6 +2005,7 @@ type (
 		ResourcesID  sproto.ResourcesID
 		TaskActor    *actor.Ref
 		Spec         tasks.TaskSpec
+		OrigSpec     tasks.TaskSpec
 	}
 
 	// KillDispatcherResources tells the dispatcher RM to clean up the resources with the given
@@ -2043,6 +2046,7 @@ func (r DispatcherResources) Summary() sproto.ResourcesSummary {
 func (r DispatcherResources) Start(
 	ctx *actor.Context, _ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
+	origSpec := spec
 	spec.ResourcesID = string(r.id)
 	spec.AllocationID = string(r.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
@@ -2062,7 +2066,9 @@ func (r DispatcherResources) Start(
 		ResourcesID:  r.id,
 		TaskActor:    r.req.AllocationRef,
 		Spec:         spec,
+		OrigSpec:     origSpec,
 	})
+
 	return nil
 }
 
