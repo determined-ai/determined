@@ -208,19 +208,26 @@ if __name__ == "__main__":
         help="sql suffix to select the trials to replicate. eg WHERE state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
+    parser.add_argument(
+        "--naive-multiplier", type=int, default=None, help="repeat the operation n times (naive)"
+    )
     args = parser.parse_args()
 
     assert args.suffix is None or args.trial_id is None, "cannot specify both suffix and trial_id"
 
     start = time.time()
 
-    if args.trial_id is not None:
-        copy_trial(args.trial_id)
-        exit(0)
-
-    row_counts = copy_trials(
-        suffix=args.suffix or f"WHERE state = 'COMPLETED' LIMIT 2",
-    )
+    row_counts = None
+    for _ in range(args.naive_multiplier or 1):
+        if args.trial_id is not None:
+            copy_trial(args.trial_id)
+        else:
+            counts = copy_trials(suffix=args.suffix or f"WHERE state = 'COMPLETED' LIMIT 2")
+            row_counts = (
+                {k: v + counts[k] for k, v in row_counts.items()}
+                if row_counts is not None
+                else counts
+            )
 
     end = time.time()
     print("rows affected:", row_counts)
