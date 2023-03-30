@@ -7,6 +7,12 @@ variable "det_version_key" {
 variable "project_id" {
 }
 
+variable "disk_size" {
+}
+
+variable "disk_type" {
+}
+
 variable "environment_image" {
 }
 

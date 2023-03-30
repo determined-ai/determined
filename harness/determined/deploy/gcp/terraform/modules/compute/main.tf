@@ -70,7 +70,9 @@ resource "google_compute_instance" "master_instance" {
             gpu_num: ${var.gpu_num}
             preemptible: ${var.preemptible}
       gcp:
+        boot_disk_size: ${var.disk_size}
         boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
+        boot_disk_type: projects/determined-ai/zones/${var.zone}/diskTypes/${var.disk_type}
         agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
         master_url: ${var.scheme}://internal-ip:${var.port}
         agent_docker_network: ${var.agent_docker_network}

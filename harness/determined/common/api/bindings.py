@@ -2190,81 +2190,41 @@ class v1CurrentUserResponse:
         return out
 
 class v1DataPoint:
+    epoch: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         batches: int,
+        time: str,
         value: float,
+        epoch: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.batches = batches
+        self.time = time
         self.value = value
+        if not isinstance(epoch, Unset):
+            self.epoch = epoch
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DataPoint":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "batches": obj["batches"],
+            "time": obj["time"],
             "value": float(obj["value"]),
         }
+        if "epoch" in obj:
+            kwargs["epoch"] = obj["epoch"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "batches": self.batches,
-            "value": dump_float(self.value),
-        }
-        return out
-
-class v1DataPointEpoch:
-
-    def __init__(
-        self,
-        *,
-        epoch: int,
-        value: float,
-    ):
-        self.epoch = epoch
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DataPointEpoch":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "epoch": obj["epoch"],
-            "value": float(obj["value"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "epoch": self.epoch,
-            "value": dump_float(self.value),
-        }
-        return out
-
-class v1DataPointTime:
-
-    def __init__(
-        self,
-        *,
-        time: str,
-        value: float,
-    ):
-        self.time = time
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DataPointTime":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "time": obj["time"],
-            "value": float(obj["value"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
             "time": self.time,
             "value": dump_float(self.value),
         }
+        if not omit_unset or "epoch" in vars(self):
+            out["epoch"] = self.epoch
         return out
 
 class v1DeleteCheckpointsRequest:
@@ -7726,6 +7686,56 @@ class v1PermissionType(enum.Enum):
     PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     PERMISSION_TYPE_EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
 
+class v1PolymorphicFilter:
+    doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
+    integerRange: "typing.Optional[v1Int32FieldFilter]" = None
+    name: "typing.Optional[str]" = None
+    timeRange: "typing.Optional[v1TimestampFieldFilter]" = None
+
+    def __init__(
+        self,
+        *,
+        doubleRange: "typing.Union[v1DoubleFieldFilter, None, Unset]" = _unset,
+        integerRange: "typing.Union[v1Int32FieldFilter, None, Unset]" = _unset,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        timeRange: "typing.Union[v1TimestampFieldFilter, None, Unset]" = _unset,
+    ):
+        if not isinstance(doubleRange, Unset):
+            self.doubleRange = doubleRange
+        if not isinstance(integerRange, Unset):
+            self.integerRange = integerRange
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(timeRange, Unset):
+            self.timeRange = timeRange
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PolymorphicFilter":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "doubleRange" in obj:
+            kwargs["doubleRange"] = v1DoubleFieldFilter.from_json(obj["doubleRange"]) if obj["doubleRange"] is not None else None
+        if "integerRange" in obj:
+            kwargs["integerRange"] = v1Int32FieldFilter.from_json(obj["integerRange"]) if obj["integerRange"] is not None else None
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "timeRange" in obj:
+            kwargs["timeRange"] = v1TimestampFieldFilter.from_json(obj["timeRange"]) if obj["timeRange"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "doubleRange" in vars(self):
+            out["doubleRange"] = None if self.doubleRange is None else self.doubleRange.to_json(omit_unset)
+        if not omit_unset or "integerRange" in vars(self):
+            out["integerRange"] = None if self.integerRange is None else self.integerRange.to_json(omit_unset)
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "timeRange" in vars(self):
+            out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
+        return out
+
 class v1PostAllocationProxyAddressRequest:
     allocationId: "typing.Optional[str]" = None
     proxyAddress: "typing.Optional[str]" = None
@@ -10508,8 +10518,6 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
-    epochs: "typing.Optional[typing.Sequence[v1DataPointEpoch]]" = None
-    time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
         self,
@@ -10517,16 +10525,10 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
-        epochs: "typing.Union[typing.Sequence[v1DataPointEpoch], None, Unset]" = _unset,
-        time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
-        if not isinstance(epochs, Unset):
-            self.epochs = epochs
-        if not isinstance(time, Unset):
-            self.time = time
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
@@ -10535,10 +10537,6 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
-        if "epochs" in obj:
-            kwargs["epochs"] = [v1DataPointEpoch.from_json(x) for x in obj["epochs"]] if obj["epochs"] is not None else None
-        if "time" in obj:
-            kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10547,10 +10545,6 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
-        if not omit_unset or "epochs" in vars(self):
-            out["epochs"] = None if self.epochs is None else [x.to_json(omit_unset) for x in self.epochs]
-        if not omit_unset or "time" in vars(self):
-            out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
 
 class v1Task:
@@ -12865,20 +12859,52 @@ def get_CompareTrials(
     *,
     endBatches: "typing.Optional[int]" = None,
     maxDatapoints: "typing.Optional[int]" = None,
+    metricIds: "typing.Optional[typing.Sequence[str]]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
+    timeSeriesFilter_doubleRange_gt: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_gte: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_lt: "typing.Optional[float]" = None,
+    timeSeriesFilter_doubleRange_lte: "typing.Optional[float]" = None,
+    timeSeriesFilter_integerRange_gt: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_gte: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_incl: "typing.Optional[typing.Sequence[int]]" = None,
+    timeSeriesFilter_integerRange_lt: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_lte: "typing.Optional[int]" = None,
+    timeSeriesFilter_integerRange_notIn: "typing.Optional[typing.Sequence[int]]" = None,
+    timeSeriesFilter_name: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_gt: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_gte: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_lt: "typing.Optional[str]" = None,
+    timeSeriesFilter_timeRange_lte: "typing.Optional[str]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
         "maxDatapoints": maxDatapoints,
+        "metricIds": metricIds,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
+        "timeSeriesFilter.doubleRange.gt": dump_float(timeSeriesFilter_doubleRange_gt) if timeSeriesFilter_doubleRange_gt is not None else None,
+        "timeSeriesFilter.doubleRange.gte": dump_float(timeSeriesFilter_doubleRange_gte) if timeSeriesFilter_doubleRange_gte is not None else None,
+        "timeSeriesFilter.doubleRange.lt": dump_float(timeSeriesFilter_doubleRange_lt) if timeSeriesFilter_doubleRange_lt is not None else None,
+        "timeSeriesFilter.doubleRange.lte": dump_float(timeSeriesFilter_doubleRange_lte) if timeSeriesFilter_doubleRange_lte is not None else None,
+        "timeSeriesFilter.integerRange.gt": timeSeriesFilter_integerRange_gt,
+        "timeSeriesFilter.integerRange.gte": timeSeriesFilter_integerRange_gte,
+        "timeSeriesFilter.integerRange.incl": timeSeriesFilter_integerRange_incl,
+        "timeSeriesFilter.integerRange.lt": timeSeriesFilter_integerRange_lt,
+        "timeSeriesFilter.integerRange.lte": timeSeriesFilter_integerRange_lte,
+        "timeSeriesFilter.integerRange.notIn": timeSeriesFilter_integerRange_notIn,
+        "timeSeriesFilter.name": timeSeriesFilter_name,
+        "timeSeriesFilter.timeRange.gt": timeSeriesFilter_timeRange_gt,
+        "timeSeriesFilter.timeRange.gte": timeSeriesFilter_timeRange_gte,
+        "timeSeriesFilter.timeRange.lt": timeSeriesFilter_timeRange_lt,
+        "timeSeriesFilter.timeRange.lte": timeSeriesFilter_timeRange_lte,
         "trialIds": trialIds,
         "xAxis": xAxis.value if xAxis is not None else None,
     }
