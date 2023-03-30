@@ -217,7 +217,8 @@ def master_up(
 
 
 def db_up(password: str, network_name: str, cluster_name: str) -> None:
-    print(f"Creating {DB_NAME}...")
+    name = f"{cluster_name}_{DB_NAME}"
+    print(f"Creating {name}...")
     env = {"POSTGRES_DB": "determined", "POSTGRES_PASSWORD": password}
     client = docker_client()
     client.containers.run(
@@ -225,7 +226,7 @@ def db_up(password: str, network_name: str, cluster_name: str) -> None:
         environment=env,
         mounts=[],
         volumes=[f"{cluster_name}_{VOLUME_NAME}:/var/lib/postgresql/data"],
-        name=DB_NAME,
+        name=name,
         detach=True,
         labels={},
         restart_policy={"Name": "unless-stopped"},
@@ -234,22 +235,25 @@ def db_up(password: str, network_name: str, cluster_name: str) -> None:
     )
     # Connect to the network separately to set alias.
     network = client.networks.get(network_name)
-    network.connect(container=DB_NAME, aliases=["determined-db"])
+    network.connect(container=name, aliases=["determined-db"])
 
 
 def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
     if master_name is None:
         master_name = f"{cluster_name}_{MASTER_NAME}"
 
-    _kill_containers(names=[master_name, DB_NAME])
+    _kill_containers(names=[master_name, f"{cluster_name}_{DB_NAME}"])
 
     client = docker_client()
     # Remove the volume if specified.
     if delete_db:
         volume_name = f"{cluster_name}_{VOLUME_NAME}"
-        print(f"Removing db volume {volume_name}")
-        volume = client.volumes.get(volume_name)
-        volume.remove()
+        try:
+            volume = client.volumes.get(volume_name)
+            print(f"Removing db volume {volume_name}")
+            volume.remove()
+        except docker.errors.NotFound:
+            print(f"Volume {volume_name} not found.")
 
     # Remove network if exists.
     networks = client.networks.list(names=[NETWORK_NAME])
@@ -328,8 +332,9 @@ def logs(cluster_name: str, follow: bool) -> None:
             log_line = next(log_stream)
 
     master_name = f"{cluster_name}_{MASTER_NAME}"
+    db_name = f"{cluster_name}_{DB_NAME}"
     master_thread = threading.Thread(target=docker_logs, args=(master_name,))
-    db_thread = threading.Thread(target=docker_logs, args=(DB_NAME,))
+    db_thread = threading.Thread(target=docker_logs, args=(db_name,))
     db_thread.start()
     master_thread.start()
 
