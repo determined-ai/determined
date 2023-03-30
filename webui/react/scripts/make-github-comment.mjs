@@ -37,7 +37,7 @@ commentsUrl.username = username;
 commentsUrl.password = password;
 const commentsPayload = await nodeFetch(commentsUrl.toString()).then((r) => r.json());
 // TODO: paginate in case we're unlucky and the comment to update isn't in the first page
-const commentToUpdate = commentsPayload.findBy((comment) => comment.user.login === login);
+const [commentToUpdate] = commentsPayload.filter((comment) => comment.user.login === login);
 const artifactUrl = `https://output.circle-artifacts.com/output/job/${jobId}/artifacts/0/webui/react/screenshot-summary.html`;
 const comment = `Hello! DesignKit diffs are available for you to view [here](${artifactUrl})`;
 const commentOptions = {

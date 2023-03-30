@@ -1363,7 +1363,7 @@ jobs:
             git checkout - -- src/designkit-standalone
             git checkout - -- scripts
             git checkout - -- src/components/ThemeProvider.tsx
-            sed -i '112d' src/pages/DesignKit.tsx
+            sed -i '117d' src/pages/DesignKit.tsx
             node scripts/designkit-screenshot.mjs MASTER
             node scripts/make-screenshot-diff.mjs
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
