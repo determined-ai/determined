@@ -99,12 +99,12 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
   };
 
   const onCloseModal = () => {
+    form.resetFields();
     onClose?.();
   };
 
   const onOpenDetails = () => {
     setIsDetailExpanded(true);
-    form.resetFields();
   };
 
   return (

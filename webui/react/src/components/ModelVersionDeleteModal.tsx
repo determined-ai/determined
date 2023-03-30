@@ -38,7 +38,7 @@ const ModelVersionDeleteModal = ({ modelVersion }: Props): JSX.Element => {
       submit={{ handler: handleOk, text: 'Delete Version' }}
       title="Confirm Delete Model Version">
       <div>
-        Are you sure you want to delete &quot; V{modelVersion.version}&quot; from this model?
+        Are you sure you want to delete &quot; Version {modelVersion.version}&quot; from this model?
       </div>
     </Modal>
   );

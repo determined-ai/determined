@@ -54,7 +54,10 @@ const ModelVersionEditModal = ({ modelVersion, fetchModelVersion }: Props): JSX.
       title="Edit Model Version"
       onClose={handleClose}>
       <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
-        <Form.Item initialValue={modelVersion.name} label="Name" name="modelVersionName">
+        <Form.Item
+          initialValue={modelVersion.name || `Version ${modelVersion.version}`}
+          label="Name"
+          name="modelVersionName">
           <Input />
         </Form.Item>
         <Form.Item initialValue={modelVersion.comment} label="Description" name="description">

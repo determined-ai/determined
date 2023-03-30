@@ -44,6 +44,9 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   } = useModalCheckpointRegister({
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
       // TODO: fix the behavior along with checkpoint modal migration
+      // It used to open checkpoint modal again after creating a model,
+      // but it doesn't with new create model modal since we don't use context holder anymore.
+      // This should be able to fix it along with checkpoint modal migration.
       if (checkpoints) modelCreateModal.open();
     },
   });
