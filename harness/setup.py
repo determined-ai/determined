@@ -61,7 +61,6 @@ setup(
     entry_points={
         "console_scripts": [
             "det = determined.cli.__main__:main",
-            "det-deploy = determined.deploy.__main__:main",
         ]
     },
 )
