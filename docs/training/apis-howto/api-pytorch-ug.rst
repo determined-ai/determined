@@ -505,6 +505,40 @@ you find that the built-in context.DataLoader() does not support your use case.
 
 See the :mod:`determined.pytorch.samplers` for details.
 
+Profiling
+---------
+
+Determined provides integrated support for the native PyTorch profiler, `torch-tb-profiler
+<https://github.com/pytorch/kineto/tree/main/tb_plugin>`_. This can be configured with
+:meth:`~determined.pytorch.PyTorchTrialContext.set_profiler` from within your Trial's ``__init__``.
+``set_profiler`` accepts the same arguments as the PyTorch plugin's ``torch.profiler.profile``
+method, but Determined will set ``on_trace_ready`` to the appropriate Tensorboard path. Stepping of
+the profiler during training will be automatically handled.
+
+This example will profile CPU and GPU activities on batches 3 and 4 (skipping batch 1, warming up on
+batch 2), and repeat for 2 cycles:
+
+.. code:: python
+
+   class MyPyTorchTrial(det.pytorch.PyTorchTrial):
+       def __init__(self, context):
+           context.set_profiler(
+               activities=[
+                   torch.profiler.ProfilerActivity.CPU,
+                   torch.profiler.ProfilerActivity.CUDA,
+               ],
+               schedule=torch.profiler.schedule(
+                   wait=1,
+                   warmup=1,
+                   active=2,
+                   repeat=2,
+               ),
+           )
+
+See the `PyTorch tensorboard profiler tutorial
+<https://pytorch.org/tutorials/intermediate/tensorboard_profiler_tutorial.html#use-profiler-to-record-execution-events>`_
+for a complete list of accepted configurations parameters.
+
 Porting Checklist
 =================
 
