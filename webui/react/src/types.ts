@@ -338,6 +338,10 @@ export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }
 
+export interface SearchExperimentPagination extends WithPagination {
+  experiments: ExperimentWithTrial[];
+}
+
 export const RunState = {
   Active: 'ACTIVE',
   Canceled: 'CANCELED',
@@ -573,6 +577,11 @@ export interface ExperimentItem {
   userId: number;
   workspaceId?: number;
   workspaceName?: string;
+}
+
+export interface ExperimentWithTrial {
+  experiment?: ExperimentItem,
+  bestTrial?: TrialItem
 }
 
 export interface ProjectExperiment extends ExperimentItem {

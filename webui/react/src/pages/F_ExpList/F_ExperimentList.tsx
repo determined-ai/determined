@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { getExperiments } from 'services/api';
+import { searchExperiments } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
@@ -106,9 +106,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const tableLimit = 2 * PAGE_RADIUS;
       const tableOffset = Math.max(pageMidpoint - PAGE_RADIUS, 0);
 
-      const response = await getExperiments(
+      const response = await searchExperiments(
         {
-          archived: false,
           limit: tableLimit,
           offset: tableOffset,
           projectId: project.id,
@@ -127,7 +126,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
         return [
           ...paddedExperimentBeforeCurrentPage,
-          ...response.experiments,
+          ...response.experiments.map((e) => e.experiment),
           ...experimentsAfterCurrentPage,
         ];
       });

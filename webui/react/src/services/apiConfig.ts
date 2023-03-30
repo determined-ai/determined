@@ -602,6 +602,28 @@ export const getExperiments: DetApi<
   },
 };
 
+export const searchExperiments: DetApi<
+  Service.SearchExperimentsParams,
+  Api.V1SearchExperimentsResponse,
+  Type.SearchExperimentPagination
+> = {
+  name: 'searchExperiments',
+  postProcess: (response: Api.V1SearchExperimentsResponse) => {
+    return {
+      experiments: response.experiments.map((e) => decoder.mapSearchExperiment(e)),
+      pagination: response.pagination,
+    };
+  },
+  request: (params: Service.SearchExperimentsParams, options) => {
+    return detApi.Experiments.searchExperiments(
+      params.projectId,
+      params.offset,
+      params.limit,
+      options,
+    );
+  },
+};
+
 export const getExperiment: DetApi<
   Service.GetExperimentParams,
   Api.V1GetExperimentResponse,
