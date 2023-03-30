@@ -166,7 +166,10 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 def from_string(shortcut) -> StorageManager:
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
-    if p.scheme == "ms":
+    if p.scheme == "":
+        base_path = p.path
+        return storage.SharedFSStorageManager(base_path=base_path)
+    elif p.scheme == "ms":
         container = p.netloc
         connection_string = p.fragment
         kwargs = urllib.parse.parse_qs(p.query)

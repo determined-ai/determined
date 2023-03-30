@@ -1,6 +1,6 @@
 import os
 from typing import Optional, Tuple
-from unittest.mock import patch
+from unittest import mock
 
 import pytest
 
@@ -84,9 +84,9 @@ def test_azure_shortcut_string(
     )
     if fields:
         shortcut += "?{}".format(",".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
-    with patch("determined.common.storage.AzureStorageManager") as mock:
+    with mock.patch("determined.common.storage.AzureStorageManager") as mocked:
         _ = from_string(shortcut)
-    assert mock.called_once_with(
+    assert mocked.called_once_with(
         container=container,
         connection_string=connection_string,
         account_url=account_url,
@@ -104,9 +104,9 @@ def test_gcs_shortcut_string(prefix: Optional[str], temp_dir: Optional[str]) -> 
         shortcut += f"/{prefix}"
     if temp_dir:
         shortcut += f"?temp_dir={temp_dir}"  # Can be replaced with f"&{temp_dir=}" with Python 3.8
-    with patch("determined.common.storage.GCSStorageManager") as mock:
+    with mock.patch("determined.common.storage.GCSStorageManager") as mocked:
         _ = from_string(shortcut)
-    assert mock.called_once_with(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
+    assert mocked.called_once_with(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
 
 
 @pytest.mark.parametrize("prefix", [None, "myprefix"])
@@ -132,9 +132,9 @@ def test_s3_shortcut_string(
     )
     if fields:
         shortcut += "?{}".format("&".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
-    with patch("determined.common.storage.S3StorageManager") as mock:
+    with mock.patch("determined.common.storage.S3StorageManager") as mocked:
         _ = from_string(shortcut)
-    assert mock.called_once_with(
+    assert mocked.called_once_with(
         bucket=bucket,
         prefix=prefix,
         access_key=access_key,
@@ -142,3 +142,10 @@ def test_s3_shortcut_string(
         endpoint_url=endpoint_url,
         temp_dir=temp_dir,
     )
+
+
+def test_gcs_shortcut_string() -> None:
+    shortcut = "/tmp/somewhere"
+    with mock.patch("determined.common.storage.SharedFSStorageManager") as mocked:
+        _ = from_string(shortcut)
+    assert mocked.called_once_with(base_path=shortcut)
