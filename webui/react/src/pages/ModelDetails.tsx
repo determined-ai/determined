@@ -4,8 +4,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import MetadataCard from 'components/Metadata/MetadataCard';
+import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -21,8 +24,6 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
-import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
@@ -62,6 +63,7 @@ type Params = {
 const ModelDetails: React.FC = () => {
   const canceler = useRef(new AbortController());
   const [model, setModel] = useState<ModelVersions>();
+  const [modelVersion, setModelVersion] = useState<ModelVersion | undefined>(undefined);
   const modelId = decodeURIComponent(useParams<Params>().modelId ?? '');
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<Error>();
@@ -103,11 +105,8 @@ const ModelDetails: React.FC = () => {
     }
   }, [modelId, pageError, settings]);
 
-  const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
-    useModalModelDownload();
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModelVersionDelete } =
-    useModalModelVersionDelete();
+  const modelDownloadModal = useModal(ModelDownloadModal);
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
 
   usePolling(fetchModel, { rerunOnNewFn: true });
 
@@ -117,20 +116,6 @@ const ModelDetails: React.FC = () => {
     ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const downloadModel = useCallback(
-    (version: ModelVersion) => {
-      openModelDownload(version);
-    },
-    [openModelDownload],
-  );
-
-  const deleteModelVersion = useCallback(
-    (version: ModelVersion) => {
-      openModelVersionDelete(version);
-    },
-    [openModelVersionDelete],
-  );
 
   const saveModelVersionTags = useCallback(
     async (modelName: string, versionNum: number, tags: string[]) => {
@@ -203,8 +188,14 @@ const ModelDetails: React.FC = () => {
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
         version={record}
-        onDelete={() => deleteModelVersion(record)}
-        onDownload={() => downloadModel(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
+        onDownload={() => {
+          setModelVersion(record);
+          modelDownloadModal.open();
+        }}
       />
     );
 
@@ -276,13 +267,14 @@ const ModelDetails: React.FC = () => {
       },
     ] as ColumnDef<ModelVersion>[];
   }, [
-    deleteModelVersion,
-    downloadModel,
-    saveModelVersionTags,
-    saveVersionDescription,
     users,
+    saveModelVersionTags,
+    modelVersionDeleteModal,
+    modelDownloadModal,
     canModifyModelVersion,
+    saveVersionDescription,
   ]);
+
   const tableIsLoading = useMemo(
     () => isLoading || isLoadingSettings,
     [isLoading, isLoadingSettings],
@@ -400,13 +392,19 @@ const ModelDetails: React.FC = () => {
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
         version={record}
-        onDelete={() => deleteModelVersion(record)}
-        onDownload={() => downloadModel(record)}
+        onDelete={() => {
+          setModelVersion(record);
+          modelVersionDeleteModal.open();
+        }}
+        onDownload={() => {
+          setModelVersion(record);
+          modelDownloadModal.open();
+        }}
         onVisibleChange={onVisibleChange}>
         {children}
       </ModelVersionActionDropdown>
     ),
-    [deleteModelVersion, downloadModel],
+    [modelDownloadModal, modelVersionDeleteModal],
   );
 
   if (!modelId) {
@@ -477,8 +475,8 @@ const ModelDetails: React.FC = () => {
           onSave={saveMetadata}
         />
       </div>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
+      {modelVersion && <modelDownloadModal.Component modelVersion={modelVersion} />}
+      {modelVersion && <modelVersionDeleteModal.Component modelVersion={modelVersion} />}
     </Page>
   );
 };
