@@ -22,22 +22,7 @@ WITH searcher_info AS (
         t.end_time,
         t.checkpoint_size,
         coalesce(t.end_time, now()) - t.start_time AS duration,
-        ( -- TODO: Precompute this on metric submission.
-            SELECT max(q.total_batches)
-            FROM (
-                SELECT coalesce(max(s.total_batches), 0) AS total_batches
-                FROM steps s
-                WHERE s.trial_id = t.id AND s.archived = false
-                UNION ALL
-                SELECT coalesce(max(v.total_batches), 0) AS total_batches
-                FROM validations v
-                WHERE v.trial_id = t.id AND v.archived = false
-                UNION ALL
-                SELECT coalesce(max(c.total_batches), 0) AS total_batches
-                FROM checkpoints c
-                WHERE c.trial_id = t.id AND c.archived = false
-            ) q
-        ) AS total_batches_processed,
+        t.total_batches AS total_batches_processed,
         (
            CASE WHEN t.best_validation_id IS NOT NULL THEN
                 (SELECT searcher_info.sign * (v.metrics->'validation_metrics'->>searcher_info.metric_name)::float8
