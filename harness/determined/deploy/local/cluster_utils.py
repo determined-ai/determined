@@ -416,6 +416,9 @@ def _kill_containers(names: Optional[List[str]] = None, labels: Optional[List[st
     client = docker_client()
     containers = client.containers.list(all=True, filters=filters)
     for container in containers:
+        # Docker will match container names containing the string instead of strictly matching.
+        if not names or container.name not in names:
+            continue
         print(f"Stopping {container.name}")
         container.stop(timeout=20)
         print(f"Removing {container.name}")
