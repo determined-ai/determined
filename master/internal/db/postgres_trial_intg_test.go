@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -176,4 +177,71 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 
 	require.Equal(t, nil, checkpoints[1].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
 	require.Equal(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+}
+
+func TestBatchesProcessed(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	exp, activeConfig := model.ExperimentModel()
+	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	task := RequireMockTask(t, db, exp.OwnerID)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        exp.JobID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+	require.NoError(t, db.AddTrial(&tr))
+
+	dbTr, err := db.TrialByID(tr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, dbTr.TotalBatches)
+
+	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+	require.NoError(t, err)
+
+	testMetricReporting := func(typ string, batches int, expectedTotalBatches int) error {
+		trialMetrics := &trialv1.TrialMetrics{
+			TrialId:        int32(tr.ID),
+			TrialRunId:     0,
+			StepsCompleted: int32(batches),
+			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
+		}
+		switch typ {
+		case "training":
+			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
+		case "validation":
+			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+		default:
+			return errors.Errorf("unknown type %s", typ)
+		}
+
+		dbTr, err = db.TrialByID(tr.ID)
+		require.NoError(t, err)
+		require.Equal(t, expectedTotalBatches, dbTr.TotalBatches)
+		return nil
+	}
+
+	cases := []struct {
+		typ             string
+		batches         int
+		expectedBatches int
+	}{ // order matters.
+		{"training", 10, 10},
+		{"validation", 10, 10},
+		{"training", 20, 20},
+		{"validation", 20, 20},
+		{"validation", 30, 30},
+		{"training", 25, 30},
+		{"validation", 25, 25}, // rollback
+		{"validation", 30, 30},
+		{"training", 30, 30},
+	}
+	for _, c := range cases {
+		require.NoError(t, testMetricReporting(c.typ, c.batches, c.expectedBatches))
+	}
 }
