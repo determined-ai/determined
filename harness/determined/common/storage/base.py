@@ -206,4 +206,6 @@ def from_string(shortcut: str) -> StorageManager:
             temp_dir=temp_dir,
         )
     else:
-        raise ValueError(f'Could not understand storage manager scheme "{p.scheme}"')
+        raise ValueError(
+            f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", or none.'
+        )
