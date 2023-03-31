@@ -28,7 +28,7 @@ const Container: React.FC<Props> = ({ group }) => {
 
   return (
     <div>
-      <Button onClick={() => DeleteGroupModal.open()}>{OPEN_MODAL_TEXT}</Button>
+      <Button onClick={DeleteGroupModal.open}>{OPEN_MODAL_TEXT}</Button>
       <DeleteGroupModal.Component group={group} />
     </div>
   );

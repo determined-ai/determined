@@ -68,6 +68,7 @@ const PasswordChangeModalComponent: React.FC = () => {
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled,
         handler: handleSubmit,

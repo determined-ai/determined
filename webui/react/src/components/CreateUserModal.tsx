@@ -159,6 +159,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: !username,
         handler: handleSubmit,

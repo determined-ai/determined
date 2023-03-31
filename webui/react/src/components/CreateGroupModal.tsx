@@ -100,7 +100,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     fetchGroupRoles();
   }, [fetchGroupRoles]);
 
-  const onOk = useCallback(async () => {
+  const onSubmit = useCallback(async () => {
     await form.validateFields();
 
     try {
@@ -145,9 +145,10 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: !groupName,
-        handler: onOk,
+        handler: onSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       }}
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}

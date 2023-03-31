@@ -108,11 +108,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const menuItems: MenuProps['items'] =
     userManagementEnabled && canModifyUsers
       ? [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Groups, label: 'Manage Groups' },
-          { key: MenuKey.Agent, label: 'Configure Agent' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+        { key: MenuKey.Edit, label: 'Edit User' },
+        { key: MenuKey.Groups, label: 'Manage Groups' },
+        { key: MenuKey.Agent, label: 'Configure Agent' },
+        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+      ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
@@ -194,10 +194,6 @@ const UserManagement: React.FC = () => {
   }, [canceler, rbacEnabled]);
 
   const CreateUserModal = useModal(CreateUserModalComponent);
-
-  const onClickCreateUser = useCallback(() => {
-    CreateUserModal.open();
-  }, [CreateUserModal]);
 
   const handleNameSearchApply = useCallback(
     (name: string) => {
@@ -330,7 +326,7 @@ const UserManagement: React.FC = () => {
             <Button
               aria-label={CREATE_USER_LABEL}
               disabled={!info.userManagementEnabled || !canModifyUsers}
-              onClick={onClickCreateUser}>
+              onClick={CreateUserModal.open}>
               {CREATE_USER}
             </Button>
             {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}

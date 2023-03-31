@@ -61,7 +61,7 @@ const Container: React.FC<Props> = ({ group }) => {
 
   return (
     <div>
-      <Button onClick={() => CreateGroupModal.open()}>{OPEN_MODAL_TEXT}</Button>
+      <Button onClick={CreateGroupModal.open}>{OPEN_MODAL_TEXT}</Button>
       <CreateGroupModal.Component group={group} users={users} />
     </div>
   );

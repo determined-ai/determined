@@ -90,6 +90,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) =>
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: !groupsValue?.length,
         handler: handleSubmit,

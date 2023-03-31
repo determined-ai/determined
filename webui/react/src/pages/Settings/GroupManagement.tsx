@@ -169,10 +169,6 @@ const GroupManagement: React.FC = () => {
 
   const CreateGroupModal = useModal(CreateGroupModalComponent);
 
-  const onClickCreateGroup = useCallback(() => {
-    CreateGroupModal.open();
-  }, [CreateGroupModal]);
-
   const onExpand = useCallback(
     (expand: boolean, record: V1GroupSearchResult) => {
       const {
@@ -324,7 +320,7 @@ const GroupManagement: React.FC = () => {
       <Section
         options={
           <Space>
-            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+            <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
               New Group
             </Button>
           </Space>

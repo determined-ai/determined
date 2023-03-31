@@ -29,7 +29,7 @@ const Container: React.FC = () => {
 
   return (
     <div>
-      <Button onClick={() => CreateUserModal.open()}>{OPEN_MODAL_TEXT}</Button>
+      <Button onClick={CreateUserModal.open}>{OPEN_MODAL_TEXT}</Button>
       <CreateUserModal.Component />
     </div>
   );

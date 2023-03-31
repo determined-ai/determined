@@ -16,7 +16,7 @@ interface Props {
 }
 
 const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
-  const onOk = useCallback(async () => {
+  const onSubmit = useCallback(async () => {
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
@@ -35,12 +35,13 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
     <Modal
       cancel
       danger
+      size="small"
       submit={{
-        handler: onOk,
+        handler: onSubmit,
         text: 'Delete',
       }}
       title={MODAL_HEADER}>
-      Are you sure you want to delete group ${group.group?.name} (ID: ${group.group?.groupId}).
+      Are you sure you want to delete group {group.group?.name} (ID: {group.group?.groupId}).
     </Modal>
   );
 };

@@ -47,10 +47,6 @@ const SettingsAccount: React.FC = () => {
 
   const PasswordChangeModal = useModal(PasswordChangeModalComponent);
 
-  const handlePasswordClick = useCallback(() => {
-    PasswordChangeModal.open();
-  }, [PasswordChangeModal]);
-
   const handleSaveDisplayName = useCallback(async (): Promise<void | Error> => {
     const values = await displaynameForm.validateFields();
     try {
@@ -167,7 +163,7 @@ const SettingsAccount: React.FC = () => {
           <Divider />
           <div className={css.row}>
             <label>Password</label>
-            <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
+            <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
           </div>
           <PasswordChangeModal.Component />
         </>
