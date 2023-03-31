@@ -580,8 +580,8 @@ export interface ExperimentItem {
 }
 
 export interface ExperimentWithTrial {
-  experiment?: ExperimentItem,
-  bestTrial?: TrialItem
+  experiment?: ExperimentItem;
+  bestTrial?: TrialItem;
 }
 
 export interface ProjectExperiment extends ExperimentItem {

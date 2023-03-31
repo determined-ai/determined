@@ -7,7 +7,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { searchExperiments } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import usersStore from 'stores/users';

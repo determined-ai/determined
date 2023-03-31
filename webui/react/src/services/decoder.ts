@@ -455,7 +455,9 @@ export const mapV1GetExperimentDetailsResponse = ({
   };
 };
 
-export const mapSearchExperiment = (data: Sdk.V1SearchExperimentExperiment): types.ExperimentWithTrial => {
+export const mapSearchExperiment = (
+  data: Sdk.V1SearchExperimentExperiment,
+): types.ExperimentWithTrial => {
   return {
     bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
     experiment: data.experiment && mapV1Experiment(data.experiment),

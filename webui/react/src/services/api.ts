@@ -250,9 +250,9 @@ export const getExperiments = generateDetApi<
 >(Config.getExperiments);
 
 export const searchExperiments = generateDetApi<
-Service.SearchExperimentsParams,
-Api.V1SearchExperimentsResponse,
-Type.SearchExperimentPagination
+  Service.SearchExperimentsParams,
+  Api.V1SearchExperimentsResponse,
+  Type.SearchExperimentPagination
 >(Config.searchExperiments);
 
 export const getExperiment = generateDetApi<
