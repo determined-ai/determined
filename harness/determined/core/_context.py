@@ -87,7 +87,7 @@ def _install_stacktrace_on_sigusr1() -> None:
 def _dummy_init(
     *,
     distributed: Optional[core.DistributedContext] = None,
-    # TODO(DET-6153): allow a Union[StorageManager, str] here.
+    checkpoint_storage: Optional[str] = None,
     storage_manager: Optional[storage.StorageManager] = None,
     tensorboard_path: Optional[pathlib.Path] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
@@ -99,6 +99,11 @@ def _dummy_init(
     """
     distributed = distributed or core.DummyDistributedContext()
     preempt = core.DummyPreemptContext(distributed, preempt_mode)
+
+    if storage_manager is not None:
+        logging.warning("storage_manager is deprecated. Consider using checkpoint_storage instead.")
+    if checkpoint_storage is not None:
+        storage_manager = storage.from_string(checkpoint_storage)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -127,7 +132,7 @@ def _dummy_init(
 def init(
     *,
     distributed: Optional[core.DistributedContext] = None,
-    # TODO: figure out a better way to deal with checkpointing in the local training case.
+    checkpoint_storage: Optional[str] = None,
     storage_manager: Optional[storage.StorageManager] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
     tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
@@ -139,7 +144,7 @@ def init(
     Always use ``with core.init() as context`` instead of instantiating a ``core.Context`` directly.
     Certain components of the Core API may be configured by passing arguments to ``core.init()``.
     The only arg that is required is a ``DistributedContext``, and even that is only required for
-    for multi-slot tasks.
+    multi-slot tasks.
 
     All of your training must occur within the scope of the ``with core.init() as core_context``, as
     there are resources necessary for training which start in the ``core.Context``'s ``__enter__``
@@ -152,14 +157,19 @@ def init(
         preempt_mode (``core.PreemptMode``, optional): Configure the calling pattern for the
             ``core_context.preempt.should_preempt()`` method.  See
             :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
-        storage_manager: Internal use only.
+        checkpoint_storage (``str``, optional): A directory path or cloud storage URI.
+        storage_manager: Internal use only. Deprecated.
         tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
             metrics and profiling data are retained. See
             :class:`~determined.core.TensorboardMode`` for more detail. Defaults to ``AUTO``.
     """
     info = det.get_cluster_info()
     if info is None:
-        return _dummy_init(distributed=distributed, storage_manager=storage_manager)
+        return _dummy_init(
+            distributed=distributed,
+            checkpoint_storage=checkpoint_storage,
+            storage_manager=storage_manager,
+        )
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
@@ -179,6 +189,11 @@ def init(
     train = None
     searcher = None
     tensorboard_manager = None
+
+    if storage_manager is not None:
+        logging.warning("storage_manager is deprecated. Consider using checkpoint_storage instead.")
+    if checkpoint_storage is not None:
+        storage_manager = storage.from_string(checkpoint_storage)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
