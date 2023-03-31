@@ -7,7 +7,7 @@ import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth } from 'stores/auth';
 import { WorkspacesProvider } from 'stores/workspaces';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
+import { generateTestExperimentData } from 'test_utils/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';

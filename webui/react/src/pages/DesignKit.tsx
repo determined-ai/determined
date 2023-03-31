@@ -48,10 +48,7 @@ import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
-import {
-  generateTestProjectData,
-  generateTestWorkspaceData,
-} from 'storybook/shared/generateTestData';
+import { generateTestProjectData, generateTestWorkspaceData } from 'test_utils/generateTestData';
 import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 
