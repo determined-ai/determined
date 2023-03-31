@@ -12,6 +12,16 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
+var (
+	// EmptyPassword is the empty password (i.e., the empty string).
+	EmptyPassword = null.NewString("", false)
+
+	// NoPasswordLogin is a password that prevents the user from logging in
+	// directly. They can still login via external authentication methods like
+	// OAuth.
+	NoPasswordLogin = null.NewString("", true)
+)
+
 // BCryptCost is a stopgap until we implement sane master-configuration.
 const BCryptCost = 15
 
