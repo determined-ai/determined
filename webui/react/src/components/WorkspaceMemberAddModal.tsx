@@ -76,15 +76,15 @@ const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
       if (values && selectedOption) {
         isUser(selectedOption)
           ? await assignRolesToUser({
-            roleIds: [values.roleId],
-            scopeWorkspaceId: workspaceId,
-            userId: Number(values.userOrGroupId.substring(2)),
-          })
+              roleIds: [values.roleId],
+              scopeWorkspaceId: workspaceId,
+              userId: Number(values.userOrGroupId.substring(2)),
+            })
           : await assignRolesToGroup({
-            groupId: Number(values.userOrGroupId.substring(2)),
-            roleIds: [values.roleId],
-            scopeWorkspaceId: workspaceId,
-          });
+              groupId: Number(values.userOrGroupId.substring(2)),
+              roleIds: [values.roleId],
+              scopeWorkspaceId: workspaceId,
+            });
         form.resetFields();
         setSelectedOption(undefined);
         onClose?.();
