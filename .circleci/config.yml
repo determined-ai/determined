@@ -1357,7 +1357,7 @@ jobs:
       - run:
           command: |
             cd webui/react
-            npx playwright install --with-deps
+            npx playwright install chromium --with-deps
             node scripts/designkit-screenshot.mjs HEAD
             git checkout master
             # BEGIN code to fake diffs. remove before merge
