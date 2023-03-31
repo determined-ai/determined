@@ -1365,32 +1365,15 @@ jobs:
       - skip-if-docs-only
       - react-get-deps
       - run:
-          command: |
-            export PLAYWRIGHT_BROWSERS_PATH=0
-            cd webui/react
-            node scripts/designkit-screenshot.mjs HEAD
-            git checkout master
-            # BEGIN code to fake diffs. remove before merge
-            git checkout - -- src/designkit-standalone
-            git checkout - -- scripts
-            git checkout - -- src/components/ThemeProvider.tsx
-            sed -i '117d' src/pages/DesignKit.tsx
-            # END code to fake diffs. remove before merge
-            node scripts/designkit-screenshot.mjs MASTER
-            # BEGIN code to fake diffs. remove before merge
-            rm screenshots/MASTER/dark/Accordion.png
-            rm screenshots/MASTER/light/Accordion.png
-            rm screenshots/HEAD/dark/Cards.png
-            rm screenshots/HEAD/light/Cards.png
-            # END code to fake diffs. remove before merge
-            node scripts/make-screenshot-diff.mjs
-            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            node scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
-            git reset --hard HEAD
-            git checkout -
-          name: get screenshot report against master
+          command: make -C webui/react visual-test
+          name: generate screenshots
       - store_artifacts:
           path: webui/react/screenshot-summary.html
+      - run:
+          command: |
+            export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
+            node scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
+          name: report results
   test-intg-downstream:
     docker:
       - image: cimg/node:16.19.0

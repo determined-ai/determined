@@ -19,10 +19,14 @@ const devServer = await createServer({
 });
 await devServer.listen();
 
+// handle assembling the base url
+const publicUrl = process.env['PUBLIC_URL'] || '';
+const { address, port } = devServer.httpServer.address();
+
 // start chrome playwright
 const browser = await chromium.launch();
 const page = await browser.newPage();
-await page.goto('http:localhost:3456/src/designkit-standalone/');
+await page.goto(`http://${address}:${port}${publicUrl}/src/designkit-standalone/`);
 // take screenshots of each section
 const sections = await page.locator('article > article').all();
 if (sections.length === 0) {

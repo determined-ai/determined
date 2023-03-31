@@ -107,6 +107,38 @@ test:
 test-ci:
 	VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test:coverage -- --reporter=junit --reporter=default --outputFile.junit=coverage/junit.xml
 
+.PHONY: visual-test-deps
+visual-test-deps:
+	npx playwright install-deps
+
+screenshots/HEAD: node_modules/done.stamp visual-test-deps
+	node scripts/designkit-screenshot.mjs HEAD
+
+screenshots/MASTER: node_modules/done.stamp visual-test-deps
+	git checkout master
+# BEGIN code to fake diffs. remove before merge
+	git checkout - -- src/designkit-standalone
+	git checkout - -- scripts
+	git checkout - -- src/components/ThemeProvider.tsx
+	sed -i '117d' src/pages/DesignKit.tsx
+# END code to fake diffs. remove before merge
+	node scripts/designkit-screenshot.mjs MASTER
+
+# BEGIN code to fake diffs. remove before merge
+.PHONY: make-fake-diff
+make-fake-diff: screenshots/HEAD screenshots/MASTER
+	rm screenshots/MASTER/dark/Accordion.png
+	rm screenshots/MASTER/light/Accordion.png
+	rm screenshots/HEAD/dark/Cards.png
+	rm screenshots/HEAD/light/Cards.png
+# END code to fake diffs. remove before merge
+
+screenshot-summary.html: screenshots/HEAD screenshots/MASTER make-fake-diff
+	node scripts/make-screenshot-diff.mjs
+
+.PHONY: visual-test
+visual-test: screenshot-summary.html
+
 # shared-web helpers
 
 .PHONY: test-shared
