@@ -60,4 +60,22 @@ jobs:
       - name: attempt rebase
         if: github.repository != env.EE_REPO
         run: |
-          git rebase proposed_base
+          git rebase proposed_base || (cat <<"EOF" 1>&2
+
+          ********
+
+          This branch failed to rebase onto the "determined-ee" repo!
+
+          This may or may not be an issue with your branch that
+          you need to resolve.
+
+          For more information, please consult this confluence page:
+
+          https://hpe-aiatscale.atlassian.net/wiki/spaces/ENGINEERIN/pages/1295450385/GitHub+Check+Rebaseable+Test
+
+          ********
+
+          EOF
+          exit 1
+          )
+
