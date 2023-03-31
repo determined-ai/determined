@@ -71,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({
   icon,
   key,
   onClose,
-  size = 'small',
+  size = 'large',
   submit,
   title,
   okButtonProps,

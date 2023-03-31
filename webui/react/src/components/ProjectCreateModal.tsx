@@ -62,6 +62,7 @@ const ProjectCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: 
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: !projectName,
         handler: handleSubmit,

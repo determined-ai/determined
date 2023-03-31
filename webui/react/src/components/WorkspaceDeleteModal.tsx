@@ -53,6 +53,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
     <Modal
       cancel
       danger
+      size="small"
       submit={{
         disabled: workspaceNameValue !== workspace.name,
         handler: handleSubmit,

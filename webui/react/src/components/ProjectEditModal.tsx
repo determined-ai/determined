@@ -45,6 +45,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onClose, project }: Props)
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: !projectName,
         handler: handleSubmit,

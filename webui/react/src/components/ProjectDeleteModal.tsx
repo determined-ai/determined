@@ -41,6 +41,7 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
     <Modal
       cancel
       danger
+      size="small"
       submit={{
         disabled: projectNameValue !== project.name,
         handler: handleSubmit,
