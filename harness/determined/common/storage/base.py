@@ -166,10 +166,15 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 def from_string(shortcut: str) -> StorageManager:
     def process_query(q: Dict[str, List[str]]) -> Dict[str, str]:
-        return {k: v[0] for k, v in q.items()}
+        kwargs = dict()
+        for key, vals in q.items():
+            if len(vals) > 1:
+                raise ValueError(f'Multiple values given for key "{key}" in storage string.')
+            kwargs[key] = vals[0]
+        return kwargs
 
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
-    if p.scheme == "":
+    if p.scheme in ["", "file"]:
         base_path = p.path
         return storage.SharedFSStorageManager(base_path=base_path)
     elif p.scheme == "ms":
