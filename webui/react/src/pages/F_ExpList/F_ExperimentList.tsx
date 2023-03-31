@@ -1,91 +1,43 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
 import { Row } from 'antd';
 import SkeletonButton from 'antd/es/skeleton/Button';
+import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { getExperiments } from 'services/api';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
+import { defaultExperimentColumns } from './glide-table/columns';
 import GlideTable from './glide-table/GlideTable';
 import { useGlasbey } from './glide-table/useGlasbey';
-
-const experimentColumns = [
-  'archived',
-  'checkpointCount',
-  'checkpointSize',
-  'description',
-  'duration',
-  'forkedFrom',
-  'id',
-  'name',
-  'progress',
-  'resourcePool',
-  'searcherType',
-  'searcherMetricValue',
-  'selected',
-  'startTime',
-  'state',
-  'tags',
-  'numTrials',
-  'user',
-] as const;
-
-export type ExperimentColumn = (typeof experimentColumns)[number];
-
-const defaultExperimentColumns: ExperimentColumn[] = [
-  'id',
-  'description',
-  'tags',
-  'forkedFrom',
-  'progress',
-  'startTime',
-  'state',
-  'searcherType',
-  'user',
-  'duration',
-  'numTrials',
-  'resourcePool',
-  'checkpointSize',
-  'checkpointCount',
-  'searcherMetricValue',
-];
 
 interface Props {
   project: Project;
 }
 
-const emptyExperiment: Omit<ExperimentItem, 'config' | 'configRaw'> = {
-  archived: false,
-  checkpointCount: 0,
-  checkpointSize: 0,
-  description: '',
-  endTime: '2021-06-21T18:11:23.756443024Z',
-  forkedFrom: undefined,
-  hyperparameters: {},
-  id: 1,
-  jobId: 'backfilled-1',
-  labels: [],
-  name: '',
-  notes: '',
-  numTrials: 0,
-  projectId: 0,
-  resourcePool: '',
-  searcherType: 'single',
-  startTime: '2020-06-26T18:09:25.844705105Z',
-  state: 'COMPLETED',
-  trialIds: [],
-  userId: 1,
-};
-
-const PAGE_RADIUS = 50;
+export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
-  const [pageMidpoint, setPageMidpoint] = useState(0);
-  const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [page, setPage] = useState(
+    isFinite(Number(searchParams.get('page'))) ? Number(searchParams.get('page')) : 0,
+  );
+  const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
+    Array(page * PAGE_SIZE).fill(NotLoaded),
+  );
+
+  useEffect(() => {
+    setSearchParams({ page: String(page) });
+  }, [page]);
+
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -96,38 +48,45 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const pageRef = useRef<HTMLElement>(null);
   const { width } = useResize(pageRef);
 
-  const handleScroll = useCallback(({ y, height }: Rectangle) => {
-    const visibleRegionMidPoint = y + height / 2;
-    setPageMidpoint(Math.round(visibleRegionMidPoint / PAGE_RADIUS) * PAGE_RADIUS);
-  }, []);
+  const [initialScrollPositionSet] = useState(observable(false));
+
+  const handleScroll = useCallback(
+    ({ y, height }: Rectangle) => {
+      if (!initialScrollPositionSet.get()) return;
+      const page = Math.floor((y + height) / PAGE_SIZE);
+      setPage(page);
+    },
+    [initialScrollPositionSet],
+  );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const tableLimit = 2 * PAGE_RADIUS;
-      const tableOffset = Math.max(pageMidpoint - PAGE_RADIUS, 0);
+      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
 
       const response = await getExperiments(
         {
           archived: false,
-          limit: tableLimit,
+          limit: 2 * PAGE_SIZE,
           offset: tableOffset,
+          orderBy: 'ORDER_BY_DESC',
           projectId: project.id,
+          sortBy: V1GetExperimentsRequestSortBy.ID,
         },
         { signal: canceler.signal },
       );
 
       setExperiments((prevExperiments) => {
-        const paddedExperimentBeforeCurrentPage = [
+        const experimentBeforeCurrentPage = [
           ...prevExperiments.slice(0, tableOffset),
-          ...Array(Math.max(0, tableOffset - prevExperiments.length)).fill(emptyExperiment),
+          ...Array(Math.max(0, tableOffset - prevExperiments.length)).fill(NotLoaded),
         ];
 
         const experimentsAfterCurrentPage = prevExperiments.slice(
           tableOffset + response.experiments.length,
         );
         return [
-          ...paddedExperimentBeforeCurrentPage,
-          ...response.experiments,
+          ...experimentBeforeCurrentPage,
+          ...response.experiments.map((e) => Loaded(e)),
           ...experimentsAfterCurrentPage,
         ];
       });
@@ -136,7 +95,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [project.id, canceler.signal, pageMidpoint]);
+  }, [project.id, canceler.signal, page]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchExperiments(), usersStore.ensureUsersFetched(canceler)]);
@@ -169,6 +128,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             colorMap={colorMap}
             data={experiments}
             handleScroll={handleScroll}
+            initialScrollPositionSet={initialScrollPositionSet}
+            page={page}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
             setSelectAll={setSelectAll}

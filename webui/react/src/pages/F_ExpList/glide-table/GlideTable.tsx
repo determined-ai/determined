@@ -1,7 +1,7 @@
-/* eslint-disable react/jsx-sort-props */
 import DataEditor, {
   CompactSelection,
   DataEditorProps,
+  DataEditorRef,
   GridCell,
   GridCellKind,
   GridColumn,
@@ -9,7 +9,6 @@ import DataEditor, {
   HeaderClickedEventArgs,
   Item,
   Rectangle,
-  SizedGridColumn,
   Theme,
 } from '@glideapps/glide-data-grid';
 import { MenuProps } from 'antd';
@@ -24,28 +23,24 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router';
 
-import { paths } from 'routes/utils';
-import { getColor, getInitials } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
-import { humanReadableBytes } from 'shared/utils/string';
 import usersStore from 'stores/users';
-import { getStateColorCssVar } from 'themes';
 import { ExperimentItem } from 'types';
 import { Loadable } from 'utils/loadable';
-import { useObservable } from 'utils/observable';
-import { getDisplayName } from 'utils/user';
+import { useObservable, WritableObservable } from 'utils/observable';
 
-import { ExperimentColumn } from '../F_ExperimentList';
+import { PAGE_SIZE } from '../F_ExperimentList';
 
-import LinksCell from './custom-cells/links-cell';
-import RangeCell from './custom-cells/range-cell';
-import SparklineCell from './custom-cells/sparkline-cell';
-import SpinnerCell from './custom-cells/spinner-cell';
-import TagsCell from './custom-cells/tags-cell';
-import UserProfileCell from './custom-cells/user-profile-cell';
+import { ColumnDef, defaultColumnWidths, ExperimentColumn, getColumnDefs } from './columns';
+import UserProfileCell from './custom-cells/avatar';
+import LinksCell from './custom-cells/links';
+import RangeCell from './custom-cells/progress';
+import SparklineCell from './custom-cells/sparkline';
+import SpinnerCell from './custom-cells/spinner';
+import TagsCell from './custom-cells/tags';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
 import { MapOfIdsToColors } from './useGlasbey';
-import { getDurationInEnglish, getTheme, getTimeInEnglish, headerIcons } from './utils';
+import { getTheme, headerIcons } from './utils';
 
 const GRID_HEIGHT = 700;
 const cells: DataEditorProps['customRenderers'] = [
@@ -59,13 +54,12 @@ const cells: DataEditorProps['customRenderers'] = [
 
 interface Props {
   colorMap: MapOfIdsToColors;
-  data: ExperimentItem[];
-
+  data: Loadable<ExperimentItem>[];
   handleScroll?: (r: Rectangle) => void;
-
+  initialScrollPositionSet: WritableObservable<boolean>;
   sortableColumnIds: ExperimentColumn[];
   setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
-
+  page: number;
   selectedExperimentIds: string[];
   setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
   selectAll: boolean;
@@ -73,12 +67,6 @@ interface Props {
 }
 
 const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
-
-type ColumnDef = SizedGridColumn & {
-  id: ExperimentColumn;
-  isNumerical?: boolean;
-  renderer: (record: ExperimentItem, idx: number) => GridCell;
-};
 
 export const GlideTable: React.FC<Props> = ({
   data,
@@ -89,24 +77,35 @@ export const GlideTable: React.FC<Props> = ({
   selectAll,
   setSelectAll,
   handleScroll,
+  initialScrollPositionSet,
+  page,
 }) => {
-  const gridRef = useRef(null);
+  const gridRef = useRef<DataEditorRef>(null);
+
+  useEffect(() => {
+    if (initialScrollPositionSet.get()) return;
+    setTimeout(() => {
+      if (gridRef.current !== null) {
+        const rowOffset = Math.max(page * PAGE_SIZE, 0);
+        gridRef.current.scrollTo(0, rowOffset);
+        setTimeout(() => initialScrollPositionSet.set(true), 200);
+      }
+    }, 200);
+  }, [initialScrollPositionSet, page]);
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
-
   const handleMenuClose = useCallback(() => {
     setMenuIsOpen(false);
   }, []);
-
-  const {
-    ui: { darkLight },
-  } = useUI();
-
   const [menuProps, setMenuProps] = useState<Omit<TableActionMenuProps, 'open'>>({
     handleClose: handleMenuClose,
     x: 0,
     y: 0,
   });
+
+  const {
+    ui: { darkLight },
+  } = useUI();
 
   const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
 
@@ -121,14 +120,15 @@ export const GlideTable: React.FC<Props> = ({
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
   });
+
   const getRowThemeOverride = React.useCallback(
-    (row: number): Partial<Theme> | undefined =>
-      colorMap[data[row]?.id]
-        ? {
-            accentColor: colorMap[data[row]?.id],
-            borderColor: '#F0F0F0',
-          }
-        : { borderColor: '#F0F0F0' },
+    (row: number): Partial<Theme> | undefined => {
+      const accentColor = Loadable.match(data[row], {
+        Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
+        NotLoaded: () => ({}),
+      });
+      return { borderColor: '#F0F0F0', ...accentColor };
+    },
     [colorMap, data],
   );
 
@@ -136,8 +136,9 @@ export const GlideTable: React.FC<Props> = ({
     const selectedRowIndices = selection.rows.toArray();
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
-        .map((idx) => String(data?.[idx]?.id))
-        .filter((x) => x !== undefined);
+        .map((idx) => data?.[idx])
+        .filter(Loadable.isLoaded)
+        .map((record) => String(record.data.id));
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
@@ -145,311 +146,20 @@ export const GlideTable: React.FC<Props> = ({
 
   const theme = getTheme(bodyStyles);
 
-  const [columnWidths, setColumnWidths] = useState<Record<ExperimentColumn, number>>({
-    archived: 80,
-    checkpointCount: 74,
-    checkpointSize: 74,
-    description: 148,
-    duration: 96,
-    forkedFrom: 128,
-    id: 50,
-    name: 150,
-    numTrials: 74,
-    progress: 111,
-    resourcePool: 140,
-    searcherMetricValue: 74,
-    searcherType: 140,
-    selected: 45,
-    startTime: 118,
-    state: 106,
-    tags: 106,
-    user: 85,
-  });
+  const [columnWidths, setColumnWidths] =
+    useState<Record<ExperimentColumn, number>>(defaultColumnWidths);
 
   const columnDefs = useMemo<Record<ExperimentColumn, ColumnDef>>(
-    () => ({
-      archived: {
-        id: 'archived',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: String(record.archived),
-          displayData: record.archived ? '📦' : '',
-          kind: GridCellKind.Text,
-        }),
-        title: 'Archived',
-        width: columnWidths.archived,
-      },
-      checkpointCount: {
-        id: 'checkpointCount',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: Number(record.checkpointCount),
-          displayData: String(record.checkpointCount),
-          kind: GridCellKind.Number,
-        }),
-        title: 'Checkpoint Count',
-        width: columnWidths.checkpointCount,
-      },
-      checkpointSize: {
-        id: 'checkpointSize',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
-          displayData: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
-          kind: GridCellKind.Text,
-        }),
-        title: 'Checkpoint Size',
-        width: columnWidths.checkpointSize,
-      },
-      description: {
-        id: 'description',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: String(record.description),
-          displayData: String(record.description),
-          kind: GridCellKind.Text,
-        }),
-        title: 'Description',
-        width: columnWidths.description,
-      },
-      duration: {
-        id: 'duration',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: `${getDurationInEnglish(record)}`,
-          displayData: `${getDurationInEnglish(record)}`,
-          kind: GridCellKind.Text,
-        }),
-        title: 'Duration',
-        width: columnWidths.duration,
-      },
-      forkedFrom: {
-        id: 'forkedFrom',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          copyData: String(record.forkedFrom ?? ''),
-          data: {
-            kind: 'links-cell',
-            links:
-              record.forkedFrom !== undefined
-                ? [
-                    {
-                      onClick: () =>
-                        record.forkedFrom && navigate(paths.experimentDetails(record.forkedFrom)),
-                      title: String(record.forkedFrom ?? ''),
-                    },
-                  ]
-                : [],
-            navigateOn: 'click',
-            underlineOffset: 6,
-          },
-          kind: GridCellKind.Custom,
-          readonly: true,
-        }),
-        title: 'Forked From',
-        width: columnWidths.forkedFrom,
-      },
-      id: {
-        id: 'id',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          copyData: String(record.id),
-          data: {
-            kind: 'links-cell',
-            links: [
-              {
-                onClick: () => navigate(paths.experimentDetails(record.id)),
-                title: String(record.id),
-              },
-            ],
-            navigateOn: 'click',
-            underlineOffset: 6,
-          },
-          kind: GridCellKind.Custom,
-          readonly: true,
-        }),
-        title: 'ID',
-        width: columnWidths.id,
-      },
-      name: {
-        id: 'name',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          copyData: String(record.name),
-          data: {
-            kind: 'links-cell',
-            links: [
-              {
-                onClick: () => navigate(paths.experimentDetails(record.id)),
-                title: String(record.name),
-              },
-            ],
-            navigateOn: 'click',
-            underlineOffset: 6,
-          },
-          kind: GridCellKind.Custom,
-          readonly: true,
-        }),
-        themeOverride: { horizontalBorderColor: '#225588' },
-        title: 'Name',
-        width: columnWidths.name,
-      },
-      numTrials: {
-        id: 'numTrials',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: record.numTrials,
-          displayData: String(record.numTrials),
-          kind: GridCellKind.Number,
-        }),
-        title: 'Trials',
-        width: columnWidths.numTrials,
-      },
-      progress: {
-        id: 'progress',
-        renderer: (record: ExperimentItem) => {
-          return (record.progress ?? 0) > 0
-            ? {
-                allowOverlay: false,
-                copyData: String(record.progress ?? 0),
-                data: {
-                  color: bodyStyles.getPropertyValue(
-                    getStateColorCssVar(record.state).slice(4, -1),
-                  ),
-                  kind: 'range-cell',
-                  max: 1,
-                  min: 0,
-                  step: 1,
-                  value: record.progress ?? 0,
-                },
-                kind: GridCellKind.Custom,
-              }
-            : {
-                allowOverlay: false,
-                data: '',
-                displayData: '',
-                kind: GridCellKind.Text,
-              };
-        },
-        title: 'Progress',
-        width: columnWidths.progress,
-      },
-      resourcePool: {
-        id: 'resourcePool',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: String(record.resourcePool),
-          displayData: String(record.resourcePool),
-          kind: GridCellKind.Text,
-        }),
-        title: 'Resource Pool',
-        width: columnWidths.resourcePool,
-      },
-      searcherMetricValue: {
-        id: 'searcherMetricValue',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: String(record.searcherMetricValue ?? ''),
-          displayData: String(record.searcherMetricValue ?? ''),
-          kind: GridCellKind.Text,
-        }),
-        title: 'Searcher Metric Values',
-        width: columnWidths.searcherMetricValue,
-      },
-      searcherType: {
-        id: 'searcherType',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: String(record.searcherType),
-          displayData: String(record.searcherType),
-          kind: GridCellKind.Text,
-        }),
-        title: 'Searcher Type',
-        width: columnWidths.searcherType,
-      },
-      selected: {
-        icon: 'selected',
-        id: 'selected',
-        renderer: (record: ExperimentItem, idx) => ({
-          allowOverlay: false,
-          contentAlign: 'left',
-          data: selectAll || selection.rows.hasIndex(idx),
-          // disabled: selectAll,
-          kind: GridCellKind.Boolean,
-        }),
-        themeOverride: { cellHorizontalPadding: 13, headerIconSize: 30 },
-        title: '',
-        width: columnWidths.selected,
-      },
-      startTime: {
-        id: 'startTime',
-        isNumerical: true,
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: false,
-          data: getTimeInEnglish(new Date(record.startTime)),
-          displayData: getTimeInEnglish(new Date(record.startTime)),
-          kind: GridCellKind.Text,
-        }),
-        title: 'Start Time',
-        width: columnWidths.startTime,
-      },
-      state: {
-        id: 'state',
-        renderer: (record: ExperimentItem) => ({
-          allowAdd: false,
-          allowOverlay: true,
-          copyData: record.state.toLocaleLowerCase(),
-          data: [],
-          kind: GridCellKind.Image,
-        }),
-        title: 'State',
-        width: columnWidths.state,
-      },
-      tags: {
-        id: 'tags',
-        renderer: (record: ExperimentItem) => ({
-          allowOverlay: true,
-          copyData: record['labels'].join(', '),
-          data: {
-            kind: 'tags-cell',
-            possibleTags: [],
-            readonly: true,
-            tags: record['labels'],
-          },
-          kind: GridCellKind.Custom,
-        }),
-        title: 'Tags',
-        width: columnWidths.tags,
-      },
-      user: {
-        id: 'user',
-        renderer: (record: ExperimentItem) => {
-          const displayName = Loadable.match(users, {
-            Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.userId)),
-            NotLoaded: () => undefined,
-          });
-          return {
-            allowOverlay: true,
-            copyData: String(record.userId),
-            data: {
-              image: undefined,
-              initials: getInitials(displayName),
-              kind: 'user-profile-cell',
-              tint: getColor(displayName, darkLight),
-            },
-            kind: GridCellKind.Custom,
-          };
-        },
-
-        title: 'User',
-        width: columnWidths.user,
-      },
-    }),
+    () =>
+      getColumnDefs({
+        bodyStyles,
+        columnWidths,
+        darkLight,
+        navigate,
+        rowSelection: selection.rows,
+        selectAll,
+        users,
+      }),
     [navigate, selectAll, selection.rows, columnWidths, users, darkLight],
   );
 
@@ -470,7 +180,6 @@ export const GlideTable: React.FC<Props> = ({
 
   const onHeaderClicked = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
-      const { bounds } = args;
       const columnId = columnIds[col];
 
       if (columnId === 'selected') {
@@ -478,6 +187,7 @@ export const GlideTable: React.FC<Props> = ({
         return;
       }
 
+      const { bounds } = args;
       const items: MenuProps['items'] = placeholderMenuItems;
       const x = bounds.x;
       const y = bounds.y + bounds.height;
@@ -487,11 +197,22 @@ export const GlideTable: React.FC<Props> = ({
     [columnIds, setSelectAll],
   );
 
-  const getContent = React.useCallback(
+  const getCellContent = React.useCallback(
     (cell: Item): GridCell => {
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
-      return columnDefs[columnId].renderer(data[rowIdx], rowIdx);
+      const row = data[rowIdx];
+      if (Loadable.isLoaded(row)) {
+        return columnDefs[columnId].renderer(row.data, rowIdx);
+      }
+      return {
+        allowOverlay: true,
+        copyData: '',
+        data: {
+          kind: 'spinner-cell',
+        },
+        kind: GridCellKind.Custom,
+      };
     },
     [data, columnIds, columnDefs],
   );
@@ -526,29 +247,33 @@ export const GlideTable: React.FC<Props> = ({
     [columnIds, columnDefs],
   );
 
+  const verticalBorder = useCallback((col: number) => columnIds[col] === 'name', [columnIds]);
+
   return (
     <div>
       <DataEditor
-        headerIcons={headerIcons}
-        customRenderers={cells}
         columns={dataGridColumns}
+        customRenderers={cells}
         freezeColumns={2}
-        getCellContent={getContent}
+        getCellContent={getCellContent}
+        getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
+        headerIcons={headerIcons}
         height={GRID_HEIGHT}
         ref={gridRef}
         rows={data.length}
         smoothScrollX
         smoothScrollY
-        width="98%"
+        theme={theme}
+        verticalBorder={verticalBorder}
+        width="100%"
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
         onGridSelectionChange={handleGridSelectionChange}
-        getRowThemeOverride={getRowThemeOverride}
-        onVisibleRegionChanged={handleScroll}
-        theme={theme}
         onHeaderClicked={onHeaderClicked}
+        onVisibleRegionChanged={handleScroll}
+        //
         // these might come in handy
         // onCellClicked={onCellClicked}
         // onItemHovered={onItemHovered}
