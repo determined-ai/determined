@@ -308,14 +308,20 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 // WarnUnsupportedOptions gives warnings for user configurations that
 // are not supported by HPC launcher.
-func (t *TaskSpec) WarnUnsupportedOptions(containerRunType string) string {
+func (t *TaskSpec) WarnUnsupportedOptions(
+	userConfiguredPriority bool,
+	containerRunType string) string {
 	var warnings []string
 
 	ignored := "is ignored with the HPC launcher"
 	if t.ResourcesConfig.MaxSlots() != nil {
 		warnings = append(warnings, fmt.Sprintf("resources.max_slots %s", ignored))
 	}
-	if t.ResourcesConfig.Priority() != nil {
+
+	// Dispatcher RM had recorded if user had configured resources.priority before it
+	// modified the resources.prioroty value. Here instead of checking t.ResourcesConfig.Priority(),
+	// we check the flag userConfiguredPriority.
+	if userConfiguredPriority {
 		warnings = append(warnings, fmt.Sprintf("resources.priority %s", ignored))
 	}
 	if t.ResourcesConfig.Weight() != 1 {
@@ -338,14 +344,14 @@ func (t *TaskSpec) WarnUnsupportedOptions(containerRunType string) string {
 
 	if t.Environment.RegistryAuth() != nil {
 		if containerRunType == podman {
-			warnings = append(warnings, fmt.Sprintf("resources.registry_auth %s", notSupported))
+			warnings = append(warnings, fmt.Sprintf("environment.registry_auth %s", notSupported))
 		} else {
 			if len(t.Environment.RegistryAuth().ServerAddress) > 0 {
 				warnings = append(warnings,
-					fmt.Sprintf("resources.registry_auth.serveraddress %s", notSupported))
+					fmt.Sprintf("environment.registry_auth.serveraddress %s", notSupported))
 			}
 			if len(t.Environment.RegistryAuth().Email) > 0 {
-				warnings = append(warnings, fmt.Sprintf("resources.registry_auth.email %s", notSupported))
+				warnings = append(warnings, fmt.Sprintf("environment.registry_auth.email %s", notSupported))
 			}
 		}
 	}

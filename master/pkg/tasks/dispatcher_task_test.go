@@ -818,12 +818,13 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 	assert.NilError(t, err)
 
 	tests := []struct {
-		name             string
-		containerRunType string
-		resourcesConfig  expconf.ResourcesConfig
-		registryAuth     *types.AuthConfig
-		wantWarn         bool
-		warningContains  []string
+		name                   string
+		containerRunType       string
+		resourcesConfig        expconf.ResourcesConfig
+		registryAuth           *types.AuthConfig
+		userConfiguredPriority bool
+		wantWarn               bool
+		warningContains        []string
 	}{
 		{
 			name:             "Test exp config warnings with Singularity",
@@ -843,15 +844,16 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				ServerAddress: "addr",
 				Email:         "email",
 			},
-			wantWarn: true,
+			userConfiguredPriority: true,
+			wantWarn:               true,
 			warningContains: []string{
 				"resources.max_slots is ignored with the HPC launcher",
 				"resources.priority is ignored with the HPC launcher",
 				"resources.weight is ignored with the HPC launcher",
 				"resources.devices is not supported with Singularity",
 				"resources.shm_size is not supported with Singularity",
-				"resources.registry_auth.serveraddress is not supported with Singularity",
-				"resources.registry_auth.email is not supported with Singularity",
+				"environment.registry_auth.serveraddress is not supported with Singularity",
+				"environment.registry_auth.email is not supported with Singularity",
 			},
 		},
 		{
@@ -868,15 +870,16 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
 			},
-			registryAuth: &types.AuthConfig{},
-			wantWarn:     true,
+			registryAuth:           &types.AuthConfig{},
+			userConfiguredPriority: true,
+			wantWarn:               true,
 			warningContains: []string{
 				"resources.max_slots is ignored with the HPC launcher",
 				"resources.priority is ignored with the HPC launcher",
 				"resources.weight is ignored with the HPC launcher",
 				"resources.devices is not supported with Podman",
 				"resources.shm_size is not supported with Podman",
-				"resources.registry_auth is not supported with Podman",
+				"environment.registry_auth is not supported with Podman",
 			},
 		},
 		{
@@ -896,14 +899,15 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 			registryAuth: &types.AuthConfig{
 				ServerAddress: "addr",
 			},
-			wantWarn: true,
+			userConfiguredPriority: true,
+			wantWarn:               true,
 			warningContains: []string{
 				"resources.max_slots is ignored with the HPC launcher",
 				"resources.priority is ignored with the HPC launcher",
 				"resources.weight is ignored with the HPC launcher",
 				"resources.devices is not supported with Enroot",
 				"resources.shm_size is not supported with Enroot",
-				"resources.registry_auth.serveraddress is not supported with Enroot",
+				"environment.registry_auth.serveraddress is not supported with Enroot",
 			},
 		},
 		{
@@ -915,13 +919,14 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawSlotsPerTrial:  nil,
 				RawWeight:         nil,
 				RawNativeParallel: nil,
-				RawPriority:       nil,
+				RawPriority:       new(int),
 				RawShmSize:        nil,
 				RawResourcePool:   nil,
 				RawDevices:        nil,
 			},
-			registryAuth: &types.AuthConfig{},
-			wantWarn:     false,
+			userConfiguredPriority: false,
+			registryAuth:           &types.AuthConfig{},
+			wantWarn:               false,
 		},
 	}
 	for _, tt := range tests {
@@ -951,7 +956,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				ResourcesConfig: schemas.WithDefaults(tt.resourcesConfig),
 			}
 
-			warn := ts.WarnUnsupportedOptions(tt.containerRunType)
+			warn := ts.WarnUnsupportedOptions(tt.userConfiguredPriority, tt.containerRunType)
 			if tt.wantWarn {
 				for _, want := range tt.warningContains {
 					assert.Assert(t, strings.Contains(warn, want))

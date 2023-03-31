@@ -995,7 +995,8 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		return
 	}
 
-	warning := msg.OrigSpec.WarnUnsupportedOptions(m.rmConfig.LauncherContainerRunType)
+	warning := msg.Spec.WarnUnsupportedOptions(
+		msg.UserConfiguredPriority, m.rmConfig.LauncherContainerRunType)
 
 	if len(warning) > 0 {
 		ctx.Tell(msg.TaskActor, sproto.ContainerLog{
@@ -2007,11 +2008,11 @@ type (
 
 	// StartDispatcherResources comment to keep "golint" from complaining.
 	StartDispatcherResources struct {
-		AllocationID model.AllocationID
-		ResourcesID  sproto.ResourcesID
-		TaskActor    *actor.Ref
-		Spec         tasks.TaskSpec
-		OrigSpec     tasks.TaskSpec
+		AllocationID           model.AllocationID
+		ResourcesID            sproto.ResourcesID
+		TaskActor              *actor.Ref
+		Spec                   tasks.TaskSpec
+		UserConfiguredPriority bool
 	}
 
 	// KillDispatcherResources tells the dispatcher RM to clean up the resources with the given
@@ -2052,13 +2053,22 @@ func (r DispatcherResources) Summary() sproto.ResourcesSummary {
 func (r DispatcherResources) Start(
 	ctx *actor.Context, _ logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
-	origSpec := spec
 	spec.ResourcesID = string(r.id)
 	spec.AllocationID = string(r.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(r.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
+
+	// HPC launcher is setting a value for resources.priority. The user configured
+	// value will be ignored. A warning message will be given if user configured
+	// this option. To generate the warning, we need to record if this option is configured
+	// before it is changed by the code below.
+	userConfiguredPriority := false
+	if spec.ResourcesConfig.Priority() != nil {
+		userConfiguredPriority = true
+	}
 	spec.ResourcesConfig.SetPriority(r.group.Priority)
+
 	if spec.LoggingFields == nil {
 		spec.LoggingFields = map[string]string{}
 	}
@@ -2068,11 +2078,11 @@ func (r DispatcherResources) Start(
 	spec.ExtraEnvVars[sproto.SlurmRendezvousIfaceEnvVar] = r.defaultRendezvousIface
 	spec.ExtraEnvVars[sproto.SlurmProxyIfaceEnvVar] = r.defaultProxyIface
 	ctx.Tell(r.rm, StartDispatcherResources{
-		AllocationID: r.req.AllocationID,
-		ResourcesID:  r.id,
-		TaskActor:    r.req.AllocationRef,
-		Spec:         spec,
-		OrigSpec:     origSpec,
+		AllocationID:           r.req.AllocationID,
+		ResourcesID:            r.id,
+		TaskActor:              r.req.AllocationRef,
+		Spec:                   spec,
+		UserConfiguredPriority: userConfiguredPriority,
 	})
 
 	return nil
