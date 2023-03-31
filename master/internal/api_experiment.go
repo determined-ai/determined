@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/errors"
 
@@ -32,7 +34,6 @@ import (
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -842,14 +843,14 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.ActivateExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.ActivateExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	results, err := exputil.PauseExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.PauseExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -865,14 +866,14 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.PauseExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.PauseExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	results, err := exputil.CancelExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.CancelExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -888,14 +889,14 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.CancelExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.CancelExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	results, err := exputil.KillExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.KillExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -911,14 +912,14 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.KillExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.KillExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	results, err := exputil.ArchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -934,14 +935,14 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
-	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.ArchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.ArchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id})
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -957,7 +958,7 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
-	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds)
+	results, err := exputil.UnarchiveExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
 	return &apiv1.UnarchiveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
@@ -1529,12 +1530,12 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time,
 ) (*apiv1.TrialsSampleResponse_Trial, error) {
-	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	var metricMeasurements db.MetricMeasurements
+	var metricID string
+	var metricMeasurements []db.MetricMeasurements
 	xAxisLabelMetrics := []string{"epoch"}
 
 	trial.TrialId = trialID
@@ -1554,32 +1555,35 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricMeasurements, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics)
+		metricID = "training"
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricMeasurements, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-			metricName, startBatches, endBatches, xAxisLabelMetrics)
+		metricID = "validation"
 	default:
 		panic("Invalid metric type")
 	}
+	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
+		metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		"batches", nil, metricID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
 	}
-	if len(metricMeasurements.Batches) > 0 {
+	if len(metricMeasurements) > 0 {
 		// if we get empty results, the endTime is incorrectly zero
 		trialCursors[trialID] = endTime
 	}
+
 	if !seenBefore {
-		metricSeries = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, false)
+		for _, in := range metricMeasurements {
+			out := apiv1.DataPoint{
+				Batches: int32(in.Batches),
+				Value:   in.Value,
+				Time:    timestamppb.New(in.Time),
+				Epoch:   in.Epoch,
+			}
+			trial.Data = append(trial.Data, &out)
+		}
 	}
 
-	for _, in := range metricSeries {
-		out := apiv1.DataPoint{
-			Batches: int32(in.X),
-			Value:   in.Y,
-		}
-		trial.Data = append(trial.Data, &out)
-	}
 	return &trial, nil
 }
 
@@ -1892,7 +1896,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	results, err := exputil.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId},
+	results, err := exputil.MoveExperiments(ctx, a.m.system, []int32{req.ExperimentId}, nil,
 		req.DestinationProjectId)
 
 	if err == nil {
@@ -1930,7 +1934,7 @@ func (a *apiServer) MoveExperiments(
 	}
 
 	results, err := exputil.MoveExperiments(ctx, a.m.system, req.ExperimentIds,
-		req.DestinationProjectId)
+		req.Filters, req.DestinationProjectId)
 	return &apiv1.MoveExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 

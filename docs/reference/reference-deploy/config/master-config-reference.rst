@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.0`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.0`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -320,6 +320,9 @@ The master supports the following configuration settings:
          find the Slurm, PBS, Singularity, Nvidia libraries, etc., in case they are not in a
          standard location on the compute node. For example,
          ``LD_LIBRARY_PATH=/cm/shared/apps/slurm/21.08.6/lib:/cm/shared/apps/slurm/21.08.6/lib/slurm:${LD_LIBRARY_PATH}``.
+
+      -  ``launcher_jvm_args``: Provides an override of the default HPC launcher JVM heap
+         configuration.
 
       -  ``tres_supported``: Indicates if ``SelectType=select/cons_tres`` is set in the Slurm
          configuration. Affects how Determined requests GPUs from Slurm. The default is true.

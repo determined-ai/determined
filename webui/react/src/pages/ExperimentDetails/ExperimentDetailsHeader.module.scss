@@ -78,27 +78,3 @@
     word-break: normal;
   }
 }
-.foldableSection {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-
-  .foldableItem {
-    display: flex;
-    line-height: 32px;
-    white-space: nowrap;
-    word-break: break-all;
-  }
-  .foldableItemLabel {
-    display: inline-block;
-    line-height: 32px;
-    opacity: 0.75;
-    padding-right: 6px;
-  }
-  .link {
-    color: inherit;
-  }
-  .description {
-    white-space: break-spaces;
-  }
-}

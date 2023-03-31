@@ -159,13 +159,23 @@ variable "preemption_enabled" {
 }
 
 variable "labels" {
-  type = map
+  type = map(string)
   default = {}
 }
 
 /******************************************
 	Determined
  *****************************************/
+
+variable "disk_size" {
+  type = number
+  default = 200
+}
+
+variable "disk_type" {
+  type = string
+  default = "pd-standard"
+}
 
 variable "environment_image" {
   type = string

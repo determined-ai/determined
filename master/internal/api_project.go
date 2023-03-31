@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -35,6 +36,63 @@ func (a *apiServer) GetProjectByID(
 		return nil, notFoundErr
 	}
 	return p, nil
+}
+
+func (a *apiServer) getProjectColumnsByID(
+	ctx context.Context, id int32, curUser model.User,
+) (*apiv1.GetProjectColumnsResponse, error) {
+	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
+	p := &projectv1.Project{}
+	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
+		return nil, notFoundErr
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
+	}
+	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, notFoundErr
+	}
+	// Get general columns
+	generalColumns := make([]projectv1.GeneralColumn, 0, len(projectv1.GeneralColumn_value))
+	for gc := range projectv1.GeneralColumn_value {
+		generalColumns = append(
+			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
+	}
+	// Get hyperpatameters columns
+	hyperparameters := struct {
+		Hyperparameters []string
+	}{}
+	err := db.Bun().
+		NewSelect().Table("projects").Column("hyperparameters").Where(
+		"id = ?", id).Scan(ctx, &hyperparameters)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get metrics columns
+	metricNames := []struct {
+		Vname []string
+	}{}
+	metricColumns := make([]string, 0)
+	err = db.Bun().
+		NewSelect().
+		TableExpr("exp_metrics_name").
+		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
+		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
+		Where("project_id = ?", id).Scan(ctx, &metricNames)
+	if err != nil {
+		return nil, err
+	}
+	for _, mn := range metricNames {
+		for _, mnv := range mn.Vname {
+			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mnv))
+		}
+	}
+
+	return &apiv1.GetProjectColumnsResponse{
+		General: generalColumns, Hyperparameters: hyperparameters.Hyperparameters, Metrics: metricColumns,
+	}, nil
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
@@ -83,6 +141,17 @@ func (a *apiServer) GetProject(
 
 	p, err := a.GetProjectByID(ctx, req.Id, *curUser)
 	return &apiv1.GetProjectResponse{Project: p}, err
+}
+
+func (a *apiServer) GetProjectColumns(
+	ctx context.Context, req *apiv1.GetProjectColumnsRequest,
+) (*apiv1.GetProjectColumnsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
 }
 
 func (a *apiServer) PostProject(

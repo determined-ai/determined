@@ -8,15 +8,19 @@ import {
 } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import DeleteModelModal from 'components/DeleteModelModal';
 import DynamicIcon from 'components/DynamicIcon';
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Toggle from 'components/kit/Toggle';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
+import ModelCreateModal from 'components/ModelCreateModal';
+import ModelMoveModal from 'components/ModelMoveModal';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -34,9 +38,6 @@ import {
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -75,6 +76,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [models, setModels] = useState<ModelItem[]>([]);
+  const [model, setModel] = useState<ModelItem | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
@@ -83,14 +85,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
   const { canCreateModels, canDeleteModel, canModifyModel } = usePermissions();
 
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModelCreate } =
-    useModalModelCreate({ workspaceId: workspace?.id });
-
-  const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
-    useModalModelDelete();
-
-  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
-    useModalModelMove();
+  const modelCreateModal = useModal(ModelCreateModal);
+  const deleteModelModal = useModal(DeleteModelModal);
+  const modelMoveModal = useModal(ModelMoveModal);
 
   const settingConfig = useMemo(() => {
     return settingsConfig(workspace?.id.toString() ?? 'global');
@@ -203,13 +200,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
     },
     [fetchModels],
-  );
-
-  const moveModelToWorkspace = useCallback(
-    (model: ModelItem) => {
-      openModelMove(model);
-    },
-    [openModelMove],
   );
 
   const setModelTags = useCallback(
@@ -383,13 +373,6 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [handleLabelFilterApply, handleLabelFilterReset, settings.tags],
   );
 
-  const showConfirmDelete = useCallback(
-    (model: ModelItem) => {
-      openModelDelete(model);
-    },
-    [openModelDelete],
-  );
-
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
@@ -426,10 +409,12 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           switchArchived(record);
         },
         [MenuKey.MoveModel]: () => {
-          moveModelToWorkspace(record);
+          setModel(record);
+          modelMoveModal.open();
         },
         [MenuKey.DeleteModel]: () => {
-          showConfirmDelete(record);
+          setModel(record);
+          deleteModelModal.open();
         },
       };
 
@@ -453,7 +438,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [moveModelToWorkspace, showConfirmDelete, switchArchived],
+    [deleteModelModal, modelMoveModal, switchArchived],
   );
 
   const columns = useMemo(() => {
@@ -612,21 +597,21 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       },
     ] as ColumnDef<ModelItem>[];
   }, [
-    canDeleteModel,
-    canModifyModel,
+    users,
     nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
+    workspaceFilterDropdown,
+    workspaces,
     labelFilterDropdown,
     tags,
     userFilterDropdown,
-    users,
+    canModifyModel,
     setModelTags,
+    canDeleteModel,
     ModelActionMenu,
     saveModelDescription,
-    workspaceFilterDropdown,
     workspaceRenderer,
-    workspaces,
   ]);
 
   const handleTableChange = useCallback(
@@ -655,7 +640,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     return () => canceler.abort();
   }, [canceler]);
 
-  const showCreateModelModal = useCallback(() => openModelCreate(), [openModelCreate]);
+  const showCreateModelModal = useCallback(() => modelCreateModal.open(), [modelCreateModal]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -779,9 +764,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           onChange={handleTableChange}
         />
       )}
-      {modalModelCreateContextHolder}
-      {modalModelDeleteContextHolder}
-      {modalModelMoveContextHolder}
+      <modelCreateModal.Component workspaceId={workspace?.id} />
+      {model && <deleteModelModal.Component model={model} />}
+      {model && <modelMoveModal.Component model={model} />}
     </Page>
   );
 };

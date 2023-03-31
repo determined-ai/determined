@@ -33,15 +33,16 @@ type kubernetesResourcePool struct {
 	config     *config.KubernetesResourceManagerConfig
 	poolConfig *config.ResourcePoolConfig
 
-	reqList           *tasklist.TaskList
-	groups            map[*actor.Ref]*tasklist.Group
-	addrToContainerID map[*actor.Ref]cproto.ID
-	containerIDtoAddr map[string]*actor.Ref
-	jobIDtoAddr       map[model.JobID]*actor.Ref
-	addrToJobID       map[*actor.Ref]model.JobID
-	groupActorToID    map[*actor.Ref]model.JobID
-	IDToGroupActor    map[model.JobID]*actor.Ref
-	slotsUsedPerGroup map[*tasklist.Group]int
+	reqList               *tasklist.TaskList
+	groups                map[*actor.Ref]*tasklist.Group
+	addrToContainerID     map[*actor.Ref]cproto.ID
+	containerIDtoAddr     map[string]*actor.Ref
+	jobIDtoAddr           map[model.JobID]*actor.Ref
+	addrToJobID           map[*actor.Ref]model.JobID
+	groupActorToID        map[*actor.Ref]model.JobID
+	IDToGroupActor        map[model.JobID]*actor.Ref
+	slotsUsedPerGroup     map[*tasklist.Group]int
+	allocRefToRunningPods map[*actor.Ref]int
 
 	podsActor *actor.Ref
 
@@ -55,19 +56,20 @@ func newResourcePool(
 	podsActor *actor.Ref,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
-		config:            rmConfig,
-		poolConfig:        poolConfig,
-		reqList:           tasklist.New(),
-		groups:            map[*actor.Ref]*tasklist.Group{},
-		addrToContainerID: map[*actor.Ref]cproto.ID{},
-		containerIDtoAddr: map[string]*actor.Ref{},
-		jobIDtoAddr:       map[model.JobID]*actor.Ref{},
-		addrToJobID:       map[*actor.Ref]model.JobID{},
-		groupActorToID:    map[*actor.Ref]model.JobID{},
-		IDToGroupActor:    map[model.JobID]*actor.Ref{},
-		slotsUsedPerGroup: map[*tasklist.Group]int{},
-		podsActor:         podsActor,
-		queuePositions:    tasklist.InitializeJobSortState(true),
+		config:                rmConfig,
+		poolConfig:            poolConfig,
+		reqList:               tasklist.New(),
+		groups:                map[*actor.Ref]*tasklist.Group{},
+		addrToContainerID:     map[*actor.Ref]cproto.ID{},
+		containerIDtoAddr:     map[string]*actor.Ref{},
+		jobIDtoAddr:           map[model.JobID]*actor.Ref{},
+		addrToJobID:           map[*actor.Ref]model.JobID{},
+		groupActorToID:        map[*actor.Ref]model.JobID{},
+		IDToGroupActor:        map[model.JobID]*actor.Ref{},
+		slotsUsedPerGroup:     map[*tasklist.Group]int{},
+		allocRefToRunningPods: map[*actor.Ref]int{},
+		podsActor:             podsActor,
+		queuePositions:        tasklist.InitializeJobSortState(true),
 	}
 }
 
@@ -214,6 +216,9 @@ func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 			req := it.Value()
 			if req.AllocationRef == ref {
 				req.State = msg.State
+				if sproto.ScheduledStates[req.State] {
+					k.allocRefToRunningPods[ref]++
+				}
 			}
 		}
 
@@ -258,6 +263,7 @@ func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.Allocate
 		k.addrToJobID[msg.AllocationRef] = msg.JobID
 		k.groupActorToID[msg.Group] = msg.JobID
 		k.IDToGroupActor[msg.JobID] = msg.Group
+		k.allocRefToRunningPods[msg.AllocationRef] = 0
 	}
 	k.reqList.AddTask(&msg)
 }
@@ -423,11 +429,32 @@ func (k *kubernetesResourcePool) moveJob(
 	return nil
 }
 
+func (k *kubernetesResourcePool) correctJobQInfo(
+	reqs []*sproto.AllocateRequest,
+	q map[model.JobID]*sproto.RMJobInfo,
+) map[model.JobID]*sproto.RMJobInfo {
+	jobIDToAllocatedSlots := map[model.JobID]int{}
+	for _, req := range reqs {
+		runningPods := k.allocRefToRunningPods[req.AllocationRef]
+		if req.SlotsNeeded <= k.config.MaxSlotsPerPod {
+			jobIDToAllocatedSlots[req.JobID] += runningPods * req.SlotsNeeded
+		} else {
+			jobIDToAllocatedSlots[req.JobID] += runningPods * k.config.MaxSlotsPerPod
+		}
+	}
+
+	for id := range q {
+		q[id].AllocatedSlots = jobIDToAllocatedSlots[id]
+	}
+
+	return q
+}
+
 func (k *kubernetesResourcePool) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
 	reqs := tasklist.SortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
-	jobQinfo := tasklist.ReduceToJobQInfo(reqs)
-
-	return jobQinfo
+	jobQInfo := tasklist.ReduceToJobQInfo(reqs)
+	correctedJobQInfo := k.correctJobQInfo(reqs, jobQInfo)
+	return correctedJobQInfo
 }
 
 func (k *kubernetesResourcePool) receiveSetAllocationName(
@@ -576,6 +603,7 @@ func (k *kubernetesResourcePool) resourcesReleased(
 	ctx.Log().Infof("resources are released for %s", msg.AllocationRef.Address())
 	k.reqList.RemoveTaskByHandler(msg.AllocationRef)
 	delete(k.addrToContainerID, msg.AllocationRef)
+	delete(k.allocRefToRunningPods, msg.AllocationRef)
 
 	deleteID := ""
 	for id, addr := range k.containerIDtoAddr {

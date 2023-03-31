@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-835d8b1
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-835d8b1
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
 
   login-docker:
     parameters:
@@ -594,7 +594,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            det deploy aws up \
+            tools/scripts/retry.sh det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
@@ -615,7 +615,7 @@ commands:
           when: always
           no_output_timeout: 20m
           command: |
-            det deploy aws down \
+            tools/scripts/retry.sh det deploy aws down \
               --cluster-id <<parameters.cluster-id>> --yes
 
   setup-aws-cluster:
@@ -730,6 +730,17 @@ commands:
       accel-node-taints:
         type: string
         default: ""
+      cluster-ipv4-cidr:
+        type: string
+        description: The IP address range for the pods in this cluster.
+        # We are specifying this since the cluster doesn't need to be very large and GKE was intermittently
+        # defaulting to an excessively large range. "/19" is the minimum range it will let us allocate and
+        # allows the cluster to create at most 16 nodes.
+        # Kubernetes services default to 4096 IPs, or a "/20", and the remainder gets split up into a "/24" per node.
+        # So with a "/19", there are 8192 total addresses. After 4096 get used for services there are 4096 left.
+        # That's 2^12 / 2^8 = 16 nodes for our tests. Thanks @Danny Sauer!
+        # If we find we need more nodes in our tests in the future, we can bump this up.
+        default: "/19"
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -757,7 +768,7 @@ commands:
       - run:
           command: |
             echo "Console URL for cluster: https://console.cloud.google.com/kubernetes/clusters/details/<<parameters.region>>/${CLUSTER_ID}?project=determined-ai"
-            gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci,${LABELS} --no-enable-ip-alias --subnetwork default
+            gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci,${LABELS} --no-enable-ip-alias --subnetwork default --cluster-ipv4-cidr=<<parameters.cluster-ipv4-cidr>>
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
@@ -1096,6 +1107,8 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1970,7 +1983,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
         type: string
       accel-node-taints:
         type: string

@@ -484,7 +484,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
-		resources.ResourcePool(),
+		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

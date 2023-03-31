@@ -130,6 +130,16 @@ func (c *Context) Respond(message Message) {
 	close(c.result)
 }
 
+// RespondCheckError returns a response message for this request message back to the sender. If the
+// response has an error send that instead.
+func (c *Context) RespondCheckError(message Message, err error) {
+	if err != nil {
+		c.Respond(err)
+	} else {
+		c.Respond(message)
+	}
+}
+
 // Kill removes the child with the given local ID from this parent. All messages from this child to
 // this actor are ignored.
 func (c *Context) Kill(id interface{}) bool {

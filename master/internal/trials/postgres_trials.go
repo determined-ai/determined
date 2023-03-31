@@ -1,11 +1,13 @@
 package trials
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
@@ -13,7 +15,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
+)
+
+const (
+	batches = "batches"
 )
 
 // TrialsAugmented shows provides information about a Trial.
@@ -310,4 +317,64 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 	}
 
 	return q, nil
+}
+
+// MetricsTimeSeries returns a time-series of the specified metric in the specified
+// trial.
+func MetricsTimeSeries(trialID int32, startTime time.Time,
+	metricName string,
+	startBatches int, endBatches int, xAxisMetricLabels []string,
+	maxDatapoints int, timeSeriesColumn string,
+	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
+	metricMeasurements []db.MetricMeasurements, err error,
+) {
+	var metricsObjectName, tableName, queryColumn, orderColumn string
+	switch metricType {
+	case "training":
+		metricsObjectName = "avg_metrics"
+		tableName = "steps"
+	case "validation":
+		metricsObjectName = "validation_metrics"
+		tableName = "validations"
+	default:
+		panic(fmt.Sprintf("Unsupported metric type %v", metricType))
+	}
+
+	// The data for batches and column are stored under different column names
+	switch timeSeriesColumn {
+	case "batches":
+		queryColumn = "total_batches"
+	case "time":
+		queryColumn = "end_time"
+	default:
+		queryColumn = timeSeriesColumn
+	}
+	measurements := []db.MetricMeasurements{}
+	subq := db.Bun().NewSelect().TableExpr(tableName).
+		ColumnExpr("setseed(1) as _seed").
+		ColumnExpr("total_batches as batches").
+		ColumnExpr("trial_id").ColumnExpr("end_time as time").
+		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName), metricName).
+		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName)).
+		Where("metrics ->'?' ->> ? IS NOT NULL", bun.Safe(metricsObjectName), metricName).
+		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
+	switch timeSeriesFilter {
+	case nil:
+		orderColumn = batches
+		subq = subq.Where("total_batches >= ?", startBatches).
+			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
+			Where("end_time > ?", startTime)
+	default:
+		orderColumn = timeSeriesColumn
+		subq, err = db.ApplyPolymorphicFilter(subq, queryColumn, timeSeriesFilter)
+		if err != nil {
+			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		}
+	}
+	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
+		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
+	if err != nil {
+		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
+	return measurements, nil
 }

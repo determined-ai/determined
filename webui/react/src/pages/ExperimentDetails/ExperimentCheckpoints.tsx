@@ -3,6 +3,8 @@ import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
+import { useModal } from 'components/kit/Modal';
+import ModelCreateModal from 'components/ModelCreateModal';
 import Section from 'components/Section';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -15,7 +17,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import useModalCheckpointDelete from 'hooks/useModal/Checkpoint/useModalCheckpointDelete';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
@@ -55,12 +56,18 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
+  const modelCreateModal = useModal(ModelCreateModal);
+
   const {
     contextHolder: modalCheckpointRegisterContextHolder,
     modalOpen: openModalCheckpointRegister,
   } = useModalCheckpointRegister({
     onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
+      // TODO: fix the behavior along with checkpoint modal migration
+      // It used to open checkpoint modal again after creating a model,
+      // but it doesn't with new create model modal since we don't use context holder anymore.
+      // This should be able to fix it along with checkpoint modal migration.
+      if (checkpoints) modelCreateModal.open();
     },
   });
 
@@ -70,9 +77,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     },
     [openModalCheckpointRegister],
   );
-
-  const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
-    useModalModelCreate({ onClose: handleOnCloseCreateModel });
 
   const {
     contextHolder: modalCheckpointDeleteContextHolder,
@@ -346,7 +350,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           <SkeletonTable columns={columns.length} />
         )}
       </Section>
-      {modalModelCreateContextHolder}
+      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       {modalCheckpointRegisterContextHolder}
       {modalCheckpointDeleteContextHolder}
     </>

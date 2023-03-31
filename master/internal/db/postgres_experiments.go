@@ -12,8 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/determined-ai/determined/master/internal/lttb"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -394,122 +393,11 @@ SELECT t.id FROM (
 // MetricMeasurements represents a metric measured by all possible
 // independent variables.
 type MetricMeasurements struct {
-	AverageMetrics map[string][]lttb.Point
-	Batches        []lttb.Point
-	Time           []lttb.Point
-	MaxEndTime     time.Time
-}
-
-func timeToFloat(t time.Time) float64 {
-	// If time.Time is the empty value, UnixNano will return the farthest back
-	// timestamp a float can represent, which is some large negative value.
-	if t.IsZero() {
-		return 0
-	}
-	return float64(t.UnixNano()) / 1e9
-}
-
-func scanMetricsSeries(rows *sql.Rows, xAxisMetricLabels []string,
-	metricName string,
-) MetricMeasurements {
-	var maxEndTime time.Time
-	var avgMetrics map[string]float64
-	averageMetricsMap := make(map[string][]lttb.Point)
-	var metricMeasurements MetricMeasurements
-
-	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
-	for rows.Next() {
-		var batches uint
-		var endTime time.Time
-		var metrics *string
-		err := rows.Scan(&batches, &endTime, &metrics)
-		if err != nil {
-			continue
-		}
-		if metrics != nil {
-			err = json.Unmarshal([]byte(*metrics), &avgMetrics)
-			if err != nil {
-				continue
-			}
-		}
-
-		value := avgMetrics[metricName]
-
-		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
-		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-
-		for _, xAxisLabel := range xAxisMetricLabels {
-			// For now we will always only search for an "epoch" value but this will be updated in the future
-			// to accept or expect a dynamic list of poossible x-axis values.
-			epoch, ok := avgMetrics[xAxisLabel]
-			if ok {
-				metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: epoch, Y: value})
-			}
-			if endTime.After(maxEndTime) {
-				maxEndTime = endTime
-			}
-		}
-	}
-	averageMetricsMap["epoch"] = metricSeriesEpoch
-	metricMeasurements.AverageMetrics = averageMetricsMap
-	metricMeasurements.Batches = metricSeriesBatch
-	metricMeasurements.Time = metricSeriesTime
-	metricMeasurements.MaxEndTime = maxEndTime
-	return metricMeasurements
-}
-
-// TrainingMetricsSeries returns a time-series of the specified training metric in the specified
-// trial.
-func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string) (
-	metricMeasurements MetricMeasurements, err error,
-) {
-	rows, err := db.sql.Query(`
-SELECT
-  total_batches AS batches,
-  s.end_time as end_time,
-  s.metrics->>'avg_metrics' AS metrics
-FROM steps s
-WHERE s.trial_id=$2
-  AND total_batches >= $3
-  AND ($4 <= 0 OR total_batches <= $4)
-  AND s.end_time > $5
-  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
-ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
-}
-
-// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
-// trial.
-func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int, xAxisMetricLabels []string) (
-	metricMeasurements MetricMeasurements, err error,
-) {
-	rows, err := db.sql.Query(`
-SELECT
-  v.total_batches AS batches,
-  v.end_time as end_time,
-  v.metrics->>'validation_metrics' AS metrics
-FROM validations v
-WHERE v.trial_id=$2
-  AND v.total_batches >= $3
-  AND ($4 <= 0 OR v.total_batches <= $4)
-  AND v.end_time > $5
-  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
-ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	if err != nil {
-		defer rows.Close()
-		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
-	}
-	metricMeasurements = scanMetricsSeries(rows, xAxisMetricLabels, metricName)
-	defer rows.Close()
-	return metricMeasurements, nil
+	Value   float64
+	Batches uint
+	Time    time.Time
+	Epoch   *int32 `json:"epoch,omitempty"`
+	TrialID int32
 }
 
 type hpImportanceDataWrapper struct {
@@ -790,34 +678,138 @@ func (db *PgDB) AddExperiment(
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
-	return db.withTransaction("add_experiment", func(tx *sqlx.Tx) error {
-		job := model.Job{
-			JobID:   experiment.JobID,
-			JobType: model.JobTypeExperiment,
-			OwnerID: experiment.OwnerID,
+	ctx := context.TODO()
+	tx, err := Bun().BeginTx(ctx, nil)
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in AddExperiment")
 		}
-		if err := addJob(tx, &job); err != nil {
-			return errors.Wrapf(err, "error inserting job %v", job)
-		}
-		// HACK: insert literal "null" into the config, which we set in the next query.
-		if err := namedGet(tx, &experiment.ID, `
-	INSERT INTO experiments
+	}()
+	job := model.Job{
+		JobID:   experiment.JobID,
+		JobType: model.JobTypeExperiment,
+		OwnerID: experiment.OwnerID,
+	}
+	_, err = tx.NewInsert().Model(&job).Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting job %v", job)
+	}
+	err = tx.NewRaw(`INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
  	project_id)
-	VALUES (:state, 'null'::::jsonb, :model_definition, :start_time, :end_time, :archived, :parent_id,
-					0, :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id,
-					:original_config, :notes, :job_id, :project_id)
-	RETURNING id`, experiment); err != nil {
-			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
-		}
-		if _, err := tx.Exec(
-			`UPDATE experiments SET config = $1 WHERE id = $2`, activeConfig, experiment.ID,
-		); err != nil {
-			return errors.Wrapf(err, "error inserting experiment config")
-		}
-		return nil
-	})
+	VALUES (?, 'null'::jsonb, ?, ?, ?, ?, ?,
+					0, ?, ?, ?, ?, ?,
+					?, ?, ?, ?)
+	RETURNING id`,
+		experiment.State,
+		experiment.ModelDefinitionBytes,
+		experiment.StartTime,
+		experiment.EndTime,
+		experiment.Archived,
+		experiment.ParentID,
+		experiment.GitRemote,
+		experiment.GitCommit,
+		experiment.GitCommitter,
+		experiment.GitCommitDate,
+		experiment.OwnerID,
+		experiment.OriginalConfig,
+		experiment.Notes,
+		experiment.JobID,
+		experiment.ProjectID).Scan(ctx, &experiment.ID)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting experiment %v", experiment)
+	}
+	activeConfigStr, err := json.Marshal(activeConfig)
+	if err != nil {
+		return errors.Wrapf(err, "error handling experiment config %v", activeConfig)
+	}
+	_, err = tx.Exec(
+		`UPDATE experiments SET config = ? WHERE id = ?`, string(activeConfigStr), experiment.ID,
+	)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting experiment config")
+	}
+	if err = AddProjectHyperparameters(
+		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
+		return errors.Wrapf(err, "error updating hyperparameters")
+	}
+	return tx.Commit()
+}
+
+// RemoveProjectHyperparameters take a list of experiment ids,
+// recalculate their respective project hyper parameters.
+func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentIDs []int32) error {
+	if idb == nil {
+		idb = Bun()
+	}
+	var projectIDs []int
+	err := idb.NewRaw(`WITH recursive flat (project_id, key, value) AS (
+		SELECT project_id, key, value
+		FROM experiments,
+		jsonb_each(config -> 'hyperparameters')
+		WHERE project_id IN (SELECT project_id WHERE id IN (?)) AND id NOT IN (?)
+	UNION
+		SELECT f.project_id, concat(f.key, '.', j.key), j.value
+		FROM flat f,
+		jsonb_each(f.value) j
+		WHERE jsonb_typeof(f.value) = 'object' AND f.value -> 'type' IS NULL
+	), flatten AS (
+	SELECT project_id, array_to_json(array_agg(DISTINCT key)) AS data
+	FROM flat
+	WHERE value -> 'type' IS NOT NULL
+	GROUP BY project_id), reset_hp AS (
+        UPDATE projects SET hyperparameters = '[]'::jsonb 
+		WHERE id IN (SELECT project_id FROM experiments WHERE id IN (?))
+    )
+	UPDATE projects SET hyperparameters = flatten.data FROM flatten 
+	WHERE flatten.project_id = projects.id`,
+		bun.In(experimentIDs), bun.In(experimentIDs), bun.In(experimentIDs)).Scan(ctx, &projectIDs)
+	if err != nil {
+		return err
+	}
+	if len(projectIDs) > 1 {
+		return errors.New("error removing experiment hyperparameters")
+	}
+	return nil
+}
+
+// AddProjectHyperparameters takes a list of project ids,
+// combine their hyper parameters with existing one.
+func AddProjectHyperparameters(
+	ctx context.Context, idb bun.IDB, projectID int32, experimentIDs []int32,
+) error {
+	if idb == nil {
+		idb = Bun()
+	}
+	var projectIDs []int
+	err := idb.NewRaw(`WITH recursive flat (key, value) AS (
+		SELECT key, value
+		FROM experiments,
+		jsonb_each(config -> 'hyperparameters')
+		WHERE id IN (?)
+	UNION
+		SELECT concat(f.key, '.', j.key), j.value
+		FROM flat f,
+		jsonb_each(f.value) j
+		WHERE jsonb_typeof(f.value) = 'object' AND f.value -> 'type' IS NULL
+	), flatten AS (
+	SELECT key AS data
+	FROM flat WHERE value -> 'type' IS NOT NULL 
+	UNION SELECT jsonb_array_elements_text(hyperparameters) FROM projects WHERE id = ?
+	), agg AS (
+		SELECT array_to_json(array_agg(DISTINCT flatten.data)) AS adata FROM flatten
+	) 
+	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`,
+		bun.In(experimentIDs), projectID, projectID).Scan(ctx, &projectIDs)
+	if err != nil {
+		return err
+	}
+	if len(projectIDs) > 1 {
+		return errors.New("error adding experiment hyperparameters")
+	}
+	return nil
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.

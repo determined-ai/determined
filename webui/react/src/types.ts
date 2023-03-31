@@ -517,6 +517,8 @@ export type Scale = ValueOf<typeof Scale>;
 
 export interface MetricDatapoint {
   batches: number;
+  epoch?: number;
+  time: Date;
   value: number;
 }
 

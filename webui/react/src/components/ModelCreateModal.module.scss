@@ -1,0 +1,36 @@
+.directions {
+  margin: 0;
+  padding-bottom: 12px;
+}
+.metadataRow {
+  align-items: baseline;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr 24px;
+
+  & > :last-of-type {
+    justify-content: center;
+  }
+}
+.label {
+  padding-bottom: 8px;
+}
+.tagContainer {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+.tagRow {
+  align-items: baseline;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 24px;
+
+  & > :last-of-type {
+    justify-content: center;
+  }
+}
+.formError {
+  color: var(--theme-status-critical);
+  padding-bottom: 8px;
+}

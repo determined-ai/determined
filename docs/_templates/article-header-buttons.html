@@ -1,0 +1,26 @@
+{% from "../macros/buttons.html" import render_funcs with context %}
+
+<div class="header-links-right">
+  <a href="/docs/release-notes.html">Release Notes</a>
+  <a href="https://determined.ai/blog/">Blog</a>
+</div>
+
+<div class="article-header-buttons">
+  <a
+    href="https://determined-community.slack.com/join/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew#/shared-invite/email"
+    target="_blank"
+    class="btn btn-sm"
+    data-bs-placement="bottom"
+    data-bs-toggle="tooltip"
+    aria-label="Slack"
+    data-bs-original-title="Slack"
+  >
+    <span class="btn__icon-container">
+      <i class="fab fa-slack"></i>
+    </span>
+  </a>
+  {%- for button in header_buttons -%} {% set btype = button.get("type") %} {%
+  set bopts = button.copy() %} {% set _ = bopts.pop("type") %} {{
+  render_funcs[btype](**bopts) }} {%- endfor -%} {#- Extra theme buttons #} {%
+  include "theme-switcher.html" %} {% include "toggle-secondary-sidebar.html" %}
+</div>

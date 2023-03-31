@@ -34,13 +34,13 @@ const Page: React.FC<Props> = (props: Props) => {
   if (props.stickyHeader) classes.push(css.stickyHeader);
 
   return (
-    <main className={classes.join(' ')} id={props.id} ref={props.containerRef}>
+    <article className={classes.join(' ')} id={props.id} ref={props.containerRef}>
       {props.headerComponent}
       {showHeader && props.pageHeader}
       <div className={css.body}>
         <Spinner spinning={!!props.loading}>{props.children}</Spinner>
       </div>
-    </main>
+    </article>
   );
 };
 

@@ -6,13 +6,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import ModelDownloadModal from 'components/ModelDownloadModal';
+import ModelVersionDeleteModal from 'components/ModelVersionDeleteModal';
+import ModelVersionEditModal from 'components/ModelVersionEditModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useModalModelVersionEdit from 'hooks/useModal/Model/useModalModelVersionEdit';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -54,18 +55,9 @@ const ModelVersionHeader: React.FC<Props> = ({
   const users = Loadable.map(loadableUsers, ({ users }) => users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
-  const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
-    useModalModelDownload();
-
-  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
-    useModalModelVersionDelete();
-
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelVersionEdit({ fetchModelVersion, modelVersion });
-
-  const handleDownloadModel = useCallback(() => {
-    openModelDownload(modelVersion);
-  }, [modelVersion, openModelDownload]);
+  const modelDownloadModal = useModal(ModelDownloadModal);
+  const modelVersionDeleteModal = useModal(ModelVersionDeleteModal);
+  const modelVersionEditModal = useModal(ModelVersionEditModal);
 
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
@@ -123,17 +115,13 @@ const ModelVersionHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
-  const handleDelete = useCallback(() => {
-    openModalVersionDelete(modelVersion);
-  }, [openModalVersionDelete, modelVersion]);
-
   const actions: Action[] = useMemo(() => {
     const items: Action[] = [
       {
         danger: false,
         disabled: false,
         key: 'download-model',
-        onClick: handleDownloadModel,
+        onClick: () => modelDownloadModal.open(),
         text: 'Download',
       },
       {
@@ -147,7 +135,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: false,
         disabled: modelVersion.model.archived || !canModifyModelVersion({ modelVersion }),
         key: 'edit-model-version-name',
-        onClick: openModelNameEdit,
+        onClick: () => modelVersionEditModal.open(),
         text: 'Edit',
       },
     ];
@@ -156,7 +144,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         danger: true,
         disabled: false,
         key: 'deregister-version',
-        onClick: handleDelete,
+        onClick: () => modelVersionDeleteModal.open(),
         text: 'Deregister Version',
       });
     }
@@ -164,10 +152,10 @@ const ModelVersionHeader: React.FC<Props> = ({
   }, [
     modelVersion,
     canModifyModelVersion,
-    openModelNameEdit,
-    handleDownloadModel,
     canDeleteModelVersion,
-    handleDelete,
+    modelDownloadModal,
+    modelVersionEditModal,
+    modelVersionDeleteModal,
   ]);
 
   const referenceText = useMemo(() => {
@@ -276,9 +264,12 @@ with det.import_from_path(path + "/code"):
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
-      {modalModelNameEditContextHolder}
+      <modelDownloadModal.Component modelVersion={modelVersion} />
+      <modelVersionDeleteModal.Component modelVersion={modelVersion} />
+      <modelVersionEditModal.Component
+        fetchModelVersion={fetchModelVersion}
+        modelVersion={modelVersion}
+      />
       <Modal
         className={css.useNotebookModal}
         footer={null}

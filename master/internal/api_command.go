@@ -109,7 +109,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	// Get the base TaskSpec.
 	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
 		a.m.system,
-		resources.ResourcePool,
+		poolName,
 		a.m.config.TaskContainerDefaults,
 	)
 	if err != nil {

@@ -403,8 +403,32 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
         """
-        Sets a torch profiler instance on the trial context to be called in _pytorch_trial
-        when training.
+        ``set_profiler()`` is a thin wrapper around the native PyTorch profiler, torch-tb-profiler.
+        It overrides the ``on_trace_ready`` parameter to the determined tensorboard path, while all
+        other arguments are passed directly into ``torch.profiler.profile``. Stepping the profiler
+        will be handled automatically during the training loop.
+
+        See the `PyTorch profiler plugin
+        <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ for details.
+
+        Examples:
+
+        Profiling GPU and CPU activities, skipping batch 1, warming up on batch 2, and profiling
+        batches 3 and 4.
+
+        .. code-block:: python
+
+            self.context.set_profiler(
+                activities=[
+                    torch.profiler.ProfilerActivity.CPU,
+                    torch.profiler.ProfilerActivity.CUDA,
+                ],
+                schedule=torch.profiler.schedule(
+                    wait=1,
+                    warmup=1,
+                    active=2
+                ),
+            )
         """
         self.profiler = torch.profiler.profile(
             on_trace_ready=torch.profiler.tensorboard_trace_handler(

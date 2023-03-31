@@ -5,8 +5,11 @@ import { RouterProvider } from 'react-router-dom';
 /* Import the styles first to allow components to override styles. */
 import 'uplot/dist/uPlot.min.css';
 
-import router from './router';
+import App from 'App';
+import router from 'router';
+
 import * as serviceWorker from './serviceWorker';
+
 import 'shared/prototypes';
 import 'dev';
 
@@ -14,14 +17,14 @@ import 'dev';
 if (process.env.PUBLIC_URL && window.location.pathname === '/') {
   window.history.replaceState({}, '', process.env.PUBLIC_URL);
 }
-
+router.initRouter(<App />);
 const container = document.getElementById('root');
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const root = createRoot(container!);
 
 root.render(
   // <React.StrictMode>
-  <RouterProvider router={router} />,
+  <RouterProvider router={router.getRouter()} />,
   // </React.StrictMode>,
 );
 
