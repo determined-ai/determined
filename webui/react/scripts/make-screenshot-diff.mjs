@@ -61,7 +61,7 @@ const newComponents = await Promise.all(
         const filePath = path.resolve(screenshotFolder, screenshotLabels[0], theme, file);
         const fileBuffer = await fs.readFile(filePath);
         return {
-          name: path.basename(file),
+          name: path.basename(file, '.png'),
           screenshot: fileBuffer,
           theme,
         };
@@ -77,7 +77,7 @@ const deletedComponents = await Promise.all(
         const filePath = path.resolve(screenshotFolder, screenshotLabels[1], theme, file);
         const fileBuffer = await fs.readFile(filePath);
         return {
-          name: path.basename(file),
+          name: path.basename(file, '.png'),
           screenshot: fileBuffer,
           theme,
         };
@@ -85,6 +85,13 @@ const deletedComponents = await Promise.all(
     ),
   ),
 );
+
+const hasDiff =
+  newComponents.length > 0 || deletedComponents.length > 0 || results.some((r) => !!r.diff);
+const diffIndicatorPath = path.resolve(process.cwd(), '.diff-detected');
+if (hasDiff) {
+  fs.writeFile(diffIndicatorPath, '');
+}
 
 const makeComparisonImgTag = (buf, tag) => `
 <div class="comparison__image-box comparison__image-box--${tag}">
@@ -240,16 +247,12 @@ const htmlOut = `
   #comparisons.js_show-diff .comparison__image-box--head:hover ~ .comparison__image-box--master {
     display: none;
   }
-  #comparisons.js_hide-blanks .comparison__comparison:not(.comparison__comparison--has-diff) {
-    display: none;
-  }
 </style>
 </head>
 <body>
 <div class="controls">
   <label >Dark mode? <input class="js_darkmode-switch" type="checkbox" /></label>
   <label >Show diff on hover? <input class="js_diff-switch" type="checkbox" /></label>
-  <label >Show components with differences only? <input class="js_hide-switch" type="checkbox"/></label>
 </div>
 <div class="container">
   <div>
@@ -283,15 +286,10 @@ const htmlOut = `
   const comparisons = document.querySelector('#comparisons')
   const darkSwitch = document.querySelector('.js_darkmode-switch')
   const diffSwitch = document.querySelector('.js_diff-switch')
-  const hideSwitch = document.querySelector('.js_hide-switch')
   diffSwitch.addEventListener('change', (e) => {
       comparisons.classList.toggle('js_show-diff', e.target.checked)
   })
-  hideSwitch.addEventListener('change', (e) => {
-  comparisons.classList.toggle('js_hide-blanks', e.target.checked)
-  })
   comparisons.classList.toggle('js_show-diff', diffSwitch.checked)
-  comparisons.classList.toggle('js_hide-blanks', hideSwitch.checked)
 
   const main = document.querySelector('main')
   darkSwitch.addEventListener('change', (e) => {

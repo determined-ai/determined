@@ -1372,7 +1372,12 @@ jobs:
       - run:
           command: |
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            node webui/react/scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
+            if [ -f .diff-detected ] ; then
+              export MESSAGE="Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
+            else
+              export MESSAGE="Hello! No changes detected to DesignKit. Verify [here]($ARTIFACT_URL)"
+            fi 
+            node webui/react/scripts/make-github-comment.mjs $MESSAGE
           name: report results
   test-intg-downstream:
     docker:
@@ -1388,7 +1393,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: "on"
+          GO111MODULE:
     resource_class: large
     steps:
       - checkout
