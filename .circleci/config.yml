@@ -1377,7 +1377,7 @@ jobs:
             else
               export MESSAGE="Hello! No changes detected to DesignKit. Verify [here]($ARTIFACT_URL)"
             fi 
-            node webui/react/scripts/make-github-comment.mjs $MESSAGE
+            node webui/react/scripts/make-github-comment.mjs "$MESSAGE"
           name: report results
   test-intg-downstream:
     docker:
