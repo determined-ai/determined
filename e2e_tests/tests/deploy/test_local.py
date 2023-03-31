@@ -251,7 +251,7 @@ def test_master_up_down() -> None:
 def test_agent_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"
-    agent_name = "determined-agent"
+    agent_name = "test_agent-determined-agent"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
 
