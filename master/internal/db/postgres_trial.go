@@ -43,7 +43,7 @@ func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
 	var trial model.Trial
 	err := db.query(`
 SELECT id, COALESCE(task_id, '') AS task_id, request_id, experiment_id, state, start_time,
-	end_time, hparams, warm_start_checkpoint_id, seed
+	end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE id = $1`, &trial, id)
 	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
@@ -56,7 +56,7 @@ func (db *PgDB) TrialByExperimentAndRequestID(
 	var trial model.Trial
 	err := db.query(`
 SELECT id, task_id, request_id, experiment_id, state, start_time,
-  end_time, hparams, warm_start_checkpoint_id, seed
+  end_time, hparams, warm_start_checkpoint_id, seed, total_batches
 FROM trials
 WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
 	return &trial, errors.Wrapf(err, "error querying for trial %v", requestID)
