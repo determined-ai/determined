@@ -56,6 +56,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
 
   const roles = RolesStore.useRoles();
+  const groupName = Form.useWatch(GROUP_NAME_NAME, form);
 
   const fetchGroup = useCallback(async () => {
     if (group?.group.groupId) {
@@ -145,6 +146,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     <Modal
       cancel
       submit={{
+        disabled: !groupName,
         handler: onOk,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       }}
@@ -155,12 +157,6 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           label={GROUP_NAME_LABEL}
           name={GROUP_NAME_NAME}
           required
-          rules={[
-            {
-              message: 'Please type in your group name.',
-              required: true,
-            },
-          ]}
           validateTrigger={['onSubmit', 'onChange']}>
           <Input autoComplete="off" autoFocus maxLength={128} placeholder="Group Name" />
         </Form.Item>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -17,8 +17,17 @@ interface Props {
   onClose?: () => void;
 }
 
+const requiredFields = ['agentUid', 'agentUser', 'agentGid', 'agentGroup'];
+
 const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props) => {
   const [form] = Form.useForm();
+  const [disabled, setDisabled] = useState<boolean>(true);
+
+  const handleFieldsChange = useCallback(() => {
+    const values = form.getFieldsValue();
+    const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => !v);
+    setDisabled(missingRequiredFields);
+  }, [form, setDisabled]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -65,14 +74,16 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   return (
     <Modal
       cancel
+      size="small"
       submit={{
+        disabled,
         handler: handleSubmit,
         text: 'Save',
       }}
       title="Configure Agent"
       onClose={handleCancel}>
       <Spinner spinning={!user}>
-        <Form form={form} labelCol={{ span: 24 }}>
+        <Form form={form} labelCol={{ span: 24 }} onFieldsChange={handleFieldsChange}>
           <Form.Item
             label="Agent User ID"
             name="agentUid"

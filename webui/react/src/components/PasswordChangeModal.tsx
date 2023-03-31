@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -38,6 +38,13 @@ const PasswordChangeModalComponent: React.FC = () => {
     Loaded: (user) => user,
     NotLoaded: () => undefined,
   });
+  const [disabled, setDisabled] = useState<boolean>(true);
+
+  const handleFieldsChange = useCallback(() => {
+    const fields = form.getFieldsError();
+    const hasError = fields.some((f) => f.errors.length);
+    setDisabled(hasError);
+  }, [form]);
 
   const handleCancel = useCallback(() => form.resetFields(), [form]);
 
@@ -62,12 +69,13 @@ const PasswordChangeModalComponent: React.FC = () => {
     <Modal
       cancel
       submit={{
+        disabled,
         handler: handleSubmit,
         text: OK_BUTTON_LABEL,
       }}
       title={MODAL_HEADER_LABEL}
       onClose={handleCancel}>
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

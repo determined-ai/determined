@@ -62,6 +62,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
   });
   const checkAuth = useAuthCheck();
 
+  const username = Form.useWatch(USER_NAME_NAME, form);
+
   const knownRoles = RolesStore.useRoles();
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
@@ -158,6 +160,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     <Modal
       cancel
       submit={{
+        disabled: !username,
         handler: handleSubmit,
         text: viewOnly ? 'Close' : BUTTON_NAME,
       }}
@@ -175,12 +178,6 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           label={USER_NAME_LABEL}
           name={USER_NAME_NAME}
           required
-          rules={[
-            {
-              message: 'Please type in your username.',
-              required: true,
-            },
-          ]}
           validateTrigger={['onSubmit']}>
           <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
         </Form.Item>

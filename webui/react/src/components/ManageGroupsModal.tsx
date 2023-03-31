@@ -22,6 +22,8 @@ interface Props {
 const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) => {
   const [form] = Form.useForm();
 
+  const groupsValue = Form.useWatch(FIELD_NAME, form);
+
   const [userGroupIds, setUserGroupIds] = useState<(number | undefined)[]>();
 
   const fetchUserGroups = useCallback(async () => {
@@ -89,6 +91,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) =>
     <Modal
       cancel
       submit={{
+        disabled: !groupsValue?.length,
         handler: handleSubmit,
         text: 'Save',
       }}
