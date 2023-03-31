@@ -19,7 +19,7 @@ import (
 
 func newPopulateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use: "populate batches trivial(?)",
+		Use: "populate NUM_BATCHES [ trivial ]",
 		Short: `populate metrics with given number of batches. 
 		trivial is an optional arg for trivial metrics rather than more complex ones.`,
 		Run: func(cmd *cobra.Command, args []string) {
