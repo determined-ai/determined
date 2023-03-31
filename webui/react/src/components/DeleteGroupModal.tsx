@@ -43,7 +43,6 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       Are you sure you want to delete group ${group.group?.name} (ID: ${group.group?.groupId}).
     </Modal>
   );
-
 };
 
 export default DeleteGroupModalComponent;

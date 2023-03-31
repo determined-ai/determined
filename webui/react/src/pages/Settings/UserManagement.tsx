@@ -108,11 +108,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const menuItems: MenuProps['items'] =
     userManagementEnabled && canModifyUsers
       ? [
-        { key: MenuKey.Edit, label: 'Edit User' },
-        { key: MenuKey.Groups, label: 'Manage Groups' },
-        { key: MenuKey.Agent, label: 'Configure Agent' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-      ]
+          { key: MenuKey.Edit, label: 'Edit User' },
+          { key: MenuKey.Groups, label: 'Manage Groups' },
+          { key: MenuKey.Agent, label: 'Configure Agent' },
+          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+        ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
@@ -126,10 +126,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
       <ViewUserModal.Component user={user} onClose={fetchUsers} />
       <EditUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <ManageGroupsModal.Component groups={groups} user={user} />
-      <ConfigureAgentModal.Component
-        user={user}
-        onClose={fetchUsers}
-      />
+      <ConfigureAgentModal.Component user={user} onClose={fetchUsers} />
     </div>
   );
 };

@@ -165,9 +165,9 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         user
           ? viewOnly
             ? MODAL_HEADER_LABEL_VIEW
-
             : MODAL_HEADER_LABEL_EDIT
-          : MODAL_HEADER_LABEL_CREATE}
+          : MODAL_HEADER_LABEL_CREATE
+      }
       onClose={handleCancel}>
       <Form form={form} labelCol={{ span: 24 }}>
         <Form.Item
@@ -214,7 +214,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               </Select>
             </Form.Item>
             <Typography.Text type="secondary">
-              Users may have additional inherited global or workspace roles not reflected here. &nbsp;
+              Users may have additional inherited global or workspace roles not reflected here.
+              &nbsp;
               <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
                 Learn more
               </Link>

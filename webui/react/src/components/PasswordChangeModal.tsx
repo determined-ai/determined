@@ -121,8 +121,8 @@ const PasswordChangeModalComponent: React.FC = () => {
           <Input.Password />
         </Form.Item>
         <Form.Item>
-          Password must be at least 8 characters and contain an uppercase letter, a lowercase letter,
-          and a number.
+          Password must be at least 8 characters and contain an uppercase letter, a lowercase
+          letter, and a number.
         </Form.Item>
       </Form>
     </Modal>
