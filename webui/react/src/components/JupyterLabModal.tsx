@@ -68,7 +68,6 @@ interface FullConfigProps {
   currentWorkspace?: Workspace;
   form: FormInstance;
   onChange?: (config: string) => void;
-  setButtonDisabled: (buttonDisabled: boolean) => void;
   workspaces: Workspace[];
 }
 
@@ -83,10 +82,19 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [showFullConfig, setShowFullConfig] = useState(false);
   const [config, setConfig] = useState<string>();
   const [configError, setConfigError] = useState<string>();
-  const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [fullConfigFormInvalid, setFullConfigFormInvalid] = useState(true);
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
   const { canCreateWorkspaceNSC } = usePermissions();
+
+  const simpleWorkspaceId = Form.useWatch('workspaceId', form);
+  const fullWorkspaceId = Form.useWatch('workspaceId', fullConfigForm);
+
+  const validateFullConfigForm = useCallback(() => {
+    const fields = fullConfigForm.getFieldsError();
+    const hasError = fields.some((f) => f.errors.length);
+    setFullConfigFormInvalid(hasError || !fullWorkspaceId);
+  }, [fullConfigForm, fullWorkspaceId]);
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
@@ -114,7 +122,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, [form]);
 
   const handleSecondary = useCallback(() => {
-    if (showFullConfig) setButtonDisabled(false);
+    if (showFullConfig) setFullConfigFormInvalid(false);
     setShowFullConfig((show) => !show);
   }, [showFullConfig]);
 
@@ -144,9 +152,10 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   }, [config, fullConfigForm, form, showFullConfig, updateDefaults]);
 
   const handleConfigChange = useCallback((config: string) => {
+    validateFullConfigForm();
     setConfig(config);
     setConfigError(undefined);
-  }, []);
+  }, [validateFullConfigForm]);
 
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
@@ -181,7 +190,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       }
       size={showFullConfig ? 'large' : 'small'}
       submit={{
-        disabled: buttonDisabled,
+        disabled: showFullConfig ? fullConfigFormInvalid : !simpleWorkspaceId,
         handler: handleSubmit,
         text: 'Launch',
       }}
@@ -193,7 +202,6 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
           configError={configError}
           currentWorkspace={workspace}
           form={fullConfigForm}
-          setButtonDisabled={setButtonDisabled}
           workspaces={workspaces}
           onChange={handleConfigChange}
         />
@@ -202,7 +210,6 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
           currentWorkspace={workspace}
           defaults={defaults}
           form={form}
-          setButtonDisabled={setButtonDisabled}
           workspaces={workspaces}
         />
       )}
@@ -223,19 +230,12 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   currentWorkspace,
   form,
   onChange,
-  setButtonDisabled,
   workspaces,
 }: FullConfigProps) => {
   const [field, setField] = useState([
     { name: 'config', value: '' },
     { name: 'workspaceId', value: undefined },
   ]);
-
-  const workspace = Form.useWatch('workspaceId', form);
-
-  useEffect(() => {
-    setButtonDisabled(!workspace);
-  }, [workspace, setButtonDisabled]);
 
   const handleConfigChange = useCallback(
     (_: unknown, allFields: unknown) => {
@@ -287,10 +287,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               validator: (rule, value) => {
                 try {
                   yaml.load(value);
-                  setButtonDisabled(false);
                   return Promise.resolve();
                 } catch (err: unknown) {
-                  setButtonDisabled(true);
                   return Promise.reject(
                     new Error(
                       `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`,
@@ -318,19 +316,13 @@ const JupyterLabForm: React.FC<{
   currentWorkspace?: Workspace;
   defaults: JupyterLabOptions;
   form: FormInstance<JupyterLabOptions>;
-  setButtonDisabled: (buttonDisabled: boolean) => void;
   workspaces: Workspace[];
-}> = ({ currentWorkspace, form, defaults, setButtonDisabled, workspaces }) => {
+}> = ({ currentWorkspace, form, defaults, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
 
   const selectedPoolName = Form.useWatch('pool', form);
-  const workspace = Form.useWatch('workspaceId', form);
-
-  useEffect(() => {
-    setButtonDisabled(!workspace);
-  }, [workspace, setButtonDisabled]);
 
   const resourceInfo = useMemo(() => {
     const selectedPool = resourcePools.find((pool) => pool.name === selectedPoolName);
