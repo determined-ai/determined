@@ -151,11 +151,14 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     }
   }, [config, fullConfigForm, form, showFullConfig, updateDefaults]);
 
-  const handleConfigChange = useCallback((config: string) => {
-    validateFullConfigForm();
-    setConfig(config);
-    setConfigError(undefined);
-  }, [validateFullConfigForm]);
+  const handleConfigChange = useCallback(
+    (config: string) => {
+      validateFullConfigForm();
+      setConfig(config);
+      setConfigError(undefined);
+    },
+    [validateFullConfigForm],
+  );
 
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
@@ -183,9 +186,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
       footerLink={
         showFullConfig
           ? {
-            text: 'Read about JupyterLab settings',
-            url: '/docs/reference/api/command-notebook-config.html',
-          }
+              text: 'Read about JupyterLab settings',
+              url: '/docs/reference/api/command-notebook-config.html',
+            }
           : undefined
       }
       size={showFullConfig ? 'large' : 'small'}
