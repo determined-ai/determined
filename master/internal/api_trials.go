@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -21,9 +22,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -33,11 +34,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
+	batches                       = "batches"
 	trialLogsBatchSize            = 1000
 	trialProfilerMetricsBatchSize = 100
 )
@@ -633,58 +636,44 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) formatMetricsBatch(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+func (a *apiServer) formatMetrics(
+	m *apiv1.SummarizedMetric, metricMeasurements []db.MetricMeasurements,
 ) {
-	for _, in := range metricSeries {
+	for _, in := range metricMeasurements {
 		out := apiv1.DataPoint{
-			Batches: int32(in.X),
-			Value:   in.Y,
+			Time:    timestamppb.New(in.Time),
+			Batches: int32(in.Batches),
+			Value:   in.Value,
+			Epoch:   in.Epoch,
 		}
 		m.Data = append(m.Data, &out)
-	}
-}
-
-func timeFromFloat64(ts float64) time.Time {
-	secs := int64(ts)
-	nsecs := int64((ts - float64(secs)) * 1e9)
-	return time.Unix(secs, nsecs)
-}
-
-func (a *apiServer) formatMetricsTime(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) {
-	for _, in := range metricSeries {
-		out := apiv1.DataPointTime{
-			Time:  timestamppb.New(timeFromFloat64(in.X)),
-			Value: in.Y,
-		}
-		m.Time = append(m.Time, &out)
-	}
-}
-
-func (a *apiServer) formatMetricsEpoch(
-	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
-) {
-	for _, in := range metricSeries {
-		out := apiv1.DataPointEpoch{
-			Epoch: int32(in.X),
-			Value: in.Y,
-		}
-		m.Epochs = append(m.Epochs, &out)
 	}
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool, xAxis apiv1.XAxis,
+	timeSeriesFilter *commonv1.PolymorphicFilter,
+	metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
-	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	var startTime time.Time
 	var err error
 	var metrics []*apiv1.SummarizedMetric
-	var metricMeasurements db.MetricMeasurements
+	var metricMeasurements []db.MetricMeasurements
+	// For now "epoch" is the only custom xAxis metric label supported so we
+	// build the `MetricSeriesEpoch` array. In the future this logic should
+	// be updated to support any number of xAxis metric options
 	xAxisLabelMetrics := []string{"epoch"}
+
+	if err := db.ValidatePolymorphicFilter(timeSeriesFilter); err != nil {
+		return nil, err
+	}
+
+	if len(metricNames) > 0 && len(metricIds) > 0 {
+		return nil, fmt.Errorf(`error fetching time series of metrics cannot specify 
+		both metric ids and metric names`)
+	}
+
 	if endBatches == 0 {
 		endBatches = math.MaxInt32
 	}
@@ -694,26 +683,16 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricMeasurements, err = a.m.db.TrainingMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, name, startBatches, endBatches,
+				xAxisLabelMetrics,
+				maxDatapoints, batches, timeSeriesFilter, "training")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			a.formatMetricsBatch(&metric, metricSeriesBatch)
-
-			// For now "epoch" is the only custom xAxis metric label supported so we
-			// build the `MetricSeriesEpoch` array. In the future this logic should
-			// be updated to support any number of xAxis metric options
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
-				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
-
-			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+			a.formatMetrics(&metric, metricMeasurements)
+			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
 		}
@@ -721,32 +700,68 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricMeasurements, err = a.m.db.ValidationMetricsSeries(
-				trialID, startTime, name, startBatches, endBatches, xAxisLabelMetrics)
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, name, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-
-			metricSeriesTime = lttb.Downsample(metricMeasurements.Time, maxDatapoints, logScale)
-			a.formatMetricsTime(&metric, metricSeriesTime)
-			metricSeriesBatch = lttb.Downsample(metricMeasurements.Batches, maxDatapoints, logScale)
-			a.formatMetricsBatch(&metric, metricSeriesBatch)
-			metricSeriesEpoch = lttb.Downsample(metricMeasurements.AverageMetrics["epoch"],
-				maxDatapoints, logScale)
-			a.formatMetricsEpoch(&metric, metricSeriesEpoch)
-
-			if len(metricSeriesBatch) > 0 || len(metricSeriesTime) > 0 {
+			a.formatMetrics(&metric, metricMeasurements)
+			if len(metricMeasurements) > 0 {
 				metrics = append(metrics, &metric)
 			}
 		}
 	}
+	if len(metricIds) > 0 {
+		var timeSeriesColumn *string
+
+		// If no time series filter column name is supplied then default to batches.
+		defaultTimeSeriesColumn := batches
+		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+			timeSeriesColumn = &defaultTimeSeriesColumn
+		} else {
+			timeSeriesColumn = timeSeriesFilter.Name
+		}
+
+		for _, metricID := range metricIds {
+			nameAndType := strings.SplitN(metricID, ".", 2)
+			if len(nameAndType) < 2 {
+				return nil, fmt.Errorf(`error fetching time series of validation metrics 
+				invalid metricId %v metrics must be in the form metric_type.metric_name`,
+					metricID,
+				)
+			}
+			metricIDName := nameAndType[1]
+			metricIDType := nameAndType[0]
+			var metric apiv1.SummarizedMetric
+			metric.Name = metricID
+			metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+			if maxDatapoints == 0 {
+				maxDatapoints = 200
+			}
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricIDName, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+				timeSeriesFilter, metricIDType,
+			)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
+			}
+			if len(metricMeasurements) > 0 {
+				a.formatMetrics(&metric, metricMeasurements)
+				metrics = append(metrics, &metric)
+			}
+		}
+	}
+
 	return metrics, nil
 }
 
 func (a *apiServer) SummarizeTrial(ctx context.Context,
 	req *apiv1.SummarizeTrialRequest,
 ) (*apiv1.SummarizeTrialResponse, error) {
+	var metricIds []string
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -759,7 +774,8 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED)
+		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
+		nil, metricIds)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
@@ -788,7 +804,8 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG), req.XAxis)
+			(req.Scale == apiv1.Scale_SCALE_LOG),
+			req.XAxis, req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
@@ -796,6 +813,98 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 		trials = append(trials, container)
 	}
 	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+}
+
+func (a *apiServer) GetTrainingMetrics(
+	req *apiv1.GetTrainingMetricsRequest, resp apiv1.Determined_GetTrainingMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetTrainingMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "steps"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *apiServer) GetValidationMetrics(
+	req *apiv1.GetValidationMetricsRequest, resp apiv1.Determined_GetValidationMetricsServer,
+) error {
+	sendFunc := func(m []*trialv1.MetricsReport) error {
+		return resp.Send(&apiv1.GetValidationMetricsResponse{Metrics: m})
+	}
+	if err := a.streamMetrics(resp.Context(), req.TrialIds, sendFunc, "validations"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *apiServer) streamMetrics(ctx context.Context,
+	trialIDs []int32, sendFunc func(m []*trialv1.MetricsReport) error, table string,
+) error {
+	if len(trialIDs) == 0 {
+		return status.Error(codes.InvalidArgument, "must specify at least one trialId")
+	}
+	ids := make(map[int32]bool)
+	for _, id := range trialIDs {
+		if ids[id] {
+			return status.Errorf(codes.InvalidArgument, "duplicate id=%d specified", id)
+		}
+	}
+	slices.Sort(trialIDs)
+
+	for _, trialID := range trialIDs {
+		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			return err
+		}
+	}
+
+	const size = 1000
+
+	trialIDIndex := 0
+	key := -1
+	for {
+		var res []*trialv1.MetricsReport
+		if err := db.Bun().NewSelect().Table(table).
+			Column("trial_id", "metrics", "total_batches", "archived", "id", "trial_run_id").
+			ColumnExpr("proto_time(end_time) AS end_time").
+			Where("trial_id = ?", trialIDs[trialIDIndex]).
+			Where("total_batches > ?", key).
+			Order("trial_id", "trial_run_id", "total_batches").
+			Limit(size).
+			Scan(ctx, &res); err != nil {
+			return err
+		}
+
+		if len(res) > 0 {
+			for i := 0; i < len(res); i++ {
+				// TODO we are giving too precise timestamps for our Python parsing code somehow.
+				res[i].EndTime = timestamppb.New(res[i].EndTime.AsTime().Truncate(time.Millisecond))
+			}
+
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := sendFunc(res); err != nil {
+				return err
+			}
+			key = int(res[len(res)-1].TotalBatches)
+		}
+
+		if len(res) != size {
+			trialIDIndex++
+			if trialIDIndex >= len(trialIDs) {
+				break
+			}
+
+			key = -1
+		}
+	}
+
+	return nil
 }
 
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
@@ -813,7 +922,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 	}
 
 	sortCode := "total_batches"
-	if req.SortKey != "" && req.SortKey != "batches" {
+	if req.SortKey != "" && req.SortKey != batches {
 		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'",
 			strings.ReplaceAll(req.SortKey, "'", ""))
 	}

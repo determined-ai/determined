@@ -46,6 +46,10 @@ output "C2--Filestore-address" {
   value = "${local.filestore_address}\n"
 }
 
+output "User-Labels" {
+  value = var.labels
+}
+
 output "NOTE" {
   value = "> To use the Determined CLI without needing to specify the master in each command, run:\n\n  export DET_MASTER=${module.compute.web_ui}\n"
 }

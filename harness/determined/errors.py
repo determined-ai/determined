@@ -93,6 +93,12 @@ class CheckpointNotFound(Exception):
     """
 
 
+class CheckpointStateException(Exception):
+    """CheckpointStateException indicates a checkpoint is in an inappropriate state."""
+
+    pass
+
+
 class NoDirectStorageAccess(Exception):
     """Direct checkpoint storage access unavailable, e.g., no credentials or permissions."""
 

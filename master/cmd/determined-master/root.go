@@ -34,6 +34,7 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(newMigrateCmd())
+	cmd.AddCommand(newPopulateCmd())
 	return cmd
 }
 

@@ -333,9 +333,7 @@ const UserManagement: React.FC = () => {
               onClick={onClickCreateUser}>
               {CREATE_USER}
             </Button>
-            {settings.name && (
-              <Button onClick={handleNameSearchReset}>{'Clear Filters (1)'}</Button>
-            )}
+            {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
           </Space>
         }
         title={USER_TITLE}>

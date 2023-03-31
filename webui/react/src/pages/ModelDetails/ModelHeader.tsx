@@ -1,18 +1,19 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Dropdown, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import DeleteModelModal from 'components/DeleteModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tags, { tagsActionHelper } from 'components/kit/Tags';
 import Avatar from 'components/kit/UserAvatar';
 import Link from 'components/Link';
+import ModelEditModal from 'components/ModelEditModal';
+import ModelMoveModal from 'components/ModelMoveModal';
 import TimeAgo from 'components/TimeAgo';
-import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import useModalModelEdit from 'hooks/useModal/Model/useModalModelEdit';
-import useModalModelMove from 'hooks/useModal/Model/useModalModelMove';
 import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
@@ -45,11 +46,10 @@ const ModelHeader: React.FC<Props> = ({
 }: Props) => {
   const loadableUsers = useObservable(usersStore.getUsers());
   const users = Loadable.map(loadableUsers, ({ users }) => users);
-  const { contextHolder: modalModelDeleteContextHolder, modalOpen } = useModalModelDelete();
-  const { contextHolder: modalModelMoveContextHolder, modalOpen: openModelMove } =
-    useModalModelMove();
-  const { contextHolder: modalModelNameEditContextHolder, modalOpen: openModelNameEdit } =
-    useModalModelEdit({ fetchModel, model });
+  const deleteModelModal = useModal(DeleteModelModal);
+  const modelMoveModal = useModal(ModelMoveModal);
+  const modelEditModal = useModal(ModelEditModal);
+
   const { canDeleteModel, canModifyModel } = usePermissions();
   const canDeleteModelFlag = canDeleteModel({ model });
   const canModifyModelFlag = canModifyModel({ model });
@@ -102,10 +102,6 @@ const ModelHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [model, onUpdateTags, users, canModifyModelFlag]);
 
-  const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
-
-  const handleMove = useCallback(() => openModelMove(model), [openModelMove, model]);
-
   const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
@@ -119,13 +115,13 @@ const ModelHeader: React.FC<Props> = ({
         onSwitchArchive();
       },
       [MenuKey.EditModelName]: () => {
-        openModelNameEdit();
+        modelEditModal.open();
       },
       [MenuKey.MoveModel]: () => {
-        handleMove();
+        modelMoveModal.open();
       },
       [MenuKey.DeleteModel]: () => {
-        handleDelete();
+        deleteModelModal.open();
       },
     };
 
@@ -156,13 +152,13 @@ const ModelHeader: React.FC<Props> = ({
 
     return { items: menuItems, onClick: onItemClick };
   }, [
-    canDeleteModelFlag,
-    canModifyModelFlag,
-    handleDelete,
-    handleMove,
     model.archived,
+    canModifyModelFlag,
+    canDeleteModelFlag,
     onSwitchArchive,
-    openModelNameEdit,
+    modelEditModal,
+    modelMoveModal,
+    deleteModelModal,
   ]);
 
   return (
@@ -230,9 +226,9 @@ const ModelHeader: React.FC<Props> = ({
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      {modalModelDeleteContextHolder}
-      {modalModelMoveContextHolder}
-      {modalModelNameEditContextHolder}
+      <deleteModelModal.Component model={model} />
+      <modelMoveModal.Component model={model} />
+      <modelEditModal.Component fetchModel={fetchModel} model={model} />
     </header>
   );
 };

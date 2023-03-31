@@ -1,7 +1,9 @@
+import dataclasses
+import datetime
 import enum
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
-from determined.common import api
+from determined.common import api, util
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint
 
@@ -46,6 +48,69 @@ class CheckpointOrderBy(enum.Enum):
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
+
+
+@dataclasses.dataclass
+class TrainingMetrics:
+    """
+    Specifies a training metric report that the trial reported.
+
+    Attributes:
+        trial_id
+        trial_run_id
+        steps_completed
+        end_time
+        metrics
+        batch_metrics
+    """
+
+    trial_id: int
+    trial_run_id: int
+    steps_completed: int
+    end_time: datetime.datetime
+    metrics: Dict[str, Any]
+    batch_metrics: Optional[List[Dict[str, Any]]] = None
+
+    @classmethod
+    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "TrainingMetrics":
+        return cls(
+            trial_id=metric_report.trialId,
+            trial_run_id=metric_report.trialRunId,
+            steps_completed=metric_report.totalBatches,
+            end_time=util.parse_protobuf_timestamp(metric_report.endTime),
+            metrics=metric_report.metrics["avg_metrics"],
+            batch_metrics=metric_report.metrics.get("batch_metrics", None),
+        )
+
+
+@dataclasses.dataclass
+class ValidationMetrics:
+    """
+    Specifies a validation metric report that the trial reported.
+
+    Attributes:
+        trial_id
+        trial_run_id
+        steps_completed
+        end_time
+        metrics
+    """
+
+    trial_id: int
+    trial_run_id: int
+    steps_completed: int
+    end_time: datetime.datetime
+    metrics: Dict[str, Any]
+
+    @classmethod
+    def _from_bindings(cls, metric_report: bindings.v1MetricsReport) -> "ValidationMetrics":
+        return cls(
+            trial_id=metric_report.trialId,
+            trial_run_id=metric_report.trialRunId,
+            steps_completed=metric_report.totalBatches,
+            end_time=util.parse_protobuf_timestamp(metric_report.endTime),
+            metrics=metric_report.metrics["validation_metrics"],
+        )
 
 
 class TrialReference:
@@ -288,6 +353,20 @@ class TrialReference:
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
 
+    def stream_training_metrics(self) -> Iterable[TrainingMetrics]:
+        """
+        Streams training metrics for this trial sorted by
+        trial_id, trial_run_id and steps_completed.
+        """
+        return _stream_training_metrics(self._session, [self.id])
+
+    def stream_validation_metrics(self) -> Iterable[ValidationMetrics]:
+        """
+        Streams validation metrics for this trial sorted by
+        trial_id, trial_run_id and steps_completed.
+        """
+        return _stream_validation_metrics(self._session, [self.id])
+
 
 # This is to shorten line lengths of the TrialSortBy definition.
 _tsb = bindings.v1GetExperimentTrialsRequestSortBy
@@ -327,3 +406,19 @@ class TrialOrderBy(enum.Enum):
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
+
+
+def _stream_training_metrics(
+    session: api.Session, trial_ids: List[int]
+) -> Iterable[TrainingMetrics]:
+    for i in bindings.get_GetTrainingMetrics(session, trialIds=trial_ids):
+        for m in i.metrics:
+            yield TrainingMetrics._from_bindings(m)
+
+
+def _stream_validation_metrics(
+    session: api.Session, trial_ids: List[int]
+) -> Iterable[ValidationMetrics]:
+    for i in bindings.get_GetValidationMetrics(session, trialIds=trial_ids):
+        for m in i.metrics:
+            yield ValidationMetrics._from_bindings(m)

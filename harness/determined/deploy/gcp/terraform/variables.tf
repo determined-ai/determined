@@ -90,7 +90,7 @@ variable "gpu_type" {
 
 variable "gpu_num" {
   type = number
-  default = 8
+  default = 4
 }
 
 variable "min_dynamic_agents" {
@@ -159,13 +159,23 @@ variable "preemption_enabled" {
 }
 
 variable "labels" {
-  type = map
+  type = map(string)
   default = {}
 }
 
 /******************************************
 	Determined
  *****************************************/
+
+variable "disk_size" {
+  type = number
+  default = 200
+}
+
+variable "disk_type" {
+  type = string
+  default = "pd-standard"
+}
 
 variable "environment_image" {
   type = string

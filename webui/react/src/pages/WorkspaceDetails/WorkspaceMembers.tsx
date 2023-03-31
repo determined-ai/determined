@@ -1,4 +1,4 @@
-import { Dropdown } from 'antd';
+import { Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -248,11 +248,13 @@ const WorkspaceMembers: React.FC<Props> = ({
   return (
     <>
       <div className={css.headerButton}>
-        {rbacEnabled &&
-          canAssignRoles({ workspace }) &&
-          !workspace.immutable &&
-          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
-        {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filters (1)'}</Button>}
+        <Space>
+          {rbacEnabled &&
+            canAssignRoles({ workspace }) &&
+            !workspace.immutable &&
+            !workspace.archived && <Button onClick={handleAddMembersClick}> Add Member</Button>}
+          {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
+        </Space>
       </div>
       {settings ? (
         <InteractiveTable

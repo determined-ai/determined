@@ -32,7 +32,8 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 	}
 
 	v2 := paseto.NewV2()
-	token, err := v2.Sign(db.tokenKeys.PrivateKey, userSession, nil)
+	privateKey := db.tokenKeys.PrivateKey
+	token, err := v2.Sign(privateKey, userSession, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate user authentication token")
 	}

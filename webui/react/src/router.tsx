@@ -1,15 +1,24 @@
+import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import 'shared/styles/index.scss';
 
-import App from './App';
+class AppRouter {
+  routerInstance: ReturnType<typeof createBrowserRouter> | null = null;
+  getRouter() {
+    if (this.routerInstance) return this.routerInstance;
+    throw new Error('Router called before instantiation -- call AppRouter#initRouter first');
+  }
+  initRouter(app: React.ReactElement) {
+    this.routerInstance = createBrowserRouter(
+      [
+        // match everything with "*"
+        { element: app, path: '*' },
+      ],
+      { basename: process.env.PUBLIC_URL },
+    );
+    return this.routerInstance;
+  }
+}
 
-const router = createBrowserRouter(
-  [
-    // match everything with "*"
-    { element: <App />, path: '*' },
-  ],
-  { basename: process.env.PUBLIC_URL },
-);
-
-export default router;
+export default new AppRouter();

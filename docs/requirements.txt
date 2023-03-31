@@ -11,7 +11,10 @@ sphinx==4.2.0
 myst_parser
 
 # Theme
-furo==2021.10.9
+sphinx-book-theme==1.0.0
+
+# pin pydata-sphinx-theme at 0.13.1 to avoid extension import issue
+pydata-sphinx-theme==0.13.1
 
 # live.py
 watchdog

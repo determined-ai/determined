@@ -124,6 +124,8 @@ message DisableSlotRequest {
   string agent_id = 1;
   // The id of the slot.
   string slot_id = 2;
+  // If true, wait for running task to finish.
+  bool drain = 3;
 }
 // Response to DisableSlotRequest.
 message DisableSlotResponse {

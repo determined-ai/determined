@@ -10,6 +10,7 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
+import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
@@ -61,7 +62,7 @@ const ModelVersionDetails: React.FC = () => {
 
   const basePath = paths.modelVersionDetails(modelId, versionNum);
 
-  const { canModifyModelVersion } = usePermissions();
+  const { canModifyModelVersion, loading: rbacLoading } = usePermissions();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -128,12 +129,12 @@ const ModelVersionDetails: React.FC = () => {
   const saveNotes = useCallback(
     async (editedNotes: string) => {
       try {
-        const versionResponse = await patchModelVersion({
+        await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
           modelName: modelId,
           versionNum: parseInt(versionNum),
         });
-        setModelVersion(versionResponse);
+        await fetchModelVersion();
       } catch (e) {
         handleError(e, {
           publicSubject: 'Unable to update notes.',
@@ -142,7 +143,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionNum],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const saveVersionTags = useCallback(
@@ -289,8 +290,10 @@ const ModelVersionDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!modelVersion || !workspace) {
-    return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
+  } else if (pageError && isNotFound(pageError)) {
+    return <PageNotFound />;
+  } else if (!modelVersion || !workspace || rbacLoading) {
+    return <Spinner spinning tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
   return (

@@ -189,7 +189,7 @@ const WebhooksView: React.FC = () => {
         tableLimit: tablePagination.pageSize,
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
-      updateSettings(newSettings, true);
+      updateSettings(newSettings);
     },
     [columns, updateSettings],
   );

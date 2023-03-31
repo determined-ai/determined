@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -636,4 +637,20 @@ func (k *kubernetesResourceManager) getTaskContainerDefaults(
 		}
 	}
 	return result
+}
+
+// EnableSlot implements 'det slot enable...' functionality.
+func (k ResourceManager) EnableSlot(
+	m actor.Messenger,
+	req *apiv1.EnableSlotRequest,
+) (resp *apiv1.EnableSlotResponse, err error) {
+	return nil, rmerrors.ErrNotSupported
+}
+
+// DisableSlot implements 'det slot disable...' functionality.
+func (k ResourceManager) DisableSlot(
+	m actor.Messenger,
+	req *apiv1.DisableSlotRequest,
+) (resp *apiv1.DisableSlotResponse, err error) {
+	return nil, rmerrors.ErrNotSupported
 }

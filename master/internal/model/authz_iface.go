@@ -34,6 +34,11 @@ type ModelAuthZ interface {
 	CanCreateModel(ctx context.Context,
 		curUser model.User, workspaceID int32,
 	) error
+	// DELETE /api/v1/models/{modelName}
+	// DELETE /api/v1/models/{modelName}/versions/{modelVersionNum}
+	CanDeleteModel(ctx context.Context, curUser model.User,
+		m *modelv1.Model, workspaceID int32,
+	) error
 	// POST /api/v1/models/{model_name}/move
 	CanMoveModel(ctx context.Context, curUser model.User, model *modelv1.Model,
 		fromWorkspaceID int32, toWorkspaceID int32) error

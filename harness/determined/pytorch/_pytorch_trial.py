@@ -770,7 +770,8 @@ class _PyTorchTrialController:
         if not self._checkpoint_is_current():
             self._checkpoint(already_exiting=False)
 
-        if self.is_chief:
+        # Test mode will break after one batch despite not completing op.
+        if self.is_chief and not self.test_mode:
             assert op._completed, "logic error; op was never completed."
 
     def _check_searcher_metric(self, val_metrics: Dict) -> Any:
@@ -1310,21 +1311,12 @@ class _PyTorchTrialController:
                 exp_conf = None
                 hparams = None
 
-            if trial_cls.__module__ == "__main__":
-                module = pytorch._guess_script_importable_name(sys.modules["__main__"].__file__)
-                # Remember that we guessed this import path.
-                trial_in_main = True
-            else:
-                module = trial_cls.__module__
-                trial_in_main = False
-
             load_data = {
                 "trial_type": "PyTorchTrial",
                 "experiment_config": exp_conf,
                 "hparams": hparams,
-                "trial_cls_spec": f"{module}:{trial_cls.__qualname__}",
+                "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
                 "is_trainer": True,
-                "trial_in_main": trial_in_main,
             }
 
             if self.context._is_pre_trainer:

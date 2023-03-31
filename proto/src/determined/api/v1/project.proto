@@ -26,6 +26,29 @@ message GetProjectResponse {
   determined.project.v1.Project project = 1;
 }
 
+// Request for experiment list columns
+message GetProjectColumnsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the project.
+  int32 id = 1;
+}
+
+// Response for experiment list columns
+message GetProjectColumnsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "general", "hyperparameters", "metrics" ] }
+  };
+  // List of general columns.
+  repeated determined.project.v1.GeneralColumn general = 1;
+  // List of hyperparameters.
+  repeated string hyperparameters = 2;
+  // List of metrics.
+  repeated string metrics = 3;
+}
+
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

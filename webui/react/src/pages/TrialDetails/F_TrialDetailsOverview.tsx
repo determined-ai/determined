@@ -62,7 +62,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [trial],
   );
 
-  const { contextHolders, openCheckpoint } = useCheckpointFlow({
+  const { contextHolders, openCheckpoint, modelCreateModalComponent } = useCheckpointFlow({
     checkpoint,
     config: experiment.config,
     title: `Best checkpoint for Trial ${trial?.id}`,
@@ -234,7 +234,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           )}
         </>
       ) : null}
-      {contextHolders}
+      {contextHolders.map((contextHolder, i) => (
+        <React.Fragment key={i}>{contextHolder}</React.Fragment>
+      ))}
+      {modelCreateModalComponent}
     </>
   );
 };

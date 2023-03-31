@@ -149,6 +149,8 @@ module "compute" {
   project_id = var.project_id
   region = var.region
   zone = var.zone
+  disk_size = var.disk_size
+  disk_type = var.disk_type
   environment_image = var.environment_image
   image_repo_prefix = var.image_repo_prefix
   det_version = var.det_version

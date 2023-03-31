@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.21.0-dev0",
+    version="0.21.1-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -61,7 +61,6 @@ setup(
     entry_points={
         "console_scripts": [
             "det = determined.cli.__main__:main",
-            "det-deploy = determined.deploy.__main__:main",
         ]
     },
 )

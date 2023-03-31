@@ -25,7 +25,13 @@ source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
 html_css_files = [
+    "https://cdn.jsdelivr.net/npm/@docsearch/css@3",
     "styles/determined.css",
+]
+
+html_js_files = [
+    ("https://cdn.jsdelivr.net/npm/@docsearch/js@3", {"defer": "defer"}),
+    ("scripts/docsearch.sbt.js", {"defer": "defer"}),
 ]
 
 
@@ -44,6 +50,7 @@ exclude_patterns = [
     "examples",
     "requirements.txt",
     "site",
+    "README.md",
     "release-notes/README.md",
 ]
 html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.
@@ -53,38 +60,31 @@ todo_include_todos = True
 # HTML theme settings
 html_show_sourcelink = False
 html_show_sphinx = False
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
 html_favicon = "assets/images/favicon.ico"
 html_last_updated_fmt = None
 # See https://pradyunsg.me/furo/
 
 html_sidebars = {
     "**": [
-        "sidebar/brand.html",
+        "navbar-logo.html",
         "sidebar-version.html",
-        "sidebar/search.html",
-        "sidebar/scroll-start.html",
-        "sidebar/navigation.html",
-        "sidebar/ethical-ads.html",
-        "sidebar/scroll-end.html",
+        "search-field.html",
+        "sbt-sidebar-nav.html",
     ]
 }
 
 pygments_style = "sphinx"
 pygments_dark_style = "monokai"
 html_theme_options = {
-    "light_logo": "images/logo-determined-ai.svg",
-    "dark_logo": "images/logo-determined-ai-white.svg",
-    "sidebar_hide_name": True,
-    "light_css_variables": {
-        "color-brand-primary": "#f37a22",
-        "color-brand-content": "#f37a22",
-        "font-stack": "Open Sans, Metric HPE, Arial, sans-serif",
+    "logo": {
+        "image_light": "assets/images/logo-determined-ai.svg",
+        "image_dark": "assets/images/logo-determined-ai-white.svg",
     },
-    "dark_css_variables": {
-        "color-brand-primary": "#f37a22",
-        "color-brand-content": "#f37a22",
-    },
+    "repository_url": "https://github.com/determined-ai/determined",
+    "use_repository_button": True,
+    "use_download_button": False,
+    "use_fullscreen_button": False,
 }
 html_use_index = True
 html_domain_indices = True

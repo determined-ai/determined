@@ -1,15 +1,31 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
+import { observable, Observable } from 'micro-observables';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
+import { DetailedUser } from 'types';
+import { Loadable, Loaded } from 'utils/loadable';
 
 import * as hook from './useSettings';
 import { SettingsProvider } from './useSettingsProvider';
+
+vi.mock('stores/users', async () => {
+  const actual: { default: object } = await vi.importActual('stores/users');
+  const getCurrentUser = (): Observable<Loadable<DetailedUser>> => {
+    return observable(
+      Loaded({
+        id: 1,
+      } as DetailedUser),
+    );
+  };
+  actual.default = { ...actual.default, getCurrentUser };
+  return { ...actual, getCurrentUser };
+});
 
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
@@ -111,22 +127,22 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   );
 };
 
-const setup = async (
+const setup = (
   newSettings?: hook.SettingsConfig<Settings>,
   newExtraSettings?: hook.SettingsConfig<ExtraSettings>,
-): Promise<{
+): {
   extraResult: ExtraHookReturn;
   result: HookReturn;
-}> => {
+} => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <UIProvider>
       <Container>{children}</Container>
     </UIProvider>
   );
-  const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
+  const hookResult = renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
     wrapper: RouterWrapper,
   });
-  const extraHookResult = await renderHook(
+  const extraHookResult = renderHook(
     () => hook.useSettings<ExtraSettings>(newExtraSettings ?? extraConfig),
     {
       wrapper: RouterWrapper,
@@ -152,8 +168,8 @@ describe('useSettings', () => {
 
   afterEach(() => vi.clearAllMocks());
 
-  it('should have default settings', async () => {
-    const { result } = await setup();
+  it('should have default settings', () => {
+    const { result } = setup();
     Object.values(config.settings).forEach((configProp) => {
       const settingsKey = configProp.storageKey as keyof Settings;
       expect(result.container.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
@@ -162,9 +178,23 @@ describe('useSettings', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('should have default settings after reset', async () => {
+    const { result } = setup();
+    act(() => result.container.current.resetSettings());
+
+    for (const configProp of Object.values(config.settings)) {
+      const settingsKey = configProp.storageKey as keyof Settings;
+      await waitFor(() =>
+        expect(result.container.current.settings[settingsKey]).toStrictEqual(
+          configProp.defaultValue,
+        ),
+      );
+    }
+  });
+
   it('should update settings', async () => {
-    const { result } = await setup();
-    await act(() => result.container.current.updateSettings(newSettings));
+    const { result } = setup();
+    act(() => result.container.current.updateSettings(newSettings));
 
     for (const configProp of Object.values(config.settings)) {
       const settingsKey = configProp.storageKey as keyof Settings;
@@ -190,31 +220,17 @@ describe('useSettings', () => {
   });
 
   it('should keep track of active settings', async () => {
-    const { result } = await setup();
-    await act(() => result.container.current.updateSettings(newSettings));
+    const { result } = setup();
+    act(() => result.container.current.updateSettings(newSettings));
 
     await waitFor(() =>
       expect(result.container.current.activeSettings()).toStrictEqual(Object.keys(newSettings)),
     );
   });
 
-  it('should have default settings after reset', async () => {
-    const { result } = await setup();
-    await act(() => result.container.current.resetSettings());
-
-    for (const configProp of Object.values(config.settings)) {
-      const settingsKey = configProp.storageKey as keyof Settings;
-      await waitFor(() =>
-        expect(result.container.current.settings[settingsKey]).toStrictEqual(
-          configProp.defaultValue,
-        ),
-      );
-    }
-  });
-
   it('should be able to keep track of multiple settings', async () => {
     const { result, extraResult } = await setup();
-    await act(() => {
+    act(() => {
       result.container.current.updateSettings(newSettings);
       extraResult.container.current.updateSettings(newExtraSettings);
     });

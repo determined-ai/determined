@@ -32,6 +32,7 @@ const config: SettingsConfig<GroupManagementSettings> = {
     },
     row: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'row',
       type: union([undefinedType, union([array(string), array(number)])]),
     },

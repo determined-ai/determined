@@ -1,0 +1,10 @@
+name: hello-client
+entrypoint: python3 hello-client.py
+resources:
+  slots: 0
+max_restarts: 0
+
+searcher:
+   name: single
+   metric: x
+   max_length: 10000000

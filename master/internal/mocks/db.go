@@ -8,8 +8,6 @@ import (
 
 	context "context"
 
-	db "github.com/determined-ai/determined/master/internal/db"
-
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	mock "github.com/stretchr/testify/mock"
@@ -1747,30 +1745,6 @@ func (_m *DB) TrainingMetricBatches(experimentID int, metricName string, startTi
 	return r0, r1, r2
 }
 
-// TrainingMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels
-func (_m *DB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string) (db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-
-	var r0 db.MetricMeasurements
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) (db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	} else {
-		r0 = ret.Get(0).(db.MetricMeasurements)
-	}
-
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TrainingTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
 func (_m *DB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int, metricName string, startTime time.Time) ([]*apiv1.TrialsSnapshotResponse_Trial, time.Time, error) {
 	ret := _m.Called(experimentID, minBatches, maxBatches, metricName, startTime)
@@ -2299,30 +2273,6 @@ func (_m *DB) ValidationMetricBatches(experimentID int, metricName string, start
 	}
 
 	return r0, r1, r2
-}
-
-// ValidationMetricsSeries provides a mock function with given fields: trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels
-func (_m *DB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string, startBatches int, endBatches int, xAxisMetricLabels []string) (db.MetricMeasurements, error) {
-	ret := _m.Called(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-
-	var r0 db.MetricMeasurements
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) (db.MetricMeasurements, error)); ok {
-		return rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	}
-	if rf, ok := ret.Get(0).(func(int32, time.Time, string, int, int, []string) db.MetricMeasurements); ok {
-		r0 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	} else {
-		r0 = ret.Get(0).(db.MetricMeasurements)
-	}
-
-	if rf, ok := ret.Get(1).(func(int32, time.Time, string, int, int, []string) error); ok {
-		r1 = rf(trialID, startTime, metricName, startBatches, endBatches, xAxisMetricLabels)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // ValidationTrialsSnapshot provides a mock function with given fields: experimentID, minBatches, maxBatches, metricName, startTime
