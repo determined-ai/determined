@@ -166,7 +166,7 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 def from_string(shortcut: str) -> StorageManager:
     def process_query(q: Dict[str, List[str]]) -> Dict[str, str]:
-        kwargs = dict()
+        kwargs = {}
         for key, vals in q.items():
             if len(vals) > 1:
                 raise ValueError(f'Multiple values given for key "{key}" in storage string.')

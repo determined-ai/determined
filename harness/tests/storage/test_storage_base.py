@@ -155,7 +155,7 @@ def test_shared_fs_shortcut_string() -> None:
 def test_bad_shortcut_strings(shortcut: str) -> None:
     try:
         _ = storage.from_string(shortcut)
-    except:
+    except Exception:
         pass
     else:
         pytest.fail()
