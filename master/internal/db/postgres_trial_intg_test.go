@@ -237,9 +237,10 @@ func TestBatchesProcessed(t *testing.T) {
 		{"validation", 20, 20},
 		{"validation", 30, 30},
 		{"training", 25, 30},
-		{"validation", 25, 25}, // rollback
+		{"validation", 25, 25}, // rollback via validations
 		{"validation", 30, 30},
 		{"training", 30, 30},
+		{"training", 27, 27}, // rollback via training
 	}
 	for _, c := range cases {
 		require.NoError(t, testMetricReporting(c.typ, c.batches, c.expectedBatches))
