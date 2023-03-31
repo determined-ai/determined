@@ -164,17 +164,15 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 			return err
 		}
 
-		// TODO: update trial.total_batches
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
+  -- CHECK: rollbacks do consider late arriving or retried metrics right?
   AND trial_run_id < $2
   AND total_batches >= $3;
 `, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
-		// check how many rows were updated.
-
 		// TODO rollback trial.total_batches if updated rows > 0
 
 		if _, err := tx.ExecContext(ctx, `
@@ -229,7 +227,7 @@ func (db *PgDB) AddValidationMetrics(
 		}
 
 		// TODO: same as AddTrainingMetrics
-
+		// QUESTION: why don't we check this with raw_steps as well same as AddTrainingMetrics?
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
