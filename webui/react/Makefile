@@ -111,10 +111,10 @@ test-ci:
 visual-test-deps:
 	npx playwright install-deps
 
-screenshots/HEAD: node_modules/done.stamp visual-test-deps
+screenshots/HEAD: node_modules visual-test-deps
 	node scripts/designkit-screenshot.mjs HEAD
 
-screenshots/MASTER: node_modules/done.stamp visual-test-deps
+screenshots/MASTER: node_modules visual-test-deps
 	git checkout master
 # BEGIN code to fake diffs. remove before merge
 	git checkout - -- src/designkit-standalone

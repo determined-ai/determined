@@ -1372,7 +1372,7 @@ jobs:
       - run:
           command: |
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            node scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
+            node webui/react/scripts/make-github-comment.mjs "Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
           name: report results
   test-intg-downstream:
     docker:
