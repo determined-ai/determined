@@ -188,7 +188,6 @@ def from_string(shortcut) -> StorageManager:
         prefix = p.path.lstrip("/")
         kwargs = urllib.parse.parse_qs(p.query)
         temp_dir = kwargs.get("temp_dir", [None])[0]
-        print(f"{kwargs=}")
         return storage.GCSStorageManager(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
     elif p.scheme == "s3":
         bucket = p.netloc
