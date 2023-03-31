@@ -229,21 +229,21 @@ def test_agents_made() -> None:
 def test_master_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"
-    name = "determined"
+    cluster_name = "determined"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
+    master_name = f"{cluster_name}_determined-master_1"
 
-    master_up(["--master-name", name])
+    master_up(["--master-name", master_name])
 
-    container_name = name + "_determined-master_1"
     client = docker.from_env()
 
-    containers = client.containers.list(filters={"name": container_name})
+    containers = client.containers.list(filters={"name": master_name})
     assert len(containers) > 0
 
     master_down([])
 
-    containers = client.containers.list(filters={"name": container_name})
+    containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
 
 
