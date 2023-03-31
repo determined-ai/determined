@@ -11,12 +11,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-<<<<<<< HEAD
-	"golang.org/x/exp/maps"
-	"gopkg.in/inf.v0"
-=======
 	"github.com/sirupsen/logrus"
->>>>>>> 8bb41fd6d (WIP: k8s cluster info using taints/tolerations)
+	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
