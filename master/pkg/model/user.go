@@ -31,6 +31,7 @@ type User struct {
 	Admin         bool        `db:"admin" json:"admin"`
 	Active        bool        `db:"active" json:"active"`
 	ModifiedAt    time.Time   `db:"modified_at" json:"modified_at"`
+	Remote        bool        `db:"remote" json:"remote"`
 }
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
@@ -50,6 +51,7 @@ type FullUser struct {
 	Admin       bool        `db:"admin" json:"admin"`
 	Active      bool        `db:"active" json:"active"`
 	ModifiedAt  time.Time   `db:"modified_at" json:"modified_at"`
+	Remote      bool        `db:"remote" json:"remote"`
 
 	AgentUID   null.Int    `db:"agent_uid" json:"agent_uid"`
 	AgentGID   null.Int    `db:"agent_gid" json:"agent_gid"`
@@ -67,6 +69,7 @@ func (u FullUser) ToUser() User {
 		Admin:        u.Admin,
 		Active:       u.Active,
 		ModifiedAt:   u.ModifiedAt,
+		Remote:       u.Remote,
 	}
 }
 
@@ -119,6 +122,7 @@ func (user *User) Proto() *userv1.User {
 		Admin:       user.Admin,
 		Active:      user.Active,
 		ModifiedAt:  timestamppb.New(user.ModifiedAt),
+		Remote:      user.Remote,
 	}
 }
 

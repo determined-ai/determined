@@ -25,6 +25,8 @@ message User {
   string display_name = 6;
   // The version of the user object for caching purposes.
   google.protobuf.Timestamp modified_at = 7;
+  // Bool denoting whether the user should be able to login with or change a password.
+  bool remote = 8;
 }
 
 // Request to edit fields for a user.
@@ -43,6 +45,8 @@ message PatchUser {
   AgentUserGroup agent_user_group = 6;
   // Indicate whether the provided password is pre-salted & hashed or not.
   bool is_hashed = 7;
+  // Bool denoting whether the user should be able to login with or change a password.
+  google.protobuf.BoolValue remote = 8;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

@@ -79,8 +79,10 @@ class Determined:
                 display_name=raw.displayName,
             )
 
-    def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
-        create_user = bindings.v1User(username=username, admin=admin, active=True)
+    def create_user(
+        self, username: str, admin: bool, password: Optional[str], remote: bool
+    ) -> user.User:
+        create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
         if password is not None:
             hashedPassword = api.salt_and_hash(password)
