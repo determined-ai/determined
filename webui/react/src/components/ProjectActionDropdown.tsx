@@ -65,10 +65,6 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
 
   const { canDeleteProjects, canModifyProjects, canMoveProjects } = usePermissions();
 
-  const handleEditClick = useCallback(() => ProjectEditModal.open(), [ProjectEditModal]);
-
-  const handleMoveClick = useCallback(() => ProjectMoveModal.open(), [ProjectMoveModal]);
-
   const handleArchiveClick = useCallback(async () => {
     if (project.archived) {
       try {
@@ -87,10 +83,6 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
     }
   }, [onComplete, project.archived, project.id]);
 
-  const handleDeleteClick = useCallback(() => {
-    ProjectDeleteModal.open();
-  }, [ProjectDeleteModal]);
-
   const MenuKey = {
     Delete: 'delete',
     Edit: 'edit',
@@ -100,16 +92,16 @@ export const useProjectActionMenu: (props: ProjectMenuPropsIn) => ProjectMenuPro
 
   const funcs = {
     [MenuKey.Edit]: () => {
-      handleEditClick();
+      ProjectEditModal.open();
     },
     [MenuKey.Move]: () => {
-      handleMoveClick();
+      ProjectMoveModal.open();
     },
     [MenuKey.SwitchArchived]: () => {
       handleArchiveClick();
     },
     [MenuKey.Delete]: () => {
-      handleDeleteClick();
+      ProjectDeleteModal.open();
     },
   };
 

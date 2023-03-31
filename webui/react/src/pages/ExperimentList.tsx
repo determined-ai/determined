@@ -822,10 +822,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const handleCustomizeColumnsClick = useCallback(() => {
-    ColumnsCustomizeModal.open();
-  }, [ColumnsCustomizeModal]);
-
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
       if (!settings) return;
@@ -916,7 +912,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
-          <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <Button onClick={ColumnsCustomizeModal.open}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
@@ -931,7 +927,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     filterCount,
     ColumnsCustomizeModal,
-    handleCustomizeColumnsClick,
     resetFilters,
     settings.archived,
     switchShowArchived,

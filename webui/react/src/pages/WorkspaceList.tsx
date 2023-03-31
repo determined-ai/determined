@@ -68,11 +68,6 @@ const WorkspaceList: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(
-    () => WorkspaceCreateModal.open(),
-    [WorkspaceCreateModal],
-  );
-
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
 
@@ -343,7 +338,7 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
+        <Button disabled={!canCreateWorkspace} onClick={WorkspaceCreateModal.open}>
           New Workspace
         </Button>
       }

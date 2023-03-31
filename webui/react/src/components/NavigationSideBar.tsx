@@ -184,10 +184,6 @@ const NavigationSideBar: React.FC = () => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
 
-  const handleCreateWorkspace = useCallback(() => {
-    WorkspaceCreateModal.open();
-  }, [WorkspaceCreateModal]);
-
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
 
@@ -260,7 +256,7 @@ const NavigationSideBar: React.FC = () => {
                     </Button>
                   </WorkspaceQuickSearch>
                   {canCreateWorkspace && (
-                    <Button type="text" onClick={handleCreateWorkspace}>
+                    <Button type="text" onClick={WorkspaceCreateModal.open}>
                       <Icon name="add-small" size="tiny" />
                     </Button>
                   )}
@@ -309,7 +305,7 @@ const NavigationSideBar: React.FC = () => {
                           </Typography.Paragraph>
                         }
                         tooltip={settings.navbarCollapsed}
-                        onClick={handleCreateWorkspace}
+                        onClick={WorkspaceCreateModal.open}
                       />
                     </li>
                   ) : workspaces.length === 0 ? (

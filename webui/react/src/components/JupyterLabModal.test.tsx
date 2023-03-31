@@ -61,7 +61,7 @@ const ModalTrigger: React.FC = () => {
   return (
     <SettingsProvider>
       <>
-        <Button onClick={() => JupyterLabModal.open()}>Show Jupyter Lab</Button>
+        <Button onClick={JupyterLabModal.open}>Show Jupyter Lab</Button>
         <JupyterLabModal.Component
           workspace={{
             archived: false,

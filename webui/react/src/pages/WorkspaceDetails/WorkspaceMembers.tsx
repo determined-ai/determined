@@ -132,10 +132,6 @@ const WorkspaceMembers: React.FC<Props> = ({
     onFilterUpdate(settings.name);
   }, [onFilterUpdate, settings.name]);
 
-  const handleAddMembersClick = useCallback(() => {
-    WorkspaceMemberAddModal.open();
-  }, [WorkspaceMemberAddModal]);
-
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
       updateSettings({ name: newSearch || undefined, tableOffset: 0 });
@@ -252,7 +248,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           {rbacEnabled &&
             canAssignRoles({ workspace }) &&
             !workspace.immutable &&
-            !workspace.archived && <Button onClick={handleAddMembersClick}> Add Member</Button>}
+            !workspace.archived && <Button onClick={WorkspaceMemberAddModal.open}> Add Member</Button>}
           {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
         </Space>
       </div>

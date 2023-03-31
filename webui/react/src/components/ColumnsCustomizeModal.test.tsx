@@ -43,13 +43,9 @@ const ColumnsButton: React.FC = () => {
 
   const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
 
-  const openModal = useCallback(() => {
-    ColumnsCustomizeModal.open();
-  }, [ColumnsCustomizeModal]);
-
   return (
     <>
-      <Button onClick={openModal}>{BUTTON_TEXT}</Button>
+      <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
       <ColumnsCustomizeModal.Component columns={columns} defaultVisibleColumns={DEFAULT_COLUMNS} />
     </>
   );

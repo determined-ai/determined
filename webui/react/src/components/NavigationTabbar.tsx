@@ -70,10 +70,6 @@ const NavigationTabbar: React.FC = () => {
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
-  const handleCreateWorkspace = useCallback(() => {
-    WorkspaceCreateModal.open();
-  }, [WorkspaceCreateModal]);
-
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -176,7 +172,7 @@ const NavigationTabbar: React.FC = () => {
                 workspaceIcons.push({
                   icon: <Icon name="add-small" size="large" />,
                   label: 'New Workspace',
-                  onClick: handleCreateWorkspace,
+                  onClick: WorkspaceCreateModal.open,
                 });
               }
               return workspaceIcons;

@@ -102,14 +102,6 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     }
   }, [onComplete, workspace.id, workspace.pinned, updateWorkspace]);
 
-  const handleEditClick = useCallback(() => {
-    WorkspaceEditModal.open();
-  }, [WorkspaceEditModal]);
-
-  const handleDeleteClick = useCallback(() => {
-    WorkspaceDeleteModal.open();
-  }, [WorkspaceDeleteModal]);
-
   const MenuKey = {
     Delete: 'delete',
     Edit: 'edit',
@@ -122,13 +114,13 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
       handlePinClick();
     },
     [MenuKey.Edit]: () => {
-      handleEditClick();
+      WorkspaceEditModal.open();
     },
     [MenuKey.SwitchArchived]: () => {
       handleArchiveClick();
     },
     [MenuKey.Delete]: () => {
-      handleDeleteClick();
+      WorkspaceDeleteModal.open();
     },
   };
 
