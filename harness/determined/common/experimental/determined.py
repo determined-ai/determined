@@ -80,7 +80,7 @@ class Determined:
             )
 
     def create_user(
-        self, username: str, admin: bool, password: Optional[str], remote: bool
+        self, username: str, admin: bool, password: Optional[str], remote: bool = False
     ) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
