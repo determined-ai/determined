@@ -22,7 +22,7 @@ import css from './ModelCreateModal.module.scss';
 
 const FORM_ID = 'create-model-form';
 
-type MetadataForm = { key: string; value: string }[];
+type MetadataForm = { key?: string; value?: string }[];
 
 type FormInputs = {
   modelDescription?: string;
@@ -57,7 +57,9 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
     const { modelDescription, modelName, workspaceId, metadata, tags } = values;
     const newMetadata: Metadata = {};
     for (const m of metadata ?? []) {
-      newMetadata[m.key] = m.value;
+      if (m.key) {
+        newMetadata[m.key] = m.value ?? '';
+      }
     }
 
     try {
@@ -166,7 +168,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                 rules={[
                   {
                     validator: async (_, metadata?: MetadataForm) => {
-                      const metadataKeys = metadata?.map((m) => m?.key) ?? [];
+                      const metadataKeys = metadata?.map((m) => m?.key ?? '') ?? [];
                       const metadataKeySet = new Set(metadataKeys);
                       if (metadataKeySet.size !== metadataKeys.length) {
                         return await Promise.reject(new Error('No dupelicate keys'));
@@ -180,13 +182,14 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                       <div className={css.metadataRow} key={key}>
                         <Form.Item
                           {...restField}
+                          initialValue=""
                           name={[name, 'key']}
                           rules={[
                             { message: 'Key is required', required: true, whitespace: true },
                           ]}>
                           <Input placeholder="Key" size="small" />
                         </Form.Item>
-                        <Form.Item {...restField} name={[name, 'value']}>
+                        <Form.Item initialValue="" {...restField} name={[name, 'value']}>
                           <Input placeholder="Value" size="small" />
                         </Form.Item>
                         <MinusCircleOutlined onClick={() => remove(name)} />
@@ -227,6 +230,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
                         <div className={css.tagRow} key={key}>
                           <Form.Item
                             {...restField}
+                            initialValue=""
                             name={name}
                             rules={[
                               { message: 'Tag is required', required: true, whitespace: true },
