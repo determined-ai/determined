@@ -4,8 +4,7 @@ import { glasbeyColor } from 'shared/utils/color';
 
 export type MapOfIdsToColors = Record<string, string>;
 
-export const useGlasbey = (ids: string[]): MapOfIdsToColors => {
-  const itemIds = ids;
+export const useGlasbey = (itemIds: string[]): MapOfIdsToColors => {
   const [indexMap, setIndexMap] = useState(() =>
     itemIds.map((itemId, idx) => ({ [itemId]: idx })).reduce((a, b) => ({ ...a, ...b }), {}),
   );
