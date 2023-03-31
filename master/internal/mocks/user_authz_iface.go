@@ -179,6 +179,20 @@ func (_m *UserAuthZ) CanSetUsersPassword(ctx context.Context, curUser model.User
 	return r0
 }
 
+// CanSetUsersRemote provides a mock function with given fields: ctx, curUser
+func (_m *UserAuthZ) CanSetUsersRemote(ctx context.Context, curUser model.User) error {
+	ret := _m.Called(ctx, curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User) error); ok {
+		r0 = rf(ctx, curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanSetUsersUsername provides a mock function with given fields: ctx, curUser, targetUser
 func (_m *UserAuthZ) CanSetUsersUsername(ctx context.Context, curUser model.User, targetUser model.User) error {
 	ret := _m.Called(ctx, curUser, targetUser)
