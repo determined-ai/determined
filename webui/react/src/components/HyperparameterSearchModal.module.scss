@@ -122,8 +122,8 @@
     padding-block: 8px;
     padding-inline: 16px;
 
-    .spacer {
-      flex-grow: 1;
+    &.alignRight {
+      flex-direction: row-reverse;
     }
   }
   .error {

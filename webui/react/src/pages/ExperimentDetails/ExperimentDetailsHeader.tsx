@@ -561,6 +561,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         options={headerOptions}
       />
       <ExperimentHeaderProgress experiment={experiment} />
+      <hyperModal.Component experiment={experiment} />
       {modalExperimentCreateContextHolder}
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}

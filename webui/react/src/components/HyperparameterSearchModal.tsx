@@ -564,7 +564,7 @@ const HyperparameterSearchModal = ({ experiment, onClose, trial }: Props): JSX.E
 
   const footer = useMemo(() => {
     return (
-      <div className={css.footer}>
+      <div className={`${css.footer} ${currentPage || css.alignRight}`}>
         {currentPage > 0 ? (
           <Button onClick={handleBack}>Back</Button>
         ) : (

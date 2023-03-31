@@ -110,17 +110,6 @@ describe('HyperparameterSearchModal', () => {
     expect(await view.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
 
-  it('should cancel modal', async () => {
-    const { view } = await setup();
-
-    await user.click(view.getAllByRole('button', { name: 'Cancel' })[0]);
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(view.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
-    });
-  });
-
   it('should submit experiment', async () => {
     const { view } = await setup();
 

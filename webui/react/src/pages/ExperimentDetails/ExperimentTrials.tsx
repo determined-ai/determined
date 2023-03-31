@@ -69,6 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
+  const [actionableTrial, setActionableTrial] = useState<TrialItem>();
   const [canceler] = useState(new AbortController());
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
@@ -136,7 +137,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
-        [TrialAction.HyperparameterSearch]: () => hyperModal.open(),
+        [TrialAction.HyperparameterSearch]: () => {
+          // passes this trial to the HyperparameterSearchModal
+          setActionableTrial(trial);
+          hyperModal.open();
+        },
       };
       if (!canHparam) {
         delete opts[TrialAction.HyperparameterSearch];
@@ -473,6 +478,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onUnselect={handleTrialUnselect}
         />
       )}
+      <hyperModal.Component experiment={experiment} trial={actionableTrial} />
     </div>
   );
 };

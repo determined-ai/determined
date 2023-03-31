@@ -314,6 +314,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         }
         onChange={handleTabChange}
       />
+      <hyperModal.Component experiment={experiment} />
     </TrialLogPreview>
   );
 };
