@@ -10,8 +10,6 @@ const branch = process.env['CIRCLE_BRANCH'];
 const username = process.env['GITHUB_USERNAME'];
 const password = process.env['GITHUB_TOKEN'];
 const jobId = process.env['CIRCLE_WORKFLOW_JOB_ID'];
-// TODO: get rid of ashton fallback
-const login = process.env['GITHUB_LOGIN'] || 'ashtonG';
 
 console.error(projectUsername);
 console.error(reponame);
@@ -19,7 +17,6 @@ console.error(branch);
 console.error(username);
 console.error(password);
 console.error(jobId);
-console.error(login);
 
 // get attached pr:
 const prUrl = new URL(`https://api.github.com/repos/${projectUsername}/${reponame}/pulls`);
@@ -37,7 +34,7 @@ commentsUrl.username = username;
 commentsUrl.password = password;
 const commentsPayload = await nodeFetch(commentsUrl.toString()).then((r) => r.json());
 // TODO: paginate in case we're unlucky and the comment to update isn't in the first page
-const [commentToUpdate] = commentsPayload.filter((comment) => comment.user.login === login);
+const [commentToUpdate] = commentsPayload.filter((comment) => comment.user.login === username);
 const artifactUrl = `https://output.circle-artifacts.com/output/job/${jobId}/artifacts/0/webui/react/screenshot-summary.html`;
 const comment = `Hello! DesignKit diffs are available for you to view [here](${artifactUrl})`;
 const commentOptions = {

@@ -2237,7 +2237,8 @@ workflows:
   test-unit:
     jobs:
       - test-unit-go
-      - test-unit-react
+      - test-unit-react:
+          context: github-write
       - test-unit-harness-cpu
       # Exclude gpu tests for now since we do not have access to those instance types on circleci.
       #- test-unit-harness-gpu
