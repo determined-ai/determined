@@ -11,13 +11,6 @@ const username = process.env['GITHUB_USERNAME'];
 const password = process.env['GITHUB_TOKEN'];
 const jobId = process.env['CIRCLE_WORKFLOW_JOB_ID'];
 
-console.error(projectUsername);
-console.error(reponame);
-console.error(branch);
-console.error(username);
-console.error(password);
-console.error(jobId);
-
 // get attached pr:
 const prUrl = new URL(`https://api.github.com/repos/${projectUsername}/${reponame}/pulls`);
 prUrl.searchParams.set('state', 'open');
@@ -49,12 +42,8 @@ if (commentToUpdate) {
   const updateUrl = new URL(commentToUpdate.url);
   updateUrl.username = username;
   updateUrl.password = password;
-  const updatePayload = await nodeFetch(updateUrl.toString(), commentOptions).then((r) => r.json());
-  console.error(updatePayload);
+  nodeFetch(updateUrl.toString(), commentOptions).then((r) => r.json());
 } else {
   commentOptions.method = 'post';
-  const createPayload = await nodeFetch(commentsUrl.toString(), commentOptions).then((r) =>
-    r.json(),
-  );
-  console.error(createPayload);
+  await nodeFetch(commentsUrl.toString(), commentOptions).then((r) => r.json());
 }

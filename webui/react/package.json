@@ -119,6 +119,7 @@
     "jsdom": "^16.7.0",
     "magic-string": "^0.30.0",
     "morgan": "^1.10.0",
+    "node-fetch": "^3.3.1",
     "npm-force-resolutions": "0.0.10",
     "playwright": "1.32.1",
     "prettier": "^2.8.4",
