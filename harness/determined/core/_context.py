@@ -88,7 +88,6 @@ def _dummy_init(
     *,
     distributed: Optional[core.DistributedContext] = None,
     checkpoint_storage: Optional[str] = None,
-    storage_manager: Optional[storage.StorageManager] = None,
     tensorboard_path: Optional[pathlib.Path] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
@@ -100,10 +99,7 @@ def _dummy_init(
     distributed = distributed or core.DummyDistributedContext()
     preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
-    if storage_manager is not None:
-        logging.warning("storage_manager is deprecated. Consider using checkpoint_storage instead.")
-    if checkpoint_storage is not None:
-        storage_manager = storage.from_string(checkpoint_storage)
+    storage_manager = storage.from_string(checkpoint_storage)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -133,7 +129,6 @@ def init(
     *,
     distributed: Optional[core.DistributedContext] = None,
     checkpoint_storage: Optional[str] = None,
-    storage_manager: Optional[storage.StorageManager] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
     tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
 ) -> Context:
@@ -160,7 +155,6 @@ def init(
         checkpoint_storage (``str``, optional): A directory path specifying a shared filesystem
             location or a cloud storage URI of the form ``s3://<bucket>[/<prefix>]`` (AWS) or
             ``gs://<bucket>[/<prefix>]`` (GCP).
-        storage_manager: Internal use only. Deprecated.
         tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
             metrics and profiling data are retained. See
             :class:`~determined.core.TensorboardMode`` for more detail. Defaults to ``AUTO``.
@@ -170,7 +164,6 @@ def init(
         return _dummy_init(
             distributed=distributed,
             checkpoint_storage=checkpoint_storage,
-            storage_manager=storage_manager,
         )
 
     # We are on the cluster.
@@ -192,10 +185,7 @@ def init(
     searcher = None
     tensorboard_manager = None
 
-    if storage_manager is not None:
-        logging.warning("storage_manager is deprecated. Consider using checkpoint_storage instead.")
-    if checkpoint_storage is not None:
-        storage_manager = storage.from_string(checkpoint_storage)
+    storage_manager = storage.from_string(checkpoint_storage)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
