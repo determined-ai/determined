@@ -227,14 +227,14 @@ export const GlideTable: React.FC<Props> = ({
   }, []);
 
   const onColumnMoved = useCallback(
-    (_startIndex: number, _endIndex: number): void => {
-      const startIndex = _startIndex - STATIC_COLUMNS.length;
-      const endIndex = Math.max(_endIndex - STATIC_COLUMNS.length, 0);
-      if (startIndex > -1) {
+    (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
+      const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
+      const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - STATIC_COLUMNS.length, 0);
+      if (sortableColumnIdsStartIdx > -1) {
         setSortableColumnIds((prevCols) => {
           const newCols = [...prevCols];
-          const [toMove] = newCols.splice(startIndex, 1);
-          newCols.splice(endIndex, 0, toMove);
+          const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
+          newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
           return newCols;
         });
       }

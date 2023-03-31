@@ -34,7 +34,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   y,
   open,
   handleClose,
-  ...menuProps
+  items,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
@@ -50,7 +50,7 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
         top: y,
         width: 200,
       }}>
-      <Menu {...menuProps} />
+      <Menu items={items} />
     </div>
   );
 };
