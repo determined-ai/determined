@@ -26,7 +26,7 @@ export interface Props extends ClassNameProp {
   square?: boolean;
 }
 
-const getInitials = (name = ''): string => {
+export const getInitials = (name = ''): string => {
   // Reduce the name to initials.
   const initials = name
     .split(/\s+/)
@@ -39,7 +39,7 @@ const getInitials = (name = ''): string => {
     : initials;
 };
 
-const getColor = (name = '', darkLight: DarkLight): string => {
+export const getColor = (name = '', darkLight: DarkLight): string => {
   const hslColor = name ? hex2hsl(md5(name).substring(0, 6)) : hex2hsl('#808080');
   return hsl2str({
     ...hslColor,
