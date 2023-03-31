@@ -733,10 +733,13 @@ commands:
       cluster-ipv4-cidr:
         type: string
         description: The IP address range for the pods in this cluster.
-        # This was previously allowed to use default values provided by GKE.
         # We are specifying this since the cluster doesn't need to be very large and GKE was intermittently
-        # choosing an excessively large range. This is the minimum range it will let us allocate and
+        # defaulting to an excessively large range. "/19" is the minimum range it will let us allocate and
         # allows the cluster to create at most 16 nodes.
+        # Kubernetes services default to 4096 IPs, or a "/20", and the remainder gets split up into a "/24" per node.
+        # So with a "/19", there are 8192 total addresses. After 4096 get used for services there are 4096 left.
+        # That's 2^12 / 2^8 = 16 nodes for our tests. Thanks @Danny Sauer!
+        # If we find we need more nodes in our tests in the future, we can bump this up.
         default: "/19"
     steps:
       - set-cluster-id:
