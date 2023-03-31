@@ -3,8 +3,6 @@ import os
 import uuid
 from typing import Any, Dict, Optional, Type
 
-from determined.common.check import check_eq, check_in, check_type
-
 from .base import StorageManager, Paths, Selector, from_string
 from .cloud import CloudStorageManager
 from .azure import AzureStorageManager
@@ -37,13 +35,15 @@ def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManag
     the configuration dictionary. Throws a `TypeError` if no storage manager
     with `type` is defined.
     """
-    check_in("type", config, "Missing 'type' parameter of storage configuration")
+    if "type" not in config:
+        raise ValueError("Missing 'type' parameter of storage configuration")
 
     # Make a deep copy of the config because we are removing items to
     # pass to the constructor of the `StorageManager`.
     config = copy.deepcopy(config)
     identifier = config.pop("type")
-    check_type(identifier, str, "`type` parameter of storage configuration must be a string")
+    if not isinstance(identifier, str):
+        raise ValueError("`type` parameter of storage configuration must be a string")
 
     try:
         subclass = _STORAGE_MANAGERS[identifier]
@@ -99,7 +99,8 @@ def validate_manager(manager: StorageManager) -> None:
 
     with manager.restore_path(storage_id) as path:
         with path.joinpath("VALIDATE.txt").open("r") as f:
-            check_eq(f.read(), storage_id, "Unable to properly load from storage")
+            if f.read() != storage_id:
+                raise ValueError("Unable to properly load from storage")
 
     manager.delete(storage_id)
 

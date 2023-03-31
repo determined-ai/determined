@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from determined.common import check, storage
+from determined.common import storage
 
 
 def test_unknown_type() -> None:
@@ -14,13 +14,13 @@ def test_unknown_type() -> None:
 
 
 def test_missing_type() -> None:
-    with pytest.raises(check.CheckFailedError, match="Missing 'type' parameter"):
+    with pytest.raises(ValueError, match="Missing 'type' parameter"):
         storage.build({}, container_path=None)
 
 
 def test_illegal_type() -> None:
     config = {"type": 4}
-    with pytest.raises(check.CheckFailedError, match="must be a string"):
+    with pytest.raises(ValueError, match="must be a string"):
         storage.build(config, container_path=None)
 
 
