@@ -58,6 +58,12 @@ func (p *UserAuthZPermissive) CanSetUsersAdmin(
 	return (&UserAuthZBasic{}).CanSetUsersAdmin(ctx, curUser, targetUser, toAdminVal)
 }
 
+// CanSetUsersRemote calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanSetUsersRemote(ctx context.Context, curUser model.User) error {
+	_ = (&UserAuthZRBAC{}).CanSetUsersRemote(ctx, curUser)
+	return (&UserAuthZBasic{}).CanSetUsersRemote(ctx, curUser)
+}
+
 // CanSetUsersAgentUserGroup calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanSetUsersAgentUserGroup(
 	ctx context.Context, curUser, targetUser model.User,

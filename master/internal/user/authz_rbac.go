@@ -194,6 +194,11 @@ func (a *UserAuthZRBAC) CanResetUsersOwnSettings(ctx context.Context, curUser mo
 	return nil
 }
 
+// CanSetUsersRemote returns an error if the user does not have admin permissions.
+func (a *UserAuthZRBAC) CanSetUsersRemote(ctx context.Context, curUser model.User) error {
+	return canAdministrateUser(ctx, curUser.ID)
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &UserAuthZRBAC{})
 }

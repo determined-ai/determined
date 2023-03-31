@@ -83,6 +83,7 @@ func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
 		Username:     suser.Username,
 		Active:       true,
 		PasswordHash: suser.PasswordHash,
+		Remote:       true,
 	}
 
 	tx, err := db.sql.Beginx()
