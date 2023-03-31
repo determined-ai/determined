@@ -1372,7 +1372,7 @@ jobs:
       - run:
           command: |
             export ARTIFACT_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/0/webui/react/screenshot-summary.html"
-            if [ -f .diff-detected ] ; then
+            if [ -f webui/react/.diff-detected ] ; then
               export MESSAGE="Hello! DesignKit diffs are available for you to view [here]($ARTIFACT_URL)"
             else
               export MESSAGE="Hello! No changes detected to DesignKit. Verify [here]($ARTIFACT_URL)"
