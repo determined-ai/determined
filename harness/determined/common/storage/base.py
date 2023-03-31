@@ -164,7 +164,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         return result
 
 
-def from_string(shortcut) -> StorageManager:
+def from_string(shortcut: str) -> StorageManager:
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
     if p.scheme == "":
         base_path = p.path

@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Tuple
+from typing import Optional
 from unittest import mock
 
 import pytest
@@ -74,11 +74,7 @@ def test_azure_shortcut_string(
     shortcut = f"ms://{container}"
     if connection_string:
         shortcut += f"/{connection_string}"
-    fields = dict(
-        account_url=account_url,
-        credential=credential,
-        temp_dir=temp_dir,
-    )
+    fields = {"account_url": account_url, "credential": credential, "temp_dir": temp_dir}
     if fields:
         shortcut += "?{}".format(",".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
     with mock.patch("determined.common.storage.AzureStorageManager") as mocked:
@@ -107,26 +103,27 @@ def test_gcs_shortcut_string(prefix: Optional[str], temp_dir: Optional[str]) -> 
 
 
 @pytest.mark.parametrize("prefix", [None, "myprefix"])
-@pytest.mark.parametrize("keys", [(None, None), ("myaccesskey", "mysecretkey")])
+@pytest.mark.parametrize("access_key", [None, "myaccesskey"])
+@pytest.mark.parametrize("secret_key", [None, "mysecretkey"])
 @pytest.mark.parametrize("endpoint_url", [None, "http://127.0.0.1:8080/"])
 @pytest.mark.parametrize("temp_dir", [None, "mytempdir/mytempsubdir"])
 def test_s3_shortcut_string(
-    keys: Optional[Tuple[str, str]],
+    access_key: Optional[str],
+    secret_key: Optional[str],
     endpoint_url: Optional[str],
     prefix: Optional[str],
     temp_dir: Optional[str],
 ) -> None:
     bucket = "mybucket"
-    access_key, secret_key = keys
     shortcut = f"s3://{bucket}"
     if prefix:
         shortcut += f"/{prefix}"
-    fields = dict(
-        access_key=access_key,
-        secret_key=secret_key,
-        endpoint_url=endpoint_url,
-        temp_dir=temp_dir,
-    )
+    fields = {
+        "access_key": access_key,
+        "secret_key": secret_key,
+        "endpoint_url": endpoint_url,
+        "temp_dir": temp_dir,
+    }
     if fields:
         shortcut += "?{}".format("&".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
     with mock.patch("determined.common.storage.S3StorageManager") as mocked:
