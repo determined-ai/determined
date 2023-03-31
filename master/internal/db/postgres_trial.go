@@ -16,6 +16,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+// TODO: rename raw_steps.
+
 // AddTrial adds the trial to the database and sets its ID.
 func (db *PgDB) AddTrial(trial *model.Trial) error {
 	if trial.ID != 0 {
@@ -162,6 +164,8 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 			return err
 		}
 
+		// TODO: update trial.total_batches
+
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
@@ -170,6 +174,7 @@ WHERE trial_id = $1
 `, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
+		// TODO rollback trial.total_batches if updated rows > 0
 
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
@@ -179,7 +184,10 @@ WHERE trial_id = $1
 `, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
+		// TODO rollback trial.total_batches if updated rows > 0
 
+		// TODO: update trial.total_batches to max(trial.total_batches, m.StepsCompleted)
+		// in a transaction.
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
@@ -210,6 +218,8 @@ func (db *PgDB) AddValidationMetrics(
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
 			return err
 		}
+
+		// TODO: same as AddTrainingMetrics
 
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
