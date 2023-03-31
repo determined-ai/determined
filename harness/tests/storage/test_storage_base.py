@@ -4,8 +4,7 @@ from unittest import mock
 
 import pytest
 
-from determined.common import storage
-from determined.common import check
+from determined.common import check, storage
 
 
 def test_unknown_type() -> None:
