@@ -8,14 +8,16 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+<<<<<<< HEAD
 	"golang.org/x/exp/maps"
 	"gopkg.in/inf.v0"
+=======
+	"github.com/sirupsen/logrus"
+>>>>>>> 8bb41fd6d (WIP: k8s cluster info using taints/tolerations)
 	k8sV1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
@@ -68,6 +70,7 @@ type pods struct {
 	slotType                 device.Type
 	slotResourceRequests     config.PodSlotResourceRequests
 	fluentConfig             config.FluentConfig
+	resourcePoolConfigs      []config.ResourcePoolConfig
 	credsDir                 string
 
 	clientSet        *k8sClient.Clientset
@@ -136,6 +139,7 @@ func Initialize(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	fluentConfig config.FluentConfig,
+	resourcePoolConfigs []config.ResourcePoolConfig,
 	credsDir string,
 	masterIP string,
 	masterPort int32,
@@ -164,6 +168,7 @@ func Initialize(
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
 		fluentConfig:                 fluentConfig,
+		resourcePoolConfigs:          resourcePoolConfigs,
 		credsDir:                     credsDir,
 		masterIP:                     masterIP,
 		masterPort:                   masterPort,
@@ -804,9 +809,18 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 		return
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"poolName": msg.PoolName,
+		"numPools": len(summary),
+	}).Debug("got a summary")
+
 	slots := 0
 	if len(msg.PoolName) > 0 {
 		slots = numSlots(summary[msg.PoolName].Slots)
+		logrus.WithFields(logrus.Fields{
+			"slots":    slots,
+			"poolName": msg.PoolName,
+		}).Debug("done summarizing slots for pool")
 	} else {
 		for _, pool := range summary {
 			slots += numSlots(pool.Slots)
@@ -934,99 +948,103 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 	ctx.Respond(response)
 }
 
-// summarize describes pods' available resources. When there's exactly one resource pool and that
-// pool has no quotas configured, it uses the whole cluster's info. Otherwise, it uses namespaces'
-// quotas to derive that info.
+// summarize describes pods' available resources. When there's exactly one resource pool, it uses
+// the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
+// tolerations to derive that info.
 func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
-	namespaceToQuota := make(map[string]k8sV1.ResourceQuota)
+	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
-	// Look up quotas for our resource pools' namespaces.
-	for namespace := range p.namespaceToPoolName {
-		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
-		if err != nil && !k8serrors.IsNotFound(err) {
-			return nil, err
-		} else if k8serrors.IsNotFound(err) || quotaList == nil {
-			continue
+	taskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
+
+	// Build the many-to-many relationship between nodes and resource pools
+	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
+	for _, node := range p.currentNodes {
+		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
+
+		for poolName, tcd := range taskContainerDefaults {
+			var poolTolerations []k8sV1.Toleration
+
+			if tcd != nil {
+				// Decide which poolTolerations to use based on slot device type
+				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
+					poolTolerations = tcd.GPUPodSpec.Spec.Tolerations
+				} else if tcd.CPUPodSpec != nil {
+					poolTolerations = tcd.CPUPodSpec.Spec.Tolerations
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"poolName": poolName,
+						"nodeName": node.Name,
+					}).Debug("didn't find appropriate podspec")
+				}
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"poolName": poolName,
+					"nodeName": node.Name,
+				}).Debug("taskContainerDefaults was nil")
+			}
+
+			logrus.WithFields(logrus.Fields{
+				"poolName":       poolName,
+				"nodeName":       node.Name,
+				"lenTolerations": len(poolTolerations),
+				"lenTaints":      len(node.Spec.Taints),
+			}).Debug("about to compare taints and tolerations")
+
+			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
+			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
+				poolsToNodes[poolName] = append(poolsToNodes[poolName], node)
+			}
 		}
-
-		relevantQuotas := cpuAndGpuQuotas(quotaList)
-		if len(relevantQuotas) != 1 {
-			// TODO: figure out how we want to handle multiple quotas per namespace?
-			// When there's multiple conflicting quotas, k8s seems to use the most
-			// restrictive of them—i.e. if there's a quota limiting to 100 CPUs and one
-			// limiting to 10, only 10 CPUs will be allowed.
-			continue
-		}
-
-		namespaceToQuota[namespace] = relevantQuotas[0]
 	}
 
-	// If there's only one resource pool configured and it doesn't have a quota, summarize using the
-	// whole cluster.
-	if len(p.namespaceToPoolName) == 1 {
-		var namespaceOfPool string
-		for namespace := range p.namespaceToPoolName {
-			namespaceOfPool = namespace
-		}
-
-		// If there's no quota for our only resource pool's namespace
-		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
-			return p.summarizeClusterByNodes(ctx), nil
-		}
+	f := logrus.Fields{
+		"lenPoolsToNodes":        len(poolsToNodes),
+		"lenNamespaceToPoolName": len(p.namespaceToPoolName),
 	}
+	for _, pool := range poolsToNodes {
+		key := fmt.Sprintf("lenNodesIn-%s", pool)
+		f[key] = len(poolsToNodes["default"])
+	}
+	logrus.WithFields(f).Debug("done associating nodes and pools")
 
+	// Build the set of summaries for each resource pool
 	containers := p.containersPerResourcePool()
 	summaries := make(map[string]model.AgentSummary, len(p.namespaceToPoolName))
-	for namespace, poolName := range p.namespaceToPoolName {
+	for poolName, nodes := range poolsToNodes {
 		slots := model.SlotsSummary{}
-		numContainers := containers[poolName]
-		var registeredTime time.Time
-		if quota, quotaExists := namespaceToQuota[namespace]; quotaExists {
-			slots = make(map[string]model.SlotSummary)
-			registeredTime = quota.CreationTimestamp.Time
+		numContainersInPool := containers[poolName]
 
-			for resourceName, qty := range quota.Spec.Hard {
-				var deviceType device.Type
-				switch resourceName {
-				case k8sV1.ResourceCPU:
-					deviceType = device.CPU
-				case ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
-					deviceType = device.CUDA
-				default:
-					// We only care about CPU and GPU quotas for the slots summary
-					continue
+		// We'll create a number of pseudo-containers in the summary equal to the number of
+		// running containers in this pool.
+		pseudoContainersAdded := 0
+
+		for _, node := range nodes {
+			numSlots, slotType := extractSlotInfo(nodeSummaries[node.Name])
+
+			for j := 0; j < numSlots; j++ {
+				id := fmt.Sprintf("%s/%s/%s/%d", poolName, node.Name, string(slotType), j)
+
+				var container *cproto.Container
+				if pseudoContainersAdded < numContainersInPool {
+					container = &cproto.Container{
+						ID:    cproto.ID(id),
+						State: "RUNNING",
+					}
 				}
 
-				// Each CPU and GPU in the quota will be counted as a slot here
-				one, decQty := inf.NewDec(1, 0), qty.AsDec()
-				for i := inf.NewDec(0, 0); i.Cmp(decQty) < 0; i.Add(i, one) {
-					id := fmt.Sprintf("%s/%s/%s", poolName, string(deviceType), i.String())
-
-					var container *cproto.Container
-					// Create a number of pseudo-containers in the summary equal to the number of
-					// running containers
-					if decNumContainers := inf.NewDec(int64(numContainers),
-						0); i.Cmp(decNumContainers) < 0 {
-						container = &cproto.Container{
-							ID:    cproto.ID(id),
-							State: "RUNNING",
-						}
-					}
-
-					slots[id] = model.SlotSummary{
-						ID:        id,
-						Device:    device.Device{Type: deviceType},
-						Enabled:   true,
-						Container: container,
-					}
+				slots[id] = model.SlotSummary{
+					ID:        id,
+					Device:    device.Device{Type: slotType},
+					Enabled:   true,
+					Container: container,
 				}
 			}
 		}
 
 		summaries[poolName] = model.AgentSummary{
 			ID:             poolName,
-			RegisteredTime: registeredTime,
-			NumContainers:  numContainers,
+			RegisteredTime: p.cluster.RegisteredTime(),
+			NumContainers:  numContainersInPool,
 			ResourcePool:   poolName,
 			Slots:          slots,
 		}
@@ -1075,6 +1093,12 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			numSlots = resources.Value()
 			deviceType = device.CUDA
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"numSlots": numSlots,
+			"nodeName": node.Name,
+		}).Debug("summarizing by nodes, looking at particular node")
+
 		if numSlots < 1 {
 			continue
 		}
@@ -1274,4 +1298,51 @@ func (p *pods) listConfigMapsInAllNamespaces(
 	}
 
 	return res, nil
+}
+
+func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig) map[string]*model.TaskContainerDefaultsConfig {
+	result := map[string]*model.TaskContainerDefaultsConfig{}
+
+	for _, config := range resourcePoolConfigs {
+		result[config.PoolName] = config.TaskContainerDefaults
+	}
+
+	return result
+}
+
+func taintTolerated(taint k8sV1.Taint, tolerations []k8sV1.Toleration) bool {
+	for _, toleration := range tolerations {
+		if toleration.ToleratesTaint(&taint) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func allTaintsTolerated(taints []k8sV1.Taint, tolerations []k8sV1.Toleration) bool {
+	for _, taint := range taints {
+		if !taintTolerated(taint, tolerations) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type) {
+	var gpuSlots, cpuSlots int
+	for _, slot := range node.Slots {
+		if slot.Device.Type == device.CPU {
+			cpuSlots++
+		} else if slot.Device.Type == device.CUDA {
+			gpuSlots++
+		}
+	}
+
+	if gpuSlots > 0 {
+		return gpuSlots, device.CUDA
+	}
+
+	return cpuSlots, device.CPU
 }
