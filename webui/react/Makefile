@@ -2,6 +2,7 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
+export PLAYWRIGHT_BROWSERS_PATH=0
 source_files := $(shell find src public -type f)
 
 .PHONY: default
