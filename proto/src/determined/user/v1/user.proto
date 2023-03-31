@@ -46,7 +46,7 @@ message PatchUser {
   // Indicate whether the provided password is pre-salted & hashed or not.
   bool is_hashed = 7;
   // Bool denoting whether the user should be able to login with or change a password.
-  google.protobuf.BoolValue remote = 8;
+  optional bool remote = 8;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an
