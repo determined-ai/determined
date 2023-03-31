@@ -399,7 +399,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		updatedUser.Remote = req.User.Remote.Value
+		updatedUser.Remote = *req.User.Remote
 		insertColumns = append(insertColumns, "remote")
 	}
 
