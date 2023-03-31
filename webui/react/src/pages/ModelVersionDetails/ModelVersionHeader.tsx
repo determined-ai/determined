@@ -26,7 +26,6 @@ import usersStore from 'stores/users';
 import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
 
@@ -72,11 +71,12 @@ const ModelVersionHeader: React.FC<Props> = ({
         content: (
           <Space>
             <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
-              <>
+              <div className={css.createdBy}>
                 <Avatar user={user} />
-                {getDisplayName(user)}
-                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
-              </>
+                <span>
+                  on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+                </span>
+              </div>
             </Spinner>
           </Space>
         ),
