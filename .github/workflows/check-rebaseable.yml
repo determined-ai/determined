@@ -60,7 +60,7 @@ jobs:
       - name: attempt rebase
         if: github.repository != env.EE_REPO
         run: |
-          git rebase proposed_base || (cat <<"EOF" 1>&2
+          mv err also_err || (cat <<"EOF" 1>&2
 
           ********
 
