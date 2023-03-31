@@ -1,13 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Select as AntdSelect,
-  ModalFuncProps,
-  Radio,
-  RadioChangeEvent,
-  Space,
-  Typography,
-} from 'antd';
+import { Alert, Select as AntdSelect, Radio, RadioChangeEvent, Typography } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,6 +9,7 @@ import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
+import { Modal } from 'components/kit/Modal';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
@@ -25,7 +18,6 @@ import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
 import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error';
@@ -47,27 +39,12 @@ import { handleWarning } from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
-import css from './useModalHyperparameterSearch.module.scss';
+import css from './HyperparameterSearchModal.module.scss';
 
 interface Props {
   experiment: ExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
-}
-
-export interface ShowModalProps {
-  initialModalProps?: ModalFuncProps;
-  trial?: TrialDetails | TrialItem;
-}
-
-interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (props?: ShowModalProps) => void;
-}
-
-interface SearchMethod {
-  displayName: string;
-  icon: React.ReactNode;
-  name: `${ExperimentSearcherName}`;
 }
 
 const SEARCH_METHODS: Record<string, SearchMethod> = {
@@ -90,6 +67,8 @@ const SEARCH_METHODS: Record<string, SearchMethod> = {
 
 const DEFAULT_LOG_BASE = 10;
 
+const FORM_ID = 'hyperparameter-search-form';
+
 interface HyperparameterRowValues {
   count?: number;
   max?: number;
@@ -98,13 +77,7 @@ interface HyperparameterRowValues {
   value?: number | string;
 }
 
-const useModalHyperparameterSearch = ({
-  experiment,
-  onClose,
-  trial: trialIn,
-}: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
-  const [trial, setTrial] = useState(trialIn);
+const HyperparameterSearchModal = ({ experiment, onClose, trial }: Props): JSX.Element => {
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
@@ -264,21 +237,9 @@ const useModalHyperparameterSearch = ({
     }
   }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
 
-  const handleOk = useCallback(() => {
-    if (currentPage === 0) {
-      setCurrentPage(1);
-    } else {
-      submitExperiment();
-    }
-  }, [currentPage, submitExperiment]);
-
   const handleBack = useCallback(() => {
     setCurrentPage((prev) => prev - 1);
   }, []);
-
-  const handleCancel = useCallback(() => {
-    modalClose(ModalCloseReason.Cancel);
-  }, [modalClose]);
 
   const handleSelectPool = useCallback(
     (value: SelectValue) => {
@@ -604,54 +565,39 @@ const useModalHyperparameterSearch = ({
   const footer = useMemo(() => {
     return (
       <div className={css.footer}>
-        {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
-        <div className={css.spacer} />
-        <Space>
-          <Button onClick={handleCancel}>Cancel</Button>
-          <Button disabled={validationError} type="primary" onClick={handleOk}>
-            {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
-          </Button>
-        </Space>
+        {currentPage > 0 ? (
+          <Button onClick={handleBack}>Back</Button>
+        ) : (
+          <Button onClick={() => setCurrentPage(1)}>Select Hyperparameters</Button>
+        )}
       </div>
     );
-  }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
+  }, [currentPage, handleBack]);
 
-  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
-    return {
-      className: css.modal,
-      closable: true,
-      content: (
+  return (
+    <Modal
+      okButtonProps={{
+        disabled: validationError || currentPage === 0,
+        form: FORM_ID,
+        htmlType: 'submit',
+      }}
+      size="medium"
+      submit={{
+        handler: async () => {
+          return await submitExperiment();
+        },
+        text: 'Run Experiment',
+      }}
+      title="Hyperparameter Search"
+      onClose={onClose}>
+      <div className={css.hparamModal}>
         <Form form={form} layout="vertical">
           {pages[currentPage]}
           {footer}
         </Form>
-      ),
-      icon: null,
-      maskClosable: false,
-      title: 'Hyperparameter Search',
-      width: 700,
-    };
-  }, [form, pages, currentPage, footer]);
-
-  const modalOpen = useCallback(
-    (props?: ShowModalProps) => {
-      setCurrentPage(0);
-      form.resetFields();
-      if (props?.trial) setTrial(props?.trial);
-      openOrUpdate({ ...modalProps, ...props?.initialModalProps });
-    },
-    [form, modalProps, openOrUpdate],
+      </div>
+    </Modal>
   );
-
-  /*
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
-
-  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 interface RowProps {
@@ -856,4 +802,10 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   );
 };
 
-export default useModalHyperparameterSearch;
+interface SearchMethod {
+  displayName: string;
+  icon: React.ReactNode;
+  name: `${ExperimentSearcherName}`;
+}
+
+export default HyperparameterSearchModal;

@@ -2,13 +2,14 @@ import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import HyperparameterSearchModal from 'components/HyperparameterSearchModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
@@ -75,13 +76,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const [canceler] = useState(new AbortController());
   const [trialDetails, setTrialDetails] = useState<TrialDetails>();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openHyperparameterSearchModal,
-  } = useModalHyperparameterSearch({ experiment });
   const chartFlagOn = useFeature().isOn('chart');
 
   const waitingForTrials = !trialId && !wontHaveTrials;
+  const hyperModal = useModal(HyperparameterSearchModal);
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -199,10 +197,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
-  const handleHPSearch = useCallback(() => {
-    openHyperparameterSearchModal({});
-  }, [openHyperparameterSearchModal]);
-
   const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
     usePermissions();
   const workspace = { id: experiment.workspaceId };
@@ -314,13 +308,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         tabBarExtraContent={
           tabKey === TabType.Hyperparameters && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
-              <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+              <Button onClick={hyperModal.open}>Hyperparameter Search</Button>
             </div>
           ) : undefined
         }
         onChange={handleTabChange}
       />
-      {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );
 };

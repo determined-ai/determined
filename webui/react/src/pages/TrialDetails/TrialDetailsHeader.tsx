@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import HyperparameterSearchModal from 'components/HyperparameterSearchModal';
+import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -37,18 +38,11 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     modalOpen: openModalExperimentCreate,
   } = useCreateExperimentModal({ onClose: handleModalClose });
 
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, trial });
-
   const handleContinueTrial = useCallback(() => {
     openModalExperimentCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
   }, [experiment, openModalExperimentCreate, trial]);
 
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
+  const hyperModal = useModal(HyperparameterSearchModal);
 
   useMemo(async () => {
     if (!terminalRunStates.has(trial.state)) {
@@ -107,7 +101,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
       options.push({
         key: Action.HyperparameterSearch,
         label: 'Hyperparameter Search',
-        onClick: handleHyperparameterSearch,
+        onClick: hyperModal.open,
       });
     }
 
@@ -116,7 +110,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     experiment,
     fetchTrialDetails,
     handleContinueTrial,
-    handleHyperparameterSearch,
+    hyperModal.open,
     isRunningTensorBoard,
     trial,
     trialNeverData,
@@ -130,7 +124,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         options={headerOptions}
       />
       {modalExperimentCreateContextHolder}
-      {modalHyperparameterSearchContextHolder}
+      <hyperModal.Component experiment={experiment} trial={trial} />
     </>
   );
 };

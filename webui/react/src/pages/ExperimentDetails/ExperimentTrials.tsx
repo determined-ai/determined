@@ -6,6 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import HyperparameterSearchModal from 'components/HyperparameterSearchModal';
+import { useModal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
@@ -14,7 +16,6 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/T
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -77,10 +78,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
   const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  const hyperModal = useModal(HyperparameterSearchModal);
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -133,26 +131,19 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [experiment.id],
   );
 
-  const handleHyperparameterSearch = useCallback(
-    (trial: TrialItem) => {
-      openModalHyperparameterSearch({ trial });
-    },
-    [openModalHyperparameterSearch],
-  );
-
   const dropDownOnTrigger = useCallback(
     (trial: TrialItem) => {
       const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
-        [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
+        [TrialAction.HyperparameterSearch]: () => hyperModal.open(),
       };
       if (!canHparam) {
         delete opts[TrialAction.HyperparameterSearch];
       }
       return opts;
     },
-    [canHparam, handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [canHparam, handleOpenTensorBoard, handleViewLogs, hyperModal],
   );
 
   const columns = useMemo(() => {
@@ -405,7 +396,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           handleOpenTensorBoard(record);
         },
         [MenuKey.HyperparameterSearch]: () => {
-          handleHyperparameterSearch(record);
+          hyperModal.open();
         },
         [MenuKey.ViewLogs]: () => {
           handleViewLogs(record);
@@ -431,7 +422,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         </Dropdown>
       );
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [handleOpenTensorBoard, handleViewLogs, hyperModal],
   );
 
   return (
@@ -482,7 +473,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onUnselect={handleTrialUnselect}
         />
       )}
-      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };

@@ -3,11 +3,12 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { ClusterProvider } from 'stores/cluster';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
-import useModalHyperparameterSearch from './useModalHyperparameterSearch';
+import HyperparameterSearchModal from './HyperparameterSearchModal';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
@@ -76,12 +77,11 @@ vi.mock('services/api', () => ({
 const { experiment } = generateTestExperimentData();
 
 const ModalTrigger: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalHyperparameterSearch({ experiment: experiment });
-
+  const hyperModal = useModal(HyperparameterSearchModal);
   return (
     <>
-      <Button onClick={() => modalOpen()}>Open Modal</Button>
-      {contextHolder}
+      <Button onClick={() => hyperModal.open()}>Open Modal</Button>
+      <hyperModal.Component experiment={experiment} />
     </>
   );
 };
@@ -103,7 +103,7 @@ const setup = async () => {
   return { view };
 };
 
-describe('useModalHyperparameterSearch', () => {
+describe('HyperparameterSearchModal', () => {
   it('should open modal', async () => {
     const { view } = await setup();
 

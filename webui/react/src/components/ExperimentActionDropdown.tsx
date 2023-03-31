@@ -4,9 +4,10 @@ import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
+import HyperparameterSearchModal from 'components/HyperparameterSearchModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ExperimentListSettings } from 'pages/ExperimentList.settings';
@@ -67,10 +68,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const id = experiment.id;
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
     useModalExperimentMove({ onClose: onComplete });
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
+
+  const hyperModal = useModal(HyperparameterSearchModal);
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -79,10 +78,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       sourceWorkspaceId: experiment.workspaceId,
     });
   }, [openExperimentMove, id, experiment.projectId, experiment.workspaceId]);
-
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
 
   const handleMenuClick = useCallback(
     async (params: MenuInfo): Promise<void> => {
@@ -173,7 +168,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             handleExperimentMove();
             break;
           case Action.HyperparameterSearch:
-            handleHyperparameterSearch();
+            hyperModal.open();
             break;
         }
       } catch (e) {
@@ -193,7 +188,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       experiment.projectId,
       experiment.workspaceId,
       handleExperimentMove,
-      handleHyperparameterSearch,
+      hyperModal,
       id,
       onComplete,
       onVisibleChange,
@@ -241,7 +236,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         {children}
       </Dropdown>
       {modalExperimentMoveContextHolder}
-      {modalHyperparameterSearchContextHolder}
+      <hyperModal.Component experiment={experiment} onClose={onComplete} />
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
@@ -249,7 +244,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
       {modalExperimentMoveContextHolder}
-      {modalHyperparameterSearchContextHolder}
+      <hyperModal.Component experiment={experiment} onClose={onComplete} />
     </div>
   );
 };

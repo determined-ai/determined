@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentIcons from 'components/ExperimentIcons';
+import HyperparameterSearchModal from 'components/HyperparameterSearchModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -18,7 +20,6 @@ import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperime
 import useModalExperimentEdit from 'hooks/useModal/Experiment/useModalExperimentEdit';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
@@ -155,6 +156,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     workspace: { id: experiment.workspaceId },
   });
 
+  const hyperModal = useModal(HyperparameterSearchModal);
+
   const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
     useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
 
@@ -174,11 +177,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       experimentName: experiment.name,
       fetchExperimentDetails,
     });
-
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
 
   const stateStyle = useMemo(
     () => ({
@@ -255,10 +253,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
   }, [experiment, openModalCreate]);
 
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
-
   useEffect(() => {
     setIsRunningArchive(false);
     setIsRunningUnarchive(false);
@@ -298,7 +292,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       [Action.HyperparameterSearch]: {
         key: 'hyperparameter-search',
         label: 'Hyperparameter Search',
-        onClick: handleHyperparameterSearch,
+        onClick: hyperModal.open,
       },
       [Action.DownloadCode]: {
         icon: <Icon name="download" size="small" />,
@@ -368,8 +362,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     handleContinueTrialClick,
     isRunningDelete,
     handleDeleteClick,
-    handleHyperparameterSearch,
     handleForkClick,
+    hyperModal.open,
     openModalEdit,
     handleMoveClick,
     isRunningTensorBoard,
@@ -572,7 +566,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
       {modalExperimentEditContextHolder}
-      {modalHyperparameterSearchContextHolder}
     </>
   );
 };
