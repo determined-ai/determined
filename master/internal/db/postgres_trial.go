@@ -165,7 +165,6 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 		}
 
 		// TODO: update trial.total_batches
-
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
@@ -174,6 +173,8 @@ WHERE trial_id = $1
 `, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
+		// check how many rows were updated.
+
 		// TODO rollback trial.total_batches if updated rows > 0
 
 		if _, err := tx.ExecContext(ctx, `
@@ -186,8 +187,6 @@ WHERE trial_id = $1
 		}
 		// TODO rollback trial.total_batches if updated rows > 0
 
-		// TODO: update trial.total_batches to max(trial.total_batches, m.StepsCompleted)
-		// in a transaction.
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
@@ -204,6 +203,16 @@ VALUES
 		}); err != nil {
 			return errors.Wrap(err, "inserting training metrics")
 		}
+
+		// QUESTION: why not use db triggers to catch both additions and rollbacks?
+		// CHECK: concurrency issues between the two statements?
+		if _, err := tx.ExecContext(ctx, `
+UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+WHERE id = $1;
+`, m.TrialId, m.StepsCompleted); err != nil {
+			return errors.Wrap(err, "updating trial total batches")
+		}
+
 		return nil
 	})
 }
@@ -244,6 +253,15 @@ VALUES
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
 			return errors.Wrap(err, "inserting validation metrics")
+		}
+
+		// QUESTION: why not use db triggers to catch both additions and rollbacks?
+		// CHECK: concurrency issues between the two statements?
+		if _, err := tx.ExecContext(ctx, `
+UPDATE trials SET total_batches = GREATEST(total_batches, $2)
+WHERE id = $1;
+`, m.TrialId, m.StepsCompleted); err != nil {
+			return errors.Wrap(err, "updating trial total batches")
 		}
 
 		if err := setTrialBestValidation(
