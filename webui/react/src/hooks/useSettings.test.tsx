@@ -13,22 +13,6 @@ import { SettingsProvider } from './useSettingsProvider';
 
 const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
-vi.mock('stores/users', async (importOriginal) => {
-  // Repeat needed due to hoisting, making this not available in this arrow function.
-  const CURRENT_USER = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
-  const loadable = await import('utils/loadable');
-  const observable = await import('utils/observable');
-
-  const store = {
-    currentUser: observable.observable(loadable.Loaded(CURRENT_USER)),
-  };
-
-  return {
-    ...(await importOriginal<typeof import('stores/users')>()),
-    userStore: store,
-  };
-});
-
 vi.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));

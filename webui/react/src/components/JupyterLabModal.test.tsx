@@ -36,7 +36,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
   return {
     __esModule: true,
     ...(await importOriginal<typeof import('stores/cluster')>()),
-    useClusterStore: () => store,
+    clusterStore: store,
   };
 });
 

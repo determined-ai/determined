@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { useClusterStore } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
@@ -26,8 +26,8 @@ const Navigation: React.FC<Props> = ({ children }) => {
   useInitApi();
   const { ui } = useUI();
   const info = useObservable(determinedStore.info);
-  const clusterOverview = useObservable(useClusterStore().clusterOverview);
   const loadableCurrentUser = useObservable(userStore.currentUser);
+  const clusterOverview = useObservable(clusterStore.clusterOverview);
 
   useEffect(() => workspaceStore.startPolling(), []);
 

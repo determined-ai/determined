@@ -20,7 +20,6 @@ import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
-import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -32,7 +31,8 @@ import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error'
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
-import { useClusterStore } from 'stores/cluster';
+import { maxPoolSlotCapacity } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -111,7 +111,7 @@ const useModalHyperparameterSearch = ({
       SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
+  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );

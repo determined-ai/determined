@@ -10,7 +10,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { ClusterProvider } from 'stores/cluster';
+import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -54,11 +54,9 @@ const setup = () => {
   const view = render(
     <UIProvider>
       <HelmetProvider>
-        <ClusterProvider>
-          <BrowserRouter>
-            <ExperimentDetails />
-          </BrowserRouter>
-        </ClusterProvider>
+        <BrowserRouter>
+          <ExperimentDetails />
+        </BrowserRouter>
       </HelmetProvider>
     </UIProvider>,
   );

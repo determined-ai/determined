@@ -3,7 +3,6 @@ import React, { Suspense, useMemo } from 'react';
 import Card from 'components/kit/Card';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
-import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
@@ -16,7 +15,8 @@ import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
-import { useClusterStore } from 'stores/cluster';
+import { maxPoolSlotCapacity } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -149,7 +149,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
   resourcePool: pool,
   size = ShirtSize.Large,
 }: Props) => {
-  const agents = Loadable.waitFor(useObservable(useClusterStore().agents));
+  const agents = Loadable.waitFor(useObservable(clusterStore.agents));
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [pool]);

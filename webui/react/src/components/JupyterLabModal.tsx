@@ -13,7 +13,7 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
-import { useClusterStore } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { Template, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -314,7 +314,7 @@ const JupyterLabForm: React.FC<{
 }> = ({ currentWorkspace, form, defaults, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
+  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const selectedPoolName = Form.useWatch('pool', form);
 

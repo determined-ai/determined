@@ -12,7 +12,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import authStore from 'stores/auth';
-import { useClusterStore } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
@@ -51,7 +51,7 @@ const NavigationTabbar: React.FC = () => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
 
-  const clusterStatus = useObservable(useClusterStore().clusterStatus);
+  const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const info = useObservable(determinedStore.info);
   const loadablePinnedWorkspaces = useObservable(workspaceStore.pinned);
