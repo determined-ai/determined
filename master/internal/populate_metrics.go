@@ -41,15 +41,14 @@ func makeMetrics() *structpb.Struct {
 	}
 }
 
-func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
-	fmt.Println("non trivial metrics for", batches, "batches")
-	trainingAvgMetrics := &structpb.Struct{}
-	validationAvgMetrics := &structpb.Struct{}
-
+func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
+	batches int,
+) error {
+	fmt.Println("non trivial metrics for", batches, "batches") //nolint:forbidigo
 	N := 5
 	losses := []float64{}
 	for i := 0; i < N; i++ {
-		losses = append(losses, rand.Float64())
+		losses = append(losses, rand.Float64()) //nolint: gosec
 	}
 
 	type Factor struct {
@@ -58,7 +57,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 
 	factors := []Factor{}
 	for i := 0; i < N; i++ {
-		factors = append(factors, Factor{rand.Float64(), rand.Float64() / 10})
+		factors = append(factors, Factor{rand.Float64(), rand.Float64() / 10}) //nolint: gosec
 	}
 
 	printTime := 200
@@ -69,13 +68,12 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 		}
 		for i := 0; i < N; i++ {
 			val := float64(1)
-			if rand.Float64() <= factors[i].a {
+			if rand.Float64() <= factors[i].a { //nolint: gosec
 				val = float64(-1)
 			}
-			losses[i] = losses[i] * (1 - (val * rand.Float64() * factors[i].b))
-
+			losses[i] *= (1 - (val * rand.Float64() * factors[i].b)) //nolint: gosec
 		}
-		trainingAvgMetrics = &structpb.Struct{
+		trainingAvgMetrics := &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
 					Kind: &structpb.Value_NumberValue{
@@ -111,7 +109,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			return err
 		}
 
-		validationAvgMetrics = &structpb.Struct{
+		validationAvgMetrics := &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"loss": {
 					Kind: &structpb.Value_NumberValue{
@@ -147,7 +145,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			return err
 		}
 		if b%printTime == 0 {
-			fmt.Println("batch time after these many batches", time.Since(start), b)
+			fmt.Println("batch time after these many batches", time.Since(start), b) //nolint:forbidigo
 		}
 	}
 
@@ -155,7 +153,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 }
 
 func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
-	fmt.Println("trivial metrics for", batches, "batches")
+	fmt.Println("trivial metrics for", batches, "batches") //nolint:forbidigo
 
 	trainingMetrics := trialv1.TrialMetrics{
 		TrialId:        trialID,
@@ -194,7 +192,9 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 }
 
 // PopulateExpTrialsMetrics adds metrics for a trial and exp to db.
-func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivialMetrics bool, batches int) error {
+func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivialMetrics bool,
+	batches int,
+) error {
 	system := actor.NewSystem("mock")
 	ref, _ := system.ActorOf(sproto.AgentRMAddr, actor.ActorFunc(
 		func(context *actor.Context) error {
