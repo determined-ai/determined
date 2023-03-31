@@ -6,3 +6,4 @@ go install github.com/goreleaser/goreleaser@v1.14.1
 go install github.com/ryanbressler/CloudForest/growforest@v0.0.0-20161201194407-d014dc32840a
 go install github.com/swaggo/swag/cmd/swag@v1.8.9
 go install github.com/vektra/mockery/v2@v2.20.0
+go install gotest.tools/gotestsum@v1.9.0
