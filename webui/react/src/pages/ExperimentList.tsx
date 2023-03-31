@@ -924,13 +924,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         </div>
       </div>
     );
-  }, [
-    filterCount,
-    ColumnsCustomizeModal,
-    resetFilters,
-    settings.archived,
-    switchShowArchived,
-  ]);
+  }, [filterCount, ColumnsCustomizeModal, resetFilters, settings.archived, switchShowArchived]);
 
   useSetDynamicTabBar(tabBarContent);
   return (

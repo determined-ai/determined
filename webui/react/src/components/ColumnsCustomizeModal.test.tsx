@@ -1,6 +1,6 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import Button from 'components/kit/Button';
