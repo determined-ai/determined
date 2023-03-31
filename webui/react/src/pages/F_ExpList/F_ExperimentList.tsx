@@ -36,6 +36,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);

@@ -45,7 +45,7 @@ const renderer: CustomRenderer<RangeCell> = {
 
     return true;
   },
-  isMatch: (c): c is RangeCell => (c.data as any).kind === 'range-cell',
+  isMatch: (c): c is RangeCell => (c.data as RangeCellProps).kind === 'range-cell',
   kind: GridCellKind.Custom,
   onPaste: (v, d) => {
     let num = Number.parseFloat(v);

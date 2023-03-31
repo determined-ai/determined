@@ -73,7 +73,7 @@ const renderer: CustomRenderer<UserProfileCell> = {
     return true;
   },
   isMatch: (cell: CustomCell): cell is UserProfileCell =>
-    (cell.data as any).kind === 'user-profile-cell',
+    (cell.data as UserProfileCellProps).kind === 'user-profile-cell',
   kind: GridCellKind.Custom,
   onPaste: (v, d) => ({
     ...d,

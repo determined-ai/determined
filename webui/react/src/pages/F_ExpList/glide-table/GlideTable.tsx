@@ -160,6 +160,12 @@ export const GlideTable: React.FC<Props> = ({
         selectAll,
         users,
       }),
+    /**
+     * dont have a stable reference to bodyStyles
+     * presumably we capture whatever changes we need when darkLight
+     * changes though (since that changes the theme vars)
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [navigate, selectAll, selection.rows, columnWidths, users, darkLight],
   );
 

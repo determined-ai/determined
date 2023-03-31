@@ -12,7 +12,7 @@ export function roundedRect(
   width: number,
   height: number,
   radius: number | CornerRadius,
-) {
+): void {
   if (radius === 0) {
     ctx.rect(x, y, width, height);
     return;

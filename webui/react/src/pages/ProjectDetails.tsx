@@ -93,12 +93,11 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              <F_ExperimentList project={project} />
-              {/* {f_explist ? (
+              {f_explist ? (
                 <F_ExperimentList project={project} />
               ) : (
                 <ExperimentList project={project} />
-              )} */}
+              )}
             </div>
           </div>
         ),
@@ -135,7 +134,7 @@ const ProjectDetails: React.FC = () => {
     }
 
     return items;
-  }, [fetchProject, id, project, trialsComparisonEnabled, projectId]);
+  }, [fetchProject, id, project, trialsComparisonEnabled, projectId, f_explist]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
