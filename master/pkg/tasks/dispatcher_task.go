@@ -310,7 +310,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 // are not supported by HPC launcher.
 func (t *TaskSpec) WarnUnsupportedOptions(
 	userConfiguredPriority bool,
-	containerRunType string) string {
+	containerRunType string,
+) string {
 	var warnings []string
 
 	ignored := "is ignored with the HPC launcher"
