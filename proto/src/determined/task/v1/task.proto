@@ -162,7 +162,7 @@ message ResourcesSummary {
 
 // ProxyPortConfig configures a proxy the allocation should start.
 message ProxyPortConfig {
-  // The service id of the proxy port config.
+  // The service ID of the proxy port config.
   string service_id = 1;
   // The port of the proxy port config.
   int32 port = 2;
@@ -180,21 +180,21 @@ message AllocationSummary {
   // form TaskID.allocation_number, maybe with some other metadata if different
   // types of allocations run.
   string allocation_id = 2;
-  // The name of the task
+  // The name of the task.
   string name = 3;
-  // The registered time of the task
+  // The registered time of the task.
   google.protobuf.Timestamp registered_time = 4;
   // The name of the resource pool.
   string resource_pool = 5;
   // The number of slots that are needed.
   int32 slots_needed = 6;
   // ResourcesSummary provides a summary of the resources comprising what we
-  // know at the time the allocation is granted,
+  // know at the time the allocation is granted.
   repeated ResourcesSummary resources = 7;
   // The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or
-  // 'ROUND_ROBIN'
+  // 'ROUND_ROBIN'.
   string scheduler_type = 8;
-  // THe priority of the task
+  // THe priority of the task.
   optional int32 priority = 9;
   // ProxyPortConfig configures a proxy the allocation should start.
   repeated ProxyPortConfig proxy_ports = 10;

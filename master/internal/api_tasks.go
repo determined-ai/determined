@@ -386,7 +386,8 @@ func (a *apiServer) GetTasks(
 		return nil, err
 	}
 
-	for allocationID := range summary {
+	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
+	for allocationID, allocationSummary := range summary {
 		isExp, exp, err := expFromAllocationID(a.m, allocationID)
 		if err != nil {
 			return nil, err
@@ -402,14 +403,9 @@ func (a *apiServer) GetTasks(
 			return nil, err
 		}
 
-		if !ok {
-			delete(summary, allocationID)
+		if ok {
+			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 		}
-	}
-
-	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
-	for allocationID, allocationSummary := range summary {
-		pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
 	}
 
 	return &apiv1.GetTasksResponse{AllocationIdToSummary: pbAllocationIDToSummary}, nil

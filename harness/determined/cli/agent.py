@@ -189,15 +189,11 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         # When draining, check if there're any tasks currently running on
         # these slots, and list them.
         if drain_mode:
-            rsp = api.get(args.master, "api/v1/tasks")
+            rsp = bindings.get_GetTasks(cli.setup_session(args))
             tasks_data = {
-                "allocationIdToSummary": {
-                    k: t
-                    for (k, t) in rsp.json()["allocationIdToSummary"].items()
-                    if any(
-                        a in agent_ids for r in t.get("resources", []) for a in r["agentDevices"]
-                    )
-                }
+                k: t
+                for (k, t) in rsp.to_json()["allocationIdToSummary"].items()
+                if any(a in agent_ids for r in t.get("resources", []) for a in r["agentDevices"])
             }
 
             if not (args.json or args.csv):

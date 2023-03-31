@@ -272,9 +272,7 @@ def test_drain_agent_sched() -> None:
 
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:
     command = ["det", "-m", conf.make_master_url(), "task", "list", "--json"]
-    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())[
-        "allocationIdToSummary"
-    ]
+    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())
     matches = [t for t in tasks_data.values() if t["taskId"] == task_id]
     return matches[0] if matches else None
 

@@ -1202,13 +1202,13 @@ export interface V1AllocationSummary {
      */
     allocationId?: string;
     /**
-     * The name of the task
+     * The name of the task.
      * @type {string}
      * @memberof V1AllocationSummary
      */
     name?: string;
     /**
-     * The registered time of the task
+     * The registered time of the task.
      * @type {Date}
      * @memberof V1AllocationSummary
      */
@@ -1226,19 +1226,19 @@ export interface V1AllocationSummary {
      */
     slotsNeeded?: number;
     /**
-     * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted,
+     * ResourcesSummary provides a summary of the resources comprising what we know at the time the allocation is granted.
      * @type {Array<V1ResourcesSummary>}
      * @memberof V1AllocationSummary
      */
     resources?: Array<V1ResourcesSummary>;
     /**
-     * The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or 'ROUND_ROBIN'
+     * The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or 'ROUND_ROBIN'.
      * @type {string}
      * @memberof V1AllocationSummary
      */
     schedulerType?: string;
     /**
-     * THe priority of the task
+     * THe priority of the task.
      * @type {number}
      * @memberof V1AllocationSummary
      */
@@ -6834,7 +6834,7 @@ export interface V1Project {
  */
 export interface V1ProxyPortConfig {
     /**
-     * The service id of the proxy port config.
+     * The service ID of the proxy port config.
      * @type {string}
      * @memberof V1ProxyPortConfig
      */

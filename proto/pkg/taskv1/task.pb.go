@@ -706,7 +706,7 @@ type ProxyPortConfig struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The service id of the proxy port config.
+	// The service ID of the proxy port config.
 	ServiceId string `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
 	// The port of the proxy port config.
 	Port int32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -788,21 +788,21 @@ type AllocationSummary struct {
 	// form TaskID.allocation_number, maybe with some other metadata if different
 	// types of allocations run.
 	AllocationId string `protobuf:"bytes,2,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
-	// The name of the task
+	// The name of the task.
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	// The registered time of the task
+	// The registered time of the task.
 	RegisteredTime *timestamp.Timestamp `protobuf:"bytes,4,opt,name=registered_time,json=registeredTime,proto3" json:"registered_time,omitempty"`
 	// The name of the resource pool.
 	ResourcePool string `protobuf:"bytes,5,opt,name=resource_pool,json=resourcePool,proto3" json:"resource_pool,omitempty"`
 	// The number of slots that are needed.
 	SlotsNeeded int32 `protobuf:"varint,6,opt,name=slots_needed,json=slotsNeeded,proto3" json:"slots_needed,omitempty"`
 	// ResourcesSummary provides a summary of the resources comprising what we
-	// know at the time the allocation is granted,
+	// know at the time the allocation is granted.
 	Resources []*ResourcesSummary `protobuf:"bytes,7,rep,name=resources,proto3" json:"resources,omitempty"`
 	// The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or
-	// 'ROUND_ROBIN'
+	// 'ROUND_ROBIN'.
 	SchedulerType string `protobuf:"bytes,8,opt,name=scheduler_type,json=schedulerType,proto3" json:"scheduler_type,omitempty"`
-	// THe priority of the task
+	// THe priority of the task.
 	Priority *int32 `protobuf:"varint,9,opt,name=priority,proto3,oneof" json:"priority,omitempty"`
 	// ProxyPortConfig configures a proxy the allocation should start.
 	ProxyPorts []*ProxyPortConfig `protobuf:"bytes,10,rep,name=proxy_ports,json=proxyPorts,proto3" json:"proxy_ports,omitempty"`

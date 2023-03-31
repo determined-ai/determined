@@ -11,6 +11,15 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
+    """
+    Render tasks for JSON, tabulate or csv output.
+
+    The output of endpoint /api/v1/tasks and bindings.get_GetTasks() has an
+    extra dict layer of "allocationIdToSummary". It is an artifact of the
+    limitations of protobuf. This fuction only accepts the value of
+    "allocationIdToSummary" for the sake of better output and cleaner code.
+    """
+
     def agent_info(t: Dict[str, Any]) -> Union[str, List[str]]:
         resources = t.get("resources", [])
         if not resources:
@@ -49,7 +58,7 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
             ",".join(map(str, sorted(pp["port"] for pp in task.get("proxyPorts", [])))),
         ]
         for task_id, task in sorted(
-            tasks["allocationIdToSummary"].items(),
+            tasks.items(),
             key=lambda tup: (render.format_time(tup[1]["registeredTime"]),),
         )
     ]
@@ -62,7 +71,7 @@ def list_tasks(args: Namespace) -> None:
     r = bindings.get_GetTasks(cli.setup_session(args))
     tasks = r.to_json()
 
-    render_tasks(args, tasks)
+    render_tasks(args, tasks["allocationIdToSummary"])
 
 
 @authentication.required

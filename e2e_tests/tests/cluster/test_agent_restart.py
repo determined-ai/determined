@@ -56,9 +56,7 @@ def _local_container_ids_for_command(command_id: str) -> Iterator[str]:
 
 def _task_list_json(master_url: str) -> Dict[str, Dict[str, Any]]:
     command = ["det", "-m", master_url, "task", "list", "--json"]
-    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())[
-        "allocationIdToSummary"
-    ]
+    tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())
     return tasks_data
 
 

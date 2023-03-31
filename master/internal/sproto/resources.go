@@ -172,18 +172,18 @@ type ResourcesFailure struct {
 }
 
 // Proto returns the proto representation of ResourcesFailure.
-func (r *ResourcesFailure) Proto() *taskv1.ResourcesFailure {
-	if r == nil {
+func (f *ResourcesFailure) Proto() *taskv1.ResourcesFailure {
+	if f == nil {
 		return nil
 	}
 
 	pbResourcesFailure := taskv1.ResourcesFailure{
-		FailureType: r.FailureType.Proto(),
-		ErrMsg:      r.ErrMsg,
+		FailureType: f.FailureType.Proto(),
+		ErrMsg:      f.ErrMsg,
 	}
 
-	if r.ExitCode != nil {
-		exitCode := int32(*r.ExitCode)
+	if f.ExitCode != nil {
+		exitCode := int32(*f.ExitCode)
 		pbResourcesFailure.ExitCode = &exitCode
 	}
 
@@ -201,14 +201,14 @@ func NewResourcesFailure(
 	}
 }
 
-func (r ResourcesFailure) Error() string {
-	if r.ExitCode == nil {
-		if len(r.ErrMsg) > 0 {
-			return fmt.Sprintf("%s: %s", r.FailureType, r.ErrMsg)
+func (f ResourcesFailure) Error() string {
+	if f.ExitCode == nil {
+		if len(f.ErrMsg) > 0 {
+			return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
 		}
-		return fmt.Sprintf("%s", r.FailureType)
+		return fmt.Sprintf("%s", f.FailureType)
 	}
-	return fmt.Sprintf("%s: %s (exit code %d)", r.FailureType, r.ErrMsg, *r.ExitCode)
+	return fmt.Sprintf("%s: %s (exit code %d)", f.FailureType, f.ErrMsg, *f.ExitCode)
 }
 
 // ExitCode is the process exit code of the container.
