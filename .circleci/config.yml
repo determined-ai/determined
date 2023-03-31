@@ -1366,6 +1366,7 @@ jobs:
       - react-get-deps
       - run:
           command: |
+            export PLAYWRIGHT_BROWSERS_PATH=0
             cd webui/react
             node scripts/designkit-screenshot.mjs HEAD
             git checkout master
