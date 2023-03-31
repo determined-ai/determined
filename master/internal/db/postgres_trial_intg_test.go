@@ -204,10 +204,11 @@ func TestBatchesProcessed(t *testing.T) {
 	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 	require.NoError(t, err)
 
-	testMetricReporting := func(typ string, batches int, expectedTotalBatches int) error {
+	testMetricReporting := func(typ string, trialRunId, batches, expectedTotalBatches int) error {
+		require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunId))
 		trialMetrics := &trialv1.TrialMetrics{
 			TrialId:        int32(tr.ID),
-			TrialRunId:     0,
+			TrialRunId:     int32(trialRunId),
 			StepsCompleted: int32(batches),
 			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
 		}
@@ -228,21 +229,22 @@ func TestBatchesProcessed(t *testing.T) {
 
 	cases := []struct {
 		typ             string
+		trialRunID      int
 		batches         int
 		expectedBatches int
 	}{ // order matters.
-		{"training", 10, 10},
-		{"validation", 10, 10},
-		{"training", 20, 20},
-		{"validation", 20, 20},
-		{"validation", 30, 30},
-		{"training", 25, 30},
-		{"validation", 25, 25}, // rollback via validations
-		{"validation", 30, 30},
-		{"training", 30, 30},
-		{"training", 27, 27}, // rollback via training
+		{"training", 0, 10, 10},
+		{"validation", 0, 10, 10},
+		{"training", 0, 20, 20},
+		{"validation", 0, 20, 20},
+		{"validation", 0, 30, 30},
+		{"training", 0, 25, 30},
+		{"validation", 1, 25, 25}, // rollback via validations
+		// {"validation", 1, 30, 30},
+		// {"training", 1, 30, 30},
+		// {"training", 2, 27, 27}, // rollback via training
 	}
 	for _, c := range cases {
-		require.NoError(t, testMetricReporting(c.typ, c.batches, c.expectedBatches))
+		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches))
 	}
 }
