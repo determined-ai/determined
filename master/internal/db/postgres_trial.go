@@ -289,7 +289,7 @@ WHERE id = $1
 	}
 }
 
-// ValidationByTotalBatches looks up a validation by trial and step ID,
+// ValidationByTotalBatches looks up a validation by trial and total batches,
 // returning nil if none exists.
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
