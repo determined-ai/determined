@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
 import InteractiveTable, {
   ColumnDef,
@@ -13,8 +14,8 @@ import InteractiveTable, {
 } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
-import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
-import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
+import WebhookCreateModalComponent from 'components/WebhookCreateModal';
+import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
@@ -35,12 +36,14 @@ const WebhooksView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
+  const [selectedWebhook, setSelectedWebhook] = useState<Webhook>();
+
   const pageRef = useRef<HTMLElement>(null);
 
   const { canEditWebhooks } = usePermissions();
 
-  const { contextHolder: modalWebhookCreateContextHolder, modalOpen: openWebhookCreate } =
-    useModalWebhookCreate({});
+  const WebhookCreateModal = useModal(WebhookCreateModalComponent);
+  const WebhookDeleteModal = useModal(WebhookDeleteModalComponent);
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
@@ -76,16 +79,6 @@ const WebhooksView: React.FC = () => {
     fetchWebhooks();
   }, [fetchWebhooks]);
 
-  const { contextHolder: modalWebhookDeleteContextHolder, modalOpen: openWebhookDelete } =
-    useModalWebhookDelete();
-
-  const showConfirmDelete = useCallback(
-    (webhook: Webhook) => {
-      openWebhookDelete(webhook);
-    },
-    [openWebhookDelete],
-  );
-
   const WebhookActionMenu = useCallback(
     (record: Webhook): DropDownProps['menu'] => {
       const MenuKey = {
@@ -95,7 +88,8 @@ const WebhooksView: React.FC = () => {
 
       const funcs = {
         [MenuKey.DeleteWebhook]: () => {
-          showConfirmDelete(record);
+          setSelectedWebhook(record);
+          WebhookDeleteModal.open();
         },
         [MenuKey.TestWebhook]: async () => {
           try {
@@ -120,7 +114,7 @@ const WebhooksView: React.FC = () => {
 
       return { items: menuItems, onClick: onItemClick };
     },
-    [showConfirmDelete],
+    [WebhookDeleteModal],
   );
 
   const columns = useMemo(() => {
@@ -204,15 +198,13 @@ const WebhooksView: React.FC = () => {
     return () => canceler.abort();
   }, [canceler]);
 
-  const showCreateWebhookModal = useCallback(() => openWebhookCreate(), [openWebhookCreate]);
-
   return (
     <Page
       containerRef={pageRef}
       id="webhooks"
       options={
         <Space>
-          {canEditWebhooks && <Button onClick={showCreateWebhookModal}>New Webhook</Button>}
+          {canEditWebhooks && <Button onClick={WebhookCreateModal.open}>New Webhook</Button>}
         </Space>
       }
       title="Webhooks">
@@ -246,8 +238,8 @@ const WebhooksView: React.FC = () => {
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      {modalWebhookCreateContextHolder}
-      {modalWebhookDeleteContextHolder}
+      <WebhookCreateModal.Component />
+      <WebhookDeleteModal.Component webhook={selectedWebhook} />
     </Page>
   );
 };

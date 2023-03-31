@@ -3,16 +3,15 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
+import JupyterLabModalComponent from 'components/JupyterLabModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { WorkspaceState } from 'types';
 
-import useModalJupyterLab from './useModalJupyterLab';
-
-const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
@@ -52,19 +51,7 @@ vi.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalJupyterLab({
-    workspace: {
-      archived: false,
-      id: 1,
-      immutable: false,
-      name: 'Uncategorized',
-      numExperiments: 0,
-      numProjects: 0,
-      pinned: false,
-      state: WorkspaceState.Unspecified,
-      userId: 1,
-    },
-  });
+  const JupyterLabModal = useModal(JupyterLabModalComponent);
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
@@ -74,8 +61,20 @@ const ModalTrigger: React.FC = () => {
   return (
     <SettingsProvider>
       <>
-        <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-        {contextHolder}
+        <Button onClick={JupyterLabModal.open}>Show Jupyter Lab</Button>
+        <JupyterLabModal.Component
+          workspace={{
+            archived: false,
+            id: 1,
+            immutable: false,
+            name: 'Uncategorized',
+            numExperiments: 0,
+            numProjects: 0,
+            pinned: false,
+            state: WorkspaceState.Unspecified,
+            userId: 1,
+          }}
+        />
       </>
     </SettingsProvider>
   );
@@ -99,24 +98,7 @@ const setup = async () => {
   return user;
 };
 
-describe('useModalJupyterLab', () => {
-  it('should open modal', async () => {
-    await setup();
-
-    expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
-  });
-
-  it('should close modal', async () => {
-    const user = await setup();
-
-    const button = await screen.findByRole('button', { name: /Launch/i });
-    await user.click(button);
-
-    await waitFor(() => {
-      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
-    });
-  });
-
+describe('JupyterLab Modal', () => {
   it('should show modal in simple form mode', async () => {
     await setup();
 

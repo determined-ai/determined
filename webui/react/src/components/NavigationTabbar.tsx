@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -22,6 +22,7 @@ import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -66,11 +67,8 @@ const NavigationTabbar: React.FC = () => {
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const { canCreateWorkspace } = usePermissions();
-  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
-    useModalWorkspaceCreate();
-  const handleCreateWorkspace = useCallback(() => {
-    openWorkspaceCreateModal();
-  }, [openWorkspaceCreateModal]);
+
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
@@ -174,7 +172,7 @@ const NavigationTabbar: React.FC = () => {
                 workspaceIcons.push({
                   icon: <Icon name="add-small" size="large" />,
                   label: 'New Workspace',
-                  onClick: handleCreateWorkspace,
+                  onClick: WorkspaceCreateModal.open,
                 });
               }
               return workspaceIcons;
@@ -195,7 +193,7 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {modalWorkspaceCreateContextHolder}
+      <WorkspaceCreateModal.Component />
     </nav>
   );
 };

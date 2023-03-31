@@ -1,16 +1,16 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import {
   camelCaseToSentence,
   generateAlphaNumeric,
   sentenceToCamelCase,
 } from 'shared/utils/string';
-
-import useModalColumnsCustomize from './useModalColumnsCustomize';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
@@ -41,19 +41,12 @@ const ColumnsButton: React.FC = () => {
     return arr;
   }, []);
 
-  const { contextHolder, modalOpen } = useModalColumnsCustomize({
-    columns,
-    defaultVisibleColumns: DEFAULT_COLUMNS,
-  });
-
-  const openModal = useCallback(() => {
-    modalOpen({});
-  }, [modalOpen]);
+  const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
 
   return (
     <>
-      <Button onClick={openModal}>{BUTTON_TEXT}</Button>
-      {contextHolder}
+      <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
+      <ColumnsCustomizeModal.Component columns={columns} defaultVisibleColumns={DEFAULT_COLUMNS} />
     </>
   );
 };
@@ -67,27 +60,7 @@ const setup = async () => {
   return { user, view };
 };
 
-describe('useModalCustomizeColumns', () => {
-  it('should open modal', async () => {
-    const { view } = await setup();
-
-    // waiting for modal to render
-    expect(await view.findByText('Customize Columns')).toBeInTheDocument();
-  });
-
-  it('should close modal', async () => {
-    const { user, view } = await setup();
-
-    // waiting for modal to render
-    await view.findByText('Customize Columns');
-
-    await user.click(view.getByRole('button', { name: /cancel/i }));
-
-    await waitFor(() => {
-      expect(view.queryByText('Customize Columns')).not.toBeInTheDocument();
-    });
-  });
-
+describe('Columns Customize Modal', () => {
   it('should renders lists', async () => {
     const { view } = await setup();
 

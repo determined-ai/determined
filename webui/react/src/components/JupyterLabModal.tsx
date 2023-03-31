@@ -1,4 +1,4 @@
-import { Alert, ModalFuncProps, Select } from 'antd';
+import { Alert, Select } from 'antd';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,13 +7,11 @@ import Button from 'components/kit/Button';
 import Form, { FormInstance } from 'components/kit/Form';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
-import Link from 'components/Link';
+import { Modal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
-import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { useClusterStore } from 'stores/cluster';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
@@ -22,8 +20,6 @@ import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import css from './useModalJupyterLab.module.scss';
 
 const { Option } = Select;
 
@@ -72,7 +68,6 @@ interface FullConfigProps {
   currentWorkspace?: Workspace;
   form: FormInstance;
   onChange?: (config: string) => void;
-  setButtonDisabled: (buttonDisabled: boolean) => void;
   workspaces: Workspace[];
 }
 
@@ -82,33 +77,32 @@ interface Props {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
+const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
-  const [visible, setVisible] = useState(false);
   const [showFullConfig, setShowFullConfig] = useState(false);
   const [config, setConfig] = useState<string>();
   const [configError, setConfigError] = useState<string>();
-  const [buttonDisabled, setButtonDisabled] = useState(false);
-  const previousConfig = usePrevious(config, config);
-  const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
+  const [fullConfigFormInvalid, setFullConfigFormInvalid] = useState(true);
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
   const { canCreateWorkspaceNSC } = usePermissions();
+
+  const simpleWorkspaceId = Form.useWatch('workspaceId', form);
+  const fullWorkspaceId = Form.useWatch('workspaceId', fullConfigForm);
+
+  const validateFullConfigForm = useCallback(() => {
+    const fields = fullConfigForm.getFieldsError();
+    const hasError = fields.some((f) => f.errors.length);
+    setFullConfigFormInvalid(hasError || !fullWorkspaceId);
+  }, [fullConfigForm, fullWorkspaceId]);
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
 
   const handleModalClose = useCallback(() => {
-    setVisible(false);
     const fields: JupyterLabOptions = form.getFieldsValue(true);
     updateDefaults(fields);
   }, [form, updateDefaults]);
-
-  const {
-    modalClose,
-    modalOpen: openOrUpdate,
-    ...modalHook
-  } = useModal({ onClose: handleModalClose });
 
   const fetchConfig = useCallback(async () => {
     const fields: JupyterLabOptions = form.getFieldsValue(true);
@@ -128,7 +122,7 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
   }, [form]);
 
   const handleSecondary = useCallback(() => {
-    if (showFullConfig) setButtonDisabled(false);
+    if (showFullConfig) setFullConfigFormInvalid(false);
     setShowFullConfig((show) => !show);
   }, [showFullConfig]);
 
@@ -155,14 +149,16 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
         });
       }
     }
-    modalClose();
-    setVisible(false);
-  }, [config, fullConfigForm, form, showFullConfig, modalClose, updateDefaults]);
+  }, [config, fullConfigForm, form, showFullConfig, updateDefaults]);
 
-  const handleConfigChange = useCallback((config: string) => {
-    setConfig(config);
-    setConfigError(undefined);
-  }, []);
+  const handleConfigChange = useCallback(
+    (config: string) => {
+      validateFullConfigForm();
+      setConfig(config);
+      setConfigError(undefined);
+    },
+    [validateFullConfigForm],
+  );
 
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
@@ -177,74 +173,6 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
     ),
   );
 
-  const bodyContent = useMemo(() => {
-    return showFullConfig ? (
-      <JupyterLabFullConfig
-        config={config}
-        configError={configError}
-        currentWorkspace={workspace}
-        form={fullConfigForm}
-        setButtonDisabled={setButtonDisabled}
-        workspaces={workspaces}
-        onChange={handleConfigChange}
-      />
-    ) : (
-      <JupyterLabForm
-        currentWorkspace={workspace}
-        defaults={defaults}
-        form={form}
-        workspaces={workspaces}
-      />
-    );
-  }, [
-    config,
-    configError,
-    fullConfigForm,
-    handleConfigChange,
-    showFullConfig,
-    defaults,
-    form,
-    workspace,
-    workspaces,
-  ]);
-
-  const content = useMemo(
-    () => (
-      <>
-        {bodyContent}
-        <div className={css.buttons}>
-          <Button onClick={handleSecondary}>
-            {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
-          </Button>
-          <Button disabled={buttonDisabled} type="primary" onClick={handleSubmit}>
-            Launch
-          </Button>
-        </div>
-      </>
-    ),
-    [bodyContent, buttonDisabled, handleSubmit, handleSecondary, showFullConfig],
-  );
-
-  const modalProps: ModalFuncProps = useMemo(
-    () => ({
-      className: css.noFooter,
-      closable: true,
-      content,
-      icon: null,
-      title: 'Launch JupyterLab',
-      width: showFullConfig ? 1000 : undefined,
-    }),
-    [content, showFullConfig],
-  );
-
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      setVisible(true);
-      openOrUpdate({ ...modalProps, ...initialModalProps });
-    },
-    [modalProps, openOrUpdate],
-  );
-
   // Fetch full config when showing advanced mode.
   useEffect(() => {
     if (showFullConfig) {
@@ -252,23 +180,52 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
     }
   }, [fetchConfig, showFullConfig]);
 
-  // Update the modal when user toggles the `Show Full Config` button.
-  useEffect(() => {
-    if (visible && (config !== previousConfig || showFullConfig !== previousShowConfig)) {
-      openOrUpdate(modalProps);
-    }
-  }, [
-    config,
-    modalProps,
-    openOrUpdate,
-    previousConfig,
-    previousShowConfig,
-    showFullConfig,
-    visible,
-  ]);
-
-  return { modalClose, modalOpen, ...modalHook };
+  return (
+    <Modal
+      cancel
+      footerLink={
+        showFullConfig
+          ? {
+              text: 'Read about JupyterLab settings',
+              url: '/docs/reference/api/command-notebook-config.html',
+            }
+          : undefined
+      }
+      size={showFullConfig ? 'large' : 'small'}
+      submit={{
+        disabled: showFullConfig ? fullConfigFormInvalid : !simpleWorkspaceId,
+        handler: handleSubmit,
+        text: 'Launch',
+      }}
+      title="Launch JupyterLab"
+      onClose={handleModalClose}>
+      {showFullConfig ? (
+        <JupyterLabFullConfig
+          config={config}
+          configError={configError}
+          currentWorkspace={workspace}
+          form={fullConfigForm}
+          workspaces={workspaces}
+          onChange={handleConfigChange}
+        />
+      ) : (
+        <JupyterLabForm
+          currentWorkspace={workspace}
+          defaults={defaults}
+          form={form}
+          workspaces={workspaces}
+        />
+      )}
+      <div>
+        <Button onClick={handleSecondary}>
+          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+        </Button>
+      </div>
+    </Modal>
+  );
 };
+
+export default JupyterLabModalComponent;
 
 const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   config,
@@ -276,7 +233,6 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   currentWorkspace,
   form,
   onChange,
-  setButtonDisabled,
   workspaces,
 }: FullConfigProps) => {
   const [field, setField] = useState([
@@ -312,19 +268,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 
   return (
     <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
-      <div className={css.note}>
-        <Link external path="/docs/reference/api/command-notebook-config.html">
-          Read about JupyterLab settings
-        </Link>
-      </div>
-      <React.Suspense
-        fallback={
-          <div className={css.loading}>
-            <Spinner tip="Loading text editor..." />
-          </div>
-        }>
+      <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
         <Form.Item
-          className={css.spacedLine}
           initialValue={currentWorkspace?.id}
           label="Workspace"
           name="workspaceId"
@@ -345,10 +290,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               validator: (rule, value) => {
                 try {
                   yaml.load(value);
-                  setButtonDisabled(false);
                   return Promise.resolve();
                 } catch (err: unknown) {
-                  setButtonDisabled(true);
                   return Promise.reject(
                     new Error(
                       `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`,
@@ -440,9 +383,8 @@ const JupyterLabForm: React.FC<{
   }, [currentWorkspace, form]);
 
   return (
-    <Form className={css.form} form={form}>
+    <Form form={form}>
       <Form.Item
-        className={css.line}
         initialValue={currentWorkspace?.id}
         label="Workspace"
         name="workspaceId"
@@ -455,11 +397,7 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item
-        className={css.line}
-        initialValue={defaults?.template}
-        label="Template"
-        name="template">
+      <Form.Item initialValue={defaults?.template} label="Template" name="template">
         <Select allowClear placeholder="No template (optional)">
           {templates.map((temp) => (
             <Option key={temp.name} value={temp.name}>
@@ -468,14 +406,10 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item className={css.line} initialValue={defaults?.name} label="Name" name="name">
+      <Form.Item initialValue={defaults?.name} label="Name" name="name">
         <Input placeholder="Name (optional)" />
       </Form.Item>
-      <Form.Item
-        className={css.line}
-        initialValue={defaults?.pool}
-        label="Resource Pool"
-        name="pool">
+      <Form.Item initialValue={defaults?.pool} label="Resource Pool" name="pool">
         <Select allowClear placeholder="Pick the best option">
           {resourcePools.map((pool) => (
             <Option key={pool.name} value={pool.name}>
@@ -485,7 +419,6 @@ const JupyterLabForm: React.FC<{
         </Select>
       </Form.Item>
       <Form.Item
-        className={css.line}
         hidden={!resourceInfo.hasCompute}
         initialValue={defaults?.slots}
         label="Slots"
@@ -498,5 +431,3 @@ const JupyterLabForm: React.FC<{
     </Form>
   );
 };
-
-export default useModalJupyterLab;

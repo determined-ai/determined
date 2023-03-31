@@ -1,21 +1,18 @@
 import { Select } from 'antd';
-import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
-
-import css from './useModalWorkspaceAddMember.module.scss';
 
 interface Props {
   addableUsersAndGroups: UserOrGroup[];
@@ -37,13 +34,12 @@ interface SearchProp {
   };
 }
 
-const useModalWorkspaceAddMember = ({
+const WorkspaceMemberAddModalComponent: React.FC<Props> = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
   onClose,
   workspaceId,
-}: Props): ModalHooks => {
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+}: Props) => {
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
 
@@ -74,7 +70,7 @@ const useModalWorkspaceAddMember = ({
     [addableUsersAndGroups],
   );
 
-  const handleOk = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
     try {
       if (values && selectedOption) {
@@ -115,74 +111,51 @@ const useModalWorkspaceAddMember = ({
     }
   }, [form, selectedOption, workspaceId, onClose]);
 
-  const modalContent = useMemo(() => {
-    return (
-      <div className={css.base}>
-        <Form autoComplete="off" form={form} layout="vertical">
-          <Form.Item
-            label="User or Group"
-            name="userOrGroupId"
-            rules={[{ message: 'User or group is required ', required: true }]}>
-            <Select
-              filterOption={handleFilter}
-              options={addableUsersAndGroups.map((option) => ({
-                label: isUser(option) ? (
-                  <UserBadge compact user={option as User} />
-                ) : (
-                  <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
-                ),
-                value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
-              }))}
-              placeholder="User or Group"
-              showSearch
-              size="large"
-              onSelect={handleSelect}
-            />
-          </Form.Item>
-          <Form.Item
-            label="Role"
-            name="roleId"
-            rules={[{ message: 'Role is required ', required: true }]}>
-            <Select placeholder="Role">
-              {rolesAssignableToScope.map((role) => (
-                <Select.Option key={role.roleId} value={role.roleId}>
-                  {role.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      </div>
-    );
-  }, [addableUsersAndGroups, form, handleFilter, handleSelect, rolesAssignableToScope]);
-
-  const getModalProps = useCallback((): ModalFuncProps => {
-    return {
-      closable: true,
-      content: modalContent,
-      icon: null,
-      okText: 'Add Member',
-      onOk: handleOk,
-      title: 'Add Member',
-    };
-  }, [handleOk, modalContent]);
-
-  const modalOpen = useCallback(
-    (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
-    },
-    [getModalProps, openOrUpdate],
+  return (
+    <Modal
+      cancel
+      size="small"
+      submit={{
+        handler: handleSubmit,
+        text: 'Add Member',
+      }}
+      title="Add Member">
+      <Form autoComplete="off" form={form} layout="vertical">
+        <Form.Item
+          label="User or Group"
+          name="userOrGroupId"
+          rules={[{ message: 'User or group is required ', required: true }]}>
+          <Select
+            filterOption={handleFilter}
+            options={addableUsersAndGroups.map((option) => ({
+              label: isUser(option) ? (
+                <UserBadge compact user={option as User} />
+              ) : (
+                <Nameplate compact icon={<Icon name="group" />} name={getName(option)} />
+              ),
+              value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
+            }))}
+            placeholder="User or Group"
+            showSearch
+            size="large"
+            onSelect={handleSelect}
+          />
+        </Form.Item>
+        <Form.Item
+          label="Role"
+          name="roleId"
+          rules={[{ message: 'Role is required ', required: true }]}>
+          <Select placeholder="Role">
+            {rolesAssignableToScope.map((role) => (
+              <Select.Option key={role.roleId} value={role.roleId}>
+                {role.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+      </Form>
+    </Modal>
   );
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps());
-  }, [getModalProps, modalRef, openOrUpdate]);
-
-  return { modalOpen, modalRef, ...modalHook };
 };
 
-export default useModalWorkspaceAddMember;
+export default WorkspaceMemberAddModalComponent;

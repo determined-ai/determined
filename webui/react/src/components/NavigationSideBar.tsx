@@ -7,9 +7,9 @@ import { CSSTransition } from 'react-transition-group';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
-import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
@@ -30,6 +30,7 @@ import { useObservable } from 'utils/observable';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 import UserBadge from './UserBadge';
+import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -127,8 +128,9 @@ const NavigationSideBar: React.FC = () => {
   const { ui } = useUI();
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
-    useModalWorkspaceCreate();
+
+  const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -181,10 +183,6 @@ const NavigationSideBar: React.FC = () => {
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [settings.navbarCollapsed, updateSettings]);
-
-  const handleCreateWorkspace = useCallback(() => {
-    openWorkspaceCreateModal();
-  }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
@@ -258,7 +256,7 @@ const NavigationSideBar: React.FC = () => {
                     </Button>
                   </WorkspaceQuickSearch>
                   {canCreateWorkspace && (
-                    <Button type="text" onClick={handleCreateWorkspace}>
+                    <Button type="text" onClick={WorkspaceCreateModal.open}>
                       <Icon name="add-small" size="tiny" />
                     </Button>
                   )}
@@ -307,7 +305,7 @@ const NavigationSideBar: React.FC = () => {
                           </Typography.Paragraph>
                         }
                         tooltip={settings.navbarCollapsed}
-                        onClick={handleCreateWorkspace}
+                        onClick={WorkspaceCreateModal.open}
                       />
                     </li>
                   ) : workspaces.length === 0 ? (
@@ -341,7 +339,7 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {modalWorkspaceCreateContextHolder}
+        <WorkspaceCreateModal.Component />
       </nav>
     </CSSTransition>
   );
