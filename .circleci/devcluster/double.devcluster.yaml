@@ -19,12 +19,21 @@ stages:
         log:
           level: debug
         root: tools/build
-        cache: 
+        cache:
           cache_dir: /tmp/determined-cache
         security:
           authz:
             rbac_ui_enabled: true
-            
+        resource_manager:
+          type: agent
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+        resource_pools:
+          - pool_name: default
+            task_container_defaults:  # for test_default_pool_task_container_defaults.
+              environment_variables:
+                - SOMEVAR=SOMEVAL
+
   - custom:
       name: proxy
       cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]

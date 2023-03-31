@@ -98,7 +98,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
-		activeConfig.Resources().ResourcePool(),
+		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
