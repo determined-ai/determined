@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const versionCheckPeriod = 60
+const versionCheckPeriod = 60 * time.Second
 
 var launcherMinimumVersion = semvar.MustParse("3.2.4")
 
