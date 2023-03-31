@@ -1354,10 +1354,19 @@ jobs:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage
+  test-unit-react-screenshot:
+    docker:
+      - image: cimg/node:16.19.0
+        environment:
+          CI: "true"
+    resource_class: xlarge
+    steps:
+      - checkout-with-sm
+      - skip-if-docs-only
+      - react-get-deps
       - run:
           command: |
             cd webui/react
-            npx playwright install chromium --with-deps
             node scripts/designkit-screenshot.mjs HEAD
             git checkout master
             # BEGIN code to fake diffs. remove before merge
@@ -2237,7 +2246,8 @@ workflows:
   test-unit:
     jobs:
       - test-unit-go
-      - test-unit-react:
+      - test-unit-react
+      - test-unit-react-screenshot:
           context: github-write
       - test-unit-harness-cpu
       # Exclude gpu tests for now since we do not have access to those instance types on circleci.
