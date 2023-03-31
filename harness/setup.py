@@ -29,7 +29,7 @@ setup(
         "filelock",
         "google-cloud-storage",
         "hdfs>=2.2.2",
-        "jsonschema",
+        "jsonschema<=4.9.1",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
         "pyyaml",
