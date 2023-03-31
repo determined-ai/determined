@@ -99,7 +99,9 @@ def _dummy_init(
     distributed = distributed or core.DummyDistributedContext()
     preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
-    storage_manager = storage.from_string(checkpoint_storage)
+    storage_manager = None
+    if checkpoint_storage is not None:
+        storage_manager = storage.from_string(checkpoint_storage)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -184,7 +186,9 @@ def init(
     searcher = None
     tensorboard_manager = None
 
-    storage_manager = storage.from_string(checkpoint_storage)
+    storage_manager = None
+    if checkpoint_storage is not None:
+        storage_manager = storage.from_string(checkpoint_storage)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
