@@ -840,20 +840,20 @@ const DropdownSection: React.FC = () => {
 
 const CodeViewerSection: React.FC = () => {
   return (
-    <ComponentSection id="CodeViewer" title="CodeViewer">
+    <ComponentSection id="CodeEditor" title="CodeEditor">
       <AntDCard>
         <p>
-          The Code Viewer (<code>{'<CodeViewer>'}</code>) shows Python and YAML files with syntax
+          The Code Viewer (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
           highlighting. If multiple files are sent, the component shows a file browser.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
         <strong>One Python file</strong>
-        <CodeViewer files={[{ content: 'import math\nprint(math.pi)', name: 'test.py' }]} />
+        <CodeEditor files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]} />
         <strong>One YAML file</strong>
-        <CodeViewer files={[{ content: 'testbox', name: 'test.yaml' }]} />
+        <CodeEditor experimentId={2021} />
         <strong>Multiple code files</strong>
-        <CodeViewer
+        <CodeEditor
           files={[
             { content: 'test1', name: 'test1.yaml' },
             { content: 'test2', name: 'test2.yaml' },

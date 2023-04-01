@@ -11,7 +11,7 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
-import CodeViewer, { Props } from './CodeViewer';
+import CodeEditor, { Props } from './CodeEditor';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -103,7 +103,7 @@ const Container: React.FC<Props> = (props) => {
 
   return (
     <SettingsProvider>
-      <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+      <CodeEditor experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
     </SettingsProvider>
   );
 };
@@ -127,7 +127,7 @@ const getElements = async () => {
   return { treeNodes };
 };
 
-describe('CodeViewer', () => {
+describe('CodeEditor', () => {
   it('should handle the initial render properly', async () => {
     setup();
     const { treeNodes } = await getElements();
