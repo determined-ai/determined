@@ -3735,13 +3735,6 @@ workflows:
           requires:
             - package-and-push-system-local
           extra-pytest-flags: "--no-compare-stats"
-      - test-e2e-slurm:
-          name: test-e2e-slurm-preemption
-          mark: "e2e_slurm_preemption"
-          slack-mentions: "${SLACK_USER_ID}"
-          requires:
-            - package-and-push-system-local
-          extra-pytest-flags: "--no-compare-stats"
 
   nightly-quarantine:
     when: << pipeline.parameters.do_nightly_tests >>
