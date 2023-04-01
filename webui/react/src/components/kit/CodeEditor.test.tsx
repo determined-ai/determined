@@ -10,7 +10,7 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
 
-import CodeViewer, { Props } from './CodeViewer';
+import CodeEditor, { Props } from './CodeEditor';
 
 const hashedFileMock =
   'ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg==';
@@ -101,7 +101,7 @@ const Container: React.FC<Props> = (props) => {
 
   return (
     <SettingsProvider>
-      <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+      <CodeEditor experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
     </SettingsProvider>
   );
 };
@@ -125,7 +125,7 @@ const getElements = async () => {
   return { treeNodes };
 };
 
-describe('CodeViewer', () => {
+describe('CodeEditor', () => {
   it('should handle the initial render properly', async () => {
     setup();
     const { treeNodes } = await getElements();

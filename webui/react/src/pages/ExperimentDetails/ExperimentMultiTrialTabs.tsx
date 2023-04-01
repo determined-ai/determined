@@ -16,7 +16,7 @@ import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 
-const CodeViewer = React.lazy(() => import('components/kit/CodeViewer'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const TabType = {
   Code: 'code',
@@ -127,7 +127,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       items.push({
         children: (
           <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
+            <CodeEditor
               experimentId={experiment.id}
               runtimeConfig={experiment.configRaw}
               submittedConfig={experiment.originalConfig}

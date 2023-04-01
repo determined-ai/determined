@@ -29,7 +29,7 @@ import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 
-const CodeViewer = React.lazy(() => import('components/kit/CodeViewer'));
+const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const TabType = {
   Checkpoints: 'checkpoints',
@@ -245,7 +245,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       items.push({
         children: (
           <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer
+            <CodeEditor
               experimentId={experiment.id}
               runtimeConfig={experiment.configRaw}
               submittedConfig={experiment.originalConfig}

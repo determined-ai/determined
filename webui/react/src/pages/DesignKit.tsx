@@ -9,7 +9,7 @@ import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
 import Checkbox from 'components/kit/Checkbox';
-import CodeViewer from 'components/kit/CodeViewer';
+import CodeEditor from 'components/kit/CodeEditor';
 import Empty from 'components/kit/Empty';
 import Facepile from 'components/kit/Facepile';
 import Form from 'components/kit/Form';
@@ -67,7 +67,7 @@ const ComponentTitles = {
   Cards: 'Cards',
   Charts: 'Charts',
   Checkboxes: 'Checkboxes',
-  CodeViewer: 'CodeViewer',
+  CodeEditor: 'CodeEditor',
   Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
@@ -723,22 +723,22 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
-const CodeViewerSection: React.FC = () => {
+const CodeEditorSection: React.FC = () => {
   return (
-    <ComponentSection id="CodeViewer" title="CodeViewer">
+    <ComponentSection id="CodeEditor" title="CodeEditor">
       <AntDCard>
         <p>
-          The Code Viewer (<code>{'<CodeViewer>'}</code>) shows Python and YAML files with syntax
+          The Code Viewer (<code>{'<CodeEditor>'}</code>) shows Python and YAML files with syntax
           highlighting. If multiple files are sent, the component shows a file browser.
         </p>
       </AntDCard>
       <AntDCard title="Usage">
         <strong>One Python file</strong>
-        <CodeViewer files={[{ content: 'import math\nprint(math.pi)', name: 'test.py' }]} />
+        <CodeEditor files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]} />
         <strong>One YAML file</strong>
-        <CodeViewer files={[{ content: 'testbox', name: 'test.yaml' }]} />
+        <CodeEditor experimentId={2021} />
         <strong>Multiple code files</strong>
-        <CodeViewer
+        <CodeEditor
           files={[
             { content: 'test1', name: 'test1.yaml' },
             { content: 'test2', name: 'test2.yaml' },
@@ -2237,7 +2237,7 @@ const Components = {
   Cards: <CardsSection />,
   Charts: <ChartsSection />,
   Checkboxes: <CheckboxesSection />,
-  CodeViewer: <CodeViewerSection />,
+  CodeEditor: <CodeEditorSection />,
   Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,

@@ -30,13 +30,13 @@ import { ErrorType } from 'shared/utils/error';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
-const JupyterRenderer = lazy(() => import('./CodeViewer/IpynbRenderer'));
+const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
 const { DirectoryTree } = Tree;
 
-import css from './CodeViewer/CodeViewer.module.scss';
+import css from './CodeEditor/CodeEditor.module.scss';
 
-import './CodeViewer/index.scss';
+import './CodeEditor/index.scss';
 
 type FileInfo = {
   content: string;
@@ -145,7 +145,7 @@ const isConfig = (key: unknown): key is Config =>
  * runtimeConfig: the config corresponding to the merged runtime config.
  */
 
-const CodeViewer: React.FC<Props> = ({
+const CodeEditor: React.FC<Props> = ({
   experimentId,
   files,
   submittedConfig: _submittedConfig,
@@ -201,14 +201,18 @@ const CodeViewer: React.FC<Props> = ({
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
-  const [activeFile, setActiveFile] = useState<TreeNode>();
+  const [activeFile, setActiveFile] = useState<TreeNode|null>(files?.length ? {
+    key: files[0].name ?? 'test',
+    text: files[0].content,
+    title: files[0].name ?? '',
+  } as TreeNode : null);
   const [isFetchingFile, setIsFetchingFile] = useState(false);
   const [isFetchingTree, setIsFetchingTree] = useState(false);
   const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
   const [viewMode, setViewMode] = useState<'tree' | 'editor' | 'split'>(() =>
-    resize.width <= 1024 ? 'tree' : 'split',
+    files?.length ? 'split' : (resize.width <= 1024 ? 'tree' : 'split'),
   );
   const [editorMode, setEditorMode] = useState<'monaco' | 'ipynb'>('monaco');
 
@@ -227,6 +231,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const handleSelectConfig = useCallback(
     (c: Config) => {
+      if (files?.length) return;
       const configText = c === Config.Submitted ? submittedConfig : runtimeConfig;
 
       if (configText) {
@@ -241,7 +246,7 @@ const CodeViewer: React.FC<Props> = ({
       });
       switchTreeViewToEditor();
     },
-    [submittedConfig, runtimeConfig, switchTreeViewToEditor],
+    [files, submittedConfig, runtimeConfig, switchTreeViewToEditor],
   );
 
   const downloadHandler = useCallback(() => {
@@ -291,6 +296,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const fetchFile = useCallback(
     async (path: string, title: string) => {
+      if (!experimentId || files?.length) return;
       setPageError(PageError.None);
 
       let file = '';
@@ -327,6 +333,7 @@ const CodeViewer: React.FC<Props> = ({
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: DataNode }) => {
+      if (files?.length) return;
       const selectedKey = String(info.node.key);
 
       if (selectedKey === activeFile?.key) {
@@ -408,8 +415,10 @@ const CodeViewer: React.FC<Props> = ({
         const path = settings.filePath.split('/');
         const fileName = path[path.length - 1];
 
-        setIsFetchingFile(true);
-        fetchFile(settings.filePath, fileName);
+        if (!files?.length) {
+          setIsFetchingFile(true);
+          fetchFile(settings.filePath, fileName);
+        }
         switchTreeViewToEditor();
       }
     }
@@ -455,11 +464,11 @@ const CodeViewer: React.FC<Props> = ({
     };
   }, []);
 
-  const classes = [css.base, pageError || isFetchingFile ? css.noEditor : ''];
+  const classes = [css.codeEditorBase, pageError || isFetchingFile ? css.noEditor : ''];
 
   return (
-    <section className={classes.join(' ')}>
-      <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="file-tree">
+    <div className={classes.join(' ')}>
+      <div className={viewMode === 'editor' ? css.hideElement : undefined} id="file-tree">
         <Spinner spinning={isFetchingTree}>
           <DirectoryTree
             className={css.fileTree}
@@ -475,9 +484,9 @@ const CodeViewer: React.FC<Props> = ({
             onSelect={handleSelectFile}
           />
         </Spinner>
-      </Section>
+      </div>
       {!!activeFile?.key && (
-        <section className={viewMode === 'tree' ? css.hideElement : css.fileDir}>
+        <div className={viewMode === 'tree' ? css.hideElement : css.fileDir}>
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
               <>
@@ -514,7 +523,7 @@ const CodeViewer: React.FC<Props> = ({
               }
             </div>
           </div>
-        </section>
+        </div>
       )}
       <Section
         bodyNoPadding
@@ -556,8 +565,8 @@ const CodeViewer: React.FC<Props> = ({
           )}
         </Spinner>
       </Section>
-    </section>
+    </div>
   );
 };
 
-export default CodeViewer;
+export default CodeEditor;
