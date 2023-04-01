@@ -183,34 +183,36 @@ to optimize how Determined interacts with PBS:
 
 -  Configure PBS to report GPU Accelerator type.
 
-   PBS administrators need to set the value for ``resources_available.accel_type`` on each node that
-   has a GPU. Otherwise, the Cluster tab on the Determined Web UI will show the value
-   ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
+   PBS administrators should set the value for ``resources_available.accel_type`` on each node with
+   a GPU. Otherwise, the Cluster tab on the Determined Web UI will show ``unconfigured`` for the
+   ``Accelerator`` field in the Resource Pool information.
 
-   PBS administrator can use the following set of commands to set the value of
+   PBS administrators can use the following set of commands to set the value of
    ``resources_available.accel_type`` on a single node:
 
-   -  Login as a root level user or use ``sudo -i`` to quickly change to a root level user.
+   -  Check if the ``resources_available.accel_type`` value is set.
 
-   -  Check if ``resources_available.accel_type`` is set.
+   .. code:: bash
 
-      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
-      -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
+      pbsnodes -v node001 | grep resources_available.accel_type
 
    -  If required, set the desired value for ``resources_available.accel_type``.
 
-      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU Type>"``
-      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla"``
+   .. code:: bash
 
-   -  If there are multiple types of GPUs on the node, provide a comma separated value.
+      sudo qmgr -c "set node node001 resources_available.accel_type=tesla"
 
-      -  ``qmgr -c "set node <node name> resources_available.accel_type=<GPU_Type_1,GPU_Type_2>"``
-      -  For example, ``qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"``
+   -  When there are multiple types of GPUs on the node, use a comma-separated value.
+
+   .. code:: bash
+
+      sudo qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"
 
    -  Verify that the ``resources_available.accel_type`` value is now set.
 
-      -  ``pbsnodes -v <node name> | grep resources_available.accel_type``
-      -  For example, ``pbsnodes -v node001 | grep resources_available.accel_type``
+   .. code:: bash
+
+      pbsnodes -v node001 | grep resources_available.accel_type
 
    Repeat the above steps to set the ``resources_available.accel_type`` value for every node
    containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
