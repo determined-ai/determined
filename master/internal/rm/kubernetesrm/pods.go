@@ -1026,6 +1026,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 						ID:    cproto.ID(id),
 						State: "RUNNING",
 					}
+					pseudoContainersAdded++
 				}
 
 				slots[id] = model.SlotSummary{
@@ -1328,6 +1329,7 @@ func allTaintsTolerated(taints []k8sV1.Taint, tolerations []k8sV1.Toleration) bo
 
 func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type) {
 	var gpuSlots, cpuSlots int
+
 	for _, slot := range node.Slots {
 		if slot.Device.Type == device.CPU {
 			cpuSlots++
