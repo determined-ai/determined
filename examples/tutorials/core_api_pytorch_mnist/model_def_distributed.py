@@ -46,7 +46,7 @@ class Net(nn.Module):
         return output
 
 
-def train(args, model, device, train_loader, optimizer, core_context, epoch, op):
+def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -59,7 +59,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -71,7 +71,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             # or upload checkpoints.
             if core_context.distributed.rank == 0:
                 core_context.train.report_training_metrics(
-                    steps_completed=(batch_idx + 1) + epoch * len(train_loader),
+                    steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                     metrics={"train_loss": loss.item()},
                 )
 
@@ -80,7 +80,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
     # NEW: Report progress only on rank 0.
     if core_context.distributed.rank == 0:
-        op.report_progress(epoch)
+        op.report_progress(epoch_idx)
 
 
 def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:

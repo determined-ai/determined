@@ -45,7 +45,7 @@ class Net(nn.Module):
 
 
 # NEW: Modify function header to include op for reporting training progress to master.
-def train(args, model, device, train_loader, optimizer, core_context, epoch, op):
+def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -58,7 +58,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -67,7 +67,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             )
 
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + epoch * len(train_loader),
+                steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                 metrics={"train_loss": loss.item()},
             )
 
@@ -75,7 +75,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
                 break
 
     # NEW: Report progress once in a while.
-    op.report_progress(epoch)
+    op.report_progress(epoch_idx)
 
 
 # NEW: Modify function header to include op for reporting training progress to master and return test loss.
@@ -110,7 +110,6 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
 
 
 def load_state(checkpoint_directory, trial_id):
-
     checkpoint_directory = pathlib.Path(checkpoint_directory)
 
     with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
