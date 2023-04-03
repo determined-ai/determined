@@ -29,7 +29,7 @@ build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json vite.con
 
 .PHONY: clean
 clean:
-	rm -rf build build-storybook node_modules/
+	rm -rf build node_modules/
 
 .PHONY: live
 live: start
