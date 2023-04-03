@@ -1004,11 +1004,18 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	if req.Experiment.Labels != nil {
-		var reqLabelList []string
+		// avoid duplicate keys
+		reqLabelSet := make(map[string]struct{}, len(req.Experiment.Labels.Values))
 		for _, el := range req.Experiment.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
-				reqLabelList = append(reqLabelList, el.GetStringValue())
+				reqLabelSet[el.GetStringValue()] = struct{}{}
 			}
+		}
+		reqLabelList := make([]string, len(reqLabelSet))
+		i := 0
+		for key := range reqLabelSet {
+			reqLabelList[i] = key
+			i++
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if strings.Join(exp.Labels, ",") != reqLabels {
