@@ -455,6 +455,15 @@ export const mapV1GetExperimentDetailsResponse = ({
   };
 };
 
+export const mapSearchExperiment = (
+  data: Sdk.V1SearchExperimentExperiment,
+): types.ExperimentWithTrial => {
+  return {
+    bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
+    experiment: data.experiment && mapV1Experiment(data.experiment),
+  };
+};
+
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
