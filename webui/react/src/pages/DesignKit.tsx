@@ -1,7 +1,7 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import { Card as AntDCard, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Accordion from 'components/kit/Accordion';
@@ -488,41 +488,60 @@ const SelectSection: React.FC = () => {
   );
 };
 
-// TODO: remove randomness here -- it causes false positives on visual
-// regression testing
-const line1BatchesDataRaw: [number, number][] = [
-  [0, -2],
-  [2, Math.random() * 12],
-  [4, 15],
-  [6, Math.random() * 60],
-  [9, Math.random() * 40],
-  [10, Math.random() * 76],
-  [18, Math.random() * 80],
-  [19, 89],
-];
-const line2BatchesDataRaw: [number, number][] = [
-  [1, 15],
-  [2, 10.123456789],
-  [2.5, Math.random() * 22],
-  [3, 10.3909],
-  [3.25, 19],
-  [3.75, 4],
-  [4, 12],
-];
-
 const ChartsSection: React.FC = () => {
-  const timerRef = useRef<NodeJS.Timer | null>(null);
-  const [timer, setTimer] = useState(1);
+  const [line1Data, setLine1Data] = useState<[number, number][]>([
+    [0, -2],
+    [2, 7],
+    [4, 15],
+    [6, 35],
+    [9, 22],
+    [10, 76],
+    [18, 1],
+    [19, 89],
+  ]);
+  const [line2Data, setLine2Data] = useState<[number, number][]>([
+    [1, 15],
+    [2, 10.123456789],
+    [2.5, 22],
+    [3, 10.3909],
+    [3.25, 19],
+    [3.75, 4],
+    [4, 12],
+  ]);
+  const [timer, setTimer] = useState(line1Data.length);
   useEffect(() => {
-    timerRef.current = setInterval(() => setTimer((t) => t + 1), 2000);
+    let timeout: NodeJS.Timer | void;
+    if (timer <= line1Data.length) {
+      timeout = setTimeout(() => setTimer((t) => t + 1), 2000);
+    }
+    return () => timeout && clearTimeout(timeout);
+  }, [timer, line1Data]);
 
-    return () => {
-      if (timerRef.current !== null) clearInterval(timerRef.current);
-    };
+  const randomizeLineData = useCallback(() => {
+    setLine1Data([
+      [0, -2],
+      [2, Math.random() * 12],
+      [4, 15],
+      [6, Math.random() * 60],
+      [9, Math.random() * 40],
+      [10, Math.random() * 76],
+      [18, Math.random() * 80],
+      [19, 89],
+    ]);
+    setLine2Data([
+      [1, 15],
+      [2, 10.123456789],
+      [2.5, Math.random() * 22],
+      [3, 10.3909],
+      [3.25, 19],
+      [3.75, 4],
+      [4, 12],
+    ]);
   }, []);
+  const streamLineData = useCallback(() => setTimer(1), []);
 
-  const line1BatchesDataStreamed = useMemo(() => line1BatchesDataRaw.slice(0, timer), [timer]);
-  const line2BatchesDataStreamed = useMemo(() => line2BatchesDataRaw.slice(0, timer), [timer]);
+  const line1BatchesDataStreamed = useMemo(() => line1Data.slice(0, timer), [timer, line1Data]);
+  const line2BatchesDataStreamed = useMemo(() => line2Data.slice(0, timer), [timer, line2Data]);
 
   const line1: Serie = {
     color: '#009BDE',
@@ -591,10 +610,18 @@ const ChartsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Label options">
         <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
         <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
       </AntDCard>
       <AntDCard title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
+        <div>
+          <Button onClick={randomizeLineData}>Randomize line data</Button>
+          <Button onClick={streamLineData}>Stream line data</Button>
+        </div>
         <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </AntDCard>
       <AntDCard title="States without data">
