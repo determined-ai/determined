@@ -733,17 +733,20 @@ const CodeEditorSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>One Python file</strong>
+        <strong>Short Python file</strong>
         <CodeEditor files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]} />
-        <strong>One YAML file</strong>
-        <CodeEditor experimentId={2021} />
-        <strong>Multiple code files</strong>
+        <strong>Realistic YAML file</strong>
         <CodeEditor
           files={[
-            { content: 'test1', name: 'test1.yaml' },
-            { content: 'test2', name: 'test2.yaml' },
+            {
+              content:
+                'name: mnist_pytorch_const\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+              name: 'test1.yaml',
+            },
           ]}
         />
+        <strong>Multiple code files</strong>
+        <CodeEditor experimentId={2021} />
       </AntDCard>
     </ComponentSection>
   );

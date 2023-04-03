@@ -1,4 +1,4 @@
-import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
+import { DownloadOutlined, FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import { string } from 'io-ts';
@@ -201,27 +201,27 @@ const CodeEditor: React.FC<Props> = ({
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
-  const [activeFile, setActiveFile] = useState<TreeNode|null>(files?.length ? {
-    key: files[0].name ?? 'test',
-    text: files[0].content,
-    title: files[0].name ?? '',
-  } as TreeNode : null);
+  const [activeFile, setActiveFile] = useState<TreeNode | null>(
+    files?.length
+      ? ({
+          key: files[0].name ?? 'test',
+          text: files[0].content,
+          title: files[0].name ?? '',
+        } as TreeNode)
+      : null,
+  );
   const [isFetchingFile, setIsFetchingFile] = useState(false);
   const [isFetchingTree, setIsFetchingTree] = useState(false);
   const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
   const [viewMode, setViewMode] = useState<'tree' | 'editor' | 'split'>(() =>
-    files?.length ? 'split' : (resize.width <= 1024 ? 'tree' : 'split'),
+    files?.length ? 'editor' : resize.width <= 1024 ? 'tree' : 'split',
   );
   const [editorMode, setEditorMode] = useState<'monaco' | 'ipynb'>('monaco');
 
   const switchTreeViewToEditor = useCallback(
     () => setViewMode((view) => (view === 'tree' ? 'editor' : view)),
-    [],
-  );
-  const switchEditorViewToTree = useCallback(
-    () => setViewMode((view) => (view === 'editor' ? 'tree' : view)),
     [],
   );
   const switchSplitViewToTree = useCallback(
@@ -328,7 +328,7 @@ const CodeEditor: React.FC<Props> = ({
         title,
       });
     },
-    [experimentId],
+    [experimentId, files?.length],
   );
 
   const handleSelectFile = useCallback(
@@ -361,7 +361,7 @@ const CodeEditor: React.FC<Props> = ({
         updateSettings({ filePath: String(info.node.key) });
       }
     },
-    [activeFile?.key, treeData, switchTreeViewToEditor, updateSettings],
+    [activeFile?.key, files?.length, treeData, switchTreeViewToEditor, updateSettings],
   );
 
   const getSyntaxHighlight = useCallback(() => {
@@ -424,6 +424,7 @@ const CodeEditor: React.FC<Props> = ({
     }
   }, [
     treeData,
+    files?.length,
     settings.filePath,
     activeFile,
     fetchFile,
@@ -452,10 +453,10 @@ const CodeEditor: React.FC<Props> = ({
   useEffect(() => {
     if (resize.width <= 1024) {
       switchSplitViewToTree();
-    } else {
+    } else if (!files?.length) {
       setViewMode('split');
     }
-  }, [resize.width, switchSplitViewToTree]);
+  }, [resize.width, switchSplitViewToTree, files?.length]);
 
   // clear the timeout ref from memory
   useEffect(() => {
@@ -464,7 +465,11 @@ const CodeEditor: React.FC<Props> = ({
     };
   }, []);
 
-  const classes = [css.codeEditorBase, pageError || isFetchingFile ? css.noEditor : ''];
+  const classes = [
+    css.codeEditorBase,
+    pageError || isFetchingFile ? css.noEditor : '',
+    viewMode === 'editor' ? css.editorMode : '',
+  ];
 
   return (
     <div className={classes.join(' ')}>
@@ -490,9 +495,6 @@ const CodeEditor: React.FC<Props> = ({
           <div className={css.fileInfo}>
             <div className={css.buttonContainer}>
               <>
-                {viewMode === 'editor' && (
-                  <LeftOutlined className={css.leftChevron} onClick={switchEditorViewToTree} />
-                )}
                 {activeFile.icon ?? <FileOutlined />}
                 <span className={css.filePath}>
                   <>{activeFile.title}</>
@@ -548,7 +550,7 @@ const CodeEditor: React.FC<Props> = ({
               language={getSyntaxHighlight()}
               options={{
                 minimap: {
-                  enabled: viewMode === 'split' && !!activeFile?.text?.length,
+                  enabled: ['split', 'editor'].includes(viewMode) && !!activeFile?.text?.length,
                   showSlider: 'mouseover',
                   size: 'fit',
                 },
