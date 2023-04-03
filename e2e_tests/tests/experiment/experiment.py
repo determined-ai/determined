@@ -12,6 +12,7 @@ import pytest
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import experimentv1State
+from determined.common.api.logs import format_trial_log
 from tests import api_utils
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
@@ -430,7 +431,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     return [
-        tl.message
+        format_trial_log(tl)
         for tl in api.trial_logs(api_utils.determined_test_session(), trial_id, follow=follow)
     ]
 
