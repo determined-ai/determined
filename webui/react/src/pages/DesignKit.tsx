@@ -33,31 +33,22 @@ import UserAvatar from 'components/kit/UserAvatar';
 import { useTags } from 'components/kit/useTags';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
-import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
-import ProjectCard from 'components/ProjectCard';
-import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
-import {
-  generateTestProjectData,
-  generateTestWorkspaceData,
-} from 'storybook/shared/generateTestData';
-import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
+import { BrandingType, MetricType, User } from 'types';
 import { NotLoaded } from 'utils/loadable';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
-import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const ComponentTitles = {
   Accordion: 'Accordion',
@@ -1308,10 +1299,6 @@ const PaginationSection: React.FC = () => {
 };
 
 const CardsSection: React.FC = () => {
-  const rps = resourcePools as unknown as ResourcePool[];
-  const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
-  const workspace = generateTestWorkspaceData();
-
   return (
     <ComponentSection id="Cards" title="Cards">
       <AntDCard>
@@ -1401,51 +1388,6 @@ const CardsSection: React.FC = () => {
           <Card size="medium" />
           <Card size="medium" />
         </Card.Group>
-        <strong>Card examples</strong>
-        <ul>
-          <li>
-            Project card (<code>{'<ProjectCard>'}</code>)
-          </li>
-          <Card.Group>
-            <ProjectCard project={project} />
-            <ProjectCard project={{ ...project, archived: true }} />
-            <ProjectCard
-              project={{
-                ...project,
-                name: 'Project with a very long name that spans many lines and eventually gets cut off',
-              }}
-            />
-            <ProjectCard
-              project={{
-                ...project,
-                workspaceId: 2,
-              }}
-              showWorkspace
-            />
-          </Card.Group>
-          <li>
-            Workspace card (<code>{'<WorkspaceCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <WorkspaceCard workspace={workspace} />
-            <WorkspaceCard workspace={{ ...workspace, archived: true }} />
-          </Card.Group>
-          <li>
-            Stats overview (<code>{'<OverviewStats>'}</code>)
-          </li>
-          <Card.Group>
-            <OverviewStats title="Active Experiments">0</OverviewStats>
-            <OverviewStats title="Clickable card" onClick={noOp}>
-              Example
-            </OverviewStats>
-          </Card.Group>
-          <li>
-            Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
-          </li>
-          <Card.Group size="medium">
-            <ResourcePoolCard resourcePool={rps[0]} />
-          </Card.Group>
-        </ul>
       </AntDCard>
     </ComponentSection>
   );

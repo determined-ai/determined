@@ -10,8 +10,6 @@ import ThemeProvider from 'components/ThemeProvider';
 import { Settings, UserSettings } from 'hooks/useSettingsProvider';
 import DesignKit from 'pages/DesignKit';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { ClusterProvider } from 'stores/cluster';
-import { WorkspacesProvider } from 'stores/workspaces';
 
 import 'antd/dist/reset.css';
 
@@ -26,19 +24,15 @@ const fakeSettingsContext = {
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <HelmetProvider>
-      <ClusterProvider>
-        <WorkspacesProvider>
-          <UIProvider>
-            <UserSettings.Provider value={fakeSettingsContext}>
-              <ThemeProvider>
-                <div className={css.base}>
-                  <DesignKit />
-                </div>
-              </ThemeProvider>
-            </UserSettings.Provider>
-          </UIProvider>
-        </WorkspacesProvider>
-      </ClusterProvider>
+      <UIProvider>
+        <UserSettings.Provider value={fakeSettingsContext}>
+          <ThemeProvider>
+            <div className={css.base}>
+              <DesignKit />
+            </div>
+          </ThemeProvider>
+        </UserSettings.Provider>
+      </UIProvider>
     </HelmetProvider>
   </BrowserRouter>,
 );
