@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from determined.experimental import client
 
 EXPERIMENT_ID_FILE = "experiment_id.txt"
@@ -191,11 +191,20 @@ class SearchRunner:
             searcherOperations=[op._to_searcher_operation() for op in operations],
             triggeredByEvent=event,
         )
-        bindings.post_PostSearcherOperations(
-            session,
-            body=body,
-            experimentId=experiment_id,
-        )
+        # TODO: Remove this temporary hack in favor of an actual solution around the issue described
+        # in https://determined-ai.slack.com/archives/C04645NHSP6/p1680201334658789
+        try:
+            bindings.post_PostSearcherOperations(
+                session,
+                body=body,
+                experimentId=experiment_id,
+            )
+        except errors.APIException as e:
+            close_op_in_operations = any([isinstance(o, searcher.Close) for o in operations])
+            if close_op_in_operations and "could not be found" in str(e):
+                pass
+            else:
+                raise e
 
     def get_events(
         self,
