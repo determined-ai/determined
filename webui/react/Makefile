@@ -117,23 +117,9 @@ screenshots/HEAD: node_modules visual-test-deps
 
 screenshots/MASTER: node_modules visual-test-deps
 	git checkout $(merge_base)
-# BEGIN code to fake diffs. remove before merge
-	git checkout - -- src/designkit-standalone
-	git checkout - -- scripts
-	git checkout - -- src/components/ThemeProvider.tsx
-# END code to fake diffs. remove before merge
 	node scripts/designkit-screenshot.mjs MASTER
 
-# BEGIN code to fake diffs. remove before merge
-.PHONY: make-fake-diff
-make-fake-diff: screenshots/HEAD screenshots/MASTER
-	rm screenshots/MASTER/dark/Accordion.png
-	rm screenshots/MASTER/light/Accordion.png
-	rm screenshots/HEAD/dark/Cards.png
-	rm screenshots/HEAD/light/Cards.png
-# END code to fake diffs. remove before merge
-
-screenshot-summary.html: screenshots/HEAD screenshots/MASTER make-fake-diff
+screenshot-summary.html: screenshots/HEAD screenshots/MASTER
 	node scripts/make-screenshot-diff.mjs
 
 .PHONY: visual-test
