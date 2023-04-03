@@ -499,3 +499,8 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 -  A job may fail with the message ``resources failed with non-zero exit code``, Determined reports
    the exit code in the experiment logs. For example, the experiment logs contain ``srun: error:
    node002: task 0: Exited with exit code 7``.
+
+-  The ``det slot enable`` and ``det slot disable`` commands are not supported. Use of these
+   commands will print an error message.
+
+-  ``det slot list`` will not display the name of any active Determined tasks.
