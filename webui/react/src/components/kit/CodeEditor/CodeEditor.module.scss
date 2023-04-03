@@ -4,7 +4,6 @@
   grid-template-rows: 38px auto;
   height: 100%;
   max-width: 100vw;
-  min-height: 300px;
 
   .fileTree {
     background-color: transparent;
@@ -82,6 +81,7 @@
   border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
   grid-column: 2 / 3;
   grid-row: 2 / 3;
+  min-height: 250px;
 
   .editorMode & {
     grid-column: 1 / 3;

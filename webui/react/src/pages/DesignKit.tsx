@@ -733,20 +733,32 @@ const CodeEditorSection: React.FC = () => {
         </p>
       </AntDCard>
       <AntDCard title="Usage">
-        <strong>Short Python file</strong>
-        <CodeEditor files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]} />
+        <strong>Editable Python file</strong>
+        <CodeEditor
+          editable={true}
+          files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]}
+        />
         <strong>Realistic YAML file</strong>
         <CodeEditor
           files={[
             {
               content:
-                'name: mnist_pytorch_const\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
               name: 'test1.yaml',
             },
           ]}
         />
-        <strong>Multiple code files</strong>
-        <CodeEditor experimentId={2021} />
+        <strong>Multiple files</strong>
+        <CodeEditor
+          files={[
+            {
+              content:
+                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+              name: 'one.yaml',
+            },
+            { content: 'searcher:\n  name: single\n  metric: validation_loss\n', name: 'two.yaml' },
+          ]}
+        />
       </AntDCard>
     </ComponentSection>
   );
