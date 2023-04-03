@@ -211,8 +211,15 @@ class DSATTrialTracker:
         return root_trial_set
 
     def get_create_val_ops_list_from_trial(
-        self, trial: DSATTrial, length: int
+        self, trial: DSATTrial, length: Optional[int] = None
     ) -> List[searcher.Operation]:
+        if length is None:
+            # Get the default length from the autotuning config.
+            # DS has a fixed notion of what a step is while Determined does not. Make sure
+            # there are no issues in reconciling this fact.
+            # The +1 is required to align DS step/DET max_length conventions.
+            # TODO: Clean all of this up.
+            length = self.autotuning_config["end_profile_step"] + 1
         create_op = searcher.Create(
             request_id=trial.request_id,
             hparams=trial.hparams,
@@ -339,8 +346,8 @@ class DSATModelProfilingInfo:
                 stage: mem // self.mp_size
                 for stage, mem in non_activation_mem_per_gpu_per_stage.items()
             }
-        # TODO: Following DS here and not dividing activation memory by mp_size, but seems like
-        # you should?
+        # No need to divide by mp_size below because self.activation_mem_per_gpu already has the
+        # model parallelism accounted for (at least approximately).
         mem_per_gpu_per_stage = {
             stage: mem + self.activation_mem_per_gpu
             for stage, mem in non_activation_mem_per_gpu_per_stage.items()
@@ -352,7 +359,7 @@ class DSATModelProfilingInfo:
         """
         Returns the set of viable zero stages based on a rough computation.
         """
-        # TODO: account for model parallelism. Add a fudge factor for a little leeway?
+        # TODO: Add a configurable fudge factor for a little leeway?
         viable_stages = {
             stage for stage, mem in self.mem_per_gpu_per_stage.items() if mem < self.gpu_mem
         }
@@ -465,6 +472,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         # TODO: Remove print tests.
         logging.info(f"Calling on_validation_completed for {request_id}")
         self.trial_tracker.update_metrics(request_id=request_id, metric=metric)
+
         last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             self.model_profile_info = DSATModelProfilingInfo(
@@ -476,7 +484,15 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             )
 
         # All DS AT Trials should be closed after validation.
-        return [searcher.Close(request_id)]
+        new_ops_list = [searcher.Close(request_id)]
+        if not self.trial_tracker.should_stop:
+            additional_ops_list = self.get_new_searcher_ops_list(
+                searcher_state=searcher_state,
+                request_id=request_id,
+                metric=metric,
+            )
+            new_ops_list.extend(additional_ops_list)
+        return new_ops_list
 
     def on_trial_closed(
         self, searcher_state: searcher.SearcherState, request_id: uuid.UUID
@@ -485,10 +501,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         logging.info(f"Calling on_trial_closed for {request_id}")
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
-        # NOTE: it seems like you in `on_validation_completed`, you can't reliably determine from
-        # `searcher_state` whether all trials have completed, since they are only marked as closed
-        # after `on_trial_closed` is called. This leads to a little bit of awkwardness below in
-        # we need to contact the trial_tracker to get the metrics to determine our next moves.
         if self.trial_tracker.should_stop:
             self._state_print_checks(searcher_state)
             # Shutdown if `should_stop` is True, and this was the last running trial.
@@ -632,10 +644,8 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         last_trial = self.trial_tracker[request_id]
         if last_trial.is_model_profiling_info_run:
             new_ops_list = self.get_ops_list_after_model_profiling_info_run()
-        elif len(searcher_state.trials_created) < self.trial_tracker.tuner_num_trials:
-            new_ops_list = self.get_ops_list_after_autotuning_run(last_trial)
         else:
-            new_ops_list = []
+            new_ops_list = self.get_ops_list_after_autotuning_run(last_trial)
         return new_ops_list
 
     def get_ops_list_after_model_profiling_info_run(
@@ -654,13 +664,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 search_data=search_data,
                 parent_trial=None,
             )
-            # A +1 is required to align DS step/DET max_length conventions.
-            # TODO: DS has a fixed notion of what a step is while Determined does not. Make sure
-            # there are no issues in reconciling this fact.
-            end_profile_step = self.autotuning_config["end_profile_step"] + 1
-            new_ops = self.trial_tracker.get_create_val_ops_list_from_trial(
-                trial=new_trial, length=end_profile_step
-            )
+            new_ops = self.trial_tracker.get_create_val_ops_list_from_trial(trial=new_trial)
             new_ops_list.extend(new_ops)
         return new_ops_list
 
@@ -698,11 +702,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
                 search_data=search_data,
                 parent_trial=parent_trial,
             )
-            # A +1 is required to align DS step/DET max_length conventions.
-            end_profile_step = self.autotuning_config["end_profile_step"] + 1
-            new_ops_list = self.trial_tracker.get_create_val_ops_list_from_trial(
-                trial=new_trial, length=end_profile_step
-            )
+            new_ops_list = self.trial_tracker.get_create_val_ops_list_from_trial(trial=new_trial)
         return new_ops_list
 
     def get_hparams_and_search_data_after_trial(

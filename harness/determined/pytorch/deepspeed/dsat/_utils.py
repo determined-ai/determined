@@ -39,8 +39,11 @@ def dsat_reporting_context(
     try:
         yield
     except SystemExit as se:
-        possible_paths = [_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH]
-        existing_paths = [path for path in possible_paths if file_or_dir_exists(path)]
+        possible_paths = [
+            pathlib.Path(p)
+            for p in (_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH)
+        ]
+        existing_paths = [p for p in possible_paths if p.exists()]
         # Exactly one of these files should be generated for each properly exited DS AT Trial.
         if len(existing_paths) == 1:
             path = existing_paths[0]
@@ -83,18 +86,6 @@ def report_json_results(
         raise AssertionError("Unexpected additional operations found!")
 
 
-def file_or_dir_exists(
-    path: Union[str, pathlib.Path], check_limit: int = 1, sleep_time: int = 0
-) -> bool:
-    # TODO: Clean up, verify needed.
-    for _ in range(check_limit):
-        if os.path.isfile(path) or os.path.isdir(path):
-            return True
-        else:
-            time.sleep(sleep_time)
-    return False
-
-
 def get_zero_optim_keys_and_defaults_per_stage(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
@@ -123,6 +114,7 @@ def get_batch_config_from_mbs_gas_and_slots(
     number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
     default value, if not specified).
     """
+    # TODO: Account for model parallelism.
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
     tbs = mbs * gas * slots
