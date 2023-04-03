@@ -48,6 +48,8 @@ const (
 	root                          = "root"
 )
 
+var errNotSupportedOnHpcCluster = fmt.Errorf("%w on HPC clusters", rmerrors.ErrNotSupported)
+
 type wlmType string
 
 // schedulerTick periodically triggers the scheduler to act.
@@ -2163,7 +2165,7 @@ func (d DispatcherResourceManager) EnableSlot(
 	m actor.Messenger,
 	req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
-	return nil, nil
+	return nil, errNotSupportedOnHpcCluster
 }
 
 // DisableSlot implements 'det slot disable...' functionality.
@@ -2171,5 +2173,5 @@ func (d DispatcherResourceManager) DisableSlot(
 	m actor.Messenger,
 	req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
-	return nil, nil
+	return nil, errNotSupportedOnHpcCluster
 }
