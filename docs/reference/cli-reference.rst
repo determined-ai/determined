@@ -1,8 +1,8 @@
 .. _cli-reference:
 
-#########################
+##########################
  Determined CLI Reference
-#########################
+##########################
 
 +-----------------------------------------------+
 | User Guide                                    |
@@ -53,10 +53,9 @@ For a comprehensive list of nouns and abbreviations, use ``det help`` or ``det -
                            master address (default: localhost:8080)
      -v, --version         print CLI version and exit
 
-Syntax
-======
-
-To use the CLI tool, follow the proper syntax.
+********
+ Syntax
+********
 
 ``det [-h] [-u username] [-m address] [-v] command ...``
 
