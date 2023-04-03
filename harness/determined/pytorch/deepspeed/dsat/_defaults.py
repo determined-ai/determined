@@ -55,3 +55,19 @@ AUTOTUNING_DICT = {
     "tuner_num_trials": 25,
     "arg_mappings": None,
 }
+
+DEFAULT_SEARCH_RUNNER_OVERRIDES = {
+    "searcher": {"name": "single", "max_length": 0},
+    # TODO: don't hardcode the searcher's max_restarts.
+    "max_restarts": 3,
+    # TODO: taking slots_per_trial: 0 to imply cpu-only here, but that's apparently an unsafe assumption
+    # e.g. on Grenoble.
+    "resources": {"slots_per_trial": 0},
+    # TODO: remove the environment section; just needed for GG's GCP cluster.
+    "environment": {
+        "image": {
+            "cpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
+            "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.20.1",
+        }
+    },
+}

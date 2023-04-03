@@ -1,23 +1,47 @@
+import copy
 import json
-import os
+import logging
 import pathlib
 import random
-import time
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, List, Union
+from typing import Any, Dict, Generator, Optional, Union
 
 import torch
 from ruamel import yaml
 
 import determined as det
 from determined.pytorch.deepspeed.dsat import _defaults
+from determined.util import merge_dicts
 
 
-def get_config_dict_from_yaml_path(path: str) -> Dict[str, Any]:
-    config = yaml.YAML(typ="safe")
-    with open(path, "r") as f:
-        config_dict: dict = config.load(f)
-    return config_dict
+# TODO: move this to determined.util?
+def get_dict_from_yaml_or_json_path(
+    path: str, convert_json_keys_to_int: bool = True
+) -> Dict[Any, Any]:
+    """
+    Load a json or yaml file as a dict. Optionally convert all json dict keys to ints, where possible.
+    """
+    p = pathlib.Path(path)
+    if p.suffix == ".json":
+        try:
+            with open(p, "r") as f:
+                json_dict: Dict[Any, Any] = json.load(f)
+            if convert_json_keys_to_int:
+
+                def try_str_to_int(s: str) -> Union[str, int]:
+                    try:
+                        return int(s)
+                    except ValueError:
+                        return s
+
+                json_dict = {try_str_to_int(k): v for k, v in json_dict.items()}
+            return json_dict
+        except Exception as e:
+            logging.info(f"Exception {e} raised when loading {path} with json. Attempting yaml.")
+    else:
+        with open(p, "r") as f:
+            yaml_dict: Dict[Any, Any] = yaml.YAML(typ="safe").load(f)
+        return yaml_dict
 
 
 @contextmanager
@@ -85,23 +109,45 @@ def report_json_results(
         raise AssertionError("Unexpected additional operations found!")
 
 
-def get_zero_optim_keys_and_defaults_per_stage(
-    zero_stage: int,
-) -> Dict[str, List[Union[bool, float]]]:
+def get_zero_optim_search_space(
+    zero_search_config: Optional[Dict[int, Dict[str, Any]]] = None,
+) -> Dict[int, Dict[str, Any]]:
+    """
+    Creates a search space for every provided zero stage (key) in `zero_search_config` whose
+    corresponding values are dictionaries whch either specify every configuration for that stage
+    or can specify a diff on top of all lower stage configurations, merged in numerical order.
+    Any lists in the individual stage configurations can be randomly and uniformly sampled from
+    using `get_random_zero_optim_dict_from_search_space`.
+    TODO: Explain better.
+    """
     default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
-    assert (
-        zero_stage in default_settings
-    ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    keys_and_defaults: dict = default_settings[0]
-    for stage in range(1, zero_stage + 1):
-        keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
-    return keys_and_defaults
+    if zero_search_config is None:
+        return default_settings
+    else:
+        user_specified_stages = list(zero_search_config)
+        highest_stage = max(user_specified_stages)
+        # Merge with defaults.
+        selected_stage_default_settings = {
+            stage: default_settings[stage] for stage in range(max(zero_search_config))
+        }
+        search_space = merge_dicts(selected_stage_default_settings, zero_search_config)
+        # Then merge each zero config with all lower-valued zero stage configs, allowing the user
+        # to specify the search space as a diff.
+        for s1, s2 in zip(range(highest_stage), range(1, highest_stage + 1)):
+            search_space[s2] = merge_dicts(search_space[s1], search_space[s2])
+        # Remove the stages which the user did not specify.
+        search_space = {s: search_space[s] for s in user_specified_stages}
+        return search_space
 
 
-def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
-    keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
-    zero_optim_dict = {key: random.choice(defaults) for key, defaults in keys_and_defaults.items()}
+def get_random_zero_optim_dict_from_search_space(
+    zero_stage: int, search_space: Dict[int, Dict[str, Any]]
+) -> Dict[str, Any]:
+    zero_optim_dict = copy.deepcopy(search_space[zero_stage])
     zero_optim_dict["stage"] = zero_stage
+    for k, v in zero_optim_dict.items():
+        # Randomly draw from any provided lists.
+        zero_optim_dict[k] = v if not isinstance(v, list) else random.choice(v)
     return zero_optim_dict
 
 
@@ -113,7 +159,6 @@ def get_batch_config_from_mbs_gas_and_slots(
     number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
     default value, if not specified).
     """
-    # TODO: Do we need to account for model parallelism? Unclear from DS docs.
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
     tbs = mbs * gas * slots
