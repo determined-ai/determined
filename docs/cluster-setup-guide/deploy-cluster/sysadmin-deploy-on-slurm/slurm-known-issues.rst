@@ -500,8 +500,7 @@ the GPUs used for the experiment to be evenly distributed among the compute node
    the exit code in the experiment logs. For example, the experiment logs contain ``srun: error:
    node002: task 0: Exited with exit code 7``.
 
--  The CLI commands ``det slot enable…`` & ``det slot disable…`` are not supported in the HPC
-   cluster environment. Use of these commands will print an error message.
+-  The ``det slot enable`` and ``det slot disable`` commands are not supported. Use of these
+   commands will print an error message.
 
--  In the HPC cluster environment, the ``det slot list`` command will not display the name of any
-   active Determined tasks.
+-  ``det slot list`` will not display the name of any active Determined tasks.
