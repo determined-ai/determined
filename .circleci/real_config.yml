@@ -2157,6 +2157,8 @@ jobs:
             # Cleanup podman state from any issues in prior runs
             sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
             sinfo -R
+            sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu" || true
+            sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu" || true
 
       - wait-for-master:
           host: localhost
