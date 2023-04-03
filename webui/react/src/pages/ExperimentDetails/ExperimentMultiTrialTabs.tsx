@@ -1,10 +1,12 @@
 import type { TabsProps } from 'antd';
+import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import usePermissions from 'hooks/usePermissions';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
@@ -55,6 +57,26 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const [tabKey, setTabKey] = useState(defaultTabKey);
 
   const basePath = paths.experimentDetails(experiment.id);
+
+  const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
+    settings: {
+      filePath: {
+        defaultValue: '',
+        storageKey: 'filePath',
+        type: string,
+      },
+    },
+    storagePath: `selected-file-${experimentId}`,
+  });
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(
+    configForExperiment(experiment.id),
+  );
+  const handleSelectFile = useCallback(
+    (filePath: string) => {
+      updateSettings({ filePath });
+    },
+    [updateSettings],
+  );
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -130,7 +152,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
             <CodeEditor
               experimentId={experiment.id}
               runtimeConfig={experiment.configRaw}
+              selectedFilePath={settings.filePath}
               submittedConfig={experiment.originalConfig}
+              onSelectFile={handleSelectFile}
             />
           </React.Suspense>
         ),
@@ -157,7 +181,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     editableNotes,
     experiment,
     handleNotesUpdate,
+    handleSelectFile,
     pageRef,
+    settings.filePath,
     showExperimentArtifacts,
     viz,
   ]);

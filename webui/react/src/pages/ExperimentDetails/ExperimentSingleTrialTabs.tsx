@@ -1,4 +1,5 @@
 import type { TabsProps } from 'antd';
+import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
@@ -84,6 +86,26 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const waitingForTrials = !trialId && !wontHaveTrials;
 
   const basePath = paths.experimentDetails(experiment.id);
+
+  const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
+    settings: {
+      filePath: {
+        defaultValue: '',
+        storageKey: 'filePath',
+        type: string,
+      },
+    },
+    storagePath: `selected-file-${experimentId}`,
+  });
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(
+    configForExperiment(experiment.id),
+  );
+  const handleSelectFile = useCallback(
+    (filePath: string) => {
+      updateSettings({ filePath });
+    },
+    [updateSettings],
+  );
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -248,7 +270,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             <CodeEditor
               experimentId={experiment.id}
               runtimeConfig={experiment.configRaw}
+              selectedFilePath={settings.filePath}
               submittedConfig={experiment.originalConfig}
+              onSelectFile={handleSelectFile}
             />
           </React.Suspense>
         ),
@@ -295,7 +319,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     editableNotes,
     experiment,
     handleNotesUpdate,
+    handleSelectFile,
     pageRef,
+    settings.filePath,
     showExperimentArtifacts,
     trialDetails,
     waitingForTrials,
