@@ -115,8 +115,8 @@ screenshots/HEAD: node_modules visual-test-deps
 	node scripts/designkit-screenshot.mjs HEAD
 
 screenshots/MASTER: node_modules visual-test-deps
-	MERGE_BASE="$(git merge-base master HEAD)"
-	git checkout $MERGE_BASE
+	MERGE_BASE != git merge-base master HEAD
+	git checkout $(MERGE_BASE)
 # BEGIN code to fake diffs. remove before merge
 	git checkout - -- src/designkit-standalone
 	git checkout - -- scripts
