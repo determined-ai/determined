@@ -574,7 +574,7 @@ The master supports the following configuration settings:
 
             -  ``public_ip``: Whether to use public IP addresses for the Determined agents. See
                :ref:`aws-network-requirements` for instructions on whether a public IP should be
-               used. Defaults to ``false``.
+               used. Defaults to ``true``.
 
             -  ``security_group_id``: The ID of the security group to run the Determined agents as.
                This should be the security group you identified or created in
