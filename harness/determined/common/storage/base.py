@@ -3,7 +3,7 @@ import contextlib
 import os
 import pathlib
 import urllib
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
+from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
 
 from determined.common import storage
 
@@ -165,42 +165,19 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 
 def from_string(shortcut: str) -> StorageManager:
-    def process_query(q: Dict[str, List[str]]) -> Dict[str, str]:
-        kwargs = {}
-        for key, vals in q.items():
-            if len(vals) > 1:
-                raise ValueError(f'Multiple values given for key "{key}" in storage string.')
-            kwargs[key] = vals[0]
-        return kwargs
-
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
     if p.scheme in ["", "file"]:
         base_path = p.path
         return storage.SharedFSStorageManager(base_path=base_path)
-    elif p.scheme == "ms":
-        container = p.netloc
-        connection_string = p.fragment
-        kwargs = process_query(urllib.parse.parse_qs(p.query))
-        return storage.AzureStorageManager(
-            container=container,
-            connection_string=connection_string,
-            **kwargs,
-        )
     elif p.scheme == "gs":
         bucket = p.netloc
         prefix = p.path.lstrip("/")
-        kwargs = process_query(urllib.parse.parse_qs(p.query))
-        return storage.GCSStorageManager(bucket=bucket, prefix=prefix, **kwargs)
+        return storage.GCSStorageManager(bucket=bucket, prefix=prefix)
     elif p.scheme == "s3":
         bucket = p.netloc
-        prefix = p.path.lstrip("/")
-        kwargs = process_query(urllib.parse.parse_qs(p.query))
-        return storage.S3StorageManager(
-            bucket=bucket,
-            prefix=prefix,
-            **kwargs,
-        )
+        return storage.S3StorageManager(bucket=bucket)
     else:
         raise ValueError(
-            f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", or none.'
+            f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", "file", '
+            f"or omit it. "
         )

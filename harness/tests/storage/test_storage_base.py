@@ -58,84 +58,26 @@ def test_list_nonexistent_directory() -> None:
 
 
 @pytest.mark.parametrize(
-    "connection_string",
-    [None, "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=myaccountkey"],
+    "prefix",
+    [None, "myprefix"],
+    ids=["gs://<bucket>", "gs://<bucket>/<prefix>"],
 )
-@pytest.mark.parametrize("account_url", [None, "http://127.0.0.1:8080/"])
-@pytest.mark.parametrize("credential", [None, "credential"])
-@pytest.mark.parametrize("temp_dir", [None, "mytempdir/mytempsubdir"])
-def test_azure_shortcut_string(
-    connection_string: Optional[str],
-    account_url: Optional[str],
-    credential: Optional[str],
-    temp_dir: Optional[str],
-) -> None:
-    container = "mycontainer"
-    shortcut = f"ms://{container}"
-    if connection_string:
-        shortcut += f"/{connection_string}"
-    fields = {"account_url": account_url, "credential": credential, "temp_dir": temp_dir}
-    if fields:
-        shortcut += "?{}".format(",".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
-    with mock.patch("determined.common.storage.AzureStorageManager") as mocked:
-        _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(
-        container=container,
-        connection_string=connection_string,
-        account_url=account_url,
-        credential=credential,
-        temp_dir=temp_dir,
-    )
-
-
-@pytest.mark.parametrize("prefix", [None, "myprefix"])
-@pytest.mark.parametrize("temp_dir", [None, "mytempdir/mytempsubdir"])
-def test_gcs_shortcut_string(prefix: Optional[str], temp_dir: Optional[str]) -> None:
+def test_gcs_shortcut_string(prefix: Optional[str]) -> None:
     bucket = "mybucket"
     shortcut = f"gs://{bucket}"
     if prefix:
         shortcut += f"/{prefix}"
-    if temp_dir:
-        shortcut += f"?temp_dir={temp_dir}"  # Can be replaced with f"&{temp_dir=}" with Python 3.8
     with mock.patch("determined.common.storage.GCSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(bucket=bucket, prefix=prefix, temp_dir=temp_dir)
+    assert mocked.called_once_with(bucket=bucket)
 
 
-@pytest.mark.parametrize("prefix", [None, "myprefix"])
-@pytest.mark.parametrize("access_key", [None, "myaccesskey"])
-@pytest.mark.parametrize("secret_key", [None, "mysecretkey"])
-@pytest.mark.parametrize("endpoint_url", [None, "http://127.0.0.1:8080/"])
-@pytest.mark.parametrize("temp_dir", [None, "mytempdir/mytempsubdir"])
-def test_s3_shortcut_string(
-    access_key: Optional[str],
-    secret_key: Optional[str],
-    endpoint_url: Optional[str],
-    prefix: Optional[str],
-    temp_dir: Optional[str],
-) -> None:
+def test_s3_shortcut_string() -> None:
     bucket = "mybucket"
     shortcut = f"s3://{bucket}"
-    if prefix:
-        shortcut += f"/{prefix}"
-    fields = {
-        "access_key": access_key,
-        "secret_key": secret_key,
-        "endpoint_url": endpoint_url,
-        "temp_dir": temp_dir,
-    }
-    if fields:
-        shortcut += "?{}".format("&".join(["{}={}".format(k, v) for k, v in fields.items() if v]))
     with mock.patch("determined.common.storage.S3StorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(
-        bucket=bucket,
-        prefix=prefix,
-        access_key=access_key,
-        secret_key=secret_key,
-        endpoint_url=endpoint_url,
-        temp_dir=temp_dir,
-    )
+    assert mocked.called_once_with(bucket=bucket)
 
 
 def test_shared_fs_shortcut_string() -> None:
@@ -143,19 +85,3 @@ def test_shared_fs_shortcut_string() -> None:
     with mock.patch("determined.common.storage.SharedFSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
     assert mocked.called_once_with(base_path=shortcut)
-
-
-@pytest.mark.parametrize(
-    "shortcut",
-    [
-        "s3://mybucket/myprefix?key=A&key=B",
-        "localhost:1234/a/b/c?key=value#header",
-    ],
-)
-def test_bad_shortcut_strings(shortcut: str) -> None:
-    try:
-        _ = storage.from_string(shortcut)
-    except Exception:
-        pass
-    else:
-        pytest.fail()
