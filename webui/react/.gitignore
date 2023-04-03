@@ -9,6 +9,7 @@
 
 # production
 build/
+build-storybook/
 
 # misc
 .DS_Store

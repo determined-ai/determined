@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 import Button from 'components/kit/Button';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
-import { generateTestExperimentData } from 'test_utils/generateTestData';
+import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalCheckpoint, { Props } from './useModalCheckpoint';
 

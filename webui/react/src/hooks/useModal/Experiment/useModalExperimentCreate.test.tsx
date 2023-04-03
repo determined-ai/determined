@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 
 import Button from 'components/kit/Button';
 import { setAuth } from 'stores/auth';
-import { generateTestExperimentData } from 'test_utils/generateTestData';
+import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
 
