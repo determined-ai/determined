@@ -1363,6 +1363,16 @@ jobs:
     steps:
       - checkout-with-sm
       - skip-if-docs-only
+      - run:
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            if git diff --quiet $MERGE_BASE -- webui/react/src/components/kit; then
+              echo "DesignKit not changed, halting job now."
+              circleci-agent step halt
+            else
+              echo "DesignKit changed, running downstream check."
+            fi
+          name: check for designkit changes
       - react-get-deps
       - run:
           command: make -C webui/react visual-test
