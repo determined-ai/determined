@@ -1,4 +1,3 @@
-# WORKDIR_PATH = "/run/determined/workdir/"
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 

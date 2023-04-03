@@ -39,15 +39,14 @@ def dsat_reporting_context(
     try:
         yield
     except SystemExit as se:
-        possible_paths = [
-            pathlib.Path(p)
-            for p in (_defaults.MODEL_INFO_PROFILING_PATH, _defaults.AUTOTUNING_RESULTS_PATH)
-        ]
+        model_profiling_path = pathlib.Path(_defaults.MODEL_INFO_PROFILING_PATH)
+        autotuning_results_path = pathlib.Path(_defaults.AUTOTUNING_RESULTS_PATH)
+        possible_paths = [model_profiling_path, autotuning_results_path]
         existing_paths = [p for p in possible_paths if p.exists()]
         # Exactly one of these files should be generated for each properly exited DS AT Trial.
         if len(existing_paths) == 1:
             path = existing_paths[0]
-            add_gpu_info = path == _defaults.MODEL_INFO_PROFILING_PATH
+            add_gpu_info = path == model_profiling_path
             report_json_results(
                 core_context=core_context,
                 op=op,
@@ -114,7 +113,7 @@ def get_batch_config_from_mbs_gas_and_slots(
     number of `slots`, `train_micro_batch_size_per_gpu`, and `gradient_accumulation_steps`  (or its
     default value, if not specified).
     """
-    # TODO: Account for model parallelism.
+    # TODO: Do we need to account for model parallelism? Unclear from DS docs.
     mbs = ds_config["train_micro_batch_size_per_gpu"]
     gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
     tbs = mbs * gas * slots
