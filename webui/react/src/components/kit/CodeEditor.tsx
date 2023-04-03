@@ -44,7 +44,9 @@ export type Props = {
   editable?: boolean;
   experimentId?: number;
   files?: FileInfo[];
+  onSelectFile?: (arg0: string) => void;
   runtimeConfig?: RawJson;
+  selectedFilePath?: string;
   submittedConfig?: string;
 };
 
@@ -146,6 +148,8 @@ const isConfig = (key: unknown): key is Config =>
  *
  * files: an array of one or more files to display code;
  *
+ * onSelectFile: called with filename when user changes files in the tree;
+ *
  * submittedConfig: the experiments.original_config property
  *
  * runtimeConfig: the config corresponding to the merged runtime config.
@@ -155,15 +159,17 @@ const CodeEditor: React.FC<Props> = ({
   editable,
   experimentId,
   files,
-  submittedConfig: _submittedConfig,
+  onSelectFile,
   runtimeConfig: _runtimeConfig,
+  selectedFilePath,
+  submittedConfig: _submittedConfig,
 }) => {
   const firstConfig = useMemo(
     () => (_submittedConfig ? Config.Submitted : Config.Runtime),
     [_submittedConfig],
   );
   const [fileViewerInfo, setFileViewerInfo] = useState<{ filePath: string; fileText?: string }>({
-    filePath: firstConfig,
+    filePath: selectedFilePath || firstConfig,
   });
 
   const submittedConfig = useMemo(() => {
@@ -400,7 +406,9 @@ const CodeEditor: React.FC<Props> = ({
   useEffect(() => {
     if (!fileViewerInfo.filePath) return;
 
-    if (fileViewerInfo.filePath && activeFile?.key !== fileViewerInfo.filePath) {
+    if (activeFile?.key !== fileViewerInfo.filePath) {
+      onSelectFile?.(fileViewerInfo.filePath);
+
       if (isConfig(fileViewerInfo.filePath)) {
         handleSelectConfig(fileViewerInfo.filePath);
       } else {
@@ -419,7 +427,15 @@ const CodeEditor: React.FC<Props> = ({
         }
       }
     }
-  }, [treeData, files?.length, fileViewerInfo, activeFile, fetchFile, handleSelectConfig]);
+  }, [
+    treeData,
+    files?.length,
+    fileViewerInfo,
+    activeFile,
+    fetchFile,
+    handleSelectConfig,
+    onSelectFile,
+  ]);
 
   // Set the code renderer to ipynb if needed
   useEffect(() => {
