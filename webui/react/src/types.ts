@@ -195,10 +195,6 @@ interface CheckpointStorage {
   type?: CheckpointStorageType;
 }
 
-export type HpImportance = Record<string, number>;
-export type HpImportanceMetricMap = Record<string, HpImportance>;
-export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
-
 export const HyperparameterType = {
   Categorical: 'categorical',
   Constant: 'const',

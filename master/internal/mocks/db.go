@@ -914,58 +914,6 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	return r0, r1
 }
 
-// FetchHPImportanceTrainingData provides a mock function with given fields: experimentID, metric
-func (_m *DB) FetchHPImportanceTrainingData(experimentID int, metric string) (map[int][]model.HPImportanceTrialData, error) {
-	ret := _m.Called(experimentID, metric)
-
-	var r0 map[int][]model.HPImportanceTrialData
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, string) (map[int][]model.HPImportanceTrialData, error)); ok {
-		return rf(experimentID, metric)
-	}
-	if rf, ok := ret.Get(0).(func(int, string) map[int][]model.HPImportanceTrialData); ok {
-		r0 = rf(experimentID, metric)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[int][]model.HPImportanceTrialData)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, string) error); ok {
-		r1 = rf(experimentID, metric)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// FetchHPImportanceValidationData provides a mock function with given fields: experimentID, metric
-func (_m *DB) FetchHPImportanceValidationData(experimentID int, metric string) (map[int][]model.HPImportanceTrialData, error) {
-	ret := _m.Called(experimentID, metric)
-
-	var r0 map[int][]model.HPImportanceTrialData
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, string) (map[int][]model.HPImportanceTrialData, error)); ok {
-		return rf(experimentID, metric)
-	}
-	if rf, ok := ret.Get(0).(func(int, string) map[int][]model.HPImportanceTrialData); ok {
-		r0 = rf(experimentID, metric)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[int][]model.HPImportanceTrialData)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, string) error); ok {
-		r1 = rf(experimentID, metric)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetExperimentStatus provides a mock function with given fields: experimentID
 func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error) {
 	ret := _m.Called(experimentID)
@@ -997,30 +945,6 @@ func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error
 	return r0, r1, r2
 }
 
-// GetHPImportance provides a mock function with given fields: experimentID
-func (_m *DB) GetHPImportance(experimentID int) (model.ExperimentHPImportance, error) {
-	ret := _m.Called(experimentID)
-
-	var r0 model.ExperimentHPImportance
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int) (model.ExperimentHPImportance, error)); ok {
-		return rf(experimentID)
-	}
-	if rf, ok := ret.Get(0).(func(int) model.ExperimentHPImportance); ok {
-		r0 = rf(experimentID)
-	} else {
-		r0 = ret.Get(0).(model.ExperimentHPImportance)
-	}
-
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(experimentID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetOrCreateClusterID provides a mock function with given fields:
 func (_m *DB) GetOrCreateClusterID() (string, error) {
 	ret := _m.Called()
@@ -1043,41 +967,6 @@ func (_m *DB) GetOrCreateClusterID() (string, error) {
 	}
 
 	return r0, r1
-}
-
-// GetPartialHPImportance provides a mock function with given fields:
-func (_m *DB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
-	ret := _m.Called()
-
-	var r0 []int
-	var r1 []model.ExperimentHPImportance
-	var r2 error
-	if rf, ok := ret.Get(0).(func() ([]int, []model.ExperimentHPImportance, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []int); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() []model.ExperimentHPImportance); ok {
-		r1 = rf()
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]model.ExperimentHPImportance)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func() error); ok {
-		r2 = rf()
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
 }
 
 // GetTrialProfilerMetricsBatches provides a mock function with given fields: labelsJSON, offset, limit
@@ -1527,20 +1416,6 @@ func (_m *DB) SaveSnapshot(experimentID int, version int, experimentSnapshot []b
 	var r0 error
 	if rf, ok := ret.Get(0).(func(int, int, []byte) error); ok {
 		r0 = rf(experimentID, version, experimentSnapshot)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetHPImportance provides a mock function with given fields: experimentID, value
-func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportance) error {
-	ret := _m.Called(experimentID, value)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, model.ExperimentHPImportance) error); ok {
-		r0 = rf(experimentID, value)
 	} else {
 		r0 = ret.Error(0)
 	}
