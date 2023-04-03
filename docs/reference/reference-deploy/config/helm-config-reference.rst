@@ -64,6 +64,10 @@
 
    -  ``memRequest``: The memory requirements for the Determined database.
 
+   -  ``cpuLimit``: The CPU limits for the Determined database.
+
+   -  ``memLimit``: The memory limits for the Determined database.
+
    -  ``useNodePortForDB``: Optional configuration that configures whether ClusterIP or NodePort
       service type is used for the Determined database. By default ClusterIP is used.
 
@@ -141,6 +145,10 @@
 -  ``masterCpuRequest``: The CPU requirements for the Determined master.
 
 -  ``masterMemRequest``: The memory requirements for the Determined master.
+
+-  ``masterCpuLimit``: The CPU limits for the Determined master.
+
+-  ``masterMemLimit``: The memory limits for the Determined master.
 
 -  ``taskContainerDefaults``: Specifies Docker defaults for all task containers. A task represents a
    single schedulable unit, such as a trial, command, or tensorboard.

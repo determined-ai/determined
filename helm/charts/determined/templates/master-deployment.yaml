@@ -69,6 +69,13 @@ spec:
             {{- if .Values.masterMemRequest }}
             memory: {{ .Values.masterMemRequest  | quote }}
             {{- end}}
+          limits:
+            {{- if .Values.masterCpuLimit }}
+            cpu: {{ .Values.masterCpuLimit  | quote }}
+            {{- end }}
+            {{- if .Values.masterMemLimit }}
+            memory: {{ .Values.masterMemLimit  | quote }}
+            {{- end}}
       {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
         - name: {{ .Values.imagePullSecretName }}

@@ -88,6 +88,8 @@ db:
   storageSize: 30Gi
   cpuRequest: 2
   memRequest: 8Gi
+  cpuLimit: 2
+  memLimit: 8Gi
 
   # useNodePortForDB configures whether ClusterIP or NodePort service type is used for the
   # Determined deployed DB. By default ClusterIP is used.
@@ -169,6 +171,8 @@ maxSlotsPerPod:
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
 masterCpuRequest: 2
 masterMemRequest: 8Gi
+masterCpuLimit: 2
+masterMemLimit: 8Gi
 
 ## Configure the task container defaults. Tasks include trials, commands, TensorBoards, notebooks,
 ## and shells. For all task containers, shm_size_bytes and network_mode are configurable. For
