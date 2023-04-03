@@ -45,13 +45,13 @@ def test_launch_script(mock_validate_config: mock.MagicMock) -> None:
     with test_util.set_resources_id_env_var():
         with test_util.set_mock_cluster_info(["0.0.0.1"], 0, 1) as info:
             # Successful entrypoints exit 0.
-            info.trial._config["entrypoint"] = ["/bin/true"]
+            info.trial._config["entrypoint"] = ["true"]
             with pytest.raises(SystemExit) as e:
                 runpy.run_module("determined.exec.launch", run_name="__main__", alter_sys=True)
             assert e.value.code == 0, e
 
             # Failing entrypoints exit 1.
-            info.trial._config["entrypoint"] = ["/bin/false"]
+            info.trial._config["entrypoint"] = ["false"]
             with pytest.raises(SystemExit) as e:
                 runpy.run_module("determined.exec.launch", run_name="__main__", alter_sys=True)
             assert e.value.code == 1, e

@@ -20,6 +20,7 @@ FullUser = namedtuple(
         "username",
         "admin",
         "active",
+        "remote",
         "agent_uid",
         "agent_gid",
         "agent_user",
@@ -128,7 +129,8 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
-    client.create_user(username=username, admin=admin)
+    remote = bool(parsed_args.remote)
+    client.create_user(username=username, admin=admin, remote=remote)
 
 
 @login_sdk_client
@@ -169,6 +171,11 @@ args_description = [
         Cmd("create", create_user, "create user", [
             Arg("username", help="name of new user"),
             Arg("--admin", action="store_true", help="give new user admin rights"),
+            Arg(
+                "--remote",
+                action="store_true",
+                help="disallow using passwords, user must use the configured external IdP",
+            ),
         ]),
         Cmd("link-with-agent-user", link_with_agent_user, "link a user with UID/GID on agent", [
             Arg("det_username", help="name of Determined user to link"),

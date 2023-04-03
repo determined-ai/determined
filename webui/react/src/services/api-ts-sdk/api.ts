@@ -5939,6 +5939,12 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     isHashed?: boolean;
+    /**
+     * Bool denoting whether the user should be able to login with or change a password.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    remote?: boolean;
 }
 /**
  * Response to PatchUserRequest.
@@ -9536,6 +9542,12 @@ export interface V1User {
      * @memberof V1User
      */
     modifiedAt?: Date;
+    /**
+     * Bool denoting whether the user should be able to login with or change a password.
+     * @type {boolean}
+     * @memberof V1User
+     */
+    remote?: boolean;
 }
 /**
  * UserRoleAssignment contains information about the users belonging to a role.

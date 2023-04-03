@@ -7411,6 +7411,7 @@ class v1PatchUser:
     displayName: "typing.Optional[str]" = None
     isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
+    remote: "typing.Optional[bool]" = None
     username: "typing.Optional[str]" = None
 
     def __init__(
@@ -7422,6 +7423,7 @@ class v1PatchUser:
         displayName: "typing.Union[str, None, Unset]" = _unset,
         isHashed: "typing.Union[bool, None, Unset]" = _unset,
         password: "typing.Union[str, None, Unset]" = _unset,
+        remote: "typing.Union[bool, None, Unset]" = _unset,
         username: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(active, Unset):
@@ -7436,6 +7438,8 @@ class v1PatchUser:
             self.isHashed = isHashed
         if not isinstance(password, Unset):
             self.password = password
+        if not isinstance(remote, Unset):
+            self.remote = remote
         if not isinstance(username, Unset):
             self.username = username
 
@@ -7455,6 +7459,8 @@ class v1PatchUser:
             kwargs["isHashed"] = obj["isHashed"]
         if "password" in obj:
             kwargs["password"] = obj["password"]
+        if "remote" in obj:
+            kwargs["remote"] = obj["remote"]
         if "username" in obj:
             kwargs["username"] = obj["username"]
         return cls(**kwargs)
@@ -7474,6 +7480,8 @@ class v1PatchUser:
             out["isHashed"] = self.isHashed
         if not omit_unset or "password" in vars(self):
             out["password"] = self.password
+        if not omit_unset or "remote" in vars(self):
+            out["remote"] = self.remote
         if not omit_unset or "username" in vars(self):
             out["username"] = self.username
         return out
@@ -12082,6 +12090,7 @@ class v1User:
     displayName: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
     modifiedAt: "typing.Optional[str]" = None
+    remote: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -12093,6 +12102,7 @@ class v1User:
         displayName: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
         modifiedAt: "typing.Union[str, None, Unset]" = _unset,
+        remote: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.active = active
         self.admin = admin
@@ -12105,6 +12115,8 @@ class v1User:
             self.id = id
         if not isinstance(modifiedAt, Unset):
             self.modifiedAt = modifiedAt
+        if not isinstance(remote, Unset):
+            self.remote = remote
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1User":
@@ -12121,6 +12133,8 @@ class v1User:
             kwargs["id"] = obj["id"]
         if "modifiedAt" in obj:
             kwargs["modifiedAt"] = obj["modifiedAt"]
+        if "remote" in obj:
+            kwargs["remote"] = obj["remote"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -12137,6 +12151,8 @@ class v1User:
             out["id"] = self.id
         if not omit_unset or "modifiedAt" in vars(self):
             out["modifiedAt"] = self.modifiedAt
+        if not omit_unset or "remote" in vars(self):
+            out["remote"] = self.remote
         return out
 
 class v1UserRoleAssignment:

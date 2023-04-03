@@ -82,3 +82,6 @@ gobin
 
 # Hydra output
 model_hub/examples/mmdetection/hydra/outputs
+
+# junit test results
+*.junit.xml

@@ -1,9 +1,8 @@
 import React from 'react';
 
+import Nameplate from 'components/kit/Nameplate';
+import UserAvatar from 'components/kit/UserAvatar';
 import { User } from 'types';
-
-import Nameplate from './kit/Nameplate';
-import UserAvatar from './kit/UserAvatar';
 
 export interface Props {
   compact?: boolean;

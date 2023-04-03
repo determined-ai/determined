@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import React from 'react';
 
+import Card from 'components/kit/Card';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
@@ -9,7 +10,6 @@ import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 
 import DynamicIcon from './DynamicIcon';
-import Card from './kit/Card';
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
 

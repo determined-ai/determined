@@ -44,6 +44,8 @@ type UserAuthZ interface {
 	// PATCH /users/:username
 	CanSetUsersAdmin(ctx context.Context, curUser, targetUser model.User, toAdminVal bool) error
 	// PATCH /users/:username
+	CanSetUsersRemote(ctx context.Context, curUser model.User) error
+	// PATCH /users/:username
 	CanSetUsersAgentUserGroup(
 		ctx context.Context, curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,
 	) error

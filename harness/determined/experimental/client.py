@@ -181,7 +181,9 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
 
 
 @_require_singleton
-def create_user(username: str, admin: bool, password: Optional[str] = None) -> User:
+def create_user(
+    username: str, admin: bool, password: Optional[str] = None, remote: bool = False
+) -> User:
     """
     Creates an user with username and password, admin. The function returns a
     :class:`~determined.experimental.client.User` of the User.
@@ -192,7 +194,7 @@ def create_user(username: str, admin: bool, password: Optional[str] = None) -> U
         admin (bool): indicates whether the user is an admin.
     """
     assert _determined is not None
-    return _determined.create_user(username, admin, password)
+    return _determined.create_user(username, admin, password, remote)
 
 
 @_require_singleton

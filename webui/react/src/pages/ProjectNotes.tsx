@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
-import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
+import ProjectNoteDeleteModalComponent from 'components/ProjectNoteDeleteModal';
 import { addProjectNote, setProjectNotes } from 'services/api';
 import { Note, Project } from 'types';
 import handleError from 'utils/error';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
+  const [pageNumber, setPageNumber] = useState<number>(0);
   const handleNewNotesPage = useCallback(async () => {
     if (!project?.id) return;
     try {
@@ -39,19 +41,19 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
     [fetchProject, project?.id],
   );
 
-  const { contextHolder: modalProjectNodeDeleteContextHolder, modalOpen: openNoteDelete } =
-    useModalProjectNoteDelete({ onClose: fetchProject, project });
+  const ProjectNoteDeleteModal = useModal(ProjectNoteDeleteModalComponent);
 
   const handleDeleteNote = useCallback(
     (pageNumber: number) => {
       if (!project?.id) return;
       try {
-        openNoteDelete({ pageNumber });
+        setPageNumber(pageNumber);
+        ProjectNoteDeleteModal.open();
       } catch (e) {
         handleError(e);
       }
     },
-    [openNoteDelete, project?.id],
+    [ProjectNoteDeleteModal, project?.id],
   );
 
   const notesTabBarContent = useMemo(
@@ -76,7 +78,11 @@ const ProjectNotes: React.FC<Props> = ({ project, fetchProject }) => {
         onNewPage={handleNewNotesPage}
         onSave={handleSaveNotes}
       />
-      {modalProjectNodeDeleteContextHolder}
+      <ProjectNoteDeleteModal.Component
+        pageNumber={pageNumber}
+        project={project}
+        onClose={fetchProject}
+      />
     </>
   );
 };
