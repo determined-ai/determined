@@ -1439,6 +1439,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v"
+      - store_test_results:
+          path: master/test.junit.xml
+      - store_test_results:
+          path: agent/test.junit.xml
 
   test-intg-master:
     machine:
@@ -1455,6 +1459,8 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C master test-intg
+      - store_test_results:
+          path: master/test-intg.junit.xml
       - persist_to_workspace:
           root: .
           paths:
@@ -1475,6 +1481,8 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
+      - store_test_results:
+          path: agent/test-intg.junit.xml
       - persist_to_workspace:
           root: .
           paths:

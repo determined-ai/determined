@@ -117,14 +117,14 @@ fmt:
 
 .PHONY: test
 test:
-	go test -short -coverprofile=coverage.out -covermode count -cover ./...
+	gotestsum --junitfile test.junit.xml -- -short -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
-	go test -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
+	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package
 pre-package:
