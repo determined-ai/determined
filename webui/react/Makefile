@@ -4,6 +4,7 @@ export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
 export PLAYWRIGHT_BROWSERS_PATH=0
 source_files := $(shell find src public -type f)
+merge_base := $(shell git merge-base master HEAD)
 
 .PHONY: default
 default: get-deps
@@ -115,8 +116,7 @@ screenshots/HEAD: node_modules visual-test-deps
 	node scripts/designkit-screenshot.mjs HEAD
 
 screenshots/MASTER: node_modules visual-test-deps
-	MERGE_BASE != git merge-base master HEAD
-	git checkout $(MERGE_BASE)
+	git checkout $(merge_base)
 # BEGIN code to fake diffs. remove before merge
 	git checkout - -- src/designkit-standalone
 	git checkout - -- scripts
