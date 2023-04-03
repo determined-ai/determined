@@ -80,69 +80,52 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     fetchUserRoles();
   }, [fetchUserRoles]);
 
-  const handleCancel = useCallback(() => {
-    form.resetFields();
-  }, [form]);
+  const handleSubmit = async (viewOnly?: boolean) => {
+    if (viewOnly) {
+      form.resetFields();
+      return;
+    }
+    await form.validateFields();
 
-  const handleSubmit = useCallback(
-    async (viewOnly?: boolean) => {
-      if (viewOnly) {
-        handleCancel();
-        return;
-      }
-      await form.validateFields();
+    const formData = form.getFieldsValue();
 
-      const formData = form.getFieldsValue();
+    const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
+    const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+    const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+    const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
-      const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
-      const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
-      const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
-      const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
-
-      try {
-        if (user) {
-          await patchUser({ userId: user.id, userParams: formData });
-          if (canModifyPermissions) {
-            rolesToAdd.size > 0 &&
-              (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
-            rolesToRemove.size > 0 &&
-              (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
-          }
-          fetchUserRoles();
-          if (currentUser && currentUser.id === user.id) checkAuth();
-          message.success('User has been updated');
-        } else {
-          formData['active'] = true;
-          const u = await postUser({ user: formData });
-          const uid = u.user?.id;
-          if (uid && rolesToAdd.size > 0) {
-            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
-          }
-
-          message.success(API_SUCCESS_MESSAGE_CREATE);
-          form.resetFields();
+    try {
+      if (user) {
+        await patchUser({ userId: user.id, userParams: formData });
+        if (canModifyPermissions) {
+          rolesToAdd.size > 0 &&
+            (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
+          rolesToRemove.size > 0 &&
+            (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
-        onClose?.();
-      } catch (e) {
-        message.error(user ? 'Error updating user' : 'Error creating new user');
-        handleError(e, { silent: true, type: ErrorType.Input });
+        fetchUserRoles();
+        if (currentUser && currentUser.id === user.id) checkAuth();
+        message.success('User has been updated');
+      } else {
+        formData['active'] = true;
+        const u = await postUser({ user: formData });
+        const uid = u.user?.id;
+        if (uid && rolesToAdd.size > 0) {
+          await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
+        }
 
-        // Re-throw error to prevent modal from getting dismissed.
-        throw e;
+        message.success(API_SUCCESS_MESSAGE_CREATE);
+        form.resetFields();
       }
-    },
-    [
-      form,
-      onClose,
-      user,
-      handleCancel,
-      userRoles,
-      canModifyPermissions,
-      fetchUserRoles,
-      checkAuth,
-      currentUser,
-    ],
-  );
+      onClose?.();
+    } catch (e) {
+      message.error(user ? 'Error updating user' : 'Error creating new user');
+      handleError(e, { silent: true, type: ErrorType.Input });
+
+      // Re-throw error to prevent modal from getting dismissed.
+      throw e;
+    }
+  };
 
   useEffect(() => {
     form.setFieldsValue({
@@ -172,8 +155,8 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
             : MODAL_HEADER_LABEL_EDIT
           : MODAL_HEADER_LABEL_CREATE
       }
-      onClose={handleCancel}>
-      <Form form={form} labelCol={{ span: 24 }}>
+      onClose={form.resetFields}>
+      <Form form={form}>
         <Form.Item
           initialValue={user?.username}
           label={USER_NAME_LABEL}

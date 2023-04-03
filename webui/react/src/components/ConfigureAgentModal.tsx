@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -23,17 +23,13 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   const [form] = Form.useForm();
   const [disabled, setDisabled] = useState<boolean>(true);
 
-  const handleFieldsChange = useCallback(() => {
+  const handleFieldsChange = () => {
     const values = form.getFieldsValue();
     const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => !v);
     setDisabled(missingRequiredFields);
-  }, [form, setDisabled]);
+  };
 
-  const handleCancel = useCallback(() => {
-    form.resetFields();
-  }, [form]);
-
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     await form.validateFields();
 
     const formData = form.getFieldsValue();
@@ -51,7 +47,7 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [form, user, onClose]);
+  };
 
   useEffect(() => {
     if (user?.agentUserGroup) {
@@ -81,9 +77,9 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
         text: 'Save',
       }}
       title="Configure Agent"
-      onClose={handleCancel}>
+      onClose={form.resetFields}>
       <Spinner spinning={!user}>
-        <Form form={form} labelCol={{ span: 24 }} onFieldsChange={handleFieldsChange}>
+        <Form form={form} onFieldsChange={handleFieldsChange}>
           <Form.Item
             label="Agent User ID"
             name="agentUid"

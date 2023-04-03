@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { Modal } from 'components/kit/Modal';
 import { deleteGroup } from 'services/api';
@@ -16,7 +16,7 @@ interface Props {
 }
 
 const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
-  const onSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
@@ -29,7 +29,7 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [onClose, group]);
+  };
 
   return (
     <Modal
@@ -37,7 +37,7 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       danger
       size="small"
       submit={{
-        handler: onSubmit,
+        handler: handleSubmit,
         text: 'Delete',
       }}
       title={MODAL_HEADER}>

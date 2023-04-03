@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -40,15 +40,20 @@ const PasswordChangeModalComponent: React.FC = () => {
   });
   const [disabled, setDisabled] = useState<boolean>(true);
 
-  const handleFieldsChange = useCallback(() => {
+  const submitValidatedFields = [OLD_PASSWORD_NAME];
+  const requiredFields = [NEW_PASSWORD_NAME, CONFIRM_PASSWORD_NAME];
+
+  const handleFieldsChange = () => {
     const fields = form.getFieldsError();
-    const hasError = fields.some((f) => f.errors.length);
-    setDisabled(hasError);
-  }, [form]);
+    const hasError = fields.some(
+      (f) => f.name[0] && !submitValidatedFields.includes(f.name[0] as string) && f.errors.length,
+    );
+    const values = form.getFieldsValue();
+    const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => !v);
+    setDisabled(hasError || missingRequiredFields);
+  };
 
-  const handleCancel = useCallback(() => form.resetFields(), [form]);
-
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     await form.validateFields();
 
     try {
@@ -63,7 +68,7 @@ const PasswordChangeModalComponent: React.FC = () => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [authUser?.id, form]);
+  };
 
   return (
     <Modal
@@ -75,8 +80,8 @@ const PasswordChangeModalComponent: React.FC = () => {
         text: OK_BUTTON_LABEL,
       }}
       title={MODAL_HEADER_LABEL}
-      onClose={handleCancel}>
-      <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
+      onClose={form.resetFields}>
+      <Form form={form} onFieldsChange={handleFieldsChange}>
         <Form.Item
           label={OLD_PASSWORD_LABEL}
           name={OLD_PASSWORD_NAME}

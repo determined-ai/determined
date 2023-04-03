@@ -81,10 +81,6 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     fetchGroup();
   }, [fetchGroup]);
 
-  const handleCancel = useCallback(() => {
-    form.resetFields();
-  }, [form]);
-
   const fetchGroupRoles = useCallback(async () => {
     if (group?.group.groupId && rbacEnabled) {
       try {
@@ -100,7 +96,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     fetchGroupRoles();
   }, [fetchGroupRoles]);
 
-  const onSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     await form.validateFields();
 
     try {
@@ -140,7 +136,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [form, onClose, group, canModifyPermissions, fetchGroupRoles, groupRoles]);
+  };
 
   return (
     <Modal
@@ -148,12 +144,12 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
       size="small"
       submit={{
         disabled: !groupName,
-        handler: onSubmit,
+        handler: handleSubmit,
         text: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       }}
       title={group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}
-      onClose={handleCancel}>
-      <Form form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
+      onClose={form.resetFields}>
+      <Form form={form}>
         <Form.Item
           label={GROUP_NAME_LABEL}
           name={GROUP_NAME_NAME}
