@@ -139,10 +139,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Update darkLight and theme when branding, system mode, or mode changes.
   useLayoutEffect(() => {
-    if (!info.branding) return;
+    const branding = info.branding || 'determined';
 
     const darkLight = getDarkLight(ui.mode, systemMode);
-    uiActions.setTheme(darkLight, themes[info.branding][darkLight]);
+    uiActions.setTheme(darkLight, themes[branding][darkLight]);
   }, [info.branding, uiActions, systemMode, ui.mode]);
 
   // Update setting mode when mode changes.
