@@ -66,7 +66,7 @@ class LoaderIgnoreUnknown(yaml.SafeLoader):
         return None
 
 
-LoaderIgnoreUnknown.add_constructor(None, LoaderIgnoreUnknown.ignore_unknown)  # type: ignore
+LoaderIgnoreUnknown.add_constructor(None, LoaderIgnoreUnknown.ignore_unknown)
 
 
 def get_default_cf_parameter(deployment_object: DeterminedDeployment, parameter: str) -> Any:
