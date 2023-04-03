@@ -32,7 +32,6 @@ setup(
         "jsonschema",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
-        "pyyaml",
         "azure-core",
         "azure-storage-blob",
         "termcolor>=1.1.0",

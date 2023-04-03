@@ -4,11 +4,10 @@ from datetime import datetime
 from typing import Any, List
 
 import pytz
-import yaml
 
 from determined import cli
 from determined.cli import render
-from determined.common import api
+from determined.common import api, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 

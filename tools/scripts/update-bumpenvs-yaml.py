@@ -30,7 +30,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 import requests
-import yaml
+
+from determined.common import yaml
 
 USER = "determined-ai"
 PROJECT = "environments"

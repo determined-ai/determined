@@ -37,9 +37,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import torch
-import yaml
 
 from determined import experimental, pytorch
+from determined.common import yaml
 from determined.pytorch import samplers
 from tests.experiment.fixtures import pytorch_counter_callback
 

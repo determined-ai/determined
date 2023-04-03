@@ -15,7 +15,8 @@ import sys
 from typing import Dict, List, Union
 
 import requests
-import yaml
+
+from determined.common import yaml
 
 
 def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[None, str]:
