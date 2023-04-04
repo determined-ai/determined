@@ -27,11 +27,10 @@ import itertools
 import os
 import sys
 from pathlib import Path
+from ruamel import yaml
 from typing import Any, Dict
 
 import requests
-
-from determined.common import yaml
 
 USER = "determined-ai"
 PROJECT = "environments"

@@ -16,7 +16,7 @@ from typing import Dict, List, Union
 
 import requests
 
-from determined.common import yaml
+from ruamel import yaml
 
 
 def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[None, str]:

@@ -5,7 +5,6 @@ from typing import Dict, Optional
 import pytest
 
 from determined.common import yaml
-
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp

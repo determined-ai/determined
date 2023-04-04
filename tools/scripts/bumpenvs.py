@@ -7,11 +7,10 @@ Usage: bumpenvs.py path/to/bumpenvs.yaml
 """
 
 import os
+from ruamel import yaml
 import subprocess
 import sys
 from typing import List
-
-from determined.common import yaml
 
 
 def samefile(a: str, b: str) -> bool:
