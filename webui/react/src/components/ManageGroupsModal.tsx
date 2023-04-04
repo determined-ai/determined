@@ -12,27 +12,32 @@ import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
-const FIELD_NAME = 'groups';
+const GROUPS_NAME = 'groups';
 
 interface Props {
-  groups: V1GroupSearchResult[];
+  groupOptions: V1GroupSearchResult[];
   user: DetailedUser;
+  userGroups: V1GroupSearchResult[];
 }
 
-const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) => {
-  const [form] = Form.useForm();
+interface FormInputs {
+  [GROUPS_NAME]: number[];
+}
 
-  const groupsValue = Form.useWatch(FIELD_NAME, form);
+const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userGroups }: Props) => {
+  const [form] = Form.useForm<FormInputs>();
+
+  const groupsValue = Form.useWatch(GROUPS_NAME, form);
 
   const rbacEnabled = useFeature().isOn('rbac');
 
   useEffect(() => {
-    if (groups) {
+    if (userGroups) {
       form.setFieldsValue({
-        [FIELD_NAME]: groups?.map((ug) => ug.group.groupId),
+        [GROUPS_NAME]: userGroups?.map((ug) => ug.group.groupId),
       });
     }
-  }, [form, groups]);
+  }, [form, userGroups]);
 
   const handleSubmit = async (userGroupIds?: (number | undefined)[]) => {
     await form.validateFields();
@@ -41,15 +46,15 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) =>
 
     try {
       if (user) {
-        const uid = user?.id;
+        const uid = user.id;
         if (uid) {
-          (formData[FIELD_NAME] as number[]).forEach(async (gid) => {
+          (formData[GROUPS_NAME] as number[]).forEach(async (gid) => {
             if (!userGroupIds?.includes(gid)) {
               await updateGroup({ addUsers: [uid], groupId: gid });
             }
           });
           (userGroupIds as number[])?.forEach(async (gid) => {
-            if (!formData[FIELD_NAME].includes(gid)) {
+            if (!formData[GROUPS_NAME].includes(gid)) {
               await updateGroup({ groupId: gid, removeUsers: [uid] });
             }
           });
@@ -78,15 +83,15 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groups }: Props) =>
         text: 'Save',
       }}
       title="Manage Groups">
-      <Spinner spinning={!groups}>
+      <Spinner spinning={!groupOptions}>
         <Form form={form}>
-          <Form.Item name={FIELD_NAME}>
+          <Form.Item name={GROUPS_NAME}>
             <Select
               mode="multiple"
               optionFilterProp="children"
               placeholder="Select Groups"
               showSearch>
-              {groups.map((go) => (
+              {groupOptions.map((go) => (
                 <Select.Option key={go.group.groupId} value={go.group.groupId}>
                   {go.group.name}
                 </Select.Option>

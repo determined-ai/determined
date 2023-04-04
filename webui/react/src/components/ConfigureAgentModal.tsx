@@ -50,22 +50,14 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
   };
 
   useEffect(() => {
-    if (user?.agentUserGroup) {
-      form.setFieldsValue({
-        agentGid: user?.agentUserGroup.agentGid,
-        agentGroup: user?.agentUserGroup.agentGroup,
-        agentUid: user?.agentUserGroup.agentUid,
-        agentUser: user?.agentUserGroup.agentUser,
+    if (user.agentUserGroup) {
+      // validate initial values, before onFieldsChange
+      const missingRequiredFields = Object.entries(user.agentUserGroup).some(([key, value]) => {
+        return requiredFields.includes(key) && !value;
       });
-    } else {
-      form.setFieldsValue({
-        agentGid: undefined,
-        agentGroup: undefined,
-        agentUid: undefined,
-        agentUser: undefined,
-      });
+      setDisabled(missingRequiredFields);
     }
-  }, [form, user]);
+  }, [user]);
 
   return (
     <Modal
@@ -79,7 +71,24 @@ const ConfigureAgentModalComponent: React.FC<Props> = ({ user, onClose }: Props)
       title="Configure Agent"
       onClose={form.resetFields}>
       <Spinner spinning={!user}>
-        <Form form={form} onFieldsChange={handleFieldsChange}>
+        <Form
+          form={form}
+          initialValues={
+            user?.agentUserGroup
+              ? {
+                  agentGid: user?.agentUserGroup.agentGid,
+                  agentGroup: user?.agentUserGroup.agentGroup,
+                  agentUid: user?.agentUserGroup.agentUid,
+                  agentUser: user?.agentUserGroup.agentUser,
+                }
+              : {
+                  agentGid: undefined,
+                  agentGroup: undefined,
+                  agentUid: undefined,
+                  agentUser: undefined,
+                }
+          }
+          onFieldsChange={handleFieldsChange}>
           <Form.Item
             label="Agent User ID"
             name="agentUid"

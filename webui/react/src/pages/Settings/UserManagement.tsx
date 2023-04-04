@@ -31,12 +31,14 @@ import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sd
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { RolesStore } from 'stores/roles';
 import usersStore, { FetchUsersConfig } from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
+import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -54,11 +56,12 @@ export const CREATE_USER_LABEL = 'add_user';
 
 interface DropdownProps {
   fetchUsers: () => void;
+  groups: V1GroupSearchResult[];
   user: DetailedUser;
   userManagementEnabled: boolean;
 }
 
-const UserActionDropdown = ({ fetchUsers, user, userManagementEnabled }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
   const EditUserModal = useModal(CreateUserModalComponent);
   const ViewUserModal = useModal(CreateUserModalComponent);
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
@@ -66,6 +69,7 @@ const UserActionDropdown = ({ fetchUsers, user, userManagementEnabled }: Dropdow
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
 
   const { canModifyUsers } = usePermissions();
+  const rbacEnabled = useFeature().isOn('rbac');
 
   const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
@@ -107,12 +111,18 @@ const UserActionDropdown = ({ fetchUsers, user, userManagementEnabled }: Dropdow
 
   const menuItems: MenuProps['items'] =
     userManagementEnabled && canModifyUsers
-      ? [
-          { key: MenuKey.Edit, label: 'Edit User' },
-          { key: MenuKey.Groups, label: 'Manage Groups' },
-          { key: MenuKey.Agent, label: 'Configure Agent' },
-          { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        ]
+      ? rbacEnabled
+        ? [
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Groups, label: 'Manage Groups' },
+            { key: MenuKey.Agent, label: 'Configure Agent' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
+        : [
+            { key: MenuKey.Edit, label: 'Edit User' },
+            { key: MenuKey.Agent, label: 'Configure Agent' },
+            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+          ]
       : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
@@ -125,13 +135,18 @@ const UserActionDropdown = ({ fetchUsers, user, userManagementEnabled }: Dropdow
       </Dropdown>
       <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
       <EditUserModal.Component user={user} onClose={fetchUsers} />
-      <ManageGroupsModal.Component groups={selectedUserGroups ?? []} user={user} />
+      <ManageGroupsModal.Component
+        groupOptions={groups}
+        user={user}
+        userGroups={selectedUserGroups ?? []}
+      />
       <ConfigureAgentModal.Component user={user} onClose={fetchUsers} />
     </div>
   );
 };
 
 const UserManagement: React.FC = () => {
+  const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
@@ -164,9 +179,26 @@ const UserManagement: React.FC = () => {
     usersStore.ensureUsersFetched(canceler, apiConfig, true);
   }, [settings, canceler, apiConfig]);
 
+  const fetchGroups = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getGroups({}, { signal: canceler.signal });
+
+      setGroups((prev) => {
+        if (isEqual(prev, response.groups)) return prev;
+        return response.groups || [];
+      });
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch groups.' });
+    }
+  }, [canceler.signal]);
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
 
   useEffect(() => {
     if (rbacEnabled) {
@@ -206,6 +238,7 @@ const UserManagement: React.FC = () => {
       return (
         <UserActionDropdown
           fetchUsers={fetchUsers}
+          groups={groups}
           user={record}
           userManagementEnabled={info.userManagementEnabled}
         />
@@ -263,7 +296,7 @@ const UserManagement: React.FC = () => {
       },
     ];
     return rbacEnabled ? columns.filter((c) => c.dataIndex !== 'isAdmin') : columns;
-  }, [fetchUsers, filterIcon, info.userManagementEnabled, nameFilterSearch, rbacEnabled]);
+  }, [fetchUsers, filterIcon, groups, info.userManagementEnabled, nameFilterSearch, rbacEnabled]);
 
   const table = useMemo(() => {
     return settings ? (

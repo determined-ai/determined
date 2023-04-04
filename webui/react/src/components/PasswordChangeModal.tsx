@@ -31,8 +31,14 @@ export const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
 export const API_SUCCESS_MESSAGE = 'Password updated.';
 export const API_ERROR_MESSAGE = 'Could not update password.';
 
+interface FormInputs {
+  [OLD_PASSWORD_NAME]: string;
+  [NEW_PASSWORD_NAME]: string;
+  [CONFIRM_PASSWORD_NAME]: string;
+}
+
 const PasswordChangeModalComponent: React.FC = () => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FormInputs>();
   const loadableUser = useObservable(usersStore.getCurrentUser());
   const authUser = Loadable.match(loadableUser, {
     Loaded: (user) => user,
@@ -49,7 +55,9 @@ const PasswordChangeModalComponent: React.FC = () => {
       (f) => f.name[0] && !submitValidatedFields.includes(f.name[0] as string) && f.errors.length,
     );
     const values = form.getFieldsValue();
-    const missingRequiredFields = requiredFields.map((rf) => values[rf]).some((v) => !v);
+    const missingRequiredFields = Object.entries(values).some(([key, value]) => {
+      return requiredFields.includes(key) && !value;
+    });
     setDisabled(hasError || missingRequiredFields);
   };
 

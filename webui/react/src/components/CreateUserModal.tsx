@@ -41,6 +41,7 @@ export const USER_NAME_LABEL = 'User Name';
 const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
+const ACTIVE_NAME = 'active';
 
 interface Props {
   user?: DetailedUser;
@@ -48,8 +49,16 @@ interface Props {
   onClose?: () => void;
 }
 
+interface FormInputs {
+  [USER_NAME_NAME]: string;
+  [DISPLAY_NAME_NAME]: string;
+  [ADMIN_NAME]: boolean;
+  [ROLE_NAME]: number[];
+  [ACTIVE_NAME]: boolean;
+}
+
 const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FormInputs>();
   const rbacEnabled = useFeature().isOn('rbac');
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
@@ -107,7 +116,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
         if (currentUser && currentUser.id === user.id) checkAuth();
         message.success('User has been updated');
       } else {
-        formData['active'] = true;
+        formData[ACTIVE_NAME] = true;
         const u = await postUser({ user: formData });
         const uid = u.user?.id;
         if (uid && rolesToAdd.size > 0) {
