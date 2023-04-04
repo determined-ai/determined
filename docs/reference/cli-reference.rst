@@ -7,11 +7,14 @@
 +-----------------------------------------------+
 | User Guide                                    |
 +===============================================+
-| :doc:`/interfaces/cli-ug`                     |
+| :ref:`Determined CLI User Guide <cli-ug>`     |
 +-----------------------------------------------+
 
-For a comprehensive list of nouns and abbreviations, use ``det help`` or ``det -h``. Each noun has a
-``help`` verb detailing its associated verbs.
+The Determined CLI has built-in documentation that you can access by using the help command or
+``-h`` and ``--help`` flags. To see a comprehensive list of nouns and abbreviations, simply call
+``det help`` or ``det -h``. Each noun has its own set of associated verbs, which are detailed in the
+help documentation. For example, to learn more about individual experiment commands, you can type
+``det experiment help``.
 
 .. code:: bash
 

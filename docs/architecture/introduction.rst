@@ -30,10 +30,12 @@ Determined CLI
 
 One of the key components of the Determined platform is the :ref:`cli-ug`. The CLI serves as a
 primary entry point for interacting with Determined, providing a way to efficiently manage and
-control various aspects of the system.
+control various aspects of the system. The following list describes some of the tasks users can
+perform with the Determined CLI:
 
-The capabilities of the Determined CLI extend beyond commands and shells. For example, the CLI lets
-users perform the following tasks:
+-  Experiment Management: Running experiments is a fundamental part of the machine learning process.
+   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   important experiment metrics and logs.
 
 -  Queue Management: The CLI enables users to manage their job queues, monitor the progress of
    ongoing tasks, and even prioritize or cancel jobs as needed.
@@ -45,10 +47,6 @@ users perform the following tasks:
 -  TensorBoard Integration: TensorBoard is a popular visualization tool for TensorFlow projects. The
    CLI allows users to easily launch and manage TensorBoard instances, making it simple to visualize
    and analyze the training progress of their models.
-
--  Experiment Management: Running experiments is a fundamental part of the machine learning process.
-   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
-   important experiment metrics and logs.
 
 Commands and Shells
 ===================
