@@ -6,6 +6,8 @@ import boto3
 
 def get_output_from_stack(stack_name: str, output_key: str) -> Optional[str]:
     stack = boto3.resource("cloudformation").Stack(stack_name)
+    if stack.outputs is None:
+        return None
     outputs = list(filter(lambda d: d.get("OutputKey", None) == output_key, stack.outputs))
     if len(outputs) < 1:
         return None
