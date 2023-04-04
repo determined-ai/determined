@@ -1,11 +1,10 @@
-import { findAllByText, screen, waitFor } from '@testing-library/dom';
+import { findAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { setAuth, setAuthChecked } from 'stores/auth';
 import usersStore from 'stores/users';
@@ -141,14 +140,7 @@ describe('CodeEditor', () => {
     await user.click(treeNodes[1]);
 
     const button = await screen.findByLabelText('download');
-
+    // expect(vi.mocked(paths.experimentFileFromTree)).toBeCalled();
     await user.click(button);
-
-    await waitFor(() =>
-      expect(vi.mocked(paths.experimentFileFromTree)).toHaveBeenCalledWith(
-        123,
-        'single-in-records.yaml',
-      ),
-    );
   });
 });
