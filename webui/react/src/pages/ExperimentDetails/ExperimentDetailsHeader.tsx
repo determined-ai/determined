@@ -2,8 +2,12 @@ import { Button, Space, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import ExperimentDeleteModalComponent from 'components/ExperimentDeleteModal';
+import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentIcons from 'components/ExperimentIcons';
+import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -14,10 +18,7 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
-import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
-import useModalExperimentEdit from 'hooks/useModal/Experiment/useModalExperimentEdit';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
-import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
@@ -155,25 +156,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     workspace: { id: experiment.workspaceId },
   });
 
-  const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
-    useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
+  const ExperimentStopModal = useModal(ExperimentStopModalComponent);
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openModalMove } =
     useModalExperimentMove({ onClose: handleModalClose });
 
-  const { contextHolder: modalExperimentDeleteContextHolder, modalOpen: openModalDelete } =
-    useModalExperimentDelete({ experiment: experiment });
+  const ExperimentDeleteModal = useModal(ExperimentDeleteModalComponent);
 
   const { contextHolder: modalExperimentCreateContextHolder, modalOpen: openModalCreate } =
     useModalExperimentCreate();
 
-  const { contextHolder: modalExperimentEditContextHolder, modalOpen: openModalEdit } =
-    useModalExperimentEdit({
-      description: experiment.description ?? '',
-      experimentId: experiment.id,
-      experimentName: experiment.name,
-      fetchExperimentDetails,
-    });
+  const ExperimentEditModal = useModal(ExperimentEditModalComponent);
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -228,10 +221,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       setIsChangingState(false);
     }
   }, [experiment.id, fetchExperimentDetails]);
-
-  const handleStopClick = useCallback(() => openModalStop(), [openModalStop]);
-
-  const handleDeleteClick = useCallback(() => openModalDelete(), [openModalDelete]);
 
   const handleMoveClick = useCallback(
     () =>
@@ -293,7 +282,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
-        onClick: handleDeleteClick,
+        onClick: ExperimentDeleteModal.open,
       },
       [Action.HyperparameterSearch]: {
         key: 'hyperparameter-search',
@@ -317,7 +306,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       [Action.Edit]: {
         key: 'edit',
         label: 'Edit',
-        onClick: openModalEdit,
+        onClick: ExperimentEditModal.open,
       },
       [Action.Move]: {
         key: 'move',
@@ -367,10 +356,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningArchive,
     handleContinueTrialClick,
     isRunningDelete,
-    handleDeleteClick,
+    ExperimentDeleteModal,
     handleHyperparameterSearch,
     handleForkClick,
-    openModalEdit,
+    ExperimentEditModal,
     handleMoveClick,
     isRunningTensorBoard,
     isRunningUnarchive,
@@ -542,7 +531,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                         disabled={!canPausePlay}
                         icon={<Icon name="stop" size="large" />}
                         shape="circle"
-                        onClick={handleStopClick}
+                        onClick={ExperimentStopModal.open}
                       />
                     )}
                     <label>{stateToLabel(experiment.state)}</label>
@@ -568,10 +557,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       />
       <ExperimentHeaderProgress experiment={experiment} />
       {modalExperimentCreateContextHolder}
-      {modalExperimentDeleteContextHolder}
+      <ExperimentDeleteModal.Component experiment={experiment} />
       {modalExperimentMoveContextHolder}
-      {modalExperimentStopContextHolder}
-      {modalExperimentEditContextHolder}
+      <ExperimentStopModal.Component experimentId={experiment.id} onClose={fetchExperimentDetails} />
+      <ExperimentEditModal.Component
+        {...{
+          description: experiment.description ?? '',
+          experimentId: experiment.id,
+          experimentName: experiment.name,
+          fetchExperimentDetails,
+        }}
+      />
       {modalHyperparameterSearchContextHolder}
     </>
   );
