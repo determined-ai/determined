@@ -25,11 +25,34 @@ except a TensorBoard, is launched.
 Options set via ``--config`` take precedence over values specified in the configuration file.
 Configuration settings are compatible with any Determined task unless otherwise specified.
 
+Determined CLI
+==============
+
+One of the key components of the Determined platform is the :ref:`cli-ug`. The CLI serves as a
+primary entry point for interacting with Determined, providing a way to efficiently manage and
+control various aspects of the system. The following list describes some of the tasks users can
+perform with the Determined CLI:
+
+-  Experiment Management: Running experiments is a fundamental part of the machine learning process.
+   With the CLI, users can effortlessly create, list, and manage experiments, as well as access
+   important experiment metrics and logs.
+
+-  Queue Management: The CLI enables users to manage their job queues, monitor the progress of
+   ongoing tasks, and even prioritize or cancel jobs as needed.
+
+-  Notebook Management: Jupyter notebooks are an essential tool for data scientists and machine
+   learning engineers. The CLI simplifies the process of creating, launching, and managing Jupyter
+   notebooks within the platform.
+
+-  TensorBoard Integration: TensorBoard is a popular visualization tool for TensorFlow projects. The
+   CLI allows users to easily launch and manage TensorBoard instances, making it simple to visualize
+   and analyze the training progress of their models.
+
 Commands and Shells
 ===================
 
 In addition to structured model training workloads, which are handled using :ref:`experiments
-<experiments>`, Determined also supports more free-form tasks using *commands* and *shells*.
+<experiments>`, Determined also supports more free-form tasks using :ref:`commands-and-shells`.
 
 Commands execute a user-specified program on the cluster. Shells start SSH servers that allow using
 cluster resources interactively.
@@ -38,9 +61,6 @@ Commands and shells enable developers to use a Determined cluster and its GPUs w
 write code conforming to the trial APIs. Commands are useful for running existing code in a batch
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
-
-This document provides an overview of the most common CLI commands related to shells and commands;
-see :ref:`cli` for full documentation.
 
 Configuration Templates
 =======================

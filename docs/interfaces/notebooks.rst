@@ -29,8 +29,8 @@ directories into the container and save files in the persistent directories in t
 If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be shut
 down automatically so you need to manually terminate the kernels.
 
-There are two ways to access notebooks in Determined: the command-line interface (CLI) and the
-WebUI. To install the CLI, see :ref:`install-cli`.
+There are two ways to access notebooks in Determined: the :ref:`cli-ug` and the :ref:`web-ui-if`. To
+install the CLI, see :ref:`install-cli`.
 
 **************
  Command Line
@@ -236,7 +236,7 @@ functionality.
  Use the Determined CLI in Notebooks
 *************************************
 
-The Determined CLI is installed into notebook containers by default. This allows users to interact
+The :ref:`cli-ug` is installed into notebook containers by default. This allows users to interact
 with Determined from inside a notebook---e.g., to launch new deep learning workloads or examine the
 metrics from an active or historical Determined experiment. For example, to list Determined
 experiments from inside a notebook, run the notebook command ``!det experiment list``.

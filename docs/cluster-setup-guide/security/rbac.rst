@@ -396,7 +396,7 @@ behind RBAC. These currently include:
 CLI
 ===
 
-Determined CLI has a help built-in. Please see help for the top level commands, as well as their
+:ref:`cli-ug` has a help built-in. Please see help for the top level commands, as well as their
 subcommands:
 
 .. code::

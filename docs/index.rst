@@ -56,11 +56,14 @@
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
    Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
+   CLI Reference <reference/cli-reference>
 
 .. toctree::
    :caption: Tools
    :hidden:
 
+   Overview <interfaces/index>
+   CLI User Guide <interfaces/cli-ug>
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
    Jupyter Notebooks <interfaces/notebooks>
