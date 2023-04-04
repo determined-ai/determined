@@ -69,15 +69,22 @@ def test_gcs_shortcut_string(prefix: Optional[str]) -> None:
         shortcut += f"/{prefix}"
     with mock.patch("determined.common.storage.GCSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(bucket=bucket)
+    assert mocked.called_once_with(bucket=bucket, prefix=prefix)
 
 
-def test_s3_shortcut_string() -> None:
+@pytest.mark.parametrize(
+    "prefix",
+    [None, "myprefix"],
+    ids=["s3://<bucket>", "s3://<bucket>/<prefix>"],
+)
+def test_s3_shortcut_string(prefix: Optional[str]) -> None:
     bucket = "mybucket"
     shortcut = f"s3://{bucket}"
+    if prefix:
+        shortcut += f"/{prefix}"
     with mock.patch("determined.common.storage.S3StorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(bucket=bucket)
+    assert mocked.called_once_with(bucket=bucket, prefix=prefix)
 
 
 def test_shared_fs_shortcut_string() -> None:

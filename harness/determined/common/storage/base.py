@@ -166,16 +166,18 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 def from_string(shortcut: str) -> StorageManager:
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
-    if p.scheme in ["", "file"]:
+    scheme = p.scheme.lower()
+    if scheme in ["", "file"]:
         base_path = p.path
         return storage.SharedFSStorageManager(base_path=base_path)
-    elif p.scheme == "gs":
+    elif scheme == "gs":
         bucket = p.netloc
         prefix = p.path.lstrip("/")
         return storage.GCSStorageManager(bucket=bucket, prefix=prefix)
-    elif p.scheme == "s3":
+    elif scheme == "s3":
         bucket = p.netloc
-        return storage.S3StorageManager(bucket=bucket)
+        prefix = p.path.lstrip("/")
+        return storage.S3StorageManager(bucket=bucket, prefix=prefix)
     else:
         raise ValueError(
             f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", "file", '
