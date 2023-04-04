@@ -259,10 +259,19 @@ class ExperimentReference:
             sort_by = sb
             smaller_is_better = config.get("searcher", {}).get("smaller_is_better", True)
 
+        reverse = not smaller_is_better
+
         def key(ckpt: checkpoint.Checkpoint) -> Any:
             training = ckpt.training
             assert training
-            return training.validation_metrics["avgMetrics"][sort_by]
+            metric = training.validation_metrics.get("avgMetrics") or {}
+            metric = metric.get(sort_by)
+
+            # Return a tuple that ensures checkpoints missing metrics appear last.
+            if reverse:
+                return metric is not None, metric
+            else:
+                return metric is None, metric
 
         checkpoints.sort(reverse=not smaller_is_better, key=key)
 
