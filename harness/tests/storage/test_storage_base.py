@@ -59,7 +59,7 @@ def test_list_nonexistent_directory() -> None:
 
 @pytest.mark.parametrize(
     "prefix",
-    [None, "myprefix"],
+    ["", "myprefix"],
     ids=["gs://<bucket>", "gs://<bucket>/<prefix>"],
 )
 def test_gcs_shortcut_string(prefix: Optional[str]) -> None:
@@ -69,12 +69,12 @@ def test_gcs_shortcut_string(prefix: Optional[str]) -> None:
         shortcut += f"/{prefix}"
     with mock.patch("determined.common.storage.GCSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(bucket=bucket, prefix=prefix)
+    mocked.assert_called_once_with(bucket=bucket, prefix=prefix)
 
 
 @pytest.mark.parametrize(
     "prefix",
-    [None, "myprefix"],
+    ["", "myprefix"],
     ids=["s3://<bucket>", "s3://<bucket>/<prefix>"],
 )
 def test_s3_shortcut_string(prefix: Optional[str]) -> None:
@@ -84,14 +84,14 @@ def test_s3_shortcut_string(prefix: Optional[str]) -> None:
         shortcut += f"/{prefix}"
     with mock.patch("determined.common.storage.S3StorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(bucket=bucket, prefix=prefix)
+    mocked.assert_called_once_with(bucket=bucket, prefix=prefix)
 
 
 def test_shared_fs_shortcut_string() -> None:
     shortcut = "/tmp/somewhere"
     with mock.patch("determined.common.storage.SharedFSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
-    assert mocked.called_once_with(base_path=shortcut)
+    mocked.assert_called_once_with(base_path=shortcut)
 
 
 @pytest.mark.parametrize(
