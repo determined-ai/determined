@@ -537,6 +537,17 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Delete multiple experiments.
+  rpc DeleteExperiments(DeleteExperimentsRequest)
+      returns (DeleteExperimentsResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/experiments/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Delete the requested experiment.
   rpc DeleteExperiment(DeleteExperimentRequest)
       returns (DeleteExperimentResponse) {

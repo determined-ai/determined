@@ -349,6 +349,33 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
+func (a *apiServer) DeleteExperiments(
+	ctx context.Context, req *apiv1.DeleteExperimentsRequest,
+) (*apiv1.DeleteExperimentsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	results, experiments, err := exputil.DeleteExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
+
+	go func() {
+		for _, e := range experiments {
+			if err := a.deleteExperiment(e, curUser); err != nil {
+				logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
+				e.State = model.DeleteFailedState
+				if err := a.m.db.SaveExperimentState(e); err != nil {
+					logrus.WithError(err).Errorf("transitioning experiment %d to %s", e.ID, e.State)
+				}
+			} else {
+				logrus.Infof("experiment %d deleted successfully", e.ID)
+			}
+		}
+	}()
+
+	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
+}
+
 func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
 	if err != nil {
@@ -407,16 +434,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 	return nil
 }
 
-func protoStateDBCaseString(
-	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
-) string {
-	query := fmt.Sprintf("CASE %s::text ", colName)
-	for enum, v := range enumToValue {
-		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
-	}
-	return query + fmt.Sprintf("END AS %s", serializedName)
-}
-
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
 		Column("e.id").
@@ -424,7 +441,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
 		Column("e.archived").
 		ColumnExpr(
 			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials").
@@ -2101,7 +2118,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("c.uuid::text AS uuid").
 		ColumnExpr("c.steps_completed AS total_batches").
 		ColumnExpr("proto_time(c.report_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
+		ColumnExpr(exputil.ProtoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2127,7 +2144,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("least(trials.restarts, (ex.config->>'max_restarts')::int) AS restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(protoStateDBCaseString(trialv1.State_value, "trials.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state", "STATE_")).
 		//nolint:lll
 		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
 		ColumnExpr("(?) AS total_batches_processed", stepsQuery).
