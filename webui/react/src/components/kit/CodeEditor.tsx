@@ -33,7 +33,11 @@ import css from './CodeEditor/CodeEditor.module.scss';
 import './CodeEditor/index.scss';
 
 export type Props = {
+<<<<<<< HEAD
   files: TreeNode[];
+=======
+  files: FileInfo[];
+>>>>>>> 773beb50c (start working on readonly)
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -118,7 +122,53 @@ const isConfig = (key: unknown): key is Config =>
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
+<<<<<<< HEAD
 const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
+=======
+const CodeEditor: React.FC<Props> = ({
+  files,
+  onSelectFile,
+  readonly,
+  runtimeConfig: _runtimeConfig,
+  selectedFilePath,
+  submittedConfig: _submittedConfig,
+}) => {
+  const firstConfig = useMemo(
+    () => (_submittedConfig ? Config.Submitted : Config.Runtime),
+    [_submittedConfig],
+  );
+  const [fileViewerInfo, setFileViewerInfo] = useState<{ filePath: string; fileText?: string }>({
+    filePath: selectedFilePath || firstConfig,
+  });
+
+  const submittedConfig = useMemo(() => {
+    if (!_submittedConfig) return;
+
+    const { hyperparameters, ...restConfig } = yaml.load(_submittedConfig) as RawJson;
+
+    // don't ask me why this works.. it gets rid of the JSON though
+    return yaml.dump({ ...restConfig, hyperparameters });
+  }, [_submittedConfig]);
+
+  const runtimeConfig: string = useMemo(() => {
+    /**
+     * strip registry_auth from config for display
+     * as well as workspace/project names
+     */
+
+    if (_runtimeConfig) {
+      const {
+        environment: { registry_auth, ...restEnvironment },
+        workspace,
+        project,
+        ...restConfig
+      } = _runtimeConfig;
+      return yaml.dump({ environment: restEnvironment, ...restConfig });
+    }
+    return '';
+  }, [_runtimeConfig]);
+
+>>>>>>> 773beb50c (start working on readonly)
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
   const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
@@ -303,11 +353,15 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                  */
                 <Tooltip title="Download File">
                   <DownloadOutlined
+<<<<<<< HEAD
                     className={
                       readonly && activeFile?.content !== NotLoaded
                         ? css.noBorderButton
                         : css.hideElement
                     }
+=======
+                    className={readonly ? css.noBorderButton : css.hideElement}
+>>>>>>> 773beb50c (start working on readonly)
                     onClick={handleDownloadClick}
                   />
                   {/* this is an invisible button to programatically download the config files */}
