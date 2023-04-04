@@ -11,7 +11,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -805,18 +804,9 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"poolName": msg.PoolName,
-		"numPools": len(summary),
-	}).Debug("got a summary")
-
 	slots := 0
 	if len(msg.PoolName) > 0 {
 		slots = numSlots(summary[msg.PoolName].Slots)
-		logrus.WithFields(logrus.Fields{
-			"slots":    slots,
-			"poolName": msg.PoolName,
-		}).Debug("done summarizing slots for pool")
 	} else {
 		for _, pool := range summary {
 			slots += numSlots(pool.Slots)
@@ -966,25 +956,8 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 					poolTolerations = tcd.GPUPodSpec.Spec.Tolerations
 				} else if tcd.CPUPodSpec != nil {
 					poolTolerations = tcd.CPUPodSpec.Spec.Tolerations
-				} else {
-					logrus.WithFields(logrus.Fields{
-						"poolName": poolName,
-						"nodeName": node.Name,
-					}).Debug("didn't find appropriate podspec")
 				}
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"poolName": poolName,
-					"nodeName": node.Name,
-				}).Debug("taskContainerDefaults was nil")
 			}
-
-			logrus.WithFields(logrus.Fields{
-				"poolName":       poolName,
-				"nodeName":       node.Name,
-				"lenTolerations": len(poolTolerations),
-				"lenTaints":      len(node.Spec.Taints),
-			}).Debug("about to compare taints and tolerations")
 
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
@@ -992,16 +965,6 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 			}
 		}
 	}
-
-	f := logrus.Fields{
-		"lenPoolsToNodes":        len(poolsToNodes),
-		"lenNamespaceToPoolName": len(p.namespaceToPoolName),
-	}
-	for pool, nodes := range poolsToNodes {
-		key := fmt.Sprintf("lenNodesIn-%s", pool)
-		f[key] = len(nodes)
-	}
-	logrus.WithFields(f).Debug("done associating nodes and pools")
 
 	// Build the set of summaries for each resource pool
 	containers := p.containersPerResourcePool()
@@ -1090,11 +1053,6 @@ func (p *pods) summarizeClusterByNodes(ctx *actor.Context) map[string]model.Agen
 			numSlots = resources.Value()
 			deviceType = device.CUDA
 		}
-
-		logrus.WithFields(logrus.Fields{
-			"numSlots": numSlots,
-			"nodeName": node.Name,
-		}).Debug("summarizing by nodes, looking at particular node")
 
 		if numSlots < 1 {
 			continue
