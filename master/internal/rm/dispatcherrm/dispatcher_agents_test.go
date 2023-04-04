@@ -6,7 +6,6 @@ package dispatcherrm
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -23,16 +22,13 @@ func TestDispatcherAgents(t *testing.T) {
 	_, _ = db.Bun().NewDelete().Model(&dispatcherState{}).Where("id=0").Exec(context.TODO())
 
 	m := &dispatcherResourceManager{
-		resourceDetails: hpcResourceDetailsCache{
-			lastSample: hpcResources{
-				Nodes: []hpcNodeDetails{
-					{Name: "Node A"},
-					{Name: "Node B"},
-					{Name: "Node C"},
-				},
+		hpcDetailsCache: makeTestHpcDetailsCache(&hpcResources{
+			Nodes: []hpcNodeDetails{
+				{Name: "Node A"},
+				{Name: "Node B"},
+				{Name: "Node C"},
 			},
-			sampleTime: time.Now(),
-		},
+		}),
 		dbState: *newDispatcherState(),
 	}
 	_, err := m.disableAgent("Node Z")

@@ -2,13 +2,11 @@ package dispatcherrm
 
 import (
 	"testing"
-	"time"
 
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -91,11 +89,8 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	m := &dispatcherResourceManager{
-		rmConfig: config,
-		resourceDetails: hpcResourceDetailsCache{
-			lastSample: *hpcResource,
-			sampleTime: time.Now(),
-		},
+		rmConfig:        config,
+		hpcDetailsCache: makeTestHpcDetailsCache(hpcResource),
 		poolProviderMap: poolProviderMap,
 		dbState:         *newDispatcherState(),
 	}
@@ -412,13 +407,10 @@ func Test_summarizeResourcePool(t *testing.T) {
 			}
 
 			m := &dispatcherResourceManager{
-				wlmType:  tt.args.wlmType,
-				rmConfig: rmConfig,
-				resourceDetails: hpcResourceDetailsCache{
-					lastSample: *hpcResource,
-					sampleTime: time.Now(),
-				},
-				poolConfig: dpPools,
+				wlmType:         tt.args.wlmType,
+				rmConfig:        rmConfig,
+				hpcDetailsCache: makeTestHpcDetailsCache(hpcResource),
+				poolConfig:      dpPools,
 			}
 
 			res, _ := m.summarizeResourcePool(tt.args.ctx)
@@ -443,135 +435,6 @@ func Test_summarizeResourcePool(t *testing.T) {
 				assert.Equal(t, pool.Location, "")
 				assert.Equal(t, pool.InstanceType, "")
 				assert.Equal(t, pool.ImageId, "")
-			}
-		})
-	}
-}
-
-func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
-	type fields struct {
-		config                   *config.DispatcherResourceManagerConfig
-		apiClient                *launcherAPIClient
-		reqList                  *tasklist.TaskList
-		groups                   map[*actor.Ref]*tasklist.Group
-		dispatchIDToAllocationID map[string]model.AllocationID
-		masterTLSConfig          model.TLSClientConfig
-		loggingConfig            model.LoggingConfig
-		jobWatcher               *launcherMonitor
-	}
-	type args struct {
-		ctx                *actor.Context
-		hpcResourceDetails []hpcPartitionDetails
-	}
-
-	p1 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
-		PartitionName:          "worf",
-		IsDefault:              true,
-		TotalAllocatedNodes:    0,
-		TotalAvailableGpuSlots: 0,
-		TotalNodes:             0,
-		TotalGpuSlots:          0,
-	}
-	p2 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
-		PartitionName:          "data",
-		IsDefault:              false,
-		TotalAllocatedNodes:    0,
-		TotalAvailableGpuSlots: 0,
-		TotalNodes:             0,
-		TotalGpuSlots:          1,
-	}
-	p3 := hpcPartitionDetails{
-		TotalAvailableNodes:    0,
-		PartitionName:          "picard",
-		IsDefault:              false,
-		TotalAllocatedNodes:    0,
-		TotalAvailableGpuSlots: 0,
-		TotalNodes:             0,
-		TotalGpuSlots:          0,
-	}
-	hpc := []hpcPartitionDetails{
-		p1,
-	}
-	hpc2 := []hpcPartitionDetails{
-		p1, p2,
-	}
-	hpc3 := []hpcPartitionDetails{
-		p1, p2, p3,
-	}
-	// One partition, no GPUs
-	hpc4 := []hpcPartitionDetails{
-		p3,
-	}
-
-	worf := "worf"
-	data := "data"
-
-	tests := []struct {
-		name        string
-		fields      fields
-		args        args
-		wantCompute string
-		wantAux     string
-	}{
-		{
-			name:        "One partition test",
-			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
-			args:        args{hpcResourceDetails: hpc},
-			wantCompute: "worf",
-			wantAux:     "worf",
-		},
-		{
-			name:        "Two partition test",
-			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
-			args:        args{hpcResourceDetails: hpc2},
-			wantCompute: "data",
-			wantAux:     "worf",
-		},
-		{
-			name:        "Three partition test",
-			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
-			args:        args{hpcResourceDetails: hpc3},
-			wantCompute: "data",
-			wantAux:     "worf",
-		},
-		{
-			name:        "No GPU partition test",
-			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
-			args:        args{hpcResourceDetails: hpc4},
-			wantCompute: "picard",
-			wantAux:     "picard",
-		},
-		{
-			name: "Override default test",
-			fields: fields{config: &config.DispatcherResourceManagerConfig{
-				DefaultComputeResourcePool: &worf,
-				DefaultAuxResourcePool:     &data,
-			}},
-			args:        args{hpcResourceDetails: hpc3},
-			wantCompute: "worf",
-			wantAux:     "data",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &dispatcherResourceManager{
-				rmConfig:                 tt.fields.config,
-				apiClient:                tt.fields.apiClient,
-				reqList:                  tt.fields.reqList,
-				groups:                   tt.fields.groups,
-				dispatchIDToAllocationID: tt.fields.dispatchIDToAllocationID,
-				masterTLSConfig:          tt.fields.masterTLSConfig,
-				loggingConfig:            tt.fields.loggingConfig,
-				jobWatcher:               tt.fields.jobWatcher,
-			}
-			compute, aux := m.selectDefaultPools(tt.args.ctx, tt.args.hpcResourceDetails)
-			if compute != tt.wantCompute {
-				t.Errorf("selectDefaultPools() compute got = %v, want %v", compute, tt.wantCompute)
-			}
-			if aux != tt.wantAux {
-				t.Errorf("selectDefaultPools() aux got = %v, want %v", aux, tt.wantAux)
 			}
 		})
 	}
@@ -742,7 +605,7 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				poolConfig: tt.fields.poolConfig,
 			}
 			resp := m.getPartitionValidationResponse(
-				tt.args.hpcDetails, tt.args.targetPartitionName)
+				&tt.args.hpcDetails, tt.args.targetPartitionName)
 
 			if resp.HasResourcePool != tt.want.wantResp.HasResourcePool {
 				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
@@ -758,4 +621,14 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 			}
 		})
 	}
+}
+
+func makeTestHpcDetailsCache(v *hpcResources) *hpcResourceDetailsCache {
+	var hpcDetailsDetails hpcResourceDetailsCache
+	hpcDetailsDetails.lastSample.Store(v)
+	c := make(chan struct{})
+	close(c)
+	hpcDetailsDetails.sampled = c
+	hpcDetailsDetails.rmConfig = &config.DispatcherResourceManagerConfig{}
+	return &hpcDetailsDetails
 }
