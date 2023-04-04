@@ -27,10 +27,10 @@ import itertools
 import os
 import sys
 from pathlib import Path
-from ruamel import yaml
 from typing import Any, Dict
 
 import requests
+from ruamel import yaml
 
 USER = "determined-ai"
 PROJECT = "environments"
@@ -267,6 +267,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     with open(path, "w") as f:
-        yaml.dump(conf, f, sort_keys=True)
+        yaml.dump(conf, f)
 
     print(f"done, {path} has been updated", file=sys.stderr)

@@ -15,7 +15,6 @@ import sys
 from typing import Dict, List, Union
 
 import requests
-
 from ruamel import yaml
 
 
@@ -75,7 +74,7 @@ def update_bumpenvs_yaml(table: List[List[str]], path: str) -> None:
                 update_tag_for_image_type(subconf, new_ami)
 
     with open(path, "w") as f:
-        yaml.dump(bumpenvs_conf, f, sort_keys=True)
+        yaml.dump(bumpenvs_conf, f)
 
 
 def update_packer_json(table: List[List[str]], path: str) -> None:
