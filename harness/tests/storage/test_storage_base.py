@@ -101,6 +101,8 @@ def test_shared_fs_shortcut_string() -> None:
         "scheme://bucket/prefix?query&otherquery",
         "scheme://bucket/prefix#fragment",
         "scheme://bucket/prefix;parameters?query#fragment",
+        "file://localhost:1234/a/b/c",
+        "localhost:1234/a/b/c",
     ],
 )
 def test_bad_shortcut_string(shortcut: str) -> None:

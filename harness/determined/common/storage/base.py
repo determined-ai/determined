@@ -170,6 +170,8 @@ def from_string(shortcut: str) -> StorageManager:
         raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
     scheme = p.scheme.lower()
     if scheme in ["", "file"]:
+        if p.netloc:
+            raise ValueError("A netloc in the file URI of checkpoint_storage is not allowed.")
         base_path = p.path
         return storage.SharedFSStorageManager(base_path=base_path)
     elif scheme == "gs":
@@ -183,5 +185,5 @@ def from_string(shortcut: str) -> StorageManager:
     else:
         raise ValueError(
             f'Could not understand storage manager scheme "{p.scheme}". Use "gs", "s3", "file", '
-            f"or omit it. "
+            "or omit it."
         )

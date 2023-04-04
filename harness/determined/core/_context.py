@@ -155,7 +155,7 @@ def init(
             ``core_context.preempt.should_preempt()`` method.  See
             :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
         checkpoint_storage (``str``, optional): A directory path or a cloud storage URI of the form
-            ``s3://<bucket>[<prefix>]`` (AWS) or ``gs://<bucket>[/<prefix>]`` (GCP). This should
+            ``s3://<bucket>[/<prefix>]`` (AWS) or ``gs://<bucket>[/<prefix>]`` (GCP). This should
             only be used when IAM permissions can be assumed.
         tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
             metrics and profiling data are retained. See
