@@ -66,15 +66,3 @@ func (r ResourcePoolConfig) Validate() []error {
 			"resource pool max cpu containers per agent should be >= 0"),
 	}
 }
-
-// Printable returns a printable object.
-func (r ResourcePoolConfig) Printable() ResourcePoolConfig {
-	res := r
-
-	if res.Provider != nil {
-		p := res.Provider.Printable()
-		res.Provider = &p
-	}
-
-	return res
-}
