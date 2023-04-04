@@ -70,7 +70,10 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 			}
 		}
 	}
-	return k8sV1.ResourceRequirements{}
+	return k8sV1.ResourceRequirements{
+		Limits:   map[k8sV1.ResourceName]resource.Quantity{},
+		Requests: map[k8sV1.ResourceName]resource.Quantity{},
+	}
 }
 
 func (p *pod) configureEnvVars(
