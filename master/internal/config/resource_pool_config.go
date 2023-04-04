@@ -69,12 +69,10 @@ func (r ResourcePoolConfig) Validate() []error {
 
 // Printable returns a printable object.
 func (r ResourcePoolConfig) Printable() ResourcePoolConfig {
-	res := r
-
-	if res.Provider != nil {
-		p := res.Provider.Printable()
-		res.Provider = &p
+	if r.Provider != nil {
+		p := r.Provider.Printable()
+		r.Provider = &p
 	}
 
-	return res
+	return r
 }

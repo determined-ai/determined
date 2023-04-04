@@ -154,15 +154,13 @@ func (c *Config) InitMasterAddress() error {
 
 // Printable returns a printable object.
 func (c Config) Printable() Config {
-	res := c
-
 	const hiddenValue = "********"
-	if len(res.StartupScript) > 0 {
-		res.StartupScript = hiddenValue
+	if len(c.StartupScript) > 0 {
+		c.StartupScript = hiddenValue
 	}
-	if len(res.ContainerStartupScript) > 0 {
-		res.ContainerStartupScript = hiddenValue
+	if len(c.ContainerStartupScript) > 0 {
+		c.ContainerStartupScript = hiddenValue
 	}
 
-	return res
+	return c
 }
