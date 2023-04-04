@@ -19,6 +19,7 @@ import {
 } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
+import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { RolesStore } from 'stores/roles';
 import { DetailedUser, UserRole } from 'types';
@@ -51,9 +52,8 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyPermissions } = usePermissions();
   const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
+  const [isLoading, setIsLoading] = useState(true);
 
   const roles = RolesStore.useRoles();
   const groupName = Form.useWatch(GROUP_NAME_NAME, form);
@@ -69,18 +69,10 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           [USERS_NAME]: groupDetail?.users?.map((u) => u.id),
         });
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch groups.' });
-      } finally {
-        setIsLoading(false);
+        handleError(e, { publicSubject: 'Unable to fetch group data.' });
       }
-    } else {
-      setIsLoading(false);
     }
   }, [group, form]);
-
-  useEffect(() => {
-    fetchGroupDetail();
-  }, [fetchGroupDetail]);
 
   const fetchGroupRoles = useCallback(async () => {
     if (group?.group.groupId && rbacEnabled) {
@@ -98,17 +90,29 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
     }
   }, [form, group, rbacEnabled]);
 
+  const fetchData = useCallback(async () => {
+    await fetchGroupDetail();
+    await fetchGroupRoles();
+    setIsLoading(false);
+  }, [fetchGroupDetail, fetchGroupRoles]);
+
   useEffect(() => {
-    fetchGroupRoles();
-  }, [fetchGroupRoles]);
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async () => {
-    await form.validateFields();
-
     try {
-      const formData = form.getFieldsValue();
+      const formData = await form.validateFields();
 
       if (group) {
+        const nameUpdated = !isEqual(formData.name, groupDetail?.name);
+        const usersUpdated = !isEqual(formData.users, groupDetail?.users?.map((u) => u.id));
+        const rolesUpdated = !isEqual(formData.roles, groupRoles.map((r) => r.id));
+        if (!nameUpdated && !usersUpdated && !rolesUpdated) {
+          message.info('No changes to make.');
+          return;
+        }
+
         const oldUserIds = groupDetail?.users?.map((u) => u.id) ?? [];
         const usersToAdd = formData[USERS_NAME].filter(
           (userId: number) => !oldUserIds.includes(userId),
@@ -196,7 +200,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
                   optionFilterProp="children"
                   placeholder={'Add Roles'}
                   showSearch>
-                  {Loadable.isLoaded(roles) ? (
+                  {Loadable.isLoaded(roles) && (
                     <>
                       {roles.data.map((r) => (
                         <Select.Option key={r.id} value={r.id}>
@@ -204,7 +208,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
                         </Select.Option>
                       ))}
                     </>
-                  ) : undefined}
+                  )}
                 </Select>
               </Form.Item>
               <Typography.Text type="secondary">
