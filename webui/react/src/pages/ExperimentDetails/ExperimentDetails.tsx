@@ -79,7 +79,7 @@ const ExperimentDetails: React.FC = () => {
   } else if (pageError && !isNotFound(pageError)) {
     const message = `${ERROR_MESSAGE} ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!experiment || isSingleTrial === undefined) {
+  } else if (!pageError && (!experiment || isSingleTrial === undefined)) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
 
@@ -87,32 +87,35 @@ const ExperimentDetails: React.FC = () => {
     <Page
       containerRef={pageRef}
       headerComponent={
-        <ExperimentDetailsHeader
-          experiment={experiment}
-          fetchExperimentDetails={fetchExperimentDetails}
-          trial={trial}
-        />
+        experiment && (
+          <ExperimentDetailsHeader
+            experiment={experiment}
+            fetchExperimentDetails={fetchExperimentDetails}
+            trial={trial}
+          />
+        )
       }
       notFound={pageError && isNotFound(pageError)}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      {isSingleTrial ? (
-        <ExperimentSingleTrialTabs
-          experiment={experiment}
-          fetchExperimentDetails={fetchExperimentDetails}
-          pageRef={pageRef}
-          onTrialUpdate={handleSingleTrialUpdate}
-        />
-      ) : (
-        <>
-          <TrialInfoBoxMultiTrial experiment={experiment} />
-          <ExperimentMultiTrialTabs
+      {experiment &&
+        (isSingleTrial ? (
+          <ExperimentSingleTrialTabs
             experiment={experiment}
             fetchExperimentDetails={fetchExperimentDetails}
             pageRef={pageRef}
+            onTrialUpdate={handleSingleTrialUpdate}
           />
-        </>
-      )}
+        ) : (
+          <>
+            <TrialInfoBoxMultiTrial experiment={experiment} />
+            <ExperimentMultiTrialTabs
+              experiment={experiment}
+              fetchExperimentDetails={fetchExperimentDetails}
+              pageRef={pageRef}
+            />
+          </>
+        ))}
     </Page>
   );
 };
