@@ -208,14 +208,6 @@ func (c Config) Printable() ([]byte, error) {
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
-	if c.ResourceConfig != nil {
-		pools := make([]ResourcePoolConfig, 0, len(c.ResourcePools))
-		for _, poolConfig := range c.ResourcePools {
-			pools = append(pools, poolConfig.Printable())
-		}
-		c.ResourcePools = pools
-	}
-
 	optJSON, err := json.Marshal(c)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
