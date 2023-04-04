@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 from dateutil import parser
 
 from determined.common import api
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 

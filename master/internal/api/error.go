@@ -101,7 +101,7 @@ func EchoErrToGRPC(err error) (bool, error) {
 }
 
 // GrpcErrToEcho converts grpc status.Errors into internal api error categories.
-func GrpcErrToEcho(err error) (bool, error) { // CHECK: shouldn't this be error, bool?
+func GrpcErrToEcho(err error) (bool, error) {
 	status, ok := status.FromError(err)
 	if !ok {
 		return false, err
