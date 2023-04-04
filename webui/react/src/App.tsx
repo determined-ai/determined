@@ -1,6 +1,6 @@
 import { App as AntdApp } from 'antd';
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -44,7 +44,6 @@ const AppView: React.FC = () => {
   const loadableUser = useObservable(userStore.currentUser);
   const loadableInfo = useObservable(determinedStore.loadableInfo);
   const isServerReachable = useObservable(determinedStore.isServerReachable);
-  const canceler = useRef(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
 
@@ -106,16 +105,10 @@ const AppView: React.FC = () => {
     );
   }, [loadableAuth, loadableInfo, loadableUser, updateTelemetry]);
 
-  // Abort cancel signal when app unmounts.
-  useEffect(() => {
-    const currentCanceler = canceler.current;
-    return () => currentCanceler.abort();
-  }, []);
-
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
 
-  return Loadable.match(Loadable.all([loadableAuth, loadableInfo]), {
+  return Loadable.match(loadableInfo, {
     Loaded: () => (
       <div className={css.base}>
         {isAuthChecked ? (

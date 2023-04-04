@@ -1,5 +1,5 @@
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { paths } from 'routes/utils';
@@ -14,7 +14,6 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();
 
@@ -23,10 +22,6 @@ const Router: React.FC<Props> = (props: Props) => {
       uiActions.hideSpinner();
     }
   }, [isAuthenticated, uiActions]);
-
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
 
   return (
     <Routes>
