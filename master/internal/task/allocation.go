@@ -359,6 +359,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+	case sproto.InvalidResourcesRequestError:
+		a.Error(ctx, msg)
 
 	default:
 		a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
@@ -961,9 +963,6 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		ctx.Log().WithError(err).Error("failed to purge restorable resources")
 	}
 
-	if len(a.resources) == 0 {
-		return
-	}
 	defer a.markResourcesReleased(ctx)
 
 	if a.req.Preemptible {
@@ -1027,6 +1026,9 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			return
 		}
 	default:
+		if len(a.resources) == 0 {
+			return
+		}
 		// If we ever exit without a reason and we have no exited resources, something has gone
 		// wrong.
 		panic("allocation exited early without a valid reason")

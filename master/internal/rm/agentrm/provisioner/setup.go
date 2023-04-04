@@ -18,7 +18,7 @@ func Setup(
 	cert *tls.Certificate,
 	db db.DB,
 ) (*Provisioner, *actor.Ref, error) {
-	ctx.Log().Info("found provisioner configuration")
+	ctx.Log().Infof("found provisioner configuration %#v", config)
 	if config.AWS != nil {
 		ctx.Log().Info("connecting to AWS")
 	}

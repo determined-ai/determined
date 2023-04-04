@@ -96,6 +96,7 @@ type mockProvider struct {
 	maxInstances     int
 	instances        map[string]*model.Instance
 	history          []mockFuncCall
+	errorInfo        *errorInfo
 }
 
 func newMockProvider(config *mockConfig) (*mockProvider, error) {
@@ -150,6 +151,18 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 	for _, id := range instanceIDs {
 		delete(c.instances, id)
 	}
+}
+
+func (c *mockProvider) hasError() bool {
+	return false
+}
+
+func (c *mockProvider) getErrorInfo() *errorInfo {
+	return c.errorInfo
+}
+
+func (c *mockProvider) clearError() {
+	c.errorInfo = nil
 }
 
 func TestProvisionerScaleUp(t *testing.T) {

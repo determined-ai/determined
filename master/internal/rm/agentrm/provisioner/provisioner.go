@@ -42,6 +42,13 @@ type Provisioner struct {
 	provider         provider
 	scaleDecider     *scaleDecider
 	telemetryLimiter *rate.Limiter
+	errorTimeout     time.Duration
+	poolName         string
+}
+
+type errorInfo struct {
+	err  error
+	time time.Time
 }
 
 type provider interface {
@@ -51,6 +58,8 @@ type provider interface {
 	list(ctx *actor.Context) ([]*model.Instance, error)
 	launch(ctx *actor.Context, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
+	getErrorInfo() *errorInfo
+	clearError()
 }
 
 // New creates a new Provisioner.
@@ -74,6 +83,11 @@ func New(
 		}
 	}
 
+	var errorTimeout time.Duration
+	if config != nil && config.ErrorTimeout != nil {
+		errorTimeout = time.Duration(*config.ErrorTimeout)
+	}
+
 	return &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
@@ -86,6 +100,8 @@ func New(
 			db,
 		),
 		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
+		errorTimeout:     errorTimeout,
+		poolName:         resourcePool,
 	}, nil
 }
 
@@ -116,6 +132,16 @@ func (p *Provisioner) SlotsPerInstance() int {
 	return p.provider.slotsPerInstance()
 }
 
+// CurrentSlotCount returns the number of Slots available in the cluster.
+func (p *Provisioner) CurrentSlotCount(ctx *actor.Context) int {
+	nodes, err := p.provider.list(ctx)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot list instances for current slot count")
+		return 0
+	}
+	return p.SlotsPerInstance() * len(nodes)
+}
+
 // InstanceType returns the instance type of the provider for the provisioner.
 func (p *Provisioner) InstanceType() string {
 	return p.provider.instanceType().Name()
@@ -124,7 +150,7 @@ func (p *Provisioner) InstanceType() string {
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list instances")
+		ctx.Log().WithError(err).Error("cannot list instances for provisioning")
 		return
 	}
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
@@ -155,7 +181,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch)
+		p.provider.launch(ctx, numToLaunch) // to return something like instances launched? or have some sort of failure mode like gang scheduling/deployment
 	}
 
 	if p.telemetryLimiter.Allow() {
@@ -163,4 +189,16 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) GetError() error {
+	errorInfo := p.provider.getErrorInfo()
+	if errorInfo == nil {
+		return nil
+	}
+	if p.errorTimeout <= 0 || time.Now().After(errorInfo.time.Add(p.errorTimeout)) {
+		p.provider.clearError()
+		return nil
+	}
+	return errorInfo.err
 }

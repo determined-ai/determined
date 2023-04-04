@@ -30,6 +30,8 @@ type gcpCluster struct {
 	metadata     []*compute.MetadataItems
 
 	client *compute.Service
+
+	errorInfo *errorInfo
 }
 
 func newGCPCluster(
@@ -215,6 +217,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 
 		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
 
+		// TODO: Update to use BulkInset
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
@@ -317,4 +320,12 @@ func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation)
 		})
 	}
 	return instances
+}
+
+func (c *gcpCluster) getErrorInfo() *errorInfo {
+	return c.errorInfo
+}
+
+func (c *gcpCluster) clearError() {
+	c.errorInfo = nil
 }

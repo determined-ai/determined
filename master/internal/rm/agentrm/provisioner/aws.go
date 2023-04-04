@@ -30,6 +30,8 @@ type awsCluster struct {
 
 	// State that is only used if spot instances are enabled
 	spot *spotState
+
+	errorInfo *errorInfo
 }
 
 //nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
@@ -117,6 +119,10 @@ func newAWSCluster(
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.BuildDockerLogString(),
 		}),
+		errorInfo: &errorInfo{
+			err:  errors.New("not implemented"),
+			time: time.Now(),
+		},
 	}
 
 	if cluster.SpotEnabled {
@@ -431,4 +437,12 @@ func (c *awsCluster) terminateInstances(
 		InstanceIds: ids,
 	}
 	return c.client.TerminateInstances(input)
+}
+
+func (c *awsCluster) getErrorInfo() *errorInfo {
+	return c.errorInfo
+}
+
+func (c *awsCluster) clearError() {
+	c.errorInfo = nil
 }
