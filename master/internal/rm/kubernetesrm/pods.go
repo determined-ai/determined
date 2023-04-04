@@ -997,9 +997,9 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		"lenPoolsToNodes":        len(poolsToNodes),
 		"lenNamespaceToPoolName": len(p.namespaceToPoolName),
 	}
-	for _, pool := range poolsToNodes {
+	for pool, nodes := range poolsToNodes {
 		key := fmt.Sprintf("lenNodesIn-%s", pool)
-		f[key] = len(poolsToNodes["default"])
+		f[key] = len(nodes)
 	}
 	logrus.WithFields(f).Debug("done associating nodes and pools")
 
