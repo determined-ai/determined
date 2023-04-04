@@ -6205,6 +6205,7 @@ class v1LaunchTensorboardRequest:
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     experimentIds: "typing.Optional[typing.Sequence[int]]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
+    filters: "typing.Optional[v1BulkExperimentFilters]" = None
     templateName: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -6215,6 +6216,7 @@ class v1LaunchTensorboardRequest:
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         experimentIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
+        filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
@@ -6225,6 +6227,8 @@ class v1LaunchTensorboardRequest:
             self.experimentIds = experimentIds
         if not isinstance(files, Unset):
             self.files = files
+        if not isinstance(filters, Unset):
+            self.filters = filters
         if not isinstance(templateName, Unset):
             self.templateName = templateName
         if not isinstance(trialIds, Unset):
@@ -6242,6 +6246,8 @@ class v1LaunchTensorboardRequest:
             kwargs["experimentIds"] = obj["experimentIds"]
         if "files" in obj:
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
+        if "filters" in obj:
+            kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
         if "trialIds" in obj:
@@ -6259,6 +6265,8 @@ class v1LaunchTensorboardRequest:
             out["experimentIds"] = self.experimentIds
         if not omit_unset or "files" in vars(self):
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
+        if not omit_unset or "filters" in vars(self):
+            out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
         if not omit_unset or "trialIds" in vars(self):

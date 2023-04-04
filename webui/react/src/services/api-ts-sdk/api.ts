@@ -4969,6 +4969,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     workspaceId?: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to LaunchTensorboardRequest.

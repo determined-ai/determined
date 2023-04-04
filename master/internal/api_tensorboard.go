@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -196,8 +197,8 @@ func (a *apiServer) LaunchTensorboard(
 	var err error
 
 	// Validate the request.
-	if len(req.ExperimentIds) == 0 && len(req.TrialIds) == 0 {
-		err = errors.New("must set experiment or trial ids")
+	if len(req.ExperimentIds) == 0 && len(req.TrialIds) == 0 && req.Filters == nil {
+		err = errors.New("must set experiment, trial ids, or filters")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -464,7 +465,18 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 ) ([]*tensorboardConfig, error) {
 	confByID := map[int32]*tensorboardConfig{}
 
-	for _, expID := range req.ExperimentIds {
+	var err error
+	var originalExpIDs []int32
+	if req.Filters == nil {
+		originalExpIDs = req.ExperimentIds
+	} else {
+		originalExpIDs, err = exputil.FilterToExperimentIds(ctx, req.Filters)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, expID := range originalExpIDs {
 		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID),
 			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err

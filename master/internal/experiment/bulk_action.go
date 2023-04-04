@@ -143,8 +143,8 @@ func queryBulkExperiments(query *bun.SelectQuery,
 	return query
 }
 
-// Apply filters to get a list of matching experiment IDs.
-func filterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
+// FilterToExperimentIds applies a request's filters to get a list of matching experiment IDs.
+func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
 	error,
 ) {
 	var experimentIDList []int32
@@ -173,7 +173,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 	if filters == nil {
 		experimentIDList = inputExpIDs
 	} else {
-		experimentIDList, err = filterToExperimentIds(ctx, filters)
+		experimentIDList, err = FilterToExperimentIds(ctx, filters)
 	}
 	if err != nil {
 		return nil, err
