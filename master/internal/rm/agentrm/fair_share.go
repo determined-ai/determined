@@ -3,7 +3,9 @@ package agentrm
 import (
 	"fmt"
 	"sort"
+	"time"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -13,13 +15,18 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type fairShare struct{}
+type fairShare struct {
+	allocationTimeout time.Duration
+	scheduledReqTime  map[*sproto.AllocateRequest]time.Time
+}
 
 // NewFairShareScheduler creates a new scheduler that schedules tasks according to the max-min
 // fairness of groups. For groups that are above their fair share, the scheduler requests
 // them to terminate their idle tasks until they have achieved their fair share.
-func NewFairShareScheduler() Scheduler {
-	return &fairShare{}
+func NewFairShareScheduler(config *config.SchedulerConfig) Scheduler {
+	return &fairShare{
+		allocationTimeout: time.Duration(*config.AllocationTimeout),
+	}
 }
 
 type groupState struct {
@@ -52,7 +59,7 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return fairshareSchedule(
+	return f.fairshareSchedule(
 		rp.taskList,
 		rp.groups,
 		rp.agentStatesCache,
@@ -81,7 +88,7 @@ func (f *fairShare) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
 	return jobQ
 }
 
-func fairshareSchedule(
+func (f *fairShare) fairshareSchedule(
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
@@ -119,10 +126,10 @@ func fairshareSchedule(
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
 	capacity := totalCapacity(agents)
-	groupStates := calculateGroupStates(taskList, groups, capacity)
+	groupStates := f.calculateGroupStates(taskList, groups, capacity)
 
 	allocateSlotOffers(groupStates, capacity)
-	toAllocate, toRelease := assignTasks(
+	toAllocate, toRelease := f.assignTasks(
 		agents,
 		groupStates,
 		fittingMethod,
@@ -144,8 +151,24 @@ func totalCapacity(agents map[*actor.Ref]*agentState) int {
 	return result
 }
 
-func calculateGroupStates(
-	taskList *tasklist.TaskList, groups map[*actor.Ref]*tasklist.Group, capacity int,
+func (f *fairShare) requestTimedout(req *sproto.AllocateRequest) bool {
+	if f.allocationTimeout == 0 {
+		return false
+	}
+	if req.State != sproto.SchedulingStateQueued {
+		return false
+	}
+	startTime, ok := f.scheduledReqTime[req]
+	if !ok {
+		return false
+	}
+	return time.Since(startTime) > f.allocationTimeout
+}
+
+func (f *fairShare) calculateGroupStates(
+	taskList *tasklist.TaskList,
+	groups map[*actor.Ref]*tasklist.Group,
+	capacity int,
 ) []*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
@@ -176,6 +199,9 @@ func calculateGroupStates(
 			switch {
 			case !tasklist.AssignmentIsScheduled(allocated):
 				state.pendingReqs = append(state.pendingReqs, req)
+				if _, ok := f.scheduledReqTime[req]; !ok {
+					f.scheduledReqTime[req] = time.Now()
+				}
 			default:
 				if !req.Preemptible {
 					state.presubscribedSlots += req.SlotsNeeded
@@ -336,7 +362,7 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 	return smallest
 }
 
-func assignTasks(
+func (f *fairShare) assignTasks(
 	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
 	allowHetergenousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
@@ -349,8 +375,9 @@ func assignTasks(
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
 			for _, req := range state.allocatedReqs {
-				if req.Preemptible {
+				if f.requestTimedout(req) || req.Preemptible {
 					toRelease = append(toRelease, req.AllocationRef)
+					delete(f.scheduledReqTime, req)
 					state.activeSlots -= req.SlotsNeeded
 					if state.activeSlots <= state.offered {
 						break

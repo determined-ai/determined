@@ -215,6 +215,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 
 		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
 
+		// TODO: Update to use BulkInset
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")

@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,17 +20,29 @@ const (
 	PriorityScheduling = "priority"
 	// RoundRobinScheduling schedules tasks based on the order in which they arrive.
 	RoundRobinScheduling = "round_robin"
+	// DefaultAllocationTimeout is the default timeout for allocating a task.
+	DefaultAllocationTimeout = "30m"
 
 	best             = "best"
 	worst            = "worst"
 	defaultFitPolicy = best
 )
 
+func defaultAllocationTimeout() *model.Duration {
+	defaultAllocationTimeout, err := time.ParseDuration(DefaultAllocationTimeout)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse default scheduler allocation timeout: %s", err))
+	}
+	duration := model.Duration(defaultAllocationTimeout)
+	return &duration
+}
+
 // DefaultSchedulerConfig returns the default fair share configuration for the scheduler.
 func DefaultSchedulerConfig() *SchedulerConfig {
 	return &SchedulerConfig{
-		FairShare:     &FairShareSchedulerConfig{},
-		FittingPolicy: defaultFitPolicy,
+		FairShare:         &FairShareSchedulerConfig{},
+		FittingPolicy:     defaultFitPolicy,
+		AllocationTimeout: defaultAllocationTimeout(),
 	}
 }
 
@@ -39,6 +53,7 @@ type SchedulerConfig struct {
 	RoundRobin             *RoundRobinSchedulerConfig `union:"type,round_robin" json:"-"`
 	FittingPolicy          string                     `json:"fitting_policy"`
 	AllowHeterogeneousFits bool                       `json:"allow_heterogeneous_fits"`
+	AllocationTimeout      *model.Duration            `json:"allocation_timeout"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -67,6 +82,9 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 	}
 	if s.FittingPolicy == "" {
 		s.FittingPolicy = best
+	}
+	if s.AllocationTimeout == nil {
+		s.AllocationTimeout = defaultAllocationTimeout()
 	}
 
 	return nil

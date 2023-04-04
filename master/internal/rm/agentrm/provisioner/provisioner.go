@@ -155,7 +155,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
-		p.provider.launch(ctx, numToLaunch)
+		p.provider.launch(ctx, numToLaunch) // to return something like instances launched? or have some sort of failure mode like gang scheduling/deployment
 	}
 
 	if p.telemetryLimiter.Allow() {

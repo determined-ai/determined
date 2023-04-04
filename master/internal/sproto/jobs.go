@@ -141,6 +141,8 @@ const (
 	SchedulingStateScheduledBackfilled SchedulingState = 1
 	// SchedulingStateScheduled denotes a job that is scheduled for execution.
 	SchedulingStateScheduled SchedulingState = 2
+	// SchedulingStateUnschedulable denotes a job that cannot be scheduled for execution.
+	SchedulingStateUnschedulable SchedulingState = 3
 )
 
 // Proto returns proto representation of SchedulingState.

@@ -308,7 +308,8 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 	return res
 }
 
-func (s *scaleDecider) calculateNumInstancesToLaunch() int {
+// how do we know how many slots per instance? See instance stats
+func (s *scaleDecider) calculateNumInstancesToLaunch() int { // maybe pass like minSlots int as an arg
 	return mathx.Max(0, mathx.Clamp(
 		s.minInstanceNum-len(s.instances),
 		s.desiredNewInstances-len(s.recentlyLaunched),

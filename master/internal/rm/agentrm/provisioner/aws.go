@@ -352,6 +352,7 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 		KeyName:                           aws.String(c.SSHKeyName),
 		MaxCount:                          aws.Int64(int64(instanceNum)),
 		MinCount:                          aws.Int64(1),
+		// TODO: Pass actual mincount value
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("instance"),

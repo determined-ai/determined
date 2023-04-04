@@ -523,6 +523,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if rp.reschedule {
+			ctx.Log().Debug("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
 				rp.agentStatesCache = nil
