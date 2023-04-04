@@ -144,6 +144,25 @@ func (a *ModelAuthZRBAC) CanCreateModel(ctx context.Context,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_MODEL_REGISTRY)
 }
 
+// CanDeleteModel checks if users has permission to delete models.
+func (a *ModelAuthZRBAC) CanDeleteModel(ctx context.Context, curUser model.User,
+	m *modelv1.Model, workspaceID int32,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, fields, string(m.Id),
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY})
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_MODEL_REGISTRY)
+}
+
+func init() {
+	AuthZProvider.Register("rbac", &ModelAuthZRBAC{})
+}
+
 // CanMoveModel checks for edit permission in origin and create permission in destination.
 func (a *ModelAuthZRBAC) CanMoveModel(ctx context.Context,
 	curUser model.User, _ *modelv1.Model, origin int32, destination int32,
@@ -219,15 +238,4 @@ func (a *ModelAuthZRBAC) FilterReadableModelsQuery(
 	query = query.Where("workspace_id IN (?)", bun.In(workspaces))
 
 	return query, nil
-}
-
-// CanDeleteModel implements ModelAuthZ.
-func (a *ModelAuthZRBAC) CanDeleteModel(ctx context.Context, curUser model.User,
-	m *modelv1.Model, workspaceID int32,
-) error {
-	panic("unimplemented")
-}
-
-func init() {
-	AuthZProvider.Register("rbac", &ModelAuthZRBAC{})
 }
