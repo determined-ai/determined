@@ -106,8 +106,14 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
 
       if (group) {
         const nameUpdated = !isEqual(formData.name, groupDetail?.name);
-        const usersUpdated = !isEqual(formData.users, groupDetail?.users?.map((u) => u.id));
-        const rolesUpdated = !isEqual(formData.roles, groupRoles.map((r) => r.id));
+        const usersUpdated = !isEqual(
+          formData.users,
+          groupDetail?.users?.map((u) => u.id),
+        );
+        const rolesUpdated = !isEqual(
+          formData.roles,
+          groupRoles.map((r) => r.id),
+        );
         if (!nameUpdated && !usersUpdated && !rolesUpdated) {
           message.info('No changes to make.');
           return;
