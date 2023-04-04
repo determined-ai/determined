@@ -44,6 +44,14 @@ func (a *ModelAuthZPermissive) CanCreateModel(ctx context.Context,
 	return (&ModelAuthZBasic{}).CanCreateModel(ctx, curUser, workspaceID)
 }
 
+// CanDeleteModel calls RBAC authz but enforces basic authz..
+func (a *ModelAuthZPermissive) CanDeleteModel(ctx context.Context, curUser model.User,
+	m *modelv1.Model, workspaceID int32,
+) error {
+	_ = (&ModelAuthZRBAC{}).CanDeleteModel(ctx, curUser, m, workspaceID)
+	return (&ModelAuthZBasic{}).CanDeleteModel(ctx, curUser, m, workspaceID)
+}
+
 // CanMoveModel always returns true.
 func (a *ModelAuthZPermissive) CanMoveModel(ctx context.Context,
 	curUser model.User, m *modelv1.Model, origin int32, destination int32,
@@ -58,13 +66,6 @@ func (a *ModelAuthZPermissive) FilterReadableModelsQuery(
 ) (*bun.SelectQuery, error) {
 	_, _ = (&ModelAuthZRBAC{}).FilterReadableModelsQuery(ctx, curUser, query)
 	return (&ModelAuthZBasic{}).FilterReadableModelsQuery(ctx, curUser, query)
-}
-
-// CanDeleteModel implements ModelAuthZ.
-func (a *ModelAuthZPermissive) CanDeleteModel(ctx context.Context, curUser model.User,
-	m *modelv1.Model, workspaceID int32,
-) error {
-	panic("unimplemented")
 }
 
 func init() {
