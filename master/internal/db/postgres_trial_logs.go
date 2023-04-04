@@ -51,6 +51,17 @@ func (db *PgDB) TrialLogs(
 SELECT
     l.id,
     l.trial_id,
+    CASE
+      WHEN log IS NOT NULL THEN
+        coalesce(to_char(timestamp, '[YYYY-MM-DD"T"HH24:MI:SS"Z"]' ), '[UNKNOWN TIME]')
+        || ' '
+        || coalesce(substring(container_id, 1, 8), '[UNKNOWN CONTAINER]')
+        || coalesce(' [rank=' || (rank_id::text) || ']', '')
+        || ' || '
+        || coalesce(level || ': ', '')
+        || encode(log, 'escape')
+      ELSE encode(message, 'escape')
+    END AS message,
     l.agent_id,
     l.container_id,
     coalesce(l.timestamp,

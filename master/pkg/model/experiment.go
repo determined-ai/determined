@@ -596,7 +596,8 @@ type TrialLog struct {
 	// _source and populated from _id.
 	StringID *string `json:"-"`
 
-	TrialID int `db:"trial_id" json:"trial_id"`
+	TrialID int    `db:"trial_id" json:"trial_id"`
+	Message string `db:"message" json:"message,omitempty"`
 
 	AgentID *string `db:"agent_id" json:"agent_id,omitempty"`
 	// In the case of k8s, container_id is a pod name instead.
@@ -613,6 +614,7 @@ type TrialLog struct {
 func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	resp := &apiv1.TrialLogsResponse{
 		TrialId:     int32(t.TrialID),
+		Message:     t.Message,
 		AgentId:     t.AgentID,
 		ContainerId: t.ContainerID,
 		Log:         t.Log,
@@ -660,6 +662,45 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	}
 
 	return resp, nil
+}
+
+// Resolve resolves the legacy Message field from the others provided.
+func (t *TrialLog) Resolve() {
+	if t.Message != "" {
+		return
+	}
+
+	var timestamp string
+	if t.Timestamp != nil {
+		timestamp = t.Timestamp.Format(time.RFC3339Nano)
+	} else {
+		timestamp = defaultTaskLogTime
+	}
+
+	// This is just to match postgres.
+	const containerIDMaxLength = 8
+	var containerID string
+	if t.ContainerID != nil {
+		containerID = *t.ContainerID
+		if len(containerID) > containerIDMaxLength {
+			containerID = containerID[:containerIDMaxLength]
+		}
+	} else {
+		containerID = defaultTaskLogContainer
+	}
+
+	var rankID string
+	if t.RankID != nil {
+		rankID = fmt.Sprintf("[rank=%d] ", *t.RankID)
+	}
+
+	var level string
+	if t.Level != nil {
+		level = fmt.Sprintf("%s: ", *t.Level)
+	}
+
+	t.Message = fmt.Sprintf("[%s] [%s] %s|| %s %s",
+		timestamp, containerID, rankID, level, *t.Log)
 }
 
 // TrialProfilerMetricsBatch represents a row from the `trial_profiler_metrics` table.

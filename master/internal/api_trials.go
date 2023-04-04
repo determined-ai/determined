@@ -219,6 +219,7 @@ func (a *apiServer) TrialLogs(
 					Id:          l.Id,
 					TrialId:     req.TrialId,
 					Timestamp:   l.Timestamp,
+					Message:     l.Message, //nolint: staticcheck // l.Message is deprecated.
 					Level:       l.Level,
 					AgentId:     l.AgentId,
 					ContainerId: l.ContainerId,

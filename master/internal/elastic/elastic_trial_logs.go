@@ -39,7 +39,6 @@ func (e *Elastic) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 // expensive for deep pagination and the scroll api specifically recommends
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
-// nolint
 func (e *Elastic) TrialLogs(
 	trialID, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {
@@ -109,6 +108,7 @@ func (e *Elastic) TrialLogs(
 		// The short form `for _, h := range resp.Hits.Hits` will result in &h.ID being
 		// the same address and all logs having identical IDs.
 		h := resp.Hits.Hits[i]
+		h.Source.Resolve()
 		h.Source.StringID = &h.ID
 		logs = append(logs, h.Source)
 	}
