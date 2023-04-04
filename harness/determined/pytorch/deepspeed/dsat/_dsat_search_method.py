@@ -232,7 +232,7 @@ class DSATTrialTracker:
     def update_metrics(
         self,
         request_id: uuid.UUID,
-        metric: Optional[Dict[str, Any]],
+        metric: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Updates the Trial Tracker after metrics have been reported or an error has occurred, in
@@ -391,9 +391,23 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     Base searcher class implementing common methods.
     """
 
-    def __init__(self, submitted_config_dict: Dict[str, Any], model_dir: str) -> None:
+    def __init__(
+        self,
+        submitted_config_dict: Dict[str, Any],
+        model_dir: str,
+        zero_search_config: Optional[str] = None,
+    ) -> None:
         self.submitted_config_dict = submitted_config_dict
         self.model_dir = model_dir
+        self.zero_search_config = (
+            None
+            if zero_search_config is None
+            else _utils.get_dict_from_yaml_or_json_path(zero_search_config)
+        )
+        self.zero_optim_search_space = _utils.get_zero_optim_search_space(
+            zero_search_config=self.zero_search_config
+        )
+        logging.info(f"SEARCH SPACE {self.zero_optim_search_space}")
 
         self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
         self.searcher_metric_name = self.submitted_config_dict["searcher"]["metric"]
@@ -738,9 +752,15 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         # TODO: verify that we are not repeating a previously attempted config.
-        random_zero_stage = random.choice(tuple(self.model_profile_info.viable_zero_stages))
+        relevant_zero_stages = self.model_profile_info.viable_zero_stages & set(
+            self.zero_optim_search_space
+        )
+        print(f"TEST: {self.zero_optim_search_space}")
+        random_zero_stage = random.choice(tuple(relevant_zero_stages))
+        zero_optim_config = _utils.get_random_zero_optim_dict_from_search_space(
+            random_zero_stage, self.zero_optim_search_space
+        )
         new_hparams = copy.deepcopy(self.submitted_hps_with_autotuning)
-        zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},

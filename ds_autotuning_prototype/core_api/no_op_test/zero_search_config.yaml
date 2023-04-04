@@ -1,0 +1,14 @@
+1:
+  reduce_bucket_size:
+    - 2e7
+    - 2e9
+    - 2e10
+  allgather_bucket_size:
+    - 2e7
+    - 2e9
+    - 2e10
+2:
+  overlap_comm: False
+  reduce_scatter:
+    - True
+    - False
