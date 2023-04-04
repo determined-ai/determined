@@ -211,8 +211,8 @@ def create_trial_and_trial_controller(
     if not trial_seed:
         trial_seed = random.randint(0, 1 << 31)
 
-    storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    with det.core._dummy_init(storage_manager=storage_manager) as core_context:
+    checkpoint_dir = checkpoint_dir or "/tmp"
+    with det.core._dummy_init(checkpoint_storage=checkpoint_dir) as core_context:
         core_context.train._trial_id = "1"
         distributed_backend = det._DistributedBackend()
         if expose_gpus:
