@@ -282,7 +282,7 @@ func (f FailureType) Proto() taskv1.FailureType {
 	case RestoreError:
 		return taskv1.FailureType_FAILURE_TYPE_RESTORE_ERROR
 	case UnknownError:
-		return taskv1.FailureType_FAILURE_TYPE_UNSPECIFIED
+		return taskv1.FailureType_FAILURE_TYPE_UNKNOWN_ERROR
 	default:
 		return taskv1.FailureType_FAILURE_TYPE_UNSPECIFIED
 	}

@@ -192,8 +192,12 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
             rsp = bindings.get_GetTasks(cli.setup_session(args))
             tasks_data = {
                 k: t
-                for (k, t) in rsp.to_json()["allocationIdToSummary"].items()
-                if any(a in agent_ids for r in t.get("resources", []) for a in r["agentDevices"])
+                for (k, t) in (
+                    rsp.allocationIdToSummary.items()
+                    if rsp.allocationIdToSummary is not None
+                    else {}
+                )
+                if any(a in agent_ids for r in (t.resources or []) for a in (r.agentDevices or {}))
             }
 
             if not (args.json or args.csv):

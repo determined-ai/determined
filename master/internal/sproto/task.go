@@ -282,14 +282,14 @@ type ResourcesSummary struct {
 }
 
 // Proto returns the proto representation of ResourcesSummary.
-func (r *ResourcesSummary) Proto() *taskv1.ResourcesSummary {
-	if r == nil {
+func (s *ResourcesSummary) Proto() *taskv1.ResourcesSummary {
+	if s == nil {
 		return nil
 	}
 
 	pbAgentDevices := make(map[string]*taskv1.ResourcesSummary_Devices)
 
-	for agentID, devices := range r.AgentDevices {
+	for agentID, devices := range s.AgentDevices {
 		pbDevices := taskv1.ResourcesSummary_Devices{}
 
 		for _, device := range devices {
@@ -300,16 +300,16 @@ func (r *ResourcesSummary) Proto() *taskv1.ResourcesSummary {
 	}
 
 	pbResourcesSummary := taskv1.ResourcesSummary{
-		ResourcesId:   string(r.ResourcesID),
-		ResourcesType: string(r.ResourcesType),
-		AllocationId:  string(r.AllocationID),
+		ResourcesId:   string(s.ResourcesID),
+		ResourcesType: string(s.ResourcesType),
+		AllocationId:  string(s.AllocationID),
 		AgentDevices:  pbAgentDevices,
-		Started:       r.Started.Proto(),
-		Exited:        r.Exited.Proto(),
+		Started:       s.Started.Proto(),
+		Exited:        s.Exited.Proto(),
 	}
 
-	if r.ContainerID != nil {
-		pbContainerID := string(*r.ContainerID)
+	if s.ContainerID != nil {
+		pbContainerID := string(*s.ContainerID)
 		pbResourcesSummary.ContainerId = &pbContainerID
 	}
 
@@ -317,9 +317,9 @@ func (r *ResourcesSummary) Proto() *taskv1.ResourcesSummary {
 }
 
 // Slots returns slot count for the resources.
-func (r ResourcesSummary) Slots() int {
+func (s ResourcesSummary) Slots() int {
 	var res int
-	for _, devs := range r.AgentDevices {
+	for _, devs := range s.AgentDevices {
 		res += len(devs)
 	}
 	return res

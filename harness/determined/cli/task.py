@@ -7,31 +7,28 @@ from determined import cli
 from determined.cli import command, render
 from determined.common import api
 from determined.common.api import authentication, bindings
+from determined.common.api.bindings import v1AllocationSummary
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
-    """
-    Render tasks for JSON, tabulate or csv output.
+def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None:
+    """Render tasks for JSON, tabulate or csv output.
 
-    The output of endpoint /api/v1/tasks and bindings.get_GetTasks() has an
-    extra dict layer of "allocationIdToSummary". It is an artifact of the
-    limitations of protobuf. This fuction only accepts the value of
-    "allocationIdToSummary" for the sake of better output and cleaner code.
+    The tasks parameter requires a map from allocation IDs to v1AllocationSummary
+    describing individual tasks.
     """
 
-    def agent_info(t: Dict[str, Any]) -> Union[str, List[str]]:
-        resources = t.get("resources", [])
-        if not resources:
+    def agent_info(t: v1AllocationSummary) -> Union[str, List[str]]:
+        if t.resources is None:
             return "unassigned"
-        agents = [a for r in resources for a in r["agentDevices"]]
+        agents = [a for r in t.resources for a in (r.agentDevices or {})]
         if len(agents) == 1:
             agent = agents[0]  # type: str
             return agent
         return agents
 
     if args.json:
-        print(json.dumps(tasks, indent=4))
+        print(json.dumps({a: t.to_json() for (a, t) in tasks.items()}, indent=4))
         return
 
     headers = [
@@ -47,19 +44,24 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
     ]
     values = [
         [
-            task["taskId"],
-            task["allocationId"],
-            task["name"],
-            task["slotsNeeded"],
-            render.format_time(task["registeredTime"]),
+            task.taskId,
+            task.allocationId,
+            task.name,
+            task.slotsNeeded,
+            render.format_time(task.registeredTime),
             agent_info(task),
-            task["priority"] if task["schedulerType"] == "priority" else "N/A",
-            task["resourcePool"],
-            ",".join(map(str, sorted(pp["port"] for pp in task.get("proxyPorts", [])))),
+            task.priority if task.schedulerType == "priority" else "N/A",
+            task.resourcePool,
+            ",".join(
+                map(
+                    str,
+                    sorted([pp.port for pp in (task.proxyPorts or []) if pp.port is not None]),
+                )
+            ),
         ]
         for task_id, task in sorted(
             tasks.items(),
-            key=lambda tup: (render.format_time(tup[1]["registeredTime"]),),
+            key=lambda tup: (render.format_time(tup[1].registeredTime),),
         )
     ]
 
@@ -69,9 +71,8 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
 @authentication.required
 def list_tasks(args: Namespace) -> None:
     r = bindings.get_GetTasks(cli.setup_session(args))
-    tasks = r.to_json()
-
-    render_tasks(args, tasks["allocationIdToSummary"])
+    tasks = r.allocationIdToSummary or {}
+    render_tasks(args, tasks)
 
 
 @authentication.required

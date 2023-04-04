@@ -80,8 +80,7 @@ message ResourcesStarted {
 
 // The failure type of a resource.
 enum FailureType {
-  // UnknownError denotes an internal error that did not map to a know failure
-  // type.
+  // UNSPECIFIED denotes an error that is not defined below.
   FAILURE_TYPE_UNSPECIFIED = 0;
 
   // ResourcesFailed denotes that the container ran but failed with a non-zero
@@ -110,6 +109,10 @@ enum FailureType {
   // RestoreError denotes a failure to restore a running allocation on master
   // blip.
   FAILURE_TYPE_RESTORE_ERROR = 8;
+
+  // UnknownError denotes an internal error that did not map to a know failure
+  // type.
+  FAILURE_TYPE_UNKNOWN_ERROR = 9;
 }
 
 // ResourcesFailure contains information about restored resources' failure.
