@@ -407,8 +407,9 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: status.Errorf(codes.NotFound, "experiment not found or no delete permission: %d", originalID),
-					ID:    originalID,
+					Error: status.Errorf(codes.NotFound, "experiment not found or no delete permission: %d",
+						originalID),
+					ID: originalID,
 				})
 			}
 		}

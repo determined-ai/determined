@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
-	exputil "github.com/determined-ai/determined/master/internal/experiment"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,7 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
-	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -478,7 +477,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 
 	for _, expID := range originalExpIDs {
 		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID),
-			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}
 
@@ -492,7 +491,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 
 	for _, trialID := range req.TrialIds {
 		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
-			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}
 
