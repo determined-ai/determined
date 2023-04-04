@@ -5,11 +5,11 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import 'uplot/dist/uPlot.min.css';
 
-import css from 'App.module.scss';
-import ThemeProvider from 'components/ThemeProvider';
-import { Settings, UserSettings } from 'hooks/useSettingsProvider';
-import DesignKit from 'pages/DesignKit';
-import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import css from '../src/App.module.scss';
+import ThemeProvider from '../src/components/ThemeProvider';
+import { Settings, UserSettings } from '../src/hooks/useSettingsProvider';
+import DesignKit from '../src/pages/DesignKit';
+import { StoreProvider as UIProvider } from '../src/shared/contexts/stores/UI';
 
 import 'antd/dist/reset.css';
 

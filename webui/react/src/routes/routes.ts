@@ -254,12 +254,6 @@ const routes: RouteConfig[] = [
     path: '/webhooks',
     title: 'Webhooks',
   },
-  {
-    id: 'designKit',
-    needAuth: false,
-    path: '/design',
-    title: 'Design Kit',
-  },
 ];
 
 export default routes;
