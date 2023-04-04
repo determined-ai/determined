@@ -92,3 +92,17 @@ def test_shared_fs_shortcut_string() -> None:
     with mock.patch("determined.common.storage.SharedFSStorageManager") as mocked:
         _ = storage.from_string(shortcut)
     assert mocked.called_once_with(base_path=shortcut)
+
+
+@pytest.mark.parametrize(
+    "shortcut",
+    [
+        "scheme://bucket/prefix;parameters?query#fragment",
+        "scheme://bucket/prefix?query&otherquery",
+        "scheme://bucket/prefix#fragment",
+        "scheme://bucket/prefix;parameters?query#fragment",
+    ],
+)
+def test_bad_shortcut_string(shortcut: str) -> None:
+    with pytest.raises(ValueError):
+        _ = storage.from_string(shortcut)

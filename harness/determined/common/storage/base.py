@@ -166,6 +166,8 @@ class StorageManager(metaclass=abc.ABCMeta):
 
 def from_string(shortcut: str) -> StorageManager:
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
+    if any((p.params, p.query, p.fragment)):
+        raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
     scheme = p.scheme.lower()
     if scheme in ["", "file"]:
         base_path = p.path
