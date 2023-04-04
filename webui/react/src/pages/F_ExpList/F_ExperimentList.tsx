@@ -7,8 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
-import { getExperiments } from 'services/api';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { searchExperiments } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
@@ -64,14 +63,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
 
-      const response = await getExperiments(
+      const response = await searchExperiments(
         {
-          archived: false,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
           orderBy: 'ORDER_BY_DESC',
           projectId: project.id,
-          sortBy: V1GetExperimentsRequestSortBy.ID,
         },
         { signal: canceler.signal },
       );
@@ -87,7 +84,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         );
         return [
           ...experimentBeforeCurrentPage,
-          ...response.experiments.map((e) => Loaded(e)),
+          ...response.experiments.map((e) => Loaded(e.experiment)),
           ...experimentsAfterCurrentPage,
         ];
       });

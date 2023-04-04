@@ -7,6 +7,7 @@ import pytest
 from determined.cli import command
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
+from determined.common.api.logs import format_trial_log
 from tests import config as conf
 from tests import experiment as exp
 
@@ -127,11 +128,11 @@ def check_logs(
 ) -> None:
     # This is also testing that follow terminates. If we timeout here, that's it.
     for log in log_fn(follow=True):
-        if log_regex.match(log.message):
+        if log_regex.match(format_trial_log(log)):
             break
     else:
         for log in log_fn(follow=True):
-            print(log.message)
+            print(format_trial_log(log))
         pytest.fail("ran out of logs without a match")
 
     # Just make sure these calls 200 and return some logs.
