@@ -164,26 +164,26 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 			return err
 		}
 
-		if _, err := tx.ExecContext(ctx, `
+		resT, err := tx.ExecContext(ctx, `
 UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
   -- CHECK: rollbacks do consider late arriving or retried metrics right?
   AND trial_run_id < $2
   AND total_batches >= $3;
-`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
+`, m.TrialId, m.TrialRunId, m.StepsCompleted)
+		if err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
-		// TODO rollback trial.total_batches if updated rows > 0
 
-		if _, err := tx.ExecContext(ctx, `
+		resV, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches > $3;
-`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
+`, m.TrialId, m.TrialRunId, m.StepsCompleted)
+		if err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
-		// TODO rollback trial.total_batches if updated rows > 0
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
@@ -202,14 +202,46 @@ VALUES
 			return errors.Wrap(err, "inserting training metrics")
 		}
 
-		// QUESTION: why not use db triggers to catch both additions and rollbacks?
-		// CHECK: concurrency issues between the two statements?
-		if _, err := tx.ExecContext(ctx, `
+		// Rollback recompute.
+		resTRows, err := resT.RowsAffected()
+		if err != nil {
+			return errors.Wrap(err, "checking for rollback in training metrics")
+		}
+		resVRows, err := resV.RowsAffected()
+		if err != nil {
+			return errors.Wrap(err, "checking for rollback in validation metrics")
+		}
+		if resTRows > 0 || resVRows > 0 {
+			if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		FROM (
+			SELECT max(q.total_batches) AS new_max_total_batches_processed
+			FROM (
+			SELECT coalesce(max(s.total_batches), 0) AS total_batches
+			FROM steps s
+			WHERE s.trial_id = 42 
+			UNION ALL
+			SELECT coalesce(max(v.total_batches), 0) AS total_batches
+			FROM validations v
+			WHERE v.trial_id = 42
+			UNION ALL
+			SELECT coalesce(max(c.total_batches), 0) AS total_batches
+			FROM checkpoints c
+			WHERE c.trial_id = 42
+		) q
+		) AS sub; 
+		`, m.TrialId); err != nil {
+				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
+			}
+		} else if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "updating trial total batches")
 		}
+
+		// QUESTION: why not use db triggers to catch both additions and rollbacks?
+		// CHECK: concurrency issues between the two statements?
 
 		return nil
 	})
@@ -228,15 +260,15 @@ func (db *PgDB) AddValidationMetrics(
 
 		// TODO: same as AddTrainingMetrics
 		// QUESTION: why don't we check this with raw_steps as well same as AddTrainingMetrics?
-		if _, err := tx.ExecContext(ctx, `
+		resV, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches >= $2;
-`, m.TrialId, m.StepsCompleted); err != nil {
+`, m.TrialId, m.StepsCompleted)
+		if err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
-
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
 	(trial_id, trial_run_id, end_time, metrics, total_batches)
@@ -253,14 +285,42 @@ VALUES
 			return errors.Wrap(err, "inserting validation metrics")
 		}
 
-		// QUESTION: why not use db triggers to catch both additions and rollbacks?
-		// CHECK: concurrency issues between the two statements?
-		if _, err := tx.ExecContext(ctx, `
+		resVRows, err := resV.RowsAffected()
+		if err != nil {
+			return errors.Wrap(err, "checking for rollback in validation metrics")
+		}
+
+		if resVRows > 0 {
+			if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		FROM (
+			SELECT max(q.total_batches) AS new_max_total_batches_processed
+			FROM (
+			SELECT coalesce(max(s.total_batches), 0) AS total_batches
+			FROM steps s
+			WHERE s.trial_id = 42 
+			UNION ALL
+			SELECT coalesce(max(v.total_batches), 0) AS total_batches
+			FROM validations v
+			WHERE v.trial_id = 42
+			UNION ALL
+			SELECT coalesce(max(c.total_batches), 0) AS total_batches
+			FROM checkpoints c
+			WHERE c.trial_id = 42
+		) q
+		) AS sub; 
+		`, m.TrialId); err != nil {
+				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
+			}
+		} else if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "updating trial total batches")
 		}
+
+		// QUESTION: why not use db triggers to catch both additions and rollbacks?
+		// CHECK: concurrency issues between the two statements?
 
 		if err := setTrialBestValidation(
 			tx, int(m.TrialId),
