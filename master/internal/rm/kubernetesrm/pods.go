@@ -942,6 +942,14 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 
 	taskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
 
+	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
+	// their resource pool config.
+	defaultTolerations := []k8sV1.Toleration{{
+		Key:      ResourceTypeNvidia,
+		Value:    "present",
+		Operator: k8sV1.TolerationOpEqual,
+	}}
+
 	// Build the many-to-many relationship between nodes and resource pools
 	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
 	for _, node := range p.currentNodes {
@@ -950,7 +958,9 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		for poolName, tcd := range taskContainerDefaults {
 			var poolTolerations []k8sV1.Toleration
 
-			if tcd != nil {
+			if len(p.resourcePoolConfigs) == 0 {
+				poolTolerations = defaultTolerations
+			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
 					poolTolerations = tcd.GPUPodSpec.Spec.Tolerations
