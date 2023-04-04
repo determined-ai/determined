@@ -958,7 +958,9 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		for poolName, tcd := range taskContainerDefaults {
 			var poolTolerations []k8sV1.Toleration
 
-			if len(p.resourcePoolConfigs) == 0 {
+			// If they're using the default RP config, use the default tolerations.
+			if len(p.resourcePoolConfigs) <= 1 &&
+				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
 				poolTolerations = defaultTolerations
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
