@@ -1210,29 +1210,6 @@ func numSlots(slots model.SlotsSummary) int {
 	return slotCountsByType[device.CPU]
 }
 
-func cpuAndGpuQuotas(quotas *k8sV1.ResourceQuotaList) []k8sV1.ResourceQuota {
-	if quotas == nil || len(quotas.Items) == 0 {
-		return nil
-	}
-
-	result := []k8sV1.ResourceQuota{}
-	for _, q := range quotas.Items {
-		foundRelevant := false
-		for resourceName := range q.Spec.Hard {
-			switch resourceName {
-			case k8sV1.ResourceCPU, ResourceTypeNvidia, "limits." + ResourceTypeNvidia:
-				foundRelevant = true
-			}
-		}
-
-		if foundRelevant {
-			result = append(result, q)
-		}
-	}
-
-	return result
-}
-
 func (p *pods) listPodsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
 ) (*k8sV1.PodList, error) {
@@ -1265,7 +1242,8 @@ func (p *pods) listConfigMapsInAllNamespaces(
 	return res, nil
 }
 
-func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig) map[string]*model.TaskContainerDefaultsConfig {
+func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig,
+) map[string]*model.TaskContainerDefaultsConfig {
 	result := map[string]*model.TaskContainerDefaultsConfig{}
 
 	for _, config := range resourcePoolConfigs {
