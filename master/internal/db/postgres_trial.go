@@ -219,15 +219,15 @@ VALUES
 			FROM (
 			SELECT coalesce(max(s.total_batches), 0) AS total_batches
 			FROM steps s
-			WHERE s.trial_id = 42 
+			WHERE s.trial_id = $1 
 			UNION ALL
 			SELECT coalesce(max(v.total_batches), 0) AS total_batches
 			FROM validations v
-			WHERE v.trial_id = 42
+			WHERE v.trial_id = $1
 			UNION ALL
 			SELECT coalesce(max(c.total_batches), 0) AS total_batches
 			FROM checkpoints c
-			WHERE c.trial_id = 42
+			WHERE c.trial_id = $1
 		) q
 		) AS sub; 
 		`, m.TrialId); err != nil {
@@ -258,7 +258,6 @@ func (db *PgDB) AddValidationMetrics(
 			return err
 		}
 
-		// TODO: same as AddTrainingMetrics
 		// QUESTION: why don't we check this with raw_steps as well same as AddTrainingMetrics?
 		resV, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
@@ -298,15 +297,15 @@ VALUES
 			FROM (
 			SELECT coalesce(max(s.total_batches), 0) AS total_batches
 			FROM steps s
-			WHERE s.trial_id = 42 
+			WHERE s.trial_id = $1
 			UNION ALL
 			SELECT coalesce(max(v.total_batches), 0) AS total_batches
 			FROM validations v
-			WHERE v.trial_id = 42
+			WHERE v.trial_id = $1
 			UNION ALL
 			SELECT coalesce(max(c.total_batches), 0) AS total_batches
 			FROM checkpoints c
-			WHERE c.trial_id = 42
+			WHERE c.trial_id = $1
 		) q
 		) AS sub; 
 		`, m.TrialId); err != nil {

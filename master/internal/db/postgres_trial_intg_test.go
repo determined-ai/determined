@@ -216,7 +216,7 @@ func TestBatchesProcessed(t *testing.T) {
 		case "training":
 			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
 		case "validation":
-			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics)) // TODO: we should add checkpoint here too.
 		default:
 			return errors.Errorf("unknown type %s", typ)
 		}
@@ -240,9 +240,9 @@ func TestBatchesProcessed(t *testing.T) {
 		{"validation", 0, 30, 30},
 		{"training", 0, 25, 30},
 		{"validation", 1, 25, 25}, // rollback via validations
-		// {"validation", 1, 30, 30},
-		// {"training", 1, 30, 30},
-		// {"training", 2, 27, 27}, // rollback via training
+		{"validation", 1, 30, 30},
+		{"training", 1, 30, 30},
+		{"training", 2, 27, 27}, // rollback via training
 	}
 	for _, c := range cases {
 		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches))
