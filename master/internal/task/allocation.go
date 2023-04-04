@@ -77,6 +77,8 @@ type (
 		proxyAddress *string
 		// active all gather state
 		allGather *allGather
+		// records whether the allocation has completed any all gathers.
+		allGatherFinished bool
 
 		logCtx          detLogger.Context
 		restored        bool
@@ -334,6 +336,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 
 		if a.allGather.done() {
 			a.allGather = nil
+			a.allGatherFinished = true
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
 		if !a.req.Preemptible {
@@ -754,8 +757,9 @@ func (a *Allocation) Terminate(ctx *actor.Context, reason string, forcePreemptio
 	if exited := a.Exit(ctx, reason); exited {
 		return
 	}
+
 	switch {
-	case a.req.Preemptible && (a.rendezvous != nil && a.rendezvous.ready()) || forcePreemption:
+	case a.req.Preemptible && a.ready() || forcePreemption:
 		a.preempt(ctx, reason)
 	default:
 		a.kill(ctx, reason)
@@ -1139,8 +1143,7 @@ func (a *Allocation) State() AllocationState {
 		Resources:  resources,
 		Addresses:  addresses,
 		Containers: containers,
-		Ready: a.rendezvous != nil && a.rendezvous.ready() ||
-			coalesceBool(a.model.IsReady, false),
+		Ready:      a.ready(),
 	}
 }
 
@@ -1157,6 +1160,16 @@ func (a *Allocation) getModelState() model.AllocationState {
 		return model.AllocationStatePending
 	}
 	return *a.model.State
+}
+
+func (a *Allocation) ready() bool {
+	// Most trials use `a.rendezvous` and the normal rendezvous APIs, and go through this path.
+	return (a.rendezvous != nil && a.rendezvous.ready()) ||
+		// But HPC trials don't, they don't use `a.rendezvous` at all but just do an allgather,
+		// so we check if we have done at least one, which also indicates all the workers are up.
+		a.allGatherFinished ||
+		// And finally, of course, if the task explicitly called `AllocationReady` it is ready.
+		coalesceBool(a.model.IsReady, false)
 }
 
 func (a *AllocationExited) String() string {
