@@ -267,7 +267,7 @@ class ExperimentReference:
             metric = training.validation_metrics.get("avgMetrics") or {}
             metric = metric.get(sort_by)
 
-            # Return a bool here to sort checkpoints that may have no validation metrics.
+            # Return a tuple that ensures checkpoints missing metrics appear last.
             if reverse:
                 return metric is not None, metric
             else:
