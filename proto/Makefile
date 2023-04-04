@@ -54,7 +54,7 @@ $(echo_swagger_patch_dir):
 	mkdir -p $(echo_swagger_patch_dir)
 
 $(echo_swagger_patch): $(echo_swagger_patch_dir) $(echo_swagger_source_files)
-	swag init -g ../master/cmd/determined-master/main.go -d ../master/. -o $(echo_swagger_patch_dir)
+	swag init -g ../master/cmd/determined-master/main.go -d ../master/. -o $(echo_swagger_patch_dir) -ot json
 	jq 'del(.swagger, .info)' $(echo_swagger_patch) > $(echo_swagger_patch).tmp
 	mv $(echo_swagger_patch).tmp $(echo_swagger_patch)
 
