@@ -71,7 +71,7 @@ The following configuration settings are supported:
       -  ``email`` (optional)
 
    -  ``add_capabilities``: A list of Linux capabilities to grant to task containers. Each entry in
-      the list is equivalent to a ``--cap-add CAP`` command line argument to ``docker run``.
+      the list is equivalent to a ``--cap-add CAP`` command-line argument to ``docker run``.
       ``add_capabilities`` is honored by resource managers of type ``agent`` but is ignored by
       resource managers of type ``kubernetes``. See :ref:`master configuration
       <master-config-reference>` for details about resource managers.
@@ -105,7 +105,7 @@ The following configuration settings are supported:
       information.
 
    -  ``devices``: A list of device strings to pass to the Docker daemon. Each entry in the list is
-      equivalent to a ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is
+      equivalent to a ``--device DEVICE`` command-line argument to ``docker run``. ``devices`` is
       honored by resource managers of type ``agent`` but is ignored by resource managers of type
       ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.

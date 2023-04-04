@@ -16,7 +16,7 @@ You can override the value in the command line using the ``-m`` option.
  Step 2 - Install the Determined CLI
 *************************************
 
-The Determined CLI is a command line tool that lets you launch new experiments and interact with a
+The Determined CLI is a command-line tool that lets you launch new experiments and interact with a
 Determined cluster. The CLI can be installed on any machine you want to use to access Determined. To
 install the CLI, follow the :ref:`installation <install-cli>` instructions.
 

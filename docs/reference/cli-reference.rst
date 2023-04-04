@@ -16,7 +16,7 @@ The Determined CLI has built-in documentation that you can access by using the h
 help documentation. For example, to learn more about individual experiment commands, you can type
 ``det experiment help``.
 
-.. code:: bash
+.. code::
 
    usage: det [-h] [-u username] [-m address] [-v] command ...
 
