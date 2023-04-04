@@ -4,12 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	echoV4 "github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -39,7 +37,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-const maxResourceDetailsSampleAgeSeconds = 60
 const (
 	slurmSchedulerType    wlmType = "slurm"
 	pbsSchedulerType      wlmType = "pbs"
@@ -57,61 +54,6 @@ type schedulerTick struct{}
 
 // actionCoolDown is the rate limit for queue submission.
 const actionCoolDown = 500 * time.Millisecond
-
-// hpcResources is a data type describing the HPC resources available
-// to Slurm on the Launcher node.
-// Example output of the HPC resource details from the Launcher.
-// ---
-// partitions:
-// - totalAvailableNodes: 293
-// totalAllocatedNodes: 21
-// partitionName: workq
-// totalAvailableGpuSlots: 16
-// totalNodes: 314
-// totalGpuSlots: 16
-// - totalAvailableNodes: 293
-// ...more partitions.
-type hpcResources struct {
-	Partitions                  []hpcPartitionDetails `json:"partitions,flow"` //nolint:staticcheck
-	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`      //nolint:staticcheck
-	DefaultComputePoolPartition string                `json:"defaultComputePoolPartition"`
-	DefaultAuxPoolPartition     string                `json:"defaultAuxPoolPartition"`
-}
-
-// hpcPartitionDetails holds HPC Slurm partition details.
-type hpcPartitionDetails struct {
-	TotalAvailableNodes    int    `json:"totalAvailableNodes"`
-	PartitionName          string `json:"partitionName"`
-	IsDefault              bool   `json:"default"`
-	TotalAllocatedNodes    int    `json:"totalAllocatedNodes"`
-	TotalAvailableGpuSlots int    `json:"totalAvailableGpuSlots"`
-	TotalNodes             int    `json:"totalNodes"`
-	TotalGpuSlots          int    `json:"totalGpuSlots"`
-	TotalAvailableCPUSlots int    `json:"totalAvailableCpuSlots"`
-	TotalCPUSlots          int    `json:"totalCpuSlots"`
-	Accelerator            string `json:"accelerator"`
-}
-
-// hpcNodeDetails holds HPC Slurm node details.
-type hpcNodeDetails struct {
-	Partitions    []string `json:"partitions"`
-	Addresses     []string `json:"addresses"`
-	Draining      bool     `json:"draining"`
-	Allocated     bool     `json:"allocated"`
-	Name          string   `json:"name"`
-	GpuCount      int      `json:"gpuCount"`
-	GpuInUseCount int      `json:"gpuInUseCount"`
-	CPUCount      int      `json:"cpuCount"`
-	CPUInUseCount int      `json:"cpuInUseCount"`
-}
-
-// hpcResourceDetailsCache stores details of the HPC resource information cache.
-type hpcResourceDetailsCache struct {
-	mu         sync.RWMutex
-	lastSample hpcResources
-	sampleTime time.Time
-	isUpdating bool
-}
 
 type (
 	// hasSlurmPartitionRequest is a message querying the presence of the specified resource pool.
@@ -271,7 +213,7 @@ type dispatcherResourceManager struct {
 	masterTLSConfig               model.TLSClientConfig
 	loggingConfig                 model.LoggingConfig
 	jobWatcher                    *launcherMonitor
-	resourceDetails               hpcResourceDetailsCache
+	hpcDetailsCache               *hpcResourceDetailsCache
 	poolProviderMap               map[string][]string
 	dispatchIDToHPCJobID          map[string]string
 	dispatchIDToAllocationIDMutex sync.RWMutex
@@ -311,6 +253,7 @@ func newDispatcherResourceManager(
 		masterTLSConfig:          masterTLSConfig,
 		loggingConfig:            loggingConfig,
 		jobWatcher:               watcher,
+		hpcDetailsCache:          newHpcResourceDetailsCache(rmConfig, apiClient),
 		poolConfig:               poolConfig,
 		poolProviderMap:          makeProvidedPoolsMap(poolConfig),
 		dispatchIDToHPCJobID:     make(map[string]string),
@@ -344,10 +287,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		go periodicallyCheckLauncherVersion(context.TODO(), ctx.Log(), m.apiClient)
 		go m.jobWatcher.watch(ctx)
 
-		// SLURM Resource Manager always fulfills requests for resource pool details using the
-		// value from the cache. This call will ensure there is an initial value in the cache at
-		// the start of the resource manager.
-		m.fetchHpcResourceDetails(ctx)
+		m.hpcDetailsCache.wait()
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case
@@ -398,33 +338,32 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		}, err)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		_, _ = m.fetchHpcResourceDetailsCached(ctx)
-		// Don't bother to check for errors, a response is required (may have no name)
-		m.resourceDetails.mu.RLock()
-		defer m.resourceDetails.mu.RUnlock()
+		hpcDetails, err := m.hpcDetailsCache.load()
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: m.resourceDetails.lastSample.DefaultComputePoolPartition,
+			PoolName: hpcDetails.DefaultComputePoolPartition,
 		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		_, _ = m.fetchHpcResourceDetailsCached(ctx)
-		// Don't bother to check for errors, a response is required (may have no name)
-		m.resourceDetails.mu.RLock()
-		defer m.resourceDetails.mu.RUnlock()
+		hpcDetails, err := m.hpcDetailsCache.load()
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{
-			PoolName: m.resourceDetails.lastSample.DefaultAuxPoolPartition,
+			PoolName: hpcDetails.DefaultAuxPoolPartition,
 		})
 
 	case hasSlurmPartitionRequest:
-		// This is a query to see if the specified resource pool exists
-		hpcDetails, err := m.fetchHpcResourceDetailsCached(ctx)
-		var response hasSlurmPartitionResponse
+		hpcDetails, err := m.hpcDetailsCache.load()
 		if err != nil {
-			response = hasSlurmPartitionResponse{HasResourcePool: false}
-		} else {
-			response = m.getPartitionValidationResponse(hpcDetails, msg.PoolName)
+			ctx.Respond(err)
+			return nil
 		}
-		ctx.Respond(response)
+		ctx.Respond(m.getPartitionValidationResponse(hpcDetails, msg.PoolName))
 
 	case sproto.ValidateCommandResourcesRequest:
 		// TODO(HAL-2862): Use inferred value here if possible.
@@ -501,7 +440,7 @@ func (m *dispatcherResourceManager) getTaskContainerDefaults(
 // or a launcher-provided pool. In the latter case we verify that the providing
 // partition exists on the cluster.
 func (m *dispatcherResourceManager) getPartitionValidationResponse(
-	hpcDetails hpcResources, targetPartitionName string,
+	hpcDetails *hpcResources, targetPartitionName string,
 ) hasSlurmPartitionResponse {
 	result := false
 	providingPartition := ""
@@ -552,17 +491,17 @@ func partitionExists(targetPartition string, knowPartitions []hpcPartitionDetail
 func (m *dispatcherResourceManager) generateGetAgentsResponse(
 	ctx *actor.Context,
 ) *apiv1.GetAgentsResponse {
-	response := &apiv1.GetAgentsResponse{
-		Agents: []*agentv1.Agent{},
+	hpcDetails, err := m.hpcDetailsCache.load()
+	if err != nil {
+		ctx.Log().WithError(err).Error("failed to generate GetAgentsResponse")
+		return nil
 	}
-	_, _ = m.fetchHpcResourceDetailsCached(ctx)
-	m.resourceDetails.mu.RLock()
-	defer m.resourceDetails.mu.RUnlock()
-	for _, node := range m.resourceDetails.lastSample.Nodes {
-		agent := m.hpcNodeToAgent(node)
-		response.Agents = append(response.Agents, agent)
+
+	var resp apiv1.GetAgentsResponse
+	for _, node := range hpcDetails.Nodes {
+		resp.Agents = append(resp.Agents, m.hpcNodeToAgent(node))
 	}
-	return response
+	return &resp
 }
 
 // hpcNodeToAgent converts a hpcNodeDetails to an agentv1.Agent.
@@ -928,7 +867,12 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	msg StartDispatcherResources,
 	req *sproto.AllocateRequest,
 ) {
-	var err error
+	hpcDetails, err := m.hpcDetailsCache.load()
+	if err != nil {
+		sendResourceStateChangedErrorResponse(ctx, err, msg,
+			"unable to start jobs without HPC details cache written")
+		return
+	}
 
 	// Log at INFO level so that we know we got this far. We had an issue on the
 	// Grenoble cluster where an attempt to delete completed experiments failed
@@ -957,7 +901,7 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	// Make sure we explicitly choose a partition.  Use default if unspecified.
 	partition := req.ResourcePool
 	if partition == "" {
-		partition = m.getDefaultPoolName(slotType == device.CPU)
+		partition = m.getDefaultPoolName(hpcDetails, slotType == device.CPU)
 	}
 
 	tresSupported := m.rmConfig.TresSupported
@@ -1222,16 +1166,16 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case *apiv1.GetJobQueueStatsRequest:
 		// TODO(HAL-2863): Fill this in per-pool as discerned from the slurm resources info job.
 		ctx.Log().Debugf("GetJobQueueStatsRequest, pool count %d", len(msg.ResourcePools))
-		resp := &apiv1.GetJobQueueStatsResponse{
-			Results: make([]*apiv1.RPQueueStat, 0),
-		}
+
+		var resp apiv1.GetJobQueueStatsResponse
 		// If no list of resource pools has been specified, return data for all pools.
 		if (len(msg.ResourcePools)) == 0 {
-			hpcDetails, err := m.fetchHpcResourceDetailsCached(ctx)
+			hpcDetails, err := m.hpcDetailsCache.load()
 			if err != nil {
-				ctx.Respond(resp)
+				ctx.Respond(err)
 				return nil
 			}
+
 			for _, p := range hpcDetails.Partitions {
 				msg.ResourcePools = append(msg.ResourcePools, p.PartitionName)
 			}
@@ -1243,7 +1187,7 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 				ResourcePool: resourcePool,
 			})
 		}
-		ctx.Respond(resp)
+		ctx.Respond(&resp)
 
 	case sproto.GetJobQStats:
 		ctx.Log().Debugf("GetJobQStats for resource pool %s", msg.ResourcePool)
@@ -1288,84 +1232,31 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	return nil
 }
 
-// selectDefaultPools identifies partitions suitable as default compute and default
-// aux partitions (if possible).
-func (m *dispatcherResourceManager) selectDefaultPools(
-	ctx *actor.Context, hpcResourceDetails []hpcPartitionDetails,
-) (string, string) {
-	// The default compute pool is the default partition if it has any GPUS,
-	// otherwise select any partition with GPUs.
-	// The AUX partition, use the default partition if available, otherwise any partition.
-
-	defaultComputePar := "" // Selected default Compute/GPU partition
-	defaultAuxPar := ""     // Selected default Aux partition
-
-	fallbackComputePar := "" // Fallback Compute/GPU partition (has GPUs)
-	fallbackAuxPar := ""     // Fallback partition if no default
-
-	for _, v := range hpcResourceDetails {
-		if v.IsDefault {
-			defaultAuxPar = v.PartitionName
-			if v.TotalGpuSlots > 0 {
-				defaultComputePar = v.PartitionName
-			}
-		} else {
-			fallbackAuxPar = v.PartitionName
-			if v.TotalGpuSlots > 0 {
-				fallbackComputePar = v.PartitionName
-			}
-		}
-	}
-
-	// Ensure we have a default aux, even if no partitions marked as such
-	if defaultAuxPar == "" {
-		defaultAuxPar = fallbackAuxPar
-	}
-
-	// If no default compute/GPU partitions, use a fallback partition
-	if defaultComputePar == "" {
-		if fallbackComputePar != "" {
-			defaultComputePar = fallbackComputePar
-		} else {
-			defaultComputePar = defaultAuxPar
-		}
-	}
-
-	// If explicitly configured, just override.
-	if m.rmConfig.DefaultComputeResourcePool != nil {
-		defaultComputePar = *m.rmConfig.DefaultComputeResourcePool
-	}
-	if m.rmConfig.DefaultAuxResourcePool != nil {
-		defaultAuxPar = *m.rmConfig.DefaultAuxResourcePool
-	}
-
-	return defaultComputePar, defaultAuxPar
-}
-
 // getDefaultPoolName returns the default aux pool if the arg is true,
 // otherwise default compute pool.
-func (m *dispatcherResourceManager) getDefaultPoolName(isCPU bool) string {
-	m.resourceDetails.mu.RLock()
-	defer m.resourceDetails.mu.RUnlock()
+func (m *dispatcherResourceManager) getDefaultPoolName(
+	hpcDetails *hpcResources, isCPU bool,
+) string {
 	if isCPU {
-		return m.resourceDetails.lastSample.DefaultAuxPoolPartition
+		return hpcDetails.DefaultAuxPoolPartition
 	}
-	return m.resourceDetails.lastSample.DefaultComputePoolPartition
+	return hpcDetails.DefaultComputePoolPartition
 }
 
 // summarizeResourcePool retrieves details regarding hpc resources of the underlying system.
 func (m *dispatcherResourceManager) summarizeResourcePool(
 	ctx *actor.Context,
 ) ([]*resourcepoolv1.ResourcePool, error) {
-	hpcResourceDetails, err := m.fetchHpcResourceDetailsCached(ctx)
+	hpcDetails, err := m.hpcDetailsCache.load()
 	if err != nil {
 		return nil, err
 	}
+
 	wlmName, schedulerType, fittingPolicy := m.getWlmResources()
 	var result []*resourcepoolv1.ResourcePool
 	poolNameMap := make(map[string]*resourcepoolv1.ResourcePool)
 
-	for _, v := range hpcResourceDetails.Partitions {
+	for _, v := range hpcDetails.Partitions {
 		slotType, err := m.resolveSlotType(ctx, v.PartitionName)
 		if err != nil {
 			return nil, fmt.Errorf("resolving slot type: %w", err)
@@ -1400,8 +1291,8 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			SlotsUsed:                    slotsUsed,
 			AuxContainerCapacity:         int32(v.TotalCPUSlots),
 			AuxContainersRunning:         int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots),
-			DefaultComputePool:           v.PartitionName == m.getDefaultPoolName(false),
-			DefaultAuxPool:               v.PartitionName == m.getDefaultPoolName(true),
+			DefaultComputePool:           v.PartitionName == m.getDefaultPoolName(hpcDetails, false),
+			DefaultAuxPool:               v.PartitionName == m.getDefaultPoolName(hpcDetails, true),
 			Preemptible:                  true,
 			MinAgents:                    int32(v.TotalNodes),
 			MaxAgents:                    int32(v.TotalNodes),
@@ -1418,13 +1309,14 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 		poolNameMap[pool.Name] = &pool
 		result = append(result, &pool)
 	}
-	result = append(result, m.getLauncherProvidedPools(poolNameMap, ctx)...)
+	result = append(result, m.getLauncherProvidedPools(hpcDetails, poolNameMap, ctx)...)
 	return result, nil
 }
 
 // getLauncherProvidedPools provides data for any launcher-provided resource pools
 // from the master configuration.
 func (m *dispatcherResourceManager) getLauncherProvidedPools(
+	hpcDetails *hpcResources,
 	poolNameMap map[string]*resourcepoolv1.ResourcePool,
 	ctx *actor.Context,
 ) []*resourcepoolv1.ResourcePool {
@@ -1446,8 +1338,8 @@ func (m *dispatcherResourceManager) getLauncherProvidedPools(
 			if pool.Description != "" {
 				launcherPoolResult.Description = pool.Description
 			}
-			launcherPoolResult.DefaultComputePool = pool.PoolName == m.getDefaultPoolName(false)
-			launcherPoolResult.DefaultAuxPool = pool.PoolName == m.getDefaultPoolName(true)
+			launcherPoolResult.DefaultComputePool = pool.PoolName == m.getDefaultPoolName(hpcDetails, false)
+			launcherPoolResult.DefaultAuxPool = pool.PoolName == m.getDefaultPoolName(hpcDetails, true)
 			result = append(result, launcherPoolResult)
 		}
 	}
@@ -1480,25 +1372,6 @@ func (m *dispatcherResourceManager) getWlmResources() (
 	}
 }
 
-// fetchHpcResourceDetailsCached fetches cached Slurm resource details from the launcher node.
-// If the cached info is too old, a cache reload will occur, and the candidates for the
-// default compute & aux resource pools will be reevaluated.
-func (m *dispatcherResourceManager) fetchHpcResourceDetailsCached(ctx *actor.Context) (
-	hpcResources, error,
-) {
-	// If anyone is viewing the 'Cluster' section of the DAI GUI then there is activity here
-	// about every 10s per user. To mitigate concerns of overloading slurmd with polling
-	// activity, we will return a cached result, updating the cache only every so often.
-	m.resourceDetails.mu.Lock()
-	defer m.resourceDetails.mu.Unlock()
-	if !m.resourceDetails.isUpdating &&
-		(time.Since(m.resourceDetails.sampleTime).Seconds() > maxResourceDetailsSampleAgeSeconds) {
-		m.resourceDetails.isUpdating = true
-		go m.fetchHpcResourceDetails(ctx)
-	}
-	return m.resourceDetails.lastSample, nil
-}
-
 // resolveSlotType resolves the correct slot type for a job targeting the given partition. If the
 // slot type is specified in the master config, use that. Otherwise if the partition is specified
 // and known, and has no GPUs select CPU as the processor type, else default to CUDA.
@@ -1510,136 +1383,17 @@ func (m *dispatcherResourceManager) resolveSlotType(
 		return *slotType, nil
 	}
 
-	hpc, err := m.fetchHpcResourceDetailsCached(ctx)
+	hpcDetails, err := m.hpcDetailsCache.load()
 	if err != nil {
-		return "", fmt.Errorf("inferring slot type for resource info: %w", err)
+		return "", err
 	}
 
-	for _, v := range hpc.Partitions {
+	for _, v := range hpcDetails.Partitions {
 		if v.PartitionName == partition && v.TotalGpuSlots == 0 {
 			return device.CPU, nil
 		}
 	}
 	return device.CUDA, nil
-}
-
-// fetchHpcResourceDetails retrieves the details about HPC Resources.
-// This function uses HPC Resources manifest to retrieve the required details.
-// This function performs the following steps:
-//  1. Launch the manifest.
-//  2. Read the log file with details on HPC resources.
-//  3. Parse and load the details into a predefined struct - HpcResourceDetails
-//  4. Terminate the manifest.
-//
-// Returns struct with HPC resource details - HpcResourceDetails.
-// This function also queries launcher version and warns user if minimum required
-// launcher version is not met.
-func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) {
-	// Below code will ensure isUpdating flag of the cache is always set to false,
-	// while exiting the function.
-	defer func() {
-		m.resourceDetails.mu.Lock()
-		m.resourceDetails.isUpdating = false
-		m.resourceDetails.mu.Unlock()
-	}()
-
-	dispatchInfo, resp, err := m.apiClient.launchHPCResourcesJob() //nolint:bodyclose
-	if err != nil {
-		m.apiClient.handleServiceQueryError(resp, err)
-		return
-	}
-	dispatchID := dispatchInfo.GetDispatchId()
-	ctx.Log().Debugf("Launched Manifest with DispatchID %s", dispatchID)
-
-	owner := "launcher"
-	defer m.ResourceQueryPostActions(ctx, dispatchID, owner)
-
-	logFileName := "slurm-resources-info"
-	// HPC resource details will be listed in a log file with name
-	// 'slurm-resources-info' in YAML format. Use LoadEnvironmentLog()
-	// method to retrieve the log file.
-	//
-	// Because we're using "launch()" instead of "launchAsync()" to get
-	// the HPC resources, we can expect that the "slurm-resources-info" log
-	// file containing the SLURM partition info will be available, because
-	// "launch()" will not return until the "slurm-resources-info" file is
-	// written. Had we used "launchAsync()", we would have to poll the launcher
-	// for job completion, but that's tricky, because the monitoring API will
-	// go through the SlurmCarrier on the launcher side, which expects a job ID.
-	// The SlurmCarrier will hang for a while waiting for the SLURM job ID to be
-	// written, which it never will, because SlurmResources only queries SLURM
-	// to get the partition info and does not create a job, so no job ID is ever
-	// generated.  Eventually it will timeout waiting and return, but that's too
-	// long of a delay for us to deal with.
-	log, _, err := m.apiClient.loadEnvironmentLog(owner, dispatchID, logFileName) //nolint:bodyclose
-	if err != nil {
-		ctx.Log().Error(err)
-		return
-	}
-
-	// Parse the HPC resources file and extract the details into a
-	// HpcResourceDetails object using YAML package.
-	resourcesBytes, err := io.ReadAll(log)
-	if err != nil {
-		ctx.Log().WithError(err).Errorf("failed to read HPC resources environment log file")
-		return
-	}
-
-	var newSample hpcResources
-	if err = yaml.Unmarshal(resourcesBytes, &newSample); err != nil {
-		ctx.Log().WithError(err).Errorf("failed to parse HPC Resource details")
-		return
-	}
-
-	m.hpcResourcesToDebugLog(ctx, newSample)
-
-	m.resourceDetails.mu.Lock()
-	defer m.resourceDetails.mu.Unlock()
-	m.resourceDetails.lastSample = newSample
-	m.resourceDetails.sampleTime = time.Now()
-	m.resourceDetails.lastSample.DefaultComputePoolPartition,
-		m.resourceDetails.lastSample.DefaultAuxPoolPartition = m.selectDefaultPools(
-		ctx, m.resourceDetails.lastSample.Partitions)
-	ctx.Log().Debugf("default resource pools are '%s', '%s'",
-		m.resourceDetails.lastSample.DefaultComputePoolPartition,
-		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
-}
-
-// hpcResourcesToDebugLog puts a summary of the available HPC resources to the debug log.
-func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
-	ctx *actor.Context, resources hpcResources,
-) {
-	if ctx.Log().Logger.Level != logrus.DebugLevel {
-		return
-	}
-	ctx.Log().Debugf("HPC Resource details: %+v", resources.Partitions)
-	nodesWithGpu := 0
-	gpusFound := 0
-	nodesAllocated := 0
-	gpusAllocated := 0
-	cpusFound := 0
-	cpusAllocated := 0
-	for _, node := range resources.Nodes {
-		gpusFound += node.GpuCount
-		cpusFound += node.CPUCount
-		if node.GpuCount > 0 {
-			nodesWithGpu++
-		}
-		if node.Allocated {
-			nodesAllocated++
-		}
-		gpusAllocated += node.GpuInUseCount
-		cpusAllocated += node.CPUInUseCount
-	}
-	ctx.Log().
-		WithField("nodes", len(resources.Nodes)).
-		WithField("allocated", nodesAllocated).
-		WithField("nodes with GPU", nodesWithGpu).
-		WithField("GPUs", gpusFound).
-		WithField("GPUs allocated", gpusAllocated).
-		WithField("CPUs", cpusFound).
-		WithField("CPUs allocated", cpusAllocated).
-		Debug("Node summary")
 }
 
 // resourceQueryPostActions performs actions to clean up after any dispatch
@@ -1956,11 +1710,10 @@ func (m *dispatcherResourceManager) disableAgent(
 		return nil, errors.New("disable agent is not supported for PBS")
 	}
 
-	agent := m.findAgent(agentID)
-	if agent == nil {
-		return nil, errors.Errorf("agent %s not found", agentID)
+	agent, err := m.findAgent(agentID)
+	if err != nil {
+		return nil, err
 	}
-
 	if err := m.dbState.disableAgent(agentID); err != nil {
 		return nil, err
 	}
@@ -1972,28 +1725,35 @@ func (m *dispatcherResourceManager) disableAgent(
 func (m *dispatcherResourceManager) enableAgent(
 	agentID string,
 ) (*apiv1.EnableAgentResponse, error) {
-	if err := m.dbState.enableAgent(agentID); err != nil {
+	if m.wlmType == pbsSchedulerType {
+		return nil, errors.New("disable agent is not supported for PBS")
+	}
+
+	agent, err := m.findAgent(agentID)
+	if err != nil {
 		return nil, err
 	}
 
-	agent := m.findAgent(agentID)
-	if agent != nil {
-		agent.Enabled = true
+	if err := m.dbState.enableAgent(agentID); err != nil {
+		return nil, err
 	}
+	agent.Enabled = true
 
 	return &apiv1.EnableAgentResponse{Agent: agent}, nil
 }
 
-func (m *dispatcherResourceManager) findAgent(agentID string) *agentv1.Agent {
-	m.resourceDetails.mu.RLock()
-	defer m.resourceDetails.mu.RUnlock()
+func (m *dispatcherResourceManager) findAgent(agentID string) (*agentv1.Agent, error) {
+	hpcDetails, err := m.hpcDetailsCache.load()
+	if err != nil {
+		return nil, err
+	}
 
-	for _, node := range m.resourceDetails.lastSample.Nodes {
+	for _, node := range hpcDetails.Nodes {
 		if node.Name == agentID {
-			return m.hpcNodeToAgent(node)
+			return m.hpcNodeToAgent(node), nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("agent %s not found", agentID)
 }
 
 type (
