@@ -393,10 +393,10 @@ def test_delete_experiment_with_no_checkpoints() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_fail_on_checkpoint_save() -> None:
+def test_fail_on_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["fail_on_checkpoint_save"] = error_log
+    config_obj["hyperparameters"]["fail_on_chechpoint_save"] = error_log
     exp.run_failure_test_with_temp_config(
         config_obj,
         conf.fixtures_path("no_op"),
@@ -405,10 +405,10 @@ def test_fail_on_checkpoint_save() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_fail_on_preclose_checkpoint_save() -> None:
+def test_fail_on_preclose_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["fail_on_checkpoint_save"] = error_log
+    config_obj["hyperparameters"]["fail_on_chechpoint_save"] = error_log
     config_obj["searcher"]["max_length"] = {"batches": 1}
     config_obj["min_validation_period"] = {"batches": 1}
     config_obj["max_restarts"] = 1

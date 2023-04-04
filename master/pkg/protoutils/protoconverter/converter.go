@@ -141,7 +141,7 @@ func (c *ProtoConverter) ToStringList(x []uuid.UUID) []string {
 	return strUUIDList
 }
 
-// ToCheckpointState converts a proto checkpoint state internal state represenations.
+// ToCheckpointState converts a proto chechkpoint state internal state represenations.
 func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 	if c.err != nil {
 		return ""

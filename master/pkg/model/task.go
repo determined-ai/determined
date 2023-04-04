@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -189,6 +191,9 @@ func (s AllocationState) Proto() taskv1.State {
 }
 
 const (
+	defaultTaskLogContainer = "UNKNOWN CONTAINER"
+	defaultTaskLogTime      = "UNKNOWN TIME"
+
 	// LogLevelTrace is the trace task log level.
 	LogLevelTrace = "TRACE"
 	// LogLevelDebug is the debug task log level.
@@ -269,6 +274,56 @@ type TaskLog struct {
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
 
+const (
+	// RFC3339MicroTrailingZeroes unlike time.RFC3339Nano is a time format specifier that preserves
+	// trailing zeroes.
+	RFC3339MicroTrailingZeroes = "2006-01-02T15:04:05.000000Z07:00"
+	// containerIDMaxLength is the max display length for a container ID in logs.
+	containerIDMaxLength = 8
+)
+
+// Message resolves the flat version of the log that UIs have shown historically.
+// TODO(task-unif): Should we just.. stop doing this? And send the log as is and let the
+// UIs handle display (yes, IMO).
+func (t *TaskLog) Message() string {
+	var parts []string
+
+	// e.g., "[2022-03-02T02:15:18.299569Z]"
+	if t.Timestamp != nil {
+		parts = append(parts, fmt.Sprintf("[%s]", t.Timestamp.Format(RFC3339MicroTrailingZeroes)))
+	} else {
+		parts = append(parts, fmt.Sprintf("[%s]", defaultTaskLogTime))
+	}
+
+	// e.g., " f6114bb3"
+	if t.ContainerID != nil && *t.ContainerID != "" {
+		containerID := *t.ContainerID
+		if len(containerID) > containerIDMaxLength {
+			containerID = containerID[:containerIDMaxLength]
+		}
+		parts = append(parts, containerID)
+	} else {
+		// Just so the logs visually line up.
+		parts = append(parts, strings.Repeat(" ", containerIDMaxLength))
+	}
+
+	// e.g., " [rank=1]"
+	if t.RankID != nil {
+		parts = append(parts, fmt.Sprintf("[rank=%d]", *t.RankID))
+	}
+
+	parts = append(parts, ("||"))
+
+	// e.g., " INFO"
+	if t.Level != nil {
+		parts = append(parts, fmt.Sprintf("%s:", *t.Level))
+	}
+
+	parts = append(parts, t.Log)
+
+	return strings.Join(parts, " ")
+}
+
 // Proto converts a task log to its protobuf representation.
 func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 	var id string
@@ -298,6 +353,7 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		TaskId:       t.TaskID,
 		Timestamp:    ts,
 		Level:        level,
+		Message:      t.Message(),
 		Log:          t.Log,
 		AllocationId: t.AllocationID,
 		AgentId:      t.AgentID,

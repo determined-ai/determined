@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional
 
 from termcolor import colored
 
@@ -6,32 +6,10 @@ from determined.common import api
 from determined.common.api import bindings
 
 
-def format_trial_log(
-    trial_log: Union[bindings.v1TrialLogsResponse, bindings.v1TaskLogsResponse]
-) -> str:
-    default_timestamp, default_container = "UNKNOWN TIME", "UNKNOWN CONTAINER"
-
-    container_id_max_length = 8
-    if trial_log.containerId is not None:
-        container_id = trial_log.containerId
-        if len(container_id) > container_id_max_length:
-            container_id = container_id[:container_id_max_length]
-    else:
-        container_id = default_container
-
-    timestamp = trial_log.timestamp if trial_log.timestamp is not None else default_timestamp
-    rank_id = "[rank={}] ".format(trial_log.rankId) if trial_log.rankId is not None else ""
-    level = "{}: ".format(trial_log.level) if trial_log.level is not None else ""
-    log = str(trial_log.log) if trial_log.log is not None else ""
-
-    formatted_log = "[{}] [{}] {}|| {}{}".format(timestamp, container_id, rank_id, level, log)
-    return formatted_log
-
-
 def pprint_task_logs(task_id: str, logs: Iterable[bindings.v1TaskLogsResponse]) -> None:
     try:
         for log in logs:
-            print(format_trial_log(log), end="")
+            print(log.message, end="")
     except KeyboardInterrupt:
         pass
     finally:
@@ -47,7 +25,7 @@ def pprint_task_logs(task_id: str, logs: Iterable[bindings.v1TaskLogsResponse]) 
 def pprint_trial_logs(trial_id: int, logs: Iterable[bindings.v1TrialLogsResponse]) -> None:
     try:
         for log in logs:
-            print(format_trial_log(log), end="")
+            print(log.message, end="")
     except KeyboardInterrupt:
         pass
     finally:
