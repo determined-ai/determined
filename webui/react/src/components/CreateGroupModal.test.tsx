@@ -15,8 +15,7 @@ import CreateGroupModalComponent, {
   GROUP_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
-  USER_ADD_LABEL,
-  USER_LABEL,
+  USERS_LABEL,
 } from './CreateGroupModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
@@ -85,7 +84,7 @@ describe('Create Group Modal', () => {
     await setup();
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USER_LABEL)).toBeInTheDocument();
+    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 
   it('should submit a valid create group request', async () => {
@@ -116,6 +115,6 @@ describe('Create Group Modal', () => {
     await setup(group);
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USER_ADD_LABEL)).toBeInTheDocument();
+    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 });
