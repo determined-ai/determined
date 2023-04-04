@@ -293,6 +293,7 @@ OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determin
 OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=false
+OPT_WLMTYPE_casablanca_login2=pbs
 
 # Configuration for sawmill (10.100.97.101)
 OPT_name_sawmill=10.100.97.101
@@ -502,6 +503,12 @@ export OPT_DEFAULTCOMPUTERESOURCEPOOL=$(lookup "OPT_DEFAULTCOMPUTERESOURCEPOOL_$
 export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 export OPT_RESOURCEPOOLS=$(lookup "OPT_RESOURCEPOOLS_$CLUSTER")
+export OPT_WLMTYPE=$(lookup "OPT_WLMTYPE_$CLUSTER")
+
+# If WLM type has not been specified, default to  Slurm
+if [[ -z $OPT_WLMTYPE ]]; then
+    export OPT_WLMTYPE="slurm"
+fi
 
 if [[ -z $OPT_GRESSUPPORTED ]]; then
     export OPT_GRESSUPPORTED="true"
