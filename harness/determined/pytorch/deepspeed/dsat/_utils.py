@@ -10,6 +10,7 @@ import torch
 from ruamel import yaml
 
 import determined as det
+from determined.common.experimental import user
 from determined.pytorch.deepspeed.dsat import _defaults
 from determined.util import merge_dicts
 
@@ -115,29 +116,18 @@ def get_zero_optim_search_space(
     """
     Creates a search space for every provided zero stage (key) in `zero_search_config` whose
     corresponding values are dictionaries whch either specify every configuration for that stage
-    or can specify a diff on top of all lower stage configurations, merged in numerical order.
+    or specify a diff on top of all lower stage configurations, merged in numerical order.
     Any lists in the individual stage configurations can be randomly and uniformly sampled from
     using `get_random_zero_optim_dict_from_search_space`.
     TODO: Explain better.
     """
-    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
     if zero_search_config is None:
-        return default_settings
-    else:
-        user_specified_stages = list(zero_search_config)
-        highest_stage = max(user_specified_stages)
-        # Merge with defaults.
-        selected_stage_default_settings = {
-            stage: default_settings[stage] for stage in range(max(zero_search_config))
-        }
-        search_space = merge_dicts(selected_stage_default_settings, zero_search_config)
-        # Then merge each zero config with all lower-valued zero stage configs, allowing the user
-        # to specify the search space as a diff.
-        for s1, s2 in zip(range(highest_stage), range(1, highest_stage + 1)):
-            search_space[s2] = merge_dicts(search_space[s1], search_space[s2])
-        # Remove the stages which the user did not specify.
-        search_space = {s: search_space[s] for s in user_specified_stages}
-        return search_space
+        zero_search_config = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    user_specified_stages = list(zero_search_config)
+    search_space = copy.deepcopy(zero_search_config)
+    for s1, s2 in zip(user_specified_stages[:-1], user_specified_stages[1:]):
+        search_space[s2] = merge_dicts(zero_search_config[s1], zero_search_config[s2])
+    return search_space
 
 
 def get_random_zero_optim_dict_from_search_space(
