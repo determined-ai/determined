@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 import docker
 import docker.errors
 import pytest
-import yaml
 
+from determined.common import yaml
 from tests import command as cmd
 from tests import config as conf
 from tests.filetree import FileTree
