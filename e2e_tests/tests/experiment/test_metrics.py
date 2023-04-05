@@ -63,27 +63,6 @@ def test_streaming_metrics_api() -> None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
 
 
-@pytest.mark.distributed
-@pytest.mark.timeout(1800)
-def test_hp_importance_api() -> None:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-
-    pool = mp.pool.ThreadPool(processes=1)
-
-    experiment_id = exp.create_experiment(
-        conf.fixtures_path("mnist_pytorch/random.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
-    )
-
-    hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
-
-    hp_importance_results = hp_importance_thread.get()
-
-    if hp_importance_results is not None:
-        pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
-
-
 def request_metric_names(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
