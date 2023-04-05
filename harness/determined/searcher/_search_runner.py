@@ -49,9 +49,11 @@ class SearchRunner:
             operations.append(searcher.Progress(progress))
         elif event.trialExitedEarly:
             # duplicate exit accounting already performed by master
+            searcher_exit_reason = searcher.ExitedReason._from_bindings(
+                event.trialExitedEarly.exitedReason
+            )
             logger.info(
-                f"trialExitedEarly({event.trialExitedEarly.requestId},"
-                f" {event.trialExitedEarly.exitedReason})"
+                f"trialExitedEarly({event.trialExitedEarly.requestId}, {searcher_exit_reason})"
             )
             if event.trialExitedEarly.exitedReason is None:
                 raise RuntimeError("trialExitedEarly event is invalid without exitedReason")
@@ -69,9 +71,7 @@ class SearchRunner:
             operations = self.search_method.on_trial_exited_early(
                 self.state,
                 request_id,
-                exited_reason=searcher.ExitedReason._from_bindings(
-                    event.trialExitedEarly.exitedReason
-                ),
+                exited_reason=searcher_exit_reason,
             )
             # add progress operation
             progress = self.search_method.progress(self.state)
