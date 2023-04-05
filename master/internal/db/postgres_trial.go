@@ -155,6 +155,29 @@ WHERE id = $1`, id, restartCount); err != nil {
 	return nil
 }
 
+// updateTotalBatches update precomputed total_batches based on existing steps and validations.
+func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
+	// CHECK: don't we need to ignore archived = true or is this handled by the db views?
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
+		FROM (
+			SELECT max(q.total_batches) AS new_max_total_batches_processed
+			FROM (
+			SELECT coalesce(max(s.total_batches), 0) AS total_batches
+			FROM steps s
+			WHERE s.trial_id = $1
+			UNION ALL
+			SELECT coalesce(max(v.total_batches), 0) AS total_batches
+			FROM validations v
+			WHERE v.trial_id = $1
+		) q
+		) AS sub;
+		`, trialID); err != nil {
+		return errors.Wrap(err, "error computing total_batches")
+	}
+	return nil
+}
+
 // AddTrainingMetrics adds a completed step to the database with the given training metrics.
 // If these training metrics occur before any others, a rollback is assumed and later
 // training and validation metrics are cleaned up.
@@ -217,22 +240,8 @@ VALUES
 			`, m.TrialId); err != nil {
 				return errors.Wrap(err, "locking the row with this trial id using select for update")
 			}
-			if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
-		FROM (
-			SELECT max(q.total_batches) AS new_max_total_batches_processed
-			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1 
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub; 
-		`, m.TrialId); err != nil {
-				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
+			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
+				return errors.Wrap(err, "rollback")
 			}
 		} else {
 			if _, err = tx.ExecContext(ctx, `
@@ -303,22 +312,8 @@ VALUES
 		`, m.TrialId); err != nil {
 				return errors.Wrap(err, "locking the row with this trial id using select for update")
 			}
-			if _, err := tx.ExecContext(ctx, `
-		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
-		FROM (
-			SELECT max(q.total_batches) AS new_max_total_batches_processed
-			FROM (
-			SELECT coalesce(max(s.total_batches), 0) AS total_batches
-			FROM steps s
-			WHERE s.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(v.total_batches), 0) AS total_batches
-			FROM validations v
-			WHERE v.trial_id = $1
-		) q
-		) AS sub; 
-		`, m.TrialId); err != nil {
-				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
+			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
+				return errors.Wrap(err, "rollback")
 			}
 		} else {
 			if _, err = tx.ExecContext(ctx, `
