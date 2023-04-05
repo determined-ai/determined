@@ -2001,6 +2001,55 @@ func (a *apiServer) SearchExperiments(
 		); err != nil {
 		return nil, err
 	}
+	if req.Sort != nil {
+		orderColMap := map[string]string{
+			"id":              "id",
+			"description":     "description",
+			"name":            "name",
+			"startTime":       "e.start_time",
+			"endTime":         "e.end_time",
+			"state":           "e.state",
+			"numTrials":       "num_trials",
+			"progress":        "COALESCE(progress, 0)",
+			"user":            "display_name",
+			"forkedFrom":      "e.parent_id",
+			"resourcePool":    "resource_pool",
+			"projectId":       "project_id",
+			"checkpointSize":  "checkpoint_size",
+			"checkpointCount": "checkpoint_count",
+			"searcherMetricsVal": `(
+				SELECT
+					searcher_metric_value
+				FROM trials t
+				WHERE t.experiment_id = e.id
+				ORDER BY (CASE
+					WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+						THEN searcher_metric_value
+						ELSE -1.0 * searcher_metric_value
+				END) ASC
+				LIMIT 1
+			 ) `,
+		}
+		sortByMap := map[string]string{
+			"asc":  "ASC",
+			"desc": "DESC NULLS LAST",
+		}
+		sortParams := strings.Split(*req.Sort, ",")
+		for _, sortParam := range sortParams {
+			paramDetail := strings.Split(sortParam, "=")
+			if len(paramDetail) != 2 {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+			}
+			if _, ok := sortByMap[paramDetail[1]]; !ok {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+			}
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortByMap[paramDetail[1]]))
+		}
+	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(
 		ctx,
