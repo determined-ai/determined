@@ -30,7 +30,7 @@ const themeBase = {
   colorScheme: 'normal',
 
   // Font styles.
-  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
+  fontFamily: 'Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
 
   // Palette colors for strong/weak calculations.
@@ -260,7 +260,7 @@ export type Theme = Record<keyof typeof themeBase, string>;
 export const globalCssVars = {
   animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
 
-  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
+  fontFamily: 'Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
 
   iconBig: '28px',
