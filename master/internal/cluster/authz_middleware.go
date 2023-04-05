@@ -21,7 +21,7 @@ func CanGetUsageDetails() echo.MiddlewareFunc {
 			if permErr != nil {
 				return echo.NewHTTPError(http.StatusForbidden, permErr.Error())
 			}
-			return nil
+			return next(c)
 		}
 	})
 }

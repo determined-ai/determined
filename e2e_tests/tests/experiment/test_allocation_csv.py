@@ -36,7 +36,7 @@ def test_experiment_capture() -> None:
     # Check if an entry exists for experiment that just ran
     reader = csv.DictReader(StringIO(r.text))
     matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
-    assert len(matches) >= 1
+    assert len(matches) >= 1, f"could not find any rows for experiment {experiment_id}"
 
 
 @pytest.mark.e2e_cpu
