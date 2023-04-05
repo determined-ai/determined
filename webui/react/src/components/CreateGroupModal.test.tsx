@@ -3,20 +3,20 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { createGroup as mockCreateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { DetailedUser } from 'types';
 
-import useModalCreateGroup, {
+import CreateGroupModalComponent, {
   API_SUCCESS_MESSAGE_CREATE,
   GROUP_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   MODAL_HEADER_LABEL_EDIT,
-  USER_ADD_LABEL,
-  USER_LABEL,
-} from './useModalCreateGroup';
+  USERS_LABEL,
+} from './CreateGroupModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';
@@ -56,12 +56,12 @@ interface Props {
 }
 
 const Container: React.FC<Props> = ({ group }) => {
-  const { contextHolder, modalOpen } = useModalCreateGroup({ group: group, users: users });
+  const CreateGroupModal = useModal(CreateGroupModalComponent);
 
   return (
     <div>
-      <Button onClick={() => modalOpen()}>{OPEN_MODAL_TEXT}</Button>
-      {contextHolder}
+      <Button onClick={CreateGroupModal.open}>{OPEN_MODAL_TEXT}</Button>
+      <CreateGroupModal.Component group={group} users={users} />
     </div>
   );
 };
@@ -74,45 +74,17 @@ const setup = async (group?: V1GroupSearchResult) => {
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole('heading', {
-    name: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
-  });
+  await view.getAllByText(group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE);
 
   return view;
 };
 
-describe('useModalCreateGroup', () => {
+describe('Create Group Modal', () => {
   it('should open modal with correct values', async () => {
     await setup();
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USER_LABEL)).toBeInTheDocument();
-  });
-
-  it('should close the modal via upper right close button', async () => {
-    await setup();
-
-    await user.click(await screen.findByLabelText('Close'));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
-      ).not.toBeInTheDocument();
-    });
-  });
-
-  it('should close the modal via cancel button', async () => {
-    await setup();
-
-    await user.click(await screen.findByText('Cancel'));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
-      ).not.toBeInTheDocument();
-    });
+    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 
   it('should submit a valid create group request', async () => {
@@ -126,13 +98,6 @@ describe('useModalCreateGroup', () => {
       expect(
         screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false }),
       ).toBeInTheDocument();
-    });
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
-      ).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.
@@ -150,6 +115,6 @@ describe('useModalCreateGroup', () => {
     await setup(group);
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USER_ADD_LABEL)).toBeInTheDocument();
+    expect(screen.getByLabelText(USERS_LABEL)).toBeInTheDocument();
   });
 });

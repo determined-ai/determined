@@ -8,7 +8,7 @@ import ExperimentCreateModalComponent, {
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
 import { setAuth } from 'stores/auth';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
+import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 const MODAL_TITLE = 'Fork';
 const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';

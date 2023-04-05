@@ -74,8 +74,8 @@ const ModelVersionHeader: React.FC<Props> = ({
             <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
               <>
                 <Avatar user={user} />
-                {getDisplayName(user)}
-                on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+                {getDisplayName(user)} on{' '}
+                {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
               </>
             </Spinner>
           </Space>

@@ -5,8 +5,9 @@ import React, { useCallback, useState } from 'react';
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
+import { useModal } from 'components/kit/Modal';
 import Avatar from 'components/kit/UserAvatar';
-import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
+import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
@@ -44,12 +45,7 @@ const SettingsAccount: React.FC = () => {
   const [isDisplaynameEditable, setIsDisplaynameEditable] = useState<boolean>(false);
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
 
-  const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
-    useModalPasswordChange();
-
-  const handlePasswordClick = useCallback(() => {
-    openChangePasswordModal();
-  }, [openChangePasswordModal]);
+  const PasswordChangeModal = useModal(PasswordChangeModalComponent);
 
   const handleSaveDisplayName = useCallback(async (): Promise<void | Error> => {
     const values = await displaynameForm.validateFields();
@@ -167,9 +163,9 @@ const SettingsAccount: React.FC = () => {
           <Divider />
           <div className={css.row}>
             <label>Password</label>
-            <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
+            <Button onClick={PasswordChangeModal.open}>{CHANGE_PASSWORD_TEXT}</Button>
           </div>
-          {modalPasswordChangeContextHolder}
+          <PasswordChangeModal.Component />
         </>
       )}
     </div>

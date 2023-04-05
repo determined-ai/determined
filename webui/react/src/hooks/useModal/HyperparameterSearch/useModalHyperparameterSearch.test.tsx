@@ -5,7 +5,7 @@ import React from 'react';
 import Button from 'components/kit/Button';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { ClusterProvider } from 'stores/cluster';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
+import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 

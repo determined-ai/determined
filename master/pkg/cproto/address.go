@@ -1,6 +1,10 @@
 package cproto
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
+)
 
 // Address represents an exposed port on a container.
 type Address struct {
@@ -20,4 +24,17 @@ type Address struct {
 
 func (a Address) String() string {
 	return fmt.Sprintf("%s:%d:%s:%d", a.HostIP, a.HostPort, a.ContainerIP, a.ContainerPort)
+}
+
+// Proto returns the proto representation of address.
+func (a *Address) Proto() *taskv1.Address {
+	if a == nil {
+		return nil
+	}
+	return &taskv1.Address{
+		ContainerIp:   a.ContainerIP,
+		ContainerPort: int32(a.ContainerPort),
+		HostIp:        a.HostIP,
+		HostPort:      int32(a.HostPort),
+	}
 }

@@ -373,6 +373,44 @@ func (a *apiServer) GetActiveTasksCount(
 	return finalResp, err
 }
 
+func (a *apiServer) GetTasks(
+	ctx context.Context, req *apiv1.GetTasksRequest,
+) (resp *apiv1.GetTasksResponse, err error) {
+	summary, err := a.m.rm.GetAllocationSummaries(a.m.system, sproto.GetAllocationSummaries{})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
+	for allocationID, allocationSummary := range summary {
+		isExp, exp, err := expFromAllocationID(a.m, allocationID)
+		if err != nil {
+			return nil, err
+		}
+
+		var ok bool
+		if !isExp {
+			ok, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
+		} else {
+			ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			pbAllocationIDToSummary[string(allocationID)] = allocationSummary.Proto()
+		}
+	}
+
+	return &apiv1.GetTasksResponse{AllocationIdToSummary: pbAllocationIDToSummary}, nil
+}
+
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {

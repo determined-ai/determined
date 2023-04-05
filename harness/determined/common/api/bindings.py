@@ -123,6 +123,32 @@ class GetTrialWorkloadsRequestFilterOption(enum.Enum):
     FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
     FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
+class ResourcesSummaryDevices:
+    devices: "typing.Optional[typing.Sequence[v1Device]]" = None
+
+    def __init__(
+        self,
+        *,
+        devices: "typing.Union[typing.Sequence[v1Device], None, Unset]" = _unset,
+    ):
+        if not isinstance(devices, Unset):
+            self.devices = devices
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ResourcesSummaryDevices":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "devices" in obj:
+            kwargs["devices"] = [v1Device.from_json(x) for x in obj["devices"]] if obj["devices"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "devices" in vars(self):
+            out["devices"] = None if self.devices is None else [x.to_json(omit_unset) for x in self.devices]
+        return out
+
 class TrialFiltersRankWithinExp:
     rank: "typing.Optional[int]" = None
     sorter: "typing.Optional[v1TrialSorter]" = None
@@ -643,6 +669,56 @@ class v1AddProjectNoteResponse:
         }
         return out
 
+class v1Address:
+    containerIp: "typing.Optional[str]" = None
+    containerPort: "typing.Optional[int]" = None
+    hostIp: "typing.Optional[str]" = None
+    hostPort: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        containerIp: "typing.Union[str, None, Unset]" = _unset,
+        containerPort: "typing.Union[int, None, Unset]" = _unset,
+        hostIp: "typing.Union[str, None, Unset]" = _unset,
+        hostPort: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(containerIp, Unset):
+            self.containerIp = containerIp
+        if not isinstance(containerPort, Unset):
+            self.containerPort = containerPort
+        if not isinstance(hostIp, Unset):
+            self.hostIp = hostIp
+        if not isinstance(hostPort, Unset):
+            self.hostPort = hostPort
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Address":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "containerIp" in obj:
+            kwargs["containerIp"] = obj["containerIp"]
+        if "containerPort" in obj:
+            kwargs["containerPort"] = obj["containerPort"]
+        if "hostIp" in obj:
+            kwargs["hostIp"] = obj["hostIp"]
+        if "hostPort" in obj:
+            kwargs["hostPort"] = obj["hostPort"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "containerIp" in vars(self):
+            out["containerIp"] = self.containerIp
+        if not omit_unset or "containerPort" in vars(self):
+            out["containerPort"] = self.containerPort
+        if not omit_unset or "hostIp" in vars(self):
+            out["hostIp"] = self.hostIp
+        if not omit_unset or "hostPort" in vars(self):
+            out["hostPort"] = self.hostPort
+        return out
+
 class v1Agent:
     addresses: "typing.Optional[typing.Sequence[str]]" = None
     containers: "typing.Optional[typing.Dict[str, v1Container]]" = None
@@ -1037,6 +1113,104 @@ class v1AllocationRendezvousInfoResponse:
         out: "typing.Dict[str, typing.Any]" = {
             "rendezvousInfo": self.rendezvousInfo.to_json(omit_unset),
         }
+        return out
+
+class v1AllocationSummary:
+    allocationId: "typing.Optional[str]" = None
+    name: "typing.Optional[str]" = None
+    priority: "typing.Optional[int]" = None
+    proxyPorts: "typing.Optional[typing.Sequence[v1ProxyPortConfig]]" = None
+    registeredTime: "typing.Optional[str]" = None
+    resourcePool: "typing.Optional[str]" = None
+    resources: "typing.Optional[typing.Sequence[v1ResourcesSummary]]" = None
+    schedulerType: "typing.Optional[str]" = None
+    slotsNeeded: "typing.Optional[int]" = None
+    taskId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        priority: "typing.Union[int, None, Unset]" = _unset,
+        proxyPorts: "typing.Union[typing.Sequence[v1ProxyPortConfig], None, Unset]" = _unset,
+        registeredTime: "typing.Union[str, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
+        resources: "typing.Union[typing.Sequence[v1ResourcesSummary], None, Unset]" = _unset,
+        schedulerType: "typing.Union[str, None, Unset]" = _unset,
+        slotsNeeded: "typing.Union[int, None, Unset]" = _unset,
+        taskId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(priority, Unset):
+            self.priority = priority
+        if not isinstance(proxyPorts, Unset):
+            self.proxyPorts = proxyPorts
+        if not isinstance(registeredTime, Unset):
+            self.registeredTime = registeredTime
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
+        if not isinstance(resources, Unset):
+            self.resources = resources
+        if not isinstance(schedulerType, Unset):
+            self.schedulerType = schedulerType
+        if not isinstance(slotsNeeded, Unset):
+            self.slotsNeeded = slotsNeeded
+        if not isinstance(taskId, Unset):
+            self.taskId = taskId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationSummary":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "priority" in obj:
+            kwargs["priority"] = obj["priority"]
+        if "proxyPorts" in obj:
+            kwargs["proxyPorts"] = [v1ProxyPortConfig.from_json(x) for x in obj["proxyPorts"]] if obj["proxyPorts"] is not None else None
+        if "registeredTime" in obj:
+            kwargs["registeredTime"] = obj["registeredTime"]
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
+        if "resources" in obj:
+            kwargs["resources"] = [v1ResourcesSummary.from_json(x) for x in obj["resources"]] if obj["resources"] is not None else None
+        if "schedulerType" in obj:
+            kwargs["schedulerType"] = obj["schedulerType"]
+        if "slotsNeeded" in obj:
+            kwargs["slotsNeeded"] = obj["slotsNeeded"]
+        if "taskId" in obj:
+            kwargs["taskId"] = obj["taskId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "priority" in vars(self):
+            out["priority"] = self.priority
+        if not omit_unset or "proxyPorts" in vars(self):
+            out["proxyPorts"] = None if self.proxyPorts is None else [x.to_json(omit_unset) for x in self.proxyPorts]
+        if not omit_unset or "registeredTime" in vars(self):
+            out["registeredTime"] = self.registeredTime
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
+        if not omit_unset or "resources" in vars(self):
+            out["resources"] = None if self.resources is None else [x.to_json(omit_unset) for x in self.resources]
+        if not omit_unset or "schedulerType" in vars(self):
+            out["schedulerType"] = self.schedulerType
+        if not omit_unset or "slotsNeeded" in vars(self):
+            out["slotsNeeded"] = self.slotsNeeded
+        if not omit_unset or "taskId" in vars(self):
+            out["taskId"] = self.taskId
         return out
 
 class v1AllocationWaitingRequest:
@@ -2873,6 +3047,18 @@ class v1ExperimentSimulation:
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
         return out
 
+class v1FailureType(enum.Enum):
+    FAILURE_TYPE_UNSPECIFIED = "FAILURE_TYPE_UNSPECIFIED"
+    FAILURE_TYPE_RESOURCES_FAILED = "FAILURE_TYPE_RESOURCES_FAILED"
+    FAILURE_TYPE_RESOURCES_ABORTED = "FAILURE_TYPE_RESOURCES_ABORTED"
+    FAILURE_TYPE_RESOURCES_MISSING = "FAILURE_TYPE_RESOURCES_MISSING"
+    FAILURE_TYPE_TASK_ABORTED = "FAILURE_TYPE_TASK_ABORTED"
+    FAILURE_TYPE_TASK_ERROR = "FAILURE_TYPE_TASK_ERROR"
+    FAILURE_TYPE_AGENT_FAILED = "FAILURE_TYPE_AGENT_FAILED"
+    FAILURE_TYPE_AGENT_ERROR = "FAILURE_TYPE_AGENT_ERROR"
+    FAILURE_TYPE_RESTORE_ERROR = "FAILURE_TYPE_RESTORE_ERROR"
+    FAILURE_TYPE_UNKNOWN_ERROR = "FAILURE_TYPE_UNKNOWN_ERROR"
+
 class v1File:
 
     def __init__(
@@ -4521,6 +4707,32 @@ class v1GetTaskResponse:
         }
         if not omit_unset or "task" in vars(self):
             out["task"] = None if self.task is None else self.task.to_json(omit_unset)
+        return out
+
+class v1GetTasksResponse:
+    allocationIdToSummary: "typing.Optional[typing.Dict[str, v1AllocationSummary]]" = None
+
+    def __init__(
+        self,
+        *,
+        allocationIdToSummary: "typing.Union[typing.Dict[str, v1AllocationSummary], None, Unset]" = _unset,
+    ):
+        if not isinstance(allocationIdToSummary, Unset):
+            self.allocationIdToSummary = allocationIdToSummary
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTasksResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "allocationIdToSummary" in obj:
+            kwargs["allocationIdToSummary"] = {k: v1AllocationSummary.from_json(v) for k, v in obj["allocationIdToSummary"].items()} if obj["allocationIdToSummary"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "allocationIdToSummary" in vars(self):
+            out["allocationIdToSummary"] = None if self.allocationIdToSummary is None else {k: v.to_json(omit_unset) for k, v in self.allocationIdToSummary.items()}
         return out
 
 class v1GetTelemetryResponse:
@@ -8490,6 +8702,56 @@ class v1Project:
             out["workspaceName"] = self.workspaceName
         return out
 
+class v1ProxyPortConfig:
+    port: "typing.Optional[int]" = None
+    proxyTcp: "typing.Optional[bool]" = None
+    serviceId: "typing.Optional[str]" = None
+    unauthenticated: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        port: "typing.Union[int, None, Unset]" = _unset,
+        proxyTcp: "typing.Union[bool, None, Unset]" = _unset,
+        serviceId: "typing.Union[str, None, Unset]" = _unset,
+        unauthenticated: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        if not isinstance(port, Unset):
+            self.port = port
+        if not isinstance(proxyTcp, Unset):
+            self.proxyTcp = proxyTcp
+        if not isinstance(serviceId, Unset):
+            self.serviceId = serviceId
+        if not isinstance(unauthenticated, Unset):
+            self.unauthenticated = unauthenticated
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ProxyPortConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "port" in obj:
+            kwargs["port"] = obj["port"]
+        if "proxyTcp" in obj:
+            kwargs["proxyTcp"] = obj["proxyTcp"]
+        if "serviceId" in obj:
+            kwargs["serviceId"] = obj["serviceId"]
+        if "unauthenticated" in obj:
+            kwargs["unauthenticated"] = obj["unauthenticated"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "port" in vars(self):
+            out["port"] = self.port
+        if not omit_unset or "proxyTcp" in vars(self):
+            out["proxyTcp"] = self.proxyTcp
+        if not omit_unset or "serviceId" in vars(self):
+            out["serviceId"] = self.serviceId
+        if not omit_unset or "unauthenticated" in vars(self):
+            out["unauthenticated"] = self.unauthenticated
+        return out
+
 class v1PutProjectNotesRequest:
 
     def __init__(
@@ -9463,6 +9725,182 @@ class v1ResourcePoolType(enum.Enum):
     RESOURCE_POOL_TYPE_GCP = "RESOURCE_POOL_TYPE_GCP"
     RESOURCE_POOL_TYPE_STATIC = "RESOURCE_POOL_TYPE_STATIC"
     RESOURCE_POOL_TYPE_K8S = "RESOURCE_POOL_TYPE_K8S"
+
+class v1ResourcesFailure:
+    errMsg: "typing.Optional[str]" = None
+    exitCode: "typing.Optional[int]" = None
+    failureType: "typing.Optional[v1FailureType]" = None
+
+    def __init__(
+        self,
+        *,
+        errMsg: "typing.Union[str, None, Unset]" = _unset,
+        exitCode: "typing.Union[int, None, Unset]" = _unset,
+        failureType: "typing.Union[v1FailureType, None, Unset]" = _unset,
+    ):
+        if not isinstance(errMsg, Unset):
+            self.errMsg = errMsg
+        if not isinstance(exitCode, Unset):
+            self.exitCode = exitCode
+        if not isinstance(failureType, Unset):
+            self.failureType = failureType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResourcesFailure":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "errMsg" in obj:
+            kwargs["errMsg"] = obj["errMsg"]
+        if "exitCode" in obj:
+            kwargs["exitCode"] = obj["exitCode"]
+        if "failureType" in obj:
+            kwargs["failureType"] = v1FailureType(obj["failureType"]) if obj["failureType"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "errMsg" in vars(self):
+            out["errMsg"] = self.errMsg
+        if not omit_unset or "exitCode" in vars(self):
+            out["exitCode"] = self.exitCode
+        if not omit_unset or "failureType" in vars(self):
+            out["failureType"] = None if self.failureType is None else self.failureType.value
+        return out
+
+class v1ResourcesStarted:
+    addresses: "typing.Optional[typing.Sequence[v1Address]]" = None
+    nativeResourcesId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        addresses: "typing.Union[typing.Sequence[v1Address], None, Unset]" = _unset,
+        nativeResourcesId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(addresses, Unset):
+            self.addresses = addresses
+        if not isinstance(nativeResourcesId, Unset):
+            self.nativeResourcesId = nativeResourcesId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResourcesStarted":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "addresses" in obj:
+            kwargs["addresses"] = [v1Address.from_json(x) for x in obj["addresses"]] if obj["addresses"] is not None else None
+        if "nativeResourcesId" in obj:
+            kwargs["nativeResourcesId"] = obj["nativeResourcesId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "addresses" in vars(self):
+            out["addresses"] = None if self.addresses is None else [x.to_json(omit_unset) for x in self.addresses]
+        if not omit_unset or "nativeResourcesId" in vars(self):
+            out["nativeResourcesId"] = self.nativeResourcesId
+        return out
+
+class v1ResourcesStopped:
+    failure: "typing.Optional[v1ResourcesFailure]" = None
+
+    def __init__(
+        self,
+        *,
+        failure: "typing.Union[v1ResourcesFailure, None, Unset]" = _unset,
+    ):
+        if not isinstance(failure, Unset):
+            self.failure = failure
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResourcesStopped":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "failure" in obj:
+            kwargs["failure"] = v1ResourcesFailure.from_json(obj["failure"]) if obj["failure"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "failure" in vars(self):
+            out["failure"] = None if self.failure is None else self.failure.to_json(omit_unset)
+        return out
+
+class v1ResourcesSummary:
+    agentDevices: "typing.Optional[typing.Dict[str, ResourcesSummaryDevices]]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    exited: "typing.Optional[v1ResourcesStopped]" = None
+    resourcesId: "typing.Optional[str]" = None
+    resourcesType: "typing.Optional[str]" = None
+    started: "typing.Optional[v1ResourcesStarted]" = None
+
+    def __init__(
+        self,
+        *,
+        agentDevices: "typing.Union[typing.Dict[str, ResourcesSummaryDevices], None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        exited: "typing.Union[v1ResourcesStopped, None, Unset]" = _unset,
+        resourcesId: "typing.Union[str, None, Unset]" = _unset,
+        resourcesType: "typing.Union[str, None, Unset]" = _unset,
+        started: "typing.Union[v1ResourcesStarted, None, Unset]" = _unset,
+    ):
+        if not isinstance(agentDevices, Unset):
+            self.agentDevices = agentDevices
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(exited, Unset):
+            self.exited = exited
+        if not isinstance(resourcesId, Unset):
+            self.resourcesId = resourcesId
+        if not isinstance(resourcesType, Unset):
+            self.resourcesType = resourcesType
+        if not isinstance(started, Unset):
+            self.started = started
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResourcesSummary":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "agentDevices" in obj:
+            kwargs["agentDevices"] = {k: ResourcesSummaryDevices.from_json(v) for k, v in obj["agentDevices"].items()} if obj["agentDevices"] is not None else None
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "exited" in obj:
+            kwargs["exited"] = v1ResourcesStopped.from_json(obj["exited"]) if obj["exited"] is not None else None
+        if "resourcesId" in obj:
+            kwargs["resourcesId"] = obj["resourcesId"]
+        if "resourcesType" in obj:
+            kwargs["resourcesType"] = obj["resourcesType"]
+        if "started" in obj:
+            kwargs["started"] = v1ResourcesStarted.from_json(obj["started"]) if obj["started"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "agentDevices" in vars(self):
+            out["agentDevices"] = None if self.agentDevices is None else {k: v.to_json(omit_unset) for k, v in self.agentDevices.items()}
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "exited" in vars(self):
+            out["exited"] = None if self.exited is None else self.exited.to_json(omit_unset)
+        if not omit_unset or "resourcesId" in vars(self):
+            out["resourcesId"] = self.resourcesId
+        if not omit_unset or "resourcesType" in vars(self):
+            out["resourcesType"] = self.resourcesType
+        if not omit_unset or "started" in vars(self):
+            out["started"] = None if self.started is None else self.started.to_json(omit_unset)
+        return out
 
 class v1Role:
     name: "typing.Optional[str]" = None
@@ -14462,6 +14900,24 @@ def get_GetTask(
     if _resp.status_code == 200:
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
+
+def get_GetTasks(
+    session: "api.Session",
+) -> "v1GetTasksResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/tasks",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTasksResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTasks", _resp)
 
 def get_GetTelemetry(
     session: "api.Session",

@@ -2,7 +2,10 @@ import { Dropdown, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import CreateGroupModalComponent from 'components/CreateGroupModal';
+import DeleteGroupModalComponent from 'components/DeleteGroupModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -13,8 +16,6 @@ import InteractiveTable, {
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
-import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
-import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
@@ -54,10 +55,8 @@ const GroupActionDropdown = ({
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
-  const { modalOpen: openEditGroupModal, contextHolder: modalEditGroupContextHolder } =
-    useModalCreateGroup({ group, onClose: onFinishEdit, users });
-  const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
-    useModalDeleteGroup({ group, onClose: fetchGroups });
+  const EditGroupModal = useModal(CreateGroupModalComponent);
+  const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
@@ -67,10 +66,10 @@ const GroupActionDropdown = ({
 
     const funcs = {
       [MenuKey.Edit]: () => {
-        openEditGroupModal();
+        EditGroupModal.open();
       },
       [MenuKey.Delete]: () => {
-        openDeleteGroupModal();
+        DeleteGroupModal.open();
       },
     };
 
@@ -83,15 +82,15 @@ const GroupActionDropdown = ({
       { key: MenuKey.Delete, label: 'Delete' },
     ];
     return { items: items, onClick: onItemClick };
-  }, [openDeleteGroupModal, openEditGroupModal]);
+  }, [DeleteGroupModal, EditGroupModal]);
 
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} />
       </Dropdown>
-      {modalEditGroupContextHolder}
-      {modalDeleteGroupContextHolder}
+      <EditGroupModal.Component group={group} users={users} onClose={onFinishEdit} />
+      <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>
   );
 };
@@ -168,12 +167,7 @@ const GroupManagement: React.FC = () => {
     }
   }, [canceler, rbacEnabled]);
 
-  const { modalOpen: openCreateGroupModal, contextHolder: modalCreateGroupContextHolder } =
-    useModalCreateGroup({ onClose: fetchGroups, users: users });
-
-  const onClickCreateGroup = useCallback(() => {
-    openCreateGroupModal();
-  }, [openCreateGroupModal]);
+  const CreateGroupModal = useModal(CreateGroupModalComponent);
 
   const onExpand = useCallback(
     (expand: boolean, record: V1GroupSearchResult) => {
@@ -326,7 +320,7 @@ const GroupManagement: React.FC = () => {
       <Section
         options={
           <Space>
-            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+            <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
               New Group
             </Button>
           </Space>
@@ -334,7 +328,7 @@ const GroupManagement: React.FC = () => {
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
-      {modalCreateGroupContextHolder}
+      <CreateGroupModal.Component users={users} onClose={fetchGroups} />
     </Page>
   );
 };

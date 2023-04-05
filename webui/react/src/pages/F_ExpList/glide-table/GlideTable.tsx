@@ -123,6 +123,7 @@ export const GlideTable: React.FC<Props> = ({
 
   const getRowThemeOverride = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
+      if (!data[row]) return;
       const accentColor = Loadable.match(data[row], {
         Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
         NotLoaded: () => ({}),

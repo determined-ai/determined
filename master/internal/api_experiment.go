@@ -2016,6 +2016,10 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
+	if len(experiments) == 0 {
+		return resp, nil
+	}
+
 	// get the best trial associated with the experiment.
 
 	// don't query for experiments twice

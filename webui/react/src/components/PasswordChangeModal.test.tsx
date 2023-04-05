@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { setUserPassword as mockSetUserPassword } from 'services/api';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
@@ -12,15 +13,13 @@ import { DetailedUser } from 'types';
 
 vi.useFakeTimers();
 
-import useModalPasswordChange, {
+import PasswordChangeModalComponent, {
   API_SUCCESS_MESSAGE,
-  CANCEL_BUTTON_LABEL,
   CONFIRM_PASSWORD_LABEL,
-  MODAL_HEADER_LABEL,
   NEW_PASSWORD_LABEL,
   OK_BUTTON_LABEL,
   OLD_PASSWORD_LABEL,
-} from './useModalPasswordChange';
+} from './PasswordChangeModal';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
@@ -61,7 +60,7 @@ vi.mock('services/api', () => ({
 const user = userEvent.setup({ delay: null });
 
 const Container: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalPasswordChange();
+  const PasswordChangeModal = useModal(PasswordChangeModalComponent);
   const [canceler] = useState(new AbortController());
 
   const loadUsers = useCallback(async () => {
@@ -77,8 +76,8 @@ const Container: React.FC = () => {
 
   return (
     <div>
-      <Button onClick={() => modalOpen()}>{OPEN_MODAL_TEXT}</Button>
-      {contextHolder}
+      <Button onClick={PasswordChangeModal.open}>{OPEN_MODAL_TEXT}</Button>
+      <PasswordChangeModal.Component />
     </div>
   );
 };
@@ -91,42 +90,11 @@ const setup = async () => {
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole('heading', { name: MODAL_HEADER_LABEL });
 
   return view;
 };
 
-describe('useModalPasswordChange', () => {
-  it('should open modal with correct values', async () => {
-    await setup();
-
-    expect(screen.getByLabelText(OLD_PASSWORD_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(NEW_PASSWORD_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(CONFIRM_PASSWORD_LABEL)).toBeInTheDocument();
-  });
-
-  it('should close the modal via upper right close button', async () => {
-    await setup();
-
-    await user.click(await screen.findByLabelText('Close'));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
-    });
-  });
-
-  it('should close the modal via cancel button', async () => {
-    await setup();
-
-    await user.click(await screen.findByText(CANCEL_BUTTON_LABEL));
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
-    });
-  });
-
+describe('Password Change Modal', () => {
   it('should submit a valid password update request', async () => {
     await setup();
 
@@ -140,11 +108,6 @@ describe('useModalPasswordChange', () => {
     // Check for successful toast message.
     await waitFor(() => {
       expect(screen.getByText(API_SUCCESS_MESSAGE)).toBeInTheDocument();
-    });
-
-    // Check for the modal to be dismissed.
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.

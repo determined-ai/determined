@@ -23,7 +23,7 @@ def det_deploy(subcommand: List) -> None:
         "deploy",
         "local",
     ] + subcommand
-    subprocess.run(command)
+    subprocess.run(command, check=True)
 
 
 def cluster_up(arguments: List, delete_db: bool = True) -> None:
@@ -164,6 +164,8 @@ def test_agent_config_path() -> None:
             print("Waiting for 'test-fluent' container to be created")
             time.sleep(10)
     else:
+        print("agent logs:")
+        print(agent_container.attach(logs=True).decode())
         pytest.fail("uh-oh, fluent didn't come online")
     agent_down(["--agent-name", agent_name])
 

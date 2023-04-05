@@ -96,6 +96,12 @@ export interface GetExperimentsParams extends PaginationParams {
   users?: Array<string>;
 }
 
+export interface SearchExperimentsParams extends PaginationParams {
+  projectId?: number;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  options?: any;
+}
+
 export interface GetExperimentParams {
   id: number;
 }

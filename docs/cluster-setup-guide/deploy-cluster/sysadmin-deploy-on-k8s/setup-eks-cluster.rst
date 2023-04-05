@@ -48,7 +48,7 @@ Determined Helm chart.
 ********************
 
 The quickest and easiest way to deploy an EKS cluster is with ``eksctl``. ``eksctl`` supports
-cluster creation with either command line arguments or a cluster config file. Below is a template
+cluster creation with either command-line arguments or a cluster config file. Below is a template
 config that deploys a managed node group for Determined's master instance, as well as an autoscaling
 GPU node group for workers. To fill in the template, insert the cluster name and S3 bucket name.
 
