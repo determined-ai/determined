@@ -1,8 +1,42 @@
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
-import React, { MutableRefObject, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { MenuInfo } from 'rc-menu/lib/interface';
+import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
-import { paths } from 'routes/utils';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import usePermissions from 'hooks/usePermissions';
+import {
+  activateExperiment,
+  archiveExperiment,
+  cancelExperiment,
+  deleteExperiment,
+  killExperiment,
+  openOrCreateTensorBoard,
+  pauseExperiment,
+  unarchiveExperiment,
+} from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { capitalize } from 'shared/utils/string';
+import { ExperimentAction as Action, ExperimentItem, Project } from 'types';
+import { modal } from 'utils/dialogApi';
+import handleError from 'utils/error';
+import { getActionsForExperiment, getProjectExperimentForExperimentItem } from 'utils/experiment';
+import { openCommandResponse } from 'utils/wait';
+
+const dropdownActions = [
+  // Action.SwitchPin, requires settings
+  Action.Activate,
+  Action.Pause,
+  Action.Archive,
+  Action.Unarchive,
+  Action.Cancel,
+  Action.Kill,
+  Action.Move,
+  Action.OpenTensorBoard,
+  Action.HyperparameterSearch,
+  Action.Delete,
+];
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
@@ -26,7 +60,8 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
 
 export interface TableContextMenuProps extends MenuProps {
   open: boolean;
-  rowKey: number;
+  experiment: ExperimentItem;
+  project?: Project;
   handleClose: () => void;
   x: number;
   y: number;
@@ -36,13 +71,135 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   x,
   y,
   open,
-  rowKey,
+  project,
+  experiment: exp,
   handleClose,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
 
-  const navigate = useNavigate();
+  const experiment = getProjectExperimentForExperimentItem(exp, project);
+
+  const permissions = usePermissions();
+
+  const menuItems = experiment
+    ? getActionsForExperiment(experiment, dropdownActions, permissions).map((action) => ({
+        danger: action === Action.Delete,
+        key: action,
+        label: action,
+      }))
+    : [];
+
+  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
+    useModalExperimentMove({ onClose: handleClose });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment, onClose: handleClose });
+
+  const handleExperimentMove = useCallback(() => {
+    openExperimentMove({
+      experimentIds: [experiment.id],
+      sourceProjectId: experiment.projectId,
+      sourceWorkspaceId: experiment.workspaceId,
+    });
+  }, [openExperimentMove, experiment]);
+
+  const handleHyperparameterSearch = useCallback(() => {
+    openModalHyperparameterSearch();
+  }, [openModalHyperparameterSearch]);
+
+  const handleMenuClick = useCallback(
+    async (params: MenuInfo): Promise<void> => {
+      params.domEvent.stopPropagation();
+      try {
+        const action = params.key as Action;
+        switch (
+          action // Cases should match menu items.
+        ) {
+          case Action.Activate:
+            await activateExperiment({ experimentId: experiment.id });
+            handleClose();
+            break;
+          case Action.Archive:
+            await archiveExperiment({ experimentId: experiment.id });
+            handleClose();
+            break;
+          case Action.Cancel:
+            await cancelExperiment({ experimentId: experiment.id });
+            handleClose();
+            break;
+          case Action.OpenTensorBoard: {
+            const commandResponse = await openOrCreateTensorBoard({
+              experimentIds: [experiment.id],
+              workspaceId: experiment.workspaceId,
+            });
+            openCommandResponse(commandResponse);
+            break;
+          }
+          case Action.Kill:
+            modal.confirm({
+              content: `
+              Are you sure you want to kill
+              experiment ${experiment.id}?
+            `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killExperiment({ experimentId: experiment.id });
+                handleClose();
+              },
+              title: 'Confirm Experiment Kill',
+            });
+            break;
+          case Action.Pause:
+            await pauseExperiment({ experimentId: experiment.id });
+            handleClose();
+            break;
+          case Action.Unarchive:
+            await unarchiveExperiment({ experimentId: experiment.id });
+            handleClose();
+            break;
+          case Action.Delete:
+            modal.confirm({
+              content: `
+            Are you sure you want to delete
+            experiment ${experiment.id}?
+          `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Delete',
+              onOk: async () => {
+                await deleteExperiment({ experimentId: experiment.id });
+                handleClose();
+              },
+              title: 'Confirm Experiment Deletion',
+            });
+            break;
+          case Action.Move:
+            handleExperimentMove();
+            break;
+          case Action.HyperparameterSearch:
+            handleHyperparameterSearch();
+            break;
+        }
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: `Unable to ${params.key} experiment ${experiment.id}.`,
+          publicSubject: `${capitalize(params.key.toString())} failed.`,
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    },
+    [
+      experiment.id,
+      experiment.workspaceId,
+      handleExperimentMove,
+      handleHyperparameterSearch,
+      handleClose,
+    ],
+  );
 
   return (
     <div
@@ -55,16 +212,9 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         top: y,
         width: 200,
       }}>
-      <Menu
-        items={[
-          {
-            disabled: false,
-            key: '1',
-            label: 'Visit',
-            onClick: () => navigate(paths.experimentDetails(rowKey)),
-          },
-        ]}
-      />
+      <Menu items={menuItems} onClick={handleMenuClick} />
+      {modalExperimentMoveContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };

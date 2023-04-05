@@ -25,15 +25,15 @@ import React, {
 import { useNavigate } from 'react-router';
 
 import useUI from 'shared/contexts/stores/UI';
-import userStore from 'stores/users';
-import { ExperimentItem } from 'types';
+import usersStore from 'stores/users';
+import { ExperimentItem, Project } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable, WritableObservable } from 'utils/observable';
 
 import { PAGE_SIZE } from '../F_ExperimentList';
 
 import { ColumnDef, defaultColumnWidths, ExperimentColumn, getColumnDefs } from './columns';
-import { TableContextMenu } from './contextMenu';
+import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import UserProfileCell from './custom-cells/avatar';
 import LinksCell from './custom-cells/links';
 import RangeCell from './custom-cells/progress';
@@ -62,6 +62,7 @@ interface Props {
   sortableColumnIds: ExperimentColumn[];
   setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
   page: number;
+  project?: Project;
   selectedExperimentIds: string[];
   setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
   selectAll: boolean;
@@ -81,6 +82,7 @@ export const GlideTable: React.FC<Props> = ({
   handleScroll,
   initialScrollPositionSet,
   page,
+  project,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
 
@@ -106,12 +108,7 @@ export const GlideTable: React.FC<Props> = ({
   });
 
   const [contextMenuIsOpen, setContextMenuIsOpen] = useState(false);
-  const [contextMenuProps, setContextMenuProps] = useState({
-    handleClose: () => setContextMenuIsOpen(false),
-    rowKey: -1,
-    x: 0,
-    y: 0,
-  });
+  const [contextMenuProps, setContextMenuProps] = useState<Omit<TableContextMenuProps, 'open'>>();
 
   const {
     ui: { darkLight },
@@ -245,23 +242,24 @@ export const GlideTable: React.FC<Props> = ({
 
   const onCellContextMenu = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
-      const loadableExperiment = Loadable.match(data?.[cell[1]], {
-        Loaded: (record) => record.id,
-        NotLoaded: () => -1,
+      const experiment = Loadable.match(data?.[cell[1]], {
+        Loaded: (record) => record,
+        NotLoaded: () => null,
       }); // could also use event.location[1]
-      if (loadableExperiment === -1) return;
+      if (!experiment) return;
 
       event.preventDefault();
       setContextMenuProps({
+        experiment,
         handleClose: () => setContextMenuIsOpen(false),
-        rowKey: loadableExperiment,
+        project,
         x: event.bounds.x,
         y: event.bounds.y,
       });
       setContextMenuIsOpen(true);
       return false;
     },
-    [data, setContextMenuProps, setContextMenuIsOpen],
+    [data, project, setContextMenuProps, setContextMenuIsOpen],
   );
 
   const onColumnMoved = useCallback(
@@ -320,7 +318,9 @@ export const GlideTable: React.FC<Props> = ({
         // onCellContextMenu={onCellContextMenu}
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
-      <TableContextMenu {...contextMenuProps} open={contextMenuIsOpen} />
+      {contextMenuProps?.experiment && (
+        <TableContextMenu {...contextMenuProps} open={contextMenuIsOpen} />
+      )}
     </div>
   );
 };
