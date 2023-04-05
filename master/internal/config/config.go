@@ -130,7 +130,7 @@ func DefaultConfig() *Config {
 			CoresPerWorker: 1,
 			MaxTrees:       100,
 		},
-		ResourceConfig: DefaultResourceConfig(),
+		ResourceConfig: *DefaultResourceConfig(),
 	}
 }
 
@@ -158,7 +158,7 @@ type Config struct {
 	Cache                 CacheConfig                       `json:"cache"`
 	Webhooks              WebhooksConfig                    `json:"webhooks"`
 	FeatureSwitches       []string                          `json:"feature_switches"`
-	*ResourceConfig
+	ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
@@ -207,6 +207,12 @@ func (c Config) Printable() ([]byte, error) {
 	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
+
+	pools := make([]ResourcePoolConfig, 0, len(c.ResourcePools))
+	for _, poolConfig := range c.ResourcePools {
+		pools = append(pools, poolConfig.Printable())
+	}
+	c.ResourcePools = pools
 
 	optJSON, err := json.Marshal(c)
 	if err != nil {
