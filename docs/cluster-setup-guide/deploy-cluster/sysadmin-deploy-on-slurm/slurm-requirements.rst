@@ -192,27 +192,27 @@ to optimize how Determined interacts with PBS:
 
    -  Check if the ``resources_available.accel_type`` value is set.
 
-   .. code:: bash
+      .. code:: bash
 
-      pbsnodes -v node001 | grep resources_available.accel_type
+         pbsnodes -v node001 | grep resources_available.accel_type
 
    -  If required, set the desired value for ``resources_available.accel_type``.
 
-   .. code:: bash
+      .. code:: bash
 
-      sudo qmgr -c "set node node001 resources_available.accel_type=tesla"
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla"
 
    -  When there are multiple types of GPUs on the node, use a comma-separated value.
 
-   .. code:: bash
+      .. code:: bash
 
-      sudo qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"
 
    -  Verify that the ``resources_available.accel_type`` value is now set.
 
-   .. code:: bash
+      .. code:: bash
 
-      pbsnodes -v node001 | grep resources_available.accel_type
+         pbsnodes -v node001 | grep resources_available.accel_type
 
    Repeat the above steps to set the ``resources_available.accel_type`` value for every node
    containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
