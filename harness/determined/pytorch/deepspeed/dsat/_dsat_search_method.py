@@ -519,17 +519,10 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         if self.trial_tracker.should_stop:
             self._state_print_checks(searcher_state)
             # Shutdown if `should_stop` is True, and this was the last running trial.
-            completed_trials = searcher_state.trials_closed | searcher_state.failures
-            running_trials = searcher_state.trials_created - completed_trials
+            running_trials = searcher_state.trials_created - searcher_state.trials_closed
             new_ops_list = [searcher.Shutdown()] if not running_trials else []
-
         else:
-            metric = self.trial_tracker[request_id].metric
-            new_ops_list = self.get_new_searcher_ops_list(
-                searcher_state=searcher_state,
-                request_id=request_id,
-                metric=metric,
-            )
+            new_ops_list = []
         return new_ops_list
 
     def on_trial_exited_early(
@@ -552,8 +545,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             if self.trial_tracker.should_stop:
                 # Shutdown if `should_stop` is True, once all currently-running trials have completed.
                 self._state_print_checks(searcher_state)
-                completed_trials = searcher_state.trials_closed | searcher_state.failures
-                running_trials = searcher_state.trials_created - completed_trials
+                running_trials = searcher_state.trials_created - searcher_state.trials_closed
                 new_ops_list = [searcher.Shutdown()] if not running_trials else []
             else:
                 new_ops_list = self.get_new_searcher_ops_list(
