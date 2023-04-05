@@ -2,11 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 
+import ExperimentCreateModalComponent, {
+  CreateExperimentType,
+} from 'components/ExperimentCreateModal';
 import Button from 'components/kit/Button';
+import { useModal } from 'components/kit/Modal';
 import { setAuth } from 'stores/auth';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-
-import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
 
 const MODAL_TITLE = 'Fork';
 const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';
@@ -23,7 +25,7 @@ vi.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalExperimentCreate();
+  const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
   const { experiment, trial } = generateTestExperimentData();
   useEffect(() => {
     setAuth({ isAuthenticated: true });
@@ -31,13 +33,10 @@ const ModalTrigger: React.FC = () => {
 
   return (
     <>
-      <Button
-        onClick={() =>
-          modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })
-        }>
-        Show Jupyter Lab
-      </Button>
-      {contextHolder}
+      <Button onClick={ExperimentCreateModal.open}>Show Jupyter Lab</Button>
+      <ExperimentCreateModal.Component
+        {...{ experiment: experiment, trial: trial, type: CreateExperimentType.Fork }}
+      />
     </>
   );
 };
@@ -52,7 +51,7 @@ const setup = async () => {
   await user.click(screen.getByRole('button'));
 };
 
-describe('useModalExperimentCreate', () => {
+describe('Create Experiment Modal', () => {
   it('modal can be opened', async () => {
     await setup();
 

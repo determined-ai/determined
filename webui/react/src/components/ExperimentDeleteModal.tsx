@@ -41,7 +41,6 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       Are you sure you want to delete experiment {experiment.id}?
     </Modal>
   );
-
 };
 
 export default ExperimentDeleteModalComponent;

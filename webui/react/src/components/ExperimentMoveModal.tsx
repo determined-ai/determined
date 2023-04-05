@@ -39,10 +39,12 @@ const moveExperimentWithHandler = async (
   }
 };
 
-const ExperimentMoveModalComponent: React.FC<Props> = ({ onClose,
+const ExperimentMoveModalComponent: React.FC<Props> = ({
+  onClose,
   experimentIds,
   sourceProjectId,
-  sourceWorkspaceId }: Props) => {
+  sourceWorkspaceId,
+}: Props) => {
   const canceler = useRef(new AbortController());
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);

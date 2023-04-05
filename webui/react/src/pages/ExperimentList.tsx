@@ -691,11 +691,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;
-        setBatchMovingExperimentIds(settings.row.filter(
-          (id) =>
-            canActionExperiment(Action.Move, experimentMap[id]) &&
-            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-        ));
+        setBatchMovingExperimentIds(
+          settings.row.filter(
+            (id) =>
+              canActionExperiment(Action.Move, experimentMap[id]) &&
+              permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+          ),
+        );
         ExperimentMoveModal.open();
       }
 

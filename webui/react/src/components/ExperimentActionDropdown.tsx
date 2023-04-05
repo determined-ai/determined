@@ -82,7 +82,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       try {
         const action = params.key as Action;
         switch (
-        action // Cases should match menu items.
+          action // Cases should match menu items.
         ) {
           case Action.Activate:
             await activateExperiment({ experimentId: id });
@@ -232,12 +232,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
-      <ExperimentMoveModal.Component {...{
-        experimentIds: [id],
-        onClose: onComplete,
-        sourceProjectId: experiment.projectId,
-        sourceWorkspaceId: experiment.workspaceId,
-      }}
+      <ExperimentMoveModal.Component
+        {...{
+          experimentIds: [id],
+          onClose: onComplete,
+          sourceProjectId: experiment.projectId,
+          sourceWorkspaceId: experiment.workspaceId,
+        }}
       />
       {modalHyperparameterSearchContextHolder}
     </>
@@ -246,12 +247,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
-      <ExperimentMoveModal.Component {...{
-        experimentIds: [id],
-        onClose: onComplete,
-        sourceProjectId: experiment.projectId,
-        sourceWorkspaceId: experiment.workspaceId,
-      }}
+      <ExperimentMoveModal.Component
+        {...{
+          experimentIds: [id],
+          onClose: onComplete,
+          sourceProjectId: experiment.projectId,
+          sourceWorkspaceId: experiment.workspaceId,
+        }}
       />
       {modalHyperparameterSearchContextHolder}
     </div>
