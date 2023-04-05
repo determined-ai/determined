@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  determined-db:
+    image: postgres:10.14
+    volumes:
+      - determined-db-volume:/var/lib/postgresql/data
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: determined
+      POSTGRES_PASSWORD: ${DET_DB_PASSWORD}
+    command:
+      - --max_connections=96
+      - --shared_buffers=512MB
+
+  determined-master:
+    init: true
+    restart: ${DET_RESTART_POLICY:-unless-stopped}
+    depends_on:
+      - determined-db
+    image: ${IMAGE_REPO_PREFIX:-determinedai}/determined-master:${DET_VERSION}
+    volumes:
+      - ${DET_MASTER_CONFIG}:/etc/determined/master.yaml
+    ports:
+      - "${INTEGRATIONS_HOST_PORT:-8080}:8080"
+    environment:
+      DET_LOG_LEVEL: ${INTEGRATIONS_LOG_LEVEL:-info}
+      DET_MASTER_HTTP_PORT: ${INTEGRATIONS_HOST_PORT:-8080}
+      DET_DB_PASSWORD: ${DET_DB_PASSWORD}
+
+volumes:
+  determined-db-volume: {}
