@@ -1,4 +1,5 @@
 import DataEditor, {
+  CellClickedEventArgs,
   CompactSelection,
   DataEditorProps,
   DataEditorRef,
@@ -32,6 +33,7 @@ import { useObservable, WritableObservable } from 'utils/observable';
 import { PAGE_SIZE } from '../F_ExperimentList';
 
 import { ColumnDef, defaultColumnWidths, ExperimentColumn, getColumnDefs } from './columns';
+import { TableContextMenu } from './contextMenu';
 import UserProfileCell from './custom-cells/avatar';
 import LinksCell from './custom-cells/links';
 import RangeCell from './custom-cells/progress';
@@ -99,6 +101,14 @@ export const GlideTable: React.FC<Props> = ({
   }, []);
   const [menuProps, setMenuProps] = useState<Omit<TableActionMenuProps, 'open'>>({
     handleClose: handleMenuClose,
+    x: 0,
+    y: 0,
+  });
+
+  const [contextMenuIsOpen, setContextMenuIsOpen] = useState(false);
+  const [contextMenuProps, setContextMenuProps] = useState({
+    handleClose: () => setContextMenuIsOpen(false),
+    rowKey: -1,
     x: 0,
     y: 0,
   });
@@ -233,6 +243,27 @@ export const GlideTable: React.FC<Props> = ({
     }));
   }, []);
 
+  const onCellContextMenu = useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      const loadableExperiment = Loadable.match(data?.[cell[1]], {
+        Loaded: (record) => record.id,
+        NotLoaded: () => -1,
+      }); // could also use event.location[1]
+      if (loadableExperiment === -1) return;
+
+      event.preventDefault();
+      setContextMenuProps({
+        handleClose: () => setContextMenuIsOpen(false),
+        rowKey: loadableExperiment,
+        x: event.bounds.x,
+        y: event.bounds.y,
+      });
+      setContextMenuIsOpen(true);
+      return false;
+    },
+    [data, setContextMenuProps, setContextMenuIsOpen],
+  );
+
   const onColumnMoved = useCallback(
     (columnIdsStartIdx: number, columnIdsEndIdx: number): void => {
       const sortableColumnIdsStartIdx = columnIdsStartIdx - STATIC_COLUMNS.length;
@@ -274,6 +305,7 @@ export const GlideTable: React.FC<Props> = ({
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
+        onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
@@ -288,6 +320,7 @@ export const GlideTable: React.FC<Props> = ({
         // onCellContextMenu={onCellContextMenu}
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
+      <TableContextMenu {...contextMenuProps} open={contextMenuIsOpen} />
     </div>
   );
 };
