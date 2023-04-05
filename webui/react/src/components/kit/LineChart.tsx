@@ -162,7 +162,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     return {
       axes: [
         {
-          font: '12px Arial, Helvetica, sans-serif',
+          font: '12px var(--theme-font-family), Arial, Helvetica, sans-serif',
           grid: { show: false },
           label: xLabel,
           scale: 'x',
@@ -172,7 +172,7 @@ export const LineChart: React.FC<LineChartProps> = ({
           values: xTickValues,
         },
         {
-          font: '12px Arial, Helvetica, sans-serif',
+          font: '12px var(--theme-font-family), Arial, Helvetica, sans-serif',
           grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
           labelGap: 8,
