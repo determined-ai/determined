@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 from typing import Callable, Dict
 
-import determined
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 from . import cluster_utils
@@ -35,7 +34,7 @@ def handle_cluster_down(args: argparse.Namespace) -> None:
 
 
 def handle_logs(args: argparse.Namespace) -> None:
-    cluster_utils.logs(cluster_name=args.cluster_name, follow=not args.no_follow)
+    cluster_utils.logs(cluster_name=args.cluster_name, no_follow=args.no_follow)
 
 
 def handle_master_up(args: argparse.Namespace) -> None:
@@ -55,9 +54,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
 
 
 def handle_master_down(args: argparse.Namespace) -> None:
-    cluster_utils.master_down(
-        master_name=args.master_name, delete_db=args.delete_db, cluster_name=args.cluster_name
-    )
+    cluster_utils.master_down(master_name=args.master_name, delete_db=args.delete_db)
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
@@ -138,12 +135,7 @@ args_description = Cmd(
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg(
-                    "--det-version",
-                    type=str,
-                    default=determined.__version__,
-                    help="version or commit to use",
-                ),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
                 Arg(
                     "--db-password",
                     type=str,
@@ -222,15 +214,10 @@ args_description = Cmd(
                 Arg(
                     "--master-name",
                     type=str,
-                    default=None,
-                    help="name for the master instance",
+                    default="determined",
+                    help="name for the cluster resources",
                 ),
-                Arg(
-                    "--det-version",
-                    type=str,
-                    default=determined.__version__,
-                    help="version or commit to use",
-                ),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
                 Arg(
                     "--db-password",
                     type=str,
@@ -254,12 +241,6 @@ args_description = Cmd(
                     help="name for the cluster resources",
                 ),
                 Arg(
-                    "--image-repo-prefix",
-                    type=str,
-                    default="determinedai",
-                    help="prefix for the master image",
-                ),
-                Arg(
                     "--auto-work-dir",
                     type=Path,
                     default=None,
@@ -275,8 +256,8 @@ args_description = Cmd(
                 Arg(
                     "--master-name",
                     type=str,
-                    default=None,
-                    help="name for the master instance",
+                    default="determined",
+                    help="name for the cluster resources",
                 ),
                 Arg(
                     "--delete-db",
@@ -323,12 +304,7 @@ args_description = Cmd(
                     default=None,
                     help="path to agent configuration",
                 ),
-                Arg(
-                    "--det-version",
-                    type=str,
-                    default=determined.__version__,
-                    help="version or commit to use",
-                ),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
                 Arg(
                     "--agent-name",
                     type=str,
@@ -354,12 +330,6 @@ args_description = Cmd(
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
-                ),
-                Arg(
-                    "--image-repo-prefix",
-                    type=str,
-                    default="determinedai",
-                    help="prefix for the master image",
                 ),
             ],
         ),

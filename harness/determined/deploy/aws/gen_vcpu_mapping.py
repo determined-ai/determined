@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 import boto3
-
-from determined.common import yaml
+import yaml
 
 
 def _fetch_vcpu_mapping() -> Iterable[Tuple[str, Dict]]:
