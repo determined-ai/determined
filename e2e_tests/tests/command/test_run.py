@@ -564,6 +564,42 @@ def test_k8_sidecars(using_k8s: bool) -> None:
         _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
 
 
+@pytest.mark.e2e_gpu
+@pytest.mark.parametrize("slots", [0, 1])
+def test_k8_resource_limits(using_k8s: bool, slots: int) -> None:
+    if not using_k8s:
+        pytest.skip("only need to run test on kubernetes")
+
+    config = {
+        "environment": {
+            "pod_spec": {
+                "spec": {
+                    "containers": [
+                        {
+                            "name": "determined-container",
+                            "resources": {
+                                "requests": {
+                                    "cpu": 0.1,
+                                    "memory": "1Gi",
+                                },
+                                "limits": {
+                                    "cpu": 1,
+                                    "memory": "1Gi",
+                                },
+                            },
+                        }
+                    ],
+                }
+            }
+        },
+        "resources": {
+            "slots": slots,
+        },
+    }
+
+    _run_cmd_with_config_expecting_success(cmd="sleep 3; echo hello", config=config)
+
+
 @pytest.mark.e2e_cpu
 def test_log_wait_timeout(tmp_path: Path, secrets: Dict[str, str]) -> None:
     # Start a subshell that prints after 5 and 20 seconds, then exit.
