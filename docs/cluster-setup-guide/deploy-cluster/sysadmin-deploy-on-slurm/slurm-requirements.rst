@@ -183,9 +183,9 @@ to optimize how Determined interacts with PBS:
 
 -  Configure PBS to report GPU Accelerator type.
 
-   PBS administrators should set the value for ``resources_available.accel_type`` on each node with
-   a GPU. Otherwise, the Cluster tab on the Determined Web UI will show ``unconfigured`` for the
-   ``Accelerator`` field in the Resource Pool information.
+   It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
+   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined Web UI will
+   show ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
 
    PBS administrators can use the following set of commands to set the value of
    ``resources_available.accel_type`` on a single node:
