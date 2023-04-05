@@ -65,8 +65,8 @@ interface Props {
   setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
   page: number;
   project?: Project;
-  selectedExperimentIds: string[];
-  setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
+  selectedExperimentIds: number[];
+  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
@@ -154,7 +154,7 @@ export const GlideTable: React.FC<Props> = ({
       const selectedIds = selectedRowIndices
         .map((idx) => data?.[idx])
         .filter(Loadable.isLoaded)
-        .map((record) => String(record.data.id));
+        .map((record) => record.data.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });

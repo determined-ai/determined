@@ -316,11 +316,23 @@ export const archiveExperiment = generateDetApi<
   void
 >(Config.archiveExperiment);
 
+export const archiveExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1ArchiveExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.archiveExperiments);
+
 export const unarchiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1UnarchiveExperimentResponse,
   void
 >(Config.unarchiveExperiment);
+
+export const unarchiveExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1UnarchiveExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.unarchiveExperiments);
 
 export const deleteExperiment = generateDetApi<
   Service.ExperimentIdParams,
@@ -334,11 +346,23 @@ export const activateExperiment = generateDetApi<
   void
 >(Config.activateExperiment);
 
+export const activateExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1ActivateExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.activateExperiments);
+
 export const pauseExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1PauseExperimentResponse,
   void
 >(Config.pauseExperiment);
+
+export const pauseExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1PauseExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.pauseExperiments);
 
 export const cancelExperiment = generateDetApi<
   Service.ExperimentIdParams,
@@ -346,11 +370,23 @@ export const cancelExperiment = generateDetApi<
   void
 >(Config.cancelExperiment);
 
+export const cancelExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1CancelExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.cancelExperiments);
+
 export const killExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1KillExperimentResponse,
   void
 >(Config.killExperiment);
+
+export const killExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1KillExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.killExperiments);
 
 export const patchExperiment = generateDetApi<
   Service.PatchExperimentParams,
@@ -369,6 +405,12 @@ export const moveExperiment = generateDetApi<
   Api.V1MoveExperimentResponse,
   void
 >(Config.moveExperiment);
+
+export const moveExperiments = generateDetApi<
+  Api.V1MoveExperimentsRequest,
+  Api.V1MoveExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.moveExperiments);
 
 export const getExperimentFileTree = generateDetApi<
   Service.ExperimentIdParams,

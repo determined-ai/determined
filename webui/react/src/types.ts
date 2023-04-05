@@ -297,6 +297,11 @@ export const ExperimentAction = {
 
 export type ExperimentAction = ValueOf<typeof ExperimentAction>;
 
+export interface BulkActionError {
+  error: string;
+  id: number;
+}
+
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }
