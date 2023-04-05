@@ -224,10 +224,6 @@ VALUES
 			SELECT coalesce(max(v.total_batches), 0) AS total_batches
 			FROM validations v
 			WHERE v.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(c.total_batches), 0) AS total_batches
-			FROM checkpoints c
-			WHERE c.trial_id = $1
 		) q
 		) AS sub; 
 		`, m.TrialId); err != nil {
@@ -302,10 +298,6 @@ VALUES
 			SELECT coalesce(max(v.total_batches), 0) AS total_batches
 			FROM validations v
 			WHERE v.trial_id = $1
-			UNION ALL
-			SELECT coalesce(max(c.total_batches), 0) AS total_batches
-			FROM checkpoints c
-			WHERE c.trial_id = $1
 		) q
 		) AS sub; 
 		`, m.TrialId); err != nil {

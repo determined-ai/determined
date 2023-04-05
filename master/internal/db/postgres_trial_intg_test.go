@@ -216,7 +216,7 @@ func TestBatchesProcessed(t *testing.T) {
 		case "training":
 			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
 		case "validation":
-			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics)) // TODO: we should add checkpoint here too.
+			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
 		default:
 			return errors.Errorf("unknown type %s", typ)
 		}

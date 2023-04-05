@@ -8,10 +8,7 @@ FROM (
         FROM steps s GROUP by trial_id 
         UNION ALL
         SELECT trial_id, coalesce(max(v.total_batches), 0) AS total_batches
-        FROM validations v  GROUP by trial_id 
-        UNION ALL
-        SELECT trial_id, coalesce(max(c.total_batches), 0) AS total_batches
-        FROM checkpoints c GROUP by trial_id 
+        FROM validations v  GROUP by trial_id
     ) AS q GROUP by trial_id 
 ) AS sub 
 WHERE public.trials.id = sub.trial_id
