@@ -215,7 +215,8 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 	if instanceNum <= 0 {
 		return
 	}
-	instances, err := c.launchInstances(instanceNum, false)
+	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
+	instances, err := c.launchInstances(ctx, instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
 		return
@@ -333,7 +334,7 @@ func (c *awsCluster) describeInstancesByID(
 	return instances, nil
 }
 
-func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reservation, error) {
+func (c *awsCluster) launchInstances(ctx *actor.Context, instanceNum int, dryRun bool) (*ec2.Reservation, error) {
 	input := &ec2.RunInstancesInput{
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
@@ -418,7 +419,7 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 			Arn: aws.String(c.IamInstanceProfileArn),
 		}
 	}
-
+	ctx.Log().Infof("run instances: %#v", input)
 	return c.client.RunInstances(input)
 }
 

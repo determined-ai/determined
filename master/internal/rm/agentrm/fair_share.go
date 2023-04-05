@@ -26,6 +26,7 @@ type fairShare struct {
 func NewFairShareScheduler(config *config.SchedulerConfig) Scheduler {
 	return &fairShare{
 		allocationTimeout: time.Duration(*config.AllocationTimeout),
+		scheduledReqTime:  make(map[*sproto.AllocateRequest]time.Time),
 	}
 }
 

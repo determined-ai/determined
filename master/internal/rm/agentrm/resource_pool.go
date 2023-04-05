@@ -530,6 +530,8 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			}()
 
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
+			ctx.Log().Debugf("toAllocate: %d", len(toAllocate))
+			ctx.Log().Debugf("toRelease: %d", len(toRelease))
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}

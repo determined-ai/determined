@@ -3,6 +3,7 @@ package provconfig
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"unicode"
 
@@ -89,12 +90,16 @@ func (c *AWSClusterConfig) BuildDockerLogString() string {
 func (c *AWSClusterConfig) InitDefaultValues() error {
 	metadata, err := getEC2MetadataSess()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get session: %w", err)
 	}
 
 	if len(c.Region) == 0 {
 		if c.Region, err = metadata.Region(); err != nil {
-			return err
+			region, ok := os.LookupEnv("AWS_DEFAULT_REGION")
+			if !ok {
+				return fmt.Errorf("unable to get region: %w", err)
+			}
+			c.Region = region
 		}
 	}
 
