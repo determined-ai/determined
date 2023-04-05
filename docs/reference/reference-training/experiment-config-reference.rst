@@ -963,7 +963,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
 
 ``devices``
    A list of device strings to pass to the Docker daemon. Each entry in the list is equivalent to a
-   ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is honored by resource
+   ``--device DEVICE`` command-line argument to ``docker run``. ``devices`` is honored by resource
    managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``. See
    :ref:`master configuration <master-config-reference>` for details about resource managers.
 
@@ -1116,7 +1116,7 @@ workloads for this experiment. For more information on customizing the trial env
 
 ``add_capabilities``
    A list of Linux capabilities to grant to task containers. Each entry in the list is equivalent to
-   a ``--cap-add CAP`` command line argument to ``docker run``. ``add_capabilities`` is honored by
+   a ``--cap-add CAP`` command-line argument to ``docker run``. ``add_capabilities`` is honored by
    resource managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``.
    See :ref:`master configuration <master-config-reference>` for details about resource managers.
 

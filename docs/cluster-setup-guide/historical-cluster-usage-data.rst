@@ -32,7 +32,7 @@ We build WebUI visualizations for a quick snapshot of the historical cluster usa
    :width: 100%
 
 ************************
- Command Line Interface
+ Command-line Interface
 ************************
 
 Alternatively, you can use the :ref:`CLI <cli-ug>` or the API endpoints to download the resource

@@ -15,7 +15,7 @@
          <div class="tile-container">
              <a class="tile" href="commands-and-shells.html">
                  <h2 class="tile-title">Commands and Shells</h2>
-                 <p class="tile-description">You can use a Determined cluster to run free-form programs.</p>
+                 <p class="tile-description">How to use a Determined cluster to run free-form programs.</p>
              </a>
          </div>
          <div class="tile-container">
@@ -27,12 +27,12 @@
          <div class="tile-container">
              <a class="tile" href="notebooks.html">
                  <h2 class="tile-title">Jupyter Notebooks</h2>
-                 <p class="tile-description">Launch and manage Jupyter Notebooks.</p>
+                 <p class="tile-description">Launching and managing Jupyter Notebooks.</p>
              </a>
          </div>
          <div class="tile-container">
              <a class="tile" href="tensorboard.html">
-                 <h2 class="tile-title">Using Tensorboard</h2>
+                 <h2 class="tile-title">Using TensorBoard</h2>
                  <p class="tile-description">Using TensorBoard to examine individual or compare multiple experiments.</p>
              </a>
          </div>

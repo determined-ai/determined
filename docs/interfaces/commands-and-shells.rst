@@ -4,11 +4,12 @@
  Commands and Shells
 #####################
 
-Determined Commands and Shells provide support for running a Determined cluster without writing a
-model. This page describes how to manage GPU-powered batch commands and interactive shells.
+Determined commands and shells provide support for running code on a Determined cluster without
+writing a model. This page describes how to manage GPU-powered batch commands and interactive
+shells.
 
-Commands and Shells are started through the Determined Command Line Interface (CLI). To learn more,
-including installation instructions, visit the :ref:`Determined CLI User Guide <cli-ug>` or
+Commands and shells are started through the Determined command-line interface (CLI). To learn more,
+including installation instructions, visit the :ref:`Determined CLI user guide <cli-ug>` or
 :ref:`Determined CLI Reference <cli-reference>`.
 
 Commands execute a user-specified program on the cluster. Commands are useful for running existing
@@ -20,10 +21,10 @@ Shells provide access to the cluster in the form of interactive `SSH
  Commands
 **********
 
-Determined commands start with ``det command``, abbreviated as ``det cmd``. The main subcommand is
-``det cmd run``, which runs a command in the cluster and streams its output. For example, the
-following CLI command uses ``nvidia-smi`` to display information about the GPUs available to tasks
-in the container:
+Determined commands are manipulated with CLI commands starting with ``det command``, abbreviated as
+``det cmd``. The main subcommand is ``det cmd run``, which runs a command in the cluster and streams
+its output. For example, the following CLI command uses ``nvidia-smi`` to display information about
+the GPUs available to tasks in the container:
 
 .. code::
 

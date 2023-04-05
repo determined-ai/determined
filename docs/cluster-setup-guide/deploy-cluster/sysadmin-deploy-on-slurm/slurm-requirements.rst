@@ -51,7 +51,7 @@ The launcher has the following additional requirements on the installation node:
 -  Support for an RPM or Debian-based package installer
 -  Java 1.8 or greater
 -  Sudo is configured to process configuration files present in the ``/etc/sudoers.d`` directory
--  Access to the Slurm or PBS command line interface for the cluster
+-  Access to the Slurm or PBS command-line interface for the cluster
 -  Access to a cluster-wide file system with a consistent path names across the cluster
 
 .. _proxy-config-requirements:
