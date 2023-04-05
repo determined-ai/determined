@@ -56,7 +56,7 @@ resource_pools:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		ResourceConfig: &ResourceConfig{
+		ResourceConfig: ResourceConfig{
 			ResourceManager: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
@@ -120,7 +120,7 @@ resource_pools:
       max_agent_starting_period: 40s
 `
 	expected := Config{
-		ResourceConfig: &ResourceConfig{
+		ResourceConfig: ResourceConfig{
 			ResourceManager: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{

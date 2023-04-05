@@ -1000,7 +1000,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.db,
 		m.echo,
-		m.config.ResourceConfig,
+		&m.config.ResourceConfig,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
