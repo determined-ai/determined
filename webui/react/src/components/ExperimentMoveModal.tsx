@@ -75,7 +75,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleSubmit = async () => {
-
     if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
       message.info('No changes to save.');
       return;
