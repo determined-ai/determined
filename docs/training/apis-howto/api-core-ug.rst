@@ -97,7 +97,8 @@ Begin by importing Determined:
 Step 2.1: Modify the Main Loop
 ==============================
 
-Modify the __main__loop to include ``core_context``:
+We'll need a ``core.Context`` object for interacting with the master. To accomplish this, we'll
+modify the __main__loop to include ``core_context``:
 
 .. note::
 
@@ -105,31 +106,36 @@ Modify the __main__loop to include ``core_context``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-at: if __name__ == "__main__":
+   :start-after: # Docs snippet start after: modify main loop core context
    :end-at: main(core_context=core_context)
 
 Step 2.2: Modify the Train Method
 =================================
 
+Use ``core_context.train`` to report training and validation metrics.
+
 Modify the train() method by adding ``core_context.train.report_training_metrics()``:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start after: report training metrics
+   :end-before: # Docs snippet end before: report training metrics
+   :dedent:
+
+and ``core_context.train.report_validation_metrics()``:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start after: report validation metrics
+   :end-before: # Docs snippet end before: report validation metrics
+   :dedent:
 
 .. note::
 
-   Viewing epoch-based metrics
+   Viewing Epoch-Based Metrics in the WebUI
 
-   This example defines an "epoch" metric for the purpose of reporting its value during training and
-   viewing epoch-based metric data in the WebUI. Modifying your code in this way is entirely
-   optional.
-
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
-   :language: python
-   :start-at: # NEW: Report epoch-based training metrics to Determined master via core_context.
-   :end-at: metrics={"train_loss": loss.item(), "epoch": epoch},
-
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
-   :language: python
-   :start-at: core_context.train.report_validation_metrics
-   :end-at: metrics={"test_loss": test_loss, "epoch": epoch},
+   You can modify your code to report epoch-based metrics as shown in this example. When you report
+   epoch-based metrics during training, you'll be able to view epoch-based metric data in the WebUI.
 
 .. tip::
 
@@ -152,15 +158,17 @@ evaluation loop. In addition, pass the newly created ``core_context`` into both 
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-at: # NEW: Pass core_context into train() and test().
-   :end-before: # NEW: Remove model saving logic, checkpointing shown in next stage.
+   :start-after: # Docs snippet start after: pass core context
+   :end-before: # Docs snippet end before: pass core context
+   :dedent:
 
 Create a ``steps_completed`` variable to plot metrics on a graph in the WebUI:
 
-.. code:: python
-
-   # NEW: Calculate steps_completed for plotting test metrics.
-   steps_completed = epoch * len(train_loader)
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
+   :language: python
+   :start-after: # Docs snippet start after: calculate steps completed
+   :end-before: # Docs snippet end before: calculate steps completed
+   :dedent:
 
 Step 2.4: Run the Experiment
 ============================
@@ -195,8 +203,9 @@ To save checkpoints, add the ``store_path`` function to your script:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-at: # NEW: Save checkpoint.
-   :end-before: # NEW: Detect when the experiment is paused by the WebUI.
+   :start-after: # Docs snippet start after: save checkpoint
+   :end-before: # Docs snippet end before: save checkpoint
+   :dedent:
 
 Step 3.2: Continuations
 =======================
@@ -217,22 +226,25 @@ To enable pausing an experiment, enable preemption:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: torch.save(model.state_dict(), path / "checkpoint.pt")
-   :end-before: if __name__ == "__main__":
+   :start-after: # Docs snippet start after: enable preemption
+   :end-before: # Docs snippet end before: enable preemption
+   :dedent:
 
 Define a load_state function for restarting model training from existing checkpoint:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-at: # NEW: Define load_state function for restarting model training from existing checkpoint.
-   :end-before: def main(core_context):
+   :start-after: # Docs snippet start after: define load state to restart
+   :end-before: # Docs snippet end before: define load state to restart
+   :dedent:
 
 If checkpoint exists, load it and assign it to model state prior to resuming training:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # NEW: If checkpoint exists, load it and assign it to model state prior to resuming training.
-   :end-before: torch.manual_seed(args.seed)
+   :start-after: # Docs snippet start after: if checkpoint assign to model state
+   :end-before: # Docs snippet end before: if checkpoint assign to model state
+   :dedent:
 
 **Enable Continuing the Trial**
 
@@ -244,22 +256,25 @@ Open the `checkpoint.pt` file in binary mode and compare `ckpt_trial_id` with th
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-at: # NEW: Define load_state function for restarting model training from existing checkpoint.
-   :end-before: def main(core_context):
+   :start-after: # Docs snippet start after: compare checkpoint and current trial IDs
+   :end-before: # Docs snippet end before: compare checkpoint and current trial IDs
+   :dedent:
 
 Save the checkpoint in the `checkpoint.pt` file:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: scheduler.step()
-   :end-at: torch.save(model.state_dict(), path / "checkpoint.pt")
+   :start-after: # Docs snippet start after: save checkpoint
+   :end-before: # Docs snippet end before: save checkpoint
+   :dedent:
 
 Detect when the experiment is paused by the WebUI:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-at: # NEW: Detect when the experiment is paused by the WebUI.
-   :end-before: if __name__ == "__main__":
+   :start-after: # Docs snippet start after: enable preemption
+   :end-before: # Docs snippet end before: enable preemption
+   :dedent:
 
 Step 3.3: Run the Experiment
 ============================
@@ -331,26 +346,28 @@ accompanying ``adaptive.yaml`` experiment configuration file.
 
 Begin by accessing the hyperparameters in your code:
 
-.. code:: python
-
-   # NEW: Get hparams chosen for this trial from cluster info object.
-   hparams = info.trial.hparams
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start after: get hparams
+   :end-before: # Docs snippet end before: get hparams
+   :dedent:
 
 Then, pass the hyperparameters into your model and optimizer:
 
-.. code::
-
-   # NEW: Pass relevant hparams to model and optimizer.
-   model = Net(hparams).to(device)
-   optimizer = optim.Adadelta(model.parameters(), lr=hparams[“learning_rate”])
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
+   :language: python
+   :start-after: # Docs snippet start after: pass hyperparameters
+   :end-before: # Docs snippet end before: pass hyperparameters
+   :dedent:
 
 Ensure your model is set to use the selected values on a per-trial basis rather than your previously
 hardcoded values:
 
-.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
-   :start-at: class Net(nn.Module):
-   :end-before: def forward(self, x):
+   :start-after: # Docs snippet start after: per trial basis
+   :end-before: # Docs snippet end before: per trial basis
+   :dedent:
 
 Step 4.1: Run the Experiment
 ============================
@@ -427,18 +444,20 @@ Add a few more imports to your training script:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-at: # NEW: Import torch distributed libraries
-   :end-at: from torchvision import datasets, transforms
+   :start-after: # Docs snippet start after: import torch distrib
+   :end-before: # Docs snippet end before: import torch distrib
+   :dedent:
 
 Initialize a process group and a Determined distributed context using ``from_torch_distributed``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-at: if __name__ == "__main__":
-   :end-at: main(core_context)
+   :start-after: # Docs snippet start after: initialize process group
+   :end-before: # Docs snippet end before: initialize process group
+   :dedent:
 
-In ``main``, set your device to the one on index ``local_rank``. This is a best practice even if you
-only have a single GPU-per-node setup:
+In ``main``, set your selected device to the device with index of ``local_rank``. This is a best
+practice even if you only have a single GPU-per-node setup:
 
 .. note::
 
@@ -446,31 +465,35 @@ only have a single GPU-per-node setup:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-at: if use_cuda:
-   :end-at: device = torch.device("cpu")
+   :start-after: # Docs snippet start after: set device
+   :end-before: # Docs snippet end before: set device
+   :dedent:
 
 Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is equal to
 ``core_context.distributed.size``, or the number of slots:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: dataset2 = datasets.MNIST("../data", train=False, transform=transform)
-   :end-before: hparams = info.trial.hparams
+   :start-after: # Docs snippet start after: shard data
+   :end-before: # Docs snippet end before: shard data
+   :dedent:
 
 Wrap your model with torch’s DistributedDataParallel:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: model = Net(hparams).to(device)
-   :end-at: model = DDP(model, device_ids=[device], output_device=device)
+   :start-after: # Docs snippet start after: DDP
+   :end-before: # Docs snippet end before: DDP
+   :dedent:
 
 Finally, at each place in the code where you upload checkpoints, report training metrics, or report
 progress to the master, make sure this is done only on rank 0, e.g.,:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: loss.item(),
-   :end-before: if args.dry_run:
+   :start-after: # Docs snippet start after: report metrics rank 0
+   :end-before: # Docs snippet end before: report metrics rank 0
+   :dedent:
 
 Step 5.3: Run the Experiment
 ============================
