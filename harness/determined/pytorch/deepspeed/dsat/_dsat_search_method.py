@@ -407,6 +407,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self.zero_optim_search_space = _utils.get_zero_optim_search_space(
             zero_search_config=self.zero_search_config
         )
+        # TODO: Delete print test
         logging.info(f"SEARCH SPACE {self.zero_optim_search_space}")
 
         self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
@@ -755,7 +756,6 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         relevant_zero_stages = self.model_profile_info.viable_zero_stages & set(
             self.zero_optim_search_space
         )
-        print(f"TEST: {self.zero_optim_search_space}")
         random_zero_stage = random.choice(tuple(relevant_zero_stages))
         zero_optim_config = _utils.get_random_zero_optim_dict_from_search_space(
             random_zero_stage, self.zero_optim_search_space
