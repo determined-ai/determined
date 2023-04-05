@@ -256,10 +256,6 @@ WHERE id = $1;
 				return errors.Wrap(err, "updating trial total batches")
 			}
 		}
-
-		// QUESTION: why not use db triggers to catch both additions and rollbacks?
-		// CHECK: concurrency issues between the two statements?
-
 		return nil
 	})
 }
@@ -328,9 +324,6 @@ WHERE id = $1;
 				return errors.Wrap(err, "updating trial total batches")
 			}
 		}
-
-		// QUESTION: why not use db triggers to catch both additions and rollbacks?
-		// CHECK: concurrency issues between the two statements?
 
 		if err := setTrialBestValidation(
 			tx, int(m.TrialId),
