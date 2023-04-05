@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
@@ -12,7 +12,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
-import { notification } from 'utils/dialogApi';
+import { message, notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 type FormInputs = {
@@ -45,10 +45,15 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {
+  const [disabled, setDisabled] = useState<boolean>(true);
   const canceler = useRef(new AbortController());
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
-  // const projectId = Form.useWatch('projectId', form);
+  const projectId = Form.useWatch('projectId', form);
+
+  useEffect(() => {
+    setDisabled(workspaceId !== 1 && !projectId);
+  }, [workspaceId, projectId, sourceProjectId, sourceWorkspaceId]);
 
   const { canMoveExperimentsTo } = usePermissions();
   const loadableWorkspaces = useWorkspaces({ archived: false });
@@ -70,6 +75,11 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleSubmit = async () => {
+
+    if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
+      message.info('No changes to save.');
+      return;
+    }
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
@@ -134,6 +144,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       cancel
       size="small"
       submit={{
+        disabled,
         handler: handleSubmit,
         text: `Move Experiment${experimentIds.length > 1 ? 's' : ''}`,
       }}
