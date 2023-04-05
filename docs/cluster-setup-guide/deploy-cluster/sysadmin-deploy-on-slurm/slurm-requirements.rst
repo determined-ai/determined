@@ -181,6 +181,43 @@ to optimize how Determined interacts with PBS:
    define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
    your experiment configuration to indicate how many GPU slots are intended for Determined to use.
 
+-  Configure PBS to report GPU Accelerator type.
+
+   It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
+   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined Web UI will
+   show ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
+
+   PBS administrators can use the following set of commands to set the value of
+   ``resources_available.accel_type`` on a single node:
+
+   -  Check if the ``resources_available.accel_type`` value is set.
+
+      .. code:: bash
+
+         pbsnodes -v node001 | grep resources_available.accel_type
+
+   -  If required, set the desired value for ``resources_available.accel_type``.
+
+      .. code:: bash
+
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla"
+
+   -  When there are multiple types of GPUs on the node, use a comma-separated value.
+
+      .. code:: bash
+
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"
+
+   -  Verify that the ``resources_available.accel_type`` value is now set.
+
+      .. code:: bash
+
+         pbsnodes -v node001 | grep resources_available.accel_type
+
+   Repeat the above steps to set the ``resources_available.accel_type`` value for every node
+   containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
+   nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
+
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
