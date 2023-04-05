@@ -212,6 +212,11 @@ VALUES
 			return errors.Wrap(err, "checking for rollback in validation metrics")
 		}
 		if resTRows > 0 || resVRows > 0 {
+			if _, err = tx.ExecContext(ctx, `
+				SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
+			`, m.TrialId); err != nil {
+				return errors.Wrap(err, "locking the row with this trial id using select for update")
+			}
 			if _, err := tx.ExecContext(ctx, `
 		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
 		FROM (
@@ -229,11 +234,18 @@ VALUES
 		`, m.TrialId); err != nil {
 				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
 			}
-		} else if _, err := tx.ExecContext(ctx, `
+		} else {
+			if _, err = tx.ExecContext(ctx, `
+		SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
+	`, m.TrialId); err != nil {
+				return errors.Wrap(err, "locking the row with this trial id using select for update")
+			}
+			if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "updating trial total batches")
+				return errors.Wrap(err, "updating trial total batches")
+			}
 		}
 
 		// QUESTION: why not use db triggers to catch both additions and rollbacks?
@@ -286,6 +298,11 @@ VALUES
 		}
 
 		if resVRows > 0 {
+			if _, err = tx.ExecContext(ctx, `
+			SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
+		`, m.TrialId); err != nil {
+				return errors.Wrap(err, "locking the row with this trial id using select for update")
+			}
 			if _, err := tx.ExecContext(ctx, `
 		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
 		FROM (
@@ -303,11 +320,18 @@ VALUES
 		`, m.TrialId); err != nil {
 				return errors.Wrap(err, "re-computing total_batches in trial after rollback")
 			}
-		} else if _, err := tx.ExecContext(ctx, `
+		} else {
+			if _, err = tx.ExecContext(ctx, `
+			SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
+		`, m.TrialId); err != nil {
+				return errors.Wrap(err, "locking the row with this trial id using select for update")
+			}
+			if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
 `, m.TrialId, m.StepsCompleted); err != nil {
-			return errors.Wrap(err, "updating trial total batches")
+				return errors.Wrap(err, "updating trial total batches")
+			}
 		}
 
 		// QUESTION: why not use db triggers to catch both additions and rollbacks?
