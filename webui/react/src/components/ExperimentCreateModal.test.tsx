@@ -35,7 +35,9 @@ const ModalTrigger: React.FC = () => {
     <>
       <Button onClick={ExperimentCreateModal.open}>Show Jupyter Lab</Button>
       <ExperimentCreateModal.Component
-        {...{ experiment: experiment, trial: trial, type: CreateExperimentType.Fork }}
+        experiment={experiment}
+        trial={trial}
+        type={CreateExperimentType.Fork}
       />
     </>
   );

@@ -233,12 +233,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         {children}
       </Dropdown>
       <ExperimentMoveModal.Component
-        {...{
-          experimentIds: [id],
-          onClose: onComplete,
-          sourceProjectId: experiment.projectId,
-          sourceWorkspaceId: experiment.workspaceId,
-        }}
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onClose={onComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </>
@@ -248,12 +246,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
       <ExperimentMoveModal.Component
-        {...{
-          experimentIds: [id],
-          onClose: onComplete,
-          sourceProjectId: experiment.projectId,
-          sourceWorkspaceId: experiment.workspaceId,
-        }}
+        experimentIds={[id]}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onClose={onComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </div>

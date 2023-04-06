@@ -124,12 +124,10 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         options={headerOptions}
       />
       <ExperimentCreateModal.Component
-        {...{
-          experiment,
-          onClose: handleModalClose,
-          trial,
-          type: CreateExperimentType.ContinueTrial,
-        }}
+        experiment={experiment}
+        trial={trial}
+        type={CreateExperimentType.ContinueTrial}
+        onClose={handleModalClose}
       />
       {modalHyperparameterSearchContextHolder}
     </>

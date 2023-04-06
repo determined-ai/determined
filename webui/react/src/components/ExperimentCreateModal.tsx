@@ -59,7 +59,9 @@ const getMaxLengthType = (config: RawJson) => {
 
 const getMaxLengthValue = (config: RawJson) => {
   const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
-  return value ? parseInt(config.searcher?.max_length[value]) : parseInt(config.searcher?.max_length);
+  return value
+    ? parseInt(config.searcher?.max_length[value])
+    : parseInt(config.searcher?.max_length);
 };
 
 const trialContinueConfig = (

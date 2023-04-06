@@ -530,33 +530,27 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       />
       <ExperimentHeaderProgress experiment={experiment} />
       <ContinueTrialModal.Component
-        {...{
-          experiment,
-          trial,
-          type: CreateExperimentType.ContinueTrial,
-        }}
+        experiment={experiment}
+        trial={trial}
+        type={CreateExperimentType.ContinueTrial}
       />
-      <ForkModal.Component {...{ experiment, type: CreateExperimentType.Fork }} />
+      <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />
       <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
-        {...{
-          experimentIds: isMovable ? [experiment.id] : [],
-          onClose: handleModalClose,
-          sourceProjectId: experiment.projectId,
-          sourceWorkspaceId: experiment.workspaceId,
-        }}
+        experimentIds={isMovable ? [experiment.id] : []}
+        sourceProjectId={experiment.projectId}
+        sourceWorkspaceId={experiment.workspaceId}
+        onClose={handleModalClose}
       />
       <ExperimentStopModal.Component
         experimentId={experiment.id}
         onClose={fetchExperimentDetails}
       />
       <ExperimentEditModal.Component
-        {...{
-          description: experiment.description ?? '',
-          experimentId: experiment.id,
-          experimentName: experiment.name,
-          fetchExperimentDetails,
-        }}
+        description={experiment.description ?? ''}
+        experimentId={experiment.id}
+        experimentName={experiment.name}
+        fetchExperimentDetails={fetchExperimentDetails}
       />
       {modalHyperparameterSearchContextHolder}
     </>

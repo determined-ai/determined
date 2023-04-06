@@ -979,12 +979,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onSave={handleUpdateColumns as (columns: string[]) => void}
       />
       <ExperimentMoveModal.Component
-        {...{
-          experimentIds: batchMovingExperimentIds ?? [],
-          onClose: handleActionComplete,
-          sourceProjectId: project?.id,
-          sourceWorkspaceId: project?.workspaceId,
-        }}
+        experimentIds={batchMovingExperimentIds ?? []}
+        sourceProjectId={project?.id}
+        sourceWorkspaceId={project?.workspaceId}
+        onClose={handleActionComplete}
       />
     </Page>
   );
