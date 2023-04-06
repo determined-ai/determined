@@ -69,6 +69,7 @@ def _ray_job_submit(exp_path: pathlib.Path) -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
 def test_experiment_proxy_ray_tunnel() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     exp_id = exp.create_experiment(
@@ -142,6 +143,7 @@ def _kill_all_ray_experiments() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     proc = subprocess.Popen(
