@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -142,17 +142,19 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     clearQuerySettings,
   } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
-  const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
-  const state = useObservable(derivedOb);
+  const settingsByKey = stateOb.select((s) => s.get(config.storagePath));
+  const settingsState = useObservable(settingsByKey);
   const navigate = useNavigate();
   const loadableUser = usersStore.getCurrentUser();
+
+  const settings = useMemo(() => (settingsState ?? {}) as SettingsRecord<T>, [settingsState]);
 
   // parse navigation url to state
   useEffect(() => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state ?? {};
+    const stateSettings = settingsState ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -162,15 +164,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     stateOb.update((s) => s.set(config.storagePath, stateSettings));
 
     clearQuerySettings();
-  }, [config, querySettings, state, clearQuerySettings, stateOb]);
-
-  const settings: SettingsRecord<T> = useMemo(
-    () =>
-      ({
-        ...(state ?? {}),
-      } as SettingsRecord<T>),
-    [state],
-  );
+  }, [config, querySettings, clearQuerySettings, settingsState, stateOb]);
 
   for (const key in config.settings) {
     const setting = config.settings[key];
@@ -299,7 +293,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     if (initialLoading) return;
-    return derivedOb.subscribe(async (cur, prev) => {
+    return settingsByKey.subscribe(async (cur, prev) => {
       const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
@@ -319,7 +313,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [derivedOb, navigate, config, updateDB, initialLoading, loadableUser]);
+  }, [navigate, config, updateDB, initialLoading, loadableUser, settingsByKey]);
 
   return {
     activeSettings,
