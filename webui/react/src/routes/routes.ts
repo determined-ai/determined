@@ -1,6 +1,7 @@
 import { RouteConfig } from 'shared/types';
 
 const routes: RouteConfig[] = [
+  { id: 'test', needAuth: true, path: '/test' },
   { id: 'default', needAuth: true, path: '/' },
   { id: 'dashboard', needAuth: true, path: '/dashboard', title: 'Home' },
   {

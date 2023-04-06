@@ -1,0 +1,22 @@
+.base {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 9fr;
+}
+.fieldCard {
+  align-items: center;
+  border: 1px solid skyblue;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 2fr 3fr 3fr auto auto;
+  padding: 2px 8px;
+}
+.draggableHandle {
+  &:hover {
+    cursor: grab;
+  }
+  &:active {
+    cursor: grabbing;
+  }
+}

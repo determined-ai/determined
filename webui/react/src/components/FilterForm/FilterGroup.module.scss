@@ -1,0 +1,44 @@
+.base {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 9fr;
+}
+.baseRoot {
+  grid-template-columns: 1fr;
+}
+.groupCard {
+  border: 1px solid red;
+  padding: 8px 16px;
+}
+.header {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-content: space-between;
+}
+.headerButtonGroup {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(auto-fit, 32px);
+  justify-content: end;
+}
+.children {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dragGroup {
+  background-color: hotpink;
+}
+.draggableHandle {
+  &:hover {
+    cursor: grab;
+  }
+  &:active {
+    cursor: grabbing;
+  }
+}
+.footer {
+  padding-top: 8px;
+}
