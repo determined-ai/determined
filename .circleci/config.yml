@@ -2303,7 +2303,7 @@ workflows:
           tf2: true
           mark: e2e_cpu
 
-      - test-e2e-proxy:
+      - test-e2e:
           name: test-e2e-cpu-proxy
           requires:
             - build-go
