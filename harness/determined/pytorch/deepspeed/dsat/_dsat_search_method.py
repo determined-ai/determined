@@ -52,7 +52,7 @@ class DSATTrial:
 
     @property
     def zero_stage(self):
-        return int(self.ds_config.get("zero_optimization", {}).get("stage", _defaults.ZERO_STAGE))
+        return self.ds_config.get("zero_optimization", {}).get("stage", _defaults.ZERO_STAGE)
 
     def add_child(self, trial: "DSATTrial") -> None:
         """Register child-parent relationship in lineage tree."""
@@ -388,7 +388,8 @@ class DSATModelProfilingInfo:
 
 class DSATSearchMethodBase(searcher.SearchMethod):
     """
-    Base searcher class implementing common methods.
+    Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
+    needs to be written overwritten when subclassing (at a minimum).
     """
 
     def __init__(
@@ -517,7 +518,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
         if self.trial_tracker.should_stop:
-            self._state_print_checks(searcher_state)
             # Shutdown if `should_stop` is True, and this was the last running trial.
             running_trials = searcher_state.trials_created - searcher_state.trials_closed
             new_ops_list = [searcher.Shutdown()] if not running_trials else []
@@ -544,7 +544,6 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         elif exited_reason == searcher.ExitedReason.ERRORED:
             if self.trial_tracker.should_stop:
                 # Shutdown if `should_stop` is True, once all currently-running trials have completed.
-                self._state_print_checks(searcher_state)
                 running_trials = searcher_state.trials_created - searcher_state.trials_closed
                 new_ops_list = [searcher.Shutdown()] if not running_trials else []
             else:
@@ -597,6 +596,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 self.model_profile_info = DSATModelProfilingInfo.from_state_dict(model_profile_info)
 
     def _state_print_checks(self, searcher_state) -> None:
+        # TODO: Delete when done testing
         running_trials_from_searcher_state = searcher_state.trials_created - (
             searcher_state.trials_closed | searcher_state.failures
         )
@@ -640,7 +640,6 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # TODO: get desired zero stages from config. Currently just running all viable.
 
     def get_new_searcher_ops_list(
         self,
@@ -766,3 +765,52 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         }
         new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mid
         return (new_hparams, search_data)
+
+
+class SimpleBatchSearch(DSATSearchMethodBase):
+    """
+    Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
+    self.trial_tracker.tuner_num_trials + 1.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_new_searcher_ops_list(
+        self,
+        searcher_state: searcher.SearcherState,
+        request_id: uuid.UUID,
+        metric: Optional[Union[float, Dict[str, Any]]] = None,
+    ) -> List[searcher.Operation]:
+        last_trial = self.trial_tracker[request_id]
+        if last_trial.is_model_profiling_info_run:
+            hparams_without_profiling_info_keys = last_trial.hparams
+            del hparams_without_profiling_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
+                "model_info"
+            ]
+            del hparams_without_profiling_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
+                "model_info_path"
+            ]
+            new_ops_list = self.get_ops_list_after_model_profiling_info_run(
+                hparams_without_profiling_info_keys
+            )
+        else:
+            new_ops_list = []
+        return new_ops_list
+
+    def get_ops_list_after_model_profiling_info_run(
+        self, hparams: Dict[str, Any]
+    ) -> List[searcher.Operation]:
+        # This isn't actually how native DS AT uses num_tuning_micro_batch_sizes, but it's a good
+        # enough placeholder usage until we get other aspects of custom searcher DS AT to work.
+        new_ops_list = []
+        for tmbs in range(2, self.trial_tracker.tuner_num_trials + 2):
+            hparams["train_micro_batch_size_per_gpu"] = tmbs
+            new_trial = self.trial_tracker.create_trial(
+                hparams=hparams,
+                search_data=None,
+                parent_trial=None,
+            )
+            new_ops = self.trial_tracker.get_create_val_ops_list_from_trial(trial=new_trial)
+            new_ops_list.extend(new_ops)
+        return new_ops_list

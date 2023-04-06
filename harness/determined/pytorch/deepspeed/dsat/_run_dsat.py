@@ -5,11 +5,7 @@ import os
 import determined as det
 from determined import searcher
 from determined.pytorch.deepspeed import get_ds_config_from_hparams, overwrite_deepspeed_config
-from determined.pytorch.deepspeed.dsat import _dsat_search_method, _utils
-
-ALL_SEARCH_METHOD_CLASSES = {
-    "random": _dsat_search_method.DSATRandomSearchMethod,
-}
+from determined.pytorch.deepspeed.dsat import _defaults, _utils
 
 
 def get_parsed_args() -> argparse.Namespace:
@@ -17,6 +13,7 @@ def get_parsed_args() -> argparse.Namespace:
     parser.add_argument("-c", "--config_path", type=str)
     parser.add_argument("-md", "--model_dir", type=str)
     parser.add_argument("-z", "--zero-search-config", type=str)
+    parser.add_argument("-t", "--tuner-type", type=str, default="random")
     args = parser.parse_args()
     # Strip and only use the base names.
     args.config_path = os.path.basename(args.config_path)
@@ -32,13 +29,11 @@ def main(core_context: det.core.Context) -> None:
 
     submitted_config_dict = _utils.get_dict_from_yaml_or_json_path(args.config_path)
 
-    # TODO: don't hard code tuner type, let the use specify somehow.
-    tuner_type = "random"
     assert (
-        tuner_type in ALL_SEARCH_METHOD_CLASSES
-    ), f"search_method must be one of {list(ALL_SEARCH_METHOD_CLASSES)}"
+        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
+    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
 
-    search_method = ALL_SEARCH_METHOD_CLASSES[tuner_type](
+    search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.tuner_type](
         submitted_config_dict=submitted_config_dict,
         model_dir=args.model_dir,
         zero_search_config=args.zero_search_config,
