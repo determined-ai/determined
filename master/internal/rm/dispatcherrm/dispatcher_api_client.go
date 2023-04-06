@@ -16,12 +16,18 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 )
 
+// Blank user runs as launcher-configured user.
 const blankImpersonatedUser = ""
 
 // One time activity to create a manifest using SlurmResources carrier.
 // This manifest is used on demand to retrieve details regarding HPC resources
 // e.g., nodes, GPUs etc.
 var hpcResourcesManifest = createSlurmResourcesManifest()
+
+// One time activity to create a manifest using Slurm/PBSQueue carrier.
+// This manifest is used on demand to retrieve details regarding
+// pending/running HPC jobs.
+var hpcQueueManifest = createHpcQueueManifest()
 
 type launcherAPIClient struct {
 	*launcher.APIClient
@@ -129,6 +135,23 @@ func (c *launcherAPIClient) launchHPCResourcesJob() (
 		Execute() //nolint:bodyclose
 }
 
+func (c *launcherAPIClient) launchHPCQueueJob() (
+	info launcher.DispatchInfo,
+	resp *http.Response,
+	err error,
+) {
+	defer recordAPITiming("launch_hpc_queue_job")()
+	defer recordAPIErr("launch_hpc_queue_job")(err)
+
+	// Launch the HPC Resources manifest. Launch() method will ensure
+	// the manifest is in the RUNNING state on successful completion.
+	return c.LaunchApi.
+		Launch(c.withAuth(context.TODO())).
+		Manifest(hpcQueueManifest).
+		Impersonate(blankImpersonatedUser).
+		Execute() //nolint:bodyclose
+}
+
 func (c *launcherAPIClient) terminateDispatch(
 	owner string,
 	id string,
@@ -229,6 +252,31 @@ func createSlurmResourcesManifest() launcher.Manifest {
 	clientMetadata.SetName("DAI-HPC-Resources")
 
 	// Create & populate the manifest
+	manifest := *launcher.NewManifest("v1", *clientMetadata)
+	manifest.SetPayloads([]launcher.Payload{*payload})
+
+	return manifest
+}
+
+// CreateHpcQueueManifest creates a Manifest for Slurm/PBSQueue Carrier.
+// This Manifest is used to retrieve information about pending/running jobs.
+func createHpcQueueManifest() launcher.Manifest {
+	payload := launcher.NewPayloadWithDefaults()
+	payload.SetName("DAI-HPC-Queues")
+	payload.SetId("com.cray.analytics.capsules.hpc.queue")
+	payload.SetVersion("latest")
+	payload.SetCarriers([]string{
+		"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmQueue",
+		"com.cray.analytics.capsules.carriers.hpc.pbs.PbsQueue",
+	})
+
+	launchParameters := launcher.NewLaunchParameters()
+	launchParameters.SetMode("batch")
+	payload.SetLaunchParameters(*launchParameters)
+
+	clientMetadata := launcher.NewClientMetadataWithDefaults()
+	clientMetadata.SetName("DAI-HPC-Queues")
+
 	manifest := *launcher.NewManifest("v1", *clientMetadata)
 	manifest.SetPayloads([]launcher.Payload{*payload})
 
