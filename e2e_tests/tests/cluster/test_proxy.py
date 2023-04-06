@@ -28,8 +28,10 @@ def _experiment_task_id(exp_id: int) -> str:
 
 
 def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
-    max_tunnel_ticks = 300
-    for i in range(max_tunnel_ticks):
+    max_tunnel_time = 300
+    start = time.time()
+    ctr = 0
+    while time.time() - start < max_tunnel_time:
         try:
             r = requests.get("http://localhost:8265", timeout=5)
             if r.status_code == 200:
@@ -38,15 +40,16 @@ def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
             pass
         except requests.exceptions.ReadTimeout:
             pass
-        if i + 1 % 10 == 0:
-            print(f"Tunnel probe pending: {i} ticks...")
+        if ctr + 1 % 10 == 0:
+            print(f"Tunnel probe pending: {ctr} ticks...")
         time.sleep(1)
         if proc.poll() is not None:
             pytest.fail(f"Tunnel process has exited prematurely, return code: {proc.returncode}")
+        ctr += 1
     else:
-        pytest.fail(f"Failed to probe the tunnel in {max_tunnel_ticks} ticks")
+        pytest.fail(f"Failed to probe the tunnel after {max_tunnel_time} seconds")
 
-    print(f"Tunnel probe done after {i} ticks.")
+    print(f"Tunnel probe done after {ctr} ticks.")
 
 
 def _ray_job_submit(exp_path: pathlib.Path) -> None:
