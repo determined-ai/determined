@@ -41,6 +41,7 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { openCommandResponse } from 'utils/wait';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 import GlideTable from './glide-table/GlideTable';
@@ -245,10 +246,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const submitBatchAction = useCallback(
     async (action: Action) => {
       try {
-        await sendBatchActions(action);
-        // if (action === Action.OpenTensorBoard && result) {
-        //   openCommandResponse(result as CommandResponse);
-        // }
+        const result = await sendBatchActions(action);
+        if (action === Action.OpenTensorBoard && result) {
+          openCommandResponse(result as CommandResponse);
+        }
 
         /*
          * Deselect selected rows since their states may have changed where they
