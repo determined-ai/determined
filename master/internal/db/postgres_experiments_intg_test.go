@@ -255,3 +255,74 @@ func TestMetricNames(t *testing.T) {
 	require.Equal(t, []string{"a", "b", "c", "d"}, actualTrain)
 	require.Equal(t, []string{"b", "c", "f"}, actualVal)
 }
+
+func TestTopTrialsByMetric(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+
+	res, err := TopTrialsByMetric(ctx, -1, 1, "metric", true)
+	require.NoError(t, err)
+	require.Len(t, res, 0)
+
+	exp := RequireMockExperiment(t, db, user)
+	trial1 := RequireMockTrial(t, db, exp)
+	addMetrics(ctx, t, db, trial1,
+		`[{"a":-10.0}]`, // Only care about validation.
+		`[{"a":1.5, "b":"NaN", "c":"-Infinity", "d":1.5}, {"d":"nonumeric"}]`)
+	trial2 := RequireMockTrial(t, db, exp)
+	addMetrics(ctx, t, db, trial2,
+		`[{"a":10.5}]`,
+		`[{"a":-1.5, "b":"1.0", "c":"Infinity"}]`)
+
+	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 1, "a", true)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial2.ID)}, res)
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 1, "a", false)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial1.ID)}, res)
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "a", true)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial2.ID), int32(trial1.ID)}, res)
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "a", false)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial1.ID), int32(trial2.ID)}, res)
+
+	// NaNs are treated as bigger than everything.
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "b", true)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial1.ID), int32(trial2.ID)}, res)
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "b", false)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial2.ID), int32(trial1.ID)}, res)
+
+	// Infinity works as expected.
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "c", true)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial1.ID), int32(trial2.ID)}, res)
+
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "c", false)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial2.ID), int32(trial1.ID)}, res)
+
+	// TODO!
+	// Non numeric metrics return results sorted by
+	res, err = TopTrialsByMetric(ctx, exp.ID, 2, "d", true)
+	require.NoError(t, err)
+	require.Equal(t, []int32{int32(trial1.ID), int32(trial2.ID)}, res)
+
+	// TODO!
+	// Only return trials with that metric.
+
+	// TODO test against old version.
+}

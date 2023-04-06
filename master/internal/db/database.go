@@ -111,8 +111,6 @@ type DB interface {
 	ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 		metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
 		endTime time.Time, err error)
-	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	ExperimentBestSearcherValidation(id int) (float32, error)

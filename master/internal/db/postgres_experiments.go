@@ -314,27 +314,50 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
-func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool,
+func TopTrialsByMetric(
+	ctx context.Context, experimentID int, maxTrials int, metric string, smallerIsBetter bool,
 ) (trials []int32, err error) {
-	order := desc
-	aggregate := max
+	/*
+		order := desc
+		aggregate := max
+		if smallerIsBetter {
+			order = asc
+			aggregate = min
+		}
+	*/
+
+	// TODO what if we don't specify the metric in a trial?
+	query := Bun().NewSelect().Table("trials").
+		Column("id").
+		Where("experiment_id = ?", experimentID).
+		Limit(maxTrials)
 	if smallerIsBetter {
-		order = asc
-		aggregate = min
+		query = query.OrderExpr("(summary_metrics->'validation_metrics'->?->>'min')::float ASC",
+			metric)
+	} else {
+		query = query.OrderExpr("(summary_metrics->'validation_metrics'->?->>'max')::float DESC",
+			metric)
 	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  LEFT JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id=$2
-  GROUP BY t.id
-  ORDER BY best_metric %s NULLS LAST
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentID, maxTrials)
+
+	if err := query.Scan(ctx, &trials); err != nil {
+		return nil, errors.Wrapf(err,
+			"error getting top trials for metric for experiment ID %d", experimentID)
+	}
 	return trials, err
+	/*
+			err = db.sql.Select(&trials, fmt.Sprintf(`
+		SELECT t.id FROM (
+		  SELECT t.id,
+		    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
+		  FROM trials t
+		  LEFT JOIN validations v ON t.id = v.trial_id
+		  WHERE t.experiment_id=$2
+		  GROUP BY t.id
+		  ORDER BY best_metric %s NULLS LAST
+		  LIMIT $3
+		) t;`, aggregate, order), metric, experimentID, maxTrials)
+			return trials, err
+	*/
 }
 
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest

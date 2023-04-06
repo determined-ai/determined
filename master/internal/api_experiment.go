@@ -1492,9 +1492,9 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	}
 }
 
-func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacySearcher) (
-	trials []int32, err error,
-) {
+func (a *apiServer) topTrials(
+	ctx context.Context, experimentID int, maxTrials int, s expconf.LegacySearcher,
+) (trials []int32, err error) {
 	type Ranking int
 	const (
 		ByMetricOfInterest Ranking = 1
@@ -1527,7 +1527,7 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.LegacyS
 	}
 	switch ranking {
 	case ByMetricOfInterest:
-		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+		return db.TopTrialsByMetric(ctx, experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	case ByTrainingLength:
 		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	default:
@@ -1657,7 +1657,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 		seenThisRound := make(map[int32]bool)
 
-		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
+		trialIDs, err := a.topTrials(resp.Context(), experimentID, maxTrials, searcherConfig)
 		if err != nil {
 			return errors.Wrapf(err, "error determining top trials")
 		}
