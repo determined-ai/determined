@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import argparse
+import pathlib
 
 import torch
 import torch.nn as nn
@@ -44,7 +45,7 @@ class Net(nn.Module):
 
 
 # NEW: Modify function header to include op for reporting training progress to master.
-def train(args, model, device, train_loader, optimizer, core_context, epoch, op):
+def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -57,7 +58,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -66,7 +67,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             )
 
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                 metrics={"train_loss": loss.item()},
             )
 
@@ -74,7 +75,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
                 break
 
     # NEW: Report progress once in a while.
-    op.report_progress(epoch)
+    op.report_progress(epoch_idx)
 
 
 # NEW: Modify function header to include op for reporting training progress to master and return test loss.
@@ -108,10 +109,20 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
     return test_loss
 
 
-def load_state(checkpoint_directory):
+def load_state(checkpoint_directory, trial_id):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
+
     with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-        return torch.load(f)
+        model = torch.load(f)
+    with checkpoint_directory.joinpath("state").open("r") as f:
+        epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+
+    # If trial ID does not match our current trial ID, we'll ignore epochs
+    # completed and start training from epoch_idx = 0
+    if ckpt_trial_id != trial_id:
+        epochs_completed = 0
+
+    return model, epochs_completed
 
 
 def main(core_context):
@@ -173,9 +184,11 @@ def main(core_context):
     info = det.get_cluster_info()
     assert info is not None, "this example only runs on-cluster"
     latest_checkpoint = info.latest_checkpoint
-    if latest_checkpoint is not None:
+    if latest_checkpoint is None:
+        epochs_completed = 0
+    else:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            model = load_state(path)
+            model, epochs_completed = load_state(path, info.trial.trial_id)
 
     torch.manual_seed(args.seed)
 
@@ -211,18 +224,19 @@ def main(core_context):
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
     # NEW: Iterate through the core_context.searcher.operations() to decide how long to train for.
-    starting_epoch = 0
-    epoch = starting_epoch
+    # Start with the number of epochs completed, in case of pausing and resuming the experiment.
+    epoch_idx = epochs_completed
     last_checkpoint_batch = None
 
     for op in core_context.searcher.operations():
 
         # NEW: Use a while loop for easier accounting of absolute lengths.
-        while epoch < op.length:
-            steps_completed = epoch * len(train_loader)
+        while epoch_idx < op.length:
 
             # NEW: Pass op into train() and test().
-            train(args, model, device, train_loader, optimizer, core_context, epoch, op)
+            train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op)
+            epochs_completed = epoch_idx + 1
+            steps_completed = epochs_completed * len(train_loader)
             test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
 
             scheduler.step()
@@ -231,10 +245,12 @@ def main(core_context):
                 "steps_completed": steps_completed,
             }
 
-            epoch += 1
+            epoch_idx += 1
 
             with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
                 torch.save(model.state_dict(), path / "checkpoint.pt")
+                with path.joinpath("state").open("w") as f:
+                    f.write(f"{epochs_completed},{info.trial.trial_id}")
 
             if core_context.preempt.should_preempt():
                 return

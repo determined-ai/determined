@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import argparse
+import pathlib
 
 import torch
 import torch.nn as nn
@@ -41,7 +42,7 @@ class Net(nn.Module):
         return output
 
 
-def train(args, model, device, train_loader, optimizer, epoch, core_context):
+def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -54,7 +55,7 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -63,7 +64,7 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
             )
 
             core_context.train.report_training_metrics(
-                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                 metrics={"train_loss": loss.item()},
             )
 
@@ -97,11 +98,22 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     )
 
 
-# NEW: Define load_state function for restarting model training from existing checkpoint.
-def load_state(checkpoint_directory):
+# NEW: Define load_state function for restarting model training from existing checkpoint. Returns (.pt, int).
+# Also update load_state header to take trial info object as an argument.
+def load_state(checkpoint_directory, trial_id):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
+
     with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-        return torch.load(f)
+        model = torch.load(f)
+    with checkpoint_directory.joinpath("state").open("r") as f:
+        epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+
+    # If trial ID does not match our current trial ID, we'll ignore epochs
+    # completed and start training from epoch_idx = 0
+    if ckpt_trial_id != trial_id:
+        epochs_completed = 0
+
+    return model, epochs_completed
 
 
 def main(core_context):
@@ -164,9 +176,11 @@ def main(core_context):
     info = det.get_cluster_info()
     assert info is not None, "this example only runs on-cluster"
     latest_checkpoint = info.latest_checkpoint
-    if latest_checkpoint is not None:
+    if latest_checkpoint is None:
+        epochs_completed = 0
+    else:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            model = load_state(path)
+            model, epochs_completed = load_state(path, info.trial.trial_id)
 
     torch.manual_seed(args.seed)
 
@@ -196,20 +210,34 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
 
-        steps_completed = epoch * len(train_loader)
+    # NEW: Resume training from epochs_completed. This is useful in the case of pausing and resuming an experiment.
+    for epoch_idx in range(epochs_completed, args.epochs):
 
-        train(args, model, device, train_loader, optimizer, epoch, core_context)
-        test(args, model, device, test_loader, epoch, core_context, steps_completed=steps_completed)
+        train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
+        epochs_completed = epoch_idx + 1
+        steps_completed = epochs_completed * len(train_loader)
+        test(
+            args,
+            model,
+            device,
+            test_loader,
+            epoch_idx,
+            core_context,
+            steps_completed=steps_completed,
+        )
 
         scheduler.step()
 
         # NEW: Save checkpoint.
         checkpoint_metadata_dict = {"steps_completed": steps_completed}
 
+        # NEW: Here we are saving multiple files to our checkpoint directory. 1) a model state file and 2) a file includes information
+        # about the training loop state.
         with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
             torch.save(model.state_dict(), path / "checkpoint.pt")
+            with path.joinpath("state").open("w") as f:
+                f.write(f"{epochs_completed},{info.trial.trial_id}")
 
         # NEW: Detect when the experiment is paused by the WebUI.
         if core_context.preempt.should_preempt():
