@@ -270,16 +270,18 @@ func TestBatchesProcessed(t *testing.T) {
 
 	// check rollbacks happened as expected.
 	archivedSteps := 0
-	err = db.sql.QueryRow("SELECT count(id) as count FROM raw_steps WHERE trial_id = $1 AND archived = true", tr.ID).Scan(&archivedSteps)
+	err = db.sql.QueryRow(`SELECT count(id) as count FROM raw_steps
+	WHERE trial_id = $1 AND archived = true`, tr.ID).Scan(&archivedSteps)
 	if err != nil {
 		t.Fatal(err)
 	}
 	require.Equal(t, 1, archivedSteps)
 
-	archivedValiadations := 0
-	err = db.sql.QueryRow("SELECT count(id) as count FROM raw_validations WHERE trial_id = $1 AND archived = true", tr.ID).Scan(&archivedValiadations)
+	archivedValidations := 0
+	err = db.sql.QueryRow(`SELECT count(id) as count FROM raw_validations
+	WHERE trial_id = $1 AND archived = true`, tr.ID).Scan(&archivedValidations)
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, 2, archivedValiadations)
+	require.Equal(t, 2, archivedValidations)
 }
