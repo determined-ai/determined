@@ -235,8 +235,9 @@ export const GlideTable: React.FC<Props> = ({
     [data, columnIds, columnDefs],
   );
 
-  const handleGridSelectionChange = useCallback((newSelection: GridSelection) => {
-    const [, row] = newSelection.current?.cell ?? [undefined, undefined];
+  const handleGridSelectionChange = useCallback((cell: Item) => {
+    const [col, row] = cell;
+    if (col !== 0) return;
     if (row === undefined) return;
     setSelection(({ rows }: GridSelection) => ({
       columns: CompactSelection.empty(),
@@ -256,11 +257,10 @@ export const GlideTable: React.FC<Props> = ({
       setContextMenuProps({
         experiment: getProjectExperimentForExperimentItem(experiment, project),
         handleClose: () => setContextMenuIsOpen(false),
-        x: event.bounds.x,
-        y: event.bounds.y,
+        x: Math.max(0, event.bounds.x + event.localEventX - 4),
+        y: Math.max(0, event.bounds.y + event.localEventY - 4),
       });
       setContextMenuIsOpen(true);
-      return false;
     },
     [data, project, setContextMenuProps, setContextMenuIsOpen],
   );
@@ -306,16 +306,15 @@ export const GlideTable: React.FC<Props> = ({
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
+        onCellClicked={handleGridSelectionChange}
         onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
-        onGridSelectionChange={handleGridSelectionChange}
         onHeaderClicked={onHeaderClicked}
         onVisibleRegionChanged={handleScroll}
         //
         // these might come in handy
-        // onCellClicked={onCellClicked}
         // onItemHovered={onItemHovered}
         // onHeaderContextMenu={onHeaderContextMenu}
         // onCellContextMenu={onCellContextMenu}
