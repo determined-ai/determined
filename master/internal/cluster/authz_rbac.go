@@ -57,14 +57,14 @@ func (a *MiscAuthZRBAC) CanUpdateAgents(
 func (a *MiscAuthZRBAC) CanGetMasterLogs(
 	ctx context.Context, curUser *model.User,
 ) (permErr error, err error) {
-	return nil, nil // FIXME.
+	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MASTER_LOGS)
 }
 
 // CanGetUsageDetails checks if the user can get usage related details.
 func (a *MiscAuthZRBAC) CanGetUsageDetails(
 	ctx context.Context, curUser *model.User,
 ) (permErr error, err error) {
-	return nil, nil // FIXME.
+	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_CLUSTER_USAGE)
 }
 
 func init() {
