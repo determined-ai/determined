@@ -215,7 +215,7 @@ def test_drain_agent() -> None:
         assert agent_data["enabled"] is False
         assert agent_data["draining"] is True
 
-        exp.cancel_single(experiment_id_no_start)
+        exp.kill_single(experiment_id_no_start)
 
 
 @pytest.mark.e2e_cpu_2a
