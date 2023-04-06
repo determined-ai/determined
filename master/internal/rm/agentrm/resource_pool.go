@@ -529,7 +529,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 				rp.agentStatesCache = nil
 			}()
 
-			toAllocate, toRelease := rp.scheduler.Schedule(rp)
+			toAllocate, toRelease := rp.scheduler.Schedule(ctx, rp)
 			ctx.Log().Debugf("toAllocate: %d", len(toAllocate))
 			ctx.Log().Debugf("toRelease: %d", len(toRelease))
 			for _, req := range toAllocate {
@@ -700,7 +700,7 @@ func (rp *resourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(tasklist.JobStats(rp.taskList))
 
 	case sproto.GetJobQ:
-		ctx.Respond(rp.scheduler.JobQInfo(rp))
+		ctx.Respond(rp.scheduler.JobQInfo(ctx, rp))
 
 	case sproto.MoveJob:
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
