@@ -2215,6 +2215,38 @@ export interface V1DeleteCheckpointsResponse {
 export interface V1DeleteExperimentResponse {
 }
 /**
+ * Delete multiple experiments.
+ * @export
+ * @interface V1DeleteExperimentsRequest
+ */
+export interface V1DeleteExperimentsRequest {
+    /**
+     * Selecting experiments by id.
+     * @type {Array<number>}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    experimentIds: Array<number>;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    filters?: V1BulkExperimentFilters;
+}
+/**
+ * Response to DeleteExperimentsRequest.
+ * @export
+ * @interface V1DeleteExperimentsResponse
+ */
+export interface V1DeleteExperimentsResponse {
+    /**
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentActionResult>}
+     * @memberof V1DeleteExperimentsResponse
+     */
+    results: Array<V1ExperimentActionResult>;
+}
+/**
  * DeleteGroupResponse is the body of the response for the call to delete a group.
  * @export
  * @interface V1DeleteGroupResponse
@@ -4937,6 +4969,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     workspaceId?: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    filters?: V1BulkExperimentFilters;
 }
 /**
  * Response to LaunchTensorboardRequest.
@@ -12725,6 +12763,45 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteExperiments.');
+            }
+            const localVarPath = `/api/v1/experiments/delete`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -14254,6 +14331,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiments(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -14956,6 +15052,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Delete multiple experiments.
+         * @param {V1DeleteExperimentsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperiments(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -15419,6 +15525,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public deleteExperiment(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete multiple experiments.
+     * @param {V1DeleteExperimentsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
