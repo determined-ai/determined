@@ -613,15 +613,17 @@ func minimizeErrorLog(messages []string) []string {
 		linesToShow = 1000
 	}
 
+	var output []string
+	output = append(output, "Job terminated. Most recent output from the stderr log is:")
 	for i, line := range messages {
 		if strings.Contains(line, "Failed to download model definition from master.") {
 			// Return up to linesToShow after message
-			return messages[i:mathx.Min(len(messages), i+linesToShow)]
+			return append(output, messages[i:mathx.Min(len(messages), i+linesToShow)]...)
 		}
 	}
 
 	// Return the last linesToShow of the log
-	return messages[mathx.Clamp(0, len(messages)-linesToShow, len(messages)):]
+	return append(output, messages[mathx.Clamp(0, len(messages)-linesToShow, len(messages)):]...)
 }
 
 /*
@@ -821,6 +823,9 @@ func calculateJobExitStatus(
 func getJobExitMessages(resp launcher.DispatchInfo) []string {
 	var result []string
 	for _, event := range resp.GetEvents() {
+		if event.Reporter == nil || event.Message == nil || event.Level == nil {
+			continue
+		}
 		if *event.Reporter == "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher" {
 			// Ignore general dispatcher messages, only want carrier messages
 			continue
