@@ -34,11 +34,9 @@ You may also want to increase the `EC2 instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html>`__ on your account
 --- the `default instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html#ec2-on-demand-instances-limits>`__
-are quite low, particularly for GPU instances. For example, by default an AWS account can only
-create 128 vCPUs worth of P-type instances in a given AWS region. The default configuration for
-``det deploy`` can result in launching up to 5 ``p2.8xlarge`` instances (which have 32 vCPUs each),
-which would exceed the default quota. AWS instance limits can be increased by submitting a request
-to the `AWS Support Center
+on GPU instances are zero. The default configuration for ``det deploy`` can result in launching up
+to 5 ``g4dn.metal`` instances (which have 94 vCPUs each), which would exceed the default quota. AWS
+instance limits can be increased by submitting a request to the `AWS Support Center
 <https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
 
 Installation
@@ -143,10 +141,9 @@ Spinning up or updating the Cluster
          following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
          ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``g5.xlarge``,
          ``g5.2xlarge``, ``g5.4xlarge``, ``g5.8xlarge``, ``g5.12xlarge``, ``g5.16xlarge``,
-         ``g5.24xlarge``, ``g5.48large``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
-         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, ``p3dn.24xlarge``, ``p4d.24xlarge``, or
-         any general purpose instance types (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
-         variants).
+         ``g5.24xlarge``, ``g5.48large``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
+         ``p3dn.24xlarge``, ``p4d.24xlarge``, or any general purpose instance types (``t2``, ``t3``,
+         ``c4``, ``c5``, ``m4``, ``m5`` and variants).
 
       -  t2.xlarge
 
@@ -156,10 +153,10 @@ Spinning up or updating the Cluster
          training, must be one of the following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
          ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
          ``g5.xlarge``, ``g5.2xlarge``, ``g5.4xlarge``, ``g5.8xlarge``, ``g5.12xlarge``,
-         ``g5.16xlarge``, ``g5.24xlarge``, ``g5.48large``, ``p2.xlarge``, ``p2.8xlarge``,
-         ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, ``p3dn.24xlarge``, or
-         ``p4d.24xlarge``. For CPU-based training or testing, any general purpose instance type may
-         be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants).
+         ``g5.16xlarge``, ``g5.24xlarge``, ``g5.48large``, ``p3.2xlarge``, ``p3.8xlarge``,
+         ``p3.16xlarge``, ``p3dn.24xlarge``, or ``p4d.24xlarge``. For CPU-based training or testing,
+         any general purpose instance type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``,
+         ``m5`` and variants).
 
       -  g4dn.metal
 
@@ -312,9 +309,9 @@ Example workflow:
       det deploy aws dump-master-config-template > /path/to/master.yaml.tmpl
 
 #. Customize the template as you see fit by editing it in any text editor. For example, let's say a
-   user wants to utilize (default) ``p2.8xlarge`` 4-GPU instances for the :ref:`default compute pool
+   user wants to utilize (default) ``g4dn.metal`` 8-GPU instances for the :ref:`default compute pool
    <resource-pools>`, but they also often run single-GPU notebook jobs, for which a single
-   ``p2.xlarge`` instance would be perfect. So, you want to add a third pool ``compute-pool-solo``
+   ``g4dn.xlarge`` instance would be perfect. So, you want to add a third pool ``compute-pool-solo``
    with a customized instance type.
 
    Start with the default template, and find the ``resource_pools`` section:
@@ -342,7 +339,7 @@ Example workflow:
       - pool_name: compute-pool-solo
         max_aux_containers_per_agent: 0
         provider:
-          instance_type: g4dn.metal
+          instance_type: g4dn.xlarge
           {{- toYaml .resource_pools.aws | nindent 6}}
 
 #. Use the new template:
