@@ -478,7 +478,7 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         assert len(trials) == 1, trials
 
         for t in trials:
-            exp.cancel_trial(t.trial.id)
+            exp.kill_trial(t.trial.id)
 
         # Give the experiment time to refill max_concurrent_trials.
         trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
@@ -486,14 +486,14 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         # The experiment handling the cancel message and waiting for it to be cancelled slyly
         # (hackishly) allows us to synchronize with the experiment state after after canceling
         # the first two trials.
-        exp.cancel_single(experiment_id)
+        exp.kill_single(experiment_id)
 
         # Make sure that there were never more than 2 total trials created.
         trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
         assert len(trials) == 2, trials
 
     finally:
-        exp.cancel_single(experiment_id)
+        exp.kill_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
