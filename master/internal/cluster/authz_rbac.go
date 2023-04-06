@@ -53,6 +53,20 @@ func (a *MiscAuthZRBAC) CanUpdateAgents(
 	return a.checkForPermission(ctx, curUser, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_AGENTS)
 }
 
+// CanGetMasterLogs checks if the user has permission to view master logs.
+func (a *MiscAuthZRBAC) CanGetMasterLogs(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil // FIXME.
+}
+
+// CanGetUsageDetails checks if the user can get usage related details.
+func (a *MiscAuthZRBAC) CanGetUsageDetails(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil // FIXME.
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &MiscAuthZRBAC{})
 }
