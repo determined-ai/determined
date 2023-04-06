@@ -297,6 +297,18 @@ type AllocationMetadata struct {
 	ImagepullingTime float64
 }
 
+// canGetUsageDetails checks if the user has permission to get cluster usage details.
+func (m *Master) canGetUsageDetails(ctx context.Context, user *model.User) error {
+	permErr, err := cluster.AuthZProvider.Get().CanGetUsageDetails(ctx, user)
+	if err != nil {
+		return err
+	}
+	if permErr != nil {
+		return status.Error(codes.PermissionDenied, permErr.Error())
+	}
+	return nil
+}
+
 //	@Summary	Get a detailed view of resource allocation at a allocation-level during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-resource-allocation-csv
@@ -1124,7 +1136,7 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources")
+	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
