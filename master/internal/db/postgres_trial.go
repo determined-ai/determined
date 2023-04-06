@@ -157,7 +157,6 @@ WHERE id = $1`, id, restartCount); err != nil {
 
 // updateTotalBatches update precomputed total_batches based on existing steps and validations.
 func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int) error {
-	// CHECK: don't we need to ignore archived = true or is this handled by the db views?
 	if _, err := tx.ExecContext(ctx, `
 		UPDATE trials SET total_batches = sub.new_max_total_batches_processed
 		FROM (
@@ -190,7 +189,6 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics)
 		resT, err := tx.ExecContext(ctx, `
 UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
-  -- CHECK: rollbacks do consider late arriving or retried metrics right?
   AND trial_run_id < $2
   AND total_batches >= $3;
 `, m.TrialId, m.TrialRunId, m.StepsCompleted)
