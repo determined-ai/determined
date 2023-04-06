@@ -295,6 +295,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		StartDispatcherResources,
 		KillDispatcherResources,
 		DispatchStateChange,
+		dispatchExpLogMessage,
 		DispatchExited,
 		sproto.SetGroupMaxSlots,
 		sproto.SetAllocationName,
@@ -647,18 +648,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case DispatchStateChange:
 		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
-		allocationID, ok := m.getAllocationIDFromDispatchID(msg.DispatchID)
-		if !ok {
-			log.Warnf("received DispatchStateChange for unknown dispatch %s", msg.DispatchID)
-			return nil
-		}
-
-		task, ok := m.reqList.TaskByID(allocationID)
-		if !ok {
-			log.Warnf("received DispatchStateChange for dispatch unknown to task list: %s", allocationID)
-			return nil
-		}
-
+		task := m.getAssociatedTask(log, ctx, msg.DispatchID)
 		alloc := m.reqList.Allocation(task.AllocationRef)
 		if len(alloc.Resources) != 1 {
 			log.Warnf("allocation has malformed resources: %v", alloc)
@@ -673,9 +663,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			})
 			m.addDispatchIDToHpcJobIDMap(msg.DispatchID, msg.HPCJobID)
 
-			ctx.Log().WithField("allocation-id", allocationID).
-				WithField("dispatch-id", msg.DispatchID).
-				WithField("hpc-job-id", msg.HPCJobID).
+			log.WithField("hpc-job-id", msg.HPCJobID).
 				Debug("Received HPC job ID for job.")
 		}
 
@@ -687,6 +675,17 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			ResourcesID:      rID,
 			ResourcesState:   resourcesStateFromDispatchState(msg.IsPullingImage, msg.State),
 			ResourcesStarted: &sproto.ResourcesStarted{},
+		})
+
+	case dispatchExpLogMessage:
+		log := ctx.Log().WithField("dispatch-id", msg.DispatchID)
+		task := m.getAssociatedTask(log, ctx, msg.DispatchID)
+		if task == nil {
+			return nil
+		}
+
+		ctx.Tell(task.AllocationRef, sproto.ContainerLog{
+			AuxMessage: &msg.Message,
 		})
 
 	case DispatchExited:
@@ -732,6 +731,24 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (m *dispatcherResourceManager) getAssociatedTask(
+	log *logrus.Entry,
+	ctx *actor.Context,
+	dispatchID string) *sproto.AllocateRequest {
+	allocationID, ok := m.getAllocationIDFromDispatchID(dispatchID)
+	if !ok {
+		log.Warnf("received message for unknown dispatch %s", dispatchID)
+		return nil
+	}
+
+	task, ok := m.reqList.TaskByID(allocationID)
+	if !ok {
+		log.Warnf("received message for dispatch unknown to task list: %s", allocationID)
+		return nil
+	}
+	return task
 }
 
 // Called only from DispatchExited event and always run via go routine.
@@ -1790,6 +1807,12 @@ type (
 		State          launcher.DispatchState
 		IsPullingImage bool
 		HPCJobID       string
+	}
+
+	// dispatchExpLogMessage notifies the dispatcher of a message to be added to the exp log.
+	dispatchExpLogMessage struct {
+		DispatchID string
+		Message    string
 	}
 
 	// DispatchExited notifies the dispatcher that the give dispatch exited.

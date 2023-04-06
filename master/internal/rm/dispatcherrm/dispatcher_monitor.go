@@ -267,11 +267,17 @@ func (m *launcherMonitor) notifyContainerRunning(
 	case !ok:
 		job.runningContainers[int(rank)] = containerInfo{nodeName: nodeName}
 
-		ctx.Log().Infof("For dispatchID %s, %d out of %d containers running on nodes %s",
-			dispatchID,
-			len(job.runningContainers),
-			job.totalContainers,
-			getNodesThatAreRunningContainer(job))
+		if job.totalContainers > 1 {
+			startedMsg := fmt.Sprintf("%d out of %d containers running on nodes %s",
+				len(job.runningContainers),
+				job.totalContainers,
+				getNodesThatAreRunningContainer(job))
+
+			ctx.Tell(ctx.Self(), dispatchExpLogMessage{
+				DispatchID: dispatchID,
+				Message:    startedMsg,
+			})
+		}
 
 	// Rank already existed in the map. This is not expected, as each container
 	// should only send the notification that it's running only once.
