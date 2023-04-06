@@ -201,6 +201,14 @@ func TestBatchesProcessed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, dbTr.TotalBatches)
 
+	a := &model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+		TaskID:       tr.TaskID,
+		StartTime:    ptrs.Ptr(time.Now()),
+	}
+	err = db.AddAllocation(a)
+	require.NoError(t, err, "failed to add allocation")
+
 	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
 	require.NoError(t, err)
 
@@ -217,6 +225,16 @@ func TestBatchesProcessed(t *testing.T) {
 			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
 		case "validation":
 			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+		case "checkpoint":
+			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
+				UUID:         uuid.New(),
+				TaskID:       task.TaskID,
+				AllocationID: a.AllocationID,
+				ReportTime:   time.Now(),
+				State:        model.CompletedState,
+				Metadata:     map[string]any{"steps_completed": batches},
+			}))
+
 		default:
 			return errors.Errorf("unknown type %s", typ)
 		}
@@ -243,6 +261,8 @@ func TestBatchesProcessed(t *testing.T) {
 		{"validation", 1, 30, 30}, // will be rolled back.
 		{"training", 1, 30, 30},   // will be rolled back.
 		{"training", 2, 27, 27},   // rollback via training.
+		{"checkpoint", 2, 30, 27}, // CHECK: do NOT account for steps_completed here.
+		{"checkpoint", 3, 25, 27}, // CHECK: do NOT account for steps_completed here.
 	}
 	for _, c := range cases {
 		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches))
