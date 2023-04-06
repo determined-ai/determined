@@ -31,7 +31,6 @@ const (
 	ignoredReporter      = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
 	errorLinesToRetrieve = 200
 	errorLinesToDisplay  = 15
-	ownerLauncher        = "launcher"
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -432,42 +431,30 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 		return result // Nothing to get of interest in this case
 	}
 	ctx.Log().Debugf("Fetching HPC queue state")
-	payload := launcher.NewPayloadWithDefaults()
-	payload.SetName("DAI-HPC-Queues")
-	payload.SetId("com.cray.analytics.capsules.hpc.queue")
-	payload.SetVersion("latest")
-	payload.SetCarriers([]string{
-		"com.cray.analytics.capsules.carriers.hpc.slurm.SlurmQueue",
-		"com.cray.analytics.capsules.carriers.hpc.pbs.PbsQueue",
-	})
 
-	launchParameters := launcher.NewLaunchParameters()
-	launchParameters.SetMode("batch")
-	payload.SetLaunchParameters(*launchParameters)
-
-	clientMetadata := launcher.NewClientMetadataWithDefaults()
-	clientMetadata.SetName("DAI-HPC-Queues")
-
-	manifest := *launcher.NewManifest("v1", *clientMetadata)
-	manifest.SetPayloads([]launcher.Payload{*payload})
-
-	dispatchInfo, r, err := m.apiClient.LaunchApi.Launch(m.apiClient.withAuth(context.TODO())).
-		Manifest(manifest).
-		Impersonate("").
-		Execute() //nolint:bodyclose
+	dispatchInfo, r, err := m.apiClient.launchHPCQueueJob() //nolint:bodyclose
 	if err != nil {
 		m.apiClient.handleServiceQueryError(r, err)
 		return result
 	}
 	dispatchID := dispatchInfo.GetDispatchId()
-	defer m.rm.ResourceQueryPostActions(ctx, dispatchID, ownerLauncher)
+	owner := dispatchInfo.GetLaunchingUser()
+	defer func() {
+		_, _, err := m.apiClient.terminateDispatch(owner, dispatchID) //nolint:bodyclose
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("failed to terminate dispatchID {%s}", dispatchID)
+			return
+		}
 
-	resp, _, err := m.apiClient.MonitoringApi.LoadEnvironmentLog(
-		m.apiClient.withAuth(context.TODO()),
-		ownerLauncher,
-		dispatchID,
-		"slurm-queue-info",
-	).Execute() //nolint:bodyclose
+		_, err = m.apiClient.deleteDispatch(owner, dispatchID) //nolint:bodyclose
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("failed to delete dispatchID {%s}", dispatchID)
+			return
+		}
+	}()
+
+	resp, _, err := m.apiClient.loadEnvironmentLog( //nolint:bodyclose
+		owner, dispatchID, "slurm-queue-info")
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("failed to retrieve HPC job queue details. response: {%v}", resp)
 		return result

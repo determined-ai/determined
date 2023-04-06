@@ -143,8 +143,8 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 		return nil, false
 	}
 	dispatchID := dispatchInfo.GetDispatchId()
-	owner := "launcher"
-	c.log.Debugf("Launched Manifest with DispatchID %s", dispatchID)
+	owner := dispatchInfo.GetLaunchingUser()
+	c.log.Debugf("Launched Manifest user %s with DispatchID %s", owner, dispatchID)
 	defer func() {
 		_, _, err := c.cl.terminateDispatch(owner, dispatchID) //nolint:bodyclose
 		if err != nil {
