@@ -40,9 +40,9 @@ func defaultAllocationTimeout() *model.Duration {
 // DefaultSchedulerConfig returns the default fair share configuration for the scheduler.
 func DefaultSchedulerConfig() *SchedulerConfig {
 	return &SchedulerConfig{
-		FairShare:         &FairShareSchedulerConfig{},
-		FittingPolicy:     defaultFitPolicy,
-		AllocationTimeout: defaultAllocationTimeout(),
+		FairShare:     &FairShareSchedulerConfig{},
+		FittingPolicy: defaultFitPolicy,
+		// AllocationTimeout: defaultAllocationTimeout(),
 	}
 }
 
@@ -83,9 +83,9 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 	if s.FittingPolicy == "" {
 		s.FittingPolicy = best
 	}
-	if s.AllocationTimeout == nil {
-		s.AllocationTimeout = defaultAllocationTimeout()
-	}
+	// if s.AllocationTimeout == nil {
+	// 	s.AllocationTimeout = defaultAllocationTimeout()
+	// }
 
 	return nil
 }

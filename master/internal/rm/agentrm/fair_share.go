@@ -24,8 +24,12 @@ type fairShare struct {
 // fairness of groups. For groups that are above their fair share, the scheduler requests
 // them to terminate their idle tasks until they have achieved their fair share.
 func NewFairShareScheduler(config *config.SchedulerConfig) Scheduler {
+	var allocationTimeout time.Duration
+	if config.AllocationTimeout != nil {
+		allocationTimeout = time.Duration(*config.AllocationTimeout)
+	}
 	return &fairShare{
-		allocationTimeout: time.Duration(*config.AllocationTimeout),
+		allocationTimeout: allocationTimeout,
 		scheduledReqTime:  make(map[*sproto.AllocateRequest]time.Time),
 	}
 }
