@@ -14,6 +14,7 @@ import {
   activateExperiments,
   archiveExperiments,
   cancelExperiments,
+  deleteExperiments,
   getExperiments,
   killExperiments,
   openOrCreateTensorBoard,
@@ -224,6 +225,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           });
         case Action.Unarchive:
           return unarchiveExperiments({
+            experimentIds: selectedExperimentIds,
+            filters: selectAll ? fetchFilters : undefined,
+          });
+        case Action.Delete:
+          return deleteExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
