@@ -95,13 +95,13 @@ eval "$($HOME/.linuxbrew/bin/brew shellenv)"
 Install the Determined prerequisites:
 
 ```sh
-brew install go@1.18 python@3.7 node@16 protobuf docker helm curl jq socat
+brew install go@1.20 python@3.9 node@16 protobuf docker helm curl jq socat
 ```
 
 Add Python and Node to your PATH:
 
 ```sh
-echo 'export PATH="$HOME/.linuxbrew/opt/python@3.7/bin:$HOME/.linuxbrew/opt/node@16/bin:$PATH"' >> $HOME/.profile
+echo 'export PATH="$HOME/.linuxbrew/opt/python@3.9/bin:$HOME/.linuxbrew/opt/node@16/bin:$PATH"' >> $HOME/.profile
 source $HOME/.profile
 ```
 
