@@ -218,3 +218,40 @@ func TestCheckpointMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricNames(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	actualTrain, actualVal, err := MetricNames(ctx, -1)
+	require.NoError(t, err)
+	require.Len(t, actualTrain, 0)
+	require.Len(t, actualVal, 0)
+
+	user := RequireMockUser(t, db)
+
+	exp := RequireMockExperiment(t, db, user)
+	trial1 := RequireMockTrial(t, db, exp)
+	addMetrics(ctx, t, db, trial1, `[{"a":1}, {"b":2}]`, `[{"b":2, "c":3}]`)
+	trial2 := RequireMockTrial(t, db, exp)
+	addMetrics(ctx, t, db, trial2, `[{"b":1}, {"d":2}]`, `[{"f":"test"}]`)
+
+	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
+
+	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "d"}, actualTrain)
+	require.Equal(t, []string{"b", "c", "f"}, actualVal)
+
+	addMetrics(ctx, t, db, trial2, `[{"c":[]}]`, `[]`)
+
+	runSummaryMigration(t) // TODO remove this after ingestion for summary metrics is added.
+
+	actualTrain, actualVal, err = MetricNames(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "c", "d"}, actualTrain)
+	require.Equal(t, []string{"b", "c", "f"}, actualVal)
+}

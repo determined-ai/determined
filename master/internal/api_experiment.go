@@ -1261,8 +1261,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
-	var tStartTime time.Time
-	var vStartTime time.Time
 
 	var timeSinceLastAuth time.Time
 	var searcherMetric string
@@ -1280,17 +1278,19 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			timeSinceLastAuth = time.Now()
 		}
 
+		// TODO should we still have a start time?
+		// We don't have to go to steps so think this should be plenty fine
+		// The one optimization we could make is like check max of steps.
+		// But that might be slower to be honest.
+		// I mean if we keep summary_metrics timestamp up to date we could optimize around
+		// that. But not seeing performance benefits really.
 		var response apiv1.MetricNamesResponse
 		response.SearcherMetric = searcherMetric
-
-		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID,
-			tStartTime, vStartTime)
+		newTrain, newValid, err := db.MetricNames(resp.Context(), experimentID)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", experimentID)
 		}
-		tStartTime = tEndTime
-		vStartTime = vEndTime
 
 		for _, name := range newTrain {
 			if seen := seenTrain[name]; !seen {

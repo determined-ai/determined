@@ -119,56 +119,30 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
-func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
-	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error,
+func MetricNames(ctx context.Context, experimentID int) (
+	training []string, validation []string, err error,
 ) {
-	type namesWrapper struct {
-		Name    string    `db:"name"`
-		EndTime time.Time `db:"end_time"`
-	}
-
-	var rows []namesWrapper
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
-  max(s.end_time) AS end_time
-FROM trials t
-JOIN steps s ON t.id=s.trial_id
-WHERE t.experiment_id=$1
-  AND s.end_time > $2
-GROUP BY name`, &rows, experimentID, sStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+	if err := Bun().NewSelect().Table("trials").
+		ColumnExpr("jsonb_object_keys(summary_metrics->'avg_metrics') AS name").
+		Where("experiment_id = ?", experimentID).
+		Group("name").
+		Order("name").
+		Scan(ctx, &training); err != nil {
+		return nil, nil, errors.Wrapf(err,
 			"error querying training metric names for experiment %d", experimentID)
 	}
-	for _, row := range rows {
-		training = append(training, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
 
-	err = db.queryRows(`
-SELECT
-  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
-  max(v.end_time) AS end_time
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-WHERE t.experiment_id=$1
-  AND v.end_time > $2
-GROUP BY name`, &rows, experimentID, vStartTime)
-	if err != nil {
-		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+	if err := Bun().NewSelect().Table("trials").
+		ColumnExpr("jsonb_object_keys(summary_metrics->'validation_metrics') AS name").
+		Where("experiment_id = ?", experimentID).
+		Group("name").
+		Order("name").
+		Scan(ctx, &validation); err != nil {
+		return nil, nil, errors.Wrapf(err,
 			"error querying validation metric names for experiment %d", experimentID)
 	}
-	for _, row := range rows {
-		validation = append(validation, row.Name)
-		if row.EndTime.After(sEndTime) {
-			sEndTime = row.EndTime
-		}
-	}
 
-	return training, validation, sEndTime, vEndTime, err
+	return training, validation, nil
 }
 
 type batchesWrapper struct {
