@@ -352,29 +352,12 @@ func (a *apiServer) DeleteExperiment(
 func (a *apiServer) DeleteExperiments(
 	ctx context.Context, req *apiv1.DeleteExperimentsRequest,
 ) (*apiv1.DeleteExperimentsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	_, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	results, experiments, err := exputil.DeleteExperiments(ctx, a.m.system, req.ExperimentIds,
-		req.Filters)
-
-	go func() {
-		for _, e := range experiments {
-			if err := a.deleteExperiment(e, curUser); err != nil {
-				logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
-				e.State = model.DeleteFailedState
-				if err := a.m.db.SaveExperimentState(e); err != nil {
-					logrus.WithError(err).Errorf("transitioning experiment %d to %s", e.ID, e.State)
-				}
-			} else {
-				logrus.Infof("experiment %d deleted successfully", e.ID)
-			}
-		}
-	}()
-
-	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
+	return &apiv1.DeleteExperimentsResponse{}, err
 }
 
 func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
