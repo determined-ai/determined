@@ -85,6 +85,11 @@ def cancel_experiment(experiment_id: int) -> None:
     wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
 
 
+def kill_experiment(experiment_id: int) -> None:
+    bindings.post_KillExperiment(api_utils.determined_test_session(), id=experiment_id)
+    wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
+
+
 def cancel_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
     if name is None:
         body = bindings.v1CancelExperimentsRequest(experimentIds=experiment_ids)
@@ -94,7 +99,16 @@ def cancel_experiments(experiment_ids: List[int], name: Optional[str] = None) ->
     bindings.post_CancelExperiments(api_utils.determined_test_session(), body=body)
 
 
-def cancel_trial(trial_id: int) -> None:
+def kill_experiments(experiment_ids: List[int], name: Optional[str] = None) -> None:
+    if name is None:
+        body = bindings.v1KillExperimentsRequest(experimentIds=experiment_ids)
+    else:
+        filters = bindings.v1BulkExperimentFilters(name=name)
+        body = bindings.v1KillExperimentsRequest(experimentIds=[], filters=filters)
+    bindings.post_KillExperiments(api_utils.determined_test_session(), body=body)
+
+
+def kill_trial(trial_id: int) -> None:
     bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
     wait_for_trial_state(trial_id, experimentv1State.STATE_CANCELED)
 
@@ -204,7 +218,7 @@ def wait_for_experiment_state(
 
     else:
         if target_state == experimentv1State.STATE_COMPLETED:
-            cancel_experiment(experiment_id)
+            kill_experiment(experiment_id)
         report_failed_experiment(experiment_id)
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
@@ -250,7 +264,7 @@ def wait_for_trial_state(
     else:
         state = trial_state(trial_id)
         if target_state == experimentv1State.STATE_COMPLETED:
-            cancel_trial(trial_id)
+            kill_trial(trial_id)
         report_failed_trial(trial_id, target_state=target_state, state=state)
         pytest.fail(
             "Trial did not reach target state {} after {} seconds".format(
@@ -378,6 +392,17 @@ def experiment_trials(experiment_id: int) -> List[TrialPlusWorkload]:
 
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
     cancel_experiment(experiment_id)
+
+    if should_have_trial:
+        trials = experiment_trials(experiment_id)
+        assert len(trials) == 1, len(trials)
+
+        trial = trials[0].trial
+        assert trial.state == experimentv1State.STATE_CANCELED
+
+
+def kill_single(experiment_id: int, should_have_trial: bool = False) -> None:
+    kill_experiment(experiment_id)
 
     if should_have_trial:
         trials = experiment_trials(experiment_id)

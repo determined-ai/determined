@@ -106,7 +106,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
         assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
         time.sleep(1)
 
-    exp.cancel_single(experiment_id)
+    exp.kill_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
@@ -128,7 +128,7 @@ def test_noop_pause_with_multiexperiment() -> None:
 
     exp.activate_experiments([experiment_id])
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
-    exp.cancel_experiments([experiment_id])
+    exp.kill_experiments([experiment_id])
 
 
 @pytest.mark.e2e_cpu
@@ -148,7 +148,7 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([], name=tf.name)
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
-    exp.cancel_experiments([experiment_id])
+    exp.kill_experiments([experiment_id])
 
 
 @pytest.mark.e2e_cpu
@@ -421,4 +421,4 @@ def test_noop_experiment_config_override() -> None:
         )
         exp_config = exp.experiment_config_json(experiment_id)
         assert exp_config["reproducibility"]["experiment_seed"] == 8200
-        exp.cancel_single(experiment_id)
+        exp.kill_single(experiment_id)
