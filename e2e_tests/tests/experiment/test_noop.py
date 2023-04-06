@@ -222,7 +222,7 @@ def test_cancel_one_experiment() -> None:
         conf.fixtures_path("no_op"),
     )
 
-    exp.kill_single(experiment_id)
+    exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
@@ -239,7 +239,7 @@ def test_cancel_one_active_experiment_unready() -> None:
     else:
         raise AssertionError("no workload active after 15 seconds")
 
-    exp.kill_single(experiment_id, should_have_trial=True)
+    exp.cancel_single(experiment_id, should_have_trial=True)
 
 
 @pytest.mark.e2e_cpu
@@ -255,7 +255,7 @@ def test_cancel_one_active_experiment_ready() -> None:
             break
         time.sleep(1)
 
-    exp.kill_single(experiment_id, should_have_trial=True)
+    exp.cancel_single(experiment_id, should_have_trial=True)
     exp.assert_performed_final_checkpoint(experiment_id)
 
 
@@ -266,7 +266,7 @@ def test_cancel_one_paused_experiment() -> None:
         conf.fixtures_path("no_op"),
         ["--paused"],
     )
-    exp.kill_single(experiment_id)
+    exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
@@ -280,7 +280,7 @@ def test_cancel_ten_experiments() -> None:
     ]
 
     for experiment_id in experiment_ids:
-        exp.kill_single(experiment_id)
+        exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
@@ -295,7 +295,7 @@ def test_cancel_ten_paused_experiments() -> None:
     ]
 
     for experiment_id in experiment_ids:
-        exp.kill_single(experiment_id)
+        exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu

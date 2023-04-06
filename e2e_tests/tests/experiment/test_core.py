@@ -486,7 +486,7 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         # The experiment handling the cancel message and waiting for it to be cancelled slyly
         # (hackishly) allows us to synchronize with the experiment state after after canceling
         # the first two trials.
-        exp.kill_single(experiment_id)
+        exp.cancel_single(experiment_id)
 
         # Make sure that there were never more than 2 total trials created.
         trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
