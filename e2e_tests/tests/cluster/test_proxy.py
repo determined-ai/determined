@@ -71,7 +71,7 @@ def _ray_job_submit(exp_path: pathlib.Path) -> None:
     )
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_proxy
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_tunnel() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
@@ -145,7 +145,7 @@ def _kill_all_ray_experiments() -> None:
                 bindings.post_KillExperiment(sess, id=exp_id)
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_proxy
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"

@@ -2303,6 +2303,14 @@ workflows:
           tf2: true
           mark: e2e_cpu
 
+      - test-e2e-proxy:
+          name: test-e2e-cpu-proxy
+          requires:
+            - build-go
+          parallelism: 1
+          tf2: true
+          mark: e2e_cpu_proxy
+
       - test-e2e:
           name: test-e2e-cpu-double
           requires:
@@ -2326,12 +2334,12 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
-      
+
       - test-e2e:
           name: test-e2e-port-registry
-          requires: 
+          requires:
             - build-go
-          parallelism: 1 
+          parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
           target-stage: agent
