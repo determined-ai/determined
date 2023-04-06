@@ -10,7 +10,7 @@ from determined.deploy.aws import constants
 
 # Try waiting for stack to delete this many times. We break up the waiting so the delete job
 # will not fail CI.
-NUM_WAITS = 5
+NUM_WAITS = 10
 
 DELETE_MASTER_IGNORE_ERRORS = (
     "IncorrectInstanceState",
