@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router';
 import useUI from 'shared/contexts/stores/UI';
 import usersStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
+import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { useObservable, WritableObservable } from 'utils/observable';
 
@@ -57,6 +58,7 @@ const cells: DataEditorProps['customRenderers'] = [
 interface Props {
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
+  fetchExperiments: () => void;
   handleScroll?: (r: Rectangle) => void;
   initialScrollPositionSet: WritableObservable<boolean>;
   sortableColumnIds: ExperimentColumn[];
@@ -73,6 +75,7 @@ const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 
 export const GlideTable: React.FC<Props> = ({
   data,
+  fetchExperiments,
   setSelectedExperimentIds,
   sortableColumnIds,
   setSortableColumnIds,
@@ -108,7 +111,8 @@ export const GlideTable: React.FC<Props> = ({
   });
 
   const [contextMenuIsOpen, setContextMenuIsOpen] = useState(false);
-  const [contextMenuProps, setContextMenuProps] = useState<Omit<TableContextMenuProps, 'open'>>();
+  const [contextMenuProps, setContextMenuProps] =
+    useState<Omit<TableContextMenuProps, 'open' | 'fetchExperiments'>>();
 
   const {
     ui: { darkLight },
@@ -250,9 +254,8 @@ export const GlideTable: React.FC<Props> = ({
 
       event.preventDefault();
       setContextMenuProps({
-        experiment,
+        experiment: getProjectExperimentForExperimentItem(experiment, project),
         handleClose: () => setContextMenuIsOpen(false),
-        project,
         x: event.bounds.x,
         y: event.bounds.y,
       });
@@ -319,7 +322,11 @@ export const GlideTable: React.FC<Props> = ({
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps?.experiment && (
-        <TableContextMenu {...contextMenuProps} open={contextMenuIsOpen} />
+        <TableContextMenu
+          {...contextMenuProps}
+          fetchExperiments={fetchExperiments}
+          open={contextMenuIsOpen}
+        />
       )}
     </div>
   );

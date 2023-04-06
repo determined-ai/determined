@@ -18,10 +18,10 @@ import {
 } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import { ExperimentAction as Action, ExperimentItem, Project } from 'types';
+import { ExperimentAction as Action, ProjectExperiment } from 'types';
 import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { getActionsForExperiment, getProjectExperimentForExperimentItem } from 'utils/experiment';
+import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
 const dropdownActions = [
@@ -59,28 +59,31 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
 }
 
 export interface TableContextMenuProps extends MenuProps {
+  fetchExperiments: () => void;
   open: boolean;
-  experiment: ExperimentItem;
-  project?: Project;
+  experiment: ProjectExperiment;
   handleClose: () => void;
   x: number;
   y: number;
 }
 
 export const TableContextMenu: React.FC<TableContextMenuProps> = ({
+  experiment,
+  fetchExperiments,
+  handleClose,
+  open,
   x,
   y,
-  open,
-  project,
-  experiment: exp,
-  handleClose,
 }) => {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
 
-  const experiment = getProjectExperimentForExperimentItem(exp, project);
-
   const permissions = usePermissions();
+
+  const onComplete = useCallback(() => {
+    handleClose();
+    fetchExperiments();
+  }, [fetchExperiments, handleClose]);
 
   const menuItems = experiment
     ? getActionsForExperiment(experiment, dropdownActions, permissions).map((action) => ({
@@ -91,11 +94,11 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
     : [];
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
-    useModalExperimentMove({ onClose: handleClose });
+    useModalExperimentMove({ onClose: onComplete });
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, onClose: handleClose });
+  } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -119,15 +122,15 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         ) {
           case Action.Activate:
             await activateExperiment({ experimentId: experiment.id });
-            handleClose();
+            onComplete();
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: experiment.id });
-            handleClose();
+            onComplete();
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: experiment.id });
-            handleClose();
+            onComplete();
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -147,18 +150,18 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
               okText: 'Kill',
               onOk: async () => {
                 await killExperiment({ experimentId: experiment.id });
-                handleClose();
+                onComplete();
               },
               title: 'Confirm Experiment Kill',
             });
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: experiment.id });
-            handleClose();
+            onComplete();
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: experiment.id });
-            handleClose();
+            onComplete();
             break;
           case Action.Delete:
             modal.confirm({
@@ -170,7 +173,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
               okText: 'Delete',
               onOk: async () => {
                 await deleteExperiment({ experimentId: experiment.id });
-                handleClose();
+                onComplete();
               },
               title: 'Confirm Experiment Deletion',
             });
@@ -197,7 +200,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       experiment.workspaceId,
       handleExperimentMove,
       handleHyperparameterSearch,
-      handleClose,
+      onComplete,
     ],
   );
 
