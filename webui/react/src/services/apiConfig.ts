@@ -702,6 +702,18 @@ export const deleteExperiment: DetApi<
   },
 };
 
+export const deleteExperiments: DetApi<
+  Service.BulkActionParams,
+  Api.V1DeleteExperimentsResponse,
+  Type.BulkActionError[] | void
+> = {
+  name: 'deleteExperiments',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params: Service.BulkActionParams, options) => {
+    return detApi.Experiments.archiveExperiments(params, options);
+  },
+};
+
 export const unarchiveExperiment: DetApi<
   Service.ExperimentIdParams,
   Api.V1UnarchiveExperimentResponse,

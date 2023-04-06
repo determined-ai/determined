@@ -266,6 +266,7 @@ export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;
+  filters?: Api.V1BulkExperimentFilters;
 }
 
 export interface LaunchJupyterLabParams {

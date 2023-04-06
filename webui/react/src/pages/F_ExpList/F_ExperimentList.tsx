@@ -16,6 +16,7 @@ import {
   cancelExperiments,
   getExperiments,
   killExperiments,
+  openOrCreateTensorBoard,
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
@@ -27,6 +28,7 @@ import userStore from 'stores/users';
 import {
   ExperimentAction as Action,
   BulkActionError,
+  CommandResponse,
   ExperimentItem,
   Project,
   ProjectExperiment,
@@ -50,7 +52,7 @@ interface Props {
 }
 
 const batchActions = [
-  //Action.OpenTensorBoard,
+  Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
   Action.Pause,
@@ -58,7 +60,7 @@ const batchActions = [
   Action.Unarchive,
   Action.Cancel,
   Action.Kill,
-  //Action.Delete,
+  Action.Delete,
 ];
 
 export const PAGE_SIZE = 100;
@@ -171,15 +173,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [experimentMap, permissions, selectedExperimentIds]);
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<BulkActionError[] | void> | void => {
-      // if (selectedExperimentIds.length === 0) return;
-      // const selectedIds = selectedExperimentIds;
-      // if (action === Action.OpenTensorBoard) {
-      //   return openOrCreateTensorBoard({
-      //     experimentIds: selectedIds,
-      //     workspaceId: project?.workspaceId,
-      //   });
-      // }
+    (action: Action): Promise<BulkActionError[] | void | CommandResponse> | void => {
+      const selectedIds = selectedExperimentIds;
+      if (action === Action.OpenTensorBoard) {
+        return openOrCreateTensorBoard({
+          experimentIds: selectedIds,
+          filters: selectAll ? fetchFilters : undefined,
+          workspaceId: project?.workspaceId,
+        });
+      }
       if (action === Action.Move) {
         return openMoveModal({
           experimentIds: selectedExperimentIds.filter(

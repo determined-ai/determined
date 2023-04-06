@@ -340,6 +340,12 @@ export const deleteExperiment = generateDetApi<
   void
 >(Config.deleteExperiment);
 
+export const deleteExperiments = generateDetApi<
+  Service.BulkActionParams,
+  Api.V1DeleteExperimentsResponse,
+  Type.BulkActionError[] | void
+>(Config.deleteExperiments);
+
 export const activateExperiment = generateDetApi<
   Service.ExperimentIdParams,
   Api.V1ActivateExperimentResponse,
