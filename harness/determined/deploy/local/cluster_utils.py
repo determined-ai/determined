@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from typing import Any, Dict, List, Optional, Sequence, Type
 
 import appdirs
@@ -118,6 +119,19 @@ def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> N
         raise ConnectionError("Timed out connecting to master")
 
 
+def _wait_for_db_container(container_name: str, timeout: int = 100) -> None:
+    print(f"Waiting for db {container_name}...")
+    client = docker_client()
+    container = client.containers.get(container_name)
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        inspect = client.api.inspect_container(container.name)
+        if inspect["State"]["Health"]["Status"] == "healthy":
+            return
+        time.sleep(1)
+    raise TimeoutError
+
+
 def master_up(
     port: int,
     master_config_path: Optional[pathlib.Path],
@@ -190,7 +204,14 @@ def master_up(
     client.networks.create(name=NETWORK_NAME, attachable=True)
 
     # Start db.
-    db_up(password=db_password, network_name=NETWORK_NAME, cluster_name=cluster_name)
+    db_name = f"{cluster_name}_{DB_NAME}"
+    db_up(name=db_name, password=db_password, network_name=NETWORK_NAME, cluster_name=cluster_name)
+
+    try:
+        _wait_for_db_container(db_name)
+    except TimeoutError:
+        print(f"Database {db_name} failed to reach a ready state, removing container.")
+        _kill_containers(names=[db_name])
 
     # Start master instance.
     print(f"Creating {master_name}...")
@@ -213,13 +234,16 @@ def master_up(
     network = client.networks.get(NETWORK_NAME)
     network.connect(container=master_name, aliases=["determined-master"])
 
-    _wait_for_master("localhost", port, cluster_name)
+    try:
+        _wait_for_master("localhost", port, cluster_name)
+    except TimeoutError:
+        print(f"Master failed to initialize, removing master and DB containers.")
+        master_down(master_name=master_name, delete_db=delete_db, cluster_name=cluster_name)
 
 
-def db_up(password: str, network_name: str, cluster_name: str) -> None:
-    name = f"{cluster_name}_{DB_NAME}"
+def db_up(name: str, password: str, network_name: str, cluster_name: str) -> None:
     print(f"Creating {name}...")
-    env = {"POSTGRES_DB": "determined", "POSTGRES_PASSWORD": password}
+    env = {"PGUSER": "postgres", "POSTGRES_DB": "determined", "POSTGRES_PASSWORD": password}
     client = docker_client()
     client.containers.run(
         image="postgres:10.14",
@@ -232,6 +256,10 @@ def db_up(password: str, network_name: str, cluster_name: str) -> None:
         restart_policy={"Name": "unless-stopped"},
         device_requests=None,
         command="--max_connections=96 --shared_buffers=512MB",
+        healthcheck={
+            "test": ["CMD-SHELL", "pg_isready", "-d", "determined"],
+            "interval": 1000000,
+        },
     )
     # Connect to the network separately to set alias.
     network = client.networks.get(network_name)
