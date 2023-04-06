@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -54,6 +55,14 @@ const (
 	// ImagePullStatsKind describes the IMAGEPULL event.
 	ImagePullStatsKind = "IMAGEPULL"
 )
+
+// Docker error strings returned by the Docker API.
+var (
+	NoSuchContainer   = "No such container"
+	RemovalInProgress = regexp.MustCompile(`removal of container ([a-f0-9]+) is already in progress`)
+)
+
+var ForceRemoveOpts = types.ContainerRemoveOptions{Force: true}
 
 type (
 	// ContainerWaiter contains channels to wait on the termination of a running container.
