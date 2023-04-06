@@ -124,13 +124,13 @@ const ExperimentCreateModalComponent = ({
     setModalState((prev) => {
       if (prev.error) return { ...prev, error: undefined };
       const values = form.getFieldsValue();
-      prev.config.name = values.name;
-      if (values.maxLength) {
+      prev.config.name = values[EXPERIMENT_NAME];
+      if (values[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(prev.config);
         if (maxLengthType) {
-          prev.config.searcher.max_length[maxLengthType] = parseInt(values.maxLength);
+          prev.config.searcher.max_length[maxLengthType] = parseInt(values[MAX_LENGTH]);
         } else {
-          prev.config.searcher.max_length = parseInt(values.maxLength);
+          prev.config.searcher.max_length = parseInt(values[MAX_LENGTH]);
         }
       }
       prev.configString = yaml.dump(prev.config);
@@ -204,16 +204,16 @@ const ExperimentCreateModalComponent = ({
       const formValues = form.getFieldsValue();
       const newConfig = clone(config);
 
-      if (formValues.name) {
-        newConfig.name = formValues.name;
+      if (formValues[EXPERIMENT_NAME]) {
+        newConfig.name = formValues[EXPERIMENT_NAME];
       }
-      if (formValues.maxLength) {
+      if (formValues[MAX_LENGTH]) {
         const maxLengthType = getMaxLengthType(newConfig);
         if (maxLengthType === undefined) {
           // Unitless searcher config.
-          newConfig.searcher.max_length = parseInt(formValues.maxLength);
+          newConfig.searcher.max_length = parseInt(formValues[MAX_LENGTH]);
         } else {
-          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues[MAX_LENGTH]) };
         }
       }
       return yaml.dump(newConfig);
@@ -378,14 +378,14 @@ const ExperimentCreateModalComponent = ({
           <Form.Item
             initialValue={experiment.name}
             label="Experiment name"
-            name="name"
+            name={EXPERIMENT_NAME}
             rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
             <Input />
           </Form.Item>
           {!isFork && (
             <Form.Item
               label={`Max ${getMaxLengthType(modalState.config) || 'length'}`}
-              name="maxLength"
+              name={MAX_LENGTH}
               rules={[
                 {
                   required: true,
