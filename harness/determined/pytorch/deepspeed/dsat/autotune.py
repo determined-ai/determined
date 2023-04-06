@@ -16,10 +16,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-p", "--password", type=str, default="")
     parser.add_argument("-z", "--zero-search-config", type=str)
     parser.add_argument("-s", "--search-runner-config", type=str)
+    parser.add_argument("-t", "--tuner-type", type=str, default="random")
 
     parser.add_argument("config_path")
     parser.add_argument("model_dir")
     args = parser.parse_args()
+
+    assert (
+        args.tuner_type in _defaults.ALL_SEARCH_METHOD_CLASSES
+    ), f"tuner-type must be one of {list(_defaults.ALL_SEARCH_METHOD_CLASSES)}, not {args.tuner_type}"
+
     return args
 
 
@@ -37,7 +43,9 @@ def run_autotuning(args: argparse.Namespace) -> None:
     # TODO: Revisit this choice. Might be worth giving the user the ability to specify some parts of
     # the SearchRunner config separately, despite the annoying double-config workflow.
     default_entrypoint = f"python3 -m determined.pytorch.deepspeed.dsat._run_dsat"
-    default_entrypoint += f" -c {config_path_absolute} -md {model_dir_absolute}"
+    default_entrypoint += (
+        f" -c {config_path_absolute} -md {model_dir_absolute} -t {args.tuner_type}"
+    )
     if zero_search_config_path_absolute is not None:
         default_entrypoint += f" -z {zero_search_config_path_absolute}"
 
@@ -73,10 +81,6 @@ def run_autotuning(args: argparse.Namespace) -> None:
         )
 
 
-def run() -> None:
+if __name__ == "__main__":
     args = parse_args()
     run_autotuning(args)
-
-
-if __name__ == "__main__":
-    run()

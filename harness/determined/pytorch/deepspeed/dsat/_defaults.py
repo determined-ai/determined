@@ -1,3 +1,10 @@
+from determined.pytorch.deepspeed.dsat import _dsat_search_method
+
+ALL_SEARCH_METHOD_CLASSES = {
+    "random": _dsat_search_method.DSATRandomSearchMethod,
+    "simple": _dsat_search_method.SimpleBatchSearch,
+}
+
 MODEL_INFO_PROFILING_PATH = "model_info.json"
 AUTOTUNING_RESULTS_PATH = "autotuning_metric.json"
 
