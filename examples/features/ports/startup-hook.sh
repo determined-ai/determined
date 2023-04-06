@@ -1,3 +1,4 @@
 #!/bin/bash
 
-pip install -U "ray[air]" "gpustat==1.0"
+pip uninstall -y pynvml
+pip install -U "ray[air]" nvidia-ml-py
