@@ -58,8 +58,8 @@ const getMaxLengthType = (config: RawJson) => {
 };
 
 const getMaxLengthValue = (config: RawJson) => {
-  const value = (Object.keys(config.searcher?.max_length || {}) || [])[1];
-  return value ? parseInt(value) : parseInt(config.searcher?.max_length);
+  const value = (Object.keys(config.searcher?.max_length || {}) || [])[0];
+  return value ? parseInt(config.searcher?.max_length[value]) : parseInt(config.searcher?.max_length);
 };
 
 const trialContinueConfig = (
@@ -95,11 +95,6 @@ const DEFAULT_MODAL_STATE = {
   type: CreateExperimentType.Fork,
 };
 
-interface FormInputs {
-  [EXPERIMENT_NAME]: string;
-  [MAX_LENGTH]: number;
-}
-
 const ExperimentCreateModalComponent = ({
   onClose,
   experiment,
@@ -121,11 +116,22 @@ const ExperimentCreateModalComponent = ({
     onClose?.();
   };
 
-  const [form] = Form.useForm<FormInputs>();
+  const [form] = Form.useForm();
 
   const handleFieldsChange = () => {
     setModalState((prev) => {
       if (prev.error) return { ...prev, error: undefined };
+      const values = form.getFieldsValue();
+      prev.config.name = values.name;
+      if (values.maxLength) {
+        const maxLengthType = getMaxLengthType(prev.config);
+        if (maxLengthType) {
+          prev.config.searcher.max_length[maxLengthType] = parseInt(values.maxLength);
+        } else {
+          prev.config.searcher.max_length = parseInt(values.maxLength);
+        }
+      }
+      prev.configString = yaml.dump(prev.config);
       return prev;
     });
 
@@ -162,23 +168,6 @@ const ExperimentCreateModalComponent = ({
     setModalState((prev) => {
       if (!prev) return prev;
 
-      if (prev.isAdvancedMode && form) {
-        try {
-          const newConfig = (yaml.load(prev.configString) || {}) as RawJson;
-          const isFork = prev.type === CreateExperimentType.Fork;
-
-          form.setFields([
-            { name: 'name', value: getExperimentName(newConfig) },
-            {
-              name: 'maxLength',
-              value: !isFork ? getMaxLengthValue(newConfig) : undefined,
-            },
-          ]);
-        } catch (e) {
-          handleError(e, { publicMessage: 'failed to load previous yaml config' });
-        }
-      }
-
       return {
         ...prev,
         configError: undefined,
@@ -186,8 +175,25 @@ const ExperimentCreateModalComponent = ({
         isAdvancedMode: !prev.isAdvancedMode,
       };
     });
+    // avoid calling form.setFields inside setModalState:
+    if (modalState.isAdvancedMode && form) {
+      try {
+        const newConfig = (yaml.load(modalState.configString) || {}) as RawJson;
+        const isFork = modalState.type === CreateExperimentType.Fork;
+
+        form.setFields([
+          { name: 'name', value: getExperimentName(newConfig) },
+          {
+            name: 'maxLength',
+            value: !isFork ? getMaxLengthValue(newConfig) : undefined,
+          },
+        ]);
+      } catch (e) {
+        handleError(e, { publicMessage: 'failed to load previous yaml config' });
+      }
+    }
     await form.validateFields();
-  }, [form]);
+  }, [form, modalState]);
 
   const getConfigFromForm = useCallback(
     (config: RawJson) => {
@@ -203,9 +209,9 @@ const ExperimentCreateModalComponent = ({
         const maxLengthType = getMaxLengthType(newConfig);
         if (maxLengthType === undefined) {
           // Unitless searcher config.
-          newConfig.searcher.max_length = formValues.maxLength;
+          newConfig.searcher.max_length = parseInt(formValues.maxLength);
         } else {
-          newConfig.searcher.max_length = { [maxLengthType]: formValues.maxLength };
+          newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
         }
       }
       return yaml.dump(newConfig);
@@ -330,6 +336,7 @@ const ExperimentCreateModalComponent = ({
       };
       return isEqual(prev, newModalState) ? prev : newModalState;
     });
+    setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
   }, [experiment, trial, type, isFork, form]);
 
   if (!experiment || (!isFork && !trial)) return <></>;
