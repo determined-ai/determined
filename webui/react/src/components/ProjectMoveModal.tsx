@@ -30,9 +30,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props)
   const { canMoveProjectsTo } = usePermissions();
   const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
     Loaded: (workspaces: Workspace[]) =>
-      workspaces.filter(
-        (w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } }),
-      ),
+      workspaces.filter((w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } })),
     NotLoaded: () => [],
   });
 
