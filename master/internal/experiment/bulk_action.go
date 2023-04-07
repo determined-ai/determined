@@ -184,7 +184,8 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		ModelTableExpr("experiments AS e").
 		Model(&expIDs).
 		Column("e.id").
-		Where("id IN (?)", bun.In(experimentIDList))
+		Join("JOIN projects p ON e.project_id = p.id").
+		Where("e.id IN (?)", bun.In(experimentIDList))
 
 	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
