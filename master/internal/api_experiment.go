@@ -1970,6 +1970,73 @@ func (a *apiServer) GetModelDefFile(
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }
 
+func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error {
+	if sortString == nil {
+		return nil
+	}
+	orderColMap := map[string]string{
+		"id":              "id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
+	}
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
+	}
+	sortParams := strings.Split(*sortString, ",")
+	for _, sortParam := range sortParams {
+		paramDetail := strings.Split(sortParam, "=")
+		if len(paramDetail) != 2 {
+			return status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+		}
+		if _, ok := sortByMap[paramDetail[1]]; !ok {
+			return status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+		}
+		sortDirection := sortByMap[paramDetail[1]]
+		switch {
+		case strings.HasPrefix(paramDetail[0], "hp:"):
+			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "validation."):
+			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s",
+					metricName, sortDirection))
+		default:
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
+		}
+	}
+	return nil
+}
+
 func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
@@ -2002,10 +2069,30 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	err = experimentQuery.Scan(ctx)
-	if err != nil {
-		return nil, err
+	if req.Sort != nil && strings.Contains(*req.Sort, "validation.") {
+		// If we want to sort on validation metrics,
+		// we need to join trials information first then paginate.
+		// TODO: revisit after unified metrics work lands.
+		err = experimentQuery.Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = sortExperiments(req.Sort, experimentQuery)
+		if err != nil {
+			return nil, err
+		}
+		resp.Pagination, err = runPagedBunExperimentsQuery(
+			ctx,
+			experimentQuery,
+			int(req.Offset),
+			int(req.Limit),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if len(experiments) == 0 {
 		return resp, nil
 	}
@@ -2136,80 +2223,22 @@ func (a *apiServer) SearchExperiments(
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).
 		Where("trial._metric_rank = 1")
 
-	experimentQuery.With("besttrials", bestTrials).
-		Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
-
-	if req.Sort != nil {
-		orderColMap := map[string]string{
-			"id":              "id",
-			"description":     "description",
-			"name":            "name",
-			"startTime":       "e.start_time",
-			"endTime":         "e.end_time",
-			"state":           "e.state",
-			"numTrials":       "num_trials",
-			"progress":        "COALESCE(progress, 0)",
-			"user":            "display_name",
-			"forkedFrom":      "e.parent_id",
-			"resourcePool":    "resource_pool",
-			"projectId":       "project_id",
-			"checkpointSize":  "checkpoint_size",
-			"checkpointCount": "checkpoint_count",
-			"searcherMetricsVal": `(
-				SELECT
-					searcher_metric_value
-				FROM trials t
-				WHERE t.experiment_id = e.id
-				ORDER BY (CASE
-					WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-						THEN searcher_metric_value
-						ELSE -1.0 * searcher_metric_value
-				END) ASC
-				LIMIT 1
-			 ) `,
+	if req.Sort != nil && strings.Contains(*req.Sort, "validation.") {
+		experimentQuery.With("besttrials", bestTrials).
+			Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
+		err = sortExperiments(req.Sort, experimentQuery)
+		if err != nil {
+			return nil, err
 		}
-		sortByMap := map[string]string{
-			"asc":  "ASC",
-			"desc": "DESC NULLS LAST",
+		resp.Pagination, err = runPagedBunExperimentsQuery(
+			ctx,
+			experimentQuery,
+			int(req.Offset),
+			int(req.Limit),
+		)
+		if err != nil {
+			return nil, err
 		}
-		sortParams := strings.Split(*req.Sort, ",")
-		for _, sortParam := range sortParams {
-			paramDetail := strings.Split(sortParam, "=")
-			if len(paramDetail) != 2 {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
-			}
-			if _, ok := sortByMap[paramDetail[1]]; !ok {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
-			}
-			sortDirection := sortByMap[paramDetail[1]]
-			switch {
-			case strings.HasPrefix(paramDetail[0], "hp:"):
-				hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'")
-				experimentQuery.OrderExpr(
-					fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
-			case strings.HasPrefix(paramDetail[0], "validation."):
-				metricName := strings.TrimPrefix(paramDetail[0], "validation.")
-				experimentQuery.OrderExpr(
-					fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s",
-						metricName, sortDirection))
-			default:
-				if _, ok := orderColMap[paramDetail[0]]; !ok {
-					return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
-				}
-				experimentQuery.OrderExpr(
-					fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
-			}
-		}
-	}
-
-	resp.Pagination, err = runPagedBunExperimentsQuery(
-		ctx,
-		experimentQuery,
-		int(req.Offset),
-		int(req.Limit),
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	if err = a.enrichExperimentState(experiments...); err != nil {
