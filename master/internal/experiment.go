@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -692,6 +694,24 @@ func (e *experiment) processOperations(
 
 func trialTaskID(eID int, rID model.RequestID) model.TaskID {
 	return model.TaskID(fmt.Sprintf("%d.%s", eID, rID))
+}
+
+var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
+
+// Hack to associate allocations to experiments for RBAC.
+// Currently unable to go through the database since trials are not necessarily persisted when
+// we return allocation information.
+func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
+	expID, _, found := strings.Cut(string(taskID), ".")
+	if !found {
+		return 0, errors.Wrapf(errIsNotTrialTaskID, "error on task ID %s", taskID)
+	}
+
+	id, err := strconv.Atoi(expID)
+	if err != nil {
+		return 0, errors.Wrapf(err, "error parsing experiment ID for task ID %s", taskID)
+	}
+	return id, nil
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
