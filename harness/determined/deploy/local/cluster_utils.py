@@ -1,3 +1,4 @@
+import contextlib
 import os
 import pathlib
 import re
@@ -7,7 +8,7 @@ import sys
 import tempfile
 import threading
 import time
-from typing import Any, Dict, List, Optional, Sequence, Type
+from typing import Any, Dict, List, Optional, Sequence, Type, Callable, Iterator, ContextManager
 
 import appdirs
 import docker
@@ -204,49 +205,69 @@ def master_up(
 
     # Create network.
     client = docker_client()
-    print(f"Creating network {NETWORK_NAME}...")
-    client.networks.create(name=NETWORK_NAME, attachable=True)
 
     # Start db and wait for healthcheck.
     db_name = f"{cluster_name}_{DB_NAME}"
-    db_up(name=db_name, password=db_password, network_name=NETWORK_NAME, cluster_name=cluster_name)
-    try:
-        _wait_for_container(db_name)
-    except TimeoutError:
-        print(f"Database {db_name} failed to reach a ready state, removing container.")
-        _kill_containers(names=[db_name])
-        raise TimeoutError
+    volume_name = f"{cluster_name}_{VOLUME_NAME}"
 
-    # Start master instance.
-    print(f"Creating {master_name}...")
-    volumes = [f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml"]
-    client.containers.run(
-        image=f"{image_repo_prefix}/determined-master:{version}",
-        environment=env,
-        init=True,
-        mounts=[],
-        volumes=volumes,
-        name=master_name,
-        detach=True,
-        labels={},
-        restart_policy={"Name": restart_policy},
-        device_requests=None,
-        ports={"8080": f"{port}"},
-    )
+    @contextlib.contextmanager
+    def defer_cleanup(fn: Callable, *args: Any) -> ContextManager[None]:
+        """
+        Defer cleanup tasks for each resource if Exceptions are caught.
+        """
+        try:
+            yield
+        except BaseException as ex:
+            fn(*args)
+            raise ex
 
-    # Connect to the network separately to set alias.
-    network = client.networks.get(NETWORK_NAME)
-    network.connect(container=master_name, aliases=["determined-master"])
+    with contextlib.ExitStack() as exit_stack:
+        # Create network used by DB and master.
+        print(f"Creating network {NETWORK_NAME}...")
+        exit_stack.enter_context(defer_cleanup(remove_network, NETWORK_NAME))
+        client.networks.create(name=NETWORK_NAME, attachable=True)
 
-    try:
+        # Start up db.
+        exit_stack.enter_context(defer_cleanup(db_down, db_name, VOLUME_NAME, delete_db))
+        db_up(
+            name=db_name,
+            password=db_password,
+            network_name=NETWORK_NAME,
+            cluster_name=cluster_name,
+            volume_name=volume_name,
+        )
+
+        # Wait for db to reach a healthy state.
+        _wait_for_container(db_name, timeout=5)
+        exit_stack.pop_all()
+
+        # Start master instance.
+        print(f"Creating {master_name}...")
+        exit_stack.enter_context(defer_cleanup(master_down, master_name, delete_db, cluster_name))
+        volumes = [f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml"]
+        client.containers.run(
+            image=f"{image_repo_prefix}/determined-master:{version}",
+            environment=env,
+            init=True,
+            mounts=[],
+            volumes=volumes,
+            name=master_name,
+            detach=True,
+            labels={},
+            restart_policy={"Name": restart_policy},
+            device_requests=None,
+            ports={"8080": f"{port}"},
+        )
+
+        # Connect to the network separately to set alias.
+        network = client.networks.get(NETWORK_NAME)
+        network.connect(container=master_name, aliases=["determined-master"])
+
         _wait_for_master("localhost", port, cluster_name)
-    except TimeoutError:
-        print(f"Master failed to initialize, removing master: {master_name} and DB {db_name}.")
-        master_down(master_name=master_name, delete_db=delete_db, cluster_name=cluster_name)
-        raise TimeoutError
+        exit_stack.pop_all()
 
 
-def db_up(name: str, password: str, network_name: str, cluster_name: str) -> None:
+def db_up(name: str, password: str, network_name: str, cluster_name: str, volume_name: str) -> None:
     print(f"Creating {name}...")
     env = {"PGUSER": "postgres", "POSTGRES_DB": "determined", "POSTGRES_PASSWORD": password}
     client = docker_client()
@@ -254,7 +275,7 @@ def db_up(name: str, password: str, network_name: str, cluster_name: str) -> Non
         image="postgres:10.14",
         environment=env,
         mounts=[],
-        volumes=[f"{cluster_name}_{VOLUME_NAME}:/var/lib/postgresql/data"],
+        volumes=[f"{volume_name}:/var/lib/postgresql/data"],
         name=name,
         detach=True,
         labels={},
@@ -275,12 +296,20 @@ def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
     if master_name is None:
         master_name = f"{cluster_name}_{MASTER_NAME}"
 
-    _kill_containers(names=[master_name, f"{cluster_name}_{DB_NAME}"])
+    _kill_containers(names=[master_name])
 
+    volume_name = f"{cluster_name}_{VOLUME_NAME}"
+    db_name = f"{cluster_name}_{DB_NAME}"
+
+    db_down(db_name=db_name, volume_name=volume_name, delete_volume=delete_db)
+    remove_network(NETWORK_NAME)
+
+
+def db_down(db_name: str, volume_name: str, delete_volume: bool):
     client = docker_client()
-    # Remove the volume if specified.
-    if delete_db:
-        volume_name = f"{cluster_name}_{VOLUME_NAME}"
+
+    _kill_containers([db_name])
+    if delete_volume:
         try:
             volume = client.volumes.get(volume_name)
             print(f"Removing db volume {volume_name}")
@@ -288,8 +317,10 @@ def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
         except docker.errors.NotFound:
             print(f"Volume {volume_name} not found.")
 
-    # Remove network if exists.
-    networks = client.networks.list(names=[NETWORK_NAME])
+
+def remove_network(network_name: str):
+    client = docker_client()
+    networks = client.networks.list(names=[network_name])
     for network in networks:
         print(f"Removing network {network.name}")
         network.remove()
