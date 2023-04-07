@@ -312,67 +312,14 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 	return trials, endTime, nil
 }
 
-func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool,
-) (trials []int32, err error) {
-	order := desc
-	aggregate := max
-	if smallerIsBetter {
-		order = asc
-		aggregate = min
-	}
-	err = db.sql.Select(&trials, fmt.Sprintf(`
-SELECT t.id FROM (
-  SELECT t.id,
-    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-  FROM trials t
-  LEFT JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id=$2
-  GROUP BY t.id
-  ORDER BY best_metric %s NULLS LAST
-  LIMIT $3
-) t;`, aggregate, order), metric, experimentID, maxTrials)
-	return trials, err
-
-	/*
-			`
-			SELECT id, summary_metrics->'validation_metrics'->'d'->>'min' FROM trials
-			WHERE experiment_id=42
-			ORDER BY (summary_metrics->'validation_metrics'->'d'->>'min')::float ASC;
-		`
-
-			`
-			SELECT t.id, best_metric FROM (
-		  SELECT t.id,
-		    min((v.metrics->'validation_metrics'->>'g')::float8) as best_metric
-		  FROM trials t
-		  LEFT JOIN validations v ON t.id = v.trial_id
-		  WHERE t.experiment_id=42
-		  GROUP BY t.id
-		  ORDER BY best_metric asc NULLS LAST
-		  LIMIT 5
-		) t;
-		`
-	*/
-}
-
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
 func TopTrialsByMetric(
 	ctx context.Context, experimentID int, maxTrials int, metric string, smallerIsBetter bool,
-) (trials []int32, err error) {
-	/*
-		order := desc
-		aggregate := max
-		if smallerIsBetter {
-			order = asc
-			aggregate = min
-		}
-	*/
-
-	// TODO what if we don't specify the metric in a trial?
+) ([]int32, error) {
 	query := Bun().NewSelect().Table("trials").
 		Column("id").
+		ColumnExpr("summary_metrics->'validation_metrics'->? AS summary_metrics", metric).
 		Where("experiment_id = ?", experimentID).
 		Limit(maxTrials)
 	if smallerIsBetter {
@@ -383,25 +330,30 @@ func TopTrialsByMetric(
 			"(summary_metrics->'validation_metrics'->?->>'max')::float DESC NULLS LAST", metric)
 	}
 
-	if err := query.Scan(ctx, &trials); err != nil {
+	var res []struct {
+		ID             int
+		SummaryMetrics *map[string]any
+	}
+	if err := query.Scan(ctx, &res); err != nil {
 		return nil, errors.Wrapf(err,
 			"error getting top trials for metric for experiment ID %d", experimentID)
 	}
-	return trials, err
-	/*
-			err = db.sql.Select(&trials, fmt.Sprintf(`
-		SELECT t.id FROM (
-		  SELECT t.id,
-		    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
-		  FROM trials t
-		  LEFT JOIN validations v ON t.id = v.trial_id
-		  WHERE t.experiment_id=$2
-		  GROUP BY t.id
-		  ORDER BY best_metric %s NULLS LAST
-		  LIMIT $3
-		) t;`, aggregate, order), metric, experimentID, maxTrials)
-			return trials, err
-	*/
+
+	// Return an error if any result was non numeric.
+	// This is somewhat weird behavior given we don't return an error for nulls
+	// but doing this to keep compatibility with old query.
+	trials := make([]int32, 0, len(res))
+	for _, r := range res {
+		if r.SummaryMetrics != nil && (*r.SummaryMetrics)["count"] == nil {
+			return nil, fmt.Errorf("error getting top trials for experimentID %d and metric %s "+
+				"because trial %d has reported a non numeric value for this report",
+				experimentID, metric, r.ID)
+		}
+
+		trials = append(trials, int32(r.ID))
+	}
+
+	return trials, nil
 }
 
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest

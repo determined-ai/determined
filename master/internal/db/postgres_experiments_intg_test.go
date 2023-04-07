@@ -257,11 +257,7 @@ func TestMetricNames(t *testing.T) {
 }
 
 func TestTopTrialsByMetric(t *testing.T) {
-	// TODO something weird is going on where we treat "1.0" differently than "2.0"???
-	// Maybe this isn't a problem at all...
-	// Can we even report "1.0" and not 1.0
-	// Awnser is probaly...
-
+	// TODO consider "1.0" vs 1.0 right now in ingestion and migration code.
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
@@ -360,7 +356,7 @@ func TestTopTrialsByMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := db.TopTrialsByMetric(exp.ID, tt.limit, tt.metric, tt.lessIsBetter)
+			res, err := TopTrialsByMetric(ctx, exp.ID, tt.limit, tt.metric, tt.lessIsBetter)
 			if tt.expectNoError {
 				require.NoError(t, err)
 			} else {
@@ -371,7 +367,12 @@ func TestTopTrialsByMetric(t *testing.T) {
 			for _, i := range tt.expected {
 				i32s = append(i32s, int32(i))
 			}
-			require.Equal(t, i32s, res)
+
+			if tt.expectedOrderRequired {
+				require.Equal(t, i32s, res)
+			} else {
+				require.ElementsMatch(t, i32s, res)
+			}
 		})
 	}
 }
