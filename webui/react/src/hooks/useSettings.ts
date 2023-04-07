@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
@@ -142,7 +142,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     clearQuerySettings,
   } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
-  const [derivedOb] = useState(stateOb.select((s) => s.get(config.storagePath)));
+  const derivedOb = useMemo(
+    () => stateOb.select((s) => s.get(config.storagePath)),
+    [stateOb, config.storagePath],
+  );
   const state = useObservable(derivedOb);
   const navigate = useNavigate();
   const loadableUser = usersStore.getCurrentUser();
@@ -259,25 +262,27 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const array = settingsArray ?? Object.keys(config.settings);
 
       stateOb.update((s) => {
-        const news = s.get(config.storagePath);
-        array.forEach((setting) => {
-          let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
-            undefined;
+        return s.update(config.storagePath, (old) => {
+          const news = { ...old };
+          array.forEach((setting) => {
+            let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+              undefined;
 
-          for (const key in config.settings) {
-            const conf = config.settings[key];
+            for (const key in config.settings) {
+              const conf = config.settings[key];
 
-            if (conf.storageKey === setting) {
-              defaultSetting = conf;
-              break;
+              if (conf.storageKey === setting) {
+                defaultSetting = conf;
+                break;
+              }
             }
-          }
 
-          if (!defaultSetting || !news) return;
+            if (!defaultSetting || !news) return;
 
-          news[setting] = defaultSetting.defaultValue;
+            news[setting] = defaultSetting.defaultValue;
+          });
+          return news;
         });
-        return s.set(config.storagePath, news ?? {});
       });
     },
     [config, stateOb, loadableUser],
