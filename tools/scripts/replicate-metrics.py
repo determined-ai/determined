@@ -7,7 +7,7 @@ connect to Determined's db and replicate various metrics for performance testing
 import psycopg  # pip install "psycopg[binary]"
 import os
 import contextlib
-from typing import Generator, List, Set, Union
+from typing import Dict, Generator, List, Set, Tuple, Union
 from psycopg.abc import Query
 import concurrent.futures
 import time
@@ -131,10 +131,22 @@ JOIN raw_validations rv ON rv.trial_id = %s;
         cur.execute("COMMIT")
 
 
-def submit_db_queries(cursor: psycopg.Cursor, queries: List[str]) -> None:
+def submit_db_queries(
+    cursor: psycopg.Cursor, queries: List[Tuple[str, str]]
+) -> Generator[Tuple[str, int], None, None]:
+    """
+    queries: list of (name, query)
+    """
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(cursor.execute, query) for query in queries]  # type: ignore
-        concurrent.futures.wait(futures)
+        # submit each query and record the rows affected for each one
+        def job(name: str, query: str) -> Tuple[str, int]:
+            cursor.execute(query)  # type: ignore
+            return name, cursor.rowcount
+
+        futures = [executor.submit(job, name, query) for name, query in queries]
+        # process as each future ready
+        for future in concurrent.futures.as_completed(futures):
+            yield future.result()
 
 
 def copy_trials(multiplier=1, suffix="") -> dict:
@@ -143,6 +155,7 @@ def copy_trials(multiplier=1, suffix="") -> dict:
     cols = get_table_col_names(table) - {"id"}
     cols_str = ", ".join(cols)
 
+    affected_rows: Dict[str, int] = {}
     with db_cursor() as cur:
         query = f"""
 -- modify the target table to add a new col called og_id
@@ -159,7 +172,7 @@ FROM {table}
 {suffix};
 """
         cur.execute(query)  # type: ignore
-        replicated_trials = cur.rowcount
+        affected_rows["trials"] = cur.rowcount
 
         query = f"""
 CREATE TEMP TABLE {table}_id_map AS -- TODO TEMP table?
@@ -182,8 +195,8 @@ FROM raw_steps rs
 INNER JOIN {table}_id_map ON {table}_id_map.og_id = rs.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL; -- all {table}_id_map with og_id are target trials.
 """
-        # cur.execute(steps_query)  # type: ignore
-        # replicated_steps = cur.rowcount
+        cur.execute(steps_query)  # type: ignore
+        affected_rows["steps"] = cur.rowcount
 
         validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
         validations_cols_str = ", ".join(validations_cols)
@@ -197,10 +210,11 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL;
 """
 
-        # cur.execute(validations_query)  # type: ignore
-        # replicated_validations = cur.rowcount
+        cur.execute(validations_query)  # type: ignore
+        affected_rows["validations"] = cur.rowcount
 
-        submit_db_queries(cur, [steps_query, validations_query])
+        # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
+        #     affected_rows[name] = rcounts
 
         query = f""" 
 -- drop the table
@@ -210,11 +224,7 @@ ALTER TABLE {table} DROP COLUMN og_id;
 """
         cur.execute(query)  # type: ignore
         cur.execute("COMMIT")
-        return {
-            "trials": replicated_trials,
-            # "steps": replicated_steps,
-            # "validations": replicated_validations,
-        }
+        return affected_rows
 
 
 if __name__ == "__main__":
@@ -249,5 +259,5 @@ if __name__ == "__main__":
             )
 
     end = time.time()
-    print("rows affected:", row_counts)
+    print("rows added:", row_counts)
     print("overall time (ms):", (end - start) * 1000)
