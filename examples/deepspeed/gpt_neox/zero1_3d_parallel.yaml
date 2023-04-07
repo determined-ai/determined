@@ -21,7 +21,7 @@ searcher:
   max_length:
     batches: 100
 min_validation_period:
-    batches: 50
+    batches: 10
 max_restarts: 0
 entrypoint:
   - python3
