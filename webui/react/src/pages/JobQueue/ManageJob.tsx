@@ -1,5 +1,5 @@
 import { List, Modal, Select, Typography } from 'antd';
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Form from 'components/kit/Form';
@@ -9,7 +9,7 @@ import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
@@ -84,8 +84,7 @@ const ManageJob: React.FC<Props> = ({
 }) => {
   const [form] = Form.useForm();
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  useRefetchClusterData();
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {
@@ -151,6 +150,8 @@ const ManageJob: React.FC<Props> = ({
       </div>
     );
   }, [currentPool, currentPoolStats]);
+
+  useEffect(() => clusterStore.startPolling(), []);
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const handleUpdateResourcePool = useCallback((changedValues: any) => {

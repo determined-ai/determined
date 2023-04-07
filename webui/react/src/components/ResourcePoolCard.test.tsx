@@ -3,7 +3,6 @@ import React, { Suspense } from 'react';
 
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { ClusterProvider } from 'stores/cluster';
 import { ResourcePool } from 'types';
 
 import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
@@ -18,11 +17,9 @@ vi.mock('services/api', () => ({
 const setup = (pool: ResourcePool) => {
   const view = render(
     <UIProvider>
-      <ClusterProvider>
-        <Suspense>
-          <RenderAllocationBarResourcePool resourcePool={pool} />
-        </Suspense>
-      </ClusterProvider>
+      <Suspense>
+        <RenderAllocationBarResourcePool resourcePool={pool} />
+      </Suspense>
     </UIProvider>,
   );
   return { view };

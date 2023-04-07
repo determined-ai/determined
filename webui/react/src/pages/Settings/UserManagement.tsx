@@ -28,18 +28,19 @@ import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
+import { GetUsersParams } from 'services/types';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { RolesStore } from 'stores/roles';
-import usersStore, { FetchUsersConfig } from 'stores/users';
+import determinedStore from 'stores/determinedInfo';
+import roleStore from 'stores/roles';
+import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './UserManagement.module.scss';
@@ -147,10 +148,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
 
 const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
-  const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
-  const apiConfig = useMemo<FetchUsersConfig>(
+  const params: GetUsersParams = useMemo(
     () => ({
       limit: settings.tableLimit,
       name: settings.name,
@@ -160,28 +160,24 @@ const UserManagement: React.FC = () => {
     }),
     [settings],
   );
-  const loadableUsers = useObservable(usersStore.getUsers(apiConfig));
-  const users: Readonly<DetailedUser[]> = Loadable.match(loadableUsers, {
-    Loaded: (usersPagination) => usersPagination.users,
-    NotLoaded: () => [],
-  });
-  const total = Loadable.match(loadableUsers, {
-    Loaded: (users) => users.pagination.total ?? 0,
-    NotLoaded: () => 0,
-  });
+  const loadableUsers = useObservable(userStore.getUsers(params));
+  const users = Loadable.getOrElse([], loadableUsers);
+  const total = users.length;
+  const canceler = useRef(new AbortController());
+
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
 
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    usersStore.ensureUsersFetched(canceler, apiConfig, true);
-  }, [settings, canceler, apiConfig]);
+    userStore.fetchUsers(params, canceler.current.signal);
+  }, [params, settings]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
-      const response = await getGroups({}, { signal: canceler.signal });
+      const response = await getGroups({}, { signal: canceler.current.signal });
 
       setGroups((prev) => {
         if (isEqual(prev, response.groups)) return prev;
@@ -190,7 +186,12 @@ const UserManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch groups.' });
     }
-  }, [canceler.signal]);
+  }, []);
+
+  useEffect(() => {
+    const currentCanceler = canceler.current;
+    return () => currentCanceler.abort();
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -200,11 +201,7 @@ const UserManagement: React.FC = () => {
     fetchGroups();
   }, [fetchGroups]);
 
-  useEffect(() => {
-    if (rbacEnabled) {
-      RolesStore.fetchRoles(canceler);
-    }
-  }, [canceler, rbacEnabled]);
+  useEffect(() => (rbacEnabled ? roleStore.fetch() : undefined), [rbacEnabled]);
 
   const CreateUserModal = useModal(CreateUserModalComponent);
 
@@ -305,7 +302,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={loadableUsers === NotLoaded}
+        loading={Loadable.isLoading(loadableUsers)}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,

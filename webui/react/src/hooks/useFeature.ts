@@ -1,8 +1,7 @@
+import { useObservable } from 'micro-observables';
 import queryString from 'query-string';
 
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { DeterminedInfo } from 'types';
-import { Loadable } from 'utils/loadable';
+import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 
 // Add new feature switches below using `|`
 export type ValidFeature =
@@ -21,7 +20,7 @@ interface FeatureHook {
 }
 
 const useFeature = (): FeatureHook => {
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   return { isOn: (ValidFeature) => IsOn(ValidFeature, info) };
 };
 

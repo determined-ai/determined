@@ -5,6 +5,7 @@ import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { generateDetApi } from 'shared/utils/service';
+import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
@@ -182,11 +183,11 @@ export const searchRolesAssignableToScope = generateDetApi<
 >(Config.searchRolesAssignableToScope);
 /* Info */
 
-export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo>(
+export const getInfo = generateDetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo>(
   Config.getInfo,
 );
 
-export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry>(
+export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry>(
   Config.getTelemetry,
 );
 

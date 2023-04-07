@@ -6,7 +6,7 @@ import { Modal } from 'components/kit/Modal';
 import { paths } from 'routes/utils';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { useDeleteWorkspace } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -30,11 +30,9 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
   const [form] = Form.useForm<FormInputs>();
   const workspaceNameValue = Form.useWatch('workspaceName', form);
 
-  const deleteWorkspace = useDeleteWorkspace();
-
   const handleSubmit = useCallback(async () => {
     try {
-      await deleteWorkspace(workspace.id);
+      await workspaceStore.deleteWorkspace(workspace.id);
       if (returnIndexOnDelete) {
         routeToReactUrl(paths.workspaceList());
       }
@@ -47,7 +45,7 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
         type: ErrorType.Server,
       });
     }
-  }, [workspace.id, deleteWorkspace, returnIndexOnDelete]);
+  }, [workspace.id, returnIndexOnDelete]);
 
   return (
     <Modal

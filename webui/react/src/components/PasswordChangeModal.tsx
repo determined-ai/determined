@@ -5,7 +5,7 @@ import Input from 'components/kit/Input';
 import { Modal } from 'components/kit/Modal';
 import { login, setUserPassword } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -39,11 +39,7 @@ interface FormInputs {
 
 const PasswordChangeModalComponent: React.FC = () => {
   const [form] = Form.useForm<FormInputs>();
-  const loadableUser = useObservable(usersStore.getCurrentUser());
-  const authUser = Loadable.match(loadableUser, {
-    Loaded: (user) => user,
-    NotLoaded: () => undefined,
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const [disabled, setDisabled] = useState<boolean>(true);
 
   const submitValidatedFields = [OLD_PASSWORD_NAME];
@@ -66,7 +62,7 @@ const PasswordChangeModalComponent: React.FC = () => {
 
     try {
       const password = form.getFieldValue(NEW_PASSWORD_NAME);
-      await setUserPassword({ password, userId: authUser?.id ?? 0 });
+      await setUserPassword({ password, userId: currentUser?.id ?? 0 });
       message.success(API_SUCCESS_MESSAGE);
       form.resetFields();
     } catch (e) {
@@ -97,7 +93,7 @@ const PasswordChangeModalComponent: React.FC = () => {
             {
               message: INCORRECT_PASSWORD_MESSAGE,
               validator: async (rule, value) => {
-                await login({ password: value ?? '', username: authUser?.username ?? '' });
+                await login({ password: value ?? '', username: currentUser?.username ?? '' });
               },
             },
           ]}

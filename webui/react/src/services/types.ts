@@ -489,7 +489,7 @@ export interface PinWorkspaceParams {
   id: number;
 }
 
-export type UnpinWorkspaceParams = ArchiveWorkspaceParams;
+export type UnpinWorkspaceParams = PinWorkspaceParams;
 
 export interface GetWebhookParams {
   id: number;

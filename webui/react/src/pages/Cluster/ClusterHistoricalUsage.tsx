@@ -8,7 +8,7 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 import { V1ResourceAllocationAggregatedResponse } from 'services/api-ts-sdk';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -33,8 +33,8 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], loadableUsers);
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -109,11 +109,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
 
   const chartSeries = useMemo(() => {
-    return mapResourceAllocationApiToChartSeries(
-      aggRes.resourceEntries,
-      filters.groupBy,
-      (Loadable.isLoaded(users) && users.data) || [],
-    );
+    return mapResourceAllocationApiToChartSeries(aggRes.resourceEntries, filters.groupBy, users);
   }, [aggRes.resourceEntries, filters.groupBy, users]);
 
   useEffect(() => {
@@ -136,7 +132,10 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={Loadable.isLoading(users)} title="Compute Hours by User">
+        <Section
+          bodyBorder
+          loading={Loadable.isLoading(loadableUsers)}
+          title="Compute Hours by User">
           {chartSeries && (
             <ClusterHistoricalUsageChart
               groupBy={chartSeries.groupedBy}
