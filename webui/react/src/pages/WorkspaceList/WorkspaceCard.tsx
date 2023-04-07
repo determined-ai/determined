@@ -8,7 +8,7 @@ import Avatar from 'components/kit/UserAvatar';
 import { paths } from 'routes/utils';
 import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -26,8 +26,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     onComplete: fetchWorkspaces,
     workspace,
   });
-  const loadableUser = useObservable(usersStore.getUser(workspace.userId));
-  const user = Loadable.map(loadableUser, (user) => user);
+  const loadableUser = useObservable(userStore.getUser(workspace.userId));
+  const user = Loadable.getOrElse(undefined, loadableUser);
 
   const classnames = [css.base];
   if (workspace.archived) classnames.push(css.archived);
@@ -57,8 +57,8 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
             </p>
             <div className={css.avatarRow}>
               <div className={css.avatar}>
-                <Spinner conditionalRender spinning={Loadable.isLoading(user)}>
-                  {Loadable.isLoaded(user) && <Avatar user={user.data} />}
+                <Spinner conditionalRender spinning={Loadable.isLoading(loadableUser)}>
+                  {Loadable.isLoaded(loadableUser) && <Avatar user={user} />}
                 </Spinner>
               </div>
               {workspace.archived && <div className={css.archivedBadge}>Archived</div>}

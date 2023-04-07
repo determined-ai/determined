@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import argparse
+import pathlib
 
 # NEW: Import torch distributed libraries.
 import torch
@@ -45,7 +46,7 @@ class Net(nn.Module):
         return output
 
 
-def train(args, model, device, train_loader, optimizer, core_context, epoch, op):
+def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -58,7 +59,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                    epoch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
@@ -70,7 +71,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
             # or upload checkpoints.
             if core_context.distributed.rank == 0:
                 core_context.train.report_training_metrics(
-                    steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                    steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                     metrics={"train_loss": loss.item()},
                 )
 
@@ -79,7 +80,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch, op)
 
     # NEW: Report progress only on rank 0.
     if core_context.distributed.rank == 0:
-        op.report_progress(epoch)
+        op.report_progress(epoch_idx)
 
 
 def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
@@ -112,10 +113,20 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
     return test_loss
 
 
-def load_state(checkpoint_directory):
+def load_state(checkpoint_directory, trial_id):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
+
     with checkpoint_directory.joinpath("checkpoint.pt").open("rb") as f:
-        return torch.load(f)
+        model = torch.load(f)
+    with checkpoint_directory.joinpath("state").open("r") as f:
+        epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+
+    # If trial ID does not match our current trial ID, we'll ignore epochs
+    # completed and start training from epoch_idx = 0
+    if ckpt_trial_id != trial_id:
+        epochs_completed = 0
+
+    return model, epochs_completed
 
 
 def main(core_context):
@@ -177,9 +188,11 @@ def main(core_context):
     info = det.get_cluster_info()
     assert info is not None, "this example only runs on-cluster"
     latest_checkpoint = info.latest_checkpoint
-    if latest_checkpoint is not None:
+    if latest_checkpoint is None:
+        epochs_completed = 0
+    else:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
-            model = load_state(path)
+            model, epochs_completed = load_state(path, info.trial.trial_id)
 
     torch.manual_seed(args.seed)
 
@@ -234,15 +247,15 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    starting_epoch = 0
-    epoch = starting_epoch
+    epoch_idx = epochs_completed
     last_checkpoint_batch = None
 
     for op in core_context.searcher.operations():
 
-        while epoch < op.length:
-            steps_completed = epoch * len(train_loader)
-            train(args, model, device, train_loader, optimizer, core_context, epoch, op)
+        while epoch_idx < op.length:
+            train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op)
+            epochs_completed = epoch_idx + 1
+            steps_completed = epochs_completed * len(train_loader)
             test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
 
             scheduler.step()
@@ -251,7 +264,7 @@ def main(core_context):
                 "steps_completed": steps_completed,
             }
 
-            epoch += 1
+            epoch_idx += 1
 
             # Store checkpoints only on rank 0.
             if core_context.distributed.rank == 0:
@@ -260,6 +273,8 @@ def main(core_context):
                     storage_id,
                 ):
                     torch.save(model.state_dict(), path / "checkpoint.pt")
+                    with path.joinpath("state").open("w") as f:
+                        f.write(f"{epochs_completed},{info.trial.trial_id}")
 
             if core_context.preempt.should_preempt():
                 return

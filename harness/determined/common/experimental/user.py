@@ -12,6 +12,7 @@ class User:
         admin: Optional[bool],
         session: api.Session,
         active: Optional[bool] = True,
+        remote: Optional[bool] = False,
         display_name: Optional[str] = None,
         agent_uid: Optional[int] = None,
         agent_gid: Optional[int] = None,
@@ -22,6 +23,7 @@ class User:
         self.admin = admin
         self.user_id = user_id
         self.active = active
+        self.remote = remote
         self.agent_uid = agent_uid
         self.agent_gid = agent_gid
         self.agent_user = agent_user
@@ -36,6 +38,7 @@ class User:
         self.user_id = raw.id
         self.username = raw.username
         self.admin = raw.admin
+        self.remote = raw.remote
         self.active = raw.active
         self.display_name = raw.displayName
         if raw.agentUserGroup is not None:

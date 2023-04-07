@@ -1,4 +1,4 @@
-import { WritableObservable } from 'micro-observables';
+import { observable, WritableObservable } from 'micro-observables';
 
 import { globalStorage } from 'globalStorage';
 import { Auth } from 'types';
@@ -20,31 +20,45 @@ const ensureAuthCookieSet = (token: string): void => {
   if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
 };
 
-const internalAuth = new WritableObservable<Loadable<Auth>>(NotLoaded);
-const internalAuthChecked = new WritableObservable(false);
+interface AuthState {
+  auth: Loadable<Auth>;
+  isChecked: boolean;
+}
 
-export const auth = internalAuth.readOnly();
-export const authChecked = internalAuthChecked.readOnly();
+const defaultState: AuthState = {
+  auth: NotLoaded,
+  isChecked: false,
+};
 
-export const reset = (): void => {
-  clearAuthCookie();
-  globalStorage.removeAuthToken();
-  WritableObservable.batch(() => {
-    internalAuth.set(NotLoaded);
-    internalAuthChecked.set(false);
+class AuthStore {
+  #state: WritableObservable<AuthState> = observable(defaultState);
+
+  public readonly auth = this.#state.select((state) => state.auth);
+  public readonly isChecked = this.#state.select((state) => state.isChecked);
+  public readonly isAuthenticated = this.auth.select((loadableAuth) => {
+    return Loadable.match(loadableAuth, {
+      Loaded: (a) => a.isAuthenticated,
+      NotLoaded: () => false,
+    });
   });
-};
-export const setAuth = (newAuth: Auth): void => {
-  if (newAuth.token) {
-    ensureAuthCookieSet(newAuth.token);
-    globalStorage.authToken = newAuth.token;
+
+  public setAuth(newAuth: Auth) {
+    if (newAuth.token) {
+      ensureAuthCookieSet(newAuth.token);
+      globalStorage.authToken = newAuth.token;
+    }
+    this.#state.update((s) => ({ ...s, auth: Loaded(newAuth) }));
   }
-  internalAuth.set(Loaded(newAuth));
-};
-export const setAuthChecked = (): void => internalAuthChecked.set(true);
-export const selectIsAuthenticated = auth.select((a) =>
-  Loadable.match(a, {
-    Loaded: (au) => au.isAuthenticated,
-    NotLoaded: () => false,
-  }),
-);
+
+  public setAuthChecked() {
+    this.#state.update((s) => ({ ...s, isChecked: true }));
+  }
+
+  public reset() {
+    clearAuthCookie();
+    globalStorage.removeAuthToken();
+    this.#state.set(defaultState);
+  }
+}
+
+export default new AuthStore();

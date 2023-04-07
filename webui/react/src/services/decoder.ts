@@ -10,6 +10,7 @@ import {
   isPrimitive,
 } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
+import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import * as types from 'types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -86,12 +87,12 @@ export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   };
 };
 
-export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo => {
   // Validate branding against `BrandingType` enum.
-  const branding = Object.values(types.BrandingType).reduce((acc, value) => {
+  const branding = Object.values(BrandingType).reduce((acc, value) => {
     if (value === data.branding) acc = data.branding;
     return acc;
-  }, types.BrandingType.Determined);
+  }, BrandingType.Determined);
 
   return {
     branding,

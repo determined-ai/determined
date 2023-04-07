@@ -27,6 +27,8 @@ def cleanup_dir(directory: str) -> None:
 @pytest.fixture(scope="module")
 def mmdet_config_dir() -> Generator[str, None, None]:
     git.Repo.clone_from("https://github.com/open-mmlab/mmdetection", "/tmp/mmdetection")
+    repo = git.Repo("/tmp/mmdetection")
+    repo.git.checkout("tags/v2.28.2")
     mmdet_config_dir = "/tmp/mmdetection/configs"
     os.environ["MMDETECTION_CONFIG_DIR"] = mmdet_config_dir
     yield mmdet_config_dir

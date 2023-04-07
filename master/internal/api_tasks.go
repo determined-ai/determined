@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -39,25 +38,13 @@ var (
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 )
 
-func expFromAllocationID(
-	m *Master, allocationID model.AllocationID,
+func expFromTaskID(
+	m *Master, taskID model.TaskID,
 ) (isExperiment bool, exp *model.Experiment, err error) {
-	resp, err := m.rm.GetAllocationHandler(
-		m.system,
-		sproto.GetAllocationHandler{ID: allocationID},
-	)
-	if err != nil {
-		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	}
-
-	parentParent := resp.Parent().Parent()
-	if parentParent.Parent() == nil || parentParent.Parent().Address().Local() != "experiments" {
-		// TaskType not trial.
+	expID, err := experimentIDFromTrialTaskID(taskID)
+	if errors.Is(err, errIsNotTrialTaskID) {
 		return false, nil, nil
-	}
-
-	expID, err := strconv.Atoi(parentParent.Address().Local())
-	if err != nil {
+	} else if err != nil {
 		return false, nil, err
 	}
 
@@ -101,7 +88,11 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		exp, err := db.ExperimentByTaskID(ctx, t.TaskID)
+		isExp, exp, err := expFromTaskID(a.m, taskID)
+		if !isExp {
+			return fmt.Errorf("error we failed to look up an experiment "+
+				"from taskID %s when we think it is a trial task", taskID)
+		}
 		if err != nil {
 			return err
 		}
@@ -134,15 +125,20 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 		return err
 	}
 
+	if !strings.Contains(allocationID, ".") {
+		return status.Errorf(codes.InvalidArgument,
+			"allocationID %s does not  contain at least '.'", allocationID)
+	}
+
+	taskID := model.AllocationID(allocationID).ToTaskID()
 	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
-	isExp, exp, err := expFromAllocationID(a.m, model.AllocationID(allocationID))
+	isExp, exp, err := expFromTaskID(a.m, taskID)
 	if err != nil {
 		return err
 	}
 	if !isExp {
-		taskID, _, _ := strings.Cut(allocationID, ".")
 		var ok bool
-		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
 		} else if !ok {
 			return errAllocationNotFound
@@ -388,7 +384,7 @@ func (a *apiServer) GetTasks(
 
 	pbAllocationIDToSummary := make(map[string]*taskv1.AllocationSummary)
 	for allocationID, allocationSummary := range summary {
-		isExp, exp, err := expFromAllocationID(a.m, allocationID)
+		isExp, exp, err := expFromTaskID(a.m, allocationSummary.TaskID)
 		if err != nil {
 			return nil, err
 		}

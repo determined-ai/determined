@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useObservable } from 'micro-observables';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
@@ -10,8 +11,9 @@ import { paths } from 'routes/utils';
 import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
-import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import projectStore from 'stores/projects';
+import workspaceStore from 'stores/workspaces';
+import { Project } from 'types';
 import { message, notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
@@ -46,7 +48,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   sourceWorkspaceId,
 }: Props) => {
   const [disabled, setDisabled] = useState<boolean>(true);
-  const canceler = useRef(new AbortController());
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);
@@ -56,21 +57,17 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   }, [workspaceId, projectId, sourceProjectId, sourceWorkspaceId]);
 
   const { canMoveExperimentsTo } = usePermissions();
-  const loadableWorkspaces = useWorkspaces({ archived: false });
-  const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
-    ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
+    canMoveExperimentsTo({ destination: { id: w.id } }),
   );
-  const projects = useWorkspaceProjects(workspaceId ?? 1);
-  const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
+  const loadableProjects: Loadable<Project[]> = useObservable(projectStore.getProjectsByWorkspace(workspaceId));
 
-  useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+  useEffect(() => workspaceStore.fetch(), []);
 
-  useEffect(() => {
-    if (workspaceId !== undefined) ensureProjectsFetched(workspaceId);
-  }, [workspaceId, ensureProjectsFetched]);
+  useEffect(
+    () => (workspaceId === undefined ? undefined : projectStore.fetch(workspaceId)),
+    [workspaceId],
+  );
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
@@ -95,7 +92,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         : `${experimentIds.length} experiments`;
 
     const destinationProjectName =
-      Loadable.getOrElse([], projects).find((p) => p.id === projId)?.name ?? '';
+      Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
 
     if (numFailures === 0) {
       notification.open({
@@ -161,7 +158,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
             id="workspace"
             placeholder="Select a destination workspace."
             onChange={() => form.resetFields(['projectId'])}>
-            {Loadable.getOrElse([], workspaces).map((workspace) => {
+            {workspaces.map((workspace) => {
               return (
                 <Option
                   disabled={workspace.archived}
@@ -182,14 +179,14 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
             label="Project"
             name="projectId"
             rules={[{ message: 'Project is required', required: true }]}>
-            {Loadable.match(projects, {
-              Loaded: (projects) => (
+            {Loadable.match(loadableProjects, {
+              Loaded: (loadableProjects) => (
                 <Select
                   filterOption={(input, option) =>
                     (option?.title?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                   placeholder="Select a destination project.">
-                  {projects.map((project) => (
+                  {loadableProjects.map((project) => (
                     <Option
                       disabled={project.archived}
                       key={project.id}

@@ -4,7 +4,6 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { createExperiment as mockCreateExperiment } from 'services/api';
-import { ClusterProvider } from 'stores/cluster';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
@@ -59,7 +58,7 @@ vi.mock('stores/cluster', async (importOriginal) => {
 
   return {
     ...(await importOriginal<typeof import('stores/cluster')>()),
-    useClusterStore: () => store,
+    default: store,
   };
 });
 
@@ -87,11 +86,7 @@ const ModalTrigger: React.FC = () => {
 };
 
 const Container: React.FC = () => {
-  return (
-    <ClusterProvider>
-      <ModalTrigger />
-    </ClusterProvider>
-  );
+  return <ModalTrigger />;
 };
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });

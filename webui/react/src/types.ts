@@ -30,39 +30,6 @@ export interface Auth {
   token?: string;
 }
 
-export interface SsoProvider {
-  name: string;
-  ssoUrl: string;
-}
-
-export const BrandingType = {
-  Determined: 'determined',
-  HPE: 'hpe',
-} as const;
-
-export type BrandingType = ValueOf<typeof BrandingType>;
-
-export interface DeterminedInfo {
-  branding?: BrandingType;
-  checked: boolean;
-  clusterId: string;
-  clusterName: string;
-  externalLoginUri?: string;
-  externalLogoutUri?: string;
-  featureSwitches: string[];
-  isTelemetryEnabled: boolean;
-  masterId: string;
-  rbacEnabled: boolean;
-  ssoProviders?: SsoProvider[];
-  userManagementEnabled: boolean;
-  version: string;
-}
-
-export interface Telemetry {
-  enabled: boolean;
-  segmentKey?: string;
-}
-
 export const ResourceType = {
   ALL: 'ALL',
   CPU: 'CPU',

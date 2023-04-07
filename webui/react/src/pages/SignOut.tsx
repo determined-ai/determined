@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -6,27 +7,27 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
-import { reset as resetAuth } from 'stores/auth';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/users';
-import { useResetWorkspaces } from 'stores/workspaces';
+import authStore from 'stores/auth';
+import determinedStore from 'stores/determinedInfo';
+import permissionStore from 'stores/permissions';
+import roleStore from 'stores/roles';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const resetWorkspaces = useResetWorkspaces();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
-      PermissionsStore.resetMyAssignmentsAndRoles();
-      usersStore.updateCurrentUser(null);
-      resetWorkspaces();
+      roleStore.reset();
+      permissionStore.reset();
+      userStore.reset();
+      workspaceStore.reset();
       try {
         await logout({});
       } catch (e) {
@@ -40,7 +41,7 @@ const SignOut: React.FC = () => {
         }
       }
       updateDetApi({ apiKey: undefined });
-      resetAuth();
+      authStore.reset();
 
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);
@@ -50,7 +51,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetWorkspaces]);
+  }, [navigate, info.externalLogoutUri, location.state, isSigningOut]);
 
   return null;
 };

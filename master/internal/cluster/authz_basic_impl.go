@@ -20,6 +20,20 @@ func (a *MiscAuthZBasic) CanUpdateAgents(
 	return nil, nil
 }
 
+// CanGetMasterLogs returns nil and nil error.
+func (a *MiscAuthZBasic) CanGetMasterLogs(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil
+}
+
+// CanGetUsageDetails returns nil and nil error.
+func (a *MiscAuthZBasic) CanGetUsageDetails(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return nil, nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &MiscAuthZBasic{})
 }
