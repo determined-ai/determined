@@ -142,19 +142,20 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     clearQuerySettings,
   } = useContext(UserSettings);
   const initialLoading = useObservable(isLoadingOb);
-  const settingsByKey = stateOb.select((s) => s.get(config.storagePath));
-  const settingsState = useObservable(settingsByKey);
+  const derivedOb = useMemo(
+    () => stateOb.select((s) => s.get(config.storagePath)),
+    [stateOb, config.storagePath],
+  );
+  const state = useObservable(derivedOb);
   const navigate = useNavigate();
   const loadableUser = usersStore.getCurrentUser();
-
-  const settings = useMemo(() => (settingsState ?? {}) as SettingsRecord<T>, [settingsState]);
 
   // parse navigation url to state
   useEffect(() => {
     if (!querySettings) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = settingsState ?? {};
+    const stateSettings = state ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -164,7 +165,15 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     stateOb.update((s) => s.set(config.storagePath, stateSettings));
 
     clearQuerySettings();
-  }, [config, querySettings, clearQuerySettings, settingsState, stateOb]);
+  }, [config, querySettings, state, clearQuerySettings, stateOb]);
+
+  const settings: SettingsRecord<T> = useMemo(
+    () =>
+      ({
+        ...(state ?? {}),
+      } as SettingsRecord<T>),
+    [state],
+  );
 
   for (const key in config.settings) {
     const setting = config.settings[key];
@@ -253,25 +262,27 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const array = settingsArray ?? Object.keys(config.settings);
 
       stateOb.update((s) => {
-        const news = s.get(config.storagePath);
-        array.forEach((setting) => {
-          let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
-            undefined;
+        return s.update(config.storagePath, (old) => {
+          const news = { ...old };
+          array.forEach((setting) => {
+            let defaultSetting: SettingsConfigProp<T[Extract<keyof T, string>]> | undefined =
+              undefined;
 
-          for (const key in config.settings) {
-            const conf = config.settings[key];
+            for (const key in config.settings) {
+              const conf = config.settings[key];
 
-            if (conf.storageKey === setting) {
-              defaultSetting = conf;
-              break;
+              if (conf.storageKey === setting) {
+                defaultSetting = conf;
+                break;
+              }
             }
-          }
 
-          if (!defaultSetting || !news) return;
+            if (!defaultSetting || !news) return;
 
-          news[setting] = defaultSetting.defaultValue;
+            news[setting] = defaultSetting.defaultValue;
+          });
+          return news;
         });
-        return s.update(config.storagePath, () => news ?? {});
       });
     },
     [config, stateOb, loadableUser],
@@ -293,7 +304,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   useLayoutEffect(() => {
     if (initialLoading) return;
-    return settingsByKey.subscribe(async (cur, prev) => {
+    return derivedOb.subscribe(async (cur, prev) => {
       const user = Loadable.match(loadableUser.get(), {
         Loaded: (cUser) => cUser,
         NotLoaded: () => undefined,
@@ -313,7 +324,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       const url = mappedSettings ? `?${mappedSettings}` : '';
       navigate(url, { replace: true });
     });
-  }, [navigate, config, updateDB, initialLoading, loadableUser, settingsByKey]);
+  }, [derivedOb, navigate, config, updateDB, initialLoading, loadableUser]);
 
   return {
     activeSettings,
