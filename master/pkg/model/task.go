@@ -84,6 +84,12 @@ func (a AllocationID) String() string {
 	return string(a)
 }
 
+// ToTaskID converts an AllocationID to its taskID.
+func (a AllocationID) ToTaskID() TaskID {
+	taskID, _, _ := strings.Cut(string(a), ".")
+	return TaskID(taskID)
+}
+
 // Allocation is the model for an allocation in the database.
 type Allocation struct {
 	bun.BaseModel `bun:"table:allocations"`
