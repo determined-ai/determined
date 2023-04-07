@@ -312,6 +312,50 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 	return trials, endTime, nil
 }
 
+func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
+	smallerIsBetter bool,
+) (trials []int32, err error) {
+	order := desc
+	aggregate := max
+	if smallerIsBetter {
+		order = asc
+		aggregate = min
+	}
+	err = db.sql.Select(&trials, fmt.Sprintf(`
+SELECT t.id FROM (
+  SELECT t.id,
+    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
+  FROM trials t
+  LEFT JOIN validations v ON t.id = v.trial_id
+  WHERE t.experiment_id=$2
+  GROUP BY t.id
+  ORDER BY best_metric %s NULLS LAST
+  LIMIT $3
+) t;`, aggregate, order), metric, experimentID, maxTrials)
+	return trials, err
+
+	/*
+			`
+			SELECT id, summary_metrics->'validation_metrics'->'d'->>'min' FROM trials
+			WHERE experiment_id=42
+			ORDER BY (summary_metrics->'validation_metrics'->'d'->>'min')::float ASC;
+		`
+
+			`
+			SELECT t.id, best_metric FROM (
+		  SELECT t.id,
+		    min((v.metrics->'validation_metrics'->>'g')::float8) as best_metric
+		  FROM trials t
+		  LEFT JOIN validations v ON t.id = v.trial_id
+		  WHERE t.experiment_id=42
+		  GROUP BY t.id
+		  ORDER BY best_metric asc NULLS LAST
+		  LIMIT 5
+		) t;
+		`
+	*/
+}
+
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
 func TopTrialsByMetric(
@@ -332,11 +376,11 @@ func TopTrialsByMetric(
 		Where("experiment_id = ?", experimentID).
 		Limit(maxTrials)
 	if smallerIsBetter {
-		query = query.OrderExpr("(summary_metrics->'validation_metrics'->?->>'min')::float ASC",
-			metric)
+		query = query.OrderExpr(
+			"(summary_metrics->'validation_metrics'->?->>'min')::float ASC NULLS LAST", metric)
 	} else {
-		query = query.OrderExpr("(summary_metrics->'validation_metrics'->?->>'max')::float DESC",
-			metric)
+		query = query.OrderExpr(
+			"(summary_metrics->'validation_metrics'->?->>'max')::float DESC NULLS LAST", metric)
 	}
 
 	if err := query.Scan(ctx, &trials); err != nil {

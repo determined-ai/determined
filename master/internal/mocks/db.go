@@ -1486,32 +1486,6 @@ func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	return r0
 }
 
-// TopTrialsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
-func (_m *DB) TopTrialsByMetric(experimentID int, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
-	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
-
-	var r0 []int32
-	var r1 error
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) ([]int32, error)); ok {
-		return rf(experimentID, maxTrials, metric, smallerIsBetter)
-	}
-	if rf, ok := ret.Get(0).(func(int, int, string, bool) []int32); ok {
-		r0 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int32)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int, int, string, bool) error); ok {
-		r1 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TopTrialsByTrainingLength provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
 func (_m *DB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
 	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
