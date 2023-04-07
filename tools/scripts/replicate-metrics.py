@@ -154,6 +154,7 @@ def copy_trials(multiplier=1, suffix="") -> dict:
     assert multiplier == 1  # disable this for now
     cols = get_table_col_names(table) - {"id"}
     cols_str = ", ".join(cols)
+    values_str = ", ".join([table + "." + col for col in cols])
 
     affected_rows: Dict[str, int] = {}
     with db_cursor() as cur:
@@ -166,9 +167,11 @@ ALTER TABLE {table} ADD COLUMN og_id int;
         query = f"""
 -- insert the replicated rows populating the og_id column with the original id
 INSERT INTO {table}( {cols_str}, og_id )
-SELECT {cols_str}, id
+SELECT {values_str}, {table}.id
 FROM {table}
+JOIN experiments e ON e.id = {table}.experiment_id
 -- CROSS JOIN generate_series(1, {multiplier}) AS g
+WHERE e.config->'searcher'->>'name' <> 'single'
 {suffix};
 """
         cur.execute(query)  # type: ignore
@@ -234,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--suffix",
         type=str,
-        help="sql suffix to select the trials to replicate. eg WHERE state = 'COMPLETED' LIMIT 2",
+        help="sql suffix to select the trials to replicate this appends after an existing WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
     parser.add_argument(
@@ -251,7 +254,7 @@ if __name__ == "__main__":
         if args.trial_id is not None:
             copy_trial(args.trial_id)
         else:
-            counts = copy_trials(suffix=args.suffix or f"WHERE state = 'COMPLETED' LIMIT 2")
+            counts = copy_trials(suffix=args.suffix or f"AND state = 'COMPLETED' LIMIT 2")
             row_counts = (
                 {k: v + counts[k] for k, v in row_counts.items()}
                 if row_counts is not None
