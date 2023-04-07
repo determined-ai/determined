@@ -106,12 +106,9 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 		name = resp.PoolName
 	}
 
-	providingPartition, err := d.validateResourcePool(ctx, name)
+	_, err := d.validateResourcePool(ctx, name)
 	if err != nil {
 		return "", fmt.Errorf("validating resource pool: %w", err)
-	}
-	if providingPartition != "" {
-		return providingPartition, nil
 	}
 	return name, nil
 }
@@ -277,6 +274,15 @@ func makeProvidedPoolsMap(poolConfig []config.ResourcePoolConfig) map[string][]s
 		}
 	}
 	return poolProviderMap
+}
+
+func (m *dispatcherResourceManager) getProvidingPartition(name string) string {
+	for _, pool := range m.poolConfig {
+		if isValidProvider(pool) && pool.PoolName == name {
+			return pool.Provider.HPC.Partition
+		}
+	}
+	return name
 }
 
 func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
@@ -736,7 +742,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 func (m *dispatcherResourceManager) getAssociatedTask(
 	log *logrus.Entry,
 	ctx *actor.Context,
-	dispatchID string) *sproto.AllocateRequest {
+	dispatchID string,
+) *sproto.AllocateRequest {
 	allocationID, ok := m.getAllocationIDFromDispatchID(dispatchID)
 	if !ok {
 		log.Warnf("received message for unknown dispatch %s", dispatchID)
@@ -901,13 +908,16 @@ func (m *dispatcherResourceManager) startLauncherJob(
 		WithField("description", msg.Spec.Description).
 		Info("Received request to launch job")
 
-	slotType := device.CPU
+	// TODO: There is a 'which first?' issue with resolving slot type and partition that needs to be
+	// unwound before it causes a bug.
+	partition := m.getProvidingPartition(req.ResourcePool)
 
+	slotType := device.CPU
 	// Only resolve the slot type if the number of slots requested is non-zero.
 	// Checkpoint GC tasks will always request zero slots and they should
 	// remain with a slot type of "CPU".
 	if req.SlotsNeeded > 0 {
-		slotType, err = m.resolveSlotType(ctx, req.ResourcePool)
+		slotType, err = m.resolveSlotType(ctx, partition)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
 				"unable to access resource pool configuration")
@@ -916,7 +926,6 @@ func (m *dispatcherResourceManager) startLauncherJob(
 	}
 
 	// Make sure we explicitly choose a partition.  Use default if unspecified.
-	partition := req.ResourcePool
 	if partition == "" {
 		partition = m.getDefaultPoolName(hpcDetails, slotType == device.CPU)
 	}
