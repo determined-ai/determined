@@ -280,9 +280,9 @@ func TestJobStats(t *testing.T) {
 	) {
 		system := actor.NewSystem(t.Name())
 		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-		toAllocate, _ := fs_test.fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
+		toAllocate, _ := fs_test.fairshareSchedule(ctx_test, taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
-		fs_test.fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
+		fs_test.fairshareSchedule(ctx_test, taskList, groupMap, agentMap, BestFit, false)
 
 		assertStatsEqual(t, tasklist.JobStats(taskList), expectedStats)
 	}
@@ -357,9 +357,9 @@ func TestJobOrder(t *testing.T) {
 	) map[model.JobID]*sproto.RMJobInfo {
 		system := actor.NewSystem(t.Name())
 		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-		toAllocate, _ := fs_test.fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
+		toAllocate, _ := fs_test.fairshareSchedule(ctx_test, taskList, groupMap, agentMap, BestFit, false)
 		AllocateTasks(toAllocate, agentMap, taskList)
-		fs_test.fairshareSchedule(taskList, groupMap, agentMap, BestFit, false)
+		fs_test.fairshareSchedule(ctx_test, taskList, groupMap, agentMap, BestFit, false)
 		f := fairShare{}
 		return f.JobQInfo(&actor.Context{}, &resourcePool{taskList: taskList, groups: groupMap})
 	}

@@ -65,6 +65,7 @@ func (g groupState) String() string {
 
 func (f *fairShare) Schedule(ctx *actor.Context, rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return f.fairshareSchedule(
+		ctx,
 		rp.taskList,
 		rp.groups,
 		rp.agentStatesCache,
@@ -74,6 +75,7 @@ func (f *fairShare) Schedule(ctx *actor.Context, rp *resourcePool) ([]*sproto.Al
 }
 
 func (f *fairShare) createJobQInfo(
+	ctx *actor.Context,
 	taskList *tasklist.TaskList,
 ) sproto.AQueue {
 	reqs := make(tasklist.AllocReqs, 0, taskList.Len())
@@ -89,22 +91,29 @@ func (f *fairShare) createJobQInfo(
 }
 
 func (f *fairShare) JobQInfo(ctx *actor.Context, rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
-	jobQ := f.createJobQInfo(rp.taskList)
+	jobQ := f.createJobQInfo(ctx, rp.taskList)
 	return jobQ
 }
 
 func (f *fairShare) fairshareSchedule(
+	ctx *actor.Context,
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	ctx.Log().Debugf("proccessing taskList of size %d", taskList.Len())
+	ctx.Log().Debugf("proccessing groups of size %d", len(groups))
+	ctx.Log().Debugf("proccessing agents of size %d", len(agents))
+
 	allToAllocate := make([]*sproto.AllocateRequest, 0)
 	allToRelease := make([]*actor.Ref, 0)
 
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
+		ctx.Log().Debugf("proccessing req %#v", req)
+
 		allocations := taskList.Allocation(req.AllocationRef)
 		if req.SlotsNeeded == 0 && allocations == nil {
 			if fits := findFits(
@@ -119,6 +128,8 @@ func (f *fairShare) fairshareSchedule(
 		}
 	}
 
+	ctx.Log().Debugf("current allToAllocate of size %d (after 0 slots needed)", len(allToAllocate))
+
 	// Fair share allocations are calculated in four parts:
 	// 1) Organize tasks into groups.
 	// 2) Calculate the slot demand of each group.
@@ -131,10 +142,11 @@ func (f *fairShare) fairshareSchedule(
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
 	capacity := totalCapacity(agents)
-	groupStates := f.calculateGroupStates(taskList, groups, capacity)
+	groupStates := f.calculateGroupStates(ctx, taskList, groups, capacity)
 
-	allocateSlotOffers(groupStates, capacity)
+	allocateSlotOffers(ctx, groupStates, capacity)
 	toAllocate, toRelease := f.assignTasks(
+		ctx,
 		agents,
 		groupStates,
 		fittingMethod,
@@ -171,6 +183,7 @@ func (f *fairShare) requestTimedout(req *sproto.AllocateRequest) bool {
 }
 
 func (f *fairShare) calculateGroupStates(
+	ctx *actor.Context,
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
 	capacity int,
@@ -198,16 +211,20 @@ func (f *fairShare) calculateGroupStates(
 	}
 	for _, state := range states {
 		check.Panic(check.True(state.Group != nil, "the group of a task must not be nil"))
+		// ctx.Log().Debugf("proccessing state %#v", state)
 		for _, req := range state.reqs {
 			allocated := taskList.Allocation(req.AllocationRef)
+			ctx.Log().Debugf("proccessing %t req %s", allocated != nil, req.AllocationID)
 			state.slotDemand += req.SlotsNeeded
 			switch {
 			case !tasklist.AssignmentIsScheduled(allocated):
+				ctx.Log().Debugf("proccessing req %s as pending", req.AllocationID)
 				state.pendingReqs = append(state.pendingReqs, req)
 				if _, ok := f.scheduledReqTime[req]; !ok {
 					f.scheduledReqTime[req] = time.Now()
 				}
 			default:
+				ctx.Log().Debugf("proccessing req %s as allocated", req.AllocationID)
 				if !req.Preemptible {
 					state.presubscribedSlots += req.SlotsNeeded
 				}
@@ -257,7 +274,8 @@ func accountForPreoffers(preoffers int, offer int) (int, int) {
 	return preoffers, offer
 }
 
-func allocateSlotOffers(states []*groupState, capacity int) {
+func allocateSlotOffers(ctx *actor.Context, states []*groupState, capacity int) {
+	ctx.Log().Debugf("allocating slot offers for %d states and capacity %d", len(states), capacity)
 	// To prevent becoming oversubscribed, we first need to account for slots that were already
 	// allocated to tasks that cannot be preempted.
 	preoffers := make(map[*groupState]int)
@@ -270,6 +288,7 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 		state.offered = state.presubscribedSlots
 		preoffers[state] = state.presubscribedSlots
 		capacity -= state.presubscribedSlots
+		ctx.Log().Debugf("preoffering %d slots to group %#v", state.presubscribedSlots, state.Group)
 	}
 
 	// Slots are offered to each group based on the progressive filling algorithm, an
@@ -314,10 +333,15 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 				1,
 				int(float64(startCapacity)*state.Weight/totalWeight),
 			)
-
+			ctx.Log().Debugf("calculated fair share for group %p: %d", state.Group, calculatedFairShare)
+			ctx.Log().Debugf("capacity: %d", capacity)
+			ctx.Log().Debugf("state.slotDemand: %d", state.slotDemand)
+			ctx.Log().Debugf("state.offered: %d", state.offered)
 			progressMade = true
 			offer := mathx.Min(calculatedFairShare, capacity, state.slotDemand-state.offered)
+			ctx.Log().Debugf("offering %d slots to group %p", offer, state.Group)
 			preoffers[state], offer = accountForPreoffers(preoffers[state], offer)
+			ctx.Log().Debugf("offering %d slots to group %p after accounting for preoffers", offer, state.Group)
 			state.offered += offer
 			capacity -= offer
 			if state.offered == state.slotDemand {
@@ -368,13 +392,18 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 }
 
 func (f *fairShare) assignTasks(
-	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
+	ctx *actor.Context,
+	agents map[*actor.Ref]*agentState,
+	states []*groupState,
+	fittingMethod SoftConstraint,
 	allowHetergenousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
 	for _, state := range states {
+		ctx.Log().Debugf("assignTasks evaluating state: %#v", state)
+
 		if state.activeSlots > state.offered {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
