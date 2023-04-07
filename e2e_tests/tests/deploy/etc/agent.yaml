@@ -4,4 +4,4 @@ master_port: 8080
 label: yaml-conf
 fluent:
   container_name: test-fluent
-  port: 24225
+  port: 29876
