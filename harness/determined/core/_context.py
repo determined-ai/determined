@@ -109,7 +109,7 @@ def _dummy_init(
                     "Cannot configure a shared_fs checkpoint storage with a "
                     "dictionary. Use a string or a configuration file."
                 )
-            storage_manager = det.common.storage.build(checkpoint_storage)
+            storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -207,7 +207,7 @@ def init(
                     "Cannot configure a shared_fs checkpoint storage with a "
                     "dictionary. Use a string or a configuration file."
                 )
-            storage_manager = det.common.storage.build(checkpoint_storage)
+            storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
