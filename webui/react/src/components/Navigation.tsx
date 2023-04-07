@@ -1,18 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import usePolling from 'shared/hooks/usePolling';
-import { useClusterStore } from 'stores/cluster';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/users';
-import { useFetchWorkspaces } from 'stores/workspaces';
-import { BrandingType, ResourceType } from 'types';
+import clusterStore from 'stores/cluster';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
+import permissionStore from 'stores/permissions';
+import userStore from 'stores/users';
+import workspaceStore from 'stores/workspaces';
+import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { useInitApi } from 'utils/dialogApi';
-import { Loadable, NotLoaded } from 'utils/loadable';
+import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
 import css from './Navigation.module.scss';
@@ -26,19 +25,11 @@ interface Props {
 const Navigation: React.FC<Props> = ({ children }) => {
   useInitApi();
   const { ui } = useUI();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
-  const [canceler] = useState(new AbortController());
+  const info = useObservable(determinedStore.info);
+  const loadableCurrentUser = useObservable(userStore.currentUser);
+  const clusterOverview = useObservable(clusterStore.clusterOverview);
 
-  const clusterOverview = useObservable(useClusterStore().clusterOverview);
-
-  const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const currentUser = useObservable(usersStore.getCurrentUser());
-  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
-
-  const guardedFetchWorkspaces = useCallback(() => {
-    return currentUser !== NotLoaded && fetchWorkspaces();
-  }, [currentUser, fetchWorkspaces]);
-  usePolling(guardedFetchWorkspaces);
+  useEffect(() => workspaceStore.startPolling(), []);
 
   useEffect(() => {
     updateFaviconType(
@@ -50,16 +41,15 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const rbacEnabled = useFeature().isOn('rbac'),
     mockAllPermission = useFeature().isOn('mock_permissions_all'),
     mockReadPermission = useFeature().isOn('mock_permissions_read');
-  const syncRoles = useCallback(() => {
-    if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
-      fetchMyRoles();
-    }
-  }, [currentUser, fetchMyRoles, rbacEnabled, mockAllPermission, mockReadPermission]);
 
   useEffect(() => {
-    syncRoles();
-  }, [syncRoles]);
-  usePolling(syncRoles, { interval: 120000 });
+    const shouldPoll =
+      rbacEnabled &&
+      !mockAllPermission &&
+      !mockReadPermission &&
+      Loadable.isLoaded(loadableCurrentUser);
+    return permissionStore.startPolling({ condition: shouldPoll, delay: 120_000 });
+  }, [loadableCurrentUser, mockAllPermission, mockReadPermission, rbacEnabled]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

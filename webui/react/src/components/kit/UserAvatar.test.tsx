@@ -1,10 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import usersStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -19,21 +17,9 @@ const testUsers: DetailedUser[] = [
   },
 ];
 
-vi.mock('services/api', () => ({
-  getUsers: () => Promise.resolve({ users: testUsers }),
-}));
-
 vi.mock('components/kit/Tooltip');
 
 const Component = ({ user }: Partial<Props> = {}) => {
-  const [canceler] = useState(new AbortController());
-
-  useEffect(() => {
-    usersStore.ensureUsersFetched(canceler);
-    usersStore.updateCurrentUser(44);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canceler]);
-
   return <UserAvatar hideTooltip={false} user={user} />;
 };
 

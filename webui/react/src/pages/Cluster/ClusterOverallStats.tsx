@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo } from 'react';
 
 import Card from 'components/kit/Card';
 import OverviewStats from 'components/OverviewStats';
@@ -8,15 +8,13 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
-import { useClusterStore } from 'stores/cluster';
+import clusterStore from 'stores/cluster';
+import { maxClusterSlotCapacity } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
-import { TasksStore } from 'stores/tasks';
-import { ResourceType, TaskCounts } from 'types';
+import taskStore from 'stores/tasks';
+import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
-
-import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
   limit: -2, // according to API swagger doc, [limit] -2 - returns pagination info but no experiments.
@@ -24,23 +22,10 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 };
 
 export const ClusterOverallStats: React.FC = () => {
-  const resourcePools = useObservable(useClusterStore().resourcePools);
-  const agents = useObservable(useClusterStore().agents);
-  const clusterOverview = useObservable(useClusterStore().clusterOverview);
-
-  const [canceler] = useState(new AbortController());
-  const fetchActiveExperiments = experimentStore.fetchExperiments(
-    ACTIVE_EXPERIMENTS_PARAMS,
-    canceler,
-  );
-  const activeTasks = useObservable<Loadable<TaskCounts>>(TasksStore.getActiveTaskCounts());
-
-  const fetchActiveRunning = useCallback(async () => {
-    await fetchActiveExperiments();
-    TasksStore.fetchActiveTasks(canceler);
-  }, [fetchActiveExperiments, canceler]);
-
-  usePolling(fetchActiveRunning);
+  const agents = useObservable(clusterStore.agents);
+  const resourcePools = useObservable(clusterStore.resourcePools);
+  const clusterOverview = useObservable(clusterStore.clusterOverview);
+  const activeTasks = useObservable(taskStore.activeTasks);
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
@@ -67,6 +52,9 @@ export const ClusterOverallStats: React.FC = () => {
       ),
     );
   }, [resourcePools, agents]);
+
+  useEffect(() => taskStore.startPolling(), []);
+  useEffect(() => experimentStore.startPolling({ args: [ACTIVE_EXPERIMENTS_PARAMS] }), []);
 
   return (
     <Section hideTitle title="Overview Stats">

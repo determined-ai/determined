@@ -1,6 +1,7 @@
 import { Card } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useObservable } from 'micro-observables';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
@@ -22,7 +23,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -46,12 +47,12 @@ const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
-  const canceler = useRef(new AbortController());
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
   const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-  const workspaces = Loadable.getOrElse([], useWorkspaces());
-  const workspace = workspaces.find((ws) => ws.id === modelVersion?.model.workspaceId);
+  const workspace = Loadable.getOrElse(
+    undefined,
+    useObservable(workspaceStore.getWorkspace(modelVersion?.model.workspaceId)),
+  );
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,9 +91,7 @@ const ModelVersionDetails: React.FC = () => {
     [basePath, navigate],
   );
 
-  useEffect(() => {
-    ensureWorkspacesFetched();
-  }, [ensureWorkspacesFetched]);
+  useEffect(() => workspaceStore.fetch(), []);
 
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_TAB_KEY);

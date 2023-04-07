@@ -1,22 +1,31 @@
 import { listRoles } from 'services/api';
+import { ListRolesParams } from 'services/types';
 import { UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { observable, WritableObservable } from 'utils/observable';
 
-export class RolesStore {
-  static #roles: WritableObservable<Loadable<UserRole[]>> = observable(NotLoaded);
+class RoleStore {
+  #roles: WritableObservable<Loadable<UserRole[]>> = observable(NotLoaded);
 
-  static fetchRoles = async (canceler: AbortController): Promise<void> => {
-    try {
-      const response = await listRoles({ limit: 0 }, { signal: canceler.signal });
-      this.#roles.set(Loaded(response));
-    } catch (e) {
-      handleError(e);
-    }
-  };
+  public readonly roles = this.#roles.readOnly();
 
-  static useRoles = (): Loadable<UserRole[]> => {
-    return useObservable(this.#roles.readOnly());
-  };
+  public fetch(params: ListRolesParams = { limit: 0 }, signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    listRoles(params, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        this.#roles.set(Loaded(response));
+        return response;
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
+  public reset() {
+    this.#roles.set(NotLoaded);
+  }
 }
+
+export default new RoleStore();

@@ -3,9 +3,9 @@ import { useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Auth, DetailedUser, DeterminedInfo } from 'types';
+import { DeterminedInfo } from 'stores/determinedInfo';
+import { Auth, DetailedUser } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
 
 /*
  * Telemetry is written as a modular class instance instead of
@@ -21,7 +21,7 @@ class Telemetry {
     this.isIdentified = false;
   }
 
-  async update(auth: Loadable<Auth>, user: Loadable<DetailedUser>, info: DeterminedInfo) {
+  async update(auth: Auth, user: DetailedUser, info: DeterminedInfo) {
     if (!info.isTelemetryEnabled) return;
 
     // Attempt to load analytics first.
@@ -70,7 +70,7 @@ class Telemetry {
     }
   }
 
-  identify(auth: Loadable<Auth>, user: Loadable<DetailedUser>, info: DeterminedInfo) {
+  identify(auth: Auth, user: DetailedUser, info: DeterminedInfo) {
     if (!this.isLoaded || !analytics?.identify) return;
 
     /*
@@ -78,26 +78,17 @@ class Telemetry {
      * lower case letters and numbers 0-9.
      */
     try {
-      if (
-        !this.isIdentified &&
-        Loadable.isLoaded(auth) &&
-        Loadable.isLoaded(user) &&
-        auth.data.isAuthenticated &&
-        user.data
-      ) {
-        analytics.identify(user.data.id.toString(), {
+      if (!this.isIdentified && auth.isAuthenticated) {
+        analytics.identify(user.id.toString(), {
           clusterId: info.clusterId,
           clusterName: info.clusterName,
           edition: 'OSS',
           masterId: info.masterId,
-          username: user.data.username,
+          username: user.username,
           version: info.version,
         });
         this.isIdentified = true;
-      } else if (
-        (this.isIdentified && Loadable.isLoading(auth)) ||
-        (Loadable.isLoaded(auth) && !auth.data.isAuthenticated)
-      ) {
+      } else if (this.isIdentified || !auth.isAuthenticated) {
         this.reset();
         this.isIdentified = false;
       }
@@ -118,11 +109,7 @@ export const telemetryInstance = new Telemetry();
 interface TelemetryHook {
   track: (...args: any[]) => void;
   trackPage: (...args: any[]) => void;
-  updateTelemetry: (
-    auth: Loadable<Auth>,
-    user: Loadable<DetailedUser>,
-    info: DeterminedInfo,
-  ) => void;
+  updateTelemetry: (auth: Auth, user: DetailedUser, info: DeterminedInfo) => void;
 }
 
 const useTelemetry = (): TelemetryHook => {
