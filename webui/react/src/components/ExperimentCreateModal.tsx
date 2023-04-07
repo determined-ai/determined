@@ -19,6 +19,9 @@ import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
+export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
+export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
+
 export const CreateExperimentType = {
   ContinueTrial: 'Continue Trial',
   Fork: 'Fork',
@@ -403,7 +406,7 @@ const ExperimentCreateModalComponent = ({
         </Form>
         <div>
           <Button onClick={toggleMode}>
-            {modalState.isAdvancedMode ? 'Show Simple Config' : 'Show Full Config'}
+            {modalState.isAdvancedMode ? SIMPLE_CONFIG_BUTTON_TEXT : FULL_CONFIG_BUTTON_TEXT}
           </Button>
         </div>
       </>

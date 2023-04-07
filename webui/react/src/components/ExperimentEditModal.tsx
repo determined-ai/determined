@@ -6,6 +6,10 @@ import { Modal } from 'components/kit/Modal';
 import { patchExperiment } from 'services/api';
 import handleError from 'utils/error';
 
+export const NAME_LABEL = 'Name';
+export const DESCRIPTION_LABEL = 'Description';
+export const BUTTON_TEXT = 'Save';
+
 type FormInputs = {
   description: string;
   experimentName: string;
@@ -58,7 +62,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       submit={{
         disabled,
         handler: handleSubmit,
-        text: 'Save',
+        text: BUTTON_TEXT,
       }}
       title="Edit Experiment"
       onClose={form.resetFields}>
@@ -70,12 +74,12 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
         onFieldsChange={handleChange}>
         <Form.Item
           initialValue={experimentName}
-          label="Name"
+          label={NAME_LABEL}
           name="experimentName"
           rules={[{ max: 128, message: 'Name must be 1 ~ 128 characters', required: true }]}>
           <Input />
         </Form.Item>
-        <Form.Item initialValue={description} label="Description" name="description">
+        <Form.Item initialValue={description} label={DESCRIPTION_LABEL} name="description">
           <Input.TextArea />
         </Form.Item>
       </Form>

@@ -8,6 +8,8 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
+export const BUTTON_TEXT = 'Delete';
+
 interface Props {
   experiment: ExperimentBase;
 }
@@ -35,7 +37,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       size="small"
       submit={{
         handler: handleSubmit,
-        text: 'Delete',
+        text: BUTTON_TEXT,
       }}
       title="Confirm Experiment Deletion">
       Are you sure you want to delete experiment {experiment.id}?

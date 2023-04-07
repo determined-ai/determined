@@ -1,39 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
+  FULL_CONFIG_BUTTON_TEXT,
+  SIMPLE_CONFIG_BUTTON_TEXT,
 } from 'components/ExperimentCreateModal';
 import Button from 'components/kit/Button';
 import { useModal } from 'components/kit/Modal';
-import { setAuth } from 'stores/auth';
+import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
-const MODAL_TITLE = 'Fork';
-const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';
+const user = userEvent.setup();
 
 vi.mock('services/api', () => ({
-  getResourcePools: () => Promise.resolve([]),
-  getTaskTemplates: () => Promise.resolve([]),
-  launchJupyterLab: () => Promise.resolve({ config: '' }),
-}));
-
-vi.mock('components/MonacoEditor', () => ({
-  __esModule: true,
-  default: () => <></>,
+  createExperiment: vi.fn(),
 }));
 
 const ModalTrigger: React.FC = () => {
   const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
   const { experiment, trial } = generateTestExperimentData();
-  useEffect(() => {
-    setAuth({ isAuthenticated: true });
-  }, []);
 
   return (
     <>
-      <Button onClick={ExperimentCreateModal.open}>Show Jupyter Lab</Button>
+      <Button onClick={ExperimentCreateModal.open} />
       <ExperimentCreateModal.Component
         experiment={experiment}
         trial={trial}
@@ -43,26 +34,31 @@ const ModalTrigger: React.FC = () => {
   );
 };
 
-const Container: React.FC = () => <ModalTrigger />;
-
 const setup = async () => {
-  const user = userEvent.setup();
-
-  render(<Container />);
+  render(<ModalTrigger />);
 
   await user.click(screen.getByRole('button'));
 };
 
 describe('Create Experiment Modal', () => {
-  it('modal can be opened', async () => {
+  it('defaults to simple config', async () => {
     await setup();
 
-    expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
+    expect(await screen.findByText(FULL_CONFIG_BUTTON_TEXT)).toBeInTheDocument();
   });
 
-  it('modal defaults to simple config', async () => {
+  it('changes to full config', async () => {
     await setup();
 
-    expect(await screen.findByText(SHOW_FULL_CONFIG_TEXT)).toBeInTheDocument();
+    await user.click(screen.getByText(FULL_CONFIG_BUTTON_TEXT));
+
+    expect(await screen.findByText(SIMPLE_CONFIG_BUTTON_TEXT)).toBeInTheDocument();
+  });
+
+  it('submits a valid create experiment request', async () => {
+    await setup();
+
+    await user.click(screen.getByRole('button', { name: CreateExperimentType.Fork }));
+    expect(mockCreateExperiment).toHaveBeenCalled();
   });
 });

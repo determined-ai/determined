@@ -16,6 +16,9 @@ export const ActionType = {
 
 export type ActionType = ValueOf<typeof ActionType>;
 
+export const BUTTON_TEXT = 'Stop Experiment';
+export const CHECKBOX_TEXT = 'Save checkpoint before stopping';
+
 interface Props {
   experimentId: number;
   onClose?: () => void;
@@ -51,13 +54,13 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       size="small"
       submit={{
         handler: handleSubmit,
-        text: 'Stop Experiment',
+        text: BUTTON_TEXT,
       }}
       title="Confirm Stop"
       onClose={onClose}>
       <div>Are you sure you want to stop experiment {experimentId}?</div>
       <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
-        Save checkpoint before stopping
+        {CHECKBOX_TEXT}
       </Checkbox>
       {type !== ActionType.Cancel && (
         <Alert
