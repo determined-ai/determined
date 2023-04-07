@@ -9,15 +9,7 @@
   align-items: center;
   border: 1px solid skyblue;
   display: grid;
-  gap: 8px;
-  grid-template-columns: 2fr 3fr 3fr auto auto;
-  padding: 2px 8px;
-}
-.draggableHandle {
-  &:hover {
-    cursor: grab;
-  }
-  &:active {
-    cursor: grabbing;
-  }
+  gap: 4px;
+  grid-template-columns: 2fr 3fr 3fr 32px 32px;
+  padding: 8px;
 }

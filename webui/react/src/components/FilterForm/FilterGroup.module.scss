@@ -1,5 +1,4 @@
 .base {
-  align-items: center;
   display: grid;
   gap: 8px;
   grid-template-columns: 1fr 9fr;
@@ -10,7 +9,7 @@
 }
 .groupCard {
   border: 1px solid red;
-  padding: 8px 16px;
+  padding: 8px;
 }
 .header {
   align-items: center;
@@ -27,15 +26,4 @@
 .children {
   display: flex;
   flex-direction: column;
-}
-.draggableHandle {
-  &:hover {
-    cursor: grab;
-  }
-  &:active {
-    cursor: grabbing;
-  }
-}
-.footer {
-  padding-top: 8px;
 }

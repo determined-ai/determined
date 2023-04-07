@@ -12,13 +12,14 @@ const FilterForm = ({ formClassStore }: Props): JSX.Element => {
   return (
     <div>
       <FilterGroup
-        conjunction={data.filterSet.conjunction}
+        conjunction={data.filterGroup.conjunction}
         formClassStore={formClassStore}
-        group={data.filterSet}
+        group={data.filterGroup}
         index={0}
         level={0}
-        parentId={data.filterSet.id}
+        parentId={data.filterGroup.id}
       />
+      <div>{formClassStore.query}</div>
     </div>
   );
 };

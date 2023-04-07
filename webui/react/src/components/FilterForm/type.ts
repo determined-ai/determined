@@ -1,46 +1,41 @@
-export const ItemTypes = {
-  FIELD: 'field',
-  GROUP: 'group',
+import { ValueOf } from 'shared/types';
+
+export const FormType = {
+  Field: 'field',
+  Group: 'group',
 } as const;
+
+export type FormType = ValueOf<typeof FormType>;
+
+export type FormFieldValue = string | string[] | number | number[] | null;
 
 export type FormField = {
   readonly id: string;
-  readonly type: typeof ItemTypes.FIELD;
+  readonly type: typeof FormType.Field;
   columnName: string;
   operator: Operator;
-  value: string | string[] | number | number[] | undefined;
+  value: FormFieldValue;
 };
 
-export type Conjunction = 'and' | 'or';
+export const Conjunction = {
+  And: 'and',
+  Or: 'or',
+} as const;
+
+export type Conjunction = ValueOf<typeof Conjunction>;
 
 export type FormGroup = {
   readonly id: string;
-  readonly type: typeof ItemTypes.GROUP;
+  readonly type: typeof FormType.Group;
   conjunction: Conjunction;
   children: (FormGroup | FormField)[];
 };
 
 export type FilterFormSet = {
-  filterSet: FormGroup;
+  filterGroup: FormGroup;
 };
 
-export type Operator =
-  | 'contains'
-  | 'in'
-  | 'is'
-  | 'eq'
-  | 'greater'
-  | 'greaterEq'
-  | 'isEmpty'
-  | 'isNot'
-  | 'less'
-  | 'lessEq'
-  | 'notContain'
-  | 'notEmpty'
-  | 'notEq'
-  | 'notIn';
-
-export const OperatorMap: Record<Operator, string> = {
+export const OperatorMap = {
   contains: 'contains',
   eq: '=',
   greater: '>',
@@ -55,4 +50,34 @@ export const OperatorMap: Record<Operator, string> = {
   notEmpty: 'not empty',
   notEq: '!=',
   notIn: 'not in',
+} as const;
+
+export type Operator = ValueOf<typeof OperatorMap>;
+
+export const AvaliableOperators = {
+  list: [OperatorMap.in, OperatorMap.notIn],
+  number: [
+    OperatorMap.eq,
+    OperatorMap.notEq,
+    OperatorMap.greater,
+    OperatorMap.greaterEq,
+    OperatorMap.less,
+    OperatorMap.lessEq,
+  ],
+  string: [
+    OperatorMap.contains,
+    OperatorMap.notContain,
+    OperatorMap.isEmpty,
+    OperatorMap.notEmpty,
+    OperatorMap.is,
+    OperatorMap.isNot,
+  ],
+} as const;
+
+export const ColumnType: Record<string, keyof typeof AvaliableOperators> = {
+  id: 'number',
+  name: 'string',
+  state: 'string',
+  tags: 'string',
+  user: 'number',
 } as const;
