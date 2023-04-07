@@ -149,9 +149,11 @@ def submit_db_queries(
             yield future.result()
 
 
-def copy_trials(multiplier=1, suffix="") -> dict:
+def copy_trials(suffix="") -> dict:
+    """
+    Duplicate trials and associated metrics for multi trial experiments.
+    """
     table = "trials"
-    assert multiplier == 1  # disable this for now
     cols = get_table_col_names(table) - {"id"}
     cols_str = ", ".join(cols)
     values_str = ", ".join([table + "." + col for col in cols])
@@ -170,7 +172,7 @@ INSERT INTO {table}( {cols_str}, og_id )
 SELECT {values_str}, {table}.id
 FROM {table}
 JOIN experiments e ON e.id = {table}.experiment_id
--- CROSS JOIN generate_series(1, {multiplier}) AS g
+-- CROSS JOIN generate_series(1, multiplier) AS g
 WHERE e.config->'searcher'->>'name' <> 'single'
 {suffix};
 """
