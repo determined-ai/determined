@@ -29,7 +29,7 @@ import (
 const (
 	pollLoopInterval     = time.Duration(10) * time.Second
 	ignoredReporter      = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
-	errorLinesToRetrieve = 200
+	errorLinesToRetrieve = 500
 	errorLinesToDisplay  = 15
 )
 
@@ -683,7 +683,12 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job *launcherJob) 
 			// and we will have no logs to assist in diagnosis, so insert the last
 			// few lines of the error log into the failure message.
 			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, job, "error.log", errorLinesToRetrieve)
-			exitMessages = minimizeErrorLog(exitMessages)
+			if m.allContainersRunning(job) {
+				// If all containers are running, then show limited output.
+				// Otherwise show all collected lines which would include the
+				// container downloading logs.
+				exitMessages = minimizeErrorLog(exitMessages)
+			}
 		}
 
 		//nolint:lll
