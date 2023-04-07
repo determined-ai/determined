@@ -60,7 +60,9 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
     canMoveExperimentsTo({ destination: { id: w.id } }),
   );
-  const loadableProjects: Loadable<Project[]> = useObservable(projectStore.getProjectsByWorkspace(workspaceId));
+  const loadableProjects: Loadable<Project[]> = useObservable(
+    projectStore.getProjectsByWorkspace(workspaceId),
+  );
 
   useEffect(() => workspaceStore.fetch(), []);
 
