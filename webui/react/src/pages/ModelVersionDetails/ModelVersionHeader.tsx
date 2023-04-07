@@ -22,7 +22,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
@@ -51,8 +51,8 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   fetchModelVersion,
 }: Props) => {
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const modelDownloadModal = useModal(ModelDownloadModal);
@@ -62,16 +62,13 @@ const ModelVersionHeader: React.FC<Props> = ({
   const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = Loadable.match(users, {
-      Loaded: (users) => users,
-      NotLoaded: () => [],
-    }).find((user) => user.id === modelVersion.userId);
+    const user = users.find((user) => user.id === modelVersion.userId);
 
     return [
       {
         content: (
           <Space>
-            <Spinner conditionalRender spinning={Loadable.isLoading(users)}>
+            <Spinner conditionalRender spinning={Loadable.isLoading(loadableUsers)}>
               <>
                 <Avatar user={user} />
                 {getDisplayName(user)} on{' '}
@@ -113,7 +110,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onUpdateTags, users, canModifyModelVersion]);
+  }, [loadableUsers, modelVersion, onUpdateTags, users, canModifyModelVersion]);
 
   const actions: Action[] = useMemo(() => {
     const items: Action[] = [

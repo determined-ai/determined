@@ -24,7 +24,7 @@ import React, {
 import { useNavigate } from 'react-router';
 
 import useUI from 'shared/contexts/stores/UI';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ExperimentItem } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable, WritableObservable } from 'utils/observable';
@@ -107,7 +107,7 @@ export const GlideTable: React.FC<Props> = ({
     ui: { darkLight },
   } = useUI();
 
-  const users = Loadable.map(useObservable(usersStore.getUsers()), ({ users }) => users);
+  const users = useObservable(userStore.getUsers());
 
   const columnIds = useMemo<ExperimentColumn[]>(
     () => [...STATIC_COLUMNS, ...sortableColumnIds],

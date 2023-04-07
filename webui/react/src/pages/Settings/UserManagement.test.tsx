@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
@@ -7,8 +7,8 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
-import { setAuth, setAuthChecked } from 'stores/auth';
-import usersStore from 'stores/users';
+import authStore from 'stores/auth';
+import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
@@ -16,7 +16,7 @@ import UserManagement, { CREATE_USER, USER_TITLE } from './UserManagement';
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
-const mockCurrentUser: DetailedUser = {
+const CURRENT_USER: DetailedUser = {
   displayName: DISPLAY_NAME,
   id: 1,
   isActive: true,
@@ -27,7 +27,7 @@ vi.mock('services/api', () => ({
   getGroups: () => Promise.resolve({ groups: [] }),
   getUserRoles: () => Promise.resolve([]),
   getUsers: () => {
-    const users: Array<DetailedUser> = [mockCurrentUser];
+    const users: Array<DetailedUser> = [CURRENT_USER];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
   getUserSetting: () => Promise.resolve({ settings: [] }),
@@ -42,14 +42,12 @@ vi.mock('hooks/useTelemetry', () => ({
 }));
 
 const Container: React.FC = () => {
-  const [canceler] = useState(new AbortController());
-
   const loadUsers = useCallback(() => {
-    usersStore.ensureUsersFetched(canceler);
-    setAuth({ isAuthenticated: true });
-    setAuthChecked();
-    usersStore.updateCurrentUser(mockCurrentUser.id);
-  }, [canceler]);
+    userStore.fetchUsers();
+    authStore.setAuth({ isAuthenticated: true });
+    authStore.setAuthChecked();
+    userStore.updateCurrentUser(CURRENT_USER);
+  }, []);
 
   useEffect(() => {
     loadUsers();

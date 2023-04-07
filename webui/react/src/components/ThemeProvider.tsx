@@ -1,5 +1,6 @@
 import { ConfigProvider, theme } from 'antd';
 import { ThemeConfig } from 'antd/es/config-provider/context';
+import { useObservable } from 'micro-observables';
 import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';
@@ -8,9 +9,8 @@ import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import determinedStore from 'stores/determinedInfo';
 import themes from 'themes';
-import { Loadable } from 'utils/loadable';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
@@ -102,7 +102,7 @@ const getSystemMode = (): Mode => {
  * Wraps various theme settings together
  */
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = useObservable(determinedStore.info);
   const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
   const [isSettingsReady, setIsSettingsReady] = useState(false);

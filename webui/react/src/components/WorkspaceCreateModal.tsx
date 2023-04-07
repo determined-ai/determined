@@ -13,7 +13,7 @@ import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { useCreateWorkspace } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -48,7 +48,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
 
   const [canceler] = useState(new AbortController());
   const [workspace, setWorkspace] = useState<Workspace>();
-  const createWorkspace = useCreateWorkspace();
 
   const fetchWorkspace = useCallback(async () => {
     if (workspaceId) {
@@ -262,7 +261,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           const response = await patchWorkspace({ id: workspaceId, ...body });
           setWorkspace(response);
         } else {
-          const response = await createWorkspace(body);
+          const response = await workspaceStore.createWorkspace(body);
           routeToReactUrl(paths.workspaceDetails(response.id));
         }
         form.resetFields();
@@ -286,7 +285,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         });
       }
     }
-  }, [form, workspaceId, canModifyAUG, canModifyCPS, createWorkspace]);
+  }, [form, workspaceId, canModifyAUG, canModifyCPS]);
 
   return (
     <Modal

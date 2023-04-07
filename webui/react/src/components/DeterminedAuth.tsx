@@ -14,9 +14,9 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
-import { setAuth } from 'stores/auth';
-import { PermissionsStore } from 'stores/permissions';
-import usersStore from 'stores/users';
+import authStore from 'stores/auth';
+import permissionStore from 'stores/permissions';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -49,7 +49,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const fetchMyRoles = PermissionsStore.fetchMyAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -65,11 +64,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           { signal: canceler.signal },
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
-        setAuth({ isAuthenticated: true, token });
-        usersStore.updateCurrentUser(user.id);
+        authStore.setAuth({ isAuthenticated: true, token });
+        userStore.updateCurrentUser(user);
         if (rbacEnabled) {
           // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
-          await fetchMyRoles();
+          permissionStore.fetch(canceler.signal);
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
       } catch (e) {
@@ -90,7 +89,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, uiActions, fetchMyRoles, rbacEnabled],
+    [canceler, uiActions, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

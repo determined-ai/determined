@@ -1,3 +1,5 @@
+import { useObservable } from 'micro-observables';
+
 import Form from 'components/kit/Form';
 import { Modal } from 'components/kit/Modal';
 import Select from 'components/kit/Select';
@@ -6,7 +8,7 @@ import usePermissions from 'hooks/usePermissions';
 import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import { moveModel } from 'services/api';
-import { useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { ModelItem } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -23,7 +25,7 @@ interface Props {
 const ModelMoveModal = ({ model }: Props): JSX.Element => {
   const [form] = Form.useForm<FormInputs>();
   const { canMoveModel } = usePermissions();
-  const workspaces = Loadable.getOrElse([], useWorkspaces());
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
   const handleOk = async () => {
     const values = await form.validateFields();
