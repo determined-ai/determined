@@ -161,6 +161,14 @@ FROM {table}
         cur.execute(query)  # type: ignore
         replicated_trials = cur.rowcount
 
+        query = f"""
+CREATE TEMP TABLE {table}_id_map AS -- TODO TEMP table?
+SELECT id, og_id
+FROM {table}
+WHERE og_id IS NOT NULL;
+"""
+        cur.execute(query)  # type: ignore
+
         steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
         steps_cols_str = ", ".join(steps_cols)
         prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
@@ -169,10 +177,10 @@ FROM {table}
 
 -- replicate raw_steps and keep the new step ids
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
-SELECT {prefixed_steps_cols}, trials.id
+SELECT {prefixed_steps_cols}, {table}_id_map.id
 FROM raw_steps rs
-INNER JOIN trials ON trials.og_id = rs.trial_id
-WHERE trials.og_id IS NOT NULL; -- all trials with og_id are target trials.
+INNER JOIN {table}_id_map ON {table}_id_map.og_id = rs.trial_id
+-- WHERE {table}_id_map.og_id IS NOT NULL; -- all {table}_id_map with og_id are target trials.
 """
         # cur.execute(steps_query)  # type: ignore
         # replicated_steps = cur.rowcount
@@ -183,10 +191,10 @@ WHERE trials.og_id IS NOT NULL; -- all trials with og_id are target trials.
         validations_query = f"""
 -- replicate raw_validations and keep the new validation ids
 INSERT INTO raw_validations( {validations_cols_str}, trial_id )
-SELECT {prefixed_validations_cols}, trials.id
+SELECT {prefixed_validations_cols}, {table}_id_map.id
 FROM raw_validations rv
-INNER JOIN trials ON trials.og_id = rv.trial_id
-WHERE trials.og_id IS NOT NULL;
+INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
+-- WHERE {table}_id_map.og_id IS NOT NULL;
 """
 
         # cur.execute(validations_query)  # type: ignore
@@ -195,6 +203,8 @@ WHERE trials.og_id IS NOT NULL;
         submit_db_queries(cur, [steps_query, validations_query])
 
         query = f""" 
+-- drop the table
+DROP TABLE {table}_id_map;
 -- drop the added column
 ALTER TABLE {table} DROP COLUMN og_id;
 """
