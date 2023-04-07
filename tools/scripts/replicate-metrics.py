@@ -149,7 +149,6 @@ def copy_trials(multiplier=1, suffix="") -> dict:
 ALTER TABLE {table} ADD COLUMN og_id int;
 """
         cur.execute(query)  # type: ignore
-        cur.execute("COMMIT")
 
         query = f"""
 -- insert the replicated rows populating the og_id column with the original id
@@ -162,26 +161,6 @@ FROM {table}
         cur.execute(query)  # type: ignore
         replicated_trials = cur.rowcount
 
-        # create a new view that only has the trial.id and og_id columns
-        query = f"""
-CREATE OR REPLACE VIEW {table}_og_id AS
-SELECT id, og_id FROM {table};
-"""
-        cur.execute(query)  # type: ignore
-
-        # print the row count for the new view
-        cur.execute(f"SELECT COUNT(*) FROM {table}_og_id;")  # type: ignore
-        print("row count for view:", cur.fetchone()[0])
-
-        # # get old and new trial id mappings
-        # cur.execute(
-        #     """
-        #     SELECT id, og_id FROM trials WHERE og_id IS NOT NULL;
-        #     """
-        # )
-        # rows = cur.fetchall()
-        # trial_id_map = {row[1]: row[0] for row in rows}
-
         steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
         steps_cols_str = ", ".join(steps_cols)
         prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
@@ -192,7 +171,8 @@ SELECT id, og_id FROM {table};
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
 SELECT {prefixed_steps_cols}, trials.id
 FROM raw_steps rs
-INNER JOIN trials_og_id ON trials_og_id.og_id = rs.trial_id
+INNER JOIN trials ON trials.og_id = rs.trial_id
+WHERE trials.og_id IS NOT NULL; -- all trials with og_id are target trials.
 """
         # cur.execute(steps_query)  # type: ignore
         # replicated_steps = cur.rowcount
@@ -205,7 +185,8 @@ INNER JOIN trials_og_id ON trials_og_id.og_id = rs.trial_id
 INSERT INTO raw_validations( {validations_cols_str}, trial_id )
 SELECT {prefixed_validations_cols}, trials.id
 FROM raw_validations rv
-INNER JOIN trials_og_id ON trials_og_id.og_id = rs.trial_id
+INNER JOIN trials ON trials.og_id = rv.trial_id
+WHERE trials.og_id IS NOT NULL;
 """
 
         # cur.execute(validations_query)  # type: ignore
@@ -214,8 +195,6 @@ INNER JOIN trials_og_id ON trials_og_id.og_id = rs.trial_id
         submit_db_queries(cur, [steps_query, validations_query])
 
         query = f""" 
--- drop the view
-DROP VIEW {table}_og_id;
 -- drop the added column
 ALTER TABLE {table} DROP COLUMN og_id;
 """
