@@ -217,7 +217,7 @@ def master_up(
         """
         try:
             yield
-        except BaseException as ex:
+        except Exception as ex:
             fn(*args)
             raise ex
 
