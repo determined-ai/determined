@@ -119,8 +119,12 @@ def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> N
         raise ConnectionError("Timed out connecting to master")
 
 
-def _wait_for_db_container(container_name: str, timeout: int = 100) -> None:
-    print(f"Waiting for db {container_name}...")
+def _wait_for_container(container_name: str, timeout: int = 100) -> None:
+    """
+    Waits for a Docker container's healthcheck (specified when the container is run) to reach a
+    "healthy" status.
+    """
+    print(f"Waiting for {container_name}...")
     client = docker_client()
     container = client.containers.get(container_name)
     start_time = time.time()
@@ -203,12 +207,11 @@ def master_up(
     print(f"Creating network {NETWORK_NAME}...")
     client.networks.create(name=NETWORK_NAME, attachable=True)
 
-    # Start db.
+    # Start db and wait for healthcheck.
     db_name = f"{cluster_name}_{DB_NAME}"
     db_up(name=db_name, password=db_password, network_name=NETWORK_NAME, cluster_name=cluster_name)
-
     try:
-        _wait_for_db_container(db_name)
+        _wait_for_container(db_name)
     except TimeoutError:
         print(f"Database {db_name} failed to reach a ready state, removing container.")
         _kill_containers(names=[db_name])
@@ -237,7 +240,7 @@ def master_up(
     try:
         _wait_for_master("localhost", port, cluster_name)
     except TimeoutError:
-        print(f"Master failed to initialize, removing master and DB containers.")
+        print(f"Master failed to initialize, removing master: {master_name} and DB {db_name}.")
         master_down(master_name=master_name, delete_db=delete_db, cluster_name=cluster_name)
 
 
