@@ -2001,77 +2001,11 @@ func (a *apiServer) SearchExperiments(
 		); err != nil {
 		return nil, err
 	}
-	if req.Sort != nil {
-		orderColMap := map[string]string{
-			"id":              "id",
-			"description":     "description",
-			"name":            "name",
-			"startTime":       "e.start_time",
-			"endTime":         "e.end_time",
-			"state":           "e.state",
-			"numTrials":       "num_trials",
-			"progress":        "COALESCE(progress, 0)",
-			"user":            "display_name",
-			"forkedFrom":      "e.parent_id",
-			"resourcePool":    "resource_pool",
-			"projectId":       "project_id",
-			"checkpointSize":  "checkpoint_size",
-			"checkpointCount": "checkpoint_count",
-			"searcherMetricsVal": `(
-				SELECT
-					searcher_metric_value
-				FROM trials t
-				WHERE t.experiment_id = e.id
-				ORDER BY (CASE
-					WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-						THEN searcher_metric_value
-						ELSE -1.0 * searcher_metric_value
-				END) ASC
-				LIMIT 1
-			 ) `,
-		}
-		sortByMap := map[string]string{
-			"asc":  "ASC",
-			"desc": "DESC NULLS LAST",
-		}
-		sortParams := strings.Split(*req.Sort, ",")
-		for _, sortParam := range sortParams {
-			paramDetail := strings.Split(sortParam, "=")
-			if len(paramDetail) != 2 {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
-			}
-			if _, ok := sortByMap[paramDetail[1]]; !ok {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
-			}
-			sortDirection := sortByMap[paramDetail[1]]
-			if strings.HasPrefix(paramDetail[0], "hp:") {
-				hps := strings.Replace(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'", -1)
-				experimentQuery.OrderExpr(
-					fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
-			} else {
-				if _, ok := orderColMap[paramDetail[0]]; !ok {
-					return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
-				}
-				experimentQuery.OrderExpr(
-					fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
-			}
-		}
-	}
 
-	resp.Pagination, err = runPagedBunExperimentsQuery(
-		ctx,
-		experimentQuery,
-		int(req.Offset),
-		int(req.Limit),
-	)
+	err = experimentQuery.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = a.enrichExperimentState(experiments...); err != nil {
-		return nil, err
-	}
-
 	if len(experiments) == 0 {
 		return resp, nil
 	}
@@ -2193,16 +2127,92 @@ func (a *apiServer) SearchExperiments(
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN ch ON ch.trial_id = trials.id AND ch.rank = 1")
 
-	err = db.Bun().NewSelect().
+	bestTrials := db.Bun().NewSelect().
 		With("ex", experimentValues).
 		With("si", searcherInfoQuery).
 		With("v", validationsQuery).
 		With("ch", checkpointsQuery).
 		Model(&trials).
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).
-		Where("trial._metric_rank = 1").
-		Scan(ctx)
+		Where("trial._metric_rank = 1")
 
+	experimentQuery.With("besttrials", bestTrials).Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
+
+	if req.Sort != nil {
+		orderColMap := map[string]string{
+			"id":              "id",
+			"description":     "description",
+			"name":            "name",
+			"startTime":       "e.start_time",
+			"endTime":         "e.end_time",
+			"state":           "e.state",
+			"numTrials":       "num_trials",
+			"progress":        "COALESCE(progress, 0)",
+			"user":            "display_name",
+			"forkedFrom":      "e.parent_id",
+			"resourcePool":    "resource_pool",
+			"projectId":       "project_id",
+			"checkpointSize":  "checkpoint_size",
+			"checkpointCount": "checkpoint_count",
+			"searcherMetricsVal": `(
+				SELECT
+					searcher_metric_value
+				FROM trials t
+				WHERE t.experiment_id = e.id
+				ORDER BY (CASE
+					WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+						THEN searcher_metric_value
+						ELSE -1.0 * searcher_metric_value
+				END) ASC
+				LIMIT 1
+			 ) `,
+		}
+		sortByMap := map[string]string{
+			"asc":  "ASC",
+			"desc": "DESC NULLS LAST",
+		}
+		sortParams := strings.Split(*req.Sort, ",")
+		for _, sortParam := range sortParams {
+			paramDetail := strings.Split(sortParam, "=")
+			if len(paramDetail) != 2 {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+			}
+			if _, ok := sortByMap[paramDetail[1]]; !ok {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+			}
+			sortDirection := sortByMap[paramDetail[1]]
+			if strings.HasPrefix(paramDetail[0], "hp:") {
+				hps := strings.Replace(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'", -1)
+				experimentQuery.OrderExpr(
+					fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+			} else if strings.HasPrefix(paramDetail[0], "validation.") {
+				metricName := strings.TrimPrefix(paramDetail[0], "validation.")
+				experimentQuery.OrderExpr(fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s", metricName, sortDirection))
+			} else {
+				if _, ok := orderColMap[paramDetail[0]]; !ok {
+					return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+				}
+				experimentQuery.OrderExpr(
+					fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
+			}
+		}
+	}
+
+	resp.Pagination, err = runPagedBunExperimentsQuery(
+		ctx,
+		experimentQuery,
+		int(req.Offset),
+		int(req.Limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = a.enrichExperimentState(experiments...); err != nil {
+		return nil, err
+	}
+
+	err = bestTrials.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
