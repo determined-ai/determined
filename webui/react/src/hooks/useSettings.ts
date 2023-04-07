@@ -271,7 +271,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
           news[setting] = defaultSetting.defaultValue;
         });
-        return s.set(config.storagePath, news ?? {});
+        return s.update(config.storagePath, () => news ?? {});
       });
     },
     [config, stateOb, loadableUser],
