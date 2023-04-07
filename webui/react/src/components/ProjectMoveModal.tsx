@@ -9,11 +9,12 @@ import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { useWorkspaces } from 'stores/workspaces';
+import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
 import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';
 
@@ -27,10 +28,11 @@ interface Props {
 const ProjectMoveModalComponent: React.FC<Props> = ({ onClose, project }: Props) => {
   const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
   const { canMoveProjectsTo } = usePermissions();
-  const workspaces = Loadable.match(useWorkspaces({ archived: false }), {
-    Loaded: (workspaces: Workspace[]) => workspaces.filter(
-      (w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } }),
-    ),
+  const workspaces = Loadable.match(useObservable(workspaceStore.unarchived), {
+    Loaded: (workspaces: Workspace[]) =>
+      workspaces.filter(
+        (w) => !w.immutable && canMoveProjectsTo({ destination: { id: w.id } }),
+      ),
     NotLoaded: () => [],
   });
 
