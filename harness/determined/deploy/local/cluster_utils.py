@@ -8,7 +8,7 @@ import sys
 import tempfile
 import threading
 import time
-from typing import Any, Dict, List, Optional, Sequence, Type, Callable, Iterator, ContextManager
+from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Type
 
 import appdirs
 import docker
@@ -211,7 +211,7 @@ def master_up(
     volume_name = f"{cluster_name}_{VOLUME_NAME}"
 
     @contextlib.contextmanager
-    def defer_cleanup(fn: Callable, *args: Any) -> ContextManager[None]:
+    def defer_cleanup(fn: Callable, *args: Any) -> Generator:
         """
         Defer cleanup tasks for each resource if Exceptions are caught.
         """
@@ -305,7 +305,7 @@ def master_down(master_name: str, delete_db: bool, cluster_name: str) -> None:
     remove_network(NETWORK_NAME)
 
 
-def db_down(db_name: str, volume_name: str, delete_volume: bool):
+def db_down(db_name: str, volume_name: str, delete_volume: bool) -> None:
     client = docker_client()
 
     _kill_containers([db_name])
@@ -318,7 +318,7 @@ def db_down(db_name: str, volume_name: str, delete_volume: bool):
             print(f"Volume {volume_name} not found.")
 
 
-def remove_network(network_name: str):
+def remove_network(network_name: str) -> None:
     client = docker_client()
     networks = client.networks.list(names=[network_name])
     for network in networks:
