@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -122,6 +123,11 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
+	}
+
+	if !strings.Contains(allocationID, ".") {
+		return status.Errorf(codes.InvalidArgument,
+			"allocationID %s does not  contain at least '.'", allocationID)
 	}
 
 	taskID := model.AllocationID(allocationID).ToTaskID()

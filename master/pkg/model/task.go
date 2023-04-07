@@ -86,8 +86,7 @@ func (a AllocationID) String() string {
 
 // ToTaskID converts an AllocationID to its taskID.
 func (a AllocationID) ToTaskID() TaskID {
-	taskID, _, _ := strings.Cut(string(a), ".")
-	return TaskID(taskID)
+	return TaskID(a[:strings.LastIndex(string(a), ".")])
 }
 
 // Allocation is the model for an allocation in the database.

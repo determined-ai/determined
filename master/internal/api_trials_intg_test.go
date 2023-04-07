@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"testing"
 	"time"
@@ -31,7 +32,10 @@ func createTestTrial(
 ) *model.Trial {
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
-	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	task := &model.Task{
+		TaskType: model.TaskTypeTrial,
+		TaskID:   trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
+	}
 	require.NoError(t, api.m.db.AddTask(task))
 
 	trial := &model.Trial{
