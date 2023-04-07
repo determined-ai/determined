@@ -2043,11 +2043,18 @@ func (a *apiServer) SearchExperiments(
 			if _, ok := sortByMap[paramDetail[1]]; !ok {
 				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
 			}
-			if _, ok := orderColMap[paramDetail[0]]; !ok {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			sortDirection := sortByMap[paramDetail[1]]
+			if strings.HasPrefix(paramDetail[0], "hp:") {
+				hps := strings.Replace(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'", -1)
+				experimentQuery.OrderExpr(
+					fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+			} else {
+				if _, ok := orderColMap[paramDetail[0]]; !ok {
+					return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+				}
+				experimentQuery.OrderExpr(
+					fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 			}
-			experimentQuery.OrderExpr(
-				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortByMap[paramDetail[1]]))
 		}
 	}
 
