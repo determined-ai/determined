@@ -2136,7 +2136,8 @@ func (a *apiServer) SearchExperiments(
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).
 		Where("trial._metric_rank = 1")
 
-	experimentQuery.With("besttrials", bestTrials).Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
+	experimentQuery.With("besttrials", bestTrials).
+		Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
 
 	if req.Sort != nil {
 		orderColMap := map[string]string{
@@ -2181,14 +2182,17 @@ func (a *apiServer) SearchExperiments(
 				return nil, status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
 			}
 			sortDirection := sortByMap[paramDetail[1]]
-			if strings.HasPrefix(paramDetail[0], "hp:") {
-				hps := strings.Replace(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'", -1)
+			switch {
+			case strings.HasPrefix(paramDetail[0], "hp:"):
+				hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp:"), ".", "'->'")
 				experimentQuery.OrderExpr(
 					fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
-			} else if strings.HasPrefix(paramDetail[0], "validation.") {
+			case strings.HasPrefix(paramDetail[0], "validation."):
 				metricName := strings.TrimPrefix(paramDetail[0], "validation.")
-				experimentQuery.OrderExpr(fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s", metricName, sortDirection))
-			} else {
+				experimentQuery.OrderExpr(
+					fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s",
+						metricName, sortDirection))
+			default:
 				if _, ok := orderColMap[paramDetail[0]]; !ok {
 					return nil, status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
 				}
