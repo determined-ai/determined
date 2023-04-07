@@ -1,6 +1,6 @@
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import { useDrag } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd';
 
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
@@ -8,7 +8,7 @@ import InputNumber from 'components/kit/InputNumber';
 
 import css from './FilterField.module.scss';
 import { FormClassStore } from './FilterFormStore';
-import { Conjunction, FormField, ItemTypes, Operator, OperatorMap } from './type';
+import { Conjunction, FormField, FormGroup, ItemTypes, Operator, OperatorMap } from './type';
 
 interface Props {
   index: number; // start from 0
@@ -16,6 +16,7 @@ interface Props {
   parentId: string;
   conjunction: Conjunction;
   formClassStore: FormClassStore;
+  level: number; // start from 0
 }
 
 const FilterField = ({
@@ -24,14 +25,58 @@ const FilterField = ({
   formClassStore,
   index,
   parentId,
+  level,
 }: Props): JSX.Element => {
-  const [, drag, preview] = useDrag<FormField, unknown, unknown>(() => ({
-    item: field,
+  const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
+    item: () => {
+      return { form: field, index };
+    },
     type: ItemTypes.FIELD,
   }));
 
+  const [{ isOverCurrent, canDrop }, drop] = useDrop<
+    { form: FormGroup | FormField; index: number },
+    unknown,
+    { isOverCurrent: boolean; canDrop: boolean }
+  >({
+    accept: [ItemTypes.GROUP, ItemTypes.FIELD],
+    canDrop(item, monitor) {
+      const isOverCurrent = monitor.isOver({ shallow: true });
+      if (isOverCurrent) {
+        if (item.form.type === 'group') {
+          return (
+            // cant dnd with deeper than 2 level group
+            level < 2 &&
+            // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
+            // and target item's level is over 2
+            // 2 is the max depth
+            (item.form.children.filter((c) => c.type === 'group').length === 0 ? 0 : 1) + level < 2
+          );
+        }
+        return true;
+      }
+      return false;
+    },
+    collect: (monitor) => ({
+      canDrop: monitor.canDrop(),
+      isOverCurrent: monitor.isOver({ shallow: true }),
+    }),
+    hover(item) {
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      if (isOverCurrent && canDrop) {
+        formClassStore.removeChild(item.form.id);
+        formClassStore.addChild(parentId, item.form.type, hoverIndex, item.form);
+        item.index = hoverIndex;
+      }
+    },
+  });
+
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={(node) => drop(node)}>
       {index === 0 ? (
         <div>where</div>
       ) : (

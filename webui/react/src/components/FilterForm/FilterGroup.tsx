@@ -1,9 +1,11 @@
 import { DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons';
-import { Dropdown, Select } from 'antd';
+import { Dropdown, DropDownProps, Select } from 'antd';
 import type { MenuProps } from 'antd';
-import { DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
+import { useMemo } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 
 import Button from 'components/kit/Button';
+import { ValueOf } from 'shared/types';
 
 import FilterField from './FilterField';
 import { FormClassStore } from './FilterFormStore';
@@ -27,87 +29,95 @@ const FilterGroup = ({
   formClassStore,
   parentId,
 }: Props): JSX.Element => {
-  const [, drag, preview] = useDrag<FormGroup, unknown, unknown>(() => ({
-    item: group,
+  const [, drag, preview] = useDrag<{ form: FormGroup; index: number }, unknown, unknown>(() => ({
+    item: () => {
+      return { form: group, index };
+    },
     type: ItemTypes.GROUP,
   }));
 
   const [{ isOverCurrent, canDrop }, drop] = useDrop<
-    FormGroup | FormField,
+    { form: FormGroup | FormField; index: number },
     unknown,
     { isOverCurrent: boolean; canDrop: boolean }
-  >(
-    () => ({
-      accept: [ItemTypes.GROUP, ItemTypes.FIELD],
-      canDrop(item, monitor) {
-        const isOverCurrent = monitor.isOver({ shallow: true });
-        if (isOverCurrent) {
-          if (item.type === 'group') {
-            return (
-              // cant self dnd
-              group.id !== item.id &&
-              // cant dnd in self childrens group
-              item.children.filter((c) => c.id === group.id).length === 0 &&
-              // cant dnd with deeper than 2 level group
-              level < 2 &&
-              // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
-              // and target item's level is over 2
-              // 2 is the max depth
-              (item.children.filter((c) => c.type === 'group').length === 0 ? 0 : 1) + level < 2
-            );
-          }
-          return true;
+  >({
+    accept: [ItemTypes.GROUP, ItemTypes.FIELD],
+    canDrop(item, monitor) {
+      const isOverCurrent = monitor.isOver({ shallow: true });
+      if (isOverCurrent) {
+        if (item.form.type === 'group') {
+          return (
+            // cant self dnd
+            group.id !== item.form.id &&
+            // cant dnd in self childrens group
+            item.form.children.filter((c) => c.id === group.id).length === 0 &&
+            // cant dnd with deeper than 2 level group
+            level < 2 &&
+            // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
+            // and target item's level is over 2
+            // 2 is the max depth
+            (item.form.children.filter((c) => c.type === 'group').length === 0 ? 0 : 1) + level < 2
+          );
         }
-        return false;
-      },
-      collect: (monitor) => ({
-        canDrop: monitor.canDrop(),
-        isOverCurrent: monitor.isOver({ shallow: true }),
-      }),
-      drop(item: FormGroup | FormField, monitor: DropTargetMonitor) {
-        const isOverCurrent = monitor.isOver({ shallow: true });
-        const didDrop = monitor.didDrop();
-        if (isOverCurrent) {
-          formClassStore.removeChild(item.id);
-          formClassStore.addChild(group.id, item.type, item);
-        }
-        if (didDrop) {
-          return;
-        }
-      },
+        return true;
+      }
+      return false;
+    },
+    collect: (monitor) => ({
+      canDrop: monitor.canDrop(),
+      isOverCurrent: monitor.isOver({ shallow: true }),
     }),
-    [],
-  );
-
-  const classes = [css.base];
-
-  if (isOverCurrent && canDrop) {
-    classes.push(css.dragGroup);
-  }
-  if (level === 0) {
-    classes.push(css.baseRoot);
-  }
-
-  const items: MenuProps['items'] = [
-    {
-      icon: <PlusOutlined />,
-      key: 'field',
-      label: (
-        <div onClick={() => formClassStore.addChild(group.id, 'field')}>Add condition field</div>
-      ),
+    hover(item) {
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      if (isOverCurrent && canDrop) {
+        formClassStore.removeChild(item.form.id);
+        formClassStore.addChild(group.id, item.form.type, hoverIndex, item.form);
+        item.index = hoverIndex;
+      }
     },
-    {
-      disabled: !(0 <= level && level <= 1),
-      icon: <PlusOutlined />,
-      key: 'group',
-      label: (
-        <div onClick={() => formClassStore.addChild(group.id, 'group')}>Add condition group</div>
-      ),
-    },
-  ];
+  });
+
+  const menuItems: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Field: 'field',
+      Group: 'group',
+    } as const;
+
+    const funcs = {
+      [MenuKey.Field]: () => {
+        formClassStore.addChild(group.id, 'field', group.children.length);
+      },
+      [MenuKey.Group]: () => {
+        formClassStore.addChild(group.id, 'group', group.children.length);
+      },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
+
+    const items: MenuProps['items'] = [
+      {
+        icon: <PlusOutlined />,
+        key: 'field',
+        label: <div>Add condition field</div>,
+      },
+      {
+        disabled: !(0 <= level && level <= 1),
+        icon: <PlusOutlined />,
+        key: 'group',
+        label: <div>Add condition group</div>,
+      },
+    ];
+    return { items: items, onClick: onItemClick };
+  }, [formClassStore, group.children.length, group.id, level]);
 
   return (
-    <div className={classes.join(' ')} ref={(node) => drop(node)}>
+    <div className={`${css.base} ${level === 0 ? css.baseRoot : ''}`} ref={(node) => drop(node)}>
       {level > 0 && (
         <>
           {index === 0 ? (
@@ -141,7 +151,7 @@ const FilterGroup = ({
           </div>
           <div className={css.headerButtonGroup}>
             <Button type="text">
-              <Dropdown menu={{ items }} trigger={['click']}>
+              <Dropdown menu={menuItems} trigger={['click']}>
                 <PlusOutlined />
               </Dropdown>
             </Button>
@@ -180,6 +190,7 @@ const FilterGroup = ({
                   formClassStore={formClassStore}
                   index={i}
                   key={child.id}
+                  level={level + 1}
                   parentId={group.id}
                 />
               );
@@ -189,10 +200,12 @@ const FilterGroup = ({
         <div className={css.footer}>
           {level === 0 && (
             <>
-              <Button onClick={() => formClassStore.addChild(group.id, 'field')}>
+              <Button
+                onClick={() => formClassStore.addChild(group.id, 'field', group.children.length)}>
                 + Add condition field
               </Button>
-              <Button onClick={() => formClassStore.addChild(group.id, 'group')}>
+              <Button
+                onClick={() => formClassStore.addChild(group.id, 'group', group.children.length)}>
                 + Add condition group
               </Button>
             </>

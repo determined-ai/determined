@@ -69,13 +69,14 @@ export class FormClassStore {
   public addChild(
     id: string,
     addType: 'group' | 'field',
+    index: number,
     obj?: Readonly<FormGroup | FormField>,
   ): void {
     const set = this.#formset.get().filterSet;
     const recur = (form: FormGroup | FormField): void => {
       if (form.id === id && form.type === 'group') {
         if (obj) {
-          form.children.push(obj);
+          form.children.splice(index, 0, obj);
           return;
         }
         form.children.push(

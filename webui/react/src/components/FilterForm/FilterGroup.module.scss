@@ -3,6 +3,7 @@
   display: grid;
   gap: 8px;
   grid-template-columns: 1fr 9fr;
+  padding-bottom: 8px;
 }
 .baseRoot {
   grid-template-columns: 1fr;
@@ -26,10 +27,6 @@
 .children {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.dragGroup {
-  background-color: hotpink;
 }
 .draggableHandle {
   &:hover {
