@@ -11,6 +11,7 @@ from typing import Dict, Generator, List, Set, Tuple, Union
 from psycopg.abc import Query
 import concurrent.futures
 import time
+import contextlib
 
 DB_NAME = os.environ.get("DET_DB_NAME", "determined")
 DB_USERNAME = os.environ.get("DET_DB_USERNAME", "postgres")
@@ -62,7 +63,8 @@ def db_cursor() -> Generator[psycopg.Cursor, None, None]:
         port=DB_PORT,
     )
     conn.cursor_factory = LoggingCursor
-    yield conn.cursor()
+    cur = conn.cursor()
+    yield cur
     conn.close()
 
 
@@ -149,49 +151,74 @@ def submit_db_queries(
             yield future.result()
 
 
-def copy_trials(suffix="") -> dict:
+@contextlib.contextmanager
+def duplicate_table_rows(cur: psycopg.Cursor, table: str, suffix=""):
     """
-    Duplicate trials and associated metrics for multi trial experiments.
+    duplicate rows of a table and keep a mapping between old and new ids.
+    `id` col is assumed to auto increment.
+    return: number of new rows added
     """
-    table = "trials"
     cols = get_table_col_names(table) - {"id"}
     cols_str = ", ".join(cols)
     values_str = ", ".join([table + "." + col for col in cols])
 
-    affected_rows: Dict[str, int] = {}
-    with db_cursor() as cur:
-        query = f"""
+    query = f"""
 -- modify the target table to add a new col called og_id
 ALTER TABLE {table} ADD COLUMN og_id int;
 """
-        cur.execute(query)  # type: ignore
+    cur.execute(query)  # type: ignore
 
-        query = f"""
+    query = f"""
 -- insert the replicated rows populating the og_id column with the original id
 INSERT INTO {table}( {cols_str}, og_id )
 SELECT {values_str}, {table}.id
 FROM {table}
-JOIN experiments e ON e.id = {table}.experiment_id
--- CROSS JOIN generate_series(1, multiplier) AS g
-WHERE e.config->'searcher'->>'name' <> 'single'
 {suffix};
 """
-        cur.execute(query)  # type: ignore
-        affected_rows["trials"] = cur.rowcount
+    cur.execute(query)  # type: ignore
+    affected_rows = cur.rowcount
 
-        query = f"""
-CREATE TEMP TABLE {table}_id_map AS -- TODO TEMP table?
+    query = f"""
+CREATE TEMP TABLE {table}_id_map AS
 SELECT id, og_id
 FROM {table}
 WHERE og_id IS NOT NULL;
 """
-        cur.execute(query)  # type: ignore
+    cur.execute(query)  # type: ignore
 
-        steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
-        steps_cols_str = ", ".join(steps_cols)
-        prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
-        # replicate raw_steps and update trial_id
-        steps_query = f"""
+    yield affected_rows
+
+    # tear down
+    query = f"""
+-- drop the table
+DROP TABLE {table}_id_map;
+-- drop the added column
+ALTER TABLE {table} DROP COLUMN og_id;
+    """
+    cur.execute(query)  # type: ignore
+
+
+def copy_trials(suffix="") -> dict:
+    """
+    Duplicate trials and associated metrics for multi trial experiments.
+    """
+    affected_rows: Dict[str, int] = {}
+    table = "trials"
+    trial_suffix = f"""
+JOIN experiments e ON e.id = {table}.experiment_id
+-- CROSS JOIN generate_series(1, multiplier) AS g
+WHERE e.config->'searcher'->>'name' <> 'single'
+{suffix};
+    """
+    with db_cursor() as cur:
+        with duplicate_table_rows(cur, table, suffix=trial_suffix) as added_trials:
+            affected_rows["trials"] = added_trials
+
+            steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
+            steps_cols_str = ", ".join(steps_cols)
+            prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
+            # replicate raw_steps and update trial_id
+            steps_query = f"""
 
 -- replicate raw_steps and keep the new step ids
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
@@ -200,13 +227,13 @@ FROM raw_steps rs
 INNER JOIN {table}_id_map ON {table}_id_map.og_id = rs.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL; -- all {table}_id_map with og_id are target trials.
 """
-        cur.execute(steps_query)  # type: ignore
-        affected_rows["steps"] = cur.rowcount
+            cur.execute(steps_query)  # type: ignore
+            affected_rows["steps"] = cur.rowcount
 
-        validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
-        validations_cols_str = ", ".join(validations_cols)
-        prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
-        validations_query = f"""
+            validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
+            validations_cols_str = ", ".join(validations_cols)
+            prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
+            validations_query = f"""
 -- replicate raw_validations and keep the new validation ids
 INSERT INTO raw_validations( {validations_cols_str}, trial_id )
 SELECT {prefixed_validations_cols}, {table}_id_map.id
@@ -215,19 +242,12 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL;
 """
 
-        cur.execute(validations_query)  # type: ignore
-        affected_rows["validations"] = cur.rowcount
+            cur.execute(validations_query)  # type: ignore
+            affected_rows["validations"] = cur.rowcount
 
-        # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
-        #     affected_rows[name] = rcounts
+            # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
+            #     affected_rows[name] = rcounts
 
-        query = f""" 
--- drop the table
-DROP TABLE {table}_id_map;
--- drop the added column
-ALTER TABLE {table} DROP COLUMN og_id;
-"""
-        cur.execute(query)  # type: ignore
         cur.execute("COMMIT")
         return affected_rows
 
