@@ -39,14 +39,14 @@ const dropdownActions = [
 ];
 
 // eslint-disable-next-line
-function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
+function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
   useEffect(() => {
     /**
      * Alert if clicked on outside of element
      */
     function handleClickOutside(event: Event) {
       if (ref.current && !ref.current.contains(event.target)) {
-        handler();
+        handler(event);
       }
     }
     // Bind the event listener
@@ -62,7 +62,7 @@ export interface TableContextMenuProps extends MenuProps {
   fetchExperiments: () => void;
   open: boolean;
   experiment: ProjectExperiment;
-  handleClose: () => void;
+  handleClose: (e?: Event) => void;
   x: number;
   y: number;
 }
@@ -81,9 +81,8 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   const permissions = usePermissions();
 
   const onComplete = useCallback(() => {
-    handleClose();
     fetchExperiments();
-  }, [fetchExperiments, handleClose]);
+  }, [fetchExperiments]);
 
   const menuItems = experiment
     ? getActionsForExperiment(experiment, dropdownActions, permissions).map((action) => ({
@@ -115,6 +114,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   const handleMenuClick = useCallback(
     async (params: MenuInfo): Promise<void> => {
       params.domEvent.stopPropagation();
+      handleClose();
       try {
         const action = params.key as Action;
         switch (
@@ -200,6 +200,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       experiment.workspaceId,
       handleExperimentMove,
       handleHyperparameterSearch,
+      handleClose,
       onComplete,
     ],
   );
