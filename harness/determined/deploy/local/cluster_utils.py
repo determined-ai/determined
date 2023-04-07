@@ -215,7 +215,7 @@ def master_up(
     except TimeoutError:
         print(f"Database {db_name} failed to reach a ready state, removing container.")
         _kill_containers(names=[db_name])
-        return
+        raise TimeoutError
 
     # Start master instance.
     print(f"Creating {master_name}...")
@@ -243,6 +243,7 @@ def master_up(
     except TimeoutError:
         print(f"Master failed to initialize, removing master: {master_name} and DB {db_name}.")
         master_down(master_name=master_name, delete_db=delete_db, cluster_name=cluster_name)
+        raise TimeoutError
 
 
 def db_up(name: str, password: str, network_name: str, cluster_name: str) -> None:
