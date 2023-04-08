@@ -223,7 +223,6 @@ func (t *TaskSpec) ToDispatcherManifest(
 		slurmArgs = append(slurmArgs, "--exclude="+strings.Join(disabledNodes, ","))
 	}
 
-	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 
 	ctx.Log().WithField("allocation-id", allocationID).Debugf("Custom slurm arguments: %s", slurmArgs)
