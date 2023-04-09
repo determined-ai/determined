@@ -98,7 +98,6 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
         )
     )
 
-    # NEW: Report epoch-based validation metrics to Determined master via core_context.
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss, "epoch": epoch},
