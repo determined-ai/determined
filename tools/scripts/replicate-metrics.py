@@ -310,9 +310,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
+    # add general help description
+    parser.description = "Replicate trials within experiments for multi-trial experiments or whole experiments at db level in bulk."
+
+    parser.add_argument("mode", type=str, help="mode to run in: trials, experiments")
     parser.add_argument(
         "--suffix",
         type=str,
+        default="",
         help="sql suffix to select the trials to replicate this appends after an existing WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
@@ -322,23 +327,29 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    assert args.suffix is None or args.trial_id is None, "cannot specify both suffix and trial_id"
+    assert args.suffix is "" or args.trial_id is None, "cannot specify both suffix and trial_id"
+    assert args.mode in ["trials", "experiments"], "mode must be either trials or experiments"
 
     start = time.time()
 
     row_counts = None
     for _ in range(args.naive_multiplier or 1):
-        row_counts = copy_experiments()
-        break
-        if args.trial_id is not None:
-            copy_trial(args.trial_id)
+        if args.mode == "experiments":
+            assert args.trial_id is None, "cannot specify trial_id in experiments mode"
+            assert args.suffix is ""
+            row_counts = copy_experiments()
+        elif args.mode == "trials":
+            if args.trial_id is not None:
+                copy_trial(args.trial_id)
+            else:
+                counts = copy_trials(suffix=args.suffix)
+                row_counts = (
+                    {k: v + counts[k] for k, v in row_counts.items()}
+                    if row_counts is not None
+                    else counts
+                )
         else:
-            counts = copy_trials(suffix=args.suffix or f"AND state = 'COMPLETED' LIMIT 2")
-            row_counts = (
-                {k: v + counts[k] for k, v in row_counts.items()}
-                if row_counts is not None
-                else counts
-            )
+            raise ValueError(f"unknown mode: {args.mode}")
 
     end = time.time()
     print("rows added:", row_counts)
