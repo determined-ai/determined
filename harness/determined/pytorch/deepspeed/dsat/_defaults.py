@@ -15,13 +15,11 @@ USE_DSAT_MODE_KEY = "_use_dsat_mode"
 GAS_DEFAULT = 1
 OVERWRITE_KEY = "overwrite_deepspeed_args"
 
-MODEL_INFO_PROFILING_DS_CONFIG = {
+# Native DS AT uses the below settings for the model info profile run, but also with the the stage
+# set to 3, presumably since that gives a general model the best chance to run without OOMing.
+# However, since some model cannot run with stage 3, we do not enforce that choice here.
+MODEL_INFO_PROFILE_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
-    "zero_optimization": {
-        "stage": 1
-    },  # Stage 3 gives the best chance for the model to successfully run without OOM and it's
-    # what native DSAT uses in its model profiling run, but some features like MOE aren't available
-    # with stage 3, so we just use 1. TODO: We should discuss.
     "autotuning": {
         "enabled": True,
         # The two fields below essentially use DS internals! Maybe fragile.
