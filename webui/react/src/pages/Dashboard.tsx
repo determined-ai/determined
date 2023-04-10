@@ -274,6 +274,7 @@ const Dashboard: React.FC = () => {
             pagination={false}
             rowKey="id"
             showHeader={false}
+            size="middle"
           />
         ) : (
           <Empty
