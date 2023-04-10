@@ -15,9 +15,7 @@ def run_test_case(testcase: str, message: str) -> None:
     )
 
     try:
-        exp.wait_for_experiment_state(
-            experiment_id, experimentv1State.STATE_COMPLETED, max_wait_secs=600
-        )
+        exp.wait_for_experiment_state(experiment_id, experimentv1State.COMPLETED, max_wait_secs=600)
 
         trials = exp.experiment_trials(experiment_id)
 

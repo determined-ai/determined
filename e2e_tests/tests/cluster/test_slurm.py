@@ -16,11 +16,11 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
         config_file,
         model_def_file,
     )
-    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_ERROR, max_wait_secs=600)
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.ERROR, max_wait_secs=600)
     trials = exp.experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != experimentv1State.STATE_ERROR:
+        if trial.state != experimentv1State.ERROR:
             continue
 
         logs = exp.trial_logs(trial.id)
@@ -182,7 +182,7 @@ def test_slurm_preemption() -> None:
         conf.cv_examples_path("cifar10_pytorch"),
         None,
     )
-    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.RUNNING)
     # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
     # partition
     high_priority_exp_id = exp.create_experiment(
@@ -193,12 +193,12 @@ def test_slurm_preemption() -> None:
     # In this scenario, cifar10_pytorch_high_priority experiment will cause the
     # cifar10_pytorch_cancelable experiment to get requeued. The experiment
     # cifar10_pytorch_high_priority will execute to completion.
-    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_QUEUED)
-    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.STATE_RUNNING)
-    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.QUEUED)
+    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(high_priority_exp_id, experimentv1State.COMPLETED)
     # Now, the experiment cifar10_pytorch_cancelable will resume as soon as the requested
     # resources are available.
-    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.RUNNING)
     # Finally, the experiment cifar10_pytorch_cancelable will complete if there are no other
     # interruptions.
-    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.COMPLETED)

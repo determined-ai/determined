@@ -25,7 +25,7 @@ def test_noop_pause_hpc() -> None:
     Walk through starting, pausing, and resuming a single no-op experiment.
     """
     experiment_id = exp.create_experiment(config_file, conf.fixtures_path("no_op"), None)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -45,7 +45,7 @@ def test_noop_pause_hpc() -> None:
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     # Wait at most 420 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
@@ -62,7 +62,7 @@ def test_noop_pause_hpc() -> None:
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 def remove_item_from_yaml_file(filename: str, item_name: str) -> str:

@@ -104,7 +104,7 @@ def test_cluster_admin_only_calls() -> None:
                 determined_test_session(creds),
                 # fmt: off
                 period=bindings.v1ResourceAllocationAggregationPeriod\
-                .RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY,
+                .DAILY,
                 # fmt: on
                 startDate=start.strftime(EXPECTED_TIME_FMT),
                 endDate=end.strftime(EXPECTED_TIME_FMT),

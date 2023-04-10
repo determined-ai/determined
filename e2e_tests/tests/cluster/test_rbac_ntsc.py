@@ -426,11 +426,11 @@ def test_ntsc_proxy() -> None:
                 determined_test_session(creds[0]),
                 NTSC_Kind(typ),
                 created_id,
-                lambda s: s == bindings.taskv1State.STATE_RUNNING,
+                lambda s: s == bindings.taskv1State.RUNNING,
                 timeout=300,
             )
             deets = get_ntsc_details(determined_test_session(creds[0]), typ, created_id)
-            assert deets.state == bindings.taskv1State.STATE_RUNNING, f"{typ} should be running"
+            assert deets.state == bindings.taskv1State.RUNNING, f"{typ} should be running"
             wait_service_ready(typ, created_id)
             assert (
                 get_proxy(creds[0], created_id) is None
