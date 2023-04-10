@@ -2,6 +2,7 @@ import collections
 import contextlib
 import datetime
 import enum
+import errno
 import inspect
 import json
 import logging
@@ -18,11 +19,45 @@ import stat
 import subprocess
 import time
 import uuid
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, SupportsFloat, Tuple, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    SupportsFloat,
+    Tuple,
+    Union,
+    cast,
+)
 
 import determined as det
 from determined import constants
 from determined.common import check, util
+
+
+def rmtree_nfs_safe(
+    path: Union[str, os.PathLike],
+    ignore_errors: bool = False,
+    onerror: Optional[Callable[[Any, Any, Any], Any]] = None,
+) -> None:
+    """
+    Reported shutil.rmtree() fails sometimes under NFS, and apparently the right solution is to
+    just retry a few times.
+    """
+    max_tries = 5
+    for tries in range(1, max_tries + 1):
+        try:
+            return shutil.rmtree(path, ignore_errors=ignore_errors, onerror=onerror)
+        except OSError as e:
+            if e.errno != errno.ENOTEMPTY or tries == max_tries:
+                raise
+            # This should not be possible, since rmtree empties directories before rmdir'ing them.
+            logging.debug(f"rmtree() failed ({e}), is this NFS?  Retrying (tries={tries})...")
+            # All 5 tries should take on the order of half a second.
+            time.sleep(2 ** tries / 100)
 
 
 @util.preserve_random_state
@@ -199,7 +234,7 @@ def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
     # in the checkpoint directory. This happens for EstimatorTrial because we overwrite the
     # estimator model directory with the checkpoint folder at the start of training.
     if code_path.exists():
-        shutil.rmtree(str(code_path))
+        rmtree_nfs_safe(str(code_path))
 
     # Most models can only be restored from a checkpoint if the original code is present. However,
     # since it is rather common that users mount large, non-model files into their working directory
@@ -341,7 +376,7 @@ def force_create_symlink(src: str, dst: str) -> None:
             if os.path.islink(dst) or os.path.isfile(dst):
                 os.unlink(dst)
             else:
-                shutil.rmtree(dst)
+                rmtree_nfs_safe(dst)
 
             try:
                 os.symlink(src, dst, target_is_directory=True)

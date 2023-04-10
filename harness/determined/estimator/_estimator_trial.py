@@ -18,7 +18,7 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, layers, monkey_patch, tensorboard, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -760,7 +760,7 @@ class EstimatorTrialController(det.TrialController):
 
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
             if self.estimator_dir.exists():
-                shutil.rmtree(str(self.estimator_dir))
+                util.rmtree_nfs_safe(str(self.estimator_dir))
             logging.debug(f"Copying from {load_path} to {self.estimator_dir}.")
             shutil.copytree(str(load_path), str(self.estimator_dir))
 
