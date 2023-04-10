@@ -238,8 +238,11 @@ func (f *fairShare) calculateGroupStates(
 				state.activeSlots += req.SlotsNeeded
 			}
 		}
+		ctx.Log().Debugf("new state %#v", state)
 		if state.MaxSlots != nil {
+			ctx.Log().Debugf("state.MaxSlots %d", *state.MaxSlots)
 			state.slotDemand = mathx.Min(state.slotDemand, *state.MaxSlots)
+			ctx.Log().Debugf("new state.slotDemand %d", state.slotDemand)
 		}
 	}
 
