@@ -83,15 +83,62 @@ data:
         image: {{ .Values.fluent.image }}
         {{- end }}
       {{- end }}
+      default_aux_resource_pool: {{ .Values.resources.resourcePool }}
+      default_compute_resource_pool: {{ .Values.resources.resourcePool }}
 
     {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea")._1 -}}
-    task_container_defaults:
-      image:
-         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
-         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
-      cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
-      gpu_pod_spec: {{ include "determined.gpuPodSpec" . | fromYaml | toJson }}
+    
+    resource_pools:
+      - pool_name: RTX_A5000
+        description: "Resource Pool for RTX_A5000"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecRTX_A5000" . | fromYaml | toJson }}
+      - pool_name: RTX_A6000
+        description: "Resource Pool for RTX_A6000"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecRTX_A6000" . | fromYaml | toJson }}
+      - pool_name: A100_NVLINK
+        description: "Resource Pool for A100_NVLINK"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecA100_NVLINK" . | fromYaml | toJson }}
+      - pool_name: A100_NVLINK_80GB
+        description: "Resource Pool for A100_NVLINK_80GB"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecA100_NVLINK_80GB" . | fromYaml | toJson }}
+      - pool_name: H100_NVLINK_80GB
+        description: "Resource Pool for H100_NVLINK_80GB"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecH100_NVLINK_80GB" . | fromYaml | toJson }}
+      - pool_name: A40
+        description: "Resource Pool for A40"
+        task_container_defaults:
+          image:
+            cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+            gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
+          cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+          gpu_pod_spec: {{ include "determined.gpuPodSpecA40" . | fromYaml | toJson }}
+      
     {{- if .Values.telemetry }}
     telemetry:
       enabled: {{ .Values.telemetry.enabled }}
