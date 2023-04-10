@@ -98,16 +98,6 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-+-------------+-----------------------------------------------------------------------------------+
-| Environment | File Name                                                                         |
-+=============+===================================================================================+
-| CPUs        | ``determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2``               |
-+-------------+-----------------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2``            |
-+-------------+-----------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2``            |
-+-------------+-----------------------------------------------------------------------------------+
-
 .. _custom-docker-images:
 
 Custom Images
