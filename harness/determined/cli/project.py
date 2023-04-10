@@ -149,9 +149,9 @@ def delete_project(args: Namespace) -> None:
                 sleep(2)
                 try:
                     p = bindings.get_GetProject(sess, id=p.id).project
-                    if p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                    if p.state == bindings.v1WorkspaceState.DELETE_FAILED:
                         raise errors.DeleteFailedException(p.errorMessage)
-                    elif p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                    elif p.state == bindings.v1WorkspaceState.DELETING:
                         print(f"Remaining experiment count: {p.numExperiments}")
                 except errors.NotFoundException:
                     print("Project deleted successfully.")

@@ -58,12 +58,12 @@ class SearchRunner:
             request_id = uuid.UUID(event.trialExitedEarly.requestId)
             if (
                 event.trialExitedEarly.exitedReason
-                == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
+                == bindings.v1TrialExitedEarlyExitedReason.INVALID_HP
             ):
                 self.state.trial_progress.pop(request_id, None)
             elif (
                 event.trialExitedEarly.exitedReason
-                == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
+                == bindings.v1TrialExitedEarlyExitedReason.UNSPECIFIED
             ):
                 self.state.failures.add(request_id)
             operations = self.search_method.on_trial_exited_early(
@@ -154,13 +154,13 @@ class SearchRunner:
                             )
                             if (
                                 event.experimentInactive.experimentState
-                                == bindings.experimentv1State.STATE_COMPLETED
+                                == bindings.experimentv1State.COMPLETED
                             ):
                                 self.state.experiment_completed = True
 
                             if (
                                 event.experimentInactive.experimentState
-                                == bindings.experimentv1State.STATE_PAUSED
+                                == bindings.experimentv1State.PAUSED
                             ):
                                 self._show_experiment_paused_msg()
                             else:

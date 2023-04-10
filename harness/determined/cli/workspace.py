@@ -235,9 +235,9 @@ def delete_workspace(args: Namespace) -> None:
                 sleep(2)
                 try:
                     w = bindings.get_GetWorkspace(sess, id=w.id).workspace
-                    if w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                    if w.state == bindings.v1WorkspaceState.DELETE_FAILED:
                         raise errors.DeleteFailedException(w.errorMessage)
-                    elif w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                    elif w.state == bindings.v1WorkspaceState.DELETING:
                         print(f"Remaining project count: {w.numProjects}")
                 except errors.NotFoundException:
                     print("Workspace deleted successfully.")
