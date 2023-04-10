@@ -29,7 +29,6 @@ import userStore from 'stores/users';
 import {
   ExperimentAction as Action,
   BulkActionError,
-  CommandResponse,
   ExperimentItem,
   Project,
   ProjectExperiment,
@@ -63,7 +62,9 @@ const batchActions = [
   Action.Cancel,
   Action.Kill,
   Action.Delete,
-];
+] as const;
+
+type BatchAction = (typeof batchActions)[number];
 
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
@@ -84,6 +85,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
   const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
 
@@ -159,8 +161,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
+  const unselect = useCallback(() => {
+    setClearSelectionTrigger((prev) => prev + 1);
+    setSelectAll(false);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    unselect();
+    fetchAll();
+  }, [fetchAll, unselect]);
+
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: fetchAll });
+    useModalExperimentMove({ onClose: handleModalClose });
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -170,71 +182,69 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [experiments, project]);
 
   const availableBatchActions = useMemo(() => {
+    if (selectAll) return batchActions;
     const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, batchActions, permissions);
-  }, [experimentMap, permissions, selectedExperimentIds]);
+    return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
+    // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
+  }, [experimentMap, permissions, selectAll, selectedExperimentIds]);
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<BulkActionError[] | void | CommandResponse> | void => {
-      const selectedIds = selectedExperimentIds;
-      if (action === Action.OpenTensorBoard) {
-        return openOrCreateTensorBoard({
-          experimentIds: selectedIds,
-          filters: selectAll ? fetchFilters : undefined,
-          workspaceId: project?.workspaceId,
-        });
-      }
-      if (action === Action.Move) {
-        return openMoveModal({
-          experimentIds: selectedExperimentIds.filter(
-            (id) =>
-              canActionExperiment(Action.Move, experimentMap[id]) &&
-              permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-          ),
-          filters: selectAll ? fetchFilters : undefined,
-          sourceProjectId: project?.id,
-          sourceWorkspaceId: project?.workspaceId,
-        });
-      }
-
+    async (action: BatchAction): Promise<BulkActionError[] | void> => {
       switch (action) {
+        case Action.OpenTensorBoard:
+          return openCommandResponse(
+            await openOrCreateTensorBoard({
+              experimentIds: selectedExperimentIds,
+              filters: selectAll ? fetchFilters : undefined,
+              workspaceId: project?.workspaceId,
+            }),
+          );
+        case Action.Move:
+          return openMoveModal({
+            experimentIds: selectedExperimentIds.filter(
+              (id) =>
+                canActionExperiment(Action.Move, experimentMap[id]) &&
+                permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+            ),
+            filters: selectAll ? fetchFilters : undefined,
+            sourceProjectId: project?.id,
+            sourceWorkspaceId: project?.workspaceId,
+          });
         case Action.Activate:
-          return activateExperiments({
+          return await activateExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Archive:
-          return archiveExperiments({
+          return await archiveExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Cancel:
-          return cancelExperiments({
+          return await cancelExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Kill:
-          return killExperiments({
+          return await killExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Pause:
-          return pauseExperiments({
+          return await pauseExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Unarchive:
-          return unarchiveExperiments({
+          return await unarchiveExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
         case Action.Delete:
-          return deleteExperiments({
+          return await deleteExperiments({
             experimentIds: selectedExperimentIds,
             filters: selectAll ? fetchFilters : undefined,
           });
-        default:
-          return Promise.resolve();
       }
     },
     [
@@ -250,19 +260,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const submitBatchAction = useCallback(
-    async (action: Action) => {
+    async (action: BatchAction) => {
       try {
-        const result = await sendBatchActions(action);
-        if (action === Action.OpenTensorBoard && result) {
-          openCommandResponse(result as CommandResponse);
-        }
+        await sendBatchActions(action);
 
         /*
          * Deselect selected rows since their states may have changed where they
          * are no longer part of the filter criteria.
          */
-        setSelectedExperimentIds([]);
-        setSelectAll(false);
+        unselect();
 
         // Refetch experiment list to get updates based on batch action.
         await fetchExperiments();
@@ -280,11 +286,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         });
       }
     },
-    [fetchExperiments, sendBatchActions],
+    [fetchExperiments, sendBatchActions, unselect],
   );
 
   const showConfirmation = useCallback(
-    (action: Action) => {
+    (action: BatchAction) => {
       modal.confirm({
         content: `
         Are you sure you want to ${action.toLocaleLowerCase()}
@@ -300,14 +306,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleBatchAction = useCallback(
-    (action?: string) => {
-      if (action === Action.OpenTensorBoard || action === Action.Move) {
+    (action: string) => {
+      if (action === Action.OpenTensorBoard) {
         submitBatchAction(action);
+      } else if (action === Action.Move) {
+        sendBatchActions(action);
       } else {
-        showConfirmation(action as Action);
+        showConfirmation(action as BatchAction);
       }
     },
-    [submitBatchAction, showConfirmation],
+    [submitBatchAction, sendBatchActions, showConfirmation],
   );
 
   return (
@@ -335,6 +343,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onAction={handleBatchAction}
             />
             <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
               colorMap={colorMap}
               data={experiments}
               fetchExperiments={fetchExperiments}

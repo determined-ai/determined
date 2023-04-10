@@ -710,7 +710,7 @@ export const deleteExperiments: DetApi<
   name: 'deleteExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.archiveExperiments(params, options);
+    return detApi.Experiments.deleteExperiments(params, options);
   },
 };
 

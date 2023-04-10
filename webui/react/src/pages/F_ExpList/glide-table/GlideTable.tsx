@@ -56,6 +56,7 @@ const cells: DataEditorProps['customRenderers'] = [
 ];
 
 interface Props {
+  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
   fetchExperiments: () => void;
@@ -76,6 +77,7 @@ const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 export const GlideTable: React.FC<Props> = ({
   data,
   fetchExperiments,
+  clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
   setSortableColumnIds,
@@ -135,6 +137,11 @@ export const GlideTable: React.FC<Props> = ({
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
   });
+
+  useEffect(() => {
+    if (clearSelectionTrigger === 0) return;
+    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
+  }, [clearSelectionTrigger]);
 
   const getRowThemeOverride = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
