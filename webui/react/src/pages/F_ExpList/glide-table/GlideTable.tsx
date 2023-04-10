@@ -116,7 +116,7 @@ export const GlideTable: React.FC<Props> = ({
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
     TableContextMenuProps,
     'open' | 'fetchExperiments'
-  >>();
+  >>(null);
 
   const {
     ui: { darkLight },

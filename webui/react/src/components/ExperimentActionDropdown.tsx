@@ -35,8 +35,8 @@ interface Props {
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings: ExperimentListSettings;
-  updateSettings: UpdateSettings;
+  settings?: ExperimentListSettings;
+  updateSettings?: UpdateSettings;
   workspaceId?: number;
 }
 
@@ -113,7 +113,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...(settings.pinned ?? {}) };
+            const newPinned = { ...(settings?.pinned ?? {}) };
             const pinSet = new Set(newPinned[experiment.projectId]);
             if (pinSet.has(id)) {
               pinSet.delete(id);
@@ -128,7 +128,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.add(id);
             }
             newPinned[experiment.projectId] = Array.from(pinSet);
-            updateSettings({ pinned: newPinned });
+            updateSettings?.({ pinned: newPinned });
             break;
           }
           case Action.Kill:
@@ -197,7 +197,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       id,
       onComplete,
       onVisibleChange,
-      settings.pinned,
+      settings?.pinned,
       updateSettings,
     ],
   );
@@ -205,7 +205,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
     (action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings.pinned?.[experiment.projectId] ?? []).includes(id)
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
           ? 'Unpin'
           : 'Pin';
         return { key: action, label };

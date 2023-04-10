@@ -3,8 +3,7 @@ import { Menu, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import usePermissions from 'hooks/usePermissions';
 import {
   activateExperiment,
@@ -78,132 +77,11 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, handleClose);
 
-  const permissions = usePermissions();
-
   const onComplete = useCallback(() => {
     fetchExperiments();
   }, [fetchExperiments]);
 
-  const menuItems = experiment
-    ? getActionsForExperiment(experiment, dropdownActions, permissions).map((action) => ({
-        danger: action === Action.Delete,
-        key: action,
-        label: action,
-      }))
-    : [];
-
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openExperimentMove } =
-    useModalExperimentMove({ onClose: onComplete });
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
-
-  const handleExperimentMove = useCallback(() => {
-    openExperimentMove({
-      experimentIds: [experiment.id],
-      sourceProjectId: experiment.projectId,
-      sourceWorkspaceId: experiment.workspaceId,
-    });
-  }, [openExperimentMove, experiment]);
-
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
-
-  const handleMenuClick = useCallback(
-    async (params: MenuInfo): Promise<void> => {
-      params.domEvent.stopPropagation();
-      handleClose();
-      try {
-        const action = params.key as Action;
-        switch (
-          action // Cases should match menu items.
-        ) {
-          case Action.Activate:
-            await activateExperiment({ experimentId: experiment.id });
-            onComplete();
-            break;
-          case Action.Archive:
-            await archiveExperiment({ experimentId: experiment.id });
-            onComplete();
-            break;
-          case Action.Cancel:
-            await cancelExperiment({ experimentId: experiment.id });
-            onComplete();
-            break;
-          case Action.OpenTensorBoard: {
-            const commandResponse = await openOrCreateTensorBoard({
-              experimentIds: [experiment.id],
-              workspaceId: experiment.workspaceId,
-            });
-            openCommandResponse(commandResponse);
-            break;
-          }
-          case Action.Kill:
-            modal.confirm({
-              content: `
-              Are you sure you want to kill
-              experiment ${experiment.id}?
-            `,
-              icon: <ExclamationCircleOutlined />,
-              okText: 'Kill',
-              onOk: async () => {
-                await killExperiment({ experimentId: experiment.id });
-                onComplete();
-              },
-              title: 'Confirm Experiment Kill',
-            });
-            break;
-          case Action.Pause:
-            await pauseExperiment({ experimentId: experiment.id });
-            onComplete();
-            break;
-          case Action.Unarchive:
-            await unarchiveExperiment({ experimentId: experiment.id });
-            onComplete();
-            break;
-          case Action.Delete:
-            modal.confirm({
-              content: `
-            Are you sure you want to delete
-            experiment ${experiment.id}?
-          `,
-              icon: <ExclamationCircleOutlined />,
-              okText: 'Delete',
-              onOk: async () => {
-                await deleteExperiment({ experimentId: experiment.id });
-                onComplete();
-              },
-              title: 'Confirm Experiment Deletion',
-            });
-            break;
-          case Action.Move:
-            handleExperimentMove();
-            break;
-          case Action.HyperparameterSearch:
-            handleHyperparameterSearch();
-            break;
-        }
-      } catch (e) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: `Unable to ${params.key} experiment ${experiment.id}.`,
-          publicSubject: `${capitalize(params.key.toString())} failed.`,
-          silent: false,
-          type: ErrorType.Server,
-        });
-      }
-    },
-    [
-      experiment.id,
-      experiment.workspaceId,
-      handleExperimentMove,
-      handleHyperparameterSearch,
-      handleClose,
-      onComplete,
-    ],
-  );
+  // <Menu items={menuItems} onClick={handleMenuClick} />
 
   return (
     <div
@@ -216,9 +94,9 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         top: y,
         width: 200,
       }}>
-      <Menu items={menuItems} onClick={handleMenuClick} />
-      {modalExperimentMoveContextHolder}
-      {modalHyperparameterSearchContextHolder}
+      <ExperimentActionDropdown
+        experiment={experiment}
+        onComplete={onComplete} />
     </div>
   );
 };
