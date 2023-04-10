@@ -157,7 +157,7 @@ class MetricReducer(metaclass=abc.ABCMeta):
 
         The return value should either be:
            -  A dict mapping string metric names to metric values, if the call to
-              context.wrap_reducer() omitted the `name` parameter, or
+              context.wrap_reducer() omitted the ``name`` parameter, or
            -  A non-dict metric value if the call to context.wrap_reducer() had name set to a string
               (an error will be raised if a dict-type metric is returned but name was set).
 

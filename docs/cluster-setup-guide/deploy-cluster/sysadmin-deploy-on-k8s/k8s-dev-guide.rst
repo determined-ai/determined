@@ -103,7 +103,7 @@ environment for Determined.
 
 After the dependencies have been installed, some changes need to be made within the Determined
 repository. First, copy the Master configuration found at ``/etc/determined/master.yaml`` and place
-it under a new name inside the Determined repo, for example at `determined/tools/k8s-master.yaml`
+it under a new name inside the Determined repo, for example at ``determined/tools/k8s-master.yaml``
 (there already exists a master.yaml in the tools dir).
 
 .. code:: bash
