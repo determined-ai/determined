@@ -239,20 +239,10 @@ VALUES
 		}
 
 		if rollbackHappened {
-			if _, err = tx.ExecContext(ctx, `
-				SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
-			`, m.TrialId); err != nil {
-				return errors.Wrap(err, "locking the row with this trial id using select for update")
-			}
 			if err := db.updateTotalBatches(ctx, tx, int(m.TrialId)); err != nil {
 				return errors.Wrap(err, "rollback")
 			}
 		} else {
-			if _, err = tx.ExecContext(ctx, `
-		SELECT * FROM trials WHERE id = $1 FOR UPDATE; 
-	`, m.TrialId); err != nil {
-				return errors.Wrap(err, "locking the row with this trial id using select for update")
-			}
 			if _, err := tx.ExecContext(ctx, `
 UPDATE trials SET total_batches = GREATEST(total_batches, $2)
 WHERE id = $1;
