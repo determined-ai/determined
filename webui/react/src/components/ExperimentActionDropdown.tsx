@@ -33,6 +33,7 @@ import { openCommandResponse } from 'utils/wait';
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
+  makeOpen?: boolean;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
@@ -58,6 +59,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  makeOpen,
   onComplete,
   onVisibleChange,
   settings,
@@ -202,8 +204,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     ],
   );
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
-    (action) => {
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
+    .filter((action) => action !== Action.SwitchPin || settings)
+    .map((action) => {
       if (action === Action.SwitchPin) {
         const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
           ? 'Unpin'
@@ -212,8 +215,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    },
-  );
+    });
 
   const menu: DropdownProps['menu'] = useMemo(() => {
     return { items: [...menuItems], onClick: handleMenuClick };
@@ -235,6 +237,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <>
       <Dropdown
         menu={menu}
+        open={makeOpen}
         placement="bottomLeft"
         trigger={['contextMenu']}
         onOpenChange={onVisibleChange}>

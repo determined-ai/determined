@@ -122,7 +122,7 @@ export const GlideTable: React.FC<Props> = ({
     ui: { darkLight },
   } = useUI();
 
-  const users = useObservable(userStore.getUsers());
+  const users = useObservable(usersStore.getUsers());
 
   const columnIds = useMemo<ExperimentColumn[]>(
     () => [...STATIC_COLUMNS, ...sortableColumnIds],
@@ -250,6 +250,7 @@ export const GlideTable: React.FC<Props> = ({
 
   const onCellContextMenu = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      contextMenuOpen.set(false);
       const [, row] = cell;
       const experiment = Loadable.match(data?.[row], {
         Loaded: (record) => record,
@@ -269,7 +270,7 @@ export const GlideTable: React.FC<Props> = ({
         x: Math.max(0, event.bounds.x + event.localEventX - 4),
         y: Math.max(0, event.bounds.y + event.localEventY - 4),
       });
-      contextMenuOpen.set(true);
+      setTimeout(() => contextMenuOpen.set(true), 25);
     },
     [data, project, setContextMenuProps, contextMenuOpen],
   );
