@@ -19,26 +19,6 @@ DB_PASSWORD = os.environ.get("DET_DB_PASSWORD", "postgres")
 DB_HOST = os.environ.get("DET_DB_HOST", "localhost")
 DB_PORT = os.environ.get("DET_DB_PORT", "5432")
 
-
-"""
-- connect to db
-- create new trial records
-    - select completed trials
-        - maybe select all trial states
-    - maybe zeroout checkpoint size, count, restarts, task and request ids.
-    - vary state between completed and errored
-    - add synth tag
-- replicate steps and validation records
-    - maybe vary total_batches? offset
-    - update trial_id and trial_run_id
-- bulk update trial ids.
-- check that related endpoints work
-
-
-TODO:
-- we'd probably want to only pick trials that belong to multi trial experiments
-"""
-
 # a class extending psycopg.Cursor that adds logging around each query execute.
 class LoggingCursor(psycopg.Cursor):
     def execute(self, query: Union[Query, str], *args, **kwargs) -> None:
@@ -202,9 +182,6 @@ ALTER TABLE {table} DROP COLUMN og_id;
 def _copy_trials(
     cur: psycopg.Cursor, suffix="", exclude_single_searcher=True
 ) -> Generator[dict, None, None]:
-    """
-    Duplicate trials and associated metrics for multi trial experiments.
-    """
     affected_rows: Dict[str, int] = {}
     table = "trials"
     trial_suffix = f"""
@@ -263,6 +240,9 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
 
 
 def copy_trials(suffix="", exclude_single_searcher=True) -> dict:
+    """
+    Duplicate trials and associated metrics for multi trial experiments.
+    """
     with db_cursor() as cur:
         with _copy_trials(cur, suffix, exclude_single_searcher) as affected_rows:
             return affected_rows
@@ -310,7 +290,6 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    # add general help description
     parser.description = "Replicate trials within experiments for multi-trial experiments or whole experiments at db level in bulk."
 
     parser.add_argument("mode", type=str, help="mode to run in: trials, experiments")
@@ -321,7 +300,6 @@ if __name__ == "__main__":
         help="sql suffix to select the trials to replicate this appends after an existing WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
-    # parser.add_argument("--experiment-id", type=int, default=None, help="experiment id to replicate")
     parser.add_argument(
         "--naive-multiplier", type=int, default=None, help="repeat the operation n times (naive)"
     )
