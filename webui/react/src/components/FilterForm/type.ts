@@ -7,7 +7,7 @@ export const FormType = {
 
 export type FormType = ValueOf<typeof FormType>;
 
-export type FormFieldValue = string | string[] | number | number[] | null;
+export type FormFieldValue = string | number | null;
 
 export type FormField = {
   readonly id: string;
@@ -40,7 +40,6 @@ export const OperatorMap = {
   eq: '=',
   greater: '>',
   greaterEq: '>=',
-  in: 'in',
   is: 'is',
   isEmpty: 'is empty',
   isNot: 'is not',
@@ -49,13 +48,11 @@ export const OperatorMap = {
   notContain: 'not contains',
   notEmpty: 'not empty',
   notEq: '!=',
-  notIn: 'not in',
 } as const;
 
 export type Operator = ValueOf<typeof OperatorMap>;
 
 export const AvaliableOperators = {
-  list: [OperatorMap.in, OperatorMap.notIn],
   number: [
     OperatorMap.eq,
     OperatorMap.notEq,

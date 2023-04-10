@@ -38,13 +38,11 @@ const OperatorQueryMap: Record<Operator, (colName: string, val: FormFieldValue) 
   '>': (colName: string, val: FormFieldValue) => `${colName}>${val}`,
   '>=': (colName: string, val: FormFieldValue) => `${colName}>=${val}`,
   'contains': (colName: string, val: FormFieldValue) => `${colName}~${val}`,
-  'in': (colName: string, val: FormFieldValue) => `${colName}????${val}`, // TODO: no spec for list yet
   'is': (colName: string, val: FormFieldValue) => `${colName}:${val}`,
   'is empty': (colName: string) => `${colName}:null`,
   'is not': (colName: string, val: FormFieldValue) => `-${colName}: ${val}`,
   'not contains': (colName: string, val: FormFieldValue) => `-${colName}~${val}`,
   'not empty': (colName: string) => `-${colName}:null`,
-  'not in': (colName: string, val: FormFieldValue) => `${colName}?????${val}`, // TODO: no spec for list yet
 } as const;
 
 export class FormClassStore {
