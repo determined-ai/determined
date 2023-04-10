@@ -1,4 +1,5 @@
 import DataEditor, {
+  CellClickedEventArgs,
   CompactSelection,
   DataEditorProps,
   DataEditorRef,
@@ -38,7 +39,13 @@ import RangeCell from './custom-cells/progress';
 import SparklineCell from './custom-cells/sparkline';
 import SpinnerCell from './custom-cells/spinner';
 import TagsCell from './custom-cells/tags';
-import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
+import {
+  contextMenuItems,
+  pinnedContextMenuItems,
+  placeholderMenuItems,
+  TableActionMenu,
+  TableActionMenuProps,
+} from './menu';
 import { MapOfIdsToColors } from './useGlasbey';
 import { getTheme, headerIcons } from './utils';
 
@@ -81,6 +88,11 @@ export const GlideTable: React.FC<Props> = ({
   page,
 }) => {
   const gridRef = useRef<DataEditorRef>(null);
+  const pinnedGridRef = useRef<DataEditorRef>(null);
+
+  const [pinnedRows, setPinnedRows] = useState<Loadable<ExperimentItem>[]>([]);
+  const [mainTableData, setMainTableData] = useState<Loadable<ExperimentItem>[]>(data);
+  const [originalIndex, setOriginalIndex] = useState<number[]>([]);
 
   useEffect(() => {
     if (initialScrollPositionSet.get()) return;
@@ -123,27 +135,27 @@ export const GlideTable: React.FC<Props> = ({
 
   const getRowThemeOverride = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
-      if (!data[row]) return;
-      const accentColor = Loadable.match(data[row], {
+      if (!mainTableData[row]) return;
+      const accentColor = Loadable.match(mainTableData[row], {
         Loaded: (record) => (colorMap[record.id] ? { accentColor: colorMap[record.id] } : {}),
         NotLoaded: () => ({}),
       });
       return { borderColor: '#F0F0F0', ...accentColor };
     },
-    [colorMap, data],
+    [colorMap, mainTableData],
   );
 
   useEffect(() => {
     const selectedRowIndices = selection.rows.toArray();
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
-        .map((idx) => data?.[idx])
+        .map((idx) => mainTableData?.[idx])
         .filter(Loadable.isLoaded)
         .map((record) => String(record.data.id));
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
-  }, [selection.rows, setSelectedExperimentIds, data]);
+  }, [selection.rows, setSelectedExperimentIds, mainTableData]);
 
   const theme = getTheme(bodyStyles);
 
@@ -208,7 +220,7 @@ export const GlideTable: React.FC<Props> = ({
     (cell: Item): GridCell => {
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
-      const row = data[rowIdx];
+      const row = mainTableData[rowIdx];
       if (Loadable.isLoaded(row)) {
         return columnDefs[columnId].renderer(row.data, rowIdx);
       }
@@ -221,8 +233,117 @@ export const GlideTable: React.FC<Props> = ({
         kind: GridCellKind.Custom,
       };
     },
-    [data, columnIds, columnDefs],
+    [mainTableData, columnIds, columnDefs],
   );
+
+  const getPinnedCellContent = React.useCallback(
+    (cell: Item): GridCell => {
+      const [colIdx, rowIdx] = cell;
+      const columnId = columnIds[colIdx];
+      const row = pinnedRows[rowIdx];
+      if (Loadable.isLoaded(row)) {
+        return columnDefs[columnId].renderer(row.data, rowIdx);
+      }
+      return {
+        allowOverlay: true,
+        copyData: '',
+        data: {
+          kind: 'spinner-cell',
+        },
+        kind: GridCellKind.Custom,
+      };
+    },
+    [pinnedRows, columnIds, columnDefs],
+  );
+
+  const onContextMenu = React.useCallback(
+    (args: CellClickedEventArgs) => {
+      args.preventDefault();
+
+      const { bounds } = args;
+      const items: MenuProps['items'] = contextMenuItems;
+      const x = bounds.x;
+      const y = bounds.y + bounds.height;
+      setMenuProps((prev) => ({
+        ...prev,
+        handleClick: () => {
+          const rowIndex = args.location[1];
+
+          setOriginalIndex((prev) => {
+            prev.push(rowIndex);
+            return [...prev];
+          });
+
+          setPinnedRows((prev) => {
+            prev.push(mainTableData.splice(rowIndex, 1)[0]);
+            return [...prev];
+          });
+
+          setMainTableData((prev) => {
+            prev.splice(rowIndex, 1);
+
+            return [...prev];
+          });
+
+          setMenuIsOpen(false);
+        },
+        isContextMenu: true,
+        items,
+        title: '',
+        x,
+        y,
+      }));
+      setMenuIsOpen(true);
+    },
+    [mainTableData],
+  );
+
+  const onPinnedGridContextMenu = React.useCallback(
+    (args: CellClickedEventArgs) => {
+      args.preventDefault();
+
+      const { bounds } = args;
+      const items: MenuProps['items'] = pinnedContextMenuItems;
+      const x = bounds.x;
+      const y = bounds.y + bounds.height;
+      setMenuProps((prev) => ({
+        ...prev,
+        handleClick: () => {
+          const rowIndex = args.location[1];
+          const prevIndex = originalIndex[rowIndex];
+
+          setOriginalIndex((prev) => {
+            prev.splice(rowIndex, 1);
+            return [...prev];
+          });
+
+          setMainTableData((prev) => {
+            prev.splice(prevIndex, 0, data[prevIndex]);
+            return [...prev];
+          });
+
+          setPinnedRows((prev) => {
+            prev.splice(rowIndex, 1);
+
+            return [...prev];
+          });
+
+          setMenuIsOpen(false);
+        },
+        isContextMenu: true,
+        items,
+        title: '',
+        x,
+        y,
+      }));
+      setMenuIsOpen(true);
+    },
+    [originalIndex, data],
+  );
+
+  const onCellClicked = React.useCallback(() => {
+    if (menuIsOpen) setMenuIsOpen(false);
+  }, [menuIsOpen]);
 
   const handleGridSelectionChange = useCallback((newSelection: GridSelection) => {
     const [, row] = newSelection.current?.cell ?? [undefined, undefined];
@@ -258,6 +379,26 @@ export const GlideTable: React.FC<Props> = ({
 
   return (
     <div>
+      {!!pinnedRows.length && (
+        <DataEditor
+          columns={dataGridColumns}
+          customRenderers={cells}
+          freezeColumns={2}
+          getCellContent={getPinnedCellContent}
+          gridSelection={selection}
+          headerIcons={headerIcons}
+          ref={pinnedGridRef}
+          rows={pinnedRows.length}
+          smoothScrollX
+          smoothScrollY
+          theme={theme}
+          verticalBorder={verticalBorder}
+          width="100%"
+          onCellClicked={onCellClicked}
+          onCellContextMenu={(_, event) => onPinnedGridContextMenu(event)}
+          onVisibleRegionChanged={handleScroll}
+        />
+      )}
       <DataEditor
         columns={dataGridColumns}
         customRenderers={cells}
@@ -268,12 +409,14 @@ export const GlideTable: React.FC<Props> = ({
         headerIcons={headerIcons}
         height={GRID_HEIGHT}
         ref={gridRef}
-        rows={data.length}
+        rows={mainTableData.length}
         smoothScrollX
         smoothScrollY
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
+        onCellClicked={onCellClicked}
+        onCellContextMenu={(_, event) => onContextMenu(event)}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
         onColumnResizeEnd={onColumnResizeEnd}
@@ -282,10 +425,8 @@ export const GlideTable: React.FC<Props> = ({
         onVisibleRegionChanged={handleScroll}
         //
         // these might come in handy
-        // onCellClicked={onCellClicked}
         // onItemHovered={onItemHovered}
         // onHeaderContextMenu={onHeaderContextMenu}
-        // onCellContextMenu={onCellContextMenu}
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
     </div>

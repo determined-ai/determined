@@ -2,9 +2,16 @@ import { SmileOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 
-// eslint-disable-next-line
-function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void) {
+function useOutsideClickHandler(
+  // eslint-disable-next-line
+  ref: MutableRefObject<any>,
+  handler: () => void,
+  shouldSkip: boolean,
+) {
   useEffect(() => {
+    if (shouldSkip) {
+      return;
+    }
     /**
      * Alert if clicked on outside of element
      */
@@ -19,25 +26,29 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
       // Unbind the event listener on clean up
       document.removeEventListener('mouseup', handleClickOutside);
     };
-  }, [ref, handler]);
+  }, [ref, handler, shouldSkip]);
 }
 
 export interface TableActionMenuProps extends MenuProps {
   x: number;
   y: number;
   open: boolean;
+  handleClick?: () => void;
   handleClose: () => void;
+  isContextMenu?: boolean;
 }
 
 export const TableActionMenu: React.FC<TableActionMenuProps> = ({
   x,
   y,
   open,
+  handleClick,
   handleClose,
   items,
+  isContextMenu = false,
 }) => {
   const containerRef = useRef(null);
-  useOutsideClickHandler(containerRef, handleClose);
+  useOutsideClickHandler(containerRef, handleClose, isContextMenu);
 
   return (
     <div
@@ -49,7 +60,8 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
         position: 'fixed',
         top: y,
         width: 200,
-      }}>
+      }}
+      onClick={handleClick}>
       <Menu items={items} />
     </div>
   );
@@ -67,5 +79,21 @@ export const placeholderMenuItems: MenuProps['items'] = [
     icon: <SmileOutlined />,
     key: '2',
     label: 'Other Menu Thing',
+  },
+];
+
+export const contextMenuItems: MenuProps['items'] = [
+  {
+    disabled: false,
+    key: '1',
+    label: 'Pin row',
+  },
+];
+
+export const pinnedContextMenuItems: MenuProps['items'] = [
+  {
+    disabled: false,
+    key: '1',
+    label: 'Unpin row',
   },
 ];
