@@ -3,5 +3,5 @@ from determined.pytorch.deepspeed.dsat._dsat_search_method import (
     DSATSearchMethodBase,
     DSATTrial,
     DSATTrialTracker,
-    DSATModelProfilingInfo,
+    DSATModelProfileInfoTrial,
 )
