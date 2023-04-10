@@ -183,8 +183,15 @@ func (db *PgDB) addTrialMetrics(
 ) (err error) {
 	trialMetricTables := []string{"raw_steps", "raw_validations"}
 	targetTable := "raw_steps"
+	metricsBody := map[string]interface{}{
+		"avg_metrics":   m.Metrics.AvgMetrics,
+		"batch_metrics": m.Metrics.BatchMetrics,
+	}
 	if isValidation {
 		targetTable = "raw_validations"
+		metricsBody = map[string]interface{}{
+			"validation_metrics": m.Metrics.AvgMetrics,
+		}
 	}
 	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
 		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
@@ -223,12 +230,9 @@ INSERT INTO %s
 VALUES
 	(:trial_id, :trial_run_id, now(), :metrics, :total_batches)
 `, targetTable), model.TrialMetrics{
-			TrialID:    int(m.TrialId),
-			TrialRunID: int(m.TrialRunId),
-			Metrics: map[string]interface{}{
-				"avg_metrics":   m.Metrics.AvgMetrics,
-				"batch_metrics": m.Metrics.BatchMetrics,
-			},
+			TrialID:      int(m.TrialId),
+			TrialRunID:   int(m.TrialRunId),
+			Metrics:      metricsBody,
 			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("inserting metrics into %s", targetTable))
