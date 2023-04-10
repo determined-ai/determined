@@ -6,7 +6,7 @@ import typing
 
 import requests
 
-if typing.CHECKING:
+if typing.TYPE_CHECKING:
     from determined.common import api
 
 # flake8: noqa
