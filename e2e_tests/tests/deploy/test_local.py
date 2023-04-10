@@ -350,7 +350,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 conf.fixtures_path("no_op"),
                 None,
             )
-            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+            exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
     for agent_id in range(num_agents):
         agent_down(["--agent-name", f"agent-{agent_id}"])

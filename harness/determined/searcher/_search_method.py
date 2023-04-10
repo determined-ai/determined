@@ -76,17 +76,17 @@ class ExitedReason(Enum):
     ) -> "ExitedReason":
         if (
             bindings_exited_reason
-            == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP
+            == bindings.v1TrialExitedEarlyExitedReason.INVALID_HP
         ):
             return cls.INVALID_HP
         if (
             bindings_exited_reason
-            == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_USER_REQUESTED_STOP
+            == bindings.v1TrialExitedEarlyExitedReason.USER_REQUESTED_STOP
         ):
             return cls.USER_CANCELED
         if (
             bindings_exited_reason
-            == bindings.v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
+            == bindings.v1TrialExitedEarlyExitedReason.UNSPECIFIED
         ):
             return cls.ERRORED
         raise RuntimeError(f"Invalid exited reason: {bindings_exited_reason}")

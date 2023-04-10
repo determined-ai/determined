@@ -704,7 +704,7 @@ class CheckpointContext:
             training=bindings.v1CheckpointTrainingMetadata(),
             uuid=storage_id,
             reportTime=datetime.now(timezone.utc).isoformat(),
-            state=bindings.checkpointv1State.STATE_COMPLETED,
+            state=bindings.checkpointv1State.COMPLETED,
         )
         bindings.post_ReportCheckpoint(self._session, body=ckpt)
         logger.info(f"Reported checkpoint to master {storage_id}")

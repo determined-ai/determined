@@ -189,7 +189,7 @@ def update_stack(
             "Value": constants.defaults.STACK_TAG_VALUE,
         },
         {
-            "Key": constants.deployment_types.TYPE_TAG_KEY,
+            "Key": constants.deployment_types.TAG_KEY,
             "Value": deployment_type,
         },
     ]
@@ -246,7 +246,7 @@ def create_stack(
             "Value": constants.defaults.STACK_TAG_VALUE,
         },
         {
-            "Key": constants.deployment_types.TYPE_TAG_KEY,
+            "Key": constants.deployment_types.TAG_KEY,
             "Value": deployment_type,
         },
     ]
@@ -350,7 +350,7 @@ def deploy_stack(
         if not no_prompt:
             tags = get_tags(stack_name, boto3_session)
             prompt_needed = False
-            if constants.deployment_types.TYPE_TAG_KEY not in tags:
+            if constants.deployment_types.TAG_KEY not in tags:
                 print()
                 print("Previous value of --deployment-type is unknown. Versions of `det` prior to")
                 print("0.17.3 did not annotate deployed clusters, and it was the responsibility of")
@@ -360,7 +360,7 @@ def deploy_stack(
                 print()
 
                 prompt_needed = True
-            elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
+            elif tags[constants.deployment_types.TAG_KEY] != deployment_type:
                 print("Value of --deployment-type has changed!")
                 prompt_needed = True
 

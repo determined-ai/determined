@@ -103,13 +103,13 @@ class ModelSortBy(enum.Enum):
         WORKSPACE
     """
 
-    UNSPECIFIED = bindings.v1GetModelsRequestSortBy.SORT_BY_UNSPECIFIED.value
-    NAME = bindings.v1GetModelsRequestSortBy.SORT_BY_NAME.value
-    DESCRIPTION = bindings.v1GetModelsRequestSortBy.SORT_BY_DESCRIPTION.value
-    CREATION_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_CREATION_TIME.value
-    LAST_UPDATED_TIME = bindings.v1GetModelsRequestSortBy.SORT_BY_LAST_UPDATED_TIME.value
-    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.SORT_BY_NUM_VERSIONS.value
-    WORKSPACE = bindings.v1GetModelsRequestSortBy.SORT_BY_WORKSPACE.value
+    UNSPECIFIED = bindings.v1GetModelsRequestSortBy.UNSPECIFIED.value
+    NAME = bindings.v1GetModelsRequestSortBy.NAME.value
+    DESCRIPTION = bindings.v1GetModelsRequestSortBy.DESCRIPTION.value
+    CREATION_TIME = bindings.v1GetModelsRequestSortBy.CREATION_TIME.value
+    LAST_UPDATED_TIME = bindings.v1GetModelsRequestSortBy.LAST_UPDATED_TIME.value
+    NUM_VERSIONS = bindings.v1GetModelsRequestSortBy.NUM_VERSIONS.value
+    WORKSPACE = bindings.v1GetModelsRequestSortBy.WORKSPACE.value
 
     def _to_bindings(self) -> bindings.v1GetModelsRequestSortBy:
         return bindings.v1GetModelsRequestSortBy(self.value)
@@ -121,10 +121,10 @@ class ModelOrderBy(enum.Enum):
     descending order.
     """
 
-    ASCENDING = bindings.v1OrderBy.ORDER_BY_ASC.value
-    ASC = bindings.v1OrderBy.ORDER_BY_ASC.value
-    DESCENDING = bindings.v1OrderBy.ORDER_BY_DESC.value
-    DESC = bindings.v1OrderBy.ORDER_BY_DESC.value
+    ASCENDING = bindings.v1OrderBy.ASC.value
+    ASC = bindings.v1OrderBy.ASC.value
+    DESCENDING = bindings.v1OrderBy.DESC.value
+    DESC = bindings.v1OrderBy.DESC.value
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
@@ -195,8 +195,8 @@ class Model:
                 self._session,
                 modelName=self.name,
                 limit=1,
-                sortBy=bindings.v1GetModelVersionsRequestSortBy.SORT_BY_VERSION,
-                orderBy=bindings.v1OrderBy.ORDER_BY_DESC,
+                sortBy=bindings.v1GetModelVersionsRequestSortBy.VERSION,
+                orderBy=bindings.v1OrderBy.DESC,
             )
             if not resp.modelVersions:
                 return None

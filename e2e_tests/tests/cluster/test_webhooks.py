@@ -49,13 +49,13 @@ def test_slack_webhook() -> None:
     sess = api_utils.determined_test_session(admin=True)
 
     webhook_trigger = bindings.v1Trigger(
-        triggerType=bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
+        triggerType=bindings.v1TriggerType.EXPERIMENT_STATE_CHANGE,
         condition={"state": "COMPLETED"},
     )
 
     webhook_request = bindings.v1Webhook(
         url=f"http://localhost:{SERVER_PORT}",
-        webhookType=bindings.v1WebhookType.WEBHOOK_TYPE_SLACK,
+        webhookType=bindings.v1WebhookType.SLACK,
         triggers=[webhook_trigger],
     )
 
@@ -68,7 +68,7 @@ def test_slack_webhook() -> None:
 
     exp.wait_for_experiment_state(
         experiment_id,
-        bindings.experimentv1State.STATE_COMPLETED,
+        bindings.experimentv1State.COMPLETED,
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
     exp_config = exp.experiment_config_json(experiment_id)

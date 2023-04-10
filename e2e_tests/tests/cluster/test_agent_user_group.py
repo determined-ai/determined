@@ -25,9 +25,9 @@ def _delete_workspace_and_check(
         sleep(1)
         try:
             w = bindings.get_GetWorkspace(sess, id=w.id).workspace
-            if w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+            if w.state == bindings.v1WorkspaceState.DELETE_FAILED:
                 raise errors.DeleteFailedException(w.errorMessage)
-            elif w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+            elif w.state == bindings.v1WorkspaceState.DELETING:
                 continue
         except errors.NotFoundException:
             break
@@ -42,7 +42,7 @@ def _check_test_experiment(project_id: int) -> None:
     )
     exp.wait_for_experiment_state(
         test_exp_id,
-        experimentv1State.STATE_COMPLETED,
+        experimentv1State.COMPLETED,
     )
 
     trials = exp.experiment_trials(test_exp_id)

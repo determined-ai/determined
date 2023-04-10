@@ -24,7 +24,7 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -36,7 +36,7 @@ def test_noop_pause() -> None:
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     # Wait at most 20 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
@@ -53,7 +53,7 @@ def test_noop_pause() -> None:
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -66,7 +66,7 @@ def test_noop_nan_validations() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -97,13 +97,13 @@ def test_noop_pause_of_experiment_without_trials() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.QUEUED)
 
     for _ in range(5):
-        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
+        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.QUEUED
         time.sleep(1)
 
     exp.kill_single(experiment_id)
@@ -124,10 +124,10 @@ def test_noop_pause_with_multiexperiment() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([experiment_id])
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
 
     exp.activate_experiments([experiment_id])
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.QUEUED)
     exp.kill_experiments([experiment_id])
 
 
@@ -147,7 +147,7 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiments([], name=tf.name)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
     exp.kill_experiments([experiment_id])
 
 
