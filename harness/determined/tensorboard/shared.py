@@ -4,6 +4,7 @@ import pathlib
 import shutil
 from typing import Any, List
 
+from determined import util
 from determined.tensorboard import base
 
 logger = logging.getLogger("determined.tensorboard")
@@ -42,4 +43,4 @@ class SharedFSTensorboardManager(base.TensorboardManager):
             shutil.copy(path, mangled_path)
 
     def delete(self) -> None:
-        shutil.rmtree(self.shared_fs_base, False)
+        util.rmtree_nfs_safe(self.shared_fs_base, False)

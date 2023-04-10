@@ -1,11 +1,10 @@
 import logging
 import os
-import shutil
 import socket
 import tempfile
 from typing import Any, List, Optional
 
-from determined import constants, ipc
+from determined import constants, ipc, util
 
 
 class DistributedContext:
@@ -249,7 +248,7 @@ class DistributedContext:
         if self._is_local_chief:
             self._local_chief_zmq.close()
             if self.tempdir is not None:
-                shutil.rmtree(self.tempdir)
+                util.rmtree_nfs_safe(self.tempdir)
                 self.tempdir = None
         else:
             self._local_worker_zmq.close()
