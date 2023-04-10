@@ -7,6 +7,8 @@ import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
 import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
@@ -168,11 +170,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleModalClose = useCallback(() => {
     unselect();
-    fetchAll();
-  }, [fetchAll, unselect]);
+    fetchExperiments();
+  }, [fetchExperiments, unselect]);
 
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleModalClose });
+  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
@@ -200,16 +201,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             }),
           );
         case Action.Move:
-          return openMoveModal({
-            experimentIds: selectedExperimentIds.filter(
-              (id) =>
-                canActionExperiment(Action.Move, experimentMap[id]) &&
-                permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-            ),
-            filters: selectAll ? fetchFilters : undefined,
-            sourceProjectId: project?.id,
-            sourceWorkspaceId: project?.workspaceId,
-          });
+          return ExperimentMoveModal.open();
         case Action.Activate:
           return await activateExperiments({
             experimentIds: selectedExperimentIds,
@@ -247,16 +239,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           });
       }
     },
-    [
-      openMoveModal,
-      selectedExperimentIds,
-      project?.id,
-      project?.workspaceId,
-      experimentMap,
-      permissions,
-      selectAll,
-      fetchFilters,
-    ],
+    [selectedExperimentIds, selectAll, fetchFilters, project?.workspaceId, ExperimentMoveModal],
   );
 
   const submitBatchAction = useCallback(
@@ -361,7 +344,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           </>
         )}
       </>
-      {modalExperimentMoveContextHolder}
+      <ExperimentMoveModal.Component
+        experimentIds={selectedExperimentIds.filter(
+          (id) =>
+            canActionExperiment(Action.Move, experimentMap[id]) &&
+            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+        )}
+        filters={selectAll ? fetchFilters : undefined}
+        sourceProjectId={project?.id}
+        sourceWorkspaceId={project?.workspaceId}
+        onClose={handleModalClose}
+      />
     </Page>
   );
 };

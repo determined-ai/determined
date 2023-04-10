@@ -8,7 +8,8 @@ import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { moveExperiment } from 'services/api';
+import { moveExperiments } from 'services/api';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import projectStore from 'stores/projects';
@@ -25,25 +26,15 @@ type FormInputs = {
 interface Props {
   onClose?: () => void;
   experimentIds: number[];
+  filters?: V1BulkExperimentFilters;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
 }
 
-const moveExperimentWithHandler = async (
-  experimentId: number,
-  destinationProjectId: number,
-): Promise<number> => {
-  try {
-    await moveExperiment({ destinationProjectId, experimentId });
-    return 0;
-  } catch (e) {
-    return 1;
-  }
-};
-
 const ExperimentMoveModalComponent: React.FC<Props> = ({
   onClose,
   experimentIds,
+  filters,
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {
@@ -81,15 +72,14 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    const results = await Promise.allSettled(
-      experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projId)),
-    );
-    const numFailures = results.filter(
-      (res) => res.status !== 'fulfilled' || res.value === 1,
-    ).length;
+    const results = await moveExperiments({ destinationProjectId: projId, experimentIds, filters });
+
+    const numFailures = results?.length ?? 0;
 
     const experimentText =
-      experimentIds.length === 1
+      filters !== undefined
+        ? 'All experiments'
+        : experimentIds.length === 1
         ? `Experiment ${experimentIds[0]}`
         : `${experimentIds.length} experiments`;
 
@@ -109,7 +99,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         ),
         message: 'Move Success',
       });
-    } else if (numFailures === experimentIds.length) {
+    } else if (numFailures === experimentIds.length && filters === undefined) {
       notification.warning({
         description: `Unable to move ${experimentText}`,
         message: 'Move Failure',
@@ -119,8 +109,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         description: (
           <div onClick={closeNotification}>
             <p>
-              {numFailures} out of {experimentIds.length} experiments failed to move to project{' '}
-              {destinationProjectName}
+              {numFailures} out of {filters !== undefined ? 'all selected' : experimentIds.length}{' '}
+              experiments failed to move to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
