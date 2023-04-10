@@ -57,7 +57,7 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       colorLink: '#57a3fa',
       colorLinkHover: '#8dc0fb',
       colorPrimary: '#1890ff',
-      fontFamily: 'var(--font-family)',
+      fontFamily: 'var(--theme-font-family)',
     },
   },
   [DarkLight.Light]: {
@@ -77,7 +77,7 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
     token: {
       borderRadius: 2,
       colorPrimary: '#1890ff',
-      fontFamily: 'var(--font-family)',
+      fontFamily: 'var(--theme-font-family)',
     },
   },
 };
