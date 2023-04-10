@@ -1,6 +1,6 @@
 description: efficientdet_const
 environment:
-  image: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1
+  image: determinedai/environments-dev:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2
 hyperparameters:
   global_batch_size: 16
   min_loss_scale: 16.0

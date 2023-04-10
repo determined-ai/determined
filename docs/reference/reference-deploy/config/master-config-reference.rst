@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
+      -  ``determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2`` for NVIDIA GPUs.
+      -  ``determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
+      -  ``determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See

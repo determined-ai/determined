@@ -35,11 +35,11 @@ ap_southeast_2_master_ami:
   new: ami-0b62ecd3babd1c548
   old: ami-06139e5e22cc2f7b1
 deepspeed_gpu_0_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9d07809
 deepspeed_gpu_0_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.21.1
 deepspeed_gpu_1_hashed:
   new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-mpi-9119094
 deepspeed_gpu_1_versioned:
@@ -75,45 +75,45 @@ gcp_env:
   new: det-environments-9d07809
   old: det-environments-835d8b1
 gpt_neox_deepspeed_gpu_0_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-9d07809
 gpt_neox_deepspeed_gpu_0_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-0.21.1
 gpt_neox_deepspeed_gpu_1_hashed:
   new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-mpi-9119094
 gpt_neox_deepspeed_gpu_1_versioned:
   new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-mpi-0.19.1
 pt_cpu_0_hashed:
-  new: determinedai/environments:py-3.8-pytorch-1.12-cpu-9d07809
-  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-835d8b1
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-cpu-f6f599d
+  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-9d07809
 pt_cpu_0_versioned:
-  new: determinedai/environments:py-3.8-pytorch-1.12-cpu-0.21.1
-  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-0.21.0
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-cpu-0.21.2
+  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-0.21.1
 pt_cpu_1_hashed:
-  new: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-9d07809
-  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-835d8b1
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-cpu-mpi-f6f599d
+  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-9d07809
 pt_cpu_1_versioned:
-  new: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-0.21.1
-  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-0.21.0
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-cpu-mpi-0.21.2
+  old: determinedai/environments:py-3.8-pytorch-1.12-cpu-mpi-0.21.1
 pt_gpu_0_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-gpu-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-9d07809
 pt_gpu_0_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-gpu-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-0.21.1
 pt_gpu_1_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-gpu-mpi-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-9d07809
 pt_gpu_1_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-gpu-mpi-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-mpi-0.21.1
 pytorch10_tf27_rocm50_0_hashed:
-  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-9d07809
-  old: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-835d8b1
+  new: determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-f6f599d
+  old: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-9d07809
 pytorch10_tf27_rocm50_0_versioned:
-  new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1
-  old: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.0
+  new: determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2
+  old: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1
 pytorch19_tf25_rocm_0_hashed:
   new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730
   old: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-ecee7c1
@@ -125,29 +125,29 @@ pytorch19_tf25_rocm_1_hashed:
 pytorch19_tf25_rocm_1_versioned:
   new: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4
 tf1_cpu_0_hashed:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-835d8b1
+  new: determinedai/environments-dev:py-3.7-pytorch-1.7-tf-1.15-cpu-f6f599d
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
 tf1_cpu_0_versioned:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.1
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.0
+  new: determinedai/environments-dev:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.2
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.21.1
 tf1_cpu_1_hashed:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-9d07809
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-835d8b1
+  new: determinedai/environments-dev:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-f6f599d
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-9d07809
 tf1_cpu_1_versioned:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.1
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.0
+  new: determinedai/environments-dev:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.2
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-mpi-0.21.1
 tf1_gpu_0_hashed:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-9d07809
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-10.2-pytorch-1.7-tf-1.15-gpu-f6f599d
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-9d07809
 tf1_gpu_0_versioned:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.1
 tf1_gpu_1_hashed:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-9d07809
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-835d8b1
+  new: determinedai/environments-dev:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-f6f599d
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-9d07809
 tf1_gpu_1_versioned:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.1
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.0
+  new: determinedai/environments-dev:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.2
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-mpi-0.21.1
 tf24_cpu_0_hashed:
   new: determinedai/environments:py-3.8-pytorch-1.9-tf-2.4-cpu-24586f0
   old: determinedai/environments-dev:py-3.8-pytorch-1.9-tf-2.4-cpu-1c769fb
@@ -221,53 +221,53 @@ tf26_gpu_1_versioned:
   new: determinedai/environments-dev:cuda-11.2-tf-2.6-gpu-mpi-0.19.10
   old: determinedai/environments:cuda-11.2-tf-2.6-gpu-mpi-0.19.4
 tf27_cpu_0_hashed:
-  new: determinedai/environments:py-3.8-tf-2.7-cpu-9d07809
-  old: determinedai/environments:py-3.8-tf-2.7-cpu-835d8b1
+  new: determinedai/environments-dev:py-3.8-tf-2.7-cpu-f6f599d
+  old: determinedai/environments:py-3.8-tf-2.7-cpu-9d07809
 tf27_cpu_0_versioned:
-  new: determinedai/environments:py-3.8-tf-2.7-cpu-0.21.1
-  old: determinedai/environments:py-3.8-tf-2.7-cpu-0.21.0
+  new: determinedai/environments-dev:py-3.8-tf-2.7-cpu-0.21.2
+  old: determinedai/environments:py-3.8-tf-2.7-cpu-0.21.1
 tf27_cpu_1_hashed:
-  new: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-9d07809
-  old: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-835d8b1
+  new: determinedai/environments-dev:py-3.8-tf-2.7-cpu-mpi-f6f599d
+  old: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-9d07809
 tf27_cpu_1_versioned:
-  new: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-0.21.1
-  old: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-0.21.0
+  new: determinedai/environments-dev:py-3.8-tf-2.7-cpu-mpi-0.21.2
+  old: determinedai/environments:py-3.8-tf-2.7-cpu-mpi-0.21.1
 tf27_gpu_0_hashed:
-  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-9d07809
-  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-11.2-tf-2.7-gpu-f6f599d
+  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-9d07809
 tf27_gpu_0_versioned:
-  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.21.1
-  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-11.2-tf-2.7-gpu-0.21.2
+  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.21.1
 tf27_gpu_1_hashed:
-  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-9d07809
-  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-835d8b1
+  new: determinedai/environments-dev:cuda-11.2-tf-2.7-gpu-mpi-f6f599d
+  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-9d07809
 tf27_gpu_1_versioned:
-  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-0.21.1
-  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-0.21.0
+  new: determinedai/environments-dev:cuda-11.2-tf-2.7-gpu-mpi-0.21.2
+  old: determinedai/environments:cuda-11.2-tf-2.7-gpu-mpi-0.21.1
 tf2_cpu_0_hashed:
-  new: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
-  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-835d8b1
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-f6f599d
+  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
 tf2_cpu_0_versioned:
-  new: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1
-  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.0
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2
+  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1
 tf2_cpu_1_hashed:
-  new: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-9d07809
-  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-835d8b1
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-f6f599d
+  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-9d07809
 tf2_cpu_1_versioned:
-  new: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-0.21.1
-  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-0.21.0
+  new: determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-0.21.2
+  old: determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-mpi-0.21.1
 tf2_gpu_0_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-9d07809
 tf2_gpu_0_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
 tf2_gpu_1_hashed:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-9d07809
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-835d8b1
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-f6f599d
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-9d07809
 tf2_gpu_1_versioned:
-  new: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-0.21.1
-  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-0.21.0
+  new: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-0.21.2
+  old: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-mpi-0.21.1
 us_east_1_agent_ami:
   new: ami-0d66a70e16e8b5cf0
   old: ami-0fdc0e3d660394d83
