@@ -3,16 +3,18 @@ import { Observable, observable } from 'micro-observables';
 import {
   ColumnType,
   Conjunction,
+  ExperimentFilterColumnName,
   FilterFormSet,
   FormField,
   FormFieldValue,
   FormGroup,
   FormType,
+  KeyType,
   Operator,
 } from './type';
 
 const INIT_FORMSET: FilterFormSet = {
-  filterGroup: { children: [], conjunction: Conjunction.And, id: 'ROOT', type: FormType.Group }, // default
+  filterGroup: { children: [], conjunction: Conjunction.And, id: 'ROOT', type: FormType.Group },
 };
 
 const getInitGroup = (): FormGroup => ({
@@ -25,7 +27,7 @@ const getInitGroup = (): FormGroup => ({
 const getInitField = (): FormField => ({
   columnName: 'id',
   id: crypto.randomUUID(),
-  operator: 'contains',
+  operator: '=',
   type: FormType.Field,
   value: null,
 });
@@ -45,7 +47,7 @@ const OperatorQueryMap: Record<Operator, (colName: string, val: FormFieldValue) 
   'not empty': (colName: string) => `-${colName}:null`,
 } as const;
 
-export class FormClassStore {
+export class FilterFormStore {
   #formset = observable<FilterFormSet>(INIT_FORMSET);
 
   constructor(data?: FilterFormSet) {
@@ -61,15 +63,15 @@ export class FormClassStore {
   public get query(): string {
     const formGroup: Readonly<FormGroup> = this.#formset.get().filterGroup;
 
-    const recur = (form: FormGroup | FormField) => {
+    const recur = (form: FormGroup | FormField): string => {
       if (form.type === 'field') {
-        const func = OperatorQueryMap[form.operator];
         const type = ColumnType[form.columnName];
-        const value =
-          type === 'string' ? `"${form.value?.toString().replaceAll('"', '\\"')}"` : form.value;
+        const escapeVal = form.value?.toString().replaceAll('"', '\\"') ?? null;
+        const value = type === 'string' && escapeVal != null ? `"${escapeVal}"` : escapeVal;
+        const func = OperatorQueryMap[form.operator];
         return func(form.columnName, value);
       }
-      const arr: string[] = [];
+      const arr = [];
       if (form.type === 'group') {
         for (const child of form.children) {
           const ans = recur(child);
@@ -81,13 +83,7 @@ export class FormClassStore {
     return recur(formGroup);
   }
 
-  public setFieldValue(
-    id: string,
-    keyType:
-      | keyof Pick<FormField, 'columnName' | 'operator' | 'value'>
-      | keyof Pick<FormGroup, 'conjunction'>,
-    value: FormFieldValue,
-  ): void {
+  public setFieldValue(id: string, keyType: KeyType, value: FormFieldValue): void {
     const filterGroup = this.#formset.get().filterGroup;
     const recur = (form: FormGroup | FormField): FormGroup | FormField | undefined => {
       if (form.id === id) {
@@ -109,12 +105,10 @@ export class FormClassStore {
     };
 
     const ans = recur(filterGroup);
-
-    // TOOD: use generic or something to simplify this logic
     if (ans) {
       if (ans.type === FormType.Field) {
         if (keyType === 'columnName' && typeof value === 'string') {
-          ans.columnName = value;
+          ans.columnName = value as ExperimentFilterColumnName;
         } else if (keyType === 'operator' && typeof value === 'string') {
           ans.operator = value as Operator;
         } else if (keyType === 'value') {
@@ -195,7 +189,7 @@ export const formSets: FilterFormSet = {
             id: 'stringdsdff123',
             operator: '=',
             type: FormType.Field,
-            value: 1,
+            value: '1',
           },
           {
             columnName: 'state',
@@ -221,7 +215,7 @@ export const formSets: FilterFormSet = {
         id: 'gsstringdfs123',
         operator: '>=',
         type: FormType.Field,
-        value: 1,
+        value: '1',
       },
     ],
     conjunction: Conjunction.And,

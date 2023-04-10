@@ -1,0 +1,20 @@
+.base {
+  max-width: 700px;
+  min-width: 600px;
+}
+.filter {
+  max-height: 300px;
+  overflow-y: scroll;
+}
+.buttonContainer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+
+  .addButtonContainer {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+}

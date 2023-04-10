@@ -1,4 +1,7 @@
+import { ExperimentColumnName } from 'pages/ExperimentList.settings';
 import { ValueOf } from 'shared/types';
+
+export type ExperimentFilterColumnName = Exclude<ExperimentColumnName, 'action' | 'archived'>;
 
 export const FormType = {
   Field: 'field',
@@ -7,14 +10,29 @@ export const FormType = {
 
 export type FormType = ValueOf<typeof FormType>;
 
-export type FormFieldValue = string | number | null;
+export type FormFieldValue = string | null;
 
 export type FormField = {
   readonly id: string;
   readonly type: typeof FormType.Field;
-  columnName: string;
+  columnName: ExperimentFilterColumnName;
   operator: Operator;
   value: FormFieldValue;
+};
+
+export type FormGroup = {
+  readonly id: string;
+  readonly type: typeof FormType.Group;
+  conjunction: Conjunction;
+  children: (FormGroup | FormField)[];
+};
+
+export type KeyType =
+  | keyof Pick<FormField, 'columnName' | 'operator' | 'value'>
+  | keyof Pick<FormGroup, 'conjunction'>;
+
+export type FilterFormSet = {
+  filterGroup: FormGroup;
 };
 
 export const Conjunction = {
@@ -24,18 +42,7 @@ export const Conjunction = {
 
 export type Conjunction = ValueOf<typeof Conjunction>;
 
-export type FormGroup = {
-  readonly id: string;
-  readonly type: typeof FormType.Group;
-  conjunction: Conjunction;
-  children: (FormGroup | FormField)[];
-};
-
-export type FilterFormSet = {
-  filterGroup: FormGroup;
-};
-
-export const OperatorMap = {
+export const Operator = {
   contains: 'contains',
   eq: '=',
   greater: '>',
@@ -50,30 +57,41 @@ export const OperatorMap = {
   notEq: '!=',
 } as const;
 
-export type Operator = ValueOf<typeof OperatorMap>;
+export type Operator = ValueOf<typeof Operator>;
 
 export const AvaliableOperators = {
   number: [
-    OperatorMap.eq,
-    OperatorMap.notEq,
-    OperatorMap.greater,
-    OperatorMap.greaterEq,
-    OperatorMap.less,
-    OperatorMap.lessEq,
+    Operator.eq,
+    Operator.notEq,
+    Operator.greater,
+    Operator.greaterEq,
+    Operator.less,
+    Operator.lessEq,
   ],
   string: [
-    OperatorMap.contains,
-    OperatorMap.notContain,
-    OperatorMap.isEmpty,
-    OperatorMap.notEmpty,
-    OperatorMap.is,
-    OperatorMap.isNot,
+    Operator.contains,
+    Operator.notContain,
+    Operator.isEmpty,
+    Operator.notEmpty,
+    Operator.is,
+    Operator.isNot,
   ],
 } as const;
 
-export const ColumnType: Record<string, keyof typeof AvaliableOperators> = {
+export const ColumnType: Record<ExperimentFilterColumnName, keyof typeof AvaliableOperators> = {
+  checkpointCount: 'number',
+  checkpointSize: 'number',
+  description: 'string',
+  duration: 'number',
+  forkedFrom: 'number',
   id: 'number',
   name: 'string',
+  numTrials: 'number',
+  progress: 'number',
+  resourcePool: 'number',
+  searcherMetricValue: 'number',
+  searcherType: 'string',
+  startTime: 'number',
   state: 'string',
   tags: 'string',
   user: 'number',

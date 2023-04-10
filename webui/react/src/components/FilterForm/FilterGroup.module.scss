@@ -1,27 +1,40 @@
 .base {
+  align-items: baseline;
   display: grid;
   gap: 8px;
-  grid-template-columns: 1fr 9fr;
+  grid-template-columns: minmax(0, 1fr) 7fr;
   padding-bottom: 8px;
-}
-.baseRoot {
-  grid-template-columns: 1fr;
+
+  &.baseRoot {
+    grid-template-columns: 1fr;
+  }
 }
 .groupCard {
-  border: 1px solid red;
+  border-radius: 4px;
   padding: 8px;
+
+  &.level0,
+  &.level2 {
+    background-color: var(--theme-stage);
+    border: 1px solid var(--theme-stage-border);
+  }
+  &.level1 {
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-surface-border);
+  }
 }
 .header {
   align-items: center;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 7fr 3fr;
   justify-content: space-between;
-}
-.headerButtonGroup {
-  display: grid;
-  gap: 4px;
-  grid-template-columns: repeat(auto-fit, 32px);
-  justify-content: end;
+  padding-bottom: 4px;
+
+  & > .headerButtonGroup {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 32px);
+    justify-content: end;
+  }
 }
 .children {
   display: flex;

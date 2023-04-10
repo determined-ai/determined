@@ -1,6 +1,6 @@
 import { Select as AntdSelect, SelectProps as AntdSelectProps } from 'antd';
 import type { DefaultOptionType, RefSelectProps, SelectValue } from 'antd/es/select';
-import React, { forwardRef, useCallback, useMemo, useState } from 'react';
+import React, { CSSProperties, forwardRef, useCallback, useMemo, useState } from 'react';
 
 import Label, { LabelTypes } from 'components/Label';
 import Icon from 'shared/components/Icon/Icon';
@@ -31,9 +31,10 @@ export interface SelectProps<T extends SelectValue = SelectValue> {
   options?: AntdSelectProps['options'];
   placeholder?: string;
   ref?: React.Ref<RefSelectProps>;
+  dropdownMatchSelectWidth?: boolean | number;
   searchable?: boolean;
   value?: T;
-  width?: number;
+  width?: CSSProperties['width'];
 }
 
 const countOptions = (children: React.ReactNode, options?: Options): number => {
@@ -64,6 +65,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
     disabled,
     disableTags = false,
     searchable = true,
+    dropdownMatchSelectWidth = true,
     filterOption,
     filterSort,
     id,
@@ -122,7 +124,7 @@ const Select: React.FC<React.PropsWithChildren<SelectProps>> = forwardRef(functi
         allowClear={allowClear}
         defaultValue={defaultValue}
         disabled={disabled || loading}
-        dropdownMatchSelectWidth
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={filterOption ?? (searchable ? handleFilter : true)}
         filterSort={filterSort}
         id={id}
