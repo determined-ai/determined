@@ -4,6 +4,8 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
 import pytest
+import importlib
+import sys
 from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
@@ -172,6 +174,26 @@ def fixtures_path(path: str) -> str:
 
 def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
+
+def fixtures_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), '../../../e2e_tests/tests/fixtures', path) #TODO: refactor fixtures.
+def cv_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
+
+def import_module(module_name: str, module_path: str, model_context: Optional[str] = None) -> Any:
+    """
+    Use importlib for examples since they are outside of harness.
+
+    model_context is necessary when there are extra .py files within
+    the model directory that are imported in model_def.py
+    """
+    if model_context is not None:
+        sys.path.append(model_context)
+
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, Any]) -> None:
