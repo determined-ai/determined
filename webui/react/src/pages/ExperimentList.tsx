@@ -8,6 +8,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
@@ -38,7 +39,6 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -119,7 +119,7 @@ interface Props {
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-
+  const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const canceler = useRef(new AbortController());
@@ -672,8 +672,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
-  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
-    useModalExperimentMove({ onClose: handleActionComplete });
+  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
@@ -686,15 +685,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
       if (action === Action.Move) {
         if (!settings?.row?.length) return;
-        return openMoveModal({
-          experimentIds: settings.row.filter(
+        setBatchMovingExperimentIds(
+          settings.row.filter(
             (id) =>
               canActionExperiment(Action.Move, experimentMap[id]) &&
               permissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
-          sourceProjectId: project?.id,
-          sourceWorkspaceId: project?.workspaceId,
-        });
+        );
+        ExperimentMoveModal.open();
       }
 
       return Promise.all(
@@ -720,7 +718,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }),
       );
     },
-    [settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, permissions],
+    [settings.row, experimentMap, permissions, ExperimentMoveModal, project?.workspaceId],
   );
 
   const submitBatchAction = useCallback(
@@ -978,7 +976,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         initialVisibleColumns={initialVisibleColumns}
         onSave={handleUpdateColumns as (columns: string[]) => void}
       />
-      {modalExperimentMoveContextHolder}
+      <ExperimentMoveModal.Component
+        experimentIds={batchMovingExperimentIds ?? []}
+        sourceProjectId={project?.id}
+        sourceWorkspaceId={project?.workspaceId}
+        onClose={handleActionComplete}
+      />
     </Page>
   );
 };
