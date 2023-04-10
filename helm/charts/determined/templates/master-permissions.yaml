@@ -41,7 +41,6 @@ rules:
   - ""
   resources:
   - services
-  - resourcequotas
   verbs:
   - get
   - list
