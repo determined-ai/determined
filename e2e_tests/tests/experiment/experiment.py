@@ -666,15 +666,11 @@ def report_failed_experiment(experiment_id: int) -> None:
     stopping_canceled = sum(
         1 for t in trials if t.trial.state == experimentv1State.STOPPING_CANCELED
     )
-    stopping_error = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_ERROR
-    )
+    stopping_error = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_ERROR)
     completed = sum(1 for t in trials if t.trial.state == experimentv1State.COMPLETED)
     canceled = sum(1 for t in trials if t.trial.state == experimentv1State.CANCELED)
     errored = sum(1 for t in trials if t.trial.state == experimentv1State.ERROR)
-    stopping_killed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STOPPING_KILLED
-    )
+    stopping_killed = sum(1 for t in trials if t.trial.state == experimentv1State.STOPPING_KILLED)
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "

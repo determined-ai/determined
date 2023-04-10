@@ -109,9 +109,7 @@ def test_workspace_org() -> None:
         test_workspaces.append(workspace2)
         list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
         assert ["Uncategorized", "_TestPatched", "_TestWS"] == [w.name for w in list_test_1]
-        list_test_2 = bindings.get_GetWorkspaces(
-            sess, orderBy=bindings.v1OrderBy.DESC
-        ).workspaces
+        list_test_2 = bindings.get_GetWorkspaces(sess, orderBy=bindings.v1OrderBy.DESC).workspaces
         assert ["_TestWS", "_TestPatched", "Uncategorized"] == [w.name for w in list_test_2]
         list_test_3 = bindings.get_GetWorkspaces(
             sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.NAME

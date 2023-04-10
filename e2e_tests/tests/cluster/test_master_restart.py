@@ -101,9 +101,7 @@ def _test_master_restart_reattach_recover_experiment(
             time.sleep(downtime)
             restartable_managed_cluster.restart_master()
 
-        exp.wait_for_experiment_state(
-            exp_id, EXP_STATE.COMPLETED, max_wait_secs=downtime + 60
-        )
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED, max_wait_secs=downtime + 60)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1

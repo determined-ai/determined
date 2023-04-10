@@ -19,9 +19,7 @@ def ls(args: Namespace) -> None:
     pools = bindings.get_GetResourcePools(cli.setup_session(args))
     is_priority = check_is_priority(pools, args.resource_pool)
 
-    order_by = (
-        bindings.v1OrderBy.ASC if not args.reverse else bindings.v1OrderBy.DESC
-    )
+    order_by = bindings.v1OrderBy.ASC if not args.reverse else bindings.v1OrderBy.DESC
 
     def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
         return bindings.get_GetJobs(
