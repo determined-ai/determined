@@ -113,6 +113,9 @@ The master supports the following configuration settings:
       ``/var/cache/determined``. Note that the master would break on startup if it does not have
       access to create this default directory.
 
+-  ``launch_error`` (optional): Specify whether to refuse an experiment or task if the slots
+   requested exceeds the cluster capacity. Defaults to ``false`` and shows a warning instead.
+
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 
 -  ``tensorboard_timeout``: Specifies the duration in seconds before idle TensorBoard instances are
