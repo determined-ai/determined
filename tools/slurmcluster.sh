@@ -266,12 +266,12 @@ OPT_DEFAULTCOMPUTERESOURCEPOOL_casablanca_login=custom_defq_GPU
 OPT_RESOURCEPOOLS_casablanca_login=$(
     cat <<EOF
         - pool_name: custom_defq_GPU
-          description: Lands jobs on defq_GPU with tesla GPU selected only node010
+          description: Lands jobs on defq_GPU with tesla GPU (excluding non-GPU node009)
           task_container_defaults:
             slurm:
               gpu_type: tesla
               sbatch_args:
-                - -wnode10
+                - -xnode009
           provider:
             type: hpc
             partition: defq_GPU
