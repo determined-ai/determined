@@ -211,24 +211,24 @@ def master_up(
     volume_name = f"{cluster_name}_{VOLUME_NAME}"
 
     @contextlib.contextmanager
-    def defer_cleanup(fn: Callable, *args: Any) -> Generator:
+    def defer_cleanup(fn: Callable[[], None]) -> Generator:
         """
         Defer cleanup tasks for each resource if Exceptions are caught.
         """
         try:
             yield
         except Exception as ex:
-            fn(*args)
+            fn()
             raise ex
 
     with contextlib.ExitStack() as exit_stack:
         # Create network used by DB and master.
         print(f"Creating network {NETWORK_NAME}...")
-        exit_stack.enter_context(defer_cleanup(remove_network, NETWORK_NAME))
+        exit_stack.enter_context(defer_cleanup(lambda: remove_network(NETWORK_NAME)))
         client.networks.create(name=NETWORK_NAME, attachable=True)
 
         # Start up db.
-        exit_stack.enter_context(defer_cleanup(db_down, db_name, VOLUME_NAME, delete_db))
+        exit_stack.enter_context(defer_cleanup(lambda: db_down(db_name, VOLUME_NAME, delete_db)))
         db_up(
             name=db_name,
             password=db_password,
@@ -239,11 +239,15 @@ def master_up(
 
         # Wait for db to reach a healthy state.
         _wait_for_container(db_name, timeout=5)
+
+        # Remove cleanup methods from ExitStack after DB successfully starts.
         exit_stack.pop_all()
 
         # Start master instance.
         print(f"Creating {master_name}...")
-        exit_stack.enter_context(defer_cleanup(master_down, master_name, delete_db, cluster_name))
+        exit_stack.enter_context(
+            defer_cleanup(lambda: master_down(master_name, delete_db, cluster_name))  # type: ignore
+        )
         volumes = [f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml"]
         client.containers.run(
             image=f"{image_repo_prefix}/determined-master:{version}",
@@ -264,6 +268,8 @@ def master_up(
         network.connect(container=master_name, aliases=["determined-master"])
 
         _wait_for_master("localhost", port, cluster_name)
+
+        # Remove all cleanup methods from ExitStack.
         exit_stack.pop_all()
 
 
