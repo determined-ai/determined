@@ -275,7 +275,7 @@ func TestBatchesProcessed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	require.Equal(t, 1, archivedSteps)
+	require.Equal(t, 1, archivedSteps, "trial id %d", tr.ID)
 
 	archivedValidations := 0
 	err = db.sql.QueryRow(`SELECT count(id) as count FROM raw_validations
