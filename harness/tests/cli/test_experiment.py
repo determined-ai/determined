@@ -82,7 +82,7 @@ def test_wait_waits_until_longrunning_experiment_is_complete(
             experiment_id_longrunning, api_server_session
         )._get()
 
-    assert fetched_experiment.state == bindings.experimentv1State.STATE_COMPLETED
+    assert fetched_experiment.state == bindings.experimentv1State.COMPLETED
 
 
 @unittest.mock.patch("determined.common.api.authentication.Authentication")
@@ -95,7 +95,7 @@ def test_wait_returns_error_code_when_experiment_errors(
     exp = api_server.sample_get_experiment().experiment
     args = CliArgs(master="http://localhost:8888", experiment_id=1)
 
-    exp.state = bindings.experimentv1State.STATE_ERROR
+    exp.state = bindings.experimentv1State.ERROR
     requests_mock.get(
         f"/api/v1/experiments/{args.experiment_id}",
         status_code=200,
