@@ -116,7 +116,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, users, group }: P
           groupRoles.map((r) => r.id),
         );
         if (!nameUpdated && !usersUpdated && !rolesUpdated) {
-          message.info('No changes to make.');
+          message.info('No changes to save.');
           return;
         }
 
