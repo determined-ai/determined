@@ -235,9 +235,8 @@ export const GlideTable: React.FC<Props> = ({
     [data, columnIds, columnDefs],
   );
 
-  const handleGridSelectionChange = useCallback((cell: Item) => {
-    const [col, row] = cell;
-    if (col !== 0) return;
+  const handleCellClicked = useCallback((cell: Item) => {
+    const [, row] = cell;
     if (row === undefined) return;
     setSelection(({ rows }: GridSelection) => ({
       columns: CompactSelection.empty(),
@@ -247,7 +246,8 @@ export const GlideTable: React.FC<Props> = ({
 
   const onCellContextMenu = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
-      const experiment = Loadable.match(data?.[cell[1]], {
+      const [, row] = cell;
+      const experiment = Loadable.match(data?.[row], {
         Loaded: (record) => record,
         NotLoaded: () => null,
       }); // could also use event.location[1]
@@ -306,7 +306,7 @@ export const GlideTable: React.FC<Props> = ({
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
-        onCellClicked={handleGridSelectionChange}
+        onCellClicked={handleCellClicked}
         onCellContextMenu={onCellContextMenu}
         onColumnMoved={onColumnMoved}
         onColumnResize={onColumnResize}
