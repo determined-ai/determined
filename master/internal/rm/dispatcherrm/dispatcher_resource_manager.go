@@ -413,7 +413,8 @@ func (m *dispatcherResourceManager) getTaskContainerDefaults(
 ) (model.TaskContainerDefaultsConfig, error) {
 	result := msg.fallbackDefault
 
-	partitionOverrides := m.rmConfig.ResolveTaskContainerDefaults(msg.resourcePool)
+	partition := m.getProvidingPartition(msg.resourcePool)
+	partitionOverrides := m.rmConfig.ResolveTaskContainerDefaults(partition)
 	if partitionOverrides != nil {
 		tmp, err := result.Merge(*partitionOverrides)
 		if err != nil {
