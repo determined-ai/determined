@@ -268,6 +268,7 @@ export const GlideTable: React.FC<Props> = ({
         ...prev,
         handleClick: () => {
           const rowIndex = args.location[1];
+          const rows = [...mainTableData];
 
           setOriginalIndex((prev) => {
             prev.push(rowIndex);
@@ -275,7 +276,7 @@ export const GlideTable: React.FC<Props> = ({
           });
 
           setPinnedRows((prev) => {
-            prev.push(mainTableData.splice(rowIndex, 1)[0]);
+            prev.push(rows.splice(rowIndex, 1)[0]);
             return [...prev];
           });
 
@@ -311,7 +312,6 @@ export const GlideTable: React.FC<Props> = ({
         handleClick: () => {
           const rowIndex = args.location[1];
           const prevIndex = originalIndex[rowIndex];
-
           setOriginalIndex((prev) => {
             prev.splice(rowIndex, 1);
             return [...prev];
