@@ -49,11 +49,9 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { noOp } from 'shared/utils/service';
 import { BrandingType } from 'stores/determinedInfo';
-import { MetricType, User } from 'types';
-import { NotLoaded } from 'utils/loadable';
-import loremIpsum from 'utils/loremIpsum';
-
-import useConfirm, { voidPromiseFn } from '../components/kit/useConfirm';
+import { MetricType, Project, ResourcePool, User } from 'types';
+import { Loaded, NotLoaded } from 'utils/loadable';
+import { generateTestProjectData, generateTestWorkspaceData } from 'utils/tests/generateTestData';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/F_TrialDetailsOverview';
@@ -850,29 +848,31 @@ const CodeViewerSection: React.FC = () => {
       <AntDCard title="Usage">
         <strong>Editable Python file</strong>
         <CodeEditor
-          editable={true}
-          files={[{ content: 'import math\nprint(math.pi)\n\n', name: 'test.py' }]}
+          files={[{ content: Loaded('import math\nprint(math.pi)\n\n'), name: 'test.py' }]}
         />
-        <strong>Realistic YAML file</strong>
+        <strong>Read-only YAML file</strong>
         <CodeEditor
           files={[
             {
               content:
-                'name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2',
+                Loaded('name: Unicode Test 日本😃\ndata:\n  url: https://example.tar.gz\nhyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 64\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5\nsearcher:\n  name: single\n  metric: validation_loss\n  max_length:\n      batches: 937 #60,000 training images with batch size 64\n  smaller_is_better: true\nentrypoint: model_def:MNistTrial\nresources:\n  slots_per_trial: 2'),
               name: 'test1.yaml',
             },
           ]}
+          readonly={true}
         />
-        <strong>Multiple files</strong>
+        <strong>Multiple files, one not finished loading.</strong>
         <CodeEditor
           files={[
             {
               content:
-                'hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5',
+                Loaded('hyperparameters:\n  learning_rate: 1.0\n  global_batch_size: 512\n  n_filters1: 32\n  n_filters2: 64\n  dropout1: 0.25\n  dropout2: 0.5'),
               name: 'one.yaml',
             },
-            { content: 'searcher:\n  name: single\n  metric: validation_loss\n', name: 'two.yaml' },
+            { content: Loaded('searcher:\n  name: single\n  metric: validation_loss\n'), name: 'two.yaml' },
+            { content: NotLoaded, name: 'unloaded.yaml' },
           ]}
+          readonly={true}
         />
       </AntDCard>
     </ComponentSection>

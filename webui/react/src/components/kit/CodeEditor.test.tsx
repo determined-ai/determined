@@ -11,7 +11,7 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
-import CodeEditor, { Props } from './CodeEditor';
+import CodeViewer, { Props } from './CodeEditor';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -103,13 +103,13 @@ const Container: React.FC<Props> = (props) => {
 
   return (
     <SettingsProvider>
-      <CodeEditor experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+      <CodeViewer files={[]} />
     </SettingsProvider>
   );
 };
 
 const setup = (
-  props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
+  props: Props = { files: [] },
 ) => {
   render(
     <BrowserRouter>
@@ -127,7 +127,7 @@ const getElements = async () => {
   return { treeNodes };
 };
 
-describe('CodeEditor', () => {
+describe('CodeViewer', () => {
   it('should handle the initial render properly', async () => {
     setup();
     const { treeNodes } = await getElements();

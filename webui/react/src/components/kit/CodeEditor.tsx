@@ -22,7 +22,11 @@ import { ErrorType } from 'shared/utils/error';
 import { AnyMouseEvent } from 'shared/utils/routes';
 import { TreeNode } from 'types';
 import handleError from 'utils/error';
+<<<<<<< HEAD
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+=======
+import { Loadable } from 'utils/loadable';
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
@@ -32,6 +36,14 @@ import css from './CodeEditor/CodeEditor.module.scss';
 
 import './CodeEditor/index.scss';
 
+<<<<<<< HEAD
+=======
+type FileInfo = {
+  content: Loadable<string>;
+  name: string;
+};
+
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 export type Props = {
 <<<<<<< HEAD
   files: TreeNode[];
@@ -82,6 +94,27 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
   return extensionA.localeCompare(extensionB) - extensionB.localeCompare(extensionB);
 };
 
+<<<<<<< HEAD
+=======
+const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
+  children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
+  isLeaf: !node.isDir,
+  key: node.path ?? '',
+  title: node.name,
+});
+
+const convertFileInfoToTreeNode = (file: FileInfo): TreeNode => ({
+  children: [],
+  isLeaf: true,
+  key: file.name ?? '',
+  text: Loadable.match(file.content, {
+    Loaded: (content) => content,
+    NotLoaded: () => '',
+  }),
+  title: file.name,
+});
+
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 const PageError = {
   Decode: 'Could not decode file.',
   Empty: 'File has no content.',
@@ -129,48 +162,47 @@ const CodeEditor: React.FC<Props> = ({
   files,
   onSelectFile,
   readonly,
-  runtimeConfig: _runtimeConfig,
   selectedFilePath,
-  submittedConfig: _submittedConfig,
 }) => {
-  const firstConfig = useMemo(
-    () => (_submittedConfig ? Config.Submitted : Config.Runtime),
-    [_submittedConfig],
-  );
+  // const firstConfig = useMemo(
+  //   () => (_submittedConfig ? Config.Submitted : Config.Runtime),
+  //   [_submittedConfig],
+  // );
   const [fileViewerInfo, setFileViewerInfo] = useState<{ filePath: string; fileText?: string }>({
-    filePath: selectedFilePath || firstConfig,
+    filePath: selectedFilePath || '',
   });
 
-  const submittedConfig = useMemo(() => {
-    if (!_submittedConfig) return;
+  // const submittedConfig = useMemo(() => {
+  //   if (!_submittedConfig) return;
+  //
+  //   const { hyperparameters, ...restConfig } = yaml.load(_submittedConfig) as RawJson;
+  //
+  //   // don't ask me why this works.. it gets rid of the JSON though
+  //   return yaml.dump({ ...restConfig, hyperparameters });
+  // }, [_submittedConfig]);
 
-    const { hyperparameters, ...restConfig } = yaml.load(_submittedConfig) as RawJson;
-
-    // don't ask me why this works.. it gets rid of the JSON though
-    return yaml.dump({ ...restConfig, hyperparameters });
-  }, [_submittedConfig]);
-
-  const runtimeConfig: string = useMemo(() => {
-    /**
-     * strip registry_auth from config for display
-     * as well as workspace/project names
-     */
-
-    if (_runtimeConfig) {
-      const {
-        environment: { registry_auth, ...restEnvironment },
-        workspace,
-        project,
-        ...restConfig
-      } = _runtimeConfig;
-      return yaml.dump({ environment: restEnvironment, ...restConfig });
-    }
-    return '';
-  }, [_runtimeConfig]);
+  // const runtimeConfig: string = useMemo(() => {
+  //   /**
+  //    * strip registry_auth from config for display
+  //    * as well as workspace/project names
+  //    */
+  //
+  //   if (_runtimeConfig) {
+  //     const {
+  //       environment: { registry_auth, ...restEnvironment },
+  //       workspace,
+  //       project,
+  //       ...restConfig
+  //     } = _runtimeConfig;
+  //     return yaml.dump({ environment: restEnvironment, ...restConfig });
+  //   }
+  //   return '';
+  // }, [_runtimeConfig]);
 
 >>>>>>> 773beb50c (start working on readonly)
   const [pageError, setPageError] = useState<PageError>(PageError.None);
 
+<<<<<<< HEAD
   const [activeFile, setActiveFile] = useState<TreeNode | null>(files[0] || null);
   const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
@@ -181,6 +213,38 @@ const CodeEditor: React.FC<Props> = ({
     const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
     return isIpybnFile ? 'ipynb' : 'monaco';
   }, [activeFile]);
+=======
+  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [activeFile, setActiveFile] = useState<TreeNode | null>(
+    files.length === 1 ? convertFileInfoToTreeNode(files[0]) : null,
+  );
+  const [isFetchingFile, setIsFetchingFile] = useState(false);
+  const [isFetchingTree, setIsFetchingTree] = useState(false);
+  const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
+  const configDownloadButton = useRef<HTMLAnchorElement>(null);
+  const timeout = useRef<NodeJS.Timeout>();
+  const [editorMode, setEditorMode] = useState<'monaco' | 'ipynb'>('monaco');
+  const viewMode = files.length === 1 ? 'editor' : 'split';
+
+  // const handleSelectConfig = useCallback(
+  //   (c: Config) => {
+  //     if (files.length) return;
+  //     const configText = c === Config.Submitted ? submittedConfig : runtimeConfig;
+  //
+  //     if (configText) {
+  //       setPageError(PageError.None);
+  //     } else setPageError(PageError.Fetch);
+  //
+  //     setActiveFile({
+  //       icon: configIcon,
+  //       key: c,
+  //       text: configText,
+  //       title: c,
+  //     });
+  //   },
+  //   [files, submittedConfig, runtimeConfig],
+  // );
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 
   const downloadHandler = useCallback(() => {
     timeout.current = setTimeout(() => {
@@ -188,6 +252,7 @@ const CodeEditor: React.FC<Props> = ({
     }, 2000);
   }, [downloadInfo.url]);
 
+<<<<<<< HEAD
   const fetchFile = useCallback(async (fileInfo: TreeNode) => {
     if (!fileInfo) return;
     setPageError(PageError.None);
@@ -211,10 +276,83 @@ const CodeEditor: React.FC<Props> = ({
       setPageError(PageError.Fetch);
     }
     if (!file) {
+=======
+  const fetchFileTree = useCallback(async () => {
+    if (files && files.length > 1) {
+      setTreeData(files.map(convertFileInfoToTreeNode).sort(sortTree));
+    }
+    return;
+    // setIsFetchingTree(true);
+    // try {
+    //   const fileTree = await getExperimentFileTree({ experimentId });
+    //   setIsFetchingTree(false);
+    //
+    //   const tree = fileTree
+    //     .map<TreeNode>((node) => convertV1FileNodeToTreeNode(node))
+    //     .sort(sortTree);
+    //
+    //   if (runtimeConfig)
+    //     tree.unshift({
+    //       icon: configIcon,
+    //       isLeaf: true,
+    //       key: Config.Runtime,
+    //       title: Config.Runtime,
+    //     });
+    //
+    //   if (submittedConfig)
+    //     tree.unshift({
+    //       icon: configIcon,
+    //       isLeaf: true,
+    //       key: Config.Submitted,
+    //       title: Config.Submitted,
+    //     });
+    //
+    //   setTreeData(tree);
+    // } catch (error) {
+    //   setIsFetchingTree(false);
+    //   handleError(error, {
+    //     publicMessage: 'Failed to load file tree.',
+    //     publicSubject: 'Unable to fetch the model file tree.',
+    //     silent: false,
+    //     type: ErrorType.Api,
+    //   });
+    // }
+  }, [files]);
+
+  const fetchFile = useCallback(
+    async (path: string, title: string) => {
+      if (!files.length) return;
+      setPageError(PageError.None);
+
+      const file = '';
+      try {
+        // file = await getExperimentFileFromTree({ experimentId, path });
+      } catch (error) {
+        handleError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+        setPageError(PageError.Fetch);
+      } finally {
+        setIsFetchingFile(false);
+      }
+
+      let text = '';
+      try {
+        text = decodeURIComponent(escape(window.atob(file)));
+
+        if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+      } catch {
+        setPageError(PageError.Decode);
+      }
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
       setActiveFile({
         ...fileInfo,
         content: NotLoaded,
       });
+<<<<<<< HEAD
       return;
     }
 
@@ -241,6 +379,11 @@ const CodeEditor: React.FC<Props> = ({
     }
     return files.sort(sortTree);
   }, [files, selectedFilePath, activeFile?.key, fetchFile]);
+=======
+    },
+    [files],
+  );
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
@@ -283,6 +426,7 @@ const CodeEditor: React.FC<Props> = ({
       if (!activeFile) return;
 
       const filePath = String(activeFile?.key);
+<<<<<<< HEAD
       if (activeFile.content !== NotLoaded) {
         const url = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile.content)]));
         setDownloadInfo({
@@ -294,11 +438,94 @@ const CodeEditor: React.FC<Props> = ({
           external: true,
           path: activeFile.download,
         });
+=======
+      // if (isConfig(filePath)) {
+      //   // const isRuntimeConf = filePath === Config.Runtime;
+      //   // const url = isRuntimeConf
+      //     // ? URL.createObjectURL(new Blob([runtimeConfig]))
+      //     // : URL.createObjectURL(new Blob([submittedConfig as string]));
+      //
+      //   setDownloadInfo({
+      //     fileName: isRuntimeConf
+      //       ? `${experimentId}_submitted_configuration.yaml`
+      //       : `${experimentId}_runtime_configuration.yaml`,
+      //     url,
+      //   });
+      // } else
+      if (activeFile.key && activeFile.text) {
+        const url = URL.createObjectURL(new Blob([activeFile.text]));
+        setDownloadInfo({
+          fileName: String(activeFile.key),
+          url,
+        });
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
       }
+      // else if (experimentId) {
+      //   handlePath(e, {
+      //     external: true,
+      //     path: paths.experimentFileFromTree(experimentId, String(activeFile?.key)),
+      //   });
+      // }
     },
     [activeFile],
   );
 
+<<<<<<< HEAD
+=======
+  // map the file tree
+  useEffect(() => {
+    fetchFileTree();
+  }, [fetchFileTree]);
+
+  // Set the selected node based on the active settings
+  useEffect(() => {
+    if (!fileViewerInfo.filePath) return;
+
+    if (activeFile?.key !== fileViewerInfo.filePath) {
+      onSelectFile?.(fileViewerInfo.filePath);
+
+      if (isConfig(fileViewerInfo.filePath)) {
+        // handleSelectConfig(fileViewerInfo.filePath);
+      } else {
+        const path = fileViewerInfo.filePath.split('/');
+        const fileName = path[path.length - 1];
+
+        if (files.length) {
+          setActiveFile({
+            key: path[path.length - 1],
+            text: fileViewerInfo.fileText,
+            title: path,
+          } as TreeNode);
+        } else {
+          setIsFetchingFile(true);
+          fetchFile(fileViewerInfo.filePath, fileName);
+        }
+      }
+    }
+  }, [
+    treeData,
+    files.length,
+    fileViewerInfo,
+    activeFile,
+    fetchFile,
+    // handleSelectConfig,
+    onSelectFile,
+  ]);
+
+  // Set the code renderer to ipynb if needed
+  useEffect(() => {
+    const hasActiveFile = activeFile?.text;
+    const isSameFile = activeFile?.key === fileViewerInfo.filePath;
+    const isIpybnFile = /\.ipynb$/i.test(fileViewerInfo.filePath);
+
+    if (hasActiveFile && isSameFile && isIpybnFile) {
+      setEditorMode('ipynb');
+    } else {
+      setEditorMode('monaco');
+    }
+  }, [fileViewerInfo.filePath, activeFile]);
+
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
   useLayoutEffect(() => {
     if (configDownloadButton.current && downloadInfo.url && downloadInfo.fileName)
       configDownloadButton.current.click();
@@ -320,6 +547,7 @@ const CodeEditor: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')}>
+<<<<<<< HEAD
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
         <DirectoryTree
           className={css.fileTree}
@@ -329,6 +557,24 @@ const CodeEditor: React.FC<Props> = ({
           treeData={treeData}
           onSelect={handleSelectFile}
         />
+=======
+      <div className={viewMode === 'editor' ? css.hideElement : undefined} id="file-tree">
+        <Spinner spinning={isFetchingTree}>
+          <DirectoryTree
+            className={css.fileTree}
+            data-testid="fileTree"
+            defaultExpandAll
+            defaultSelectedKeys={
+              viewMode
+                ? // this is to ensure that, at least, the most parent node gets highlighted...
+                  [fileViewerInfo.filePath.split('/')[0] ?? ''] //firstConfig]
+                : undefined
+            }
+            treeData={treeData}
+            onSelect={handleSelectFile}
+          />
+        </Spinner>
+>>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
       </div>
       {!!activeFile?.key && (
         <div className={css.fileDir}>

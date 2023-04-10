@@ -268,10 +268,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         children: (
           <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
             <CodeEditor
-              experimentId={experiment.id}
-              runtimeConfig={experiment.configRaw}
+              files={[]}
+              readonly={true}
               selectedFilePath={settings.filePath}
-              submittedConfig={experiment.originalConfig}
               onSelectFile={handleSelectFile}
             />
           </React.Suspense>
