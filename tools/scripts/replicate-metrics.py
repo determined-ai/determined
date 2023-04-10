@@ -191,14 +191,17 @@ WHERE og_id IS NOT NULL;
     # tear down
     query = f"""
 -- drop the table
-DROP TABLE {table}_id_map;
+-- DROP TABLE {table}_id_map; -- temp table
 -- drop the added column
 ALTER TABLE {table} DROP COLUMN og_id;
     """
     cur.execute(query)  # type: ignore
 
 
-def copy_trials(suffix="") -> dict:
+@contextlib.contextmanager
+def _copy_trials(
+    cur: psycopg.Cursor, suffix="", exclude_single_searcher=True
+) -> Generator[dict, None, None]:
     """
     Duplicate trials and associated metrics for multi trial experiments.
     """
@@ -210,15 +213,22 @@ JOIN experiments e ON e.id = {table}.experiment_id
 WHERE e.config->'searcher'->>'name' <> 'single'
 {suffix};
     """
-    with db_cursor() as cur:
-        with duplicate_table_rows(cur, table, suffix=trial_suffix) as added_trials:
-            affected_rows["trials"] = added_trials
+    if not exclude_single_searcher:
+        trial_suffix = f"""
+WHERE 1 = 1
+{suffix};
+        """
+    with duplicate_table_rows(cur, table, suffix=trial_suffix) as added_trials:
+        affected_rows["trials"] = added_trials
+        if added_trials == 0:
+            yield affected_rows
+            return
 
-            steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
-            steps_cols_str = ", ".join(steps_cols)
-            prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
-            # replicate raw_steps and update trial_id
-            steps_query = f"""
+        steps_cols = get_table_col_names("raw_steps") - {"id"} - {"trial_id"}
+        steps_cols_str = ", ".join(steps_cols)
+        prefixed_steps_cols = ", ".join([f"rs.{col}" for col in steps_cols])
+        # replicate raw_steps and update trial_id
+        steps_query = f"""
 
 -- replicate raw_steps and keep the new step ids
 INSERT INTO raw_steps( {steps_cols_str}, trial_id )
@@ -227,13 +237,13 @@ FROM raw_steps rs
 INNER JOIN {table}_id_map ON {table}_id_map.og_id = rs.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL; -- all {table}_id_map with og_id are target trials.
 """
-            cur.execute(steps_query)  # type: ignore
-            affected_rows["steps"] = cur.rowcount
+        cur.execute(steps_query)  # type: ignore
+        affected_rows["steps"] = cur.rowcount
 
-            validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
-            validations_cols_str = ", ".join(validations_cols)
-            prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
-            validations_query = f"""
+        validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
+        validations_cols_str = ", ".join(validations_cols)
+        prefixed_validations_cols = ", ".join([f"rv.{col}" for col in validations_cols])
+        validations_query = f"""
 -- replicate raw_validations and keep the new validation ids
 INSERT INTO raw_validations( {validations_cols_str}, trial_id )
 SELECT {prefixed_validations_cols}, {table}_id_map.id
@@ -242,14 +252,58 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL;
 """
 
-            cur.execute(validations_query)  # type: ignore
-            affected_rows["validations"] = cur.rowcount
+        cur.execute(validations_query)  # type: ignore
+        affected_rows["validations"] = cur.rowcount
+        yield affected_rows
 
-            # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
-            #     affected_rows[name] = rcounts
+        # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
+        #     affected_rows[name] = rcounts
 
+    cur.execute("COMMIT")
+
+
+def copy_trials(suffix="", exclude_single_searcher=True) -> dict:
+    with db_cursor() as cur:
+        with _copy_trials(cur, suffix, exclude_single_searcher) as affected_rows:
+            return affected_rows
+
+
+def copy_experiments() -> dict:
+    """
+    - copy experiments, keep id mapping
+    - copy trials and all metrics and keep id mapping
+    - update trials' experiment_id to the new experiment id
+    """
+    added_rows: Dict[str, int] = {}
+    with db_cursor() as cur:
+        with duplicate_table_rows(cur, "experiments") as added_exps:
+            added_rows["experiments"] = added_exps
+            if added_exps == 0:
+                return added_rows
+            with _copy_trials(cur, exclude_single_searcher=False) as affected_rows:
+                added_rows.update(affected_rows)
+                """
+                tables
+                - experiments: id
+                - experiments_id_map: id, og_id
+                - trials: id
+                - trials_id_map: id, og_id
+                """
+                # update new trials' experiment_id to the newly added experiment id
+                query = f"""
+UPDATE trials
+SET experiment_id = sub.new_exp_id
+FROM (
+    SELECT trials.id as trial_id, experiments_id_map.id AS new_exp_id
+    FROM trials
+    JOIN trials_id_map ON trials.id = trials_id_map.id
+    JOIN experiments_id_map ON trials.experiment_id = experiments_id_map.og_id
+) as sub
+WHERE trials.id = sub.trial_id;
+"""
+                cur.execute(query)  # type: ignore
         cur.execute("COMMIT")
-        return affected_rows
+    return added_rows
 
 
 if __name__ == "__main__":
@@ -262,6 +316,7 @@ if __name__ == "__main__":
         help="sql suffix to select the trials to replicate this appends after an existing WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
+    # parser.add_argument("--experiment-id", type=int, default=None, help="experiment id to replicate")
     parser.add_argument(
         "--naive-multiplier", type=int, default=None, help="repeat the operation n times (naive)"
     )
@@ -273,6 +328,8 @@ if __name__ == "__main__":
 
     row_counts = None
     for _ in range(args.naive_multiplier or 1):
+        row_counts = copy_experiments()
+        break
         if args.trial_id is not None:
             copy_trial(args.trial_id)
         else:
