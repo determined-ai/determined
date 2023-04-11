@@ -241,7 +241,7 @@ export const GlideTable: React.FC<Props> = ({
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
       const row = pinnedRows[rowIdx];
-      if (Loadable.isLoaded(row)) {
+      if (Loadable.isLoaded(row) && row !== undefined) {
         return columnDefs[columnId].renderer(row.data, rowIdx);
       }
       return {
@@ -268,9 +268,15 @@ export const GlideTable: React.FC<Props> = ({
         ...prev,
         handleClick: () => {
           const rowIndex = args.location[1];
+          const originalData = data.map((row) =>
+            Loadable.isLoaded(row) ? row.data : ({} as ExperimentItem),
+          );
+          const mainData = mainTableData.map((row) =>
+            Loadable.isLoaded(row) ? row.data : ({} as ExperimentItem),
+          );
 
           setOriginalIndex((prev) => {
-            prev.push(rowIndex);
+            prev.push(originalData.findIndex((row) => row.id === mainData[rowIndex].id));
             return [...prev];
           });
 
@@ -295,7 +301,7 @@ export const GlideTable: React.FC<Props> = ({
       }));
       setMenuIsOpen(true);
     },
-    [mainTableData],
+    [mainTableData, data],
   );
 
   const onPinnedGridContextMenu = React.useCallback(
@@ -384,7 +390,6 @@ export const GlideTable: React.FC<Props> = ({
           customRenderers={cells}
           freezeColumns={2}
           getCellContent={getPinnedCellContent}
-          gridSelection={selection}
           headerIcons={headerIcons}
           ref={pinnedGridRef}
           rows={pinnedRows.length}
@@ -405,6 +410,7 @@ export const GlideTable: React.FC<Props> = ({
         getCellContent={getCellContent}
         getRowThemeOverride={getRowThemeOverride}
         gridSelection={selection}
+        headerHeight={pinnedRows.length !== 0 ? 0 : undefined}
         headerIcons={headerIcons}
         height={GRID_HEIGHT}
         ref={gridRef}
@@ -421,7 +427,12 @@ export const GlideTable: React.FC<Props> = ({
         onColumnResizeEnd={onColumnResizeEnd}
         onGridSelectionChange={handleGridSelectionChange}
         onHeaderClicked={onHeaderClicked}
-        onVisibleRegionChanged={handleScroll}
+        onVisibleRegionChanged={(range) => {
+          if (pinnedRows.length !== 0) {
+            pinnedGridRef.current?.scrollTo(range.y, range.x, 'horizontal');
+          }
+          handleScroll?.(range);
+        }}
         //
         // these might come in handy
         // onItemHovered={onItemHovered}
