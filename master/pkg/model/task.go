@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -79,6 +80,11 @@ type Task struct {
 // TaskID.allocation_number, maybe with some other metadata if different types of
 // allocations run.
 type AllocationID string
+
+// NewAllocationID casts string ptr to AllocationID ptr.
+func NewAllocationID(in *string) *AllocationID {
+	return (*AllocationID)(unsafe.Pointer(in)) //nolint: gosec
+}
 
 func (a AllocationID) String() string {
 	return string(a)

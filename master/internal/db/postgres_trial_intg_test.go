@@ -649,7 +649,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         uuid.New(),
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
@@ -691,7 +691,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 		UUID:         checkpoint2UUID,
 		TaskID:       task.TaskID,
-		AllocationID: a.AllocationID,
+		AllocationID: &a.AllocationID,
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
@@ -781,7 +781,7 @@ func TestBatchesProcessed(t *testing.T) {
 			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
 				UUID:         uuid.New(),
 				TaskID:       task.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now(),
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},

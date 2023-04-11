@@ -10,6 +10,7 @@ import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
 import "determined/api/v1/checkpoint.proto";
 import "determined/api/v1/command.proto";
+import "determined/api/v1/unmanaged.proto";
 import "determined/api/v1/experiment.proto";
 import "determined/api/v1/group.proto";
 import "determined/api/v1/job.proto";
@@ -680,6 +681,18 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Create unmanaged trial.
+  rpc CreateUnmanagedTrial(CreateUnmanagedTrialRequest)
+      returns (CreateUnmanagedTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
     };
   }
 

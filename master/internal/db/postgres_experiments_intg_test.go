@@ -133,7 +133,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			ckpt := model.CheckpointV2{
 				UUID:         ckptUUID,
 				TaskID:       tr.TaskID,
-				AllocationID: a.AllocationID,
+				AllocationID: &a.AllocationID,
 				ReportTime:   time.Now().UTC(),
 				State:        model.CompletedState,
 				Resources: map[string]int64{
@@ -176,7 +176,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			) {
 				conv := protoconverter.ProtoConverter{}
 				require.Equal(t, expected.TaskID, model.TaskID(actual.TaskId))
-				require.Equal(t, expected.AllocationID, model.AllocationID(actual.AllocationId))
+				require.Equal(t, *expected.AllocationID, model.AllocationID(*actual.AllocationId))
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.UUID, conv.ToUUID(actual.Uuid))
 				require.Equal(t, expected.ReportTime.Truncate(time.Millisecond),

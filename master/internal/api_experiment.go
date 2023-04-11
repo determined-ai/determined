@@ -1345,6 +1345,23 @@ func (a *apiServer) CreateExperiment(
 			Experiment: &experimentv1.Experiment{},
 		}, nil
 	}
+
+	if req.Unmanaged != nil && *req.Unmanaged {
+		dbExp.Unmanaged = true
+		e, _, err := newUnmanagedExperiment(a.m, dbExp, activeConfig, taskSpec)
+		if err != nil {
+			return nil, err
+		}
+
+		protoExp, err := a.getExperiment(ctx, *user, e.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &apiv1.CreateExperimentResponse{
+			Experiment: protoExp,
+			Config:     protoutils.ToStruct(activeConfig),
+		}, nil
+	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if req.Activate {
@@ -1410,7 +1427,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 					return err
 				}
 
-				if timeSinceLastAuth == (time.Time{}) { // Initialzation.
+				if timeSinceLastAuth == (time.Time{}) { // Initialization.
 					searcherMetric := exp.Config.Searcher.Metric
 
 					if seen := seenSearcher[searcherMetric]; !seen {
@@ -2212,6 +2229,61 @@ func (a *apiServer) SearchExperiments(
 			resp.Experiments,
 			&apiv1.SearchExperimentExperiment{Experiment: experiment, BestTrial: trial},
 		)
+	}
+
+	return resp, nil
+}
+
+func (a *apiServer) CreateUnmanagedTrial(
+	ctx context.Context, req *apiv1.CreateUnmanagedTrialRequest,
+) (*apiv1.CreateUnmanagedTrialResponse, error) {
+	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+		exputil.AuthZProvider.Get().CanEditExperiment)
+	if err != nil {
+		return nil, err
+	}
+
+	// HACK: needed for ``experimentIDFromTrialTaskID``.
+	taskID := model.TaskID(fmt.Sprintf("%d.%s", exp.ID, model.NewTaskID()))
+
+	if !exp.Unmanaged {
+		return nil, errors.New("trials can only be created on unmanaged experiments")
+	}
+
+	trialModel := model.NewTrial(
+		model.NewJobID(),
+		taskID,
+		model.RequestID{},
+		exp.ID,
+		req.Hparams.AsMap(),
+		nil,
+		0)
+	trialModel.State = model.CompletedState
+
+	if err := a.m.db.AddTask(&model.Task{
+		TaskID:     trialModel.TaskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  time.Now(),
+		JobID:      nil,
+		LogVersion: model.CurrentTaskLogVersion,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := a.m.db.AddTrial(trialModel); err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.CreateUnmanagedTrialResponse{Trial: &trialv1.Trial{}}
+
+	if err := a.m.db.QueryProtof(
+		"proto_get_trials_plus",
+		[]any{"($1::int, $2::int)"},
+		resp.Trial,
+		trialModel.ID,
+		1,
+	); err != nil {
+		return nil, errors.Wrapf(err, "failed to get trial %d", trialModel.ID)
 	}
 
 	return resp, nil
