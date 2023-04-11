@@ -525,15 +525,11 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if rp.provisioner.HasError() {
+			// todo: make this logic smarter, we should only fail unallocated tasks
 			for it := rp.taskList.Iterator(); it.Next(); {
-				t := it.Value()
-				t.State = sproto.SchedulingStateUnschedulable
-
-				// this doesn't work as is, allocationref of trial is overridden, need to bubble up error
-				rf := sproto.ProvisionerFailure{
+				ctx.Tell(it.Value().AllocationRef, sproto.ProvisionerFailure{
 					Err: errors.New("provisioner error"),
-				}
-				ctx.Tell(t.AllocationRef, rf)
+				})
 			}
 		} else if rp.reschedule {
 			ctx.Log().Debug("scheduling")
