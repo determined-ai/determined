@@ -386,19 +386,26 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
       });
       setPageError(PageError.Fetch);
     }
+    if (!file) {
+      setActiveFile({
+        ...fileInfo,
+        content: NotLoaded,
+      });
+      return;
+    }
 
     try {
-      const text = decodeURIComponent(escape(window.atob(file || '')));
+      const text = decodeURIComponent(escape(window.atob(file)));
 
       if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
       content = Loaded(text);
+      setActiveFile({
+        ...fileInfo,
+        content,
+      });
     } catch {
       setPageError(PageError.Decode);
     }
-    setActiveFile({
-      ...fileInfo,
-      content,
-    });
   }, []);
 
   const treeData = useMemo(() => {
@@ -680,14 +687,20 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                 <Tooltip title="Download File">
                   <DownloadOutlined
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5548fbba3 (loading, readonly, border)
                     className={
                       readonly && activeFile?.content !== NotLoaded
                         ? css.noBorderButton
                         : css.hideElement
                     }
+<<<<<<< HEAD
 =======
                     className={readonly ? css.noBorderButton : css.hideElement}
 >>>>>>> 773beb50c (start working on readonly)
+=======
+>>>>>>> 5548fbba3 (loading, readonly, border)
                     onClick={handleDownloadClick}
                   />
                   {/* this is an invisible button to programatically download the config files */}
@@ -741,6 +754,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                 showFoldingControls: 'always',
               }}
 <<<<<<< HEAD
+<<<<<<< HEAD
               value={Loadable.getOrElse('', activeFile.content)}
             />
           ) : (
@@ -761,6 +775,13 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
                 })}
               />
 >>>>>>> 110e8f963 (single trial experiment tree)
+=======
+              value={Loadable.getOrElse('', activeFile.content)}
+            />
+          ) : (
+            <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
+              <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
+>>>>>>> 5548fbba3 (loading, readonly, border)
             </Suspense>
           )}
         </Spinner>

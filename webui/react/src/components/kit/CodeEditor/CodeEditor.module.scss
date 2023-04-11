@@ -14,6 +14,11 @@
     span {
       white-space: nowrap;
     }
+
+    @media screen and (max-width: 1024px) {
+      display: block;
+      grid-column: 1 / span 3;
+    }
   }
   h5 {
     color: var(--theme-background-on-strong);
@@ -27,8 +32,8 @@
     .fileInfo {
       align-items: center;
       background-color: var(--theme-stage);
-      border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
       border-radius: 0;
+      border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
       border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
       display: flex;
       justify-content: space-between;
@@ -42,9 +47,13 @@
       .filePath {
         margin-left: 10px;
       }
-      .fileDesc {
+      .fileDesc,
+      .readOnly {
         color: var(--theme-stage-on-weak);
         margin-left: 20px;
+      }
+      .readOnly {
+        font-variant: small-caps;
       }
       .buttonsContainer {
         display: flex;
@@ -78,7 +87,8 @@
   }
 }
 .editor {
-  border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
+  border: solid var(--theme-stroke-width) var(--theme-stage-border);
+  border-left: none;
   grid-column: 2 / 3;
   grid-row: 2 / 3;
   min-height: 250px;
