@@ -4,7 +4,7 @@ import logging
 import pathlib
 import random
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 
 import torch
 from ruamel import yaml
@@ -110,34 +110,23 @@ def report_json_results(
         raise AssertionError("Unexpected additional operations found!")
 
 
-def get_zero_optim_search_space(
-    zero_search_config: Optional[Dict[int, Dict[str, Any]]] = None,
-) -> Dict[int, Dict[str, Any]]:
-    """
-    Creates a search space for every provided zero stage (key) in `zero_search_config` whose
-    corresponding values are dictionaries whch either specify every configuration for that stage
-    or specify a diff on top of all lower stage configurations, merged in numerical order.
-    Any lists in the individual stage configurations can be randomly and uniformly sampled from
-    using `get_random_zero_optim_dict_from_search_space`.
-    TODO: Explain better.
-    """
-    if zero_search_config is None:
-        zero_search_config = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
-    user_specified_stages = list(zero_search_config)
-    search_space = copy.deepcopy(zero_search_config)
-    for s1, s2 in zip(user_specified_stages[:-1], user_specified_stages[1:]):
-        search_space[s2] = merge_dicts(zero_search_config[s1], zero_search_config[s2])
-    return search_space
+def get_zero_optim_keys_and_defaults_per_stage(
+    zero_stage: int,
+) -> Dict[str, List[Union[bool, float]]]:
+    default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    assert (
+        zero_stage in default_settings
+    ), f"Invalid zero_stage, must be one of {list(default_settings)}"
+    keys_and_defaults: dict = default_settings[0]
+    for stage in range(1, zero_stage + 1):
+        keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
+    return keys_and_defaults
 
 
-def get_random_zero_optim_dict_from_search_space(
-    zero_stage: int, search_space: Dict[int, Dict[str, Any]]
-) -> Dict[str, Any]:
-    zero_optim_dict = copy.deepcopy(search_space[zero_stage])
+def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
+    keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
+    zero_optim_dict = {key: random.choice(defaults) for key, defaults in keys_and_defaults.items()}
     zero_optim_dict["stage"] = zero_stage
-    for k, v in zero_optim_dict.items():
-        # Randomly draw from any provided lists.
-        zero_optim_dict[k] = v if not isinstance(v, list) else random.choice(v)
     return zero_optim_dict
 
 
