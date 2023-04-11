@@ -66,6 +66,7 @@ type pods struct {
 	slotResourceRequests     config.PodSlotResourceRequests
 	fluentConfig             config.FluentConfig
 	resourcePoolConfigs      []config.ResourcePoolConfig
+	baseContainerDefaults    *model.TaskContainerDefaultsConfig
 	credsDir                 string
 
 	clientSet        *k8sClient.Clientset
@@ -135,6 +136,7 @@ func Initialize(
 	slotResourceRequests config.PodSlotResourceRequests,
 	fluentConfig config.FluentConfig,
 	resourcePoolConfigs []config.ResourcePoolConfig,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	credsDir string,
 	masterIP string,
 	masterPort int32,
@@ -164,6 +166,7 @@ func Initialize(
 		slotResourceRequests:         slotResourceRequests,
 		fluentConfig:                 fluentConfig,
 		resourcePoolConfigs:          resourcePoolConfigs,
+		baseContainerDefaults:        taskContainerDefaults,
 		credsDir:                     credsDir,
 		masterIP:                     masterIP,
 		masterPort:                   masterPort,
@@ -940,7 +943,7 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, error) {
 	nodeSummaries := p.summarizeClusterByNodes(ctx)
 
-	taskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
+	poolTaskContainerDefaults := extractTCDs(p.resourcePoolConfigs)
 
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
 	// their resource pool config.
@@ -955,7 +958,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	for _, node := range p.currentNodes {
 		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
 
-		for poolName, tcd := range taskContainerDefaults {
+		for poolName, tcd := range poolTaskContainerDefaults {
 			var poolTolerations []k8sV1.Toleration
 
 			// If they're using the default RP config, use the default tolerations.
@@ -970,6 +973,11 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 					poolTolerations = tcd.CPUPodSpec.Spec.Tolerations
 				}
 			}
+
+			// Incorporate tolerations from the top-level, non-resource-pool-specific task
+			// container defaults config
+			poolTolerations = append(poolTolerations,
+				extractTolerations(p.baseContainerDefaults, slotType)...)
 
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
@@ -1291,4 +1299,18 @@ func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type
 	}
 
 	return cpuSlots, device.CPU
+}
+
+func extractTolerations(tcd *model.TaskContainerDefaultsConfig,
+	slotType device.Type) []k8sV1.Toleration {
+
+	if tcd != nil {
+		if slotType == device.CUDA && tcd.GPUPodSpec != nil {
+			return tcd.GPUPodSpec.Spec.Tolerations
+		} else if slotType == device.CPU && tcd.CPUPodSpec != nil {
+			return tcd.CPUPodSpec.Spec.Tolerations
+		}
+	}
+
+	return nil
 }
