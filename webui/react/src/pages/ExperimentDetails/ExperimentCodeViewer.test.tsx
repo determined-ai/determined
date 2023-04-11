@@ -94,6 +94,9 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
 global.URL.createObjectURL = vi.fn();
 const experimentMock = {
   ...generateExperiment(),
+  configRaw: {
+    environment: { registry_auth: '', restEnvironment: {} },
+  },
   id: 123,
   originalConfig: 'abc',
   parentArchived: false,
