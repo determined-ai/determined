@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Rectangle } from '@glideapps/glide-data-grid';
 import { Row } from 'antd';
 import SkeletonButton from 'antd/es/skeleton/Button';
@@ -7,43 +6,15 @@ import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
-import { useModal } from 'components/kit/Modal';
 import Page from 'components/Page';
-import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
-import {
-  activateExperiments,
-  archiveExperiments,
-  cancelExperiments,
-  deleteExperiments,
-  getExperiments,
-  killExperiments,
-  openOrCreateTensorBoard,
-  pauseExperiments,
-  unarchiveExperiments,
-} from 'services/api';
+import { getExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
-import { RecordKey } from 'shared/types';
-import { ErrorLevel } from 'shared/utils/error';
 import userStore from 'stores/users';
-import {
-  ExperimentAction as Action,
-  BulkActionError,
-  ExperimentItem,
-  Project,
-  ProjectExperiment,
-} from 'types';
-import { modal } from 'utils/dialogApi';
+import { ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
-import {
-  canActionExperiment,
-  getActionsForExperimentsUnion,
-  getProjectExperimentForExperimentItem,
-} from 'utils/experiment';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { openCommandResponse } from 'utils/wait';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 import GlideTable from './glide-table/GlideTable';
@@ -53,20 +24,6 @@ import { useGlasbey } from './glide-table/useGlasbey';
 interface Props {
   project: Project;
 }
-
-const batchActions = [
-  Action.OpenTensorBoard,
-  Action.Activate,
-  Action.Move,
-  Action.Pause,
-  Action.Archive,
-  Action.Unarchive,
-  Action.Cancel,
-  Action.Kill,
-  Action.Delete,
-] as const;
-
-type BatchAction = (typeof batchActions)[number];
 
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
@@ -91,7 +48,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
 
-  const permissions = usePermissions();
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
   const { width } = useResize(pageRef);
@@ -163,145 +119,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
-  const unselect = useCallback(() => {
+  const handleOnAction = useCallback(() => {
+    /*
+     * Deselect selected rows since their states may have changed where they
+     * are no longer part of the filter criteria.
+     */
     setClearSelectionTrigger((prev) => prev + 1);
     setSelectAll(false);
-  }, []);
 
-  const handleModalClose = useCallback(() => {
-    unselect();
+    // Refetch experiment list to get updates based on batch action.
     fetchExperiments();
-  }, [fetchExperiments, unselect]);
-
-  const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
-
-  const experimentMap = useMemo(() => {
-    return experiments.filter(Loadable.isLoaded).reduce((acc, experiment) => {
-      acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
-      return acc;
-    }, {} as Record<RecordKey, ProjectExperiment>);
-  }, [experiments, project]);
-
-  const availableBatchActions = useMemo(() => {
-    if (selectAll) return batchActions;
-    const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
-    // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentMap, permissions, selectAll, selectedExperimentIds]);
-
-  const sendBatchActions = useCallback(
-    async (action: BatchAction): Promise<BulkActionError[] | void> => {
-      switch (action) {
-        case Action.OpenTensorBoard:
-          return openCommandResponse(
-            await openOrCreateTensorBoard({
-              experimentIds: selectedExperimentIds,
-              filters: selectAll ? fetchFilters : undefined,
-              workspaceId: project?.workspaceId,
-            }),
-          );
-        case Action.Move:
-          return ExperimentMoveModal.open();
-        case Action.Activate:
-          return await activateExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Archive:
-          return await archiveExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Cancel:
-          return await cancelExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Kill:
-          return await killExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Pause:
-          return await pauseExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Unarchive:
-          return await unarchiveExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-        case Action.Delete:
-          return await deleteExperiments({
-            experimentIds: selectedExperimentIds,
-            filters: selectAll ? fetchFilters : undefined,
-          });
-      }
-    },
-    [selectedExperimentIds, selectAll, fetchFilters, project?.workspaceId, ExperimentMoveModal],
-  );
-
-  const submitBatchAction = useCallback(
-    async (action: BatchAction) => {
-      try {
-        await sendBatchActions(action);
-
-        /*
-         * Deselect selected rows since their states may have changed where they
-         * are no longer part of the filter criteria.
-         */
-        unselect();
-
-        // Refetch experiment list to get updates based on batch action.
-        await fetchExperiments();
-      } catch (e) {
-        const publicSubject =
-          action === Action.OpenTensorBoard
-            ? 'Unable to View TensorBoard for Selected Experiments'
-            : `Unable to ${action} Selected Experiments`;
-        handleError(e, {
-          isUserTriggered: true,
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject,
-          silent: false,
-        });
-      }
-    },
-    [fetchExperiments, sendBatchActions, unselect],
-  );
-
-  const showConfirmation = useCallback(
-    (action: BatchAction) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all eligible ${
-          selectAll ? 'experiments matching the current filters' : 'selected experiments'
-        }?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [selectAll, submitBatchAction],
-  );
-
-  const handleBatchAction = useCallback(
-    (action: string) => {
-      if (action === Action.OpenTensorBoard) {
-        submitBatchAction(action);
-      } else if (action === Action.Move) {
-        sendBatchActions(action);
-      } else {
-        showConfirmation(action as BatchAction);
-      }
-    },
-    [submitBatchAction, sendBatchActions, showConfirmation],
-  );
+  }, [fetchExperiments]);
 
   return (
     <Page
@@ -319,13 +147,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <>
             <TableActionBar
-              actions={batchActions.map((action) => ({
-                disabled: !availableBatchActions.includes(action),
-                label: action,
-              }))}
+              experiments={experiments}
+              filters={fetchFilters}
+              project={project}
               selectAll={selectAll}
-              selectedRowCount={selectedExperimentIds.length}
-              onAction={handleBatchAction}
+              selectedExperimentIds={selectedExperimentIds}
+              onAction={handleOnAction}
             />
             <GlideTable
               clearSelectionTrigger={clearSelectionTrigger}
@@ -346,17 +173,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           </>
         )}
       </>
-      <ExperimentMoveModal.Component
-        experimentIds={selectedExperimentIds.filter(
-          (id) =>
-            canActionExperiment(Action.Move, experimentMap[id]) &&
-            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-        )}
-        filters={selectAll ? fetchFilters : undefined}
-        sourceProjectId={project?.id}
-        sourceWorkspaceId={project?.workspaceId}
-        onClose={handleModalClose}
-      />
     </Page>
   );
 };
