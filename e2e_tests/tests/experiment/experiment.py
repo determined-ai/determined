@@ -920,7 +920,7 @@ def has_at_least_one_checkpoint(experiment_id: int) -> bool:
     # Loop through the trials to look for checkpoints
     for trial in experiment_trials(experiment_id):
         # Return true if at least one workload has a checkpoint
-        if len(workloads_with_checkpoint(trial)) > 0:
+        if len(workloads_with_checkpoint(trial.workloads)) > 0:
             return True
     # No checkpoints found for the experiment return false.
     return False
