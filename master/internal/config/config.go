@@ -107,7 +107,7 @@ func DefaultConfig() *Config {
 			SegmentWebUIKey:          DefaultSegmentWebUIKey,
 		},
 		EnableCors:  false,
-		LaunchError: false,
+		LaunchError: true,
 		ClusterName: "",
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
