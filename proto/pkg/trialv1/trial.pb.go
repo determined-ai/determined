@@ -812,7 +812,7 @@ type TrialMetrics struct {
 	// The trial run associated with these metrics.
 	TrialRunId int32 `protobuf:"varint,2,opt,name=trial_run_id,json=trialRunId,proto3" json:"trial_run_id,omitempty"`
 	// The number of batches trained on when these metrics were reported.
-	StepsCompleted int32 `protobuf:"varint,3,opt,name=steps_completed,json=stepsCompleted,proto3" json:"steps_completed,omitempty"`
+	StepsCompleted int32 `protobuf:"varint,3,opt,name=steps_completed,json=stepsCompleted,proto3" json:"steps_completed,omitempty"` // TODO: rename to batches. batches_trained?
 	// The metrics for this bit of training, including:
 	// - avg_metrics: metrics reduced over the reporting period).
 	// - batch_metrics: (optional) per-batch metrics.

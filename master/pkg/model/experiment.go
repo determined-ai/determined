@@ -429,6 +429,7 @@ type Trial struct {
 	HParams               JSONObj    `db:"hparams"`
 	WarmStartCheckpointID *int       `db:"warm_start_checkpoint_id"`
 	Seed                  int64      `db:"seed"`
+	TotalBatches          int        `db:"total_batches"`
 
 	JobID JobID
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -176,4 +177,105 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 
 	require.Equal(t, nil, checkpoints[1].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
 	require.Equal(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+}
+
+func TestBatchesProcessed(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	exp, activeConfig := model.ExperimentModel()
+	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	task := RequireMockTask(t, db, exp.OwnerID)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        exp.JobID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+	require.NoError(t, db.AddTrial(&tr))
+
+	dbTr, err := db.TrialByID(tr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, dbTr.TotalBatches)
+
+	a := &model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, 0)),
+		TaskID:       tr.TaskID,
+		StartTime:    ptrs.Ptr(time.Now()),
+	}
+	err = db.AddAllocation(a)
+	require.NoError(t, err, "failed to add allocation")
+
+	metrics, err := structpb.NewStruct(map[string]any{"loss": 10})
+	require.NoError(t, err)
+
+	testMetricReporting := func(typ string, trialRunId, batches, expectedTotalBatches int) error {
+		require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunId))
+		trialMetrics := &trialv1.TrialMetrics{
+			TrialId:        int32(tr.ID),
+			TrialRunId:     int32(trialRunId),
+			StepsCompleted: int32(batches),
+			Metrics:        &commonv1.Metrics{AvgMetrics: metrics},
+		}
+		switch typ {
+		case "training":
+			require.NoError(t, db.AddTrainingMetrics(ctx, trialMetrics))
+		case "validation":
+			require.NoError(t, db.AddValidationMetrics(ctx, trialMetrics))
+		case "checkpoint":
+			require.NoError(t, AddCheckpointMetadata(ctx, &model.CheckpointV2{
+				UUID:         uuid.New(),
+				TaskID:       task.TaskID,
+				AllocationID: a.AllocationID,
+				ReportTime:   time.Now(),
+				State:        model.CompletedState,
+				Metadata:     map[string]any{"steps_completed": batches},
+			}))
+
+		default:
+			return errors.Errorf("unknown type %s", typ)
+		}
+
+		dbTr, err = db.TrialByID(tr.ID)
+		require.NoError(t, err)
+		require.Equal(t, expectedTotalBatches, dbTr.TotalBatches)
+		return nil
+	}
+
+	cases := []struct {
+		typ             string
+		trialRunID      int
+		batches         int
+		expectedBatches int
+	}{ // order matters.
+		{"training", 0, 10, 10},
+		{"validation", 0, 10, 10},
+		{"training", 0, 20, 20},
+		{"validation", 0, 20, 20},
+		{"validation", 0, 30, 30}, // will be rolled back.
+		{"training", 0, 25, 30},
+		{"validation", 1, 25, 25}, // rollback via validations.
+		{"validation", 1, 30, 30}, // will be rolled back.
+		{"training", 1, 30, 30},   // will be rolled back.
+		{"training", 2, 27, 27},   // rollback via training.
+		{"checkpoint", 2, 30, 27}, // CHECK: do NOT account for steps_completed here.
+		{"checkpoint", 3, 25, 27}, // CHECK: do NOT account for steps_completed here.
+	}
+	for _, c := range cases {
+		require.NoError(t, testMetricReporting(c.typ, c.trialRunID, c.batches, c.expectedBatches))
+	}
+
+	// check rollbacks happened as expected.
+	archivedSteps, err := Bun().NewSelect().Table("raw_steps").
+		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, archivedSteps, "trial id %d", tr.ID)
+
+	archivedValidations, err := Bun().NewSelect().Table("raw_validations").
+		Where("trial_id = ?", tr.ID).Where("archived = true").Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, archivedValidations, "trial id %d", tr.ID)
 }
