@@ -152,6 +152,10 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 	}
 }
 
+func (c *mockProvider) hasError() bool {
+	return false
+}
+
 func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,

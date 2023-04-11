@@ -51,6 +51,7 @@ type provider interface {
 	list(ctx *actor.Context) ([]*model.Instance, error)
 	launch(ctx *actor.Context, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
+	hasError() bool
 }
 
 // New creates a new Provisioner.
@@ -163,4 +164,8 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 			instances,
 			p.InstanceType())
 	}
+}
+
+func (p *Provisioner) HasError() bool {
+	return p.provider.hasError()
 }

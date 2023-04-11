@@ -26,7 +26,7 @@ func MakeScheduler(conf *config.SchedulerConfig) Scheduler {
 	case config.PriorityScheduling:
 		return NewPriorityScheduler(conf)
 	case config.FairShareScheduling:
-		return NewFairShareScheduler(conf)
+		return NewFairShareScheduler()
 	case config.RoundRobinScheduling:
 		return NewRoundRobinScheduler()
 	default:

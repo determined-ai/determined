@@ -319,3 +319,7 @@ func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation)
 	}
 	return instances
 }
+
+func (c *gcpCluster) hasError() bool {
+	return false
+}

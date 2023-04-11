@@ -215,8 +215,7 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 	if instanceNum <= 0 {
 		return
 	}
-	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
-	instances, err := c.launchInstances(ctx, instanceNum, false)
+	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
 		return
@@ -334,7 +333,7 @@ func (c *awsCluster) describeInstancesByID(
 	return instances, nil
 }
 
-func (c *awsCluster) launchInstances(ctx *actor.Context, instanceNum int, dryRun bool) (*ec2.Reservation, error) {
+func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reservation, error) {
 	input := &ec2.RunInstancesInput{
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
@@ -353,7 +352,6 @@ func (c *awsCluster) launchInstances(ctx *actor.Context, instanceNum int, dryRun
 		KeyName:                           aws.String(c.SSHKeyName),
 		MaxCount:                          aws.Int64(int64(instanceNum)),
 		MinCount:                          aws.Int64(1),
-		// TODO: Pass actual mincount value
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("instance"),
@@ -419,7 +417,7 @@ func (c *awsCluster) launchInstances(ctx *actor.Context, instanceNum int, dryRun
 			Arn: aws.String(c.IamInstanceProfileArn),
 		}
 	}
-	ctx.Log().Infof("run instances: %#v", input)
+
 	return c.client.RunInstances(input)
 }
 
@@ -433,4 +431,8 @@ func (c *awsCluster) terminateInstances(
 		InstanceIds: ids,
 	}
 	return c.client.TerminateInstances(input)
+}
+
+func (c *awsCluster) hasError() bool {
+	return true
 }

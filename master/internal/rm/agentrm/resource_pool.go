@@ -33,7 +33,8 @@ type resourcePool struct {
 
 	scheduler        Scheduler
 	fittingMethod    SoftConstraint
-	provisioner      *actor.Ref
+	provisioner      *provisioner.Provisioner
+	provisionerActor *actor.Ref
 	slotsPerInstance int
 
 	agents           map[*actor.Ref]bool
@@ -103,7 +104,8 @@ func (rp *resourcePool) setupProvisioner(ctx *actor.Context) error {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
 	rp.slotsPerInstance = p.SlotsPerInstance()
-	rp.provisioner = pRef
+	rp.provisioner = p
+	rp.provisionerActor = pRef
 	return nil
 }
 
@@ -413,8 +415,8 @@ func (rp *resourcePool) updateScalingInfo() bool {
 }
 
 func (rp *resourcePool) sendScalingInfo(ctx *actor.Context) {
-	if rp.provisioner != nil && rp.updateScalingInfo() {
-		ctx.Tell(rp.provisioner, *rp.scalingInfo)
+	if rp.provisionerActor != nil && rp.updateScalingInfo() {
+		ctx.Tell(rp.provisionerActor, *rp.scalingInfo)
 	}
 }
 
@@ -522,7 +524,20 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case schedulerTick:
-		if rp.reschedule {
+		if rp.provisioner.HasError() {
+			for it := rp.taskList.Iterator(); it.Next(); {
+				task := it.Value()
+				task.State = sproto.SchedulingStateUnschedulable
+
+				// this doesn't work as is, allocationref of trial is overridden, need to bubble up error
+				rf := sproto.ResourcesFailure{
+					FailureType: sproto.TaskAborted,
+					ErrMsg:      "provisioner unable to allocate resources",
+					ExitCode:    nil,
+				}
+				ctx.Tell(task.AllocationRef, rf)
+			}
+		} else if rp.reschedule {
 			ctx.Log().Debug("scheduling")
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			defer func() {
