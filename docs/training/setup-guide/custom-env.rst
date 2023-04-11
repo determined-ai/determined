@@ -34,7 +34,7 @@ format is a list of ``NAME=VALUE`` strings. For example:
        - C=${B}
 
 Variables are set sequentially, which affect variables that depend on the expansion of other
-variables. In the example, names `A`, `B`, and `C` each have the value `hello_world` in the
+variables. In the example, names ``A``, ``B``, and ``C`` each have the value ``hello_world`` in the
 container.
 
 Proxy variables set in this way take precedent over variables set in the :ref:`agent configuration

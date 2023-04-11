@@ -59,14 +59,14 @@ you will be taken back to the Incoming Webhooks page.
 Determined has the ability to send links to experiments, projects, and workspaces in Slack messages.
 To enable Determined to send correctly formatted links you must set the **Base URL** in the
 Determined cluster configuration. The **Base URL** is the website address that is used to access the
-Determined user interface. The value should be in the format of `https://yourdomain.com`
+Determined user interface. The value should be in the format of ``https://yourdomain.com``
 
 There are three ways to set the **Base URL**.
 
 #. Setting a **DET_WEBHOOK_BASE_URL** environment variable.
-#. Using the flag `--webhook-base-url`
-#. Adding a `base_url` entry to the webhook portion of the master configuration file. An example is
-   shown below:
+#. Using the flag ``--webhook-base-url``
+#. Adding a ``base_url`` entry to the webhook portion of the master configuration file. An example
+   is shown below:
 
 .. code::
 

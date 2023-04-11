@@ -45,7 +45,7 @@ batch size that fits into a single GPU`` * ``number of slots``. This is commonly
 
 Step 3 of the distributed training loop in Determined introduces the majority of the communication
 overhead. Because deep learning models typically perform dense updates, where every model parameter
-is updated for every training sample, `batch size` does not affect how long it takes workers to
+is updated for every training sample, ``batch_size`` does not affect how long it takes workers to
 communicate updates. However, increasing ``global_batch_size`` does reduce the required number of
 passes through the training loop, thus reducing the total communication overhead.
 
