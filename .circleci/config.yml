@@ -1120,8 +1120,8 @@ jobs:
       - pre-package-and-push-system:
           check: false
       - make-package
-      - run: make -C master publish-dev
-      - run: make -C agent publish-dev
+      - run: tools/scripts/retry.sh make -C master publish-dev
+      - run: tools/scripts/retry.sh make -C agent publish-dev
       - run:
           name: Build and publish model_hub docker images
           command: |
@@ -1130,11 +1130,11 @@ jobs:
                 # with the git hash as well as the version.  This will make that image available
                 # immediately for nightly tests.
                 make -C model_hub build-docker
-                make -C model_hub publish-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
             else
                 # Otherwise, only tag and publish the environment with the git hash.
                 make -C model_hub build-docker-dev
-                make -C model_hub publish-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
@@ -1165,7 +1165,7 @@ jobs:
       - run: make -C master publish
       - run: make -C agent publish
       - run: make -C model_hub build-docker
-      - run: make -C model_hub publish-docker
+      - run: tools/scripts/retry.sh make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
