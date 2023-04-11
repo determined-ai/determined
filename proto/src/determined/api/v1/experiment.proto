@@ -871,6 +871,8 @@ message SearchExperimentsRequest {
   int32 offset = 2;
   // How many results to show
   int32 limit = 3;
+  // Filter expression
+  string filter = 4;
 }
 
 // combination of experiment and best trial with metrics

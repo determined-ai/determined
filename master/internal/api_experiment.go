@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1979,6 +1980,162 @@ func (a *apiServer) GetModelDefFile(
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }
 
+func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
+	numericeRegex := regexp.MustCompile(`\d|\.|-`)
+	var query string
+	var valueIsString bool
+	valueTypeKnown := false
+	value := ""
+	col := ""
+	filterIndex := int32(startIndex)
+	valueHasStarted := valueStart
+	isCol := !valueHasStarted
+	isNull := false
+	comparator := ""
+	fmt.Printf("Starting Scan at index %v", filterIndex)
+	for {
+		if filterIndex > int32(len(filter)-1) {
+			fmt.Printf("Ending Scan at index %v reacheded end of filter", filterIndex)
+			break
+		}
+		char := string(filter[filterIndex])
+		if valueHasStarted && valueIsString && valueTypeKnown {
+			if char == "'" || char == "\"" {
+				fmt.Printf("Ending Scan at index %v reached end of string", filterIndex)
+				filterIndex += 1
+				break
+			}
+		} else if valueHasStarted && !valueIsString && valueTypeKnown {
+			if !numericeRegex.MatchString(char) {
+				fmt.Printf("Ending Scan at index %v reached end of number", filterIndex)
+				break
+			}
+		}
+		if !valueTypeKnown && valueHasStarted {
+			valueTypeKnown = true
+			fmt.Println("Determinging v type")
+			if filterIndex+4 < int32(len(filter)) {
+				fmt.Println(fmt.Sprintf("filter index %v, 4 more is %v, string is %v", filterIndex, filterIndex+4, filter[filterIndex:filterIndex+4]))
+			}
+			if char == "'" || char == "\"" {
+				fmt.Printf("Determined it is string at %v skippingto next index", filterIndex)
+				valueIsString = true
+				filterIndex += 1
+				continue
+			} else if filterIndex+3 < int32(len(filter)) && filter[filterIndex:filterIndex+4] == "null" {
+				fmt.Printf("Determined we are looking at null from %d to %d", filterIndex, filterIndex+4)
+				filterIndex += 4
+				isNull = true
+				break
+			} else {
+				valueIsString = false
+			}
+		}
+		if char == ":" || char == "~" {
+			isCol = false
+			valueHasStarted = true
+			fmt.Printf("REached colon string at %v skipping to next index", filterIndex)
+			filterIndex += 1
+			comparator = char
+			continue
+		}
+		if char == "\\" {
+			if filterIndex+1 < int32(len(filter)-1) {
+				if string(filterIndex+1) == `'` || string(filterIndex+1) == `"` {
+					char = `\` + `"`
+				}
+				filterIndex += 1
+			}
+		}
+		switch isCol {
+		case true:
+			col += char
+		case false:
+			value += char
+		}
+		fmt.Printf("Added charcter goinf to next index %v ", filterIndex)
+		filterIndex += 1
+	}
+	if operator == nil {
+		return col + value, filterIndex
+	}
+	if *operator == ":" {
+		if isNull {
+			query = " IS NULL"
+		} else {
+			query = fmt.Sprintf(" == %v", value)
+		}
+		return query, filterIndex
+	}
+	if *operator == "~" {
+		query = " LIKE " + "%" + value + "%"
+		return query, filterIndex
+	}
+	if *operator == "-" {
+		if isNull {
+			query = fmt.Sprintf("%v IS NOT NULL", col)
+		} else if comparator == "~" {
+			query = fmt.Sprintf("%v NOT LIKE ", col) + "%" + value + "%"
+		} else if comparator == ":" {
+			query = fmt.Sprintf("%v != %v", col, value)
+		}
+		return query, filterIndex
+	}
+	return query, filterIndex
+}
+
+func parseFilter(filter string) (string, error) {
+	currentIndex := 0
+	currentQuery := ""
+	openParenCount := 0
+	for {
+		fmt.Println("Current filter: " + currentQuery)
+		fmt.Printf("Current index: %d", currentIndex)
+		if currentIndex > len(filter)-1 {
+			fmt.Println("At end of string")
+			if openParenCount != 0 {
+				return "", fmt.Errorf("invalid filter string %v, missing closing parenthesis", filter)
+			}
+			break
+		}
+		char := string(filter[currentIndex])
+		switch char {
+		case "(":
+			openParenCount += 1
+			fmt.Println(fmt.Sprintf("found open paren Open paren count is now %d", openParenCount))
+			currentQuery = currentQuery + char
+			currentIndex += 1
+		case ")":
+			if openParenCount < 1 {
+				return "", fmt.Errorf("invalid filter string %v, no open parenthesis found for character %v at index, %x", filter, char, currentIndex)
+			}
+			currentQuery = currentQuery + char
+			openParenCount -= 1
+			fmt.Println(fmt.Sprintf("found close paren Open paren count is now %d", openParenCount))
+			currentIndex += 1
+		case ":":
+			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
+			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
+			currentQuery = currentQuery + queryString
+			currentIndex = int(nextIndex)
+		case "-":
+			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
+			queryString, nextIndex := scanString(filter, currentIndex+1, &char, false)
+			currentQuery = currentQuery + queryString
+			currentIndex = int(nextIndex)
+		case "~":
+			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
+			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
+			currentQuery = currentQuery + queryString
+			currentIndex = int(nextIndex)
+		default:
+			currentQuery = currentQuery + char
+			currentIndex += 1
+		}
+	}
+	return currentQuery, nil
+}
+
 func (a *apiServer) SearchExperiments(
 	ctx context.Context,
 	req *apiv1.SearchExperimentsRequest,
@@ -1986,6 +2143,15 @@ func (a *apiServer) SearchExperiments(
 	resp := &apiv1.SearchExperimentsResponse{}
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
+
+	if req.Filter != "" {
+		filterExpr, err := parseFilter(req.Filter)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
+		}
+		fmt.Println(filterExpr)
+	}
+
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").

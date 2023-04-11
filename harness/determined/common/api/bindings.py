@@ -16858,11 +16858,13 @@ def get_ResourceAllocationRaw(
 def get_SearchExperiments(
     session: "api.Session",
     *,
+    filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     projectId: "typing.Optional[int]" = None,
 ) -> "v1SearchExperimentsResponse":
     _params = {
+        "filter": filter,
         "limit": limit,
         "offset": offset,
         "projectId": projectId,
