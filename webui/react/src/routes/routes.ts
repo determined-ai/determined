@@ -256,7 +256,7 @@ const routes: RouteConfig[] = [
   },
   {
     id: 'designKit',
-    needAuth: false,
+    needAuth: true,
     path: '/design',
     title: 'Design Kit',
   },

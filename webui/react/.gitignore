@@ -24,3 +24,5 @@ done.stamp
 /test-results/
 /playwright-report/
 /playwright/.cache/
+e2e/test-results/
+e2e/playwright-report/
