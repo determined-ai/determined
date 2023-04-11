@@ -22,7 +22,7 @@ from torchvision import datasets, transforms
 
 import determined as det
 
-# Docs snippet end before: import torch distrib
+# Docs snippet end: import torch distrib
 
 
 class Net(nn.Module):
@@ -70,7 +70,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
                     loss.item(),
                 )
             )
-            # Docs snippet start after: report metrics rank 0
+            # Docs snippet start: report metrics rank 0
             # NEW: Report metrics only on rank 0: only the chief worker
             # may report training metrics and progress, or upload checkpoints.
             if core_context.distributed.rank == 0:
@@ -78,7 +78,7 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
                     steps_completed=(batch_idx + 1) + epoch_idx * len(train_loader),
                     metrics={"train_loss": loss.item()},
                 )
-            # Docs snippet end before: report metrics rank 0
+            # Docs snippet end: report metrics rank 0
 
             if args.dry_run:
                 break
@@ -201,14 +201,14 @@ def main(core_context):
     torch.manual_seed(args.seed)
 
     if use_cuda:
-        # Docs snippet start after: set device
+        # Docs snippet start: set device
         # NEW: Change selected device to the one with index of local_rank.
         device = torch.device(core_context.distributed.local_rank)
     elif use_mps:
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
-        # Docs snippet end before: set device
+        # Docs snippet end: set device
 
     train_kwargs = {"batch_size": args.batch_size}
     test_kwargs = {"batch_size": args.test_batch_size}
@@ -228,7 +228,7 @@ def main(core_context):
         dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
         dataset2 = datasets.MNIST("../data", train=False, transform=transform)
 
-    # Docs snippet start after: shard data
+    # Docs snippet start: shard data
     # NEW: Create DistributedSampler object for sharding data into
     # core_context.distributed.size parts.
     sampler1 = DistributedSampler(
@@ -247,16 +247,16 @@ def main(core_context):
     # NEW: Shard data.
     train_loader = torch.utils.data.DataLoader(dataset1, sampler=sampler1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, sampler=sampler2, **test_kwargs)
-    # Docs snippet end before: shard data
+    # Docs snippet end: shard data
 
     hparams = info.trial.hparams
 
-    # Docs snippet start after: DDP
+    # Docs snippet start: DDP
     model = Net(hparams).to(device)
     # NEW: Wrap model with DDP. Aggregates gradients and synchronizes
     # model training across slots.
     model = DDP(model, device_ids=[device], output_device=device)
-    # Docs snippet end before: DDP
+    # Docs snippet end: DDP
 
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
@@ -297,7 +297,7 @@ def main(core_context):
             op.report_completed(test_loss)
 
 
-# Docs snippet start after: initialize process group
+# Docs snippet start: initialize process group
 if __name__ == "__main__":
     # NEW: Initialize process group using torch.
     dist.init_process_group("nccl")
@@ -308,4 +308,4 @@ if __name__ == "__main__":
     distributed = det.core.DistributedContext.from_torch_distributed()
     with det.core.init(distributed=distributed) as core_context:
         main(core_context)
-    # Docs snippet end before: initialize process group
+    # Docs snippet end: initialize process group

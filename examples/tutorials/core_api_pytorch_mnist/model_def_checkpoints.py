@@ -98,7 +98,7 @@ def test(args, model, device, test_loader, epoch, core_context, steps_completed)
     )
 
 
-# Docs snippet start after: define load state to restart
+# Docs snippet start: define load state to restart
 # NEW: Define load_state function for restarting model training from
 # existing checkpoint. Returns (.pt, int).
 # Also update load_state header to take trial info object as an argument.
@@ -109,15 +109,15 @@ def load_state(checkpoint_directory, trial_id):
         model = torch.load(f)
     with checkpoint_directory.joinpath("state").open("r") as f:
         epochs_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
-    # Docs snippet start after: compare checkpoint and current trial IDs
+    # Docs snippet start: compare checkpoint and current trial IDs
     # If trial ID does not match our current trial ID, we'll ignore
     # epochs completed and start training from epoch_idx = 0
     if ckpt_trial_id != trial_id:
         epochs_completed = 0
-    # Docs snippet end before: compare checkpoint and current trial IDs
+    # Docs snippet end: compare checkpoint and current trial IDs
 
     return model, epochs_completed
-    # Docs snippet end before: define load state to restart
+    # Docs snippet end: define load state to restart
 
 
 def main(core_context):
@@ -176,7 +176,7 @@ def main(core_context):
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     use_mps = not args.no_mps and torch.backends.mps.is_available()
 
-    # Docs snippet start after: if checkpoint assign to model state
+    # Docs snippet start: if checkpoint assign to model state
     # NEW: If checkpoint exists, load it and assign it to model state
     # prior to resuming training.
     info = det.get_cluster_info()
@@ -187,7 +187,7 @@ def main(core_context):
     else:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             model, epochs_completed = load_state(path, info.trial.trial_id)
-    # Docs snippet end before: if checkpoint assign to model state
+    # Docs snippet end: if checkpoint assign to model state
 
     torch.manual_seed(args.seed)
 
@@ -236,7 +236,7 @@ def main(core_context):
 
         scheduler.step()
 
-        # Docs snippet start after: save checkpoint
+        # Docs snippet start: save checkpoint
         # NEW: Save checkpoint.
         checkpoint_metadata_dict = {"steps_completed": steps_completed}
 
@@ -247,13 +247,13 @@ def main(core_context):
             torch.save(model.state_dict(), path / "checkpoint.pt")
             with path.joinpath("state").open("w") as f:
                 f.write(f"{epochs_completed},{info.trial.trial_id}")
-        # Docs snippet end before: save checkpoint
+        # Docs snippet end: save checkpoint
 
-        # Docs snippet start after: enable preemption
+        # Docs snippet start: enable preemption
         # NEW: Detect when the experiment is paused by the WebUI.
         if core_context.preempt.should_preempt():
             return
-        # Docs snippet end before: enable preemption
+        # Docs snippet end: enable preemption
 
 
 if __name__ == "__main__":

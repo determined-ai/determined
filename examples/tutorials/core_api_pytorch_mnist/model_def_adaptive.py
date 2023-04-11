@@ -19,7 +19,7 @@ import determined as det
 
 
 class Net(nn.Module):
-    # Docs snippet start after: per trial basis
+    # Docs snippet start: per trial basis
     # NEW: Add hparams to __init__.
     def __init__(self, hparams):
         # NEW: Read hyperparameters provided for this trial.
@@ -31,7 +31,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(144 * hparams["n_filters2"], 128)
         self.fc2 = nn.Linear(128, 10)
 
-    # Docs snippet end before: per trial basis
+    # Docs snippet end: per trial basis
 
     def forward(self, x):
         x = self.conv1(x)
@@ -219,16 +219,16 @@ def main(core_context):
     train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
-    # Docs snippet start after: get hparams
+    # Docs snippet start: get hparams
     # NEW: Get hparams chosen for this trial from cluster info object.
     hparams = info.trial.hparams
-    # Docs snippet end before: get hparams
+    # Docs snippet end: get hparams
 
-    # Docs snippet start after: pass hyperparameters
+    # Docs snippet start: pass hyperparameters
     # NEW: Pass relevant hparams to model and optimizer.
     model = Net(hparams).to(device)
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
-    # Docs snippet end before: pass hyperparameters
+    # Docs snippet end: pass hyperparameters
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 

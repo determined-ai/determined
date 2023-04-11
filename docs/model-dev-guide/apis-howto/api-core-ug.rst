@@ -2,10 +2,7 @@
  Core API User Guide
 #####################
 
-.. meta::
-   :description: Learn how to train almost any machine learning model using Determined AI's Core API. This guide covers metrics tracking, checkpoint tracking and preemption support, hyperparameter search, and distributing work across multiple GPUs or nodes.
-
-In this guide, you'll learn how to use the Core API.
+This guide will help you get up and running with the Core API.
 
 +------------------------------------------------------------------+
 | Visit the API reference                                          |
@@ -13,11 +10,8 @@ In this guide, you'll learn how to use the Core API.
 | :ref:`core-reference`                                            |
 +------------------------------------------------------------------+
 
-   :description: Learn how to train almost any machine learning model using Determined AI's Core API. This guide covers metrics tracking, checkpoint tracking and preemption support, hyperparameter search, and distributing work across multiple GPUs or nodes.
-
 In this user guide, we'll show you how to adapt model training code to use the Core API. As an
-With the Core API you can train arbitrary models on the Determined platform with seamless access to
-the following capabilities:
+example, we'll be working with the PyTorch MNIST model.
 
 ************
  Objectives
@@ -31,7 +25,7 @@ the following functions:
 -  Perform a hyperparameter search
 -  Perform distributed training
 
-After completing the steps in this user guide, you will be able to do the following:
+After completing the steps in this user guide, you will be able to:
 
 -  Understand the minimum requirements for running an experiment
 -  Modify a script and an experiment configuration file
@@ -112,7 +106,7 @@ modify the __main__loop to include ``core_context``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-after: # Docs snippet start after: modify main loop core context
+   :start-after: # Docs snippet start: modify main loop core context
    :end-at: main(core_context=core_context)
 
 Step 2.2: Modify the Train Method
@@ -124,23 +118,21 @@ Modify the train() method by adding ``core_context.train.report_training_metrics
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-after: # Docs snippet start after: report training metrics
-   :end-before: # Docs snippet end before: report training metrics
+   :start-after: # Docs snippet start: report training metrics
+   :end-before: # Docs snippet end: report training metrics
    :dedent:
 
 and ``core_context.train.report_validation_metrics()``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-after: # Docs snippet start after: report validation metrics
-   :end-before: # Docs snippet end before: report validation metrics
+   :start-after: # Docs snippet start: report validation metrics
+   :end-before: # Docs snippet end: report validation metrics
    :dedent:
 
 .. note::
 
-The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+   Viewing Epoch-Based Metrics in the WebUI
 
    You can modify your code to report epoch-based metrics as shown in this example. When you report
    epoch-based metrics during training, you'll be able to view epoch-based metric data in the WebUI.
@@ -166,16 +158,16 @@ evaluation loop. In addition, pass the newly created ``core_context`` into both 
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-after: # Docs snippet start after: pass core context
-   :end-before: # Docs snippet end before: pass core context
+   :start-after: # Docs snippet start: pass core context
+   :end-before: # Docs snippet end: pass core context
    :dedent:
 
 Create a ``steps_completed`` variable to plot metrics on a graph in the WebUI:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_metrics.py
    :language: python
-   :start-after: # Docs snippet start after: calculate steps completed
-   :end-before: # Docs snippet end before: calculate steps completed
+   :start-after: # Docs snippet start: calculate steps completed
+   :end-before: # Docs snippet end: calculate steps completed
    :dedent:
 
 Step 2.4: Run the Experiment
@@ -189,29 +181,9 @@ Run the following command to run the experiment:
 
 Open the Determined WebUI again and navigate to the **Overview** tab.
 
-#. Create a ``2_checkpoints.yaml`` file by copying the ``0_start.yaml`` file and changing the first
-   couple of lines:
-
-   .. literalinclude:: ../../../examples/tutorials/core_api/2_checkpoints.yaml
-      :language: yaml
-      :lines: 1-2
-
-#. Run the code using the command:
-
-   .. code:: bash
-
-      det e create 2_checkpoints.yaml . -f
-
-#. You can navigate to the experiment in the WebUI and pause it mid-training. The trial shuts down
-   and stops producing logs. If you reactivate training it resumes where it stopped. After training
-   is completed, click Continue Trial to see that fresh training is started but that the model
-   weight continues from where previous training finished.
-
-The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in this example can be
-found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
-
-.. _core-hpsearch:
+The WebUI now displays metrics. In this step, you learned how to add a few new lines of code in
+order to report training and validation metrics to the Determined master. Next, we’ll modify our
+script to report checkpoints.
 
 ***********************
  Step 3: Checkpointing
@@ -231,8 +203,8 @@ To save checkpoints, add the ``store_path`` function to your script:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: save checkpoint
-   :end-before: # Docs snippet end before: save checkpoint
+   :start-after: # Docs snippet start: save checkpoint
+   :end-before: # Docs snippet end: save checkpoint
    :dedent:
 
 Step 3.2: Continuations
@@ -254,24 +226,24 @@ To enable pausing an experiment, enable preemption:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: enable preemption
-   :end-before: # Docs snippet end before: enable preemption
+   :start-after: # Docs snippet start: enable preemption
+   :end-before: # Docs snippet end: enable preemption
    :dedent:
 
 Define a load_state function for restarting model training from existing checkpoint:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: define load state to restart
-   :end-before: # Docs snippet end before: define load state to restart
+   :start-after: # Docs snippet start: define load state to restart
+   :end-before: # Docs snippet end: define load state to restart
    :dedent:
 
 If checkpoint exists, load it and assign it to model state prior to resuming training:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: if checkpoint assign to model state
-   :end-before: # Docs snippet end before: if checkpoint assign to model state
+   :start-after: # Docs snippet start: if checkpoint assign to model state
+   :end-before: # Docs snippet end: if checkpoint assign to model state
    :dedent:
 
 **Enable Continuing the Trial**
@@ -284,24 +256,24 @@ Open the `checkpoint.pt` file in binary mode and compare `ckpt_trial_id` with th
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: compare checkpoint and current trial IDs
-   :end-before: # Docs snippet end before: compare checkpoint and current trial IDs
+   :start-after: # Docs snippet start: compare checkpoint and current trial IDs
+   :end-before: # Docs snippet end: compare checkpoint and current trial IDs
    :dedent:
 
 Save the checkpoint in the `checkpoint.pt` file:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: save checkpoint
-   :end-before: # Docs snippet end before: save checkpoint
+   :start-after: # Docs snippet start: save checkpoint
+   :end-before: # Docs snippet end: save checkpoint
    :dedent:
 
 Detect when the experiment is paused by the WebUI:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_checkpoints.py
    :language: python
-   :start-after: # Docs snippet start after: enable preemption
-   :end-before: # Docs snippet end before: enable preemption
+   :start-after: # Docs snippet start: enable preemption
+   :end-before: # Docs snippet end: enable preemption
    :dedent:
 
 Step 3.3: Run the Experiment
@@ -376,26 +348,25 @@ Begin by accessing the hyperparameters in your code:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
-   :start-after: # Docs snippet start after: get hparams
-   :end-before: # Docs snippet end before: get hparams
+   :start-after: # Docs snippet start: get hparams
+   :end-before: # Docs snippet end: get hparams
    :dedent:
 
 Then, pass the hyperparameters into your model and optimizer:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
-   :start-after: # Docs snippet start after: pass hyperparameters
-   :end-before: # Docs snippet end before: pass hyperparameters
+   :start-after: # Docs snippet start: pass hyperparameters
+   :end-before: # Docs snippet end: pass hyperparameters
    :dedent:
 
-The complete ``3_hpsearch.py`` and ``3_hpsearch.yaml`` listings used in this example can be found in
-the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+Ensure your model is set to use the selected values on a per-trial basis rather than your previously
+hardcoded values:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_adaptive.py
    :language: python
-   :start-after: # Docs snippet start after: per trial basis
-   :end-before: # Docs snippet end before: per trial basis
+   :start-after: # Docs snippet start: per trial basis
+   :end-before: # Docs snippet end: per trial basis
    :dedent:
 
 Step 4.1: Run the Experiment
@@ -473,16 +444,16 @@ Add a few more imports to your training script:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: # Docs snippet start after: import torch distrib
-   :end-before: # Docs snippet end before: import torch distrib
+   :start-after: # Docs snippet start: import torch distrib
+   :end-before: # Docs snippet end: import torch distrib
    :dedent:
 
 Initialize a process group and a Determined distributed context using ``from_torch_distributed``:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: # Docs snippet start after: initialize process group
-   :end-before: # Docs snippet end before: initialize process group
+   :start-after: # Docs snippet start: initialize process group
+   :end-before: # Docs snippet end: initialize process group
    :dedent:
 
 In ``main``, set your selected device to the device with index of ``local_rank``. This is a best
@@ -494,8 +465,8 @@ practice even if you only have a single GPU-per-node setup:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: # Docs snippet start after: set device
-   :end-before: # Docs snippet end before: set device
+   :start-after: # Docs snippet start: set device
+   :end-before: # Docs snippet end: set device
    :dedent:
 
 Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is equal to
@@ -503,18 +474,48 @@ Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is 
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: # Docs snippet start after: shard data
-   :end-before: # Docs snippet end before: shard data
+   :start-after: # Docs snippet start: shard data
+   :end-before: # Docs snippet end: shard data
    :dedent:
 
 Wrap your model with torch’s DistributedDataParallel:
 
 .. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
-   :start-after: # Docs snippet start after: DDP
-   :end-before: # Docs snippet end before: DDP
+   :start-after: # Docs snippet start: DDP
+   :end-before: # Docs snippet end: DDP
    :dedent:
 
-The complete ``4_distributed.py`` and ``3_hpsearch.yaml`` listings used in this example can be found
-in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `GitHub repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+Finally, at each place in the code where you upload checkpoints, report training metrics, or report
+progress to the master, make sure this is done only on rank 0, e.g.,:
+
+.. literalinclude:: ../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
+   :language: python
+   :start-after: # Docs snippet start: report metrics rank 0
+   :end-before: # Docs snippet end: report metrics rank 0
+   :dedent:
+
+Step 5.3: Run the Experiment
+============================
+
+Run the following command to run the experiment:
+
+.. code:: bash
+
+   det e create distributed.yaml .
+
+In the Determined WebUI, visit the **Cluster** tab.
+
+You should be able to see multiple slots active in the Cluster tab corresponding to the value you
+set for ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple
+ranks.
+
+************
+ Next Steps
+************
+
+In this user guide, you learned how to use the Core API to integrate a model into Determined. You
+also saw how to modify a training script and use the appropriate configuration file to report
+metrics and checkpointing, perform a hyperparameter search, and run distributed training.
+
+For more information about distributed training, visit :ref:`multi-gpu-training`.
