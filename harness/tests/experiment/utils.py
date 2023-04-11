@@ -175,7 +175,7 @@ def fixtures_path(path: str) -> str:
 def repo_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../", path)
 
-def fixtures_path(path: str) -> str:
+def e2e_fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), '../../../e2e_tests/tests/fixtures', path) #TODO: refactor fixtures.
 def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
