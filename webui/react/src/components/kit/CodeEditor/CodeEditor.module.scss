@@ -1,6 +1,6 @@
 .codeEditorBase {
   display: grid;
-  grid-template-columns: minmax(15%, auto) minmax(60%, auto);
+  grid-template-columns: minmax(15%, auto) minmax(52%, auto);
   grid-template-rows: 38px auto;
   height: 100%;
   max-width: 100vw;
@@ -9,15 +9,15 @@
     background-color: transparent;
     color: var(--theme-background-on-strong);
     height: 100%;
-    padding: 0;
+    padding: 0.5em;
 
     span {
       white-space: nowrap;
     }
 
     @media screen and (max-width: 1024px) {
-      display: block;
-      grid-column: 1 / span 3;
+      border-right: none;
+      grid-column: 1 / 3;
     }
   }
   h5 {
@@ -26,15 +26,12 @@
     text-align: center;
   }
   .fileDir {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-
     .fileInfo {
       align-items: center;
       background-color: var(--theme-stage);
+      border: solid var(--theme-stroke-width) var(--theme-stage-border);
+      border-bottom: none;
       border-radius: 0;
-      border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
-      border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
       display: flex;
       justify-content: space-between;
       padding: 0.5em 1em;
@@ -61,21 +58,36 @@
         .noBorderButton {
           border: 0;
           cursor: pointer;
+          margin-right: -4px;
           width: 20px;
         }
       }
     }
 
     @media screen and (max-width: 1024px) {
-      grid-column: 1 / 2;
+      grid-column: 1 / 3;
+      grid-row: 2 / 2;
     }
   }
-  &.editorMode .fileDir {
-    grid-column: 1 / 3;
+  .editor {
+    border: solid var(--theme-stroke-width) var(--theme-stage-border);
+    grid-column: 2 / 3;
+    min-height: 250px;
+
+    @media screen and (max-width: 1024px) {
+      grid-column: 1 / 3;
+      grid-row: 3;
+    }
+  }
+  &.editorMode {
+    .editor,
+    .fileDir {
+      grid-column: span 2;
+    }
   }
 
   @media screen and (max-width: 1024px) {
-    grid-template-columns: auto;
+    grid-template-rows: auto;
   }
 }
 .pageError {
@@ -85,24 +97,6 @@
   @media screen and (max-width: 1024px) {
     grid-column: 1 / 2;
   }
-}
-.editor {
-  border: solid var(--theme-stroke-width) var(--theme-stage-border);
-  border-left: none;
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-  min-height: 250px;
-
-  .editorMode & {
-    grid-column: 1 / 3;
-  }
-
-  @media screen and (max-width: 1024px) {
-    grid-column: 1 / 2;
-  }
-}
-.noEditor {
-  grid-template-columns: max-content auto;
 }
 .hideElement {
   display: none;

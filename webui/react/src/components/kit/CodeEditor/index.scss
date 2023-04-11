@@ -15,17 +15,6 @@
 .ant-tree-list {
   width: 100%;
 }
-#file-tree {
-  border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  overflow-x: scroll;
-  padding: 1em;
-
-  @media screen and (max-width: 1024px) {
-    grid-column: 1 / 3;
-  }
-}
 .ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-normal {
   display: flex;
 }

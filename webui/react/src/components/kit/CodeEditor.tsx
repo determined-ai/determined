@@ -624,6 +624,9 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   return (
     <div className={classes.join(' ')}>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d7696e9b6 (responsiveness)
       <div className={viewMode === 'editor' ? css.hideElement : undefined}>
         <DirectoryTree
           className={css.fileTree}
