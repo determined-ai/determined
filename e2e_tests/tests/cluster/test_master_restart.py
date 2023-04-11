@@ -145,17 +145,17 @@ def test_master_restart_error_missing_docker_container(
         trials = exp.experiment_trials(exp_id)
         trial_id = trials[0].trial.id
 
-        expected_message = ""
-        if wait_for_amnesia:
-            expected_message = (
+        expected_message = (
+            (
                 "allocation failed due to agent failure: agent failed while the "
                 + "container was running: agent closed with allocated containers"
             )
-        else:
-            expected_message = (
+            if wait_for_amnesia
+            else (
                 "allocation failed due to restore error: RM failed "
                 + "to restore the allocation: container is gone on reattachment"
             )
+        )
 
         for _ in range(30):
             trial_logs = "\n".join(exp.trial_logs(trial_id))
