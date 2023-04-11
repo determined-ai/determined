@@ -129,6 +129,10 @@ type (
 		AllocationSignal    AllocationSignal
 		InformationalReason string
 	}
+	// ProvisionerFailure is a message sent to the allocation when the provider fails.
+	ProvisionerFailure struct {
+		Err error
+	}
 )
 
 // Proto returns the proto representation of ProxyPortConfig.

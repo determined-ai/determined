@@ -359,6 +359,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+	case sproto.ProvisionerFailure:
+		ctx.Log().Debugf("provisioner failure: %s", msg.Err)
+		a.Exit(ctx, fmt.Sprintf("provisioner failure: %s", msg.Err))
 
 	default:
 		a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
