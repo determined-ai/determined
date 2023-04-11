@@ -23,10 +23,14 @@ import { AnyMouseEvent } from 'shared/utils/routes';
 import { TreeNode } from 'types';
 import handleError from 'utils/error';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 =======
 import { Loadable } from 'utils/loadable';
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+>>>>>>> 110e8f963 (single trial experiment tree)
 
 const JupyterRenderer = lazy(() => import('./CodeEditor/IpynbRenderer'));
 
@@ -36,6 +40,7 @@ import css from './CodeEditor/CodeEditor.module.scss';
 
 import './CodeEditor/index.scss';
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 type FileInfo = {
@@ -50,6 +55,10 @@ export type Props = {
 =======
   files: FileInfo[];
 >>>>>>> 773beb50c (start working on readonly)
+=======
+export type Props = {
+  files: TreeNode[];
+>>>>>>> 110e8f963 (single trial experiment tree)
   onSelectFile?: (arg0: string) => void;
   readonly?: boolean;
   selectedFilePath?: string;
@@ -95,6 +104,7 @@ const sortTree = (a: TreeNode, b: TreeNode) => {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
   children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
@@ -115,6 +125,8 @@ const convertFileInfoToTreeNode = (file: FileInfo): TreeNode => ({
 });
 
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+>>>>>>> 110e8f963 (single trial experiment tree)
 const PageError = {
   Decode: 'Could not decode file.',
   Empty: 'File has no content.',
@@ -155,6 +167,7 @@ const isConfig = (key: unknown): key is Config =>
  * selectedFilePath: gives path to the file to set as activeFile;
  */
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
 =======
@@ -220,12 +233,17 @@ const CodeEditor: React.FC<Props> = ({
   );
   const [isFetchingFile, setIsFetchingFile] = useState(false);
   const [isFetchingTree, setIsFetchingTree] = useState(false);
+=======
+const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFilePath }) => {
+  const [pageError, setPageError] = useState<PageError>(PageError.None);
+
+  const [activeFile, setActiveFile] = useState<TreeNode | null>(files.length > 0 ? files[0] : null);
+>>>>>>> 110e8f963 (single trial experiment tree)
   const [downloadInfo, setDownloadInfo] = useState(DEFAULT_DOWNLOAD_INFO);
   const configDownloadButton = useRef<HTMLAnchorElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
-  const [editorMode, setEditorMode] = useState<'monaco' | 'ipynb'>('monaco');
-  const viewMode = files.length === 1 ? 'editor' : 'split';
 
+<<<<<<< HEAD
   // const handleSelectConfig = useCallback(
   //   (c: Config) => {
   //     if (files.length) return;
@@ -245,6 +263,13 @@ const CodeEditor: React.FC<Props> = ({
   //   [files, submittedConfig, runtimeConfig],
   // );
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+  const viewMode = useMemo(() => (files.length === 1 ? 'editor' : 'split'), [files.length]);
+  const editorMode = useMemo(() => {
+    const isIpybnFile = /\.ipynb$/i.test(String(activeFile?.key || ''));
+    return isIpybnFile ? 'ipynb' : 'monaco';
+  }, [activeFile]);
+>>>>>>> 110e8f963 (single trial experiment tree)
 
   const downloadHandler = useCallback(() => {
     timeout.current = setTimeout(() => {
@@ -253,6 +278,9 @@ const CodeEditor: React.FC<Props> = ({
   }, [downloadInfo.url]);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 110e8f963 (single trial experiment tree)
   const fetchFile = useCallback(async (fileInfo: TreeNode) => {
     if (!fileInfo) return;
     setPageError(PageError.None);
@@ -260,6 +288,7 @@ const CodeEditor: React.FC<Props> = ({
     if (isConfig(fileInfo.key) || fileInfo.content !== NotLoaded) {
       setActiveFile(fileInfo);
       return;
+<<<<<<< HEAD
     }
 
     let file,
@@ -280,45 +309,11 @@ const CodeEditor: React.FC<Props> = ({
   const fetchFileTree = useCallback(async () => {
     if (files && files.length > 1) {
       setTreeData(files.map(convertFileInfoToTreeNode).sort(sortTree));
+=======
+>>>>>>> 110e8f963 (single trial experiment tree)
     }
-    return;
-    // setIsFetchingTree(true);
-    // try {
-    //   const fileTree = await getExperimentFileTree({ experimentId });
-    //   setIsFetchingTree(false);
-    //
-    //   const tree = fileTree
-    //     .map<TreeNode>((node) => convertV1FileNodeToTreeNode(node))
-    //     .sort(sortTree);
-    //
-    //   if (runtimeConfig)
-    //     tree.unshift({
-    //       icon: configIcon,
-    //       isLeaf: true,
-    //       key: Config.Runtime,
-    //       title: Config.Runtime,
-    //     });
-    //
-    //   if (submittedConfig)
-    //     tree.unshift({
-    //       icon: configIcon,
-    //       isLeaf: true,
-    //       key: Config.Submitted,
-    //       title: Config.Submitted,
-    //     });
-    //
-    //   setTreeData(tree);
-    // } catch (error) {
-    //   setIsFetchingTree(false);
-    //   handleError(error, {
-    //     publicMessage: 'Failed to load file tree.',
-    //     publicSubject: 'Unable to fetch the model file tree.',
-    //     silent: false,
-    //     type: ErrorType.Api,
-    //   });
-    // }
-  }, [files]);
 
+<<<<<<< HEAD
   const fetchFile = useCallback(
     async (path: string, title: string) => {
       if (!files.length) return;
@@ -373,17 +368,55 @@ const CodeEditor: React.FC<Props> = ({
   const treeData = useMemo(() => {
     if (selectedFilePath && activeFile?.key !== selectedFilePath) {
       const matchTopFileOrFolder = files.find((f) => f.key === selectedFilePath);
+=======
+    let file,
+      content: Loadable<string> = NotLoaded;
+    try {
+      file = await fileInfo.get?.(String(fileInfo.key));
+    } catch (error) {
+      console.error(error);
+      handleError(error, {
+        publicMessage: 'Failed to load selected file.',
+        publicSubject: 'Unable to fetch the selected file.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+      setPageError(PageError.Fetch);
+    }
+
+    try {
+      const text = decodeURIComponent(escape(window.atob(file || '')));
+
+      if (!text) setPageError(PageError.Empty); // Emmits a "Empty file" error message
+      content = Loaded(text);
+    } catch {
+      setPageError(PageError.Decode);
+    }
+    setActiveFile({
+      ...fileInfo,
+      content,
+    });
+  }, []);
+
+  const treeData = useMemo(() => {
+    if (selectedFilePath) {
+      const matchTopFileOrFolder = files.find((f) => f.key === selectedFilePath.split('/')[0]);
+>>>>>>> 110e8f963 (single trial experiment tree)
       if (matchTopFileOrFolder) {
         fetchFile(matchTopFileOrFolder);
       }
     }
     return files.sort(sortTree);
+<<<<<<< HEAD
   }, [files, selectedFilePath, activeFile?.key, fetchFile]);
 =======
     },
     [files],
   );
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+  }, [files, fetchFile, selectedFilePath]);
+>>>>>>> 110e8f963 (single trial experiment tree)
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {
@@ -427,6 +460,7 @@ const CodeEditor: React.FC<Props> = ({
 
       const filePath = String(activeFile?.key);
 <<<<<<< HEAD
+<<<<<<< HEAD
       if (activeFile.content !== NotLoaded) {
         const url = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile.content)]));
         setDownloadInfo({
@@ -454,22 +488,34 @@ const CodeEditor: React.FC<Props> = ({
       // } else
       if (activeFile.key && activeFile.text) {
         const url = URL.createObjectURL(new Blob([activeFile.text]));
+=======
+      if (isConfig(filePath) && activeFile.content !== NotLoaded) {
+        const url = URL.createObjectURL(
+          Loadable.match(activeFile.content, {
+            Loaded: (content) => new Blob([content]),
+            NotLoaded: () => new Blob(),
+          }),
+        );
+>>>>>>> 110e8f963 (single trial experiment tree)
         setDownloadInfo({
-          fileName: String(activeFile.key),
+          fileName: String(activeFile.download || activeFile.key),
           url,
         });
+<<<<<<< HEAD
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+      } else if (activeFile.key) {
+        handlePath(e, {
+          external: true,
+          path: activeFile.download,
+        });
+>>>>>>> 110e8f963 (single trial experiment tree)
       }
-      // else if (experimentId) {
-      //   handlePath(e, {
-      //     external: true,
-      //     path: paths.experimentFileFromTree(experimentId, String(activeFile?.key)),
-      //   });
-      // }
     },
     [activeFile],
   );
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
   // map the file tree
@@ -526,6 +572,8 @@ const CodeEditor: React.FC<Props> = ({
   }, [fileViewerInfo.filePath, activeFile]);
 
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+>>>>>>> 110e8f963 (single trial experiment tree)
   useLayoutEffect(() => {
     if (configDownloadButton.current && downloadInfo.url && downloadInfo.fileName)
       configDownloadButton.current.click();
@@ -559,6 +607,7 @@ const CodeEditor: React.FC<Props> = ({
         />
 =======
       <div className={viewMode === 'editor' ? css.hideElement : undefined} id="file-tree">
+<<<<<<< HEAD
         <Spinner spinning={isFetchingTree}>
           <DirectoryTree
             className={css.fileTree}
@@ -575,6 +624,16 @@ const CodeEditor: React.FC<Props> = ({
           />
         </Spinner>
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
+=======
+        <DirectoryTree
+          className={css.fileTree}
+          data-testid="fileTree"
+          defaultExpandAll
+          defaultSelectedKeys={[selectedFilePath ? selectedFilePath.split('/')[0] : files[0]?.key]}
+          treeData={treeData}
+          onSelect={handleSelectFile}
+        />
+>>>>>>> 110e8f963 (single trial experiment tree)
       </div>
       {!!activeFile?.key && (
         <div className={css.fileDir}>
@@ -648,17 +707,39 @@ const CodeEditor: React.FC<Props> = ({
               language={getSyntaxHighlight()}
               options={{
                 minimap: {
+<<<<<<< HEAD
                   enabled: false,
+=======
+                  enabled: ['split', 'editor'].includes(viewMode) && !!activeFile?.content,
+                  showSlider: 'mouseover',
+                  size: 'fit',
+>>>>>>> 110e8f963 (single trial experiment tree)
                 },
                 occurrencesHighlight: false,
                 readOnly: readonly,
                 showFoldingControls: 'always',
               }}
+<<<<<<< HEAD
               value={Loadable.getOrElse('', activeFile.content)}
             />
           ) : (
             <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
               <JupyterRenderer file={Loadable.getOrElse('', activeFile.content)} />
+=======
+              value={Loadable.match(activeFile.content, {
+                Loaded: (code) => code,
+                NotLoaded: () => '',
+              })}
+            />
+          ) : (
+            <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
+              <JupyterRenderer
+                file={Loadable.match(activeFile.content, {
+                  Loaded: (code) => code,
+                  NotLoaded: () => '',
+                })}
+              />
+>>>>>>> 110e8f963 (single trial experiment tree)
             </Suspense>
           )}
         </Spinner>

@@ -1,5 +1,6 @@
 import type { TabsProps } from 'antd';
 import { string } from 'io-ts';
+import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -14,15 +15,24 @@ import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import F_TrialDetailsOverview from 'pages/TrialDetails/F_TrialDetailsOverview';
 import { paths } from 'routes/utils';
-import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
+import {
+  getExperimentFileFromTree,
+  getExperimentFileTree,
+  getExpTrials,
+  getTrialDetails,
+  patchExperiment,
+} from 'services/api';
+import { V1FileNode } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
-import { ValueOf } from 'shared/types';
+import { RawJson, ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, TrialDetails, TrialItem } from 'types';
+import { ExperimentBase, TreeNode, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
@@ -55,6 +65,8 @@ const NeverTrials: React.FC = () => (
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
+const configIcon = <Icon name="settings" />;
+
 export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
@@ -72,6 +84,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const location = useLocation();
   const [trialId, setFirstTrialId] = useState<number>();
   const [wontHaveTrials, setWontHaveTrials] = useState<boolean>(false);
+  const [expFiles, setExpFiles] = useState<Loadable<TreeNode[]>>(NotLoaded);
   const prevTrialId = usePrevious(trialId, undefined);
   const { tab } = useParams<Params>();
   const [canceler] = useState(new AbortController());
@@ -232,6 +245,45 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
   const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
 
+  const submittedConfig = useMemo(() => {
+    if (!experiment.originalConfig) return;
+
+    const { hyperparameters, ...restConfig } = yaml.load(experiment.originalConfig) as RawJson;
+
+    // don't ask me why this works.. it gets rid of the JSON though
+    return yaml.dump({ ...restConfig, hyperparameters });
+  }, [experiment.originalConfig]);
+
+  const runtimeConfig = useMemo(() => {
+    if (!experiment.configRaw) return;
+
+    const {
+      environment: { registry_auth, ...restEnvironment },
+      workspace,
+      project,
+      ...restConfig
+    } = experiment.configRaw;
+    return yaml.dump({ environment: restEnvironment, ...restConfig });
+  }, [experiment.configRaw]);
+
+  useMemo(async () => {
+    const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
+      children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
+      content: NotLoaded,
+      download: paths.experimentFileFromTree(experiment.id, String(node.path)),
+      get: (path: string) =>
+        getExperimentFileFromTree({ experimentId: experiment.id, path }),
+      isLeaf: !node.isDir,
+      key: node.path ?? '',
+      title: node.name,
+    });
+
+    const fileTree = await getExperimentFileTree({ experimentId: experiment.id });
+    setExpFiles(
+      Loaded(fileTree.map<TreeNode>(convertV1FileNodeToTreeNode)),
+    );Loadable;
+  }, [experiment.id]);
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     const items: TabsProps['items'] = [
       {
@@ -259,6 +311,30 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     ];
 
     if (showExperimentArtifacts) {
+      const fileOpts = [
+        submittedConfig
+          ? {
+              content: Loaded(submittedConfig),
+              download: `${experiment.id}_submitted_configuration.yaml`,
+              icon: configIcon,
+              isLeaf: true,
+              key: 'Submitted Configuration',
+              title: 'Submitted Configuration',
+            }
+          : null,
+        runtimeConfig
+          ? {
+              content: Loaded(runtimeConfig),
+              download: `${experiment.id}_runtime_configuration.yaml`,
+              icon: configIcon,
+              isLeaf: true,
+              key: 'Runtime Configuration',
+              title: 'Runtime Configuration',
+            }
+          : null,
+        ...Loadable.getOrElse([], expFiles),
+      ].filter((valid) => !!valid) as TreeNode[];
+
       items.push({
         children: <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />,
         key: TabType.Checkpoints,
@@ -266,14 +342,16 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       });
       items.push({
         children: (
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeEditor
-              files={[]}
-              readonly={true}
-              selectedFilePath={settings.filePath}
-              onSelectFile={handleSelectFile}
-            />
-          </React.Suspense>
+          <Spinner spinning={expFiles === NotLoaded} tip="Loading file tree...">
+            <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+              <CodeEditor
+                files={fileOpts}
+                readonly={true}
+                selectedFilePath={settings.filePath}
+                onSelectFile={handleSelectFile}
+              />
+            </React.Suspense>
+          </Spinner>
         ),
         key: TabType.Code,
         label: 'Code',
@@ -317,11 +395,14 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [
     editableNotes,
     experiment,
+    expFiles,
     handleNotesUpdate,
     handleSelectFile,
     pageRef,
+    runtimeConfig,
     settings.filePath,
     showExperimentArtifacts,
+    submittedConfig,
     trialDetails,
     waitingForTrials,
     wontHaveTrials,
