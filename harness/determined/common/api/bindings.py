@@ -55,64 +55,6 @@ class APIHttpStreamError(APIHttpError):
         return self.message
 
 
-class GetHPImportanceResponseMetricHPImportance:
-    error: "typing.Optional[str]" = None
-    experimentProgress: "typing.Optional[float]" = None
-    hpImportance: "typing.Optional[typing.Dict[str, float]]" = None
-    inProgress: "typing.Optional[bool]" = None
-    pending: "typing.Optional[bool]" = None
-
-    def __init__(
-        self,
-        *,
-        error: "typing.Union[str, None, Unset]" = _unset,
-        experimentProgress: "typing.Union[float, None, Unset]" = _unset,
-        hpImportance: "typing.Union[typing.Dict[str, float], None, Unset]" = _unset,
-        inProgress: "typing.Union[bool, None, Unset]" = _unset,
-        pending: "typing.Union[bool, None, Unset]" = _unset,
-    ):
-        if not isinstance(error, Unset):
-            self.error = error
-        if not isinstance(experimentProgress, Unset):
-            self.experimentProgress = experimentProgress
-        if not isinstance(hpImportance, Unset):
-            self.hpImportance = hpImportance
-        if not isinstance(inProgress, Unset):
-            self.inProgress = inProgress
-        if not isinstance(pending, Unset):
-            self.pending = pending
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "GetHPImportanceResponseMetricHPImportance":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "error" in obj:
-            kwargs["error"] = obj["error"]
-        if "experimentProgress" in obj:
-            kwargs["experimentProgress"] = float(obj["experimentProgress"]) if obj["experimentProgress"] is not None else None
-        if "hpImportance" in obj:
-            kwargs["hpImportance"] = {k: float(v) for k, v in obj["hpImportance"].items()} if obj["hpImportance"] is not None else None
-        if "inProgress" in obj:
-            kwargs["inProgress"] = obj["inProgress"]
-        if "pending" in obj:
-            kwargs["pending"] = obj["pending"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "error" in vars(self):
-            out["error"] = self.error
-        if not omit_unset or "experimentProgress" in vars(self):
-            out["experimentProgress"] = None if self.experimentProgress is None else dump_float(self.experimentProgress)
-        if not omit_unset or "hpImportance" in vars(self):
-            out["hpImportance"] = None if self.hpImportance is None else {k: dump_float(v) for k, v in self.hpImportance.items()}
-        if not omit_unset or "inProgress" in vars(self):
-            out["inProgress"] = self.inProgress
-        if not omit_unset or "pending" in vars(self):
-            out["pending"] = self.pending
-        return out
-
 class GetMasterResponseProduct(enum.Enum):
     UNSPECIFIED = "PRODUCT_UNSPECIFIED"
     COMMUNITY = "PRODUCT_COMMUNITY"
@@ -3823,32 +3765,6 @@ class v1GetGroupsResponse:
             out["groups"] = None if self.groups is None else [x.to_json(omit_unset) for x in self.groups]
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        return out
-
-class v1GetHPImportanceResponse:
-
-    def __init__(
-        self,
-        *,
-        trainingMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-        validationMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-    ):
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetHPImportanceResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "trainingMetrics": {k: GetHPImportanceResponseMetricHPImportance.from_json(v) for k, v in obj["trainingMetrics"].items()},
-            "validationMetrics": {k: GetHPImportanceResponseMetricHPImportance.from_json(v) for k, v in obj["validationMetrics"].items()},
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "trainingMetrics": {k: v.to_json(omit_unset) for k, v in self.trainingMetrics.items()},
-            "validationMetrics": {k: v.to_json(omit_unset) for k, v in self.validationMetrics.items()},
-        }
         return out
 
 class v1GetJobQueueStatsResponse:
@@ -13459,26 +13375,6 @@ def post_CompleteTrialSearcherValidation(
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
-def post_ComputeHPImportance(
-    session: "api.Session",
-    *,
-    experimentId: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_ComputeHPImportance", _resp)
-
 def post_CreateExperiment(
     session: "api.Session",
     *,
@@ -14290,40 +14186,6 @@ def get_GetGroupsAndUsersAssignedToWorkspace(
     if _resp.status_code == 200:
         return v1GetGroupsAndUsersAssignedToWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetGroupsAndUsersAssignedToWorkspace", _resp)
-
-def get_GetHPImportance(
-    session: "api.Session",
-    *,
-    experimentId: int,
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "typing.Iterable[v1GetHPImportanceResponse]":
-    _params = {
-        "periodSeconds": periodSeconds,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=True,
-    )
-    if _resp.status_code == 200:
-        try:
-            for _line in _resp.iter_lines(chunk_size=1024 * 1024):
-                _j = json.loads(_line)
-                if "error" in _j:
-                    raise APIHttpStreamError(
-                        "get_GetHPImportance",
-                        runtimeStreamError.from_json(_j["error"])
-                )
-                yield v1GetHPImportanceResponse.from_json(_j["result"])
-        except requests.exceptions.ChunkedEncodingError:
-            raise APIHttpStreamError("get_GetHPImportance", runtimeStreamError(message="ChunkedEncodingError"))
-        return
-    raise APIHttpError("get_GetHPImportance", _resp)
 
 def get_GetJobQueueStats(
     session: "api.Session",
