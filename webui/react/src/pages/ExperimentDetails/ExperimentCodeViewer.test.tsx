@@ -11,7 +11,7 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
-import CodeViewer, { Props } from './CodeEditor';
+import CodeViewer, { Props } from './ExperimentCodeViewer';
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
@@ -91,7 +91,11 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
 });
 
 global.URL.createObjectURL = vi.fn();
-const experimentIdMock = 123;
+const experimentMock = {
+  id: 123,
+  originalConfig: 'abc',
+  rawConfig: 'xyz',
+};
 const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
@@ -103,14 +107,12 @@ const Container: React.FC<Props> = (props) => {
 
   return (
     <SettingsProvider>
-      <CodeViewer files={[]} />
+      <CodeViewer experiment={props.experiment} />
     </SettingsProvider>
   );
 };
 
-const setup = (
-  props: Props = { files: [] },
-) => {
+const setup = (props: Props = { experiment: experimentMock }) => {
   render(
     <BrowserRouter>
       <UIProvider>

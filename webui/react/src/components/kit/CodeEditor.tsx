@@ -296,6 +296,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
     try {
       file = await fileInfo.get?.(String(fileInfo.key));
     } catch (error) {
+<<<<<<< HEAD
       handleError(error, {
         publicMessage: 'Failed to load selected file.',
         publicSubject: 'Unable to fetch the selected file.',
@@ -375,6 +376,8 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
       file = await fileInfo.get?.(String(fileInfo.key));
     } catch (error) {
       console.error(error);
+=======
+>>>>>>> e525324d8 (ExperimentCodeViewer allows single- and multi- to load)
       handleError(error, {
         publicMessage: 'Failed to load selected file.',
         publicSubject: 'Unable to fetch the selected file.',
@@ -399,14 +402,20 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
   }, []);
 
   const treeData = useMemo(() => {
+<<<<<<< HEAD
     if (selectedFilePath) {
       const matchTopFileOrFolder = files.find((f) => f.key === selectedFilePath.split('/')[0]);
 >>>>>>> 110e8f963 (single trial experiment tree)
+=======
+    if (selectedFilePath && activeFile?.key !== selectedFilePath) {
+      const matchTopFileOrFolder = files.find((f) => f.key === selectedFilePath);
+>>>>>>> e525324d8 (ExperimentCodeViewer allows single- and multi- to load)
       if (matchTopFileOrFolder) {
         fetchFile(matchTopFileOrFolder);
       }
     }
     return files.sort(sortTree);
+<<<<<<< HEAD
 <<<<<<< HEAD
   }, [files, selectedFilePath, activeFile?.key, fetchFile]);
 =======
@@ -417,6 +426,9 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
 =======
   }, [files, fetchFile, selectedFilePath]);
 >>>>>>> 110e8f963 (single trial experiment tree)
+=======
+  }, [files, selectedFilePath, activeFile?.key, fetchFile]);
+>>>>>>> e525324d8 (ExperimentCodeViewer allows single- and multi- to load)
 
   const handleSelectFile = useCallback(
     (_: React.Key[], info: { node: TreeNode }) => {

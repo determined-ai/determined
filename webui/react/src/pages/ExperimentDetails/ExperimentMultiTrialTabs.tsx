@@ -7,6 +7,7 @@ import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import ExperimentCodeViewer from 'pages/ExperimentDetails/ExperimentCodeViewer';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
@@ -17,8 +18,6 @@ import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
 import { ExperimentVisualizationType } from './ExperimentVisualization';
-
-const CodeEditor = React.lazy(() => import('components/kit/CodeEditor'));
 
 const TabType = {
   Code: 'code',
@@ -148,14 +147,11 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     if (showExperimentArtifacts) {
       items.push({
         children: (
-          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeEditor
-              files={[]}
-              readonly={true}
-              selectedFilePath={settings.filePath}
-              onSelectFile={handleSelectFile}
-            />
-          </React.Suspense>
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
         ),
         key: TabType.Code,
         label: 'Code',
