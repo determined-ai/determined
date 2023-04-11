@@ -186,7 +186,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.12-cpu-d9dd317
+            - run: docker pull determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.12-cpu-d9dd317
 
   login-docker:
     parameters:

@@ -15,5 +15,5 @@ entrypoint: auto_amp_model_def:MNistAutoAMPTrial
 environment:
   image:
     gpu: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.12-gpu-d9dd317
-    cpu: determinedai/environments:py-3.8-pytorch-1.12-tf-2.12-cpu-d9dd317
+    cpu: determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.12-cpu-d9dd317
 
