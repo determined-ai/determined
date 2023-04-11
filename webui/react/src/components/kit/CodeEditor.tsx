@@ -473,6 +473,7 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
       const filePath = String(activeFile?.key);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       if (activeFile.content !== NotLoaded) {
         const url = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile.content)]));
         setDownloadInfo({
@@ -509,14 +510,22 @@ const CodeEditor: React.FC<Props> = ({ files, onSelectFile, readonly, selectedFi
           }),
         );
 >>>>>>> 110e8f963 (single trial experiment tree)
+=======
+      if (activeFile.content !== NotLoaded) {
+        const url = URL.createObjectURL(new Blob([Loadable.getOrElse('', activeFile.content)]));
+>>>>>>> ddb0557b9 (test and download button fixes)
         setDownloadInfo({
-          fileName: String(activeFile.download || activeFile.key),
+          fileName: isConfig(filePath) ? activeFile.download || '' : String(activeFile.title),
           url,
         });
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> e5d871c08 (readonly, re-sync, prep for loadable)
 =======
       } else if (activeFile.key) {
+=======
+      } else if (activeFile.download) {
+>>>>>>> ddb0557b9 (test and download button fixes)
         handlePath(e, {
           external: true,
           path: activeFile.download,

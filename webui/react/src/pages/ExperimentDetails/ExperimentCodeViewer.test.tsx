@@ -10,6 +10,7 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
+import { generateExperiment } from 'utils/task';
 
 import CodeViewer, { Props } from './ExperimentCodeViewer';
 
@@ -92,9 +93,14 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
 
 global.URL.createObjectURL = vi.fn();
 const experimentMock = {
+  ...generateExperiment(),
   id: 123,
   originalConfig: 'abc',
-  rawConfig: 'xyz',
+  parentArchived: false,
+  projectName: 'a',
+  projectOwnerId: 1,
+  workspaceId: 1,
+  workspaceName: 'b',
 };
 const user = userEvent.setup();
 
