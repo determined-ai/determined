@@ -1981,6 +1981,7 @@ func (a *apiServer) GetModelDefFile(
 }
 
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
+
 	numericeRegex := regexp.MustCompile(`\d|\.|-`)
 	var query string
 	var valueIsString bool
@@ -2053,11 +2054,10 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		case false:
 			value += char
 		}
-		fmt.Printf("Added charcter goinf to next index %v ", filterIndex)
 		filterIndex += 1
 	}
-	if operator == nil {
-		return col + value, filterIndex
+	if valueIsString {
+		value = `"` + value + `"`
 	}
 	if *operator == ":" {
 		if isNull {
@@ -2065,11 +2065,9 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		} else {
 			query = fmt.Sprintf(" == %v", value)
 		}
-		return query, filterIndex
 	}
 	if *operator == "~" {
 		query = " LIKE " + "%" + value + "%"
-		return query, filterIndex
 	}
 	if *operator == "-" {
 		if isNull {
@@ -2079,12 +2077,41 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		} else if comparator == ":" {
 			query = fmt.Sprintf("%v != %v", col, value)
 		}
-		return query, filterIndex
 	}
 	return query, filterIndex
 }
 
 func parseFilter(filter string) (string, error) {
+	general_column_prefix := "general_column."
+	orderColMap := map[string]string{
+		"id":              "id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
+	}
+
 	currentIndex := 0
 	currentQuery := ""
 	openParenCount := 0
@@ -2132,6 +2159,10 @@ func parseFilter(filter string) (string, error) {
 			currentQuery = currentQuery + char
 			currentIndex += 1
 		}
+	}
+	for key, value := range orderColMap {
+		fmt.Println(key + " " + value + " " + general_column_prefix + key)
+		currentQuery = strings.ReplaceAll(currentQuery, general_column_prefix+key, value)
 	}
 	return currentQuery, nil
 }
