@@ -117,13 +117,6 @@ type DB interface {
 		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	FetchHPImportanceTrainingData(experimentID int, metric string) (
-		map[int][]model.HPImportanceTrialData, error)
-	FetchHPImportanceValidationData(experimentID int, metric string) (
-		map[int][]model.HPImportanceTrialData, error)
-	GetHPImportance(experimentID int) (result model.ExperimentHPImportance, err error)
-	SetHPImportance(experimentID int, value model.ExperimentHPImportance) error
-	GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error)
 	ExperimentBestSearcherValidation(id int) (float32, error)
 	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error

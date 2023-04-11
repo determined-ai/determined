@@ -3637,229 +3637,6 @@ func (x *TrialsSampleResponse) GetDemotedTrials() []int32 {
 	return nil
 }
 
-// Trigger the computation of hyperparameter importance on-demand for a specific
-// metric on a specific experiment.
-type ComputeHPImportanceRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The id of the experiment.
-	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
-	// A metric name.
-	MetricName string `protobuf:"bytes,2,opt,name=metric_name,json=metricName,proto3" json:"metric_name,omitempty"`
-	// The type of metric.
-	MetricType MetricType `protobuf:"varint,3,opt,name=metric_type,json=metricType,proto3,enum=determined.api.v1.MetricType" json:"metric_type,omitempty"`
-}
-
-func (x *ComputeHPImportanceRequest) Reset() {
-	*x = ComputeHPImportanceRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ComputeHPImportanceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ComputeHPImportanceRequest) ProtoMessage() {}
-
-func (x *ComputeHPImportanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ComputeHPImportanceRequest.ProtoReflect.Descriptor instead.
-func (*ComputeHPImportanceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{57}
-}
-
-func (x *ComputeHPImportanceRequest) GetExperimentId() int32 {
-	if x != nil {
-		return x.ExperimentId
-	}
-	return 0
-}
-
-func (x *ComputeHPImportanceRequest) GetMetricName() string {
-	if x != nil {
-		return x.MetricName
-	}
-	return ""
-}
-
-func (x *ComputeHPImportanceRequest) GetMetricType() MetricType {
-	if x != nil {
-		return x.MetricType
-	}
-	return MetricType_METRIC_TYPE_UNSPECIFIED
-}
-
-// Response to ComputeHPImportanceRequest
-type ComputeHPImportanceResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *ComputeHPImportanceResponse) Reset() {
-	*x = ComputeHPImportanceResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ComputeHPImportanceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ComputeHPImportanceResponse) ProtoMessage() {}
-
-func (x *ComputeHPImportanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ComputeHPImportanceResponse.ProtoReflect.Descriptor instead.
-func (*ComputeHPImportanceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58}
-}
-
-// Retrieve the status and results of hyperparameter importance computation.
-type GetHPImportanceRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The id of the experiment.
-	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
-	// Seconds to wait when polling for updates.
-	PeriodSeconds int32 `protobuf:"varint,2,opt,name=period_seconds,json=periodSeconds,proto3" json:"period_seconds,omitempty"`
-}
-
-func (x *GetHPImportanceRequest) Reset() {
-	*x = GetHPImportanceRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetHPImportanceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHPImportanceRequest) ProtoMessage() {}
-
-func (x *GetHPImportanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHPImportanceRequest.ProtoReflect.Descriptor instead.
-func (*GetHPImportanceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{59}
-}
-
-func (x *GetHPImportanceRequest) GetExperimentId() int32 {
-	if x != nil {
-		return x.ExperimentId
-	}
-	return 0
-}
-
-func (x *GetHPImportanceRequest) GetPeriodSeconds() int32 {
-	if x != nil {
-		return x.PeriodSeconds
-	}
-	return 0
-}
-
-// Response to GetHPImportanceRequest
-type GetHPImportanceResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// A map of training metric names to their respective entries.
-	TrainingMetrics map[string]*GetHPImportanceResponse_MetricHPImportance `protobuf:"bytes,1,rep,name=training_metrics,json=trainingMetrics,proto3" json:"training_metrics,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// A map of validation metric names to their respective entries.
-	ValidationMetrics map[string]*GetHPImportanceResponse_MetricHPImportance `protobuf:"bytes,2,rep,name=validation_metrics,json=validationMetrics,proto3" json:"validation_metrics,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-}
-
-func (x *GetHPImportanceResponse) Reset() {
-	*x = GetHPImportanceResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetHPImportanceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHPImportanceResponse) ProtoMessage() {}
-
-func (x *GetHPImportanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHPImportanceResponse.ProtoReflect.Descriptor instead.
-func (*GetHPImportanceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60}
-}
-
-func (x *GetHPImportanceResponse) GetTrainingMetrics() map[string]*GetHPImportanceResponse_MetricHPImportance {
-	if x != nil {
-		return x.TrainingMetrics
-	}
-	return nil
-}
-
-func (x *GetHPImportanceResponse) GetValidationMetrics() map[string]*GetHPImportanceResponse_MetricHPImportance {
-	if x != nil {
-		return x.ValidationMetrics
-	}
-	return nil
-}
-
 // Request for an experiment model definition.
 type GetModelDefRequest struct {
 	state         protoimpl.MessageState
@@ -3873,7 +3650,7 @@ type GetModelDefRequest struct {
 func (x *GetModelDefRequest) Reset() {
 	*x = GetModelDefRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3886,7 +3663,7 @@ func (x *GetModelDefRequest) String() string {
 func (*GetModelDefRequest) ProtoMessage() {}
 
 func (x *GetModelDefRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[57]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3899,7 +3676,7 @@ func (x *GetModelDefRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{61}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *GetModelDefRequest) GetExperimentId() int32 {
@@ -3922,7 +3699,7 @@ type GetModelDefResponse struct {
 func (x *GetModelDefResponse) Reset() {
 	*x = GetModelDefResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3935,7 +3712,7 @@ func (x *GetModelDefResponse) String() string {
 func (*GetModelDefResponse) ProtoMessage() {}
 
 func (x *GetModelDefResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[58]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3948,7 +3725,7 @@ func (x *GetModelDefResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{62}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *GetModelDefResponse) GetB64Tgz() string {
@@ -3973,7 +3750,7 @@ type MoveExperimentRequest struct {
 func (x *MoveExperimentRequest) Reset() {
 	*x = MoveExperimentRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3986,7 +3763,7 @@ func (x *MoveExperimentRequest) String() string {
 func (*MoveExperimentRequest) ProtoMessage() {}
 
 func (x *MoveExperimentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3999,7 +3776,7 @@ func (x *MoveExperimentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentRequest.ProtoReflect.Descriptor instead.
 func (*MoveExperimentRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{63}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *MoveExperimentRequest) GetExperimentId() int32 {
@@ -4026,7 +3803,7 @@ type MoveExperimentResponse struct {
 func (x *MoveExperimentResponse) Reset() {
 	*x = MoveExperimentResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4039,7 +3816,7 @@ func (x *MoveExperimentResponse) String() string {
 func (*MoveExperimentResponse) ProtoMessage() {}
 
 func (x *MoveExperimentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4052,7 +3829,7 @@ func (x *MoveExperimentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentResponse.ProtoReflect.Descriptor instead.
 func (*MoveExperimentResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{64}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60}
 }
 
 // Request to move an experiment into a project.
@@ -4072,7 +3849,7 @@ type MoveExperimentsRequest struct {
 func (x *MoveExperimentsRequest) Reset() {
 	*x = MoveExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4085,7 +3862,7 @@ func (x *MoveExperimentsRequest) String() string {
 func (*MoveExperimentsRequest) ProtoMessage() {}
 
 func (x *MoveExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4098,7 +3875,7 @@ func (x *MoveExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*MoveExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{65}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *MoveExperimentsRequest) GetExperimentIds() []int32 {
@@ -4135,7 +3912,7 @@ type MoveExperimentsResponse struct {
 func (x *MoveExperimentsResponse) Reset() {
 	*x = MoveExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4148,7 +3925,7 @@ func (x *MoveExperimentsResponse) String() string {
 func (*MoveExperimentsResponse) ProtoMessage() {}
 
 func (x *MoveExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4161,7 +3938,7 @@ func (x *MoveExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*MoveExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{66}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *MoveExperimentsResponse) GetResults() []*ExperimentActionResult {
@@ -4184,7 +3961,7 @@ type GetModelDefTreeRequest struct {
 func (x *GetModelDefTreeRequest) Reset() {
 	*x = GetModelDefTreeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4197,7 +3974,7 @@ func (x *GetModelDefTreeRequest) String() string {
 func (*GetModelDefTreeRequest) ProtoMessage() {}
 
 func (x *GetModelDefTreeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4210,7 +3987,7 @@ func (x *GetModelDefTreeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefTreeRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefTreeRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{67}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *GetModelDefTreeRequest) GetExperimentId() int32 {
@@ -4233,7 +4010,7 @@ type GetModelDefTreeResponse struct {
 func (x *GetModelDefTreeResponse) Reset() {
 	*x = GetModelDefTreeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4246,7 +4023,7 @@ func (x *GetModelDefTreeResponse) String() string {
 func (*GetModelDefTreeResponse) ProtoMessage() {}
 
 func (x *GetModelDefTreeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[64]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4259,7 +4036,7 @@ func (x *GetModelDefTreeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefTreeResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefTreeResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{68}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetModelDefTreeResponse) GetFiles() []*experimentv1.FileNode {
@@ -4284,7 +4061,7 @@ type GetModelDefFileRequest struct {
 func (x *GetModelDefFileRequest) Reset() {
 	*x = GetModelDefFileRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4297,7 +4074,7 @@ func (x *GetModelDefFileRequest) String() string {
 func (*GetModelDefFileRequest) ProtoMessage() {}
 
 func (x *GetModelDefFileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[65]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4310,7 +4087,7 @@ func (x *GetModelDefFileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefFileRequest.ProtoReflect.Descriptor instead.
 func (*GetModelDefFileRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{69}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *GetModelDefFileRequest) GetExperimentId() int32 {
@@ -4340,7 +4117,7 @@ type GetModelDefFileResponse struct {
 func (x *GetModelDefFileResponse) Reset() {
 	*x = GetModelDefFileResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4353,7 +4130,7 @@ func (x *GetModelDefFileResponse) String() string {
 func (*GetModelDefFileResponse) ProtoMessage() {}
 
 func (x *GetModelDefFileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[66]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4366,7 +4143,7 @@ func (x *GetModelDefFileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetModelDefFileResponse.ProtoReflect.Descriptor instead.
 func (*GetModelDefFileResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{70}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetModelDefFileResponse) GetFile() []byte {
@@ -4389,7 +4166,7 @@ type GetSearcherEventsRequest struct {
 func (x *GetSearcherEventsRequest) Reset() {
 	*x = GetSearcherEventsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4402,7 +4179,7 @@ func (x *GetSearcherEventsRequest) String() string {
 func (*GetSearcherEventsRequest) ProtoMessage() {}
 
 func (x *GetSearcherEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[67]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4415,7 +4192,7 @@ func (x *GetSearcherEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSearcherEventsRequest.ProtoReflect.Descriptor instead.
 func (*GetSearcherEventsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{71}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *GetSearcherEventsRequest) GetExperimentId() int32 {
@@ -4438,7 +4215,7 @@ type GetSearcherEventsResponse struct {
 func (x *GetSearcherEventsResponse) Reset() {
 	*x = GetSearcherEventsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4451,7 +4228,7 @@ func (x *GetSearcherEventsResponse) String() string {
 func (*GetSearcherEventsResponse) ProtoMessage() {}
 
 func (x *GetSearcherEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[68]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4464,7 +4241,7 @@ func (x *GetSearcherEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSearcherEventsResponse.ProtoReflect.Descriptor instead.
 func (*GetSearcherEventsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{72}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *GetSearcherEventsResponse) GetSearcherEvents() []*experimentv1.SearcherEvent {
@@ -4491,7 +4268,7 @@ type PostSearcherOperationsRequest struct {
 func (x *PostSearcherOperationsRequest) Reset() {
 	*x = PostSearcherOperationsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4504,7 +4281,7 @@ func (x *PostSearcherOperationsRequest) String() string {
 func (*PostSearcherOperationsRequest) ProtoMessage() {}
 
 func (x *PostSearcherOperationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4517,7 +4294,7 @@ func (x *PostSearcherOperationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostSearcherOperationsRequest.ProtoReflect.Descriptor instead.
 func (*PostSearcherOperationsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{73}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *PostSearcherOperationsRequest) GetExperimentId() int32 {
@@ -4551,7 +4328,7 @@ type PostSearcherOperationsResponse struct {
 func (x *PostSearcherOperationsResponse) Reset() {
 	*x = PostSearcherOperationsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4564,7 +4341,7 @@ func (x *PostSearcherOperationsResponse) String() string {
 func (*PostSearcherOperationsResponse) ProtoMessage() {}
 
 func (x *PostSearcherOperationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4577,7 +4354,7 @@ func (x *PostSearcherOperationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostSearcherOperationsResponse.ProtoReflect.Descriptor instead.
 func (*PostSearcherOperationsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{74}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{70}
 }
 
 // Request for searching experiments
@@ -4597,7 +4374,7 @@ type SearchExperimentsRequest struct {
 func (x *SearchExperimentsRequest) Reset() {
 	*x = SearchExperimentsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4610,7 +4387,7 @@ func (x *SearchExperimentsRequest) String() string {
 func (*SearchExperimentsRequest) ProtoMessage() {}
 
 func (x *SearchExperimentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4623,7 +4400,7 @@ func (x *SearchExperimentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentsRequest.ProtoReflect.Descriptor instead.
 func (*SearchExperimentsRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{75}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *SearchExperimentsRequest) GetProjectId() int32 {
@@ -4662,7 +4439,7 @@ type SearchExperimentExperiment struct {
 func (x *SearchExperimentExperiment) Reset() {
 	*x = SearchExperimentExperiment{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4675,7 +4452,7 @@ func (x *SearchExperimentExperiment) String() string {
 func (*SearchExperimentExperiment) ProtoMessage() {}
 
 func (x *SearchExperimentExperiment) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[76]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[72]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4688,7 +4465,7 @@ func (x *SearchExperimentExperiment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentExperiment.ProtoReflect.Descriptor instead.
 func (*SearchExperimentExperiment) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{76}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *SearchExperimentExperiment) GetExperiment() *experimentv1.Experiment {
@@ -4720,7 +4497,7 @@ type SearchExperimentsResponse struct {
 func (x *SearchExperimentsResponse) Reset() {
 	*x = SearchExperimentsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4733,7 +4510,7 @@ func (x *SearchExperimentsResponse) String() string {
 func (*SearchExperimentsResponse) ProtoMessage() {}
 
 func (x *SearchExperimentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[77]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[73]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4746,7 +4523,7 @@ func (x *SearchExperimentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchExperimentsResponse.ProtoReflect.Descriptor instead.
 func (*SearchExperimentsResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{77}
+	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *SearchExperimentsResponse) GetExperiments() []*SearchExperimentExperiment {
@@ -4782,7 +4559,7 @@ type TrialsSnapshotResponse_Trial struct {
 func (x *TrialsSnapshotResponse_Trial) Reset() {
 	*x = TrialsSnapshotResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4795,7 +4572,7 @@ func (x *TrialsSnapshotResponse_Trial) String() string {
 func (*TrialsSnapshotResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSnapshotResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[78]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[74]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4857,7 +4634,7 @@ type TrialsSampleResponse_Trial struct {
 func (x *TrialsSampleResponse_Trial) Reset() {
 	*x = TrialsSampleResponse_Trial{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
+		mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4870,7 +4647,7 @@ func (x *TrialsSampleResponse_Trial) String() string {
 func (*TrialsSampleResponse_Trial) ProtoMessage() {}
 
 func (x *TrialsSampleResponse_Trial) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[79]
+	mi := &file_determined_api_v1_experiment_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4905,93 +4682,6 @@ func (x *TrialsSampleResponse_Trial) GetData() []*DataPoint {
 		return x.Data
 	}
 	return nil
-}
-
-// Hyperparameter importance as computed with respect for one specific metric.
-type GetHPImportanceResponse_MetricHPImportance struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// A map between hyperparameter names and their relative importance.
-	HpImportance map[string]float64 `protobuf:"bytes,1,rep,name=hp_importance,json=hpImportance,proto3" json:"hp_importance,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
-	// The approximate portion of the experiment that was complete when the data
-	// was read.
-	ExperimentProgress float64 `protobuf:"fixed64,2,opt,name=experiment_progress,json=experimentProgress,proto3" json:"experiment_progress,omitempty"`
-	// A description of why computation failed. Empty unless the state is (or
-	// was) 'failed'.
-	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	// Whether or not a request to compute results for this metric is queued.
-	Pending bool `protobuf:"varint,4,opt,name=pending,proto3" json:"pending,omitempty"`
-	// Whether or not results for this metric are currently being computed.
-	InProgress bool `protobuf:"varint,5,opt,name=in_progress,json=inProgress,proto3" json:"in_progress,omitempty"`
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) Reset() {
-	*x = GetHPImportanceResponse_MetricHPImportance{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_experiment_proto_msgTypes[80]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHPImportanceResponse_MetricHPImportance) ProtoMessage() {}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_experiment_proto_msgTypes[80]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHPImportanceResponse_MetricHPImportance.ProtoReflect.Descriptor instead.
-func (*GetHPImportanceResponse_MetricHPImportance) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{60, 0}
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) GetHpImportance() map[string]float64 {
-	if x != nil {
-		return x.HpImportance
-	}
-	return nil
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) GetExperimentProgress() float64 {
-	if x != nil {
-		return x.ExperimentProgress
-	}
-	return 0
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) GetPending() bool {
-	if x != nil {
-		return x.Pending
-	}
-	return false
-}
-
-func (x *GetHPImportanceResponse_MetricHPImportance) GetInProgress() bool {
-	if x != nil {
-		return x.InProgress
-	}
-	return false
 }
 
 var File_determined_api_v1_experiment_proto protoreflect.FileDescriptor
@@ -5580,213 +5270,135 @@ var file_determined_api_v1_experiment_proto_rawDesc = []byte{
 	0x61, 0x3a, 0x31, 0x92, 0x41, 0x2e, 0x0a, 0x2c, 0xd2, 0x01, 0x06, 0x74, 0x72, 0x69, 0x61, 0x6c,
 	0x73, 0xd2, 0x01, 0x0f, 0x70, 0x72, 0x6f, 0x6d, 0x6f, 0x74, 0x65, 0x64, 0x5f, 0x74, 0x72, 0x69,
 	0x61, 0x6c, 0x73, 0xd2, 0x01, 0x0e, 0x64, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x64, 0x5f, 0x74, 0x72,
-	0x69, 0x61, 0x6c, 0x73, 0x22, 0xc8, 0x01, 0x0a, 0x1a, 0x43, 0x6f, 0x6d, 0x70, 0x75, 0x74, 0x65,
-	0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
-	0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x32, 0x0a, 0x0b, 0x6d, 0x65, 0x74, 0x72,
-	0x69, 0x63, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x11, 0x92,
-	0x41, 0x0e, 0xd2, 0x01, 0x0b, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
-	0x52, 0x0a, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x51, 0x0a, 0x0b,
-	0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x0e, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65,
-	0x42, 0x11, 0x92, 0x41, 0x0e, 0xd2, 0x01, 0x0b, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5f, 0x74,
-	0x79, 0x70, 0x65, 0x52, 0x0a, 0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65, 0x22,
-	0x1d, 0x0a, 0x1b, 0x43, 0x6f, 0x6d, 0x70, 0x75, 0x74, 0x65, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f,
-	0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x64,
-	0x0a, 0x16, 0x47, 0x65, 0x74, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x25, 0x0a,
-	0x0e, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x53, 0x65, 0x63,
-	0x6f, 0x6e, 0x64, 0x73, 0x22, 0x80, 0x07, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x48, 0x50, 0x49, 0x6d,
-	0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x6a, 0x0a, 0x10, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67, 0x5f, 0x6d, 0x65, 0x74,
-	0x72, 0x69, 0x63, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3f, 0x2e, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47,
-	0x65, 0x74, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67, 0x4d,
-	0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0f, 0x74, 0x72, 0x61,
-	0x69, 0x6e, 0x69, 0x6e, 0x67, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x12, 0x70, 0x0a, 0x12,
-	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69,
-	0x63, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x41, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
-	0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d,
-	0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x11, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x1a, 0xcd,
-	0x02, 0x0a, 0x12, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72,
-	0x74, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x74, 0x0a, 0x0d, 0x68, 0x70, 0x5f, 0x69, 0x6d, 0x70, 0x6f,
-	0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x4f, 0x2e, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x47, 0x65, 0x74, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x48,
-	0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x2e, 0x48, 0x70, 0x49, 0x6d,
-	0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0c, 0x68,
-	0x70, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x2f, 0x0a, 0x13, 0x65,
-	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x70, 0x72, 0x6f, 0x67, 0x72, 0x65,
-	0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x12, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69,
-	0x6d, 0x65, 0x6e, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a, 0x05,
-	0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x72, 0x72,
-	0x6f, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x07, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x12, 0x1f, 0x0a, 0x0b,
-	0x69, 0x6e, 0x5f, 0x70, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x0a, 0x69, 0x6e, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x1a, 0x3f, 0x0a,
-	0x11, 0x48, 0x70, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x45, 0x6e, 0x74,
-	0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x01, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x81,
-	0x01, 0x0a, 0x14, 0x54, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67, 0x4d, 0x65, 0x74, 0x72, 0x69,
-	0x63, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x53, 0x0a, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x3d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
-	0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x48, 0x50, 0x49, 0x6d, 0x70,
-	0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02,
-	0x38, 0x01, 0x1a, 0x83, 0x01, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
-	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
-	0x53, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x3d,
-	0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e,
-	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e,
-	0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x4d, 0x65, 0x74, 0x72, 0x69,
-	0x63, 0x48, 0x50, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x3a, 0x2d, 0x92, 0x41, 0x2a, 0x0a, 0x28, 0xd2,
-	0x01, 0x10, 0x74, 0x72, 0x61, 0x69, 0x6e, 0x69, 0x6e, 0x67, 0x5f, 0x6d, 0x65, 0x74, 0x72, 0x69,
-	0x63, 0x73, 0xd2, 0x01, 0x12, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f,
-	0x6d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x73, 0x22, 0x39, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x4d, 0x6f,
-	0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a,
-	0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
-	0x49, 0x64, 0x22, 0x3f, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65,
-	0x66, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x62, 0x36, 0x34,
-	0x5f, 0x74, 0x67, 0x7a, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x62, 0x36, 0x34, 0x54,
-	0x67, 0x7a, 0x3a, 0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x62, 0x36, 0x34, 0x5f,
-	0x74, 0x67, 0x7a, 0x22, 0xa2, 0x01, 0x0a, 0x15, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a,
-	0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
-	0x49, 0x64, 0x12, 0x34, 0x0a, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x14, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50,
-	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x3a, 0x2e, 0x92, 0x41, 0x2b, 0x0a, 0x29, 0xd2,
-	0x01, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x70, 0x72,
-	0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0xd2, 0x01, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72,
-	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x4d, 0x6f, 0x76, 0x65,
-	0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0xea, 0x01, 0x0a, 0x16, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72,
-	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x25, 0x0a,
-	0x0e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x73, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
-	0x74, 0x49, 0x64, 0x73, 0x12, 0x34, 0x0a, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x14, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x12, 0x42, 0x0a, 0x07, 0x66, 0x69,
-	0x6c, 0x74, 0x65, 0x72, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x42, 0x75, 0x6c, 0x6b, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x46, 0x69,
-	0x6c, 0x74, 0x65, 0x72, 0x73, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x3a, 0x2f,
-	0x92, 0x41, 0x2c, 0x0a, 0x2a, 0xd2, 0x01, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0xd2, 0x01,
-	0x0e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x73, 0x22,
-	0x6f, 0x0a, 0x17, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
-	0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x43, 0x0a, 0x07, 0x72, 0x65,
-	0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a,
-	0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
-	0x22, 0x3d, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x54,
-	0x72, 0x65, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78,
+	0x69, 0x61, 0x6c, 0x73, 0x22, 0x39, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c,
+	0x44, 0x65, 0x66, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78,
 	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22,
-	0x53, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x54, 0x72,
-	0x65, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x05, 0x66, 0x69,
-	0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x64, 0x65, 0x74, 0x65,
-	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
-	0x74, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x05, 0x66,
-	0x69, 0x6c, 0x65, 0x73, 0x22, 0x51, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c,
-	0x44, 0x65, 0x66, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23,
-	0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e,
-	0x74, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x22, 0x2d, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x4d, 0x6f,
-	0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c,
-	0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x22, 0x3f, 0x0a, 0x18, 0x47, 0x65, 0x74, 0x53, 0x65, 0x61,
-	0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
-	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72,
-	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x6d, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x53, 0x65,
-	0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72,
-	0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e,
-	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72,
-	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65,
-	0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x52, 0x0e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72,
-	0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x22, 0xf9, 0x01, 0x0a, 0x1d, 0x50, 0x6f, 0x73, 0x74, 0x53,
-	0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
-	0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x5c, 0x0a,
-	0x13, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x5f, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2b, 0x2e, 0x64, 0x65, 0x74,
+	0x3f, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x17, 0x0a, 0x07, 0x62, 0x36, 0x34, 0x5f, 0x74, 0x67,
+	0x7a, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x62, 0x36, 0x34, 0x54, 0x67, 0x7a, 0x3a,
+	0x0f, 0x92, 0x41, 0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x62, 0x36, 0x34, 0x5f, 0x74, 0x67, 0x7a,
+	0x22, 0xa2, 0x01, 0x0a, 0x15, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
+	0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12,
+	0x34, 0x0a, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x70,
+	0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x14, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x6a,
+	0x65, 0x63, 0x74, 0x49, 0x64, 0x3a, 0x2e, 0x92, 0x41, 0x2b, 0x0a, 0x29, 0xd2, 0x01, 0x16, 0x64,
+	0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65,
+	0x63, 0x74, 0x5f, 0x69, 0x64, 0xd2, 0x01, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
+	0x6e, 0x74, 0x5f, 0x69, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70,
+	0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0xea, 0x01, 0x0a, 0x16, 0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x05, 0x52, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64,
+	0x73, 0x12, 0x34, 0x0a, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x14, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x50, 0x72,
+	0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x12, 0x42, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x75, 0x6c,
+	0x6b, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x73, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x3a, 0x2f, 0x92, 0x41, 0x2c,
+	0x0a, 0x2a, 0xd2, 0x01, 0x16, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0xd2, 0x01, 0x0e, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x73, 0x22, 0x6f, 0x0a, 0x17,
+	0x4d, 0x6f, 0x76, 0x65, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x43, 0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c,
+	0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x70,
+	0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x3a, 0x0f, 0x92, 0x41,
+	0x0c, 0x0a, 0x0a, 0xd2, 0x01, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x22, 0x3d, 0x0a,
+	0x16, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x54, 0x72, 0x65, 0x65,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72,
+	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c,
+	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x53, 0x0a, 0x17,
+	0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66, 0x54, 0x72, 0x65, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x05, 0x66, 0x69, 0x6c, 0x65, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x76,
+	0x31, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x05, 0x66, 0x69, 0x6c, 0x65,
+	0x73, 0x22, 0x51, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x44, 0x65, 0x66,
+	0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65,
+	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64,
+	0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x70, 0x61, 0x74, 0x68, 0x22, 0x2d, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x4d, 0x6f, 0x64, 0x65, 0x6c,
+	0x44, 0x65, 0x66, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x66,
+	0x69, 0x6c, 0x65, 0x22, 0x3f, 0x0a, 0x18, 0x47, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
+	0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
+	0x6e, 0x74, 0x49, 0x64, 0x22, 0x6d, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63,
+	0x68, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x50, 0x0a, 0x0f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x5f, 0x65, 0x76,
+	0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74,
 	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f, 0x70,
-	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x12, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65,
-	0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x55, 0x0a, 0x12, 0x74,
-	0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x65, 0x64, 0x5f, 0x62, 0x79, 0x5f, 0x65, 0x76, 0x65, 0x6e,
-	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
+	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x52, 0x0e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76, 0x65,
+	0x6e, 0x74, 0x73, 0x22, 0xf9, 0x01, 0x0a, 0x1d, 0x50, 0x6f, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
+	0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78,
+	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x5c, 0x0a, 0x13, 0x73, 0x65,
+	0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x5f, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2b, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
 	0x69, 0x6e, 0x65, 0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e,
-	0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74,
-	0x52, 0x10, 0x74, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x65, 0x64, 0x42, 0x79, 0x45, 0x76, 0x65,
-	0x6e, 0x74, 0x22, 0x20, 0x0a, 0x1e, 0x50, 0x6f, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x7b, 0x0a, 0x18, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78,
-	0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x22, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49,
-	0x64, 0x88, 0x01, 0x01, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05,
-	0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d,
-	0x69, 0x74, 0x42, 0x0d, 0x0a, 0x0b, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69,
-	0x64, 0x22, 0x9d, 0x01, 0x0a, 0x1a, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
-	0x12, 0x44, 0x0a, 0x0a, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f, 0x70, 0x65, 0x72, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x12, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f, 0x70,
+	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x55, 0x0a, 0x12, 0x74, 0x72, 0x69, 0x67,
+	0x67, 0x65, 0x72, 0x65, 0x64, 0x5f, 0x62, 0x79, 0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
 	0x64, 0x2e, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e,
-	0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0a, 0x65, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x62, 0x65, 0x73, 0x74, 0x5f, 0x74,
-	0x72, 0x69, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76, 0x31,
-	0x2e, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x52, 0x09, 0x62, 0x65, 0x73, 0x74, 0x54, 0x72, 0x69, 0x61,
-	0x6c, 0x22, 0xcd, 0x01, 0x0a, 0x19, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65,
-	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4f, 0x0a, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
-	0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45,
-	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
-	0x65, 0x6e, 0x74, 0x52, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73,
-	0x12, 0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
-	0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x3a,
-	0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0xd2, 0x01, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
-	0x65, 0x6e, 0x74, 0x73, 0xd2, 0x01, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x2a, 0x5f, 0x0a, 0x0a, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12,
-	0x1b, 0x0a, 0x17, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55,
-	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x18, 0x0a, 0x14,
-	0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x54, 0x52, 0x41, 0x49,
-	0x4e, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43,
-	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e,
-	0x10, 0x02, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
-	0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x52, 0x10, 0x74,
+	0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x65, 0x64, 0x42, 0x79, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x22,
+	0x20, 0x0a, 0x1e, 0x50, 0x6f, 0x73, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x65, 0x72, 0x4f,
+	0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x7b, 0x0a, 0x18, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65, 0x72,
+	0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x22, 0x0a,
+	0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x48, 0x00, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x88, 0x01,
+	0x01, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d,
+	0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x42,
+	0x0d, 0x0a, 0x0b, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x22, 0x9d,
+	0x01, 0x0a, 0x1a, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
+	0x65, 0x6e, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x44, 0x0a,
+	0x0a, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x24, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x65,
+	0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x70,
+	0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0a, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
+	0x65, 0x6e, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x62, 0x65, 0x73, 0x74, 0x5f, 0x74, 0x72, 0x69, 0x61,
+	0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
+	0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x72, 0x69, 0x61, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x72,
+	0x69, 0x61, 0x6c, 0x52, 0x09, 0x62, 0x65, 0x73, 0x74, 0x54, 0x72, 0x69, 0x61, 0x6c, 0x22, 0xcd,
+	0x01, 0x0a, 0x19, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d,
+	0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4f, 0x0a, 0x0b,
+	0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x2d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x45, 0x78, 0x70, 0x65,
+	0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x45, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x52, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x3d, 0x0a,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61,
+	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x20, 0x92, 0x41,
+	0x1d, 0x0a, 0x1b, 0xd2, 0x01, 0x0b, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
+	0x73, 0xd2, 0x01, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2a, 0x5f,
+	0x0a, 0x0a, 0x4d, 0x65, 0x74, 0x72, 0x69, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x17,
+	0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50,
+	0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x18, 0x0a, 0x14, 0x4d, 0x45, 0x54,
+	0x52, 0x49, 0x43, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x54, 0x52, 0x41, 0x49, 0x4e, 0x49, 0x4e,
+	0x47, 0x10, 0x01, 0x12, 0x1a, 0x0a, 0x16, 0x4d, 0x45, 0x54, 0x52, 0x49, 0x43, 0x5f, 0x54, 0x59,
+	0x50, 0x45, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x02, 0x42,
+	0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67,
+	0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -5802,187 +5414,173 @@ func file_determined_api_v1_experiment_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_experiment_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 84)
+var file_determined_api_v1_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
 var file_determined_api_v1_experiment_proto_goTypes = []interface{}{
-	(MetricType)(0),                                    // 0: determined.api.v1.MetricType
-	(GetExperimentsRequest_SortBy)(0),                  // 1: determined.api.v1.GetExperimentsRequest.SortBy
-	(GetExperimentCheckpointsRequest_SortBy)(0),        // 2: determined.api.v1.GetExperimentCheckpointsRequest.SortBy
-	(*DataPoint)(nil),                                  // 3: determined.api.v1.DataPoint
-	(*GetExperimentRequest)(nil),                       // 4: determined.api.v1.GetExperimentRequest
-	(*GetExperimentResponse)(nil),                      // 5: determined.api.v1.GetExperimentResponse
-	(*GetExperimentsRequest)(nil),                      // 6: determined.api.v1.GetExperimentsRequest
-	(*GetExperimentsResponse)(nil),                     // 7: determined.api.v1.GetExperimentsResponse
-	(*GetExperimentLabelsRequest)(nil),                 // 8: determined.api.v1.GetExperimentLabelsRequest
-	(*GetExperimentLabelsResponse)(nil),                // 9: determined.api.v1.GetExperimentLabelsResponse
-	(*DeleteExperimentRequest)(nil),                    // 10: determined.api.v1.DeleteExperimentRequest
-	(*DeleteExperimentResponse)(nil),                   // 11: determined.api.v1.DeleteExperimentResponse
-	(*DeleteExperimentsRequest)(nil),                   // 12: determined.api.v1.DeleteExperimentsRequest
-	(*DeleteExperimentsResponse)(nil),                  // 13: determined.api.v1.DeleteExperimentsResponse
-	(*GetBestSearcherValidationMetricRequest)(nil),     // 14: determined.api.v1.GetBestSearcherValidationMetricRequest
-	(*GetBestSearcherValidationMetricResponse)(nil),    // 15: determined.api.v1.GetBestSearcherValidationMetricResponse
-	(*PreviewHPSearchRequest)(nil),                     // 16: determined.api.v1.PreviewHPSearchRequest
-	(*PreviewHPSearchResponse)(nil),                    // 17: determined.api.v1.PreviewHPSearchResponse
-	(*ActivateExperimentRequest)(nil),                  // 18: determined.api.v1.ActivateExperimentRequest
-	(*ActivateExperimentResponse)(nil),                 // 19: determined.api.v1.ActivateExperimentResponse
-	(*ExperimentActionResult)(nil),                     // 20: determined.api.v1.ExperimentActionResult
-	(*ActivateExperimentsRequest)(nil),                 // 21: determined.api.v1.ActivateExperimentsRequest
-	(*ActivateExperimentsResponse)(nil),                // 22: determined.api.v1.ActivateExperimentsResponse
-	(*PauseExperimentRequest)(nil),                     // 23: determined.api.v1.PauseExperimentRequest
-	(*PauseExperimentResponse)(nil),                    // 24: determined.api.v1.PauseExperimentResponse
-	(*BulkExperimentFilters)(nil),                      // 25: determined.api.v1.BulkExperimentFilters
-	(*PauseExperimentsRequest)(nil),                    // 26: determined.api.v1.PauseExperimentsRequest
-	(*PauseExperimentsResponse)(nil),                   // 27: determined.api.v1.PauseExperimentsResponse
-	(*CancelExperimentRequest)(nil),                    // 28: determined.api.v1.CancelExperimentRequest
-	(*CancelExperimentResponse)(nil),                   // 29: determined.api.v1.CancelExperimentResponse
-	(*CancelExperimentsRequest)(nil),                   // 30: determined.api.v1.CancelExperimentsRequest
-	(*CancelExperimentsResponse)(nil),                  // 31: determined.api.v1.CancelExperimentsResponse
-	(*KillExperimentRequest)(nil),                      // 32: determined.api.v1.KillExperimentRequest
-	(*KillExperimentResponse)(nil),                     // 33: determined.api.v1.KillExperimentResponse
-	(*KillExperimentsRequest)(nil),                     // 34: determined.api.v1.KillExperimentsRequest
-	(*KillExperimentsResponse)(nil),                    // 35: determined.api.v1.KillExperimentsResponse
-	(*ArchiveExperimentRequest)(nil),                   // 36: determined.api.v1.ArchiveExperimentRequest
-	(*ArchiveExperimentResponse)(nil),                  // 37: determined.api.v1.ArchiveExperimentResponse
-	(*ArchiveExperimentsRequest)(nil),                  // 38: determined.api.v1.ArchiveExperimentsRequest
-	(*ArchiveExperimentsResponse)(nil),                 // 39: determined.api.v1.ArchiveExperimentsResponse
-	(*UnarchiveExperimentRequest)(nil),                 // 40: determined.api.v1.UnarchiveExperimentRequest
-	(*UnarchiveExperimentResponse)(nil),                // 41: determined.api.v1.UnarchiveExperimentResponse
-	(*UnarchiveExperimentsRequest)(nil),                // 42: determined.api.v1.UnarchiveExperimentsRequest
-	(*UnarchiveExperimentsResponse)(nil),               // 43: determined.api.v1.UnarchiveExperimentsResponse
-	(*PatchExperimentRequest)(nil),                     // 44: determined.api.v1.PatchExperimentRequest
-	(*PatchExperimentResponse)(nil),                    // 45: determined.api.v1.PatchExperimentResponse
-	(*GetExperimentCheckpointsRequest)(nil),            // 46: determined.api.v1.GetExperimentCheckpointsRequest
-	(*GetExperimentCheckpointsResponse)(nil),           // 47: determined.api.v1.GetExperimentCheckpointsResponse
-	(*GetExperimentValidationHistoryRequest)(nil),      // 48: determined.api.v1.GetExperimentValidationHistoryRequest
-	(*GetExperimentValidationHistoryResponse)(nil),     // 49: determined.api.v1.GetExperimentValidationHistoryResponse
-	(*CreateExperimentRequest)(nil),                    // 50: determined.api.v1.CreateExperimentRequest
-	(*CreateExperimentResponse)(nil),                   // 51: determined.api.v1.CreateExperimentResponse
-	(*MetricNamesRequest)(nil),                         // 52: determined.api.v1.MetricNamesRequest
-	(*MetricNamesResponse)(nil),                        // 53: determined.api.v1.MetricNamesResponse
-	(*MetricBatchesRequest)(nil),                       // 54: determined.api.v1.MetricBatchesRequest
-	(*MetricBatchesResponse)(nil),                      // 55: determined.api.v1.MetricBatchesResponse
-	(*TrialsSnapshotRequest)(nil),                      // 56: determined.api.v1.TrialsSnapshotRequest
-	(*TrialsSnapshotResponse)(nil),                     // 57: determined.api.v1.TrialsSnapshotResponse
-	(*TrialsSampleRequest)(nil),                        // 58: determined.api.v1.TrialsSampleRequest
-	(*TrialsSampleResponse)(nil),                       // 59: determined.api.v1.TrialsSampleResponse
-	(*ComputeHPImportanceRequest)(nil),                 // 60: determined.api.v1.ComputeHPImportanceRequest
-	(*ComputeHPImportanceResponse)(nil),                // 61: determined.api.v1.ComputeHPImportanceResponse
-	(*GetHPImportanceRequest)(nil),                     // 62: determined.api.v1.GetHPImportanceRequest
-	(*GetHPImportanceResponse)(nil),                    // 63: determined.api.v1.GetHPImportanceResponse
-	(*GetModelDefRequest)(nil),                         // 64: determined.api.v1.GetModelDefRequest
-	(*GetModelDefResponse)(nil),                        // 65: determined.api.v1.GetModelDefResponse
-	(*MoveExperimentRequest)(nil),                      // 66: determined.api.v1.MoveExperimentRequest
-	(*MoveExperimentResponse)(nil),                     // 67: determined.api.v1.MoveExperimentResponse
-	(*MoveExperimentsRequest)(nil),                     // 68: determined.api.v1.MoveExperimentsRequest
-	(*MoveExperimentsResponse)(nil),                    // 69: determined.api.v1.MoveExperimentsResponse
-	(*GetModelDefTreeRequest)(nil),                     // 70: determined.api.v1.GetModelDefTreeRequest
-	(*GetModelDefTreeResponse)(nil),                    // 71: determined.api.v1.GetModelDefTreeResponse
-	(*GetModelDefFileRequest)(nil),                     // 72: determined.api.v1.GetModelDefFileRequest
-	(*GetModelDefFileResponse)(nil),                    // 73: determined.api.v1.GetModelDefFileResponse
-	(*GetSearcherEventsRequest)(nil),                   // 74: determined.api.v1.GetSearcherEventsRequest
-	(*GetSearcherEventsResponse)(nil),                  // 75: determined.api.v1.GetSearcherEventsResponse
-	(*PostSearcherOperationsRequest)(nil),              // 76: determined.api.v1.PostSearcherOperationsRequest
-	(*PostSearcherOperationsResponse)(nil),             // 77: determined.api.v1.PostSearcherOperationsResponse
-	(*SearchExperimentsRequest)(nil),                   // 78: determined.api.v1.SearchExperimentsRequest
-	(*SearchExperimentExperiment)(nil),                 // 79: determined.api.v1.SearchExperimentExperiment
-	(*SearchExperimentsResponse)(nil),                  // 80: determined.api.v1.SearchExperimentsResponse
-	(*TrialsSnapshotResponse_Trial)(nil),               // 81: determined.api.v1.TrialsSnapshotResponse.Trial
-	(*TrialsSampleResponse_Trial)(nil),                 // 82: determined.api.v1.TrialsSampleResponse.Trial
-	(*GetHPImportanceResponse_MetricHPImportance)(nil), // 83: determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	nil,                               // 84: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
-	nil,                               // 85: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
-	nil,                               // 86: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
-	(*timestamp.Timestamp)(nil),       // 87: google.protobuf.Timestamp
-	(*experimentv1.Experiment)(nil),   // 88: determined.experiment.v1.Experiment
-	(*jobv1.JobSummary)(nil),          // 89: determined.job.v1.JobSummary
-	(OrderBy)(0),                      // 90: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),        // 91: google.protobuf.BoolValue
-	(experimentv1.State)(0),           // 92: determined.experiment.v1.State
-	(*commonv1.Int32FieldFilter)(nil), // 93: determined.common.v1.Int32FieldFilter
-	(*Pagination)(nil),                // 94: determined.api.v1.Pagination
-	(*_struct.Struct)(nil),            // 95: google.protobuf.Struct
-	(*experimentv1.ExperimentSimulation)(nil),   // 96: determined.experiment.v1.ExperimentSimulation
-	(*experimentv1.PatchExperiment)(nil),        // 97: determined.experiment.v1.PatchExperiment
-	(checkpointv1.State)(0),                     // 98: determined.checkpoint.v1.State
-	(*checkpointv1.Checkpoint)(nil),             // 99: determined.checkpoint.v1.Checkpoint
-	(*experimentv1.ValidationHistoryEntry)(nil), // 100: determined.experiment.v1.ValidationHistoryEntry
-	(*utilv1.File)(nil),                         // 101: determined.util.v1.File
-	(LaunchWarning)(0),                          // 102: determined.api.v1.LaunchWarning
-	(*experimentv1.FileNode)(nil),               // 103: determined.experiment.v1.FileNode
-	(*experimentv1.SearcherEvent)(nil),          // 104: determined.experiment.v1.SearcherEvent
-	(*experimentv1.SearcherOperation)(nil),      // 105: determined.experiment.v1.SearcherOperation
-	(*trialv1.Trial)(nil),                       // 106: determined.trial.v1.Trial
+	(MetricType)(0),                                 // 0: determined.api.v1.MetricType
+	(GetExperimentsRequest_SortBy)(0),               // 1: determined.api.v1.GetExperimentsRequest.SortBy
+	(GetExperimentCheckpointsRequest_SortBy)(0),     // 2: determined.api.v1.GetExperimentCheckpointsRequest.SortBy
+	(*DataPoint)(nil),                               // 3: determined.api.v1.DataPoint
+	(*GetExperimentRequest)(nil),                    // 4: determined.api.v1.GetExperimentRequest
+	(*GetExperimentResponse)(nil),                   // 5: determined.api.v1.GetExperimentResponse
+	(*GetExperimentsRequest)(nil),                   // 6: determined.api.v1.GetExperimentsRequest
+	(*GetExperimentsResponse)(nil),                  // 7: determined.api.v1.GetExperimentsResponse
+	(*GetExperimentLabelsRequest)(nil),              // 8: determined.api.v1.GetExperimentLabelsRequest
+	(*GetExperimentLabelsResponse)(nil),             // 9: determined.api.v1.GetExperimentLabelsResponse
+	(*DeleteExperimentRequest)(nil),                 // 10: determined.api.v1.DeleteExperimentRequest
+	(*DeleteExperimentResponse)(nil),                // 11: determined.api.v1.DeleteExperimentResponse
+	(*DeleteExperimentsRequest)(nil),                // 12: determined.api.v1.DeleteExperimentsRequest
+	(*DeleteExperimentsResponse)(nil),               // 13: determined.api.v1.DeleteExperimentsResponse
+	(*GetBestSearcherValidationMetricRequest)(nil),  // 14: determined.api.v1.GetBestSearcherValidationMetricRequest
+	(*GetBestSearcherValidationMetricResponse)(nil), // 15: determined.api.v1.GetBestSearcherValidationMetricResponse
+	(*PreviewHPSearchRequest)(nil),                  // 16: determined.api.v1.PreviewHPSearchRequest
+	(*PreviewHPSearchResponse)(nil),                 // 17: determined.api.v1.PreviewHPSearchResponse
+	(*ActivateExperimentRequest)(nil),               // 18: determined.api.v1.ActivateExperimentRequest
+	(*ActivateExperimentResponse)(nil),              // 19: determined.api.v1.ActivateExperimentResponse
+	(*ExperimentActionResult)(nil),                  // 20: determined.api.v1.ExperimentActionResult
+	(*ActivateExperimentsRequest)(nil),              // 21: determined.api.v1.ActivateExperimentsRequest
+	(*ActivateExperimentsResponse)(nil),             // 22: determined.api.v1.ActivateExperimentsResponse
+	(*PauseExperimentRequest)(nil),                  // 23: determined.api.v1.PauseExperimentRequest
+	(*PauseExperimentResponse)(nil),                 // 24: determined.api.v1.PauseExperimentResponse
+	(*BulkExperimentFilters)(nil),                   // 25: determined.api.v1.BulkExperimentFilters
+	(*PauseExperimentsRequest)(nil),                 // 26: determined.api.v1.PauseExperimentsRequest
+	(*PauseExperimentsResponse)(nil),                // 27: determined.api.v1.PauseExperimentsResponse
+	(*CancelExperimentRequest)(nil),                 // 28: determined.api.v1.CancelExperimentRequest
+	(*CancelExperimentResponse)(nil),                // 29: determined.api.v1.CancelExperimentResponse
+	(*CancelExperimentsRequest)(nil),                // 30: determined.api.v1.CancelExperimentsRequest
+	(*CancelExperimentsResponse)(nil),               // 31: determined.api.v1.CancelExperimentsResponse
+	(*KillExperimentRequest)(nil),                   // 32: determined.api.v1.KillExperimentRequest
+	(*KillExperimentResponse)(nil),                  // 33: determined.api.v1.KillExperimentResponse
+	(*KillExperimentsRequest)(nil),                  // 34: determined.api.v1.KillExperimentsRequest
+	(*KillExperimentsResponse)(nil),                 // 35: determined.api.v1.KillExperimentsResponse
+	(*ArchiveExperimentRequest)(nil),                // 36: determined.api.v1.ArchiveExperimentRequest
+	(*ArchiveExperimentResponse)(nil),               // 37: determined.api.v1.ArchiveExperimentResponse
+	(*ArchiveExperimentsRequest)(nil),               // 38: determined.api.v1.ArchiveExperimentsRequest
+	(*ArchiveExperimentsResponse)(nil),              // 39: determined.api.v1.ArchiveExperimentsResponse
+	(*UnarchiveExperimentRequest)(nil),              // 40: determined.api.v1.UnarchiveExperimentRequest
+	(*UnarchiveExperimentResponse)(nil),             // 41: determined.api.v1.UnarchiveExperimentResponse
+	(*UnarchiveExperimentsRequest)(nil),             // 42: determined.api.v1.UnarchiveExperimentsRequest
+	(*UnarchiveExperimentsResponse)(nil),            // 43: determined.api.v1.UnarchiveExperimentsResponse
+	(*PatchExperimentRequest)(nil),                  // 44: determined.api.v1.PatchExperimentRequest
+	(*PatchExperimentResponse)(nil),                 // 45: determined.api.v1.PatchExperimentResponse
+	(*GetExperimentCheckpointsRequest)(nil),         // 46: determined.api.v1.GetExperimentCheckpointsRequest
+	(*GetExperimentCheckpointsResponse)(nil),        // 47: determined.api.v1.GetExperimentCheckpointsResponse
+	(*GetExperimentValidationHistoryRequest)(nil),   // 48: determined.api.v1.GetExperimentValidationHistoryRequest
+	(*GetExperimentValidationHistoryResponse)(nil),  // 49: determined.api.v1.GetExperimentValidationHistoryResponse
+	(*CreateExperimentRequest)(nil),                 // 50: determined.api.v1.CreateExperimentRequest
+	(*CreateExperimentResponse)(nil),                // 51: determined.api.v1.CreateExperimentResponse
+	(*MetricNamesRequest)(nil),                      // 52: determined.api.v1.MetricNamesRequest
+	(*MetricNamesResponse)(nil),                     // 53: determined.api.v1.MetricNamesResponse
+	(*MetricBatchesRequest)(nil),                    // 54: determined.api.v1.MetricBatchesRequest
+	(*MetricBatchesResponse)(nil),                   // 55: determined.api.v1.MetricBatchesResponse
+	(*TrialsSnapshotRequest)(nil),                   // 56: determined.api.v1.TrialsSnapshotRequest
+	(*TrialsSnapshotResponse)(nil),                  // 57: determined.api.v1.TrialsSnapshotResponse
+	(*TrialsSampleRequest)(nil),                     // 58: determined.api.v1.TrialsSampleRequest
+	(*TrialsSampleResponse)(nil),                    // 59: determined.api.v1.TrialsSampleResponse
+	(*GetModelDefRequest)(nil),                      // 60: determined.api.v1.GetModelDefRequest
+	(*GetModelDefResponse)(nil),                     // 61: determined.api.v1.GetModelDefResponse
+	(*MoveExperimentRequest)(nil),                   // 62: determined.api.v1.MoveExperimentRequest
+	(*MoveExperimentResponse)(nil),                  // 63: determined.api.v1.MoveExperimentResponse
+	(*MoveExperimentsRequest)(nil),                  // 64: determined.api.v1.MoveExperimentsRequest
+	(*MoveExperimentsResponse)(nil),                 // 65: determined.api.v1.MoveExperimentsResponse
+	(*GetModelDefTreeRequest)(nil),                  // 66: determined.api.v1.GetModelDefTreeRequest
+	(*GetModelDefTreeResponse)(nil),                 // 67: determined.api.v1.GetModelDefTreeResponse
+	(*GetModelDefFileRequest)(nil),                  // 68: determined.api.v1.GetModelDefFileRequest
+	(*GetModelDefFileResponse)(nil),                 // 69: determined.api.v1.GetModelDefFileResponse
+	(*GetSearcherEventsRequest)(nil),                // 70: determined.api.v1.GetSearcherEventsRequest
+	(*GetSearcherEventsResponse)(nil),               // 71: determined.api.v1.GetSearcherEventsResponse
+	(*PostSearcherOperationsRequest)(nil),           // 72: determined.api.v1.PostSearcherOperationsRequest
+	(*PostSearcherOperationsResponse)(nil),          // 73: determined.api.v1.PostSearcherOperationsResponse
+	(*SearchExperimentsRequest)(nil),                // 74: determined.api.v1.SearchExperimentsRequest
+	(*SearchExperimentExperiment)(nil),              // 75: determined.api.v1.SearchExperimentExperiment
+	(*SearchExperimentsResponse)(nil),               // 76: determined.api.v1.SearchExperimentsResponse
+	(*TrialsSnapshotResponse_Trial)(nil),            // 77: determined.api.v1.TrialsSnapshotResponse.Trial
+	(*TrialsSampleResponse_Trial)(nil),              // 78: determined.api.v1.TrialsSampleResponse.Trial
+	(*timestamp.Timestamp)(nil),                     // 79: google.protobuf.Timestamp
+	(*experimentv1.Experiment)(nil),                 // 80: determined.experiment.v1.Experiment
+	(*jobv1.JobSummary)(nil),                        // 81: determined.job.v1.JobSummary
+	(OrderBy)(0),                                    // 82: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),                      // 83: google.protobuf.BoolValue
+	(experimentv1.State)(0),                         // 84: determined.experiment.v1.State
+	(*commonv1.Int32FieldFilter)(nil),               // 85: determined.common.v1.Int32FieldFilter
+	(*Pagination)(nil),                              // 86: determined.api.v1.Pagination
+	(*_struct.Struct)(nil),                          // 87: google.protobuf.Struct
+	(*experimentv1.ExperimentSimulation)(nil),       // 88: determined.experiment.v1.ExperimentSimulation
+	(*experimentv1.PatchExperiment)(nil),            // 89: determined.experiment.v1.PatchExperiment
+	(checkpointv1.State)(0),                         // 90: determined.checkpoint.v1.State
+	(*checkpointv1.Checkpoint)(nil),                 // 91: determined.checkpoint.v1.Checkpoint
+	(*experimentv1.ValidationHistoryEntry)(nil),     // 92: determined.experiment.v1.ValidationHistoryEntry
+	(*utilv1.File)(nil),                             // 93: determined.util.v1.File
+	(LaunchWarning)(0),                              // 94: determined.api.v1.LaunchWarning
+	(*experimentv1.FileNode)(nil),                   // 95: determined.experiment.v1.FileNode
+	(*experimentv1.SearcherEvent)(nil),              // 96: determined.experiment.v1.SearcherEvent
+	(*experimentv1.SearcherOperation)(nil),          // 97: determined.experiment.v1.SearcherOperation
+	(*trialv1.Trial)(nil),                           // 98: determined.trial.v1.Trial
 }
 var file_determined_api_v1_experiment_proto_depIdxs = []int32{
-	87,  // 0: determined.api.v1.DataPoint.time:type_name -> google.protobuf.Timestamp
-	88,  // 1: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	89,  // 2: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
-	1,   // 3: determined.api.v1.GetExperimentsRequest.sort_by:type_name -> determined.api.v1.GetExperimentsRequest.SortBy
-	90,  // 4: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	91,  // 5: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
-	92,  // 6: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
-	93,  // 7: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
-	88,  // 8: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
-	94,  // 9: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
-	25,  // 10: determined.api.v1.DeleteExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 11: determined.api.v1.DeleteExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	95,  // 12: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
-	96,  // 13: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
-	25,  // 14: determined.api.v1.ActivateExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 15: determined.api.v1.ActivateExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	91,  // 16: determined.api.v1.BulkExperimentFilters.archived:type_name -> google.protobuf.BoolValue
-	92,  // 17: determined.api.v1.BulkExperimentFilters.states:type_name -> determined.experiment.v1.State
-	25,  // 18: determined.api.v1.PauseExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 19: determined.api.v1.PauseExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	25,  // 20: determined.api.v1.CancelExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 21: determined.api.v1.CancelExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	25,  // 22: determined.api.v1.KillExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 23: determined.api.v1.KillExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	25,  // 24: determined.api.v1.ArchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 25: determined.api.v1.ArchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	25,  // 26: determined.api.v1.UnarchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 27: determined.api.v1.UnarchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	97,  // 28: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
-	88,  // 29: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	2,   // 30: determined.api.v1.GetExperimentCheckpointsRequest.sort_by:type_name -> determined.api.v1.GetExperimentCheckpointsRequest.SortBy
-	90,  // 31: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	98,  // 32: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
-	99,  // 33: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
-	94,  // 34: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
-	100, // 35: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
-	101, // 36: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
-	87,  // 37: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
-	88,  // 38: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
-	95,  // 39: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
-	102, // 40: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
-	0,   // 41: determined.api.v1.MetricBatchesRequest.metric_type:type_name -> determined.api.v1.MetricType
-	0,   // 42: determined.api.v1.TrialsSnapshotRequest.metric_type:type_name -> determined.api.v1.MetricType
-	81,  // 43: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
-	0,   // 44: determined.api.v1.TrialsSampleRequest.metric_type:type_name -> determined.api.v1.MetricType
-	82,  // 45: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
-	0,   // 46: determined.api.v1.ComputeHPImportanceRequest.metric_type:type_name -> determined.api.v1.MetricType
-	84,  // 47: determined.api.v1.GetHPImportanceResponse.training_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry
-	85,  // 48: determined.api.v1.GetHPImportanceResponse.validation_metrics:type_name -> determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry
-	25,  // 49: determined.api.v1.MoveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
-	20,  // 50: determined.api.v1.MoveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
-	103, // 51: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
-	104, // 52: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
-	105, // 53: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
-	104, // 54: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
-	88,  // 55: determined.api.v1.SearchExperimentExperiment.experiment:type_name -> determined.experiment.v1.Experiment
-	106, // 56: determined.api.v1.SearchExperimentExperiment.best_trial:type_name -> determined.trial.v1.Trial
-	79,  // 57: determined.api.v1.SearchExperimentsResponse.experiments:type_name -> determined.api.v1.SearchExperimentExperiment
-	94,  // 58: determined.api.v1.SearchExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
-	95,  // 59: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
-	95,  // 60: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
-	3,   // 61: determined.api.v1.TrialsSampleResponse.Trial.data:type_name -> determined.api.v1.DataPoint
-	86,  // 62: determined.api.v1.GetHPImportanceResponse.MetricHPImportance.hp_importance:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance.HpImportanceEntry
-	83,  // 63: determined.api.v1.GetHPImportanceResponse.TrainingMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	83,  // 64: determined.api.v1.GetHPImportanceResponse.ValidationMetricsEntry.value:type_name -> determined.api.v1.GetHPImportanceResponse.MetricHPImportance
-	65,  // [65:65] is the sub-list for method output_type
-	65,  // [65:65] is the sub-list for method input_type
-	65,  // [65:65] is the sub-list for extension type_name
-	65,  // [65:65] is the sub-list for extension extendee
-	0,   // [0:65] is the sub-list for field type_name
+	79, // 0: determined.api.v1.DataPoint.time:type_name -> google.protobuf.Timestamp
+	80, // 1: determined.api.v1.GetExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	81, // 2: determined.api.v1.GetExperimentResponse.job_summary:type_name -> determined.job.v1.JobSummary
+	1,  // 3: determined.api.v1.GetExperimentsRequest.sort_by:type_name -> determined.api.v1.GetExperimentsRequest.SortBy
+	82, // 4: determined.api.v1.GetExperimentsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	83, // 5: determined.api.v1.GetExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
+	84, // 6: determined.api.v1.GetExperimentsRequest.states:type_name -> determined.experiment.v1.State
+	85, // 7: determined.api.v1.GetExperimentsRequest.experiment_id_filter:type_name -> determined.common.v1.Int32FieldFilter
+	80, // 8: determined.api.v1.GetExperimentsResponse.experiments:type_name -> determined.experiment.v1.Experiment
+	86, // 9: determined.api.v1.GetExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	25, // 10: determined.api.v1.DeleteExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 11: determined.api.v1.DeleteExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	87, // 12: determined.api.v1.PreviewHPSearchRequest.config:type_name -> google.protobuf.Struct
+	88, // 13: determined.api.v1.PreviewHPSearchResponse.simulation:type_name -> determined.experiment.v1.ExperimentSimulation
+	25, // 14: determined.api.v1.ActivateExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 15: determined.api.v1.ActivateExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	83, // 16: determined.api.v1.BulkExperimentFilters.archived:type_name -> google.protobuf.BoolValue
+	84, // 17: determined.api.v1.BulkExperimentFilters.states:type_name -> determined.experiment.v1.State
+	25, // 18: determined.api.v1.PauseExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 19: determined.api.v1.PauseExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	25, // 20: determined.api.v1.CancelExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 21: determined.api.v1.CancelExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	25, // 22: determined.api.v1.KillExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 23: determined.api.v1.KillExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	25, // 24: determined.api.v1.ArchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 25: determined.api.v1.ArchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	25, // 26: determined.api.v1.UnarchiveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 27: determined.api.v1.UnarchiveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	89, // 28: determined.api.v1.PatchExperimentRequest.experiment:type_name -> determined.experiment.v1.PatchExperiment
+	80, // 29: determined.api.v1.PatchExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	2,  // 30: determined.api.v1.GetExperimentCheckpointsRequest.sort_by:type_name -> determined.api.v1.GetExperimentCheckpointsRequest.SortBy
+	82, // 31: determined.api.v1.GetExperimentCheckpointsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	90, // 32: determined.api.v1.GetExperimentCheckpointsRequest.states:type_name -> determined.checkpoint.v1.State
+	91, // 33: determined.api.v1.GetExperimentCheckpointsResponse.checkpoints:type_name -> determined.checkpoint.v1.Checkpoint
+	86, // 34: determined.api.v1.GetExperimentCheckpointsResponse.pagination:type_name -> determined.api.v1.Pagination
+	92, // 35: determined.api.v1.GetExperimentValidationHistoryResponse.validation_history:type_name -> determined.experiment.v1.ValidationHistoryEntry
+	93, // 36: determined.api.v1.CreateExperimentRequest.model_definition:type_name -> determined.util.v1.File
+	79, // 37: determined.api.v1.CreateExperimentRequest.git_commit_date:type_name -> google.protobuf.Timestamp
+	80, // 38: determined.api.v1.CreateExperimentResponse.experiment:type_name -> determined.experiment.v1.Experiment
+	87, // 39: determined.api.v1.CreateExperimentResponse.config:type_name -> google.protobuf.Struct
+	94, // 40: determined.api.v1.CreateExperimentResponse.warnings:type_name -> determined.api.v1.LaunchWarning
+	0,  // 41: determined.api.v1.MetricBatchesRequest.metric_type:type_name -> determined.api.v1.MetricType
+	0,  // 42: determined.api.v1.TrialsSnapshotRequest.metric_type:type_name -> determined.api.v1.MetricType
+	77, // 43: determined.api.v1.TrialsSnapshotResponse.trials:type_name -> determined.api.v1.TrialsSnapshotResponse.Trial
+	0,  // 44: determined.api.v1.TrialsSampleRequest.metric_type:type_name -> determined.api.v1.MetricType
+	78, // 45: determined.api.v1.TrialsSampleResponse.trials:type_name -> determined.api.v1.TrialsSampleResponse.Trial
+	25, // 46: determined.api.v1.MoveExperimentsRequest.filters:type_name -> determined.api.v1.BulkExperimentFilters
+	20, // 47: determined.api.v1.MoveExperimentsResponse.results:type_name -> determined.api.v1.ExperimentActionResult
+	95, // 48: determined.api.v1.GetModelDefTreeResponse.files:type_name -> determined.experiment.v1.FileNode
+	96, // 49: determined.api.v1.GetSearcherEventsResponse.searcher_events:type_name -> determined.experiment.v1.SearcherEvent
+	97, // 50: determined.api.v1.PostSearcherOperationsRequest.searcher_operations:type_name -> determined.experiment.v1.SearcherOperation
+	96, // 51: determined.api.v1.PostSearcherOperationsRequest.triggered_by_event:type_name -> determined.experiment.v1.SearcherEvent
+	80, // 52: determined.api.v1.SearchExperimentExperiment.experiment:type_name -> determined.experiment.v1.Experiment
+	98, // 53: determined.api.v1.SearchExperimentExperiment.best_trial:type_name -> determined.trial.v1.Trial
+	75, // 54: determined.api.v1.SearchExperimentsResponse.experiments:type_name -> determined.api.v1.SearchExperimentExperiment
+	86, // 55: determined.api.v1.SearchExperimentsResponse.pagination:type_name -> determined.api.v1.Pagination
+	87, // 56: determined.api.v1.TrialsSnapshotResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	87, // 57: determined.api.v1.TrialsSampleResponse.Trial.hparams:type_name -> google.protobuf.Struct
+	3,  // 58: determined.api.v1.TrialsSampleResponse.Trial.data:type_name -> determined.api.v1.DataPoint
+	59, // [59:59] is the sub-list for method output_type
+	59, // [59:59] is the sub-list for method input_type
+	59, // [59:59] is the sub-list for extension type_name
+	59, // [59:59] is the sub-list for extension extendee
+	0,  // [0:59] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_experiment_proto_init() }
@@ -6678,54 +6276,6 @@ func file_determined_api_v1_experiment_proto_init() {
 			}
 		}
 		file_determined_api_v1_experiment_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ComputeHPImportanceRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_experiment_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ComputeHPImportanceResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_experiment_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetHPImportanceRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_experiment_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetHPImportanceResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_experiment_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefRequest); i {
 			case 0:
 				return &v.state
@@ -6737,7 +6287,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefResponse); i {
 			case 0:
 				return &v.state
@@ -6749,7 +6299,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MoveExperimentRequest); i {
 			case 0:
 				return &v.state
@@ -6761,7 +6311,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MoveExperimentResponse); i {
 			case 0:
 				return &v.state
@@ -6773,7 +6323,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MoveExperimentsRequest); i {
 			case 0:
 				return &v.state
@@ -6785,7 +6335,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MoveExperimentsResponse); i {
 			case 0:
 				return &v.state
@@ -6797,7 +6347,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefTreeRequest); i {
 			case 0:
 				return &v.state
@@ -6809,7 +6359,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefTreeResponse); i {
 			case 0:
 				return &v.state
@@ -6821,7 +6371,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefFileRequest); i {
 			case 0:
 				return &v.state
@@ -6833,7 +6383,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetModelDefFileResponse); i {
 			case 0:
 				return &v.state
@@ -6845,7 +6395,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetSearcherEventsRequest); i {
 			case 0:
 				return &v.state
@@ -6857,7 +6407,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetSearcherEventsResponse); i {
 			case 0:
 				return &v.state
@@ -6869,7 +6419,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostSearcherOperationsRequest); i {
 			case 0:
 				return &v.state
@@ -6881,7 +6431,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PostSearcherOperationsResponse); i {
 			case 0:
 				return &v.state
@@ -6893,7 +6443,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SearchExperimentsRequest); i {
 			case 0:
 				return &v.state
@@ -6905,7 +6455,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SearchExperimentExperiment); i {
 			case 0:
 				return &v.state
@@ -6917,7 +6467,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SearchExperimentsResponse); i {
 			case 0:
 				return &v.state
@@ -6929,7 +6479,7 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TrialsSnapshotResponse_Trial); i {
 			case 0:
 				return &v.state
@@ -6941,20 +6491,8 @@ func file_determined_api_v1_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_experiment_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_experiment_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TrialsSampleResponse_Trial); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_experiment_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetHPImportanceResponse_MetricHPImportance); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6968,14 +6506,14 @@ func file_determined_api_v1_experiment_proto_init() {
 	}
 	file_determined_api_v1_experiment_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	file_determined_api_v1_experiment_proto_msgTypes[47].OneofWrappers = []interface{}{}
-	file_determined_api_v1_experiment_proto_msgTypes[75].OneofWrappers = []interface{}{}
+	file_determined_api_v1_experiment_proto_msgTypes[71].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_experiment_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   84,
+			NumMessages:   76,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

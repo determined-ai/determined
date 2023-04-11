@@ -24,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/webhooks"
@@ -104,7 +103,6 @@ type (
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
 		taskLogger          *task.Logger
-		hpImportance        *actor.Ref
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
@@ -180,7 +178,6 @@ func newExperiment(
 		Experiment:          expModel,
 		activeConfig:        activeConfig,
 		taskLogger:          m.taskLogger,
-		hpImportance:        m.hpImportance,
 		db:                  m.db,
 		rm:                  m.rm,
 		searcher:            search,
@@ -262,7 +259,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 		e.processOperations(ctx, ops, nil)
-		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.requestID)
@@ -305,7 +301,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
-		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
 	case trialGetSearcherState:
 		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {
@@ -424,10 +419,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.logCtx,
 			)
 			ctx.Self().System().ActorOf(addr, ckptGCTask)
-		}
-
-		if e.State == model.CompletedState {
-			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
 		}
 
 		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {

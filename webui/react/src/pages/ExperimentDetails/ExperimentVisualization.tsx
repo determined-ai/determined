@@ -9,32 +9,23 @@ import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
-import {
-  GetHPImportanceResponseMetricHPImportance,
-  V1GetHPImportanceResponse,
-  V1MetricBatchesResponse,
-} from 'services/api-ts-sdk';
+import { V1MetricBatchesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { hasObjectKeys } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase,
   ExperimentSearcherName,
-  HpImportanceMap,
-  HpImportanceMetricMap,
   HyperparameterType,
   Metric,
   MetricType,
   RunState,
   Scale,
 } from 'types';
-
-import { hpImportanceSorter } from '../../utils/experiment';
 
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT,
@@ -64,7 +55,6 @@ interface Props {
 
 const PageError = {
   MetricBatches: 'MetricBatches',
-  MetricHpImportance: 'MetricHpImportance',
   MetricNames: 'MetricNames',
 } as const;
 
@@ -80,20 +70,7 @@ const DEFAULT_MAX_TRIALS = 100;
 const DEFAULT_VIEW = ViewType.Grid;
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
-  [PageError.MetricHpImportance]: 'Unable to retrieve experiment hp importance.',
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
-};
-
-const getHpImportanceMap = (hpImportanceMetrics: {
-  [key: string]: GetHPImportanceResponseMetricHPImportance;
-}): HpImportanceMetricMap => {
-  const map: HpImportanceMetricMap = {};
-
-  Object.keys(hpImportanceMetrics).forEach((metricName) => {
-    map[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
-  });
-
-  return map;
 };
 
 const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Props) => {
@@ -134,7 +111,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const [activeMetric, setActiveMetric] = useState<Metric | null>(initFilters.metric);
   const [hasSearcherMetric, setHasSearcherMetric] = useState<boolean>(false);
   const [batches, setBatches] = useState<number[]>();
-  const [hpImportanceMap, setHpImportanceMap] = useState<HpImportanceMap>();
   const [pageError, setPageError] = useState<PageError>();
 
   const handleMetricNamesError = useCallback(() => {
@@ -155,11 +131,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       ),
     };
   }, [batches, experiment, metrics]);
-
-  const hpImportance = useMemo(() => {
-    if (!hpImportanceMap || !activeMetric) return {};
-    return hpImportanceMap[activeMetric.type][activeMetric.name] || {};
-  }, [activeMetric, hpImportanceMap]);
 
   const handleFiltersChange = useCallback(
     (filters: VisualizationFilters) => {
@@ -215,7 +186,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         batches={batches || []}
         filters={filters}
         fullHParams={fullHParams.current}
-        hpImportance={hpImportance}
         metrics={metrics}
         type={typeKey}
         onChange={handleFiltersChange}
@@ -229,7 +199,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     handleFiltersChange,
     handleFiltersReset,
     handleMetricChange,
-    hpImportance,
     metrics,
     typeKey,
   ]);
@@ -330,27 +299,6 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     }
   }, [basePath, navigate, location, type, typeKey]);
 
-  useEffect(() => {
-    if (!isSupported || ui.isPageHidden) return;
-    const canceler = new AbortController();
-
-    readStream<V1GetHPImportanceResponse>(
-      detApi.StreamingInternal.getHPImportance(experiment.id, undefined, {
-        signal: canceler.signal,
-      }),
-      (event) => {
-        if (!event) return;
-        setHpImportanceMap({
-          [MetricType.Training]: getHpImportanceMap(event.trainingMetrics),
-          [MetricType.Validation]: getHpImportanceMap(event.validationMetrics),
-        });
-      },
-      () => setPageError(PageError.MetricHpImportance),
-    );
-
-    return () => canceler.abort();
-  }, [experiment.id, filters?.metric, isSupported, metrics, ui.isPageHidden]);
-
   // Stream available batches.
   useEffect(() => {
     if (!isSupported || ui.isPageHidden || !activeMetric) return;
@@ -395,14 +343,10 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
     setFilters((prev) => {
       if (prev.hParams.length !== 0) return prev;
-      const map = prev.metric ? hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {} : {};
-      let hParams = fullHParams.current;
-      if (hasObjectKeys(map)) {
-        hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));
-      }
+      const hParams = fullHParams.current;
       return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
     });
-  }, [hpImportanceMap, isSupported]);
+  }, [isSupported]);
 
   if (!isSupported) {
     const alertMessage = `
