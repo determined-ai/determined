@@ -10,6 +10,52 @@
  Version 0.21
 **************
 
+Version 0.21.1
+==============
+
+**Release Date:** April 11, 2023
+
+**Breaking Change**
+
+-  Remove old master logs `/logs` endpoint. Users should use `/api/v1/master/logs` instead.
+
+**Bug Fixes**
+
+-  Fix an issue where ``task_container_defaults`` for the default resource pools where not respected
+   for the experiments and tasks unless they specified the resource pool name explicitly, which has
+   been introduced in 0.19.9.
+
+-  Checkpoints: Fix an issue where checkpoint insertion on a cluster with a lot of checkpoints and
+   reported metrics could take a long time.
+
+**Deprecated Features**
+
+-  HDFS checkpoint storage support has been deprecated and will be removed in a future version.
+   Please contact Determined if you still need it, or else migrate to an different storage backend.
+
+**Improvement**
+
+-  Cluster: HPC Launcher support for JVM resource configuration.
+
+   -  The master configuration ``resource_manager.launcher_jvm_args`` can be used to override the
+      default HPC launcher JVM heap configuration. This support requires HPC Launcher version 3.2.6
+      or greater.
+
+**New Features**
+
+-  Python SDK: Adds methods for efficient export of training and validation metrics to the Python
+   SDK. The methods are listed below.
+
+   -  :meth:`~determined.experimental.client.stream_trials_training_metrics`
+   -  :meth:`~determined.experimental.client.stream_trials_validation_metrics`
+   -  :meth:`~determined.experimental.client.TrialReference.stream_training_metrics`
+   -  :meth:`~determined.experimental.client.TrialReference.stream_validation_metrics`
+
+**Removed Features**
+
+-  Separate ``det-deploy`` executable was deprecated in 0.15.0 (April 2021) and is now removed. Use
+   ``det deploy`` subcommand instead.
+
 Version 0.21.0
 ==============
 
