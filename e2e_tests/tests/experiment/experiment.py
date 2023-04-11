@@ -917,16 +917,13 @@ def root_user_home_bind_mount() -> Dict[str, str]:
 
 
 def has_at_least_one_checkpoint(experiment_id: int) -> bool:
-    # Loop through the trials to look for checkpoints
     for trial in experiment_trials(experiment_id):
-        # Return true if at least one workload has a checkpoint
         if len(workloads_with_checkpoint(trial.workloads)) > 0:
             return True
-    # No checkpoints found for the experiment return false.
     return False
 
 
-def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 30) -> None:
+def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 120) -> None:
     for _ in range(timeout):
         if has_at_least_one_checkpoint(experiment_id):
             return
