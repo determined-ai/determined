@@ -12,6 +12,7 @@ import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
+import { pluralizer } from 'shared/utils/string';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
@@ -78,7 +79,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     const experimentText =
       filters !== undefined
-        ? 'All experiments'
+        ? 'All filtered experiments'
         : experimentIds.length === 1
         ? `Experiment ${experimentIds[0]}`
         : `${experimentIds.length} experiments`;
@@ -134,9 +135,16 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       submit={{
         disabled,
         handler: handleSubmit,
-        text: `Move Experiment${experimentIds.length > 1 ? 's' : ''}`,
+        text:
+          filters !== undefined
+            ? 'Move Experiments'
+            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
       }}
-      title={`Move Experiment${experimentIds.length > 1 ? 's' : ''}`}
+      title={
+        filters !== undefined
+          ? 'Move Experiments'
+          : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
+      }
       onClose={onClose}>
       <Form form={form} layout="vertical">
         <Form.Item

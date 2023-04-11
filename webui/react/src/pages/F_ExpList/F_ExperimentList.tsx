@@ -277,7 +277,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       modal.confirm({
         content: `
         Are you sure you want to ${action.toLocaleLowerCase()}
-        all the eligible selected experiments?
+        all eligible ${
+          selectAll ? 'experiments matching the current filters' : 'selected experiments'
+        }?
       `,
         icon: <ExclamationCircleOutlined />,
         okText: /cancel/i.test(action) ? 'Confirm' : action,
@@ -285,7 +287,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         title: 'Confirm Batch Action',
       });
     },
-    [submitBatchAction],
+    [selectAll, submitBatchAction],
   );
 
   const handleBatchAction = useCallback(
