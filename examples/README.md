@@ -31,7 +31,6 @@
 
 | Example                                            | Dataset    | Framework |
 |:--------------------------------------------------:|:----------:|:---------:|
-| [bert\_squad\_pytorch](nlp/bert_squad_pytorch)     | SQuAD      | PyTorch   |
 | [albert\_squad\_pytorch](nlp/albert_squad_pytorch) | SQuAD      | PyTorch   |
 | [bert\_glue\_pytorch](nlp/bert_glue_pytorch)       | GLUE       | PyTorch   |
 | [word\_language\_model](nlp/word_language_model)   | WikiText-2 | PyTorch   |

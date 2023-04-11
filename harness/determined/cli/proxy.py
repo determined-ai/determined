@@ -40,9 +40,9 @@ def _tunnel_trial(sess: Session, trial_id: int, port_map: dict[int, int]) -> Ite
         trial = resp.trial
 
         terminal_states = [
-            bindings.experimentv1State.STATE_COMPLETED,
-            bindings.experimentv1State.STATE_CANCELED,
-            bindings.experimentv1State.STATE_ERROR,
+            bindings.experimentv1State.COMPLETED,
+            bindings.experimentv1State.CANCELED,
+            bindings.experimentv1State.ERROR,
         ]
         if trial.state in terminal_states:
             raise ValueError("Can't tunnel a trial in terminal state")

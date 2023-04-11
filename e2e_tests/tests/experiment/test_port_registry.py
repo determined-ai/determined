@@ -15,5 +15,5 @@ def test_multi_trial_exp_port_registry() -> None:
     )
 
     exp.wait_for_experiment_state(
-        experiment_id=experiment_id, target_state=experimentv1State.STATE_COMPLETED
+        experiment_id=experiment_id, target_state=experimentv1State.COMPLETED
     )

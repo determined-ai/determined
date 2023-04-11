@@ -25,6 +25,7 @@ known_licenses = {
     "bsd3": "BSD 3-clause",
     "mit": "MIT",
     "mozilla": "Mozilla Public License",
+    "sil": "SIL Open Font License 1.1",
     "unlicense": "Unlicense",
 }
 

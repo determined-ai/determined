@@ -45,7 +45,7 @@ batch size that fits into a single GPU`` * ``number of slots``. This is commonly
 
 Step 3 of the distributed training loop in Determined introduces the majority of the communication
 overhead. Because deep learning models typically perform dense updates, where every model parameter
-is updated for every training sample, `batch size` does not affect how long it takes workers to
+is updated for every training sample, ``batch_size`` does not affect how long it takes workers to
 communicate updates. However, increasing ``global_batch_size`` does reduce the required number of
 passes through the training loop, thus reducing the total communication overhead.
 
@@ -593,7 +593,7 @@ To launch the experiment with the template:
 Using the CLI to Work with Templates
 ------------------------------------
 
-The :ref:`Determined Command Line Interface <cli-ug>` can be used to list, create, update, and
+The :ref:`Determined command-line interface <cli-ug>` can be used to list, create, update, and
 delete configuration templates. This functionality can be accessed through the ``det template``
 sub-command. This command can be abbreviated as ``det tpl``.
 

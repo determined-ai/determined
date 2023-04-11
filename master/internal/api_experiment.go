@@ -33,7 +33,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -349,6 +348,17 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
+func (a *apiServer) DeleteExperiments(
+	ctx context.Context, req *apiv1.DeleteExperimentsRequest,
+) (*apiv1.DeleteExperimentsResponse, error) {
+	_, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.DeleteExperimentsResponse{}, err
+}
+
 func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
 	if err != nil {
@@ -407,16 +417,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 	return nil
 }
 
-func protoStateDBCaseString(
-	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
-) string {
-	query := fmt.Sprintf("CASE %s::text ", colName)
-	for enum, v := range enumToValue {
-		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
-	}
-	return query + fmt.Sprintf("END AS %s", serializedName)
-}
-
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
 		Column("e.id").
@@ -424,7 +424,8 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
+			"STATE_")).
 		Column("e.archived").
 		ColumnExpr(
 			"(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials").
@@ -1004,11 +1005,18 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	if req.Experiment.Labels != nil {
-		var reqLabelList []string
+		// avoid duplicate keys
+		reqLabelSet := make(map[string]struct{}, len(req.Experiment.Labels.Values))
 		for _, el := range req.Experiment.Labels.Values {
 			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
-				reqLabelList = append(reqLabelList, el.GetStringValue())
+				reqLabelSet[el.GetStringValue()] = struct{}{}
 			}
+		}
+		reqLabelList := make([]string, len(reqLabelSet))
+		i := 0
+		for key := range reqLabelSet {
+			reqLabelList[i] = key
+			i++
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if strings.Join(exp.Labels, ",") != reqLabels {
@@ -1700,125 +1708,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
-func (a *apiServer) ComputeHPImportance(ctx context.Context,
-	req *apiv1.ComputeHPImportanceRequest,
-) (*apiv1.ComputeHPImportanceResponse, error) {
-	experimentID := int(req.ExperimentId)
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
-		exputil.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-
-	metricName := req.MetricName
-	if metricName == "" {
-		return nil, status.Error(codes.InvalidArgument, "must specify a metric name")
-	}
-	var metricType model.MetricType
-	switch req.MetricType {
-	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
-		return nil, status.Error(codes.InvalidArgument, "must specify a metric type")
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricType = model.TrainingMetric
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricType = model.ValidationMetric
-	default:
-		panic("Invalid metric type")
-	}
-
-	a.m.system.Ask(a.m.hpImportance, hpimportance.WorkRequest{
-		ExperimentID: experimentID,
-		MetricName:   metricName,
-		MetricType:   metricType,
-	})
-
-	var resp apiv1.ComputeHPImportanceResponse
-	return &resp, nil
-}
-
-// Translates MetricHPImportance to the protobuf form.
-func protoMetricHPI(metricHpi model.MetricHPImportance,
-) *apiv1.GetHPImportanceResponse_MetricHPImportance {
-	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
-		Error:              metricHpi.Error,
-		Pending:            metricHpi.Pending,
-		InProgress:         metricHpi.InProgress,
-		ExperimentProgress: metricHpi.ExperimentProgress,
-		HpImportance:       metricHpi.HpImportance,
-	}
-}
-
-func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
-	resp apiv1.Determined_GetHPImportanceServer,
-) error {
-	experimentID := int(req.ExperimentId)
-	period := time.Duration(req.PeriodSeconds) * time.Second
-	if period == 0 {
-		period = defaultMetricsStreamPeriod
-	}
-
-	var timeSinceLastAuth time.Time
-	for {
-		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
-				exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-				return err
-			}
-			timeSinceLastAuth = time.Now()
-		}
-
-		var response apiv1.GetHPImportanceResponse
-
-		result, err := a.m.db.GetHPImportance(experimentID)
-		if err != nil {
-			return errors.Wrap(err, "error looking up hyperparameter importance")
-		}
-		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
-		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
-		for metric, metricHpi := range result.TrainingMetrics {
-			response.TrainingMetrics[metric] = protoMetricHPI(metricHpi)
-		}
-		for metric, metricHpi := range result.ValidationMetrics {
-			response.ValidationMetrics[metric] = protoMetricHPI(metricHpi)
-		}
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-		if err := resp.Send(&response); err != nil {
-			return errors.Wrap(err, "error sending hyperparameter importance response")
-		}
-
-		allComplete := true
-		if len(result.TrainingMetrics)+len(result.ValidationMetrics) == 0 {
-			allComplete = false
-		}
-		for _, metricHpi := range result.TrainingMetrics {
-			if metricHpi.Pending || metricHpi.InProgress {
-				allComplete = false
-			}
-		}
-		for _, metricHpi := range result.ValidationMetrics {
-			if metricHpi.Pending || metricHpi.InProgress {
-				allComplete = false
-			}
-		}
-		if allComplete {
-			state, _, err := a.m.db.GetExperimentStatus(experimentID)
-			if err != nil {
-				return errors.Wrap(err, "error looking up experiment state")
-			}
-			if model.TerminalStates[state] {
-				return nil
-			}
-		}
-
-		time.Sleep(period)
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-	}
-}
-
 func (a *apiServer) GetBestSearcherValidationMetric(
 	ctx context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
 ) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
@@ -2171,7 +2060,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("c.uuid::text AS uuid").
 		ColumnExpr("c.steps_completed AS total_batches").
 		ColumnExpr("proto_time(c.report_time) AS end_time").
-		ColumnExpr(protoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
+		ColumnExpr(exputil.ProtoStateDBCaseString(checkpointv1.State_value, "c.state", "state", "STATE_"))
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2197,7 +2086,8 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("least(trials.restarts, (ex.config->>'max_restarts')::int) AS restarts").
 		ColumnExpr("coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(protoStateDBCaseString(trialv1.State_value, "trials.state", "state", "STATE_")).
+		ColumnExpr(exputil.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
+			"STATE_")).
 		//nolint:lll
 		ColumnExpr("(CASE WHEN trials.hparams = 'null'::jsonb THEN null ELSE trials.hparams END) AS hparams").
 		ColumnExpr("(?) AS total_batches_processed", stepsQuery).

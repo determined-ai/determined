@@ -14,7 +14,7 @@ class AzureStorageManager(storage.CloudStorageManager):
     Store and load checkpoints from Azure Blob Storage.
 
     Checkpoints are stored as a collection of Block Blobs,
-    with each block blob corresponding to one checkpoint resouce.
+    with each block blob corresponding to one checkpoint resource.
     """
 
     def __init__(

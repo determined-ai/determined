@@ -245,7 +245,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.SlotType,
 			config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
-			k.poolsConfig,
 			k.config.CredsDir,
 			k.config.MasterIP,
 			k.config.MasterPort,

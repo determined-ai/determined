@@ -4,93 +4,74 @@ import { getExperiments } from 'services/api';
 import { V1Pagination } from 'services/api-ts-sdk';
 import { GetExperimentsParams } from 'services/types';
 import { ExperimentItem, ExperimentPagination } from 'types';
-import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { Observable, observable, WritableObservable } from 'utils/observable';
 import { encodeParams } from 'utils/store';
 
-type ExperimentsCache = {
+import PollingStore from './polling';
+
+type ExperimentCache = {
   experimentIds: Readonly<number[]>;
   pagination: Readonly<V1Pagination>;
 };
 
-// TODO: use js private intead of ts private for methods
-class ExperimentsService {
-  #experimentsCache: WritableObservable<Map<string, ExperimentsCache>> = observable(Map());
+class ExperimentStore extends PollingStore {
+  // Cache values keyed by encoded request param.
+  #experimentCache: WritableObservable<Map<string, ExperimentCache>> = observable(Map());
   #experimentMap: WritableObservable<Map<number, ExperimentItem>> = observable(Map());
 
-  // Get an experiment by experiment id
-  public getExperimentsByIds(experimentIds: number[]): Observable<Loadable<ExperimentItem[]>> {
-    return this.#experimentMap.select((map) => {
-      const expList: ExperimentItem[] = experimentIds.flatMap((id) => {
+  public getExperimentsByIds(experimentIds: number[]): Observable<Readonly<ExperimentItem[]>> {
+    return this.#experimentMap.select((map) =>
+      experimentIds.flatMap((id) => {
         const exp = map.get(id);
         return exp ? [exp] : [];
-      });
-      return Loaded(expList);
-    });
+      }),
+    );
   }
 
   public getExperimentsByParams(
-    params: Readonly<GetExperimentsParams>,
-  ): Observable<Loadable<ExperimentPagination>> {
-    return this.#experimentsCache.select((map) => {
-      const cache = map.get(encodeParams(params));
-      if (!cache) {
-        return NotLoaded;
-      }
-      const expMap = this.#experimentMap.get();
-      const experiments: ExperimentItem[] = cache.experimentIds.flatMap((id) => {
-        const exp = expMap.get(id);
-        return exp ? [exp] : [];
-      });
-      const expPagination: ExperimentPagination = {
-        experiments: experiments,
-        pagination: cache.pagination,
+    params: GetExperimentsParams,
+  ): Observable<Loadable<Readonly<ExperimentPagination>>> {
+    return Observable.select([this.#experimentCache, this.#experimentMap], (cache, map) => {
+      const cachedExperiment = cache.get(encodeParams(params));
+      if (!cachedExperiment) return NotLoaded;
+
+      const experimentPagination: ExperimentPagination = {
+        experiments: cachedExperiment.experimentIds.flatMap((id) => {
+          const exp = map.get(id);
+          return exp ? [exp] : [];
+        }),
+        pagination: cachedExperiment.pagination,
       };
-      return Loaded(expPagination);
+      return Loaded(experimentPagination);
     });
   }
 
-  // fetch experiments with params
-  public fetchExperiments(
+  protected async poll(params: GetExperimentsParams) {
+    const response = await getExperiments(params, { signal: this.canceler?.signal });
+    this.updateExperimentCache(response, params);
+    this.updateExperimentMap(response.experiments);
+  }
+
+  private updateExperimentCache(
+    pagination: Readonly<ExperimentPagination>,
     params: Readonly<GetExperimentsParams>,
-    canceler: AbortController,
-  ): () => Promise<void> {
-    return async () => {
-      try {
-        const response = await getExperiments(params, { signal: canceler.signal });
-        this.updateExperimentsCache(response, params);
-        this.updateExperimentMap(response.experiments);
-      } catch (e) {
-        handleError(e);
-      }
-    };
+  ) {
+    this.#experimentCache.update((prev) =>
+      prev.set(encodeParams(params), {
+        experimentIds: pagination.experiments.map((exp) => exp.id),
+        pagination: pagination.pagination,
+      }),
+    );
   }
 
   private updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
-    this.#experimentMap.update((map) => {
-      const newMap: Map<number, ExperimentItem> = map.withMutations((mutMap) => {
-        for (const exp of experimentItems) {
-          mutMap.set(exp.id, exp);
-        }
-      });
-      return newMap;
-    });
-  }
-
-  private updateExperimentsCache(
-    expPagination: Readonly<ExperimentPagination>,
-    params: Readonly<GetExperimentsParams>,
-  ) {
-    this.#experimentsCache.update((prevState: Map<string, ExperimentsCache>) => {
-      const experimentIds: Readonly<number[]> = expPagination.experiments.map((exp) => exp.id);
-      const expCache: ExperimentsCache = { experimentIds, pagination: expPagination.pagination };
-      const newState = prevState.set(encodeParams(params), expCache);
-      return newState;
-    });
+    this.#experimentMap.update((prev) =>
+      prev.withMutations((map) => {
+        for (const exp of experimentItems) map.set(exp.id, exp);
+      }),
+    );
   }
 }
 
-const experimentStore = new ExperimentsService();
-
-export default experimentStore;
+export default new ExperimentStore();

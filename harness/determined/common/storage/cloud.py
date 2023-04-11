@@ -1,9 +1,9 @@
 import contextlib
 import os
 import pathlib
-import shutil
 from typing import Iterator, Optional, Union
 
+from determined import util
 from determined.common import storage
 
 
@@ -20,7 +20,7 @@ class CloudStorageManager(storage.StorageManager):
         try:
             yield pathlib.Path(dst)
         finally:
-            shutil.rmtree(dst, ignore_errors=True)
+            util.rmtree_nfs_safe(dst, ignore_errors=True)
 
     def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
         """
@@ -29,7 +29,7 @@ class CloudStorageManager(storage.StorageManager):
         try:
             self.upload(src, dst)
         finally:
-            shutil.rmtree(src, ignore_errors=True)
+            util.rmtree_nfs_safe(src, ignore_errors=True)
 
     def store_path_is_direct_access(self) -> bool:
         return False

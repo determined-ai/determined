@@ -71,7 +71,7 @@ export const getTheme = (bodyStyles: CSSStyleDeclaration): DataEditorProps['them
   // bgSearchResult: '',
   borderColor: '#00000000',
 
-  fontFamily: bodyStyles.getPropertyValue('--font-family'),
+  fontFamily: bodyStyles.getPropertyValue('--theme-font-family'),
 
   // cellHorizontalPadding: 0,
   // textHeaderSelected: '',

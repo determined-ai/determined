@@ -204,7 +204,7 @@ message TrialMetrics {
   // The trial run associated with these metrics.
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
-  int32 steps_completed = 3;
+  int32 steps_completed = 3;  // TODO: rename to batches. batches_trained?
   // The metrics for this bit of training, including:
   // - avg_metrics: metrics reduced over the reporting period).
   // - batch_metrics: (optional) per-batch metrics.

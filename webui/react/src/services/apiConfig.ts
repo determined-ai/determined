@@ -9,6 +9,7 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
+import { DeterminedInfo, Telemetry } from 'stores/determinedInfo';
 import * as Type from 'types';
 
 const updatedApiConfigParams = (
@@ -427,13 +428,13 @@ export const searchRolesAssignableToScope: DetApi<
 
 /* Info */
 
-export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo> = {
+export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.getMaster(),
 };
 
-export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry> = {
+export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
   request: () => detApi.Internal.getTelemetry(),

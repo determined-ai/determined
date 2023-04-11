@@ -367,13 +367,13 @@ def test_kill_experiment_ignoring_preemption() -> None:
         conf.fixtures_path("core_api"),
         None,
     )
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
 
     bindings.post_CancelExperiment(api_utils.determined_test_session(), id=exp_id)
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_STOPPING_CANCELED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STOPPING_CANCELED)
 
     bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_CANCELED)
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.CANCELED)
 
 
 @pytest.mark.e2e_cpu
@@ -478,7 +478,7 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         assert len(trials) == 1, trials
 
         for t in trials:
-            exp.cancel_trial(t.trial.id)
+            exp.kill_trial(t.trial.id)
 
         # Give the experiment time to refill max_concurrent_trials.
         trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
@@ -493,7 +493,7 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
         assert len(trials) == 2, trials
 
     finally:
-        exp.cancel_single(experiment_id)
+        exp.kill_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu
@@ -519,3 +519,25 @@ def test_experiment_list_columns() -> None:
     metrics = columns.metrics
     for mc in exp_metrics:
         assert metrics.index(mc) >= 0
+
+
+@pytest.mark.e2e_cpu
+def test_core_api_arbitrary_workload_order() -> None:
+    experiment_id = exp.run_basic_test(
+        conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=True,
+        expect_checkpoints=True,
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    assert len(trials) == 1
+    trial = trials[0]
+
+    steps = exp.workloads_with_training(trial.workloads)
+    assert len(steps) == 11
+    validations = exp.workloads_with_validation(trial.workloads)
+    assert len(validations) == 11
+    checkpoints = exp.workloads_with_checkpoint(trial.workloads)
+    assert len(checkpoints) == 11

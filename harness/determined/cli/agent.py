@@ -81,11 +81,11 @@ def list_slots(args: argparse.Namespace) -> None:
     }
 
     def device_type_string(deviceType: typing.Optional[devicev1Type]) -> str:
-        if deviceType == devicev1Type.TYPE_CUDA:
+        if deviceType == devicev1Type.CUDA:
             return "cuda"
-        if deviceType == devicev1Type.TYPE_ROCM:
+        if deviceType == devicev1Type.ROCM:
             return "rocm"
-        if deviceType == devicev1Type.TYPE_CPU:
+        if deviceType == devicev1Type.CPU:
             return "cpu"
         return "unknown"
 
@@ -189,11 +189,15 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         # When draining, check if there're any tasks currently running on
         # these slots, and list them.
         if drain_mode:
-            rsp = api.get(args.master, "tasks")
+            rsp = bindings.get_GetTasks(cli.setup_session(args))
             tasks_data = {
                 k: t
-                for (k, t) in rsp.json().items()
-                if any(a in agent_ids for r in t.get("resources", []) for a in r["agent_devices"])
+                for (k, t) in (
+                    rsp.allocationIdToSummary.items()
+                    if rsp.allocationIdToSummary is not None
+                    else {}
+                )
+                if any(a in agent_ids for r in (t.resources or []) for a in (r.agentDevices or {}))
             }
 
             if not (args.json or args.csv):

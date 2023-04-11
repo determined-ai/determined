@@ -3,6 +3,7 @@ package experiment
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
 
@@ -32,8 +35,25 @@ type archiveExperimentOKResult struct {
 	State    bool
 }
 
+type deleteExperimentOKResult struct {
+	ID       int32
+	Versions int
+	State    experimentv1.State
+}
+
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
+
+// ProtoStateDBCaseString helps bun extract the experiment state.
+func ProtoStateDBCaseString(
+	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
+) string {
+	query := fmt.Sprintf("CASE %s::text ", colName)
+	for enum, v := range enumToValue {
+		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
+	}
+	return query + fmt.Sprintf("END AS %s", serializedName)
+}
 
 // For each experiment, based on the actor, add an error or non-error to results.
 func loadMultiExperimentActionResults(results []ExperimentActionResult,
@@ -123,8 +143,8 @@ func queryBulkExperiments(query *bun.SelectQuery,
 	return query
 }
 
-// Apply filters to get a list of matching experiment IDs.
-func filterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
+// FilterToExperimentIds applies a request's filters to get a list of matching experiment IDs.
+func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFilters) ([]int32,
 	error,
 ) {
 	var experimentIDList []int32
@@ -153,7 +173,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 	if filters == nil {
 		experimentIDList = inputExpIDs
 	} else {
-		experimentIDList, err = filterToExperimentIds(ctx, filters)
+		experimentIDList, err = FilterToExperimentIds(ctx, filters)
 	}
 	if err != nil {
 		return nil, err
@@ -164,7 +184,8 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		ModelTableExpr("experiments AS e").
 		Model(&expIDs).
 		Column("e.id").
-		Where("id IN (?)", bun.In(experimentIDList))
+		Join("JOIN projects p ON e.project_id = p.id").
+		Where("e.id IN (?)", bun.In(experimentIDList))
 
 	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -323,6 +344,100 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 	refs, results := nonTerminalExperiments(system, expIDs, results)
 	resps := system.AskAll(&apiv1.PauseExperimentRequest{}, refs...).GetAll()
 	return loadMultiExperimentActionResults(results, resps)
+}
+
+// DeleteExperiments works on one or many experiments.
+func DeleteExperiments(ctx context.Context, system *actor.System,
+	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+) ([]ExperimentActionResult, []*model.Experiment, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var expChecks []deleteExperimentOKResult
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(&expChecks).
+		Column("e.id").
+		ColumnExpr(ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		ColumnExpr("COUNT(model_versions.id) AS versions").
+		Join("LEFT JOIN checkpoints_view c ON c.experiment_id = e.id").
+		Join("LEFT JOIN model_versions ON model_versions.checkpoint_uuid = c.uuid").
+		Group("e.id")
+
+	if filters == nil {
+		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	} else {
+		query = queryBulkExperiments(query, filters)
+	}
+
+	query, err = AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = query.Scan(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	var results []ExperimentActionResult
+	var visibleIDs []int32
+	var validIDs []int32
+	for _, check := range expChecks {
+		visibleIDs = append(visibleIDs, check.ID)
+		switch {
+		case check.Versions > 0:
+			results = append(results, ExperimentActionResult{
+				Error: status.Errorf(codes.InvalidArgument, "checkpoints are registered as model versions"),
+				ID:    check.ID,
+			})
+		case !model.ExperimentTransitions[model.StateFromProto(check.State)][model.DeletingState]:
+			results = append(results, ExperimentActionResult{
+				Error: status.Errorf(codes.FailedPrecondition, "cannot delete experiment in %s state",
+					check.State),
+				ID: check.ID,
+			})
+		default:
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if filters == nil {
+		for _, originalID := range experimentIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: status.Errorf(codes.NotFound, "experiment not found or no delete permission: %d",
+						originalID),
+					ID: originalID,
+				})
+			}
+		}
+	}
+
+	var acceptedExperiments []*model.Experiment
+	if len(validIDs) > 0 {
+		_, err = db.Bun().NewUpdate().
+			ModelTableExpr("experiments as e").
+			Set("state = ?", model.DeletingState).
+			Where("id IN (?)", bun.In(validIDs)).
+			Returning(`id, state, config, start_time, end_time, archived,
+				   owner_id, notes, job_id, '' as username, project_id`).
+			Model(&acceptedExperiments).
+			Exec(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for _, exp := range acceptedExperiments {
+			results = append(results, ExperimentActionResult{
+				Error: nil,
+				ID:    int32(exp.ID),
+			})
+		}
+	}
+	return results, acceptedExperiments, nil
 }
 
 // ArchiveExperiments works on one or many experiments.

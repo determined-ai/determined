@@ -51,7 +51,7 @@ The launcher has the following additional requirements on the installation node:
 -  Support for an RPM or Debian-based package installer
 -  Java 1.8 or greater
 -  Sudo is configured to process configuration files present in the ``/etc/sudoers.d`` directory
--  Access to the Slurm or PBS command line interface for the cluster
+-  Access to the Slurm or PBS command-line interface for the cluster
 -  Access to a cluster-wide file system with a consistent path names across the cluster
 
 .. _proxy-config-requirements:
@@ -62,8 +62,8 @@ The launcher has the following additional requirements on the installation node:
 
 If internet connectivity requires a use of a proxy, verify the following requirements:
 
--  Ensure that the proxy variables are defined in `/etc/environment` (or `/etc/sysconfig/proxy` on
-   SLES).
+-  Ensure that the proxy variables are defined in ``/etc/environment`` (or ``/etc/sysconfig/proxy``
+   on SLES).
 
 -  Ensure that the `no_proxy` setting covers the login and admin nodes. If these nodes may be
    referenced by short names known only within the cluster, they must explicitly be included in the
@@ -74,9 +74,9 @@ If internet connectivity requires a use of a proxy, verify the following require
    `no_proxy` variable setting.
 
 The HPC launcher imports `http_proxy`, `https_proxy`, `ftp_proxy`, `rsync_proxy`, `gopher_proxy`,
-`socks_proxy`, `socks5_server`, and `no_proxy` from `/etc/environment` and `/etc/sysconfig/proxy`.
-These environment variables are automatically exported in lowercase and uppercase into any launched
-jobs and containers.
+`socks_proxy`, `socks5_server`, and `no_proxy` from ``/etc/environment`` and
+``/etc/sysconfig/proxy``. These environment variables are automatically exported in lowercase and
+uppercase into any launched jobs and containers.
 
 .. _slurm-config-requirements:
 
@@ -181,6 +181,43 @@ to optimize how Determined interacts with PBS:
    define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
    your experiment configuration to indicate how many GPU slots are intended for Determined to use.
 
+-  Configure PBS to report GPU Accelerator type.
+
+   It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
+   each node that contains an accelerator. Otherwise, the Cluster tab on the Determined Web UI will
+   show ``unconfigured`` for the ``Accelerator`` field in the Resource Pool information.
+
+   PBS administrators can use the following set of commands to set the value of
+   ``resources_available.accel_type`` on a single node:
+
+   -  Check if the ``resources_available.accel_type`` value is set.
+
+      .. code:: bash
+
+         pbsnodes -v node001 | grep resources_available.accel_type
+
+   -  If required, set the desired value for ``resources_available.accel_type``.
+
+      .. code:: bash
+
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla"
+
+   -  When there are multiple types of GPUs on the node, use a comma-separated value.
+
+      .. code:: bash
+
+         sudo qmgr -c "set node node001 resources_available.accel_type=tesla,kepler"
+
+   -  Verify that the ``resources_available.accel_type`` value is now set.
+
+      .. code:: bash
+
+         pbsnodes -v node001 | grep resources_available.accel_type
+
+   Repeat the above steps to set the ``resources_available.accel_type`` value for every node
+   containing GPU. Once the ``resources_available.accel_type`` value is set for all the necessary
+   nodes, admins can verify the Accelerator field on the Cluster tab of the Web UI.
+
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
@@ -200,7 +237,7 @@ to optimize how Determined interacts with PBS:
       resources out of that queue using a custom resource pool. Configure a :ref:`resource pool
       <cluster-resource-pools>` with ``provider_type: hpc``, specify the underlying PBS queue name
       to receive the job and include a :ref:`task_container_defaults
-      <master-task-container-defaults>` section with the necessary `pbs`` options to select the
+      <master-task-container-defaults>` section with the necessary ``pbs`` options to select the
       desired homogenous set of resources from that queue.
 
 -  Tune the PBS configuration for Determined job preemption.
@@ -350,7 +387,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-9d07809
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-6218891
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

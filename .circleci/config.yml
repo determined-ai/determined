@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6218891
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-6218891
 
   login-docker:
     parameters:
@@ -594,7 +594,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
+            MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
@@ -615,7 +615,7 @@ commands:
           when: always
           no_output_timeout: 20m
           command: |
-            DET_DEBUG=1 tools/scripts/retry.sh det deploy aws down \
+            MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws down \
               --cluster-id <<parameters.cluster-id>> --yes
 
   setup-aws-cluster:
@@ -1120,8 +1120,8 @@ jobs:
       - pre-package-and-push-system:
           check: false
       - make-package
-      - run: make -C master publish-dev
-      - run: make -C agent publish-dev
+      - run: tools/scripts/retry.sh make -C master publish-dev
+      - run: tools/scripts/retry.sh make -C agent publish-dev
       - run:
           name: Build and publish model_hub docker images
           command: |
@@ -1130,11 +1130,11 @@ jobs:
                 # with the git hash as well as the version.  This will make that image available
                 # immediately for nightly tests.
                 make -C model_hub build-docker
-                make -C model_hub publish-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
             else
                 # Otherwise, only tag and publish the environment with the git hash.
                 make -C model_hub build-docker-dev
-                make -C model_hub publish-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
@@ -1165,7 +1165,7 @@ jobs:
       - run: make -C master publish
       - run: make -C agent publish
       - run: make -C model_hub build-docker
-      - run: make -C model_hub publish-docker
+      - run: tools/scripts/retry.sh make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1991,7 +1991,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string

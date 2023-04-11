@@ -1,7 +1,7 @@
 import { Alert, Select } from 'antd';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form, { FormInstance } from 'components/kit/Form';
@@ -13,8 +13,8 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
-import { useClusterStore } from 'stores/cluster';
-import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import clusterStore from 'stores/cluster';
+import workspaceStore from 'stores/workspaces';
 import { Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
@@ -78,7 +78,6 @@ interface Props {
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
-  const canceler = useRef(new AbortController());
   const [showFullConfig, setShowFullConfig] = useState(false);
   const [config, setConfig] = useState<string>();
   const [configError, setConfigError] = useState<string>();
@@ -86,6 +85,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
   const { canCreateWorkspaceNSC } = usePermissions();
+  const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces)).filter(
+    (workspace) => canCreateWorkspaceNSC({ workspace }),
+  );
 
   const simpleWorkspaceId = Form.useWatch('workspaceId', form);
   const fullWorkspaceId = Form.useWatch('workspaceId', fullConfigForm);
@@ -160,18 +162,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
     [validateFullConfigForm],
   );
 
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
-
-  useEffect(() => {
-    ensureWorkspacesFetched();
-  }, [ensureWorkspacesFetched]);
-
-  const workspaces = Loadable.getOrElse(
-    [],
-    Loadable.map(useWorkspaces(), (ws) =>
-      ws.filter((workspace) => canCreateWorkspaceNSC({ workspace })),
-    ),
-  );
+  useEffect(() => workspaceStore.fetch(), []);
 
   // Fetch full config when showing advanced mode.
   useEffect(() => {
@@ -323,7 +314,7 @@ const JupyterLabForm: React.FC<{
 }> = ({ currentWorkspace, form, defaults, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
-  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
+  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const selectedPoolName = Form.useWatch('pool', form);
 

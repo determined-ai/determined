@@ -105,8 +105,8 @@
       -  ``bucket``: The S3 bucket name to use.
       -  ``accessKey``: The AWS access key to use.
       -  ``secretKey``: The AWS secret key to use.
-      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
-         normalized, e.g., `/pre/.//fix` -> `/prefix`
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
       -  ``endpointUrl``: The optional endpoint to use for S3 clones, e.g., http://127.0.0.1:8080/.
 
    -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is
@@ -135,7 +135,7 @@
 -  ``maxSlotsPerPod``: Specifies number of GPUs there are per machine. Determined uses this
    information when scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be
    scheduled as a set of ``slotsPerTask / maxSlotsPerPod`` separate pods, with each pod assigned up
-   to ``maxSlotsPerPod`` GPUs. Distibuted tasks with sizes that are not divisible by
+   to ``maxSlotsPerPod`` GPUs. Distributed tasks with sizes that are not divisible by
    ``maxSlotsPerPod`` are never scheduled. If you have a cluster of different size nodes, set the
    ``maxSlotsPerPod`` to greatest common divisor of all the sizes. For example, if you have some
    nodes with 4 GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so that all
@@ -181,11 +181,11 @@
 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1``.
+      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1``.
+      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 

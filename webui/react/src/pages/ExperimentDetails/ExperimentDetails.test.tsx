@@ -10,9 +10,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { ClusterProvider } from 'stores/cluster';
-import { ProjectsProvider } from 'stores/projects';
-import { WorkspacesProvider } from 'stores/workspaces';
+import {} from 'stores/cluster';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -39,7 +37,7 @@ vi.mock('services/api', () => ({
   getTrialDetails: vi.fn(),
   getWorkspace: vi.fn(),
   getWorkspaceProjects: vi.fn().mockReturnValue({ projects: [] }),
-  getWorkspaces: vi.fn().mockReturnValue({ workspaces: [] }),
+  getWorkspaces: vi.fn().mockResolvedValue({ workspaces: [] }),
 }));
 
 /**
@@ -56,15 +54,9 @@ const setup = () => {
   const view = render(
     <UIProvider>
       <HelmetProvider>
-        <WorkspacesProvider>
-          <ClusterProvider>
-            <ProjectsProvider>
-              <BrowserRouter>
-                <ExperimentDetails />
-              </BrowserRouter>
-            </ProjectsProvider>
-          </ClusterProvider>
-        </WorkspacesProvider>
+        <BrowserRouter>
+          <ExperimentDetails />
+        </BrowserRouter>
       </HelmetProvider>
     </UIProvider>,
   );

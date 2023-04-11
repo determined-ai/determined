@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -86,7 +86,7 @@ The master supports the following configuration settings:
 
    -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.
       Ignored by resource managers of type ``kubernetes``. See :ref:`environment.add_capabilities
-      <exp-environment-add-capapbilities>` for more details.
+      <exp-environment-add-capabilities>` for more details.
 
    -  ``drop_capabilities``: Just like ``add_capabilities`` but for dropping capabilities.
 
@@ -589,10 +589,9 @@ The master supports the following configuration settings:
             ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
             ``g4dn.12xlarge``, ``g4dn.metal``, ``g5.xlarge``, ``g5.2xlarge``, ``g5.4xlarge``,
             ``g5.8xlarge``, ``g5.12xlarge``, ``g5.16xlarge``, ``g5.24xlarge``, ``g5.48large``,
-            ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``,
-            ``p3.16xlarge``, ``p3dn.24xlarge``, or ``p4d.24xlarge``. For CPU instances, most general
-            purpose instance types are allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
-            variants). Defaults to ``g4dn.metal``.
+            ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, ``p3dn.24xlarge``, or ``p4d.24xlarge``.
+            For CPU instances, most general purpose instance types are allowed (``t2``, ``t3``,
+            ``c4``, ``c5``, ``m4``, ``m5`` and variants). Defaults to ``g4dn.metal``.
 
          -  ``instance_slots``: The optional number of GPUs for the AWS instance type. This is used
             in conjunction with the ``instance_type`` in order to specify types which are not listed

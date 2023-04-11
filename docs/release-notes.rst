@@ -555,7 +555,7 @@ Version 0.19.2
 
 **Improvements**
 
--  API: `GetTrialWorkloads` can now optionally include per-batch metrics when
+-  API: ``GetTrialWorkloads`` can now optionally include per-batch metrics when
    ``includeBatchMetrics`` query parameter is set.
 
 **New Features**

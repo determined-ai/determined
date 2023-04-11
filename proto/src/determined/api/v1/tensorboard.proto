@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/struct.proto";
 
 import "determined/api/v1/command.proto";
+import "determined/api/v1/experiment.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/tensorboard/v1/tensorboard.proto";
 import "determined/util/v1/util.proto";
@@ -111,6 +112,8 @@ message LaunchTensorboardRequest {
   repeated determined.util.v1.File files = 5;
   // Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
   int32 workspace_id = 6;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 7;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {

@@ -79,7 +79,7 @@ We also need to create an experiment configuration file. This file defines speci
 information such as: number of samples, training length, and hyperparameters.
 
 We recommend that all hyperparameters be added to this file. A good starting point is taking any
-command line arguments - you may see this as parser args - from the original script and immediately
+command-line arguments---you may see this as parser args---from the original script and immediately
 adding them to your file.
 
 In our case, since we’re using hyperparameters that don’t change, we’ve given this specific config

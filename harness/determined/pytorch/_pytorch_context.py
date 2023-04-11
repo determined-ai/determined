@@ -302,8 +302,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
 
-        `backward_passes_per_step` can be used to specify how many gradient aggregation
-        steps will be performed in a single `train_batch` call per optimizer step.
+        ``backward_passes_per_step`` can be used to specify how many gradient aggregation
+        steps will be performed in a single ``train_batch`` call per optimizer step.
         In most cases, this will just be the default value 1.  However, this advanced functionality
         can be used to support training loops like the one shown below:
 
@@ -595,10 +595,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             verbosity (int, default=1):  Set to 0 to suppress Amp-related output.
             min_loss_scale (float, default=None):  Sets a floor for the loss scale values that
                 can be chosen by dynamic loss scaling.  The default value of None means that no
-                floor is imposed. If dynamic loss scaling is not used, `min_loss_scale` is ignored.
+                floor is imposed. If dynamic loss scaling is not used, ``min_loss_scale`` is
+                ignored.
             max_loss_scale (float, default=2.**24):  Sets a ceiling for the loss scale values
                 that can be chosen by dynamic loss scaling.  If dynamic loss scaling is not used,
-                `max_loss_scale` is ignored.
+                ``max_loss_scale`` is ignored.
 
         Returns:
             Model(s) and optimizer(s) modified according to the ``opt_level``.

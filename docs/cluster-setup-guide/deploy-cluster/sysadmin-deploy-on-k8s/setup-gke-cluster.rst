@@ -84,7 +84,7 @@ It is important to note that if you use the ``gcloud`` CLI to create nodes with 
 also add tolerations using ``kubectl``; otherwise, Kubernetes will be unable to schedule pods on the
 tainted node.
 
-To create a nodepool or a cluster with a taint in GKE, use the `--node-taints` flag to specify the
+To create a nodepool or a cluster with a taint in GKE, use the ``--node-taints`` flag to specify the
 type, tag, and effect.
 
 .. code:: bash

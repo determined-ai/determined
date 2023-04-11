@@ -28,8 +28,10 @@ def _experiment_task_id(exp_id: int) -> str:
 
 
 def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
-    max_tunnel_ticks = 300
-    for i in range(max_tunnel_ticks):
+    max_tunnel_time = 300
+    start = time.time()
+    ctr = 0
+    while time.time() - start < max_tunnel_time:
         try:
             r = requests.get("http://localhost:8265", timeout=5)
             if r.status_code == 200:
@@ -38,15 +40,16 @@ def _probe_tunnel(proc: "subprocess.Popen[str]") -> None:
             pass
         except requests.exceptions.ReadTimeout:
             pass
-        if i + 1 % 10 == 0:
-            print(f"Tunnel probe pending: {i} ticks...")
+        if ctr + 1 % 10 == 0:
+            print(f"Tunnel probe pending: {ctr} ticks...")
         time.sleep(1)
         if proc.poll() is not None:
             pytest.fail(f"Tunnel process has exited prematurely, return code: {proc.returncode}")
+        ctr += 1
     else:
-        pytest.fail(f"Failed to probe the tunnel in {max_tunnel_ticks} ticks")
+        pytest.fail(f"Failed to probe the tunnel after {max_tunnel_time} seconds")
 
-    print(f"Tunnel probe done after {i} ticks.")
+    print(f"Tunnel probe done after {ctr} ticks.")
 
 
 def _ray_job_submit(exp_path: pathlib.Path) -> None:
@@ -69,6 +72,7 @@ def _ray_job_submit(exp_path: pathlib.Path) -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
 def test_experiment_proxy_ray_tunnel() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     exp_id = exp.create_experiment(
@@ -77,7 +81,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
         ["--config", "max_restarts=0", "--config", "resources.slots=1"],
     )
     try:
-        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
+        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
         task_id = _experiment_task_id(exp_id)
 
         proc = subprocess.Popen(
@@ -142,6 +146,7 @@ def _kill_all_ray_experiments() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     proc = subprocess.Popen(
@@ -173,7 +178,7 @@ def test_experiment_proxy_ray_publish() -> None:
             raise
 
         try:
-            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
+            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
             _probe_tunnel(proc)
             _ray_job_submit(exp_path)
         finally:

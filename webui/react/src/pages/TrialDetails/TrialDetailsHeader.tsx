@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import ExperimentCreateModalComponent, {
+  CreateExperimentType,
+} from 'components/ExperimentCreateModal';
+import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
-import useCreateExperimentModal, {
-  CreateExperimentType,
-} from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
@@ -32,19 +33,12 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [fetchTrialDetails]);
 
-  const {
-    contextHolder: modalExperimentCreateContextHolder,
-    modalOpen: openModalExperimentCreate,
-  } = useCreateExperimentModal({ onClose: handleModalClose });
+  const ExperimentCreateModal = useModal(ExperimentCreateModalComponent);
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
   } = useModalHyperparameterSearch({ experiment, trial });
-
-  const handleContinueTrial = useCallback(() => {
-    openModalExperimentCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [experiment, openModalExperimentCreate, trial]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
@@ -91,7 +85,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
           icon: <Icon name="fork" size="small" />,
           key: Action.ContinueTrial,
           label: 'Continue Trial',
-          onClick: handleContinueTrial,
+          onClick: ExperimentCreateModal.open,
         });
       } else {
         options.push({
@@ -115,7 +109,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
   }, [
     experiment,
     fetchTrialDetails,
-    handleContinueTrial,
+    ExperimentCreateModal,
     handleHyperparameterSearch,
     isRunningTensorBoard,
     trial,
@@ -129,7 +123,12 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}
       />
-      {modalExperimentCreateContextHolder}
+      <ExperimentCreateModal.Component
+        experiment={experiment}
+        trial={trial}
+        type={CreateExperimentType.ContinueTrial}
+        onClose={handleModalClose}
+      />
       {modalHyperparameterSearchContextHolder}
     </>
   );

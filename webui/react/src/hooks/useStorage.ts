@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';
 import { StorageManager } from 'shared/utils/storage';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -19,11 +19,8 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const userNamespace = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => (cUser ? `u:${cUser.id}` : ''),
-    NotLoaded: () => '',
-  });
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const userNamespace = currentUser ? `u:${currentUser.id}` : '';
   const [storage] = useState(
     new StorageManager({ basePath: `${userNamespace}/${basePath}`, store }),
   );

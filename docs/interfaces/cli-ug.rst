@@ -10,15 +10,15 @@
 | :doc:`/reference/cli-reference`               |
 +-----------------------------------------------+
 
-To use Determined, you'll need, at minimum, the Determined Command Line Interface (Determined CLI)
-and a Determined cluster. The Determined CLI includes the ``det`` command line tools for interacting
+To use Determined, you'll need, at minimum, the Determined command-line interface (Determined CLI)
+and a Determined cluster. The Determined CLI includes the ``det`` command-line tools for interacting
 with a Determined cluster. This page contains instructions for using the CLI, including installion
 and upgrade.
 
 .. warning::
 
    Although Determined supports password-based authentication, communication between the Determined
-   CLI, Determined WebUI, and the Determined master does not take place over an encrypted channel by
+   CLI, Determined WebUI, and Determined master does not take place over an encrypted channel by
    default.
 
 .. note::
@@ -27,7 +27,7 @@ and upgrade.
 
 .. note::
 
-   You can also interact with Determined using the :ref:`web-ui-if`.
+   You can also interact with Determined using the :ref:`web interface (WebUI) <web-ui-if>`.
 
 .. _install-cli:
 
@@ -124,8 +124,8 @@ cluster. The CLI is invoked with the ``det`` command.
 CLI subcommands usually follow a ``<noun> <verb>`` form, similar to the paradigm of `ip
 <http://www.policyrouting.org/iproute2.doc.html>`__. Certain abbreviations are supported, and a
 missing verb is the same as ``list``, when possible. The following examples show different ways to
-achieve the same outcome using the ``<noun><verb>`` form, followed by the abbreviation, followed by
-a missing ``<verb>``:
+achieve the same outcome using the full ``<noun> <verb>`` form, then with an abbreviation, and
+finally with an implicit ``list``:
 
 .. code:: bash
 
@@ -161,7 +161,7 @@ a missing ``<verb>``:
       -  Command
       -  Options
 
-   -  -  List all experiments
+   -  -  List all experiments.
       -  Display a list of all experiments in the cluster.
       -  ``det experiment list``
       -
@@ -171,7 +171,7 @@ a missing ``<verb>``:
       -  ``det -m 1.2.3.4 e``
       -
 
-   -  -  View a snapshot of logs
+   -  -  View a snapshot of logs.
       -  Display the most recent logs for a specific command.
       -  ``det command logs <command_id>``
       -  -f, --tail
@@ -181,12 +181,12 @@ a missing ``<verb>``:
       -  ``det t logs -f 289``
       -  -f
 
-   -  -  Add a label
+   -  -  Add a label.
       -  Add the label ``foobar`` to experiment 17.
       -  ``det e label add 17 foobar``
       -
 
-   -  -  Create an experiment
+   -  -  Create an experiment.
 
       -  Create an experiment in a paused state with the configuration file ``const.yaml`` and the
          code contained in the current directory. The paused experiment is not scheduled on the
@@ -196,33 +196,33 @@ a missing ``<verb>``:
 
       -
 
-   -  -  Describe an experiment
+   -  -  Describe an experiment.
       -  Display information about experiment 493, including full metrics, in CSV format.
       -  ``det e describe 493 --metrics --csv``
       -
 
-   -  -  Set max slots
+   -  -  Set max slots.
       -  Ensure that experiment 85 does not use more than 4 slots in the cluster.
       -  ``det e set max-slots 85 4``
       -
 
-   -  -  Display details about the CLI and master
+   -  -  Display details about the CLI and master.
       -  Show detailed information about the CLI and master. This command does not take both an
          object and an action.
       -  ``det version``
       -
 
-   -  -  Stop (kill) the command
+   -  -  Stop (kill) a command.
       -  Terminate a running command.
       -  ``det command kill <command_id>``
       -
 
-   -  -  Set a password for the admin user
+   -  -  Set a password for the admin user.
       -  Set the password for the admin user during cluster setup.
       -  ``det user change-password admin``
       -
 
-   -  -  Create a user
+   -  -  Create a user.
       -  Create a new user named ``hoid`` who has admin privileges.
       -  ``det u create --admin hoid``
       -
