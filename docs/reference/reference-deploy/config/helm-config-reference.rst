@@ -105,8 +105,8 @@
       -  ``bucket``: The S3 bucket name to use.
       -  ``accessKey``: The AWS access key to use.
       -  ``secretKey``: The AWS secret key to use.
-      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
-         normalized, e.g., `/pre/.//fix` -> `/prefix`
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
       -  ``endpointUrl``: The optional endpoint to use for S3 clones, e.g., http://127.0.0.1:8080/.
 
    -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is
@@ -135,7 +135,7 @@
 -  ``maxSlotsPerPod``: Specifies number of GPUs there are per machine. Determined uses this
    information when scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be
    scheduled as a set of ``slotsPerTask / maxSlotsPerPod`` separate pods, with each pod assigned up
-   to ``maxSlotsPerPod`` GPUs. Distibuted tasks with sizes that are not divisible by
+   to ``maxSlotsPerPod`` GPUs. Distributed tasks with sizes that are not divisible by
    ``maxSlotsPerPod`` are never scheduled. If you have a cluster of different size nodes, set the
    ``maxSlotsPerPod`` to greatest common divisor of all the sizes. For example, if you have some
    nodes with 4 GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so that all

@@ -62,8 +62,8 @@ The launcher has the following additional requirements on the installation node:
 
 If internet connectivity requires a use of a proxy, verify the following requirements:
 
--  Ensure that the proxy variables are defined in `/etc/environment` (or `/etc/sysconfig/proxy` on
-   SLES).
+-  Ensure that the proxy variables are defined in ``/etc/environment`` (or ``/etc/sysconfig/proxy``
+   on SLES).
 
 -  Ensure that the `no_proxy` setting covers the login and admin nodes. If these nodes may be
    referenced by short names known only within the cluster, they must explicitly be included in the
@@ -74,9 +74,9 @@ If internet connectivity requires a use of a proxy, verify the following require
    `no_proxy` variable setting.
 
 The HPC launcher imports `http_proxy`, `https_proxy`, `ftp_proxy`, `rsync_proxy`, `gopher_proxy`,
-`socks_proxy`, `socks5_server`, and `no_proxy` from `/etc/environment` and `/etc/sysconfig/proxy`.
-These environment variables are automatically exported in lowercase and uppercase into any launched
-jobs and containers.
+`socks_proxy`, `socks5_server`, and `no_proxy` from ``/etc/environment`` and
+``/etc/sysconfig/proxy``. These environment variables are automatically exported in lowercase and
+uppercase into any launched jobs and containers.
 
 .. _slurm-config-requirements:
 
@@ -237,7 +237,7 @@ to optimize how Determined interacts with PBS:
       resources out of that queue using a custom resource pool. Configure a :ref:`resource pool
       <cluster-resource-pools>` with ``provider_type: hpc``, specify the underlying PBS queue name
       to receive the job and include a :ref:`task_container_defaults
-      <master-task-container-defaults>` section with the necessary `pbs`` options to select the
+      <master-task-container-defaults>` section with the necessary ``pbs`` options to select the
       desired homogenous set of resources from that queue.
 
 -  Tune the PBS configuration for Determined job preemption.

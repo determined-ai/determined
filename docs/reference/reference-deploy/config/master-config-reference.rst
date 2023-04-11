@@ -86,7 +86,7 @@ The master supports the following configuration settings:
 
    -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.
       Ignored by resource managers of type ``kubernetes``. See :ref:`environment.add_capabilities
-      <exp-environment-add-capapbilities>` for more details.
+      <exp-environment-add-capabilities>` for more details.
 
    -  ``drop_capabilities``: Just like ``add_capabilities`` but for dropping capabilities.
 
