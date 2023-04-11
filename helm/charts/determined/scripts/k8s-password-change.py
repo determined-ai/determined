@@ -56,7 +56,7 @@ def getMasterAddress(
     if node_port != "true":
         while True:
             services = requests.get(
-                url=f"https://{service_host}:{service_post}/api/v1/namespaces/{namespace}/services",
+                url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
                 headers={"Authorization": f"Bearer {token}"},
                 verify=False,
             ).json()
@@ -73,7 +73,7 @@ def getMasterAddress(
                         return f"{status['ingress'][0]['ip']}:{master_port}"
 
     services = requests.get(
-        url=f"https://{service_host}:{service_post}/api/v1/namespaces/{namespace}/services",
+        url=f"https://{service_host}:{service_port}/api/v1/namespaces/{namespace}/services",
         headers={"Authorization": f"Bearer {token}"},
         verify=False,
     ).json()
