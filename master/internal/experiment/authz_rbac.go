@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -133,6 +134,19 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 		audit.LogFromErr(fields, nil)
 	}()
 
+	groups, _, _, err := usergroup.SearchGroups(ctx, "", curUser.ID, 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error getting users %d groups for filtering experiments: %w", curUser.ID, err)
+	}
+	if len(groups) == 0 {
+		return nil, fmt.Errorf("user %d has to be in at least one group", curUser.ID)
+	}
+	groupIDs := make([]int, len(groups))
+	for i := range groups {
+		groupIDs[i] = groups[i].ID
+	}
+
 	var workspacePermissions []permissionMatch
 	err = db.Bun().NewSelect().
 		ColumnExpr("scope_workspace_id AS id").
@@ -143,11 +157,11 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 		Join("JOIN role_assignments ON group_id = groups.id").
 		Join("JOIN role_assignment_scopes ON role_assignment_scopes.id = role_assignments.scope_id").
 		Join("JOIN permission_assignments ON permission_assignments.role_id = role_assignments.role_id").
-		Where("groups.user_id = ?", curUser.ID).
+		Where("groups.id IN (?)", bun.In(groupIDs)).
 		Group("scope_workspace_id").
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting workspace permissions for filtering experiments: %w", err)
 	}
 
 	localPermissionWorkspaces := []int{-1}
