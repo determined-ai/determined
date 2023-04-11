@@ -195,7 +195,6 @@ class DSATTrialTracker:
         self,
         submitted_config_dict: Dict[str, Any],
         model_dir: str,
-        zero_search_config: Optional[str] = None,
         all_trials_dict: Optional[Dict[uuid.UUID, DSATTrial]] = None,
         should_stop: bool = False,
         best_autotuning_metric_val: Optional[Any] = None,
@@ -203,7 +202,6 @@ class DSATTrialTracker:
     ) -> None:
         self.submitted_config_dict = submitted_config_dict
         self.model_dir = model_dir
-        self.zero_search_config = zero_search_config
         self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
         self.should_stop = should_stop
         self.best_autotuning_metric_val = best_autotuning_metric_val
@@ -394,25 +392,13 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         self,
         submitted_config_dict: Dict[str, Any],
         model_dir: str,
-        zero_search_config: Optional[str] = None,
     ) -> None:
         self.submitted_config_dict = submitted_config_dict
         self.model_dir = model_dir
-        self.zero_search_config = (
-            None
-            if zero_search_config is None
-            else _utils.get_dict_from_yaml_or_json_path(zero_search_config)
-        )
-        self.zero_optim_search_space = _utils.get_zero_optim_search_space(
-            zero_search_config=self.zero_search_config
-        )
-        # TODO: Delete print test
-        logging.info(f"SEARCH SPACE {self.zero_optim_search_space}")
 
         self.trial_tracker = DSATTrialTracker(
             submitted_config_dict=submitted_config_dict,
             model_dir=model_dir,
-            zero_search_config=zero_search_config,
         )
 
     @abstractmethod
@@ -679,14 +665,10 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return new_hparams, new_search_data
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        # TODO: verify that we are not repeating a previously attempted config.
-        relevant_zero_stages = self.trial_tracker.model_profile_info_trial.viable_zero_stages & set(
-            self.zero_optim_search_space
+        random_zero_stage = random.choice(
+            tuple(self.trial_tracker.model_profile_info_trial.viable_zero_stages)
         )
-        random_zero_stage = random.choice(tuple(relevant_zero_stages))
-        zero_optim_config = _utils.get_random_zero_optim_dict_from_search_space(
-            random_zero_stage, self.zero_optim_search_space
-        )
+        zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.submitted_hps_with_autotuning)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),

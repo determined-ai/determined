@@ -12,15 +12,11 @@ def get_parsed_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config_path", type=str)
     parser.add_argument("-md", "--model_dir", type=str)
-    parser.add_argument("-z", "--zero-search-config", type=str)
     parser.add_argument("-t", "--tuner-type", type=str, default="random")
     args = parser.parse_args()
     # Strip and only use the base names.
     args.config_path = os.path.basename(args.config_path)
     args.model_dir = os.path.basename(args.model_dir)
-    args.zero_search_config = (
-        None if args.zero_search_config is None else os.path.basename(args.zero_search_config)
-    )
     return args
 
 
@@ -36,7 +32,6 @@ def main(core_context: det.core.Context) -> None:
     search_method = _defaults.ALL_SEARCH_METHOD_CLASSES[args.tuner_type](
         submitted_config_dict=submitted_config_dict,
         model_dir=args.model_dir,
-        zero_search_config=args.zero_search_config,
     )
     search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
