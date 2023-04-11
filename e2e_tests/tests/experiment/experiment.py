@@ -916,15 +916,17 @@ def root_user_home_bind_mount() -> Dict[str, str]:
     return {"host_path": "/tmp", "container_path": "/root"}
 
 
-def has_at_least_one_checkpoint(exp_id: int) -> bool:
-    trials = experiment_trials(exp_id)
-    # Check if the most recent trial has any checkpoints.
-    if len(trials) > 0 and len(workloads_with_checkpoint(trials[len(trials) - 1].workloads)) > 0:
-        return True
+def has_at_least_one_checkpoint(experiment_id: int) -> bool:
+    # Loop through the trials to look for checkpoints
+    for trial in experiment_trials(experiment_id):
+        # Return true if at least one workload has a checkpoint
+        if len(workloads_with_checkpoint(trial)) > 0:
+            return True
+    # No checkpoints found for the experiment return false.
     return False
 
 
-def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 20) -> None:
+def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 30) -> None:
     for _ in range(timeout):
         if has_at_least_one_checkpoint(experiment_id):
             return
