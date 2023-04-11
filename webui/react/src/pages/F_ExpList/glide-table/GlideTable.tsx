@@ -93,6 +93,7 @@ export const GlideTable: React.FC<Props> = ({
   const [pinnedRows, setPinnedRows] = useState<Loadable<ExperimentItem>[]>([]);
   const [mainTableData, setMainTableData] = useState<Loadable<ExperimentItem>[]>(data);
   const [originalIndex, setOriginalIndex] = useState<number[]>([]);
+  const [mainGridScroll, setMainGridScroll] = useState(0);
 
   useEffect(() => {
     if (initialScrollPositionSet.get()) return;
@@ -104,6 +105,11 @@ export const GlideTable: React.FC<Props> = ({
       }
     }, 200);
   }, [initialScrollPositionSet, page]);
+
+  useEffect(() => {
+    if (!pinnedGridRef.current) return;
+    pinnedGridRef.current.scrollTo(mainGridScroll + 2, 0, 'horizontal');
+  }, [mainGridScroll]);
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const handleMenuClose = useCallback(() => {
@@ -382,6 +388,16 @@ export const GlideTable: React.FC<Props> = ({
 
   const verticalBorder = useCallback((col: number) => columnIds[col] === 'name', [columnIds]);
 
+  const onScroll = React.useCallback(
+    (range: Rectangle) => {
+      if (pinnedRows.length !== 0 && range.x !== mainGridScroll) {
+        setMainGridScroll(range.x);
+      }
+      handleScroll?.(range);
+    },
+    [pinnedRows.length, mainGridScroll, handleScroll],
+  );
+
   return (
     <div>
       {!!pinnedRows.length && (
@@ -400,7 +416,6 @@ export const GlideTable: React.FC<Props> = ({
           width="100%"
           onCellClicked={onCellClicked}
           onCellContextMenu={(_, event) => onPinnedGridContextMenu(event)}
-          onVisibleRegionChanged={handleScroll}
         />
       )}
       <DataEditor
@@ -427,12 +442,7 @@ export const GlideTable: React.FC<Props> = ({
         onColumnResizeEnd={onColumnResizeEnd}
         onGridSelectionChange={handleGridSelectionChange}
         onHeaderClicked={onHeaderClicked}
-        onVisibleRegionChanged={(range) => {
-          if (pinnedRows.length !== 0) {
-            pinnedGridRef.current?.scrollTo(range.y, range.x, 'horizontal');
-          }
-          handleScroll?.(range);
-        }}
+        onVisibleRegionChanged={onScroll}
         //
         // these might come in handy
         // onItemHovered={onItemHovered}
