@@ -291,6 +291,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("Starting dispatcher resource manager")
 		go m.killAllInactiveDispatches(ctx, ctx.Self())
 		go periodicallyCheckLauncherVersion(context.TODO(), ctx.Log(), m.apiClient)
+		go gcOrphanedDispatches(context.TODO(), ctx.Log(), m.apiClient)
 		go m.jobWatcher.watch(ctx)
 
 		m.hpcDetailsCache.wait()
