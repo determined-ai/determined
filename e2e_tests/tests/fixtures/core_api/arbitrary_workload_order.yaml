@@ -1,0 +1,7 @@
+name: arbitrary_workload_order
+entrypoint: python3 arbitrary_workload_order.py
+searcher:
+   name: single
+   metric: x
+   max_length: 1
+max_restarts: 0
