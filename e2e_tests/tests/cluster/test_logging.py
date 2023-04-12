@@ -1,9 +1,8 @@
-import _socket
-import async_timeout
 import functools
 import re
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
+import _socket
 import pytest
 
 from determined.cli import command
