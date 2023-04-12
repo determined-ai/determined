@@ -119,7 +119,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
-  const handleOnAction = useCallback(() => {
+  const handleOnAction = useCallback(async () => {
     /*
      * Deselect selected rows since their states may have changed where they
      * are no longer part of the filter criteria.
@@ -128,7 +128,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     setSelectAll(false);
 
     // Refetch experiment list to get updates based on batch action.
-    fetchExperiments();
+    await fetchExperiments();
   }, [fetchExperiments]);
 
   return (

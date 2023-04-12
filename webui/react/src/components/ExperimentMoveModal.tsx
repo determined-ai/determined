@@ -25,7 +25,7 @@ type FormInputs = {
 };
 
 interface Props {
-  onClose?: () => void;
+  onSubmit?: () => Promise<void>;
   experimentIds: number[];
   filters?: V1BulkExperimentFilters;
   sourceProjectId?: number;
@@ -33,7 +33,7 @@ interface Props {
 }
 
 const ExperimentMoveModalComponent: React.FC<Props> = ({
-  onClose,
+  onSubmit,
   experimentIds,
   filters,
   sourceProjectId,
@@ -134,6 +134,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       submit={{
         disabled,
         handler: handleSubmit,
+        onComplete: onSubmit,
         text:
           filters !== undefined
             ? 'Move Experiments'
@@ -143,8 +144,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         filters !== undefined
           ? 'Move Experiments'
           : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
-      }
-      onClose={onClose}>
+      }>
       <Form form={form} layout="vertical">
         <Form.Item
           label="Workspace"

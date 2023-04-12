@@ -70,7 +70,7 @@ const actionIcons: Record<BatchAction, string> = {
 interface Props {
   experiments: Loadable<ExperimentItem>[];
   filters: V1BulkExperimentFilters;
-  onAction: () => void;
+  onAction: () => Promise<void>;
   selectAll: boolean;
   selectedExperimentIds: number[];
   project: Project;
@@ -294,7 +294,7 @@ const TableActionBar: React.FC<Props> = ({
         filters={selectAll ? filters : undefined}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
-        onClose={onAction}
+        onSubmit={onAction}
       />
     </>
   );

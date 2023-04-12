@@ -35,7 +35,7 @@ interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
   makeOpen?: boolean;
-  onComplete?: (action?: Action) => void;
+  onComplete?: (action?: Action) => Promise<void>;
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings;
@@ -88,15 +88,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         ) {
           case Action.Activate:
             await activateExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Cancel:
             await cancelExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
@@ -135,18 +135,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Kill',
               onOk: async () => {
                 await killExperiment({ experimentId: id });
-                onComplete?.(action);
+                await onComplete?.(action);
               },
               title: 'Confirm Experiment Kill',
             });
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Unarchive:
             await unarchiveExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            await onComplete?.(action);
             break;
           case Action.Delete:
             modal.confirm({
@@ -158,7 +158,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               okText: 'Delete',
               onOk: async () => {
                 await deleteExperiment({ experimentId: id });
-                if (onComplete) onComplete(action);
+                await onComplete?.(action);
               },
               title: 'Confirm Experiment Deletion',
             });
@@ -239,7 +239,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
-        onClose={onComplete}
+        onSubmit={onComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </>
@@ -252,7 +252,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
-        onClose={onComplete}
+        onSubmit={onComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </div>
