@@ -914,3 +914,19 @@ def s3_checkpoint_config_no_creds() -> Dict[str, str]:
 
 def root_user_home_bind_mount() -> Dict[str, str]:
     return {"host_path": "/tmp", "container_path": "/root"}
+
+
+def has_at_least_one_checkpoint(experiment_id: int) -> bool:
+    for trial in experiment_trials(experiment_id):
+        if len(workloads_with_checkpoint(trial.workloads)) > 0:
+            return True
+    return False
+
+
+def wait_for_at_least_one_checkpoint(experiment_id: int, timeout: int = 120) -> None:
+    for _ in range(timeout):
+        if has_at_least_one_checkpoint(experiment_id):
+            return
+        else:
+            time.sleep(1)
+    pytest.fail("Experiment did not reach at least one checkpoint after {} seconds".format(timeout))
