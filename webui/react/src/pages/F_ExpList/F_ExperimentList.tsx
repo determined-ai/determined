@@ -63,16 +63,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [initialScrollPositionSet],
   );
 
-  const experimentFilters: V1BulkExperimentFilters = useMemo(
-    () => ({
+  const experimentFilters = useMemo(() => {
+    const filters: V1BulkExperimentFilters = {
       archived: false,
-      limit: 2 * PAGE_SIZE,
-      orderBy: 'ORDER_BY_DESC',
       projectId: project.id,
-      sortBy: V1GetExperimentsRequestSortBy.ID,
-    }),
-    [project.id],
-  );
+    };
+    return filters;
+  }, [project.id]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -81,7 +78,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const response = await getExperiments(
         {
           ...experimentFilters,
+          limit: 2 * PAGE_SIZE,
           offset: tableOffset,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: V1GetExperimentsRequestSortBy.ID,
         },
         { signal: canceler.signal },
       );
