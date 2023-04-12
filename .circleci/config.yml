@@ -217,6 +217,12 @@ commands:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
+  install-codecov:
+    steps:
+      - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
+      - run: chmod +x $HOME/.local/bin/codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+
   setup-go-intg-deps:
     steps:
       - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
@@ -1563,15 +1569,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1585,14 +1592,15 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1605,15 +1613,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1626,15 +1635,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1647,16 +1657,17 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
