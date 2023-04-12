@@ -1980,6 +1980,72 @@ func (a *apiServer) GetModelDefFile(
 	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }
 
+func scanMetricName(filter string, index int) string {
+	metricName := ""
+	for index < len(filter) {
+		char := string(filter[index])
+		if char == "<" || char == ":" || char == " " || char == "~" || char == "=" {
+			break
+		}
+		metricName += char
+		index += 1
+	}
+	return metricName
+}
+
+func buildQuery(filter string) string {
+	general_column_prefix := "general_column."
+	metricPrefixes := map[string]string{
+		"validations.": "besttrials.best_validation->'metrics'->'avg_metrics'->'%s'",
+		"hp.":          "e.config->'hyperparameters'->'%s'",
+	}
+	orderColMap := map[string]string{
+		"id":              "e.id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
+		"projectId":       "project_id",
+		"checkpointSize":  "checkpoint_size",
+		"checkpointCount": "checkpoint_count",
+		"searcherMetricsVal": `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
+	}
+
+	for key, value := range orderColMap {
+		filter = strings.ReplaceAll(filter, general_column_prefix+key, value)
+	}
+	for prefix, replacement := range metricPrefixes {
+		i := strings.Index(filter, prefix)
+		for i != -1 {
+			fmt.Println("Found " + prefix)
+			fmt.Println(i)
+			fmt.Println(filter[i : i+len(prefix)])
+			metricName := scanMetricName(filter, i+len(prefix))
+			fmt.Println(metricName)
+			filter = strings.ReplaceAll(filter, prefix+metricName, fmt.Sprintf(replacement, metricName))
+			i = strings.Index(filter, prefix)
+		}
+	}
+	return filter
+}
+
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
 
 	numericeRegex := regexp.MustCompile(`\d|\.|-`)
@@ -2042,8 +2108,9 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		}
 		if char == "\\" {
 			if filterIndex+1 < int32(len(filter)-1) {
-				if string(filterIndex+1) == `'` || string(filterIndex+1) == `"` {
-					char = `\` + `"`
+				nextChar := string(filter[filterIndex+1])
+				if nextChar == `'` || nextChar == `"` {
+					char = `\` + nextChar
 				}
 				filterIndex += 1
 			}
@@ -2082,35 +2149,6 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 }
 
 func parseFilter(filter string) (string, error) {
-	general_column_prefix := "general_column."
-	orderColMap := map[string]string{
-		"id":              "id",
-		"description":     "description",
-		"name":            "name",
-		"startTime":       "e.start_time",
-		"endTime":         "e.end_time",
-		"state":           "e.state",
-		"numTrials":       "num_trials",
-		"progress":        "COALESCE(progress, 0)",
-		"user":            "display_name",
-		"forkedFrom":      "e.parent_id",
-		"resourcePool":    "resource_pool",
-		"projectId":       "project_id",
-		"checkpointSize":  "checkpoint_size",
-		"checkpointCount": "checkpoint_count",
-		"searcherMetricsVal": `(
-			SELECT
-				searcher_metric_value
-			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
-		 ) `,
-	}
 
 	currentIndex := 0
 	currentQuery := ""
@@ -2160,10 +2198,7 @@ func parseFilter(filter string) (string, error) {
 			currentIndex += 1
 		}
 	}
-	for key, value := range orderColMap {
-		fmt.Println(key + " " + value + " " + general_column_prefix + key)
-		currentQuery = strings.ReplaceAll(currentQuery, general_column_prefix+key, value)
-	}
+	currentQuery = buildQuery(currentQuery)
 	return currentQuery, nil
 }
 
@@ -2175,19 +2210,18 @@ func (a *apiServer) SearchExperiments(
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
 
+	experimentQuery := db.Bun().NewSelect().
+		Model(&experiments).
+		ModelTableExpr("experiments as e").
+		Apply(getExperimentColumns)
 	if req.Filter != "" {
 		filterExpr, err := parseFilter(req.Filter)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
 		}
 		fmt.Println(filterExpr)
+		experimentQuery.Where(filterExpr)
 	}
-
-	experimentQuery := db.Bun().NewSelect().
-		Model(&experiments).
-		ModelTableExpr("experiments as e").
-		Apply(getExperimentColumns)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
