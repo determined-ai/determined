@@ -29,7 +29,7 @@ import {
   Project,
   ProjectExperiment,
 } from 'types';
-import { modal } from 'utils/dialogApi';
+import { modal, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -95,7 +95,8 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const availableBatchActions = useMemo(() => {
-    if (selectAll) return [...batchActions];
+    if (selectAll)
+      return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
     const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
@@ -154,12 +155,53 @@ const TableActionBar: React.FC<Props> = ({
     [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
   );
 
+  const closeNotification = useCallback(() => notification.destroy(), []);
+
   const submitBatchAction = useCallback(
     async (action: BatchAction) => {
       try {
-        await sendBatchActions(action);
+        const results = await sendBatchActions(action);
+        if (results === undefined) return;
 
-        onAction();
+        const numSuccesses = results.successful.length;
+        const numFailures = results.failed.length;
+
+        if (numSuccesses === 0 && numFailures === 0) {
+          notification.open({
+            description: `No selected experiments were eligable for ${action.toLowerCase()}`,
+            message: 'No eligable experiments',
+          });
+        } else if (numFailures === 0) {
+          notification.open({
+            btn: null,
+            description: (
+              <div onClick={closeNotification}>
+                <p>
+                  {action} succeeded for{results.successful.length} experiments
+                </p>
+              </div>
+            ),
+            message: `${action} Success`,
+          });
+        } else if (numSuccesses === 0) {
+          notification.warning({
+            description: `Unable to ${action.toLowerCase} ${numFailures} experiments`,
+            message: `${action} Failure`,
+          });
+        } else {
+          notification.warning({
+            description: (
+              <div onClick={closeNotification}>
+                <p>
+                  {action} succeeded for {numSuccesses} out of {numFailures + numSuccesses} eligable
+                  experiments
+                </p>
+              </div>
+            ),
+            key: 'move-notification',
+            message: `Partial ${action} Failure`,
+          });
+        }
       } catch (e) {
         const publicSubject =
           action === ExperimentAction.OpenTensorBoard
@@ -172,9 +214,11 @@ const TableActionBar: React.FC<Props> = ({
           publicSubject,
           silent: false,
         });
+      } finally {
+        onAction();
       }
     },
-    [sendBatchActions, onAction],
+    [sendBatchActions, closeNotification, onAction],
   );
 
   const showConfirmation = useCallback(
