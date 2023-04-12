@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: helm-chart-repository
-          token: ${{ secrets.DETERMINED_CI_RELEASE_PAT }}
+          token: ${{ secrets.DETERMINED_TOKEN }}
       - name: get chart artifact
         run: |
           NEW_CHART_DIR=$( mktemp -d )
