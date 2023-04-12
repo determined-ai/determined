@@ -4,9 +4,8 @@ from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
 
 import pytest
-import yaml
 
-from determined.common import api
+from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
