@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten,
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.optimizers.legacy import RMSprop
 
 # Constants about the data set.
 IMAGE_SIZE = 32
