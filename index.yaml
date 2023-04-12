@@ -2,6 +2,17 @@ apiVersion: v1
 entries:
   determined:
   - apiVersion: v1
+    appVersion: 0.21.0
+    created: "2023-04-12T17:38:28.916149148Z"
+    description: A Helm chart for Determined
+    digest: 101b1782b9bc24fc44b2803fd9994f528dc95914cc197bd0522b073c7373bae2
+    home: https://github.com/determined-ai/determined.git
+    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    name: determined
+    urls:
+    - https://github.com/determined-ai/determined/releases/download/0.21.0/determined-helm-chart_0.21.0.tgz
+    version: 0.21.0
+  - apiVersion: v1
     appVersion: 0.20.1
     created: "2023-04-12T17:38:17.081842664Z"
     description: A Helm chart for Determined
@@ -188,4 +199,4 @@ entries:
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.2/determined-helm-chart_0.18.2.tgz
     version: 0.18.2
-generated: "2023-04-12T17:38:17.080493752Z"
+generated: "2023-04-12T17:38:28.914967739Z"
