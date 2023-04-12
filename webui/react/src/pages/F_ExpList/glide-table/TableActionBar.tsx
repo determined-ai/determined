@@ -43,14 +43,14 @@ import css from './TableActionBar.module.scss';
 
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
-  ExperimentAction.Activate,
   ExperimentAction.Move,
-  ExperimentAction.Pause,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
+  ExperimentAction.Delete,
+  ExperimentAction.Activate,
+  ExperimentAction.Pause,
   ExperimentAction.Cancel,
   ExperimentAction.Kill,
-  ExperimentAction.Delete,
 ] as const;
 
 type BatchAction = (typeof batchActions)[number];
@@ -210,6 +210,7 @@ const TableActionBar: React.FC<Props> = ({
 
   const editMenuItems: ItemType[] = useMemo(() => {
     return batchActions.map((action) => ({
+      danger: action === ExperimentAction.Delete,
       disabled: !availableBatchActions.includes(action),
       // The icon doesn't show up without being wrapped in a div.
       icon: (
