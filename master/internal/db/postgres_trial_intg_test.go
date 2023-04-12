@@ -144,7 +144,7 @@ func addMetricCustomTime(ctx context.Context, t *testing.T, trialID int, endTime
 }
 
 func runSummaryMigration(t *testing.T) {
-	bytes, err := os.ReadFile("../../static/migrations/20230405164440_add-summary-metrics.tx.up.sql")
+	bytes, err := os.ReadFile("../../static/migrations/20230412163510_add-summary-metrics.tx.up.sql")
 	require.NoError(t, err)
 
 	_, err = Bun().Exec(string(bytes))
