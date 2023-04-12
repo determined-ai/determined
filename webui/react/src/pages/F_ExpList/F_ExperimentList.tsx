@@ -63,7 +63,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [initialScrollPositionSet],
   );
 
-  const fetchFilters: V1BulkExperimentFilters = useMemo(
+  const experimentFilters: V1BulkExperimentFilters = useMemo(
     () => ({
       archived: false,
       limit: 2 * PAGE_SIZE,
@@ -80,7 +80,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
       const response = await getExperiments(
         {
-          ...fetchFilters,
+          ...experimentFilters,
           offset: tableOffset,
         },
         { signal: canceler.signal },
@@ -106,7 +106,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, fetchFilters, canceler.signal]);
+  }, [page, experimentFilters, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
@@ -148,7 +148,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <>
             <TableActionBar
               experiments={experiments}
-              filters={fetchFilters}
+              filters={experimentFilters}
               project={project}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
