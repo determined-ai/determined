@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import ExperimentIcons from 'components/ExperimentIcons';
+import Icon from 'components/kit/Icon';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import { ExperimentBase, TrialDetails } from 'types';
 
 import css from './TrialHeaderLeft.module.scss';

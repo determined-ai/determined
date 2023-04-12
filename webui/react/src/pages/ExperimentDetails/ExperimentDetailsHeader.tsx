@@ -11,6 +11,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
 import Link from 'components/Link';
@@ -30,7 +31,6 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';

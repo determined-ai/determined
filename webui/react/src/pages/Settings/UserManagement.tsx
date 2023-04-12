@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ConfigureAgentModalComponent from 'components/ConfigureAgentModal';
 import CreateUserModalComponent from 'components/CreateUserModal';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import ManageGroupsModalComponent from 'components/ManageGroupsModal';
 import Page from 'components/Page';
@@ -30,7 +31,6 @@ import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import { GetUsersParams } from 'services/types';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';

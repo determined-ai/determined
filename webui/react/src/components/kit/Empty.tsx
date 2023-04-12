@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import Icon from 'shared/components/Icon';
+import Icon from 'components/kit/Icon';
 
 import css from './Empty.module.scss';
 

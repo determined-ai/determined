@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 
 import Button from 'components/kit/Button';
 import Form, { FormListFieldData } from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 
 import css from './EditableRow.module.scss';

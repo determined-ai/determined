@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import Select, { Option, SelectValue } from 'components/kit/Select';
@@ -23,7 +24,6 @@ import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';

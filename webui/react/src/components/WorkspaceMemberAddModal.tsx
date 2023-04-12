@@ -2,12 +2,12 @@ import { Select } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import { message } from 'utils/dialogApi';

@@ -14,6 +14,7 @@ import React, {
   useState,
 } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -22,7 +23,6 @@ import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RawJson, ValueOf } from 'shared/types';

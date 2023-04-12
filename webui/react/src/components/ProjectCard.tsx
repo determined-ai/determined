@@ -2,10 +2,10 @@ import { Typography } from 'antd';
 import React from 'react';
 
 import Card from 'components/kit/Card';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import { nearestCardinalNumber } from 'shared/utils/number';
 import { Project } from 'types';
 

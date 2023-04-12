@@ -1,8 +1,7 @@
 import React, { CSSProperties } from 'react';
 
 import Tooltip from 'components/kit/Tooltip';
-
-import { CommonProps } from '../../types';
+import { CommonProps } from 'shared/types';
 
 import css from './Icon.module.scss';
 

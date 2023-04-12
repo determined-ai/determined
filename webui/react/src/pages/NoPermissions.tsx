@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Page from 'components/Page';
-import Icon from 'shared/components/Icon/Icon';
 
 import css from './NoPermissions.module.scss';
 

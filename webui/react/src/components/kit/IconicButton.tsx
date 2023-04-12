@@ -1,7 +1,7 @@
 import { Button as AntdButton } from 'antd';
 import React, { MouseEvent } from 'react';
 
-import Icon from 'shared/components/Icon';
+import Icon from 'components/kit/Icon';
 
 interface ButtonProps {
   danger?: boolean;

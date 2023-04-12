@@ -4,11 +4,11 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';

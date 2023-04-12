@@ -3,10 +3,10 @@ import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
-import Icon from 'shared/components/Icon';
 import { isNumber } from 'shared/utils/data';
 import { isPercent, percentToFloat } from 'shared/utils/number';
 

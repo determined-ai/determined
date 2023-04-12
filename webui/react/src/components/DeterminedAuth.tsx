@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
@@ -10,7 +11,6 @@ import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isLoginFailure } from 'services/utils';
-import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';

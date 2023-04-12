@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import Icon from 'shared/components/Icon/Icon';
+import Icon from 'components/kit/Icon';
 
 import css from './ActionSheet.module.scss';
 import Link, { Props as LinkProps } from './Link';

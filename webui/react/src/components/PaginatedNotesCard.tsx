@@ -5,8 +5,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Empty from 'components/kit/Empty';
+import Icon from 'components/kit/Icon';
 import Select, { Option, SelectValue } from 'components/kit/Select';
-import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 

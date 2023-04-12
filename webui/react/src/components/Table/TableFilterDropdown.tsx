@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input, { InputRef } from 'components/kit/Input';
-import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 
 import css from './TableFilterDropdown.module.scss';

@@ -10,8 +10,8 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Link from 'components/Link';
-import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

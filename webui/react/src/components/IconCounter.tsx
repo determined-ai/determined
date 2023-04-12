@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Icon from 'shared/components/Icon/Icon';
+import Icon from 'components/kit/Icon';
 import { ValueOf } from 'shared/types';
 
 import css from './IconCounter.module.scss';

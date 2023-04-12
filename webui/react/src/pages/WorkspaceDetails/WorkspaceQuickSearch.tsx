@@ -3,11 +3,11 @@ import { Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';

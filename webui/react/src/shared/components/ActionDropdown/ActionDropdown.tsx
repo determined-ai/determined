@@ -5,7 +5,7 @@ import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Button from 'components/kit/Button';
 import useConfirm, { ConfirmModalProps } from 'components/kit/useConfirm';
-import Icon from 'shared/components/Icon/Icon';
+import Icon from 'components/kit/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 

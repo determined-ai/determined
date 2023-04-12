@@ -3,10 +3,10 @@ import { Space } from 'antd';
 import React from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import { UserOrGroup, Workspace } from 'types';
 
 import css from './WorkspaceDetailsHeader.module.scss';

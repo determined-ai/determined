@@ -3,12 +3,12 @@ import { string } from 'io-ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
-import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import userStore from 'stores/users';

@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
@@ -15,7 +16,6 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace, postUserActivity } from 'services/api';
 import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';

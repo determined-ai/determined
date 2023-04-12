@@ -11,10 +11,10 @@ import React, {
 } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import TableBatch from 'components/Table/TableBulkActions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { noOp } from 'shared/utils/service';

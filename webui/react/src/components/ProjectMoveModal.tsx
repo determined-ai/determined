@@ -2,12 +2,12 @@ import { Select, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useState } from 'react';
 
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';

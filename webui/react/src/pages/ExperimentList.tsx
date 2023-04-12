@@ -11,6 +11,7 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Input from 'components/kit/Input';
 import { useModal } from 'components/kit/Modal';
 import Tags from 'components/kit/Tags';
@@ -57,7 +58,6 @@ import {
 import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey, ValueOf } from 'shared/types';

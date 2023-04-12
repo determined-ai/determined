@@ -3,11 +3,11 @@ import { useLocation } from 'react-router-dom';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Link, { Props as LinkProps } from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath, paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';

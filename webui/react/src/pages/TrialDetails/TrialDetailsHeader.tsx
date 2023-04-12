@@ -4,13 +4,13 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import {
   ExperimentAction as Action,
   ExperimentAction,

@@ -2,10 +2,10 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Icon from 'components/kit/Icon';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';

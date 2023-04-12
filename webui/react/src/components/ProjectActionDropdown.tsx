@@ -3,11 +3,11 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveProject, unarchiveProject } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { Project } from 'types';
 import handleError from 'utils/error';

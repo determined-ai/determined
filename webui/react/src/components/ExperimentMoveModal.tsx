@@ -3,6 +3,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Form from 'components/kit/Form';
+import Icon from 'components/kit/Icon';
 import { Modal } from 'components/kit/Modal';
 import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
@@ -10,7 +11,6 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { pluralizer } from 'shared/utils/string';
 import projectStore from 'stores/projects';

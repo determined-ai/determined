@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import HpSelect from 'components/HpSelect';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Select, { Option, SelectValue } from 'components/kit/Select';
 import MetricSelect from 'components/MetricSelect';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
-import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { Metric, Scale } from 'types';
 

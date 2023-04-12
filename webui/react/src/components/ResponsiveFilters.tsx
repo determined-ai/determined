@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import useResize from 'hooks/useResize';
-import Icon from 'shared/components/Icon/Icon';
 
 import css from './ResponsiveFilters.module.scss';
 

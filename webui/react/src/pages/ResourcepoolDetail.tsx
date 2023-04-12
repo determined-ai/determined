@@ -4,6 +4,7 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
+import Icon from 'components/kit/Icon';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -12,7 +13,6 @@ import { V1SchedulerTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { ValueOf } from 'shared/types';

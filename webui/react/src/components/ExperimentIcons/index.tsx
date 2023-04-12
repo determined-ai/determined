@@ -1,8 +1,8 @@
 import React, { CSSProperties, useMemo } from 'react';
 
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import { stateToLabel } from 'constants/states';
-import Icon from 'shared/components/Icon/Icon';
 import { CompoundRunState, JobState, RunState } from 'types';
 
 import Active from './Active';

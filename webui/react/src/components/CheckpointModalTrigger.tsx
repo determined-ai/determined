@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Tooltip from 'components/kit/Tooltip';
 import ModelCreateModal from 'components/ModelCreateModal';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import Icon from 'shared/components/Icon/Icon';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
 

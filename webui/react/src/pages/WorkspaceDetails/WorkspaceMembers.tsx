@@ -4,6 +4,7 @@ import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import { useModal } from 'components/kit/Modal';
 import Nameplate from 'components/kit/Nameplate';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
@@ -17,7 +18,6 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, UserOrGroupWithRoleInfo, Workspace } from 'types';

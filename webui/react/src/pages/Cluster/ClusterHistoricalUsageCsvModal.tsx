@@ -2,8 +2,8 @@ import { DatePicker, Form, Modal, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import Icon from 'components/kit/Icon';
 import { handlePath, serverAddress } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 
 const { Option } = Select;

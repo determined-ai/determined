@@ -3,8 +3,8 @@ import type { DropdownProps, MenuProps } from 'antd';
 import React, { useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
-import Icon from 'shared/components/Icon/Icon';
 import { isMouseEvent } from 'shared/utils/routes';
 
 import css from './PageHeaderFoldable.module.scss';

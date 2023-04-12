@@ -12,6 +12,7 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
+import Icon from 'components/kit/Icon';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Section from 'components/Section';
@@ -19,7 +20,6 @@ import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RecordKey, ValueOf } from 'shared/types';
