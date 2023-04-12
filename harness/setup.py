@@ -48,12 +48,8 @@ setup(
         "docker[ssh]>=3.7.3",
         "google-api-python-client>=1.12.1",
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
-        "docker-compose>=1.13.0",
         "tqdm",
         "appdirs",
-        # docker-compose has a requirement not properly propagated with semi-old pip installations;
-        # so we expose that requirement here.
-        "websocket-client<1",
         # Telemetry
         "analytics-python",
     ],

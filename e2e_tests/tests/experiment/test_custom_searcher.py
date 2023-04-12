@@ -6,10 +6,10 @@ import time
 from typing import Iterator, List, Optional
 
 import pytest
-import yaml
 from urllib3 import connectionpool
 
 from determined import searcher
+from determined.common import yaml
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
