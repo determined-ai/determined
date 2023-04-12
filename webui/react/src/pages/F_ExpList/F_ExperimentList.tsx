@@ -123,9 +123,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <GlideTable
             colorMap={colorMap}
             data={experiments}
+            fetchExperiments={fetchExperiments}
             handleScroll={handleScroll}
             initialScrollPositionSet={initialScrollPositionSet}
             page={page}
+            project={project}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
             setSelectAll={setSelectAll}
