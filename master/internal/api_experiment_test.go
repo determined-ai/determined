@@ -10,10 +10,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	invalidTestCases := []string{
 		"(",
 		")",
-		"())",
-		")()",
-		"((((((()",
-		")((((((()))))))",
+		"())junk",
+		")morejunk()",
+		"(((junk(((()",
+		")((((otherjunk)((()))))))",
 	}
 	for _, c := range invalidTestCases {
 		_, err := parseFilter(c)
