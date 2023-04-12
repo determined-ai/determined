@@ -4,13 +4,18 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
 """
 
 import numpy as np
+from packaging import version
 import tensorflow as tf
 from data import NUM_CLASSES
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten, MaxPooling2D
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers.legacy import RMSprop
+
+if version.parse("2.11.0") <= version.parse(tf.__version__):
+    from tensorflow.keras.optimizers.legacy import RMSprop
+else:
+    from tensorflow.keras.optimizers import RMSprop
 
 # Constants about the data set.
 IMAGE_SIZE = 32

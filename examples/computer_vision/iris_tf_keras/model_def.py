@@ -11,14 +11,19 @@ Based off of: https://medium.com/@nickbortolotti/iris-species-categorization-usi
 """
 from typing import List
 
+from packaging import version
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers.legacy import RMSprop
 from tensorflow.keras.utils import to_categorical
+
+if version.parse("2.11.0") <= version.parse(tf.__version__):
+    from tensorflow.keras.optimizers.legacy import RMSprop
+else:
+    from tensorflow.keras.optimizers import RMSprop
 
 from determined import keras
 
