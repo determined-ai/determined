@@ -13,6 +13,9 @@ from typing import Callable, Dict, List, Tuple
 import pandas as pd
 import tensorflow as tf
 
+# TODO needs migration to Decision Forests [MLG-442],
+#  see https://blog.tensorflow.org/2022/04/how-to-migrate-from-boostedtrees.html
+
 from determined.estimator import EstimatorTrial, EstimatorTrialContext
 
 
