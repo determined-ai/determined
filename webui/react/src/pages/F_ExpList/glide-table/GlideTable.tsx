@@ -299,7 +299,7 @@ export const GlideTable: React.FC<Props> = ({
   const verticalBorder = useCallback((col: number) => columnIds[col] === 'name', [columnIds]);
 
   return (
-    <div>
+    <div onWheel={() => contextMenuOpen.set(false)}>
       <DataEditor
         columns={dataGridColumns}
         customRenderers={cells}
@@ -327,7 +327,6 @@ export const GlideTable: React.FC<Props> = ({
         // these might come in handy
         // onItemHovered={onItemHovered}
         // onHeaderContextMenu={onHeaderContextMenu}
-        // onCellContextMenu={onCellContextMenu}
       />
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
