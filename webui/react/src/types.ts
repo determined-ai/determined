@@ -297,9 +297,9 @@ export const ExperimentAction = {
 
 export type ExperimentAction = ValueOf<typeof ExperimentAction>;
 
-export interface BulkActionError {
-  error: string;
-  id: number;
+export interface BulkActionResult {
+  successful: number[];
+  failed: Api.V1ExperimentActionResult[];
 }
 
 export interface ExperimentPagination extends WithPagination {

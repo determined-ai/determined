@@ -681,7 +681,7 @@ export const archiveExperiment: DetApi<
 export const archiveExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1ArchiveExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'archiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -705,7 +705,7 @@ export const deleteExperiment: DetApi<
 export const deleteExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1DeleteExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'deleteExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -729,7 +729,7 @@ export const unarchiveExperiment: DetApi<
 export const unarchiveExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1UnarchiveExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'unarchiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -753,7 +753,7 @@ export const activateExperiment: DetApi<
 export const activateExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1ActivateExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'activateExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -777,7 +777,7 @@ export const pauseExperiment: DetApi<
 export const pauseExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1PauseExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'pauseExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -801,7 +801,7 @@ export const cancelExperiment: DetApi<
 export const cancelExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1CancelExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'cancelExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -825,7 +825,7 @@ export const killExperiment: DetApi<
 export const killExperiments: DetApi<
   Service.BulkActionParams,
   Api.V1KillExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'killExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
@@ -962,7 +962,7 @@ export const moveExperiment: DetApi<
 export const moveExperiments: DetApi<
   Api.V1MoveExperimentsRequest,
   Api.V1MoveExperimentsResponse,
-  Type.BulkActionError[] | void
+  Type.BulkActionResult
 > = {
   name: 'moveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),

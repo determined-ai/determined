@@ -75,34 +75,33 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     const results = await moveExperiments({ destinationProjectId: projId, experimentIds, filters });
 
-    const numFailures = results?.length ?? 0;
-
-    const experimentText =
-      filters !== undefined
-        ? 'All filtered experiments'
-        : experimentIds.length === 1
-        ? `Experiment ${experimentIds[0]}`
-        : `${experimentIds.length} experiments`;
+    const numSuccesses = results.successful.length;
+    const numFailures = results.failed.length;
 
     const destinationProjectName =
       Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
 
-    if (numFailures === 0) {
+    if (numSuccesses === 0 && numFailures === 0) {
+      notification.open({
+        description: 'No selected experiments were eligable for moving',
+        message: 'No eligable experiments',
+      });
+    } else if (numFailures === 0) {
       notification.open({
         btn: null,
         description: (
           <div onClick={closeNotification}>
             <p>
-              {experimentText} moved to project {destinationProjectName}
+              {results.successful.length} experiments moved to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
         ),
         message: 'Move Success',
       });
-    } else if (numFailures === experimentIds.length && filters === undefined) {
+    } else if (numSuccesses === 0) {
       notification.warning({
-        description: `Unable to move ${experimentText}`,
+        description: `Unable to move ${numFailures} experiments`,
         message: 'Move Failure',
       });
     } else {
@@ -110,8 +109,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         description: (
           <div onClick={closeNotification}>
             <p>
-              {numFailures} out of {filters !== undefined ? 'all selected' : experimentIds.length}{' '}
-              experiments failed to move to project {destinationProjectName}
+              {numFailures} out of {numFailures + numSuccesses} eligable experiments failed to move
+              to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>

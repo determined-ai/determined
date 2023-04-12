@@ -23,7 +23,7 @@ import Icon from 'shared/components/Icon';
 import { RecordKey } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import {
-  BulkActionError,
+  BulkActionResult,
   ExperimentAction,
   ExperimentItem,
   Project,
@@ -102,7 +102,7 @@ const TableActionBar: React.FC<Props> = ({
   }, [experimentMap, permissions, selectAll, selectedExperimentIds]);
 
   const sendBatchActions = useCallback(
-    async (action: BatchAction): Promise<BulkActionError[] | void> => {
+    async (action: BatchAction): Promise<BulkActionResult | void> => {
       switch (action) {
         case ExperimentAction.OpenTensorBoard:
           return openCommandResponse(

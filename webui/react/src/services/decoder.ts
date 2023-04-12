@@ -816,7 +816,16 @@ export const decodeJobStates = (
 
 export const mapV1ExperimentActionResults = (
   results: Sdk.V1ExperimentActionResult[],
-): types.BulkActionError[] | void => {
-  const errorResults = results.filter((result) => !!result.error);
-  return errorResults.length > 0 ? errorResults : undefined;
+): types.BulkActionResult => {
+  return results.reduce(
+    (acc, cur) => {
+      if (cur.error.length > 0) {
+        acc.failed.push(cur);
+      } else {
+        acc.successful.push(cur.id);
+      }
+      return acc;
+    },
+    { failed: [], successful: [] } as types.BulkActionResult,
+  );
 };
