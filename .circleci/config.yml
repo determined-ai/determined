@@ -219,7 +219,7 @@ commands:
 
   install-codecov:
     steps:
-      - run: curl -O $HOME/.local/bin https://uploader.codecov.io/latest/linux/codecov
+      - run: curl -Os $HOME/.local/bin https://uploader.codecov.io/latest/linux/codecov
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
