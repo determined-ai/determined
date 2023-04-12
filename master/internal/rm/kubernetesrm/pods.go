@@ -952,6 +952,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 		Value:    "present",
 		Operator: k8sV1.TolerationOpEqual,
 	}}
+	cpuTolerations, gpuTolerations := extractTolerations(p.baseContainerDefaults)
 
 	// Build the many-to-many relationship between nodes and resource pools
 	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
@@ -968,16 +969,13 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
-					poolTolerations = tcd.GPUPodSpec.Spec.Tolerations
+					//nolint:gocritic,appendAssign
+					poolTolerations = append(tcd.GPUPodSpec.Spec.Tolerations, gpuTolerations...)
 				} else if tcd.CPUPodSpec != nil {
-					poolTolerations = tcd.CPUPodSpec.Spec.Tolerations
+					//nolint:gocritic,appendAssign
+					poolTolerations = append(tcd.CPUPodSpec.Spec.Tolerations, cpuTolerations...)
 				}
 			}
-
-			// Incorporate tolerations from the top-level, non-resource-pool-specific task
-			// container defaults config
-			poolTolerations = append(poolTolerations,
-				extractTolerations(p.baseContainerDefaults, slotType)...)
 
 			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
 			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
@@ -1301,15 +1299,16 @@ func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type
 	return cpuSlots, device.CPU
 }
 
-func extractTolerations(tcd *model.TaskContainerDefaultsConfig,
-	slotType device.Type) []k8sV1.Toleration {
+func extractTolerations(tcd *model.TaskContainerDefaultsConfig) (
+	cpuTolerations, gpuTolerations []k8sV1.Toleration) {
 	if tcd != nil {
-		if slotType == device.CUDA && tcd.GPUPodSpec != nil {
-			return tcd.GPUPodSpec.Spec.Tolerations
-		} else if slotType == device.CPU && tcd.CPUPodSpec != nil {
-			return tcd.CPUPodSpec.Spec.Tolerations
+		if tcd.GPUPodSpec != nil {
+			gpuTolerations = tcd.GPUPodSpec.Spec.Tolerations
+		}
+		if tcd.CPUPodSpec != nil {
+			cpuTolerations = tcd.CPUPodSpec.Spec.Tolerations
 		}
 	}
 
-	return nil
+	return cpuTolerations, gpuTolerations
 }
