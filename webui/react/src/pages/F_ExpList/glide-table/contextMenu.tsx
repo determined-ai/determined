@@ -62,6 +62,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         left: x,
         position: 'fixed',
         top: y,
+        zIndex: 10,
       }}>
       <ExperimentActionDropdown experiment={experiment} makeOpen={open} onComplete={onComplete}>
         <div />
