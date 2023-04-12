@@ -2123,25 +2123,28 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		}
 		filterIndex += 1
 	}
-	if valueIsString {
-		value = `"` + value + `"`
-	}
 	if *operator == ":" {
 		if isNull {
 			query = " IS NULL"
 		} else {
+			if valueIsString {
+				value = `"` + value + `"`
+			}
 			query = fmt.Sprintf(" == %v", value)
 		}
 	}
 	if *operator == "~" {
-		query = " LIKE " + "%" + value + "%"
+		query = " LIKE " + `"%` + value + `%"`
 	}
 	if *operator == "-" {
 		if isNull {
 			query = fmt.Sprintf("%v IS NOT NULL", col)
 		} else if comparator == "~" {
-			query = fmt.Sprintf("%v NOT LIKE ", col) + "%" + value + "%"
+			query = fmt.Sprintf("%v NOT LIKE ", col) + `"%` + value + `%"`
 		} else if comparator == ":" {
+			if valueIsString {
+				value = `"` + value + `"`
+			}
 			query = fmt.Sprintf("%v != %v", col, value)
 		}
 	}
