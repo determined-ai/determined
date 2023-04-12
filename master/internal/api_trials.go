@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -640,10 +641,12 @@ func (a *apiServer) formatMetrics(
 	m *apiv1.SummarizedMetric, metricMeasurements []db.MetricMeasurements,
 ) {
 	for _, in := range metricMeasurements {
+		valueMap, err := structpb.NewValue(in.Value)
+		fmt.Println(err.Error())
 		out := apiv1.DataPoint{
 			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
-			Value:   in.Value,
+			Value:   valueMap,
 			Epoch:   in.Epoch,
 		}
 		m.Data = append(m.Data, &out)
@@ -660,6 +663,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var err error
 	var metrics []*apiv1.SummarizedMetric
 	var metricMeasurements []db.MetricMeasurements
+	fmt.Println(metricMeasurements)
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
@@ -678,82 +682,90 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		endBatches = math.MaxInt32
 	}
 
-	for _, name := range metricNames {
-		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.SummarizedMetric
-			metric.Name = name
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics,
-				maxDatapoints, batches, timeSeriesFilter, "training")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-			a.formatMetrics(&metric, metricMeasurements)
-			if len(metricMeasurements) > 0 {
-				metrics = append(metrics, &metric)
-			}
-		}
-		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
-			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-			var metric apiv1.SummarizedMetric
-			metric.Name = name
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, name, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
-			}
-			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-			a.formatMetrics(&metric, metricMeasurements)
-			if len(metricMeasurements) > 0 {
-				metrics = append(metrics, &metric)
-			}
-		}
+	metricMeasurements, err = trials.MetricsTimeSeries(
+		trialID, startTime, startBatches, endBatches,
+		xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 	}
-	if len(metricIds) > 0 {
-		var timeSeriesColumn *string
 
-		// If no time series filter column name is supplied then default to batches.
-		defaultTimeSeriesColumn := batches
-		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
-			timeSeriesColumn = &defaultTimeSeriesColumn
-		} else {
-			timeSeriesColumn = timeSeriesFilter.Name
-		}
-
-		for _, metricID := range metricIds {
-			nameAndType := strings.SplitN(metricID, ".", 2)
-			if len(nameAndType) < 2 {
-				return nil, fmt.Errorf(`error fetching time series of validation metrics 
-				invalid metricId %v metrics must be in the form metric_type.metric_name`,
-					metricID,
-				)
-			}
-			metricIDName := nameAndType[1]
-			metricIDType := nameAndType[0]
-			var metric apiv1.SummarizedMetric
-			metric.Name = metricID
-			metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
-			if maxDatapoints == 0 {
-				maxDatapoints = 200
-			}
-			metricMeasurements, err = trials.MetricsTimeSeries(
-				trialID, startTime, metricIDName, startBatches, endBatches,
-				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-				timeSeriesFilter, metricIDType,
-			)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
-			}
-			if len(metricMeasurements) > 0 {
+	/*
+		for _, name := range metricNames {
+			if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
+				(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+				var metric apiv1.SummarizedMetric
+				metric.Name = name
+				metricMeasurements, err = trials.MetricsTimeSeries(
+					trialID, startTime, name, startBatches, endBatches,
+					xAxisLabelMetrics,
+					maxDatapoints, batches, timeSeriesFilter, "training")
+				if err != nil {
+					return nil, errors.Wrapf(err, "error fetching time series of training metrics")
+				}
+				metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 				a.formatMetrics(&metric, metricMeasurements)
-				metrics = append(metrics, &metric)
+				if len(metricMeasurements) > 0 {
+					metrics = append(metrics, &metric)
+				}
+			}
+			if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
+				(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+				var metric apiv1.SummarizedMetric
+				metric.Name = name
+				metricMeasurements, err = trials.MetricsTimeSeries(
+					trialID, startTime, name, startBatches, endBatches,
+					xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
+				if err != nil {
+					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+				}
+				metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+				a.formatMetrics(&metric, metricMeasurements)
+				if len(metricMeasurements) > 0 {
+					metrics = append(metrics, &metric)
+				}
 			}
 		}
-	}
+		if len(metricIds) > 0 {
+			var timeSeriesColumn *string
+
+			// If no time series filter column name is supplied then default to batches.
+			defaultTimeSeriesColumn := batches
+			if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+				timeSeriesColumn = &defaultTimeSeriesColumn
+			} else {
+				timeSeriesColumn = timeSeriesFilter.Name
+			}
+
+			for _, metricID := range metricIds {
+				nameAndType := strings.SplitN(metricID, ".", 2)
+				if len(nameAndType) < 2 {
+					return nil, fmt.Errorf(`error fetching time series of validation metrics
+					invalid metricId %v metrics must be in the form metric_type.metric_name`,
+						metricID,
+					)
+				}
+				metricIDName := nameAndType[1]
+				metricIDType := nameAndType[0]
+				var metric apiv1.SummarizedMetric
+				metric.Name = metricID
+				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
+				if maxDatapoints == 0 {
+					maxDatapoints = 200
+				}
+				metricMeasurements, err = trials.MetricsTimeSeries(
+					trialID, startTime, metricIDName, startBatches, endBatches,
+					xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+					timeSeriesFilter, metricIDType,
+				)
+				if err != nil {
+					return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
+				}
+				if len(metricMeasurements) > 0 {
+					a.formatMetrics(&metric, metricMeasurements)
+					metrics = append(metrics, &metric)
+				}
+			}
+		}*/
 
 	return metrics, nil
 }

@@ -67,9 +67,15 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
-					"epoch": {
+
+					"loss2": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
+						},
+					},
+					"text-metric": {
+						Kind: &structpb.Value_StringValue{
+							StringValue: "NaN",
 						},
 					},
 				},
@@ -109,9 +115,15 @@ func createTestTrialWithMetrics(
 							NumberValue: float64(i),
 						},
 					},
-					"epoch": {
+
+					"val_loss2": {
 						Kind: &structpb.Value_NumberValue{
 							NumberValue: float64(i),
+						},
+					},
+					"text-metric": {
+						Kind: &structpb.Value_StringValue{
+							StringValue: "NaN",
 						},
 					},
 				},
@@ -181,6 +193,66 @@ func compareMetrics(
 	}
 }
 
+func isMultiTrialSampleCorrect(trainMetrics []*commonv1.Metrics, actual *apiv1.SummarizedMetric) bool {
+	for i := 0; i < len(trainMetrics); i++ {
+		expectedAvgMetrics := trainMetrics[i].AvgMetrics.AsMap()
+		// actualMetrics := actual.Value // use unmarshal here this is going to be a json value.
+		fmt.Println(expectedAvgMetrics)
+		/*for metricName := range expectedAvgMetrics {
+
+		}*/
+	}
+
+	return true
+}
+
+func TestMultiTrialSampleMetrics(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	_, trainMetrics, valMetrics := createTestTrialWithMetrics(
+		ctx, t, api, curUser, false)
+	/*
+		var trainingMetricsData []apiv1.DataPoint
+		var trainingMetricNames []string
+		var validationMetricsData []apiv1.DataPoint
+		var validationMetricNames []string
+		for i := 0; i < len(trainMetrics); i++ {
+			trainAvgMetrics := trainMetrics[i].AvgMetrics.AsMap()
+			for metricName := range trainAvgMetrics {
+				data := apiv1.DataPoint{
+					Batches: int32(i),
+					Value:   trainAvgMetrics[metricName], // this will be a map so this data point is created outside this for loop.
+					// why not just write the check where you take trainMetrics, valmetrics. and delete this for loop.
+					Epoch: 0, // how to figure out epoch here?
+					Time:  0,
+				}
+				trainingMetricsData = append(trainingMetricsData, data)
+				trainingMetricNames = append(trainingMetricNames, metricName)
+			}
+			valAvgMetrics := valMetrics[i].AvgMetrics.AsMap()
+			for metricName := range valAvgMetrics {
+				data := apiv1.DataPoint{
+					Batches: int32(i),
+					Value:   valAvgMetrics[metricName],
+					Epoch:   0, // how to figure out epoch here?
+					Time:    0,
+				}
+				validationMetricsData = append(validationMetricsData, data)
+				validationMetricNames = append(validationMetricNames, metricName)
+			}
+		}
+		maxDataPoints := 10
+		var metricIds []string
+		actualTrainingMetrics, err := api.MultiTrialSample(trial.ID, trainingMetricNames, apiv1.MetricType_METRIC_TYPE_TRAINING, maxDataPoints, 0, 10, false, apiv1.XAxis_X_AXIS_UNSPECIFIED, nil, metricIds)
+		require.NoError(t, err)
+		validateTrainingMetrics, err := api.MultiTrialSample(trial.ID, validationMetricNames, apiv1.MetricType_METRIC_TYPE_VALIDATION, maxDataPoints, 0, 10, false, apiv1.XAxis_X_AXIS_UNSPECIFIED, nil, metricIds)
+		require.NoError(t, err)
+		expectedTrainingMetrics := apiv1.SummarizedMetric{MetricType: apiv1.MetricType_METRIC_TYPE_TRAINING, data: trainingMetricsData}
+		expectedValidationMetrics := apiv1.SummarizedMetric{MetricType: apiv1.MetricType_METRIC_TYPE_VALIDATION, data: validationMetricsData}*/
+
+	require.True(t, isMultiTrialSampleCorrect(trainMetrics, nil))
+	require.True(t, isMultiTrialSampleCorrect(valMetrics, nil))
+}
 func TestStreamTrainingMetrics(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 

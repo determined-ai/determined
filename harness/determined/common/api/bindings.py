@@ -2313,7 +2313,7 @@ class v1DataPoint:
         *,
         batches: int,
         time: str,
-        value: float,
+        value: "typing.Dict[str, typing.Any]",
         epoch: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.batches = batches
@@ -2327,7 +2327,7 @@ class v1DataPoint:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "batches": obj["batches"],
             "time": obj["time"],
-            "value": float(obj["value"]),
+            "value": obj["value"],
         }
         if "epoch" in obj:
             kwargs["epoch"] = obj["epoch"]
@@ -2337,7 +2337,7 @@ class v1DataPoint:
         out: "typing.Dict[str, typing.Any]" = {
             "batches": self.batches,
             "time": self.time,
-            "value": dump_float(self.value),
+            "value": self.value,
         }
         if not omit_unset or "epoch" in vars(self):
             out["epoch"] = self.epoch
@@ -10955,18 +10955,15 @@ class v1SummarizedMetric:
         self,
         *,
         data: "typing.Sequence[v1DataPoint]",
-        name: str,
         type: "v1MetricType",
     ):
         self.data = data
-        self.name = name
         self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "data": [v1DataPoint.from_json(x) for x in obj["data"]],
-            "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
         return cls(**kwargs)
@@ -10974,7 +10971,6 @@ class v1SummarizedMetric:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "data": [x.to_json(omit_unset) for x in self.data],
-            "name": self.name,
             "type": self.type.value,
         }
         return out

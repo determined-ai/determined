@@ -322,7 +322,6 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
 // trial.
 func MetricsTimeSeries(trialID int32, startTime time.Time,
-	metricName string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
@@ -354,10 +353,9 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
-		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName), metricName).
-		ColumnExpr("(metrics ->'?' ->> 'epoch')::integer as epoch", bun.Safe(metricsObjectName)).
-		Where("metrics ->'?' ->> ? IS NOT NULL", bun.Safe(metricsObjectName), metricName).
-		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints)
+		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName)).
+		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName)).
+		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * 10)
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches

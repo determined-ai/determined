@@ -51,6 +51,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	structpbmap "google.golang.org/protobuf/types/known/structpb"
 )
 
 // Catches information on active running experiments.
@@ -1570,7 +1571,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		panic("Invalid metric type")
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
-		metricName, startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
+		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
 		"batches", nil, metricID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching time series of metrics")
@@ -1582,9 +1583,11 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 
 	if !seenBefore {
 		for _, in := range metricMeasurements {
+			valueMap, err := structpbmap.NewValue(in.Value)
+			fmt.Printf(err.Error())
 			out := apiv1.DataPoint{
 				Batches: int32(in.Batches),
-				Value:   in.Value,
+				Value:   valueMap,
 				Time:    timestamppb.New(in.Time),
 				Epoch:   in.Epoch,
 			}

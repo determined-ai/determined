@@ -2106,11 +2106,11 @@ export interface V1DataPoint {
      */
     batches: number;
     /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
+     * Values of the requested metrics at this point in the trial.
+     * @type {any}
      * @memberof V1DataPoint
      */
-    value: number;
+    value: any;
     /**
      * The time the measurement is taken.
      * @type {Date}
@@ -8531,13 +8531,7 @@ export interface V1SSOProvider {
  */
 export interface V1SummarizedMetric {
     /**
-     * Name of the selected metric.
-     * @type {string}
-     * @memberof V1SummarizedMetric
-     */
-    name: string;
-    /**
-     * A possibly down-sampled series of metric readings through the progress of the trial.
+     * A possibly down-sampled series of metrics' readings through the progress of the trial.
      * @type {Array<V1DataPoint>}
      * @memberof V1SummarizedMetric
      */
