@@ -58,7 +58,7 @@ def get_table_col_names(table: str) -> Set[str]:
             """
             SELECT column_name FROM information_schema.columns WHERE table_name = %s
             """,
-            (table,),
+            (table,),  # type: ignore
         )
         rows = cur.fetchall()
         return {row[0] for row in rows}
@@ -75,7 +75,7 @@ SELECT {cols_str} FROM {table}
 CROSS JOIN generate_series(1, {multiplier}) AS g
 {suffix};
         """
-        cur.execute(query)  # type: ignore
+        cur.execute(query)
         print("added rows:", cur.rowcount)
         cur.execute("COMMIT")
 
@@ -127,7 +127,7 @@ def submit_db_queries(
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         # submit each query and record the rows affected for each one
         def job(name: str, query: str) -> Tuple[str, int]:
-            cursor.execute(query)  # type: ignore
+            cursor.execute(query)
             return name, cursor.rowcount
 
         futures = [executor.submit(job, name, query) for name, query in queries]
@@ -153,7 +153,7 @@ def duplicate_table_rows(
 -- modify the target table to add a new col called og_id
 ALTER TABLE {table} ADD COLUMN og_id int;
 """
-    cur.execute(query)  # type: ignore
+    cur.execute(query)
 
     query = f"""
 -- insert the replicated rows populating the og_id column with the original id
@@ -162,7 +162,7 @@ SELECT {values_str}, {table}.id
 FROM {table}
 {suffix};
 """
-    cur.execute(query)  # type: ignore
+    cur.execute(query)
     affected_rows = cur.rowcount
 
     query = f"""
@@ -171,7 +171,7 @@ SELECT id, og_id
 FROM {table}
 WHERE og_id IS NOT NULL;
 """
-    cur.execute(query)  # type: ignore
+    cur.execute(query)
 
     yield affected_rows
 
@@ -182,7 +182,7 @@ WHERE og_id IS NOT NULL;
 -- drop the added column
 ALTER TABLE {table} DROP COLUMN og_id;
     """
-    cur.execute(query)  # type: ignore
+    cur.execute(query)
 
 
 @contextlib.contextmanager
@@ -221,7 +221,7 @@ FROM raw_steps rs
 INNER JOIN {table}_id_map ON {table}_id_map.og_id = rs.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL; -- all {table}_id_map with og_id are target trials.
 """
-        cur.execute(steps_query)  # type: ignore
+        cur.execute(steps_query)
         affected_rows["steps"] = cur.rowcount
 
         validations_cols = get_table_col_names("raw_validations") - {"id", "trial_id"}
@@ -236,7 +236,7 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
 -- WHERE {table}_id_map.og_id IS NOT NULL;
 """
 
-        cur.execute(validations_query)  # type: ignore
+        cur.execute(validations_query)
         affected_rows["validations"] = cur.rowcount
         yield affected_rows
 
@@ -285,7 +285,7 @@ FROM (
 ) as sub
 WHERE trials.id = sub.trial_id;
 """
-                cur.execute(query)  # type: ignore
+                cur.execute(query)
         cur.execute("COMMIT")
     return added_rows
 
