@@ -11,6 +11,7 @@ import determined as det
 from determined import core, tensorboard
 from determined.common import api, constants, storage, util
 from determined.common.api import certs
+from determined.common.storage import StorageManager
 
 logger = logging.getLogger("determined.core")
 
@@ -84,6 +85,23 @@ def _install_stacktrace_on_sigusr1() -> None:
     old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
 
 
+def _get_storage_manager(
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]]
+) -> Optional[StorageManager]:
+    storage_manager = None
+    if checkpoint_storage is not None:
+        if isinstance(checkpoint_storage, str):
+            storage_manager = storage.from_string(checkpoint_storage)
+        elif isinstance(checkpoint_storage, dict):
+            if checkpoint_storage["type"] == "shared_fs":
+                raise ValueError(
+                    "Cannot configure a shared_fs checkpoint storage with a "
+                    "dictionary. Use a string or a configuration file."
+                )
+            storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
+    return storage_manager
+
+
 def _dummy_init(
     *,
     distributed: Optional[core.DistributedContext] = None,
@@ -99,17 +117,7 @@ def _dummy_init(
     distributed = distributed or core.DummyDistributedContext()
     preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
-    storage_manager = None
-    if checkpoint_storage is not None:
-        if isinstance(checkpoint_storage, str):
-            storage_manager = storage.from_string(checkpoint_storage)
-        elif isinstance(checkpoint_storage, dict):
-            if checkpoint_storage["type"] == "shared_fs":
-                raise ValueError(
-                    "Cannot configure a shared_fs checkpoint storage with a "
-                    "dictionary. Use a string or a configuration file."
-                )
-            storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
+    storage_manager = _get_storage_manager(checkpoint_storage)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -197,17 +205,7 @@ def init(
     searcher = None
     tensorboard_manager = None
 
-    storage_manager = None
-    if checkpoint_storage is not None:
-        if isinstance(checkpoint_storage, str):
-            storage_manager = storage.from_string(checkpoint_storage)
-        elif isinstance(checkpoint_storage, dict):
-            if checkpoint_storage["type"] == "shared_fs":
-                raise ValueError(
-                    "Cannot configure a shared_fs checkpoint storage with a "
-                    "dictionary. Use a string or a configuration file."
-                )
-            storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
+    storage_manager = _get_storage_manager(checkpoint_storage)
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
