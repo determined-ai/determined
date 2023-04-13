@@ -99,6 +99,8 @@ def _get_storage_manager(
                     "dictionary. Use a string or a configuration file."
                 )
             storage_manager = det.common.storage.build(checkpoint_storage, container_path=None)
+        else:
+            raise TypeError("checkpoint_storage must be a string, dictionary, or None")
     return storage_manager
 
 
