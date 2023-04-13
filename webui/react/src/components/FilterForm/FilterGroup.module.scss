@@ -2,7 +2,7 @@
   align-items: baseline;
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 7fr;
+  grid-template-columns: minmax(70px, 1fr) 7fr;
   padding-bottom: 8px;
 
   &.baseRoot {
@@ -13,18 +13,18 @@
   border-radius: 4px;
   padding: 8px;
 
-  &.level0,
-  &.level2 {
-    background-color: var(--theme-stage);
-    border: 1px solid var(--theme-stage-border);
-  }
   &.level1 {
     background-color: var(--theme-surface);
     border: 1px solid var(--theme-surface-border);
   }
+  &.level2 {
+    background-color: var(--theme-stage);
+    border: 1px solid var(--theme-stage-border);
+  }
 }
 .header {
   align-items: center;
+  color: var(--theme-stage-on);
   display: grid;
   grid-template-columns: 7fr 3fr;
   justify-content: space-between;

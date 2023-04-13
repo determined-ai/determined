@@ -1,16 +1,17 @@
 import { DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import { Dropdown, DropDownProps } from 'antd';
 import type { MenuProps } from 'antd';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { debounce } from 'throttle-debounce';
 
 import Button from 'components/kit/Button';
 
 import ConjunctionContainer from './ConjunctionContainer';
 import FilterField from './FilterField';
-import { FilterFormStore } from './FilterFormStore';
+import { FilterFormStore, ITEM_LIMIT } from './FilterFormStore';
 import css from './FilterGroup.module.scss';
-import { Conjunction, FormField, FormGroup, FormType } from './type';
+import { Conjunction, FormField, FormGroup, FormKind } from './type';
 
 interface Props {
   conjunction: Conjunction;
@@ -29,9 +30,10 @@ const FilterGroup = ({
   formStore,
   parentId,
 }: Props): JSX.Element => {
+  const scrollBottomRef = useRef<HTMLDivElement>(null);
   const [, drag, preview] = useDrag<{ form: FormGroup; index: number }, unknown, unknown>(() => ({
     item: { form: group, index },
-    type: FormType.Group,
+    type: FormKind.Group,
   }));
 
   const [{ isOverCurrent, canDrop }, drop] = useDrop<
@@ -39,11 +41,11 @@ const FilterGroup = ({
     unknown,
     { isOverCurrent: boolean; canDrop: boolean }
   >({
-    accept: [FormType.Group, FormType.Field],
+    accept: [FormKind.Group, FormKind.Field],
     canDrop(item, monitor) {
       const isOverCurrent = monitor.isOver({ shallow: true });
       if (isOverCurrent) {
-        if (item.form.type === FormType.Group) {
+        if (item.form.kind === FormKind.Group) {
           return (
             // cant self dnd
             group.id !== item.form.id &&
@@ -54,7 +56,7 @@ const FilterGroup = ({
             // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
             // and target item's level is over 2
             // 2 is the max depth
-            (item.form.children.filter((c) => c.type === FormType.Group).length === 0 ? 0 : 1) +
+            (item.form.children.filter((c) => c.kind === FormKind.Group).length === 0 ? 0 : 1) +
               level <
               2
           );
@@ -82,7 +84,7 @@ const FilterGroup = ({
             return (diffOffset?.y ?? 0) > 0 ? group.children.length : 0;
           }
         })();
-        formStore.addChild(group.id, item.form.type, insertIndex, item.form);
+        formStore.addChild(group.id, item.form.kind, insertIndex, item.form);
         item.index = hoverIndex;
       }
     },
@@ -90,19 +92,25 @@ const FilterGroup = ({
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const onItemClick: MenuProps['onClick'] = (e) => {
-      if (e.key === FormType.Field) {
-        formStore.addChild(group.id, FormType.Field, group.children.length);
-      } else if (e.key === FormType.Group) {
-        formStore.addChild(group.id, FormType.Group, group.children.length);
+      if (e.key === FormKind.Field) {
+        formStore.addChild(group.id, FormKind.Field, group.children.length);
+        debounce(100, () => {
+          scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        })();
+      } else if (e.key === FormKind.Group) {
+        formStore.addChild(group.id, FormKind.Group, group.children.length);
+        debounce(100, () => {
+          scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        })();
       }
     };
 
     const items: MenuProps['items'] = [
-      { icon: <PlusOutlined />, key: FormType.Field, label: <div>Add condition field</div> },
+      { icon: <PlusOutlined />, key: FormKind.Field, label: <div>Add condition field</div> },
       {
         disabled: !(0 <= level && level <= 1),
         icon: <PlusOutlined />,
-        key: FormType.Group,
+        key: FormKind.Group,
         label: <div>Add condition group</div>,
       },
     ];
@@ -128,15 +136,24 @@ const FilterGroup = ({
       <div className={`${css.groupCard} ${css[`level${level}`]}`} ref={preview}>
         <div className={css.header}>
           <div>
-            {group.conjunction === Conjunction.And ? (
-              <div>All of the following conditions are true</div>
+            {level === 0 ? (
+              <div>Show experiments…</div>
             ) : (
-              <div>Some of the following conditions are true</div>
+              <>
+                {group.conjunction === Conjunction.And ? (
+                  <div>All of the following conditions are true</div>
+                ) : (
+                  <div>Some of the following conditions are true</div>
+                )}
+              </>
             )}
           </div>
           {level > 0 && (
             <div className={css.headerButtonGroup}>
-              <Dropdown menu={menuItems} trigger={['click']}>
+              <Dropdown
+                disabled={group.children.length > ITEM_LIMIT}
+                menu={menuItems}
+                trigger={['click']}>
                 <Button icon={<PlusOutlined />} type="text" />
               </Dropdown>
               <Button
@@ -152,7 +169,7 @@ const FilterGroup = ({
         </div>
         <div className={css.children}>
           {group.children.map((child, i) => {
-            if (child.type === FormType.Group) {
+            if (child.kind === FormKind.Group) {
               return (
                 <FilterGroup
                   conjunction={group.conjunction}
@@ -178,6 +195,7 @@ const FilterGroup = ({
               );
             }
           })}
+          <div ref={scrollBottomRef} />
         </div>
       </div>
     </div>

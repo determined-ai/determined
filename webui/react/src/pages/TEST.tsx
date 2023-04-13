@@ -2,9 +2,9 @@ import { Button, Popover } from 'antd';
 import { useState } from 'react';
 
 import FilterForm from 'components/FilterForm/FilterForm';
-import { FilterFormStore, formSets } from 'components/FilterForm/FilterFormStore';
+import { FilterFormStore } from 'components/FilterForm/FilterFormStore';
 
-const formStore = new FilterFormStore(formSets);
+const formStore = new FilterFormStore();
 
 const TEST = (): JSX.Element => {
   const [open, setOpen] = useState(false);
@@ -21,7 +21,6 @@ const TEST = (): JSX.Element => {
           content={<FilterForm formStore={formStore} />}
           open={open}
           placement="bottom"
-          title="Filter"
           trigger="click"
           onOpenChange={handleOpenChange}>
           <Button>Click ME</Button>

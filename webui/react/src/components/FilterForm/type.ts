@@ -3,18 +3,18 @@ import { ValueOf } from 'shared/types';
 
 export type ExperimentFilterColumnName = Exclude<ExperimentColumnName, 'action' | 'archived'>;
 
-export const FormType = {
+export const FormKind = {
   Field: 'field',
   Group: 'group',
 } as const;
 
-export type FormType = ValueOf<typeof FormType>;
+export type FormKind = ValueOf<typeof FormKind>;
 
-export type FormFieldValue = string | null;
+export type FormFieldValue = string | number | null;
 
 export type FormField = {
   readonly id: string;
-  readonly type: typeof FormType.Field;
+  readonly kind: typeof FormKind.Field;
   columnName: ExperimentFilterColumnName;
   operator: Operator;
   value: FormFieldValue;
@@ -22,7 +22,7 @@ export type FormField = {
 
 export type FormGroup = {
   readonly id: string;
-  readonly type: typeof FormType.Group;
+  readonly kind: typeof FormKind.Group;
   conjunction: Conjunction;
   children: (FormGroup | FormField)[];
 };

@@ -12,7 +12,7 @@ interface Props {
 const ConjunctionContainer = ({ index, conjunction, onClick }: Props): JSX.Element => {
   return (
     <>
-      {index === 0 && <div className={css.operator}>if</div>}
+      {index === 0 && <div className={css.operator}>Where</div>}
       {index === 1 && (
         <Select searchable={false} value={conjunction} width={'100%'} onChange={onClick}>
           {Object.values(Conjunction).map((c) => (

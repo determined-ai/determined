@@ -15,7 +15,7 @@ import {
   Conjunction,
   FormField,
   FormGroup,
-  FormType,
+  FormKind,
   Operator,
 } from './type';
 
@@ -38,7 +38,7 @@ const FilterField = ({
 }: Props): JSX.Element => {
   const [, drag, preview] = useDrag<{ form: FormField; index: number }, unknown, unknown>(() => ({
     item: { form: field, index },
-    type: FormType.Field,
+    type: FormKind.Field,
   }));
 
   const [{ isOverCurrent, canDrop }, drop] = useDrop<
@@ -46,17 +46,17 @@ const FilterField = ({
     unknown,
     { isOverCurrent: boolean; canDrop: boolean }
   >({
-    accept: [FormType.Group, FormType.Field],
+    accept: [FormKind.Group, FormKind.Field],
     canDrop(item, monitor) {
       const isOverCurrent = monitor.isOver({ shallow: true });
       if (isOverCurrent) {
-        if (item.form.type === FormType.Group) {
+        if (item.form.kind === FormKind.Group) {
           return (
             // cant dnd with deeper than 2 level group
             level < 2 &&
             // cant dnd if sum of source children of group type (0 if none, 1 if children exist)
             // and target item's level is over 3 for field
-            (item.form.children.filter((c) => c.type === FormType.Group).length === 0 ? 0 : 1) +
+            (item.form.children.filter((c) => c.kind === FormKind.Group).length === 0 ? 0 : 1) +
               level <
               3
           );
@@ -74,7 +74,7 @@ const FilterField = ({
       const hoverIndex = index;
       if (dragIndex !== hoverIndex && isOverCurrent && canDrop) {
         formStore.removeChild(item.form.id);
-        formStore.addChild(parentId, item.form.type, hoverIndex, item.form);
+        formStore.addChild(parentId, item.form.kind, hoverIndex, item.form);
         item.index = hoverIndex;
       }
     },
@@ -139,9 +139,9 @@ const FilterField = ({
             <InputNumber
               className={css.fullWidth}
               value={field.value != null ? Number(field.value) : undefined}
-              onChange={(val) =>
-                formStore.setFieldValue(field.id, 'value', val?.toString() ?? null)
-              }
+              onChange={(val) => {
+                formStore.setFieldValue(field.id, 'value', val != null ? Number(val) : null);
+              }}
             />
           )}
         </>
