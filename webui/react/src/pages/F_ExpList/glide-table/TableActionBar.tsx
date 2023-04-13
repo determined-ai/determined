@@ -168,8 +168,8 @@ const TableActionBar: React.FC<Props> = ({
 
         if (numSuccesses === 0 && numFailures === 0) {
           notification.open({
-            description: `No selected experiments were eligable for ${action.toLowerCase()}`,
-            message: 'No eligable experiments',
+            description: `No selected experiments were eligible for ${action.toLowerCase()}`,
+            message: 'No eligible experiments',
           });
         } else if (numFailures === 0) {
           notification.open({
@@ -177,7 +177,7 @@ const TableActionBar: React.FC<Props> = ({
             description: (
               <div onClick={closeNotification}>
                 <p>
-                  {action} succeeded for{results.successful.length} experiments
+                  {action} succeeded for {results.successful.length} experiments
                 </p>
               </div>
             ),
@@ -185,7 +185,7 @@ const TableActionBar: React.FC<Props> = ({
           });
         } else if (numSuccesses === 0) {
           notification.warning({
-            description: `Unable to ${action.toLowerCase} ${numFailures} experiments`,
+            description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
             message: `${action} Failure`,
           });
         } else {
@@ -193,7 +193,7 @@ const TableActionBar: React.FC<Props> = ({
             description: (
               <div onClick={closeNotification}>
                 <p>
-                  {action} succeeded for {numSuccesses} out of {numFailures + numSuccesses} eligable
+                  {action} succeeded for {numSuccesses} out of {numFailures + numSuccesses} eligible
                   experiments
                 </p>
               </div>

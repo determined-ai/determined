@@ -83,8 +83,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       notification.open({
-        description: 'No selected experiments were eligable for moving',
-        message: 'No eligable experiments',
+        description: 'No selected experiments were eligible for moving',
+        message: 'No eligible experiments',
       });
     } else if (numFailures === 0) {
       notification.open({
@@ -109,7 +109,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         description: (
           <div onClick={closeNotification}>
             <p>
-              {numFailures} out of {numFailures + numSuccesses} eligable experiments failed to move
+              {numFailures} out of {numFailures + numSuccesses} eligible experiments failed to move
               to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
