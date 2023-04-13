@@ -11216,15 +11216,18 @@ class v1Template:
         *,
         config: "typing.Dict[str, typing.Any]",
         name: str,
+        workspaceId: int,
     ):
         self.config = config
         self.name = name
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Template":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "name": obj["name"],
+            "workspaceId": obj["workspaceId"],
         }
         return cls(**kwargs)
 
@@ -11232,6 +11235,7 @@ class v1Template:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
             "name": self.name,
+            "workspaceId": self.workspaceId,
         }
         return out
 

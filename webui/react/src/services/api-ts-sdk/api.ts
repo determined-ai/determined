@@ -8752,6 +8752,12 @@ export interface V1Template {
      * @memberof V1Template
      */
     config: any;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1Template
+     */
+    workspaceId: number;
 }
 /**
  * Tensorboard is a tensorboard instance in a containerized environment.
