@@ -1,10 +1,7 @@
 import argparse
 import functools
-import json
-import shutil
-import subprocess
 import sys
-from typing import Any, Callable, Dict, List, Sequence, Union
+from typing import Any, Callable, Dict, List, Sequence
 
 import termcolor
 
@@ -36,23 +33,6 @@ output_format_args: Dict[str, declarative_argparse.Arg] = {
         help="Output in table format",
     ),
 }
-
-
-def print_json(data: Union[str, Any]) -> None:
-    """
-    Print JSON data in a human-readable format.
-    """
-    try:
-        if shutil.which("jq") is not None:
-            if not isinstance(data, str):
-                data = json.dumps(data)
-            subprocess.run(["jq", "."], input=data, text=True)
-        else:
-            if isinstance(data, str):
-                data = json.loads(data)
-            print(json.dumps(data, indent=4))
-    except json.decoder.JSONDecodeError:
-        print(data)
 
 
 PAGE_CHOICES = [v.value for v in api.PageOpts]

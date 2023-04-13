@@ -1,6 +1,7 @@
 from argparse import Namespace
 from typing import Any, List, Optional
 
+import determined.cli.render
 from determined import cli
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings
@@ -11,7 +12,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
     if args.json:
-        cli.print_json(response.json())
+        determined.cli.render.print_json(response.json())
     else:
         print(yaml.safe_dump(response.json(), default_flow_style=False))
 
@@ -19,7 +20,7 @@ def config(args: Namespace) -> None:
 def get_master(args: Namespace) -> None:
     resp = bindings.get_GetMaster(cli.setup_session(args))
     if args.json:
-        cli.print_json(resp.to_json())
+        determined.cli.render.print_json(resp.to_json())
     else:
         print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
 

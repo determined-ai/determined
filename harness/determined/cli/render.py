@@ -1,7 +1,10 @@
 import base64
 import csv
 import inspect
+import json
 import pathlib
+import shutil
+import subprocess
 import sys
 from datetime import timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
@@ -148,3 +151,20 @@ def yes_or_no(prompt: str) -> bool:
         # Add a newline to mimic a return when sending normal inputs.
         print()
         return False
+
+
+def print_json(data: Union[str, Any]) -> None:
+    """
+    Print JSON data in a human-readable format.
+    """
+    try:
+        if shutil.which("jq") is not None:
+            if not isinstance(data, str):
+                data = json.dumps(data)
+            subprocess.run(["jq", "."], input=data, text=True)
+        else:
+            if isinstance(data, str):
+                data = json.loads(data)
+            print(json.dumps(data, indent=4))
+    except json.decoder.JSONDecodeError:
+        print(data)

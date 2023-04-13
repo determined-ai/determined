@@ -6,7 +6,6 @@ from determined.cli._util import (
     require_feature_flag,
     login_sdk_client,
     print_warnings,
-    print_json,
 )
 from determined.cli import (
     agent,

@@ -8,7 +8,7 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined import cli
+import determined.cli.render
 from determined.common.api import authentication
 from determined.common.api.request import make_url
 from determined.common.declarative_argparse import Arg, Cmd
@@ -48,7 +48,7 @@ def curl(args: Namespace) -> None:
         print(output.stderr.decode("utf8"), file=sys.stderr)
 
     out = output.stdout.decode("utf8")
-    cli.print_json(out)
+    determined.cli.render.print_json(out)
 
     sys.exit(output.returncode)
 
