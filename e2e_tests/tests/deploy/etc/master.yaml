@@ -12,3 +12,5 @@ db:
   port: 5432
   name: determined
   # password: database_password
+
+launch_error: false
