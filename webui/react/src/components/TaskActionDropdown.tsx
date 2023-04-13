@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
@@ -7,17 +6,17 @@ import React from 'react';
 import Button from 'components/kit/Button';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
+import { useModal } from './kit/Modal';
 import Link from './Link';
+import TaskKillModalComponent from './TaskKillModal';
 
 interface Props {
   children?: React.ReactNode;
@@ -35,6 +34,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
+  const TaskKillModal = useModal(TaskKillModalComponent);
   const { canModifyWorkspaceNSC } = usePermissions();
   const isKillable = isTaskKillable(
     task,
@@ -49,19 +49,7 @@ const TaskActionDropdown: React.FC<Props> = ({
         action // Cases should match menu items.
       ) {
         case Action.Kill:
-          modal.confirm({
-            content: `
-              Are you sure you want to kill
-              this task?
-            `,
-            icon: <ExclamationCircleOutlined />,
-            okText: 'Kill',
-            onOk: async () => {
-              await killTask(task as CommandTask);
-              onComplete?.(action);
-            },
-            title: 'Confirm Task Kill',
-          });
+          TaskKillModal.open();
           break;
         case Action.ViewLogs:
           break;
@@ -91,19 +79,27 @@ const TaskActionDropdown: React.FC<Props> = ({
 
   const menu: DropDownProps['menu'] = { items: menuItems, onClick: handleMenuClick };
 
+  const modals = (
+    <TaskKillModal.Component task={task as CommandTask} onClose={onComplete} />
+  );
+
   return children ? (
-    <Dropdown
+    <>
+      <Dropdown
       menu={menu}
       placement="bottomLeft"
       trigger={['contextMenu']}
       onOpenChange={onVisibleChange}>
-      {children}
-    </Dropdown>
+        {children}
+      </Dropdown>
+      {modals}
+    </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
       </Dropdown>
+      {modals}
     </div>
   );
 };
