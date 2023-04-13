@@ -456,7 +456,7 @@ export const GlideTable: React.FC<Props> = ({
         ref={gridRef}
         rows={mainTableData.length}
         smoothScrollX={!pinnedRows.length}
-        smoothScrollY={!pinnedRows.length}
+        smoothScrollY
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
