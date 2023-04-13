@@ -186,7 +186,8 @@ class TestLightningAdapter:
         hparams: typing.Dict,
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
-        exp_config: typing.Optional[typing.Dict],
+        exp_config: typing.Dict,
+        expose_gpus: bool = False,
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -201,6 +202,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
+            expose_gpus=expose_gpus
         )
 
         trial_controller_A.run()
@@ -252,7 +254,7 @@ class TestLightningAdapter:
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, steps=(1, 1)
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
         )
 
     @pytest.mark.e2e_cpu
@@ -352,7 +354,7 @@ def create_trial_and_trial_controller(
             exp_conf=exp_config,
             aggregation_frequency=1,
             steps_completed=steps_completed,
-            managed_training=False,
+            managed_training=True,
             debug_enabled=False,
         )
         trial_context._set_default_gradient_compression(False)
