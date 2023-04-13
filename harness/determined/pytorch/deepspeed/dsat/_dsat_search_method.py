@@ -462,6 +462,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
                 metric=metric,
             )
             new_ops_list.extend(additional_ops_list)
+        new_ops_list.append(searcher.Close(request_id))
         return new_ops_list
 
     def on_trial_closed(
@@ -687,7 +688,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return (new_hparams, search_data)
 
 
-class SimpleBatchSearch(DSATSearchMethodBase):
+class SimpleBatchSearchMethod(DSATSearchMethodBase):
     """
     Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
     self.trial_tracker.tuner_num_trials.

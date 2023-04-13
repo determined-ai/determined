@@ -2,7 +2,7 @@ from determined.pytorch.deepspeed.dsat import _dsat_search_method
 
 ALL_SEARCH_METHOD_CLASSES = {
     "random": _dsat_search_method.DSATRandomSearchMethod,
-    "simple": _dsat_search_method.SimpleBatchSearch,
+    "simple": _dsat_search_method.SimpleBatchSearchMethod,
 }
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
