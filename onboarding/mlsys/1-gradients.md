@@ -1,15 +1,4 @@
-# Part 1: Calculating Gradients and Adding Them Together
-
-editing TODO list:
-- reword to use MSE.  Will have to introduce averaging much earlier.
-- pull autodifferentiation into second document, along with:
-    - optimizers
-    - sharding the optimizer
-    - model-parallel training
-- Introduce "Adding them together" much more bluntly
-- Trim section about types of gradient descent, and stick to the Adding Them
-  Together theme.
-- Introdue shuffling somewhere?
+# Part 1: Calculating Gradients and Averaging Them Together
 
 Machine learning is all about getting computers to solve math problems for you.
 
@@ -20,10 +9,11 @@ accurate predictions for a set of inputs?"
 You're going to write code to solve this exact problem for one particularly
 simple model.
 
-Afterward, you will understand basic concepts like gradient descent and
-batch size.  You will also understand how those basic concepts translate into
-some of Determined's advanced features, like gradient aggregation,
-data-parallel distributed training, and model-parallel distributed training.
+Afterward, you will understand basic concepts like what a gradient is and how
+gradient descent works to train models.  You will also understand how many
+features in Determined, like batch size, gradient aggregation, and
+data-parallel distributed training, really just boil down to different ways of
+averaging gradients together during gradient descent.
 
 ## The Model
 
@@ -57,62 +47,74 @@ For this model and dataset, there is a perfect answer (`m=1`), but usually there
 isn't.  So usually instead of seeking an perfect answer, we are really seeking
 to minimize a function, called the "loss", that mathematically describes the
 goodness-of-fit between our model and the data.  There are lots of loss
-functions, but we're going to use the least-squares error function, sometimes
-abbreviated LSE.  It is defined as the sum of the squares of the error between
-our labels (the `y` values of our dataset) and our predictions (the output `y`
-of our `y=m*x` model).
+functions, but we're going to work with the Mean Squared Error (MSE) function.
 
-So for data points `(x0, ytrue0)`, `(x1, ytrue1)` and corresponding
-predictions `ypred0`, `ypred1`, you would calculate the LSE as:
+The MSE definition is just like it sounds: the mean of the squares of the
+errors between each ground truth `ytrue` and the corresponding model prediction
+`ypred`.  So for `N` data points, we can say:
 
-    loss = (ytrue0 - ypred0)**2 + (ytrue1 - ypred1)**2
-    loss = (ytrue0 - m * x0)**2 + (ytrue1 - m * x1)**2
+    loss_mse = ( (ytrue0 - ypred0)**2 + ... + (ytrueN - ypredN)**2 ) / N
 
-Intuitively, this `loss` function will never be negative, and it can only be
-zero when every prediction is perfect.
+It should be clear from the above formula that the number of data points in the
+MSE loss calculation `N` is just a constant divisor that applies to each term.
+Then the MSE becomes the sum of a losses calculated individually for each
+point:
 
-Did you notice that `loss` is a function of `m`, even though our model defines
-`ypred` as a function of `x`?  Also, our dataset appears in the `loss` as a
-bunch of constants.  That is because every `m` value on our loss curve
-corresponds to a different model for `ypred = m*x`, and how accurately it
-predicts the (predetermined) values in our dataset.  (This feels like it could
-use a graphic.  Also, let me know if this was only groundbreaking for me, and
-if other people think this is obvious.)
+    loss_point = (ytrue - ypred)**2 / N
+
+And we can rewrite `loss_point` in terms of `m`:
+
+    loss_point = (ytrue - m * x)**2 / N
+
+Did you notice that the loss is a function of `m`, even though our model
+defines `ypred` as a function of `x`?  Also, our dataset
+`x` and `ypred` values appear in the loss calculation as constants, even though
+we might normally think of `x` as our variable.  That is because every `m`
+value on our loss curve corresponds to a different model for `ypred = m*x`.
+The value of the loss at each value `m` is defined by how accurately it
+predicts the (constant) values in our dataset.
+
+![multi](multi.jpg "Multi Graph")
 
 ### Q2:
+
+Can `loss_point` or `loss_mse` ever be negative?  Why or why not, and does the
+make logical sense to you?
+
+### Q3:
 
 With `m=2`, complete the following table by calculating the loss for each
 point of our dataset:
 
-|  x  | ytrue | ypred | `(ytrue - ypred)**2` |
-| --- | ----- | ----- | --------------------- |
-|  1  |   1   |       |                       |
-|  2  |   2   |       |                       |
-|  3  |   3   |       |                       |
-|  4  |   4   |       |                       |
+|  `x`  | `ytrue` | `ypred` | `loss_point` |
+| ----- | ------- | ------- | ------------ |
+|   1   |    1    |         |              |
+|   2   |    2    |         |              |
+|   3   |    3    |         |              |
+|   4   |    4    |         |              |
 
-Write a function for calculating the LSE loss for a single `(x, ytrue)` data
-pair.  It should take `m` and a single `(x, ytrue)` pair as inputs and return
-the loss.
+Also calculate the total `loss_mse` for the whole dataset:
 
-Then write a function for calculating the LSE loss for a whole dataset.  It
-should take `m` and a list of `(x, ytrue)` pairs and return the LSE loss.
+| `loss_mse` |
+| ---------- |
+|            |
 
-Is it possible to write the second function by making multiple calls to the
-first function and combining the results?  Why or why not?
+### Q4:
+
+Write a function for calculating the total `loss_mse`, which takes as input
+the current model weight `m` and a list `(x, ytrue)` data points, and returns
+the floating-point `loss_mse`.
+
+Make sure it agrees with your answer to Q3.
 
 ## Minimizing the loss
 
 We have the loss, but how do we minimize it?  There are many ways, but one of
-the simplest and most pravelent techniques in deep learning is called "gradient
+the simplest and most prevalent techniques in deep learning is called "gradient
 descent".  We basically follow the curve of our loss until we get to the
 minimum of the loss graph:
 
 ![gradient descent](gradient_descent.jpg "Gradient Descent")
-
-The source of this image is [this youtube video](
-https://www.youtube.com/watch?v=b4Vyma9wPHo) which explains a lot of the
-details here in greater detail, if you want that.
 
 The basic idea is that we look at the slope of the loss curve (or the "gradient"
 of the loss curve if our loss is more than two-dimensional), and try to take a
@@ -122,7 +124,7 @@ The direction of our step is based on the sign of the slope.  If the slope is
 positive, we know the minimum must be to our left, so we move in the negative
 direction (decreasing `m`).
 
-The size of our step is based on the magnitude of the slope multiplied by  a
+The size of our step is based on the magnitude of the slope multiplied by a
 tunable learning rate parameter, `lr`.  Intuitively,  this means that if the
 slope is really steep, we probably can afford to take a really big step, but if
 if the slope is really small we think we're getting close to the slope and we
@@ -137,63 +139,49 @@ But where does that `gradient` term come from?
 ## The Gradient
 
 In the case of our simple model, we can use calculus to calculate the slope of
-our loss with respect to `m`, which for a one-variable model is also the
-gradient of the loss.
+our loss when plotted against `m` (technically, the "derivative of our loss
+with respect to `m`").  In the case of a one-variable model, this is identical
+to the gradient of the loss.
 
-We'll start by writing the loss for a single data point in terms of `m`:
+We'll start by recalling the definition of `loss_point` in terms of `m`:
 
-    loss = (ytrue - ypred)**2
-    loss = (ytrue - (m * x))**2
+    loss_point = (ytrue - (m*x))**2 / N
 
 Then apply the product rule and the chain rule from to get the derivative with
 respect to the weight `m`:
 
-    dloss/dm = - 2*x (ytrue - m*x)
+    dloss_point/dm = - 2*x*(ytrue - m*x) / N
 
-### Q3:
+And since our total `loss_mse` is just the sum of several `loss_point` values,
+we know from calculus that the derivative of the total `loss_mse` is the sum
+of the per-point derivatives:
+
+    dloss_mse/dm = - 2 * ( x0*(ytrue0 - m*x0) + ... + xN*(ytrueN - m*xN) ) / N
+
+### Q5:
 
 Write a function to calculate the gradient for a single data point.  It should
-take `m` and a single `(x, ytrue)` pair as inputs and return.
+take `m`, a single `(x, ytrue)` pair, and `N` as inputs and return
+`dloss_point/dm`.
 
-Then write a function to calculate the total gradient for a list of
-`(x, ytrue)` pairs.
+You can test with:
 
-Is it possible to write the second function by making multiple calls to the
-first function and combining the results?  Why or why not?
+```python
+assert grad_point(m=2, data=(1, 1), N=4) == 0.5
+assert grad_point(m=2, data=(2, 2), N=4) == 2.0
+```
 
-## Autodifferentiation
+Then write a function to calculate the total gradient for a list of `(x,
+ytrue)` pairs.  It should take `m` and a list of `(x, ytrue)` pairs as inputs.
 
-We solved our gradient symbolically because it was so simple.  But real
-gradients in real models are calculated with some magic called
-"autodifferentiation".
+You can test with:
 
-You don't need to understand autodifferentiation, but you do need to
-understand:
-- it starts in the the "forward" pass of training a batch, and finishes in
-  the "backward" pass, and
-- it is additive.
+```python
+assert grad_multi(m=2, data=[(1, 1), (2, 2), (3, 3), (4, 4)]) == 15.0
+```
 
-The "forward" pass is when a model makes a prediction, and the loss is
-calculated by comparing the label to the prediction.  During the forward pass,
-the deep learning library keeps information about every weight in the model
-and how it affects the output.  Then the "backward" pass takes the calculated
-loss and figures out how changing each weight would affect the loss.  This
-output is the gradient.  In our toy model, the gradient is just a single number
-because we have just a single parameter (`m`), but in a model with a billion
-parameters the gradient is a billion numbers long.
-
-The additive part is important.  If you do a forward pass on a particular data
-point, followed by a backward pass, you'll have some gradient.  If you
-immediately do another forward pass on the same data, followed by another
-background pass, you'll have twice the gradient as before.  If you do it one
-more time, you'll have three times the original gradient.
-
-### Q4:
-
-The additive nature of autodifferentiated gradients is important to
-understanding the features that Determined offers.
-
-Explain in your own words _why_ autodifferentiated gradients are additive.
+Is it mathematically valid to call the first function from the second function
+to simplify writing the second?  Why or why not?
 
 ## Training by Gradient Descent
 
@@ -206,7 +194,7 @@ The basic gradient descent loop algorithm is:
 5. Subtract `gradient * lr` from our model weight ("Minimizing the loss").
 6. Repeat steps 2—5 until you decide to stop.
 
-### Q5
+### Q6
 
 Write a training loop to do gradient descent on our `ypred = m*x` model.  Your
 function should take the following inputs:
@@ -229,103 +217,258 @@ Here are some test cases:
 ```python
 dataset = [(1,1)]
 mfinal = train_loop(m=0, lr=0.001, dataset=dataset, iterations=1)
-assert mfinal == XXX, mfinal
+assert mfinal == 0.002, mfinal
 
 dataset = [(1,1)]
 mfinal = train_loop(m=0, lr=0.001, dataset=dataset, iterations=100)
-assert mfinal == XXX, mfinal
+assert round(mfinal, 5) == 0.18143, mfinal
+
 
 dataset = [(1,1),(2,2),(3,3),(4,4)]
 mfinal = train_loop(m=0, lr=0.001, dataset=dataset, iterations=4)
-assert mfinal == XXX, mfinal
+assert round(mfinal, 5) == 0.05891, mfinal
+
 
 dataset = [(1,1),(2,2),(3,3),(4,4)]
 mfinal = train_loop(m=0, lr=0.001, dataset=dataset, iterations=100)
-assert mfinal == XXX, mfinal
+assert round(mfinal, 5) == 0.78086, mfinal
 ```
 
-### Q6
+### Q7
 
 What happens if you set the learning rate way too low?
 
 ```python
-dataset = [(1,1),(2,2),(3,3),(4,4)]
+dataset = [(1,2),(2,6),(3,7),(4,4)]
 mfinal = train_loop(m=0, lr=0.000000001, dataset=dataset, iterations=4)
-print("mfinal", mfinal)
+print(mfinal)
 ```
 
 Explain in words what is happening.
 
-### Q7
+### Q8
 
 What happens if you set the learning rate way too high?
 
 ```python
 dataset = [(1,1),(2,2),(3,3),(4,4)]
 mfinal = train_loop(m=0, lr=10, dataset=dataset, iterations=4)
-print("mfinal", mfinal)
+print(mfinal)
 ```
 
 Explain in words what is happening.
 
-## Batch Size in Training
+## Noise in Training
 
-Your training function calculated the gradient for each data point, taking a
-step to minimize the loss for that particular point, then moving on to the next
-point.  This strategy (considering exactly one data point at a time) is called
-"stochastic gradient descent".  It can be a messy process because real gradient
-curves are not smooth parabolas like in this example, and taking a step every
-data point can cause you to take a lot of steps in the overall wrong direction.
+You should have a pretty good grasp of how the gradient "steers" the training
+of the model towards better predictions over time.  We've been using an
+artificially easy dataset to make it obvious what the ideal value for `m` would
+be, but let's change up the dataset to make it more noisy.  The ideal value of
+`m` will still be 1, the loss just won't ever go to zero anymore.
 
-There is also "batch gradient descent", which is where you calculate the total
-gradient for your whole dataset (adding up the gradients for every data point
-in the whole dataset) before taking a single step.  This is a more reliable way
-to minimize the loss than stochastic gradient descent because by looking at
-all data points before stepping, you can be sure you're stepping in the overall
-right direction.  However, nobody in deep learning really does this, because the
-datasets are normally huge and it would take forever to train a model on a
-dataset if you could only step once per epoch.
+Our new dataset will be:
 
-There is an in-between option, which is more accurate than stochastic gradient
-descent but much faster than batch gradient descent.  It is called "mini-batch
-gradient descent", and it's basically the only gradient descent used in deep
-learning.  In mini-batch gradient descent, you have some `batch_size`,
-frequently a power of 2.  In each iteration of training, you select a
-mini-batch of `batch_size` elements, calculate the gradients for that
-mini-batch, take a step, and then repeat with the next mini-batch.  Mini-batch
-gradient descent is so universal in our industry that you won't hear anybody
-talk about it, and the word "batch" is widely preferred to "mini-batch".
+- `(x=1, ytrue=0)`
+- `(x=2, ytrue=1)`
+- `(x=3, ytrue=1)`
+- `(x=4, ytrue=6.25)`
 
-Mini-batch training is especially well-suited to training on GPUs.  Graphics
-cards are parallel-processing engines, and since the total gradient for a
-batch (no use calling it a "mini-batch" around here) can be calculated in
-parallel (by independently calculating the gradients from each data point, and
-summing or averaging them together at the end), the time to do a forward and
-backward pass on a single data point is approximately equal to the time to do a
-forward and backward pass on a whole batch of data.  However, since you are
-considering multiple data points for each step, you get a more accurate step in
-the same amount of training time.  The upper limit of batch size is how much
-GPU memory you have.  Increasing batch size means you are doing more parallel
-calculations at the same time, which requires more memory.
-
-### Q8
-
-Write a variation of your previous training loop, but this time do mini-batch
-training and add a `batch_size` parameter.  When you combine gradients, it is
-more common to average them than to just sum them.
-
-Report what you get in the following scenarios:
+You can check that the model still should converge to `1` either by solving the
+loss function algebraically or running your training loop:
 
 ```python
-dataset = [(1,1),(2,2),(3,3),(4,4)]
-mfinal = train_loop(m=0, lr=0.001, dataset=dataset, batch_size=2 iterations=4)
-assert mfinal = XXX, mfinal
-
-mfinal = train_loop(m=0, lr=0.001, dataset=dataset, batch_size=4 iterations=4)
-assert mfinal = XXX, mfinal
+dataset = [(1,0),(2,1),(3,1),(4,6.25)]
+print(train_loop(m=0, lr=0.0001, dataset=dataset, iterations=10000))
 ```
 
-Why do you get different results when you change the batch size?
+Now that we have noise in our dataset, we find that some values are "noisier"
+than others.  Notice that the at `m=1` our model is off by `1`, but at `x=4`
+our model is off by `1.5`.  These noisier points can cause training to become
+unstable at higher learning rates.
+
+### Q9
+
+Test your `train_loop` function against different learning rates:
+
+```python
+dataset = [(1,0),(2,1),(3,1),(4,6.25)]
+for lr in [.001, .002, .004, .008, .016, .032, .064, .128, .256]:
+    print("lr", lr, train_loop(m=0, lr=lr, dataset=dataset, iterations=1000))
+```
+
+Which learning rates cause training to diverge?  Which learning rates cause the
+model to converge to 1?  Are there values which are somewhere in between?
+
+## Batch size in Training
+
+In real life, all datasets have noise.  If you calculate the gradient for every
+record and step the model on each data point's gradient, that noise can cause
+you to take a lot of wrong steps, causing training to either take longer to
+converge or not to converge at all.
+
+One common way to deal with this noise is to process multiple data points at
+once.  Calculate each gradient, then average them, to smooth out the noise in
+the gradients from each point.
+
+This is called "batching" your inputs.  The number of inputs that you include
+in each training iteration is called your "batch size".
+
+### Q11
+
+Let `m=2` and fill the following table of per-data-point gradients:
+
+| `(x, ytrue)`  | `grad_point` |
+| ------------- | ------------ |
+|     (1, 0)    |              |
+|     (2, 1)    |              |
+|     (3, 1)    |              |
+|    (4, 6.25)  |              |
+
+Then, with `m=2`, fill the following table of `batch_size=2` batch gradients:
+
+| `(x0, ytrue0)` | `(x1, ytrue1)` | `grad_multi` |
+| -------------- | -------------- | ------------ |
+|     (1, 0)     |     (2, 1)     |              |
+|     (3, 1)     |    (4, 6.25)   |              |
+
+Do you see that by averaging gradients from multiple points, we end up with
+smoother overall gradients?
+
+### Q12
+
+Write a new training loop that takes batches instead of individual points.
+
+The only difference is that instead of using the gradient from one point per
+iteration, you will be using the gradient of a batch of points for every
+iteration.  You should assume that the dataset is already broken up into
+batches, and your train function does not need to handle that.
+
+Here are some test cases:
+
+```python
+dataset = [
+    [(1,0),(2,1)],
+    [(3,1),(4,6.25)],
+]
+mfinal = train_loop_batches(0, lr=0.001, dataset=dataset, iterations=2)
+assert round(mfinal, 5) == 0.02995, mfinal
+mfinal = train_loop_batches(0, lr=0.001, dataset=dataset, iterations=20)
+assert round(mfinal, 5) == 0.26228, mfinal
+```
+
+## Averaging Gradients Together Means Faster Training
+
+Here is the central idea of this lesson: **when you average gradients from
+multiple data points, you get less noisy gradients, which lets you train
+faster**.  Less noisy gradients means you have higher confidence that the step
+you take after calculating the gradient is in the correct direction.  Higher
+confidence in the gradient direction means you can take bigger steps (by
+increasing your learning rate).  A higher learning rate means your model
+converges faster.
+
+This is really important.  This is foundational to understanding and supporting
+our product offering.
+
+The general rule of thumb for Stochastic Gradient Descent (basically the
+algorithm you just implemented) is that you can scale up your learning rate
+linearly as you increase your batch size.
+
+There are hardware upper limits to how far you can push that rule of thumb, of
+course.  You can only train efficiently on what fits in RAM, and the larger the
+batch size, the more memory space is required, both for the data itself and for
+various intermediate values used in training.
+
+## Data-Parallel Distributed Training
+
+Suppose you have a model that takes days or weeks to train on a single GPU, and
+you'd like to throw more hardware at it and get it to train faster.
+
+Any time you train a single model on multiple accelerators, that's called
+Distributed Training (or "dtrain", in internal company slang).
+
+There are a few kinds of dtrain, but we'll focus on data-parallel dtrain,
+because it's more common, and also it's a straightforward application of
+averaging gradients together, like we've been doing.
+
+The basic strategy of data-parallel d-train is you have one worker per
+accelerator.  Each worker keeps its own replica of the model.  Every batch,
+each worker pulls a batch out of its unique shard of the total dataset.  Each
+worker calculates gradients for its batch.  Then all workers communicate their
+gradients to all other workers, after which each worker has the average of all
+worker gradients.
+
+### Q13
+
+Write a training loop that simulates data-parallel distributed training.  No
+need for actual distributed mechanics; just do it inside a single process.
+
+You should have the following steps clearly identified:
+- A step to calculate gradients for one worker, which uses the current model
+  weight `m` and a batch of data `data` from that worker's shard.  (Can you
+  reuse any of the functions you've already written?)
+- A step to average gradients generated by multiple workers.  In real life,
+  this would involve network communication, but we're just focused on the math
+  today, not communication.  Just make sure it's a separate step.
+- A step to apply the averaged gradients to the model in accordance with the
+  learning rate.
+
+Your function should combine the above three components into a single
+distributed-like training loop.  This function should take an initial weight
+`m`, a learning rate `lr`, a list of data `shards` (each shard is a list of
+batches of `(x, ytrue)` tuples), and a number of iterations to train for.  Your
+function should act as if it has one worker per shard it is provided.  Return
+the final model weight.
+
+Here is a test case:
+
+```python
+# Two workers, each with two batches of two data points each.
+shards = [
+    [
+        [(1,1),(2,2)],     # first shard, first batch
+        [(3,3), (4,4)],    # first shard, second batch
+    ],
+    [
+        [(1,0),(2,1)],     # second shard, first batch
+        [(3,1), (4,6.25)], # second shard, second batch
+    ]
+]
+
+mfinal = train_loop_distributed(0, 0.001, shards, iterations=4)
+assert round(mfinal, 5) == 0.05893, mfinal
+```
+
+Notice that you can achieve the same exact results with the
+`train_loop_batches` you wrote previously:
+
+```python
+dataset = [
+    [(1,1),(2,2), (1,0),(2,1)],
+    [(3,3), (4,4), (3,1), (4,6.25)],
+]
+mfinal = train_loop_batches(m=0, lr=0.001, dataset=dataset, iterations=4)
+assert round(mfinal, 5) == 0.05893, mfinal
+```
+
+Explain why you see the same training result in both cases.
+
+## Data-Parallel Communication Overhead
+
+Because data-parallel dtrain communicates gradients after every single step, it
+is most effective with models that spend a relatively long time calculating
+each gradient.  If the gradient calculation step is relatively fast compared to
+the communication time between workers, dtrain can cause significant slowdowns
+to training.  This is why distributed MNIST models don't really make any sense;
+the model is so small and fast it spends most of its time communicating rather
+than training.
+
+There are specific model features which can aggravate this problem, such as the
+presence of a SyncBatchNormalization layer in the model.
+
+Users will occasionally not understand how these communication overheads affect
+training, and will ask questions like, "I started training my model on 2 GPUs
+and it got slower", so understanding the overhead costs helps you answer those
+sorts of questions.
 
 ## Gradient Aggregation
 
@@ -333,105 +476,19 @@ Determined supports "gradient aggregation", where you calculate multiple
 batches of gradients in sequence, combine them with averaging, and then take a
 step based on that "aggregated" gradient.
 
-### Q9
+You should be able to see that the steps involved in gradient aggregation are
+essentially identical to the `train_loop_distributed` function you just
+implemented.  If data-parallel dtrain is a way to simulate larger batch sizes
+across multiple workers, gradient aggregation is a way to simulate larger batch
+sizes across multiple iterations within a single worker.
 
-Imagine the following pseudocode for implementing gradient aggregation:
+Unfortunately, gradient aggregation isn't particularly useful by itself.  When
+training on a single worker, applying gradients doesn't take very long, so it
+doesn't make much sense to not apply gradients from a batch as soon as you
+finish calculating that batch.
 
-```python
-batch_a = [(1,1),(2,2)]
-batch_b = [(3,3),(4,4)]
-
-grad_a = calc_batch_grad(batch_a)
-grad_b = calc_batch_grad(batch_b)
-
-grad_total = (grad_a + grad_b)/2
-```
-
-Would you expect the calculated `grad_total` to be different or the same
-compared to calculating `grad_total` from a single batch with all of the data?
-
-```python
-batch_total = [(1,1),(2,2),(3,3),(4,4)]
-grad_total = calc_batch_grad(batch_total)
-```
-
-So what would gradient aggregation be useful for?
-
-## Distributed Training
-
-Perhaps you have so much data that it takes days and days to go through it all
-on a single GPU.
-
-Or perhaps you have such a large model, the whole thing doesn't fit on a single
-GPU.
-
-It's time for distributed training!  Distributed training ("dtrain") means
-there are multiple hardware devices (GPUs usually) involved in one training
-task.  There are two common types of dtrain:
-
-- Data-parallel dtrain
-- Model-parallel dtrain
-
-### Data-Parallel DTrain
-
-In data-parallel dtrain, there are N replicas of a model, each on a different
-GPU.  The GPUs may be attached all to one physical node or spread amongst many
-nodes.  Each worker calculates a gradient for its own unique shard of the
-data, then each worker communicates its results to all other nodes in the
-training job, then each worker each applies the average of all worker gradients
-to its replica.  Because all workers calculate their step from the same final
-averaged gradient, all the model replicas stay in-sync after each step.
-
-The result is that each step of the model is derived from `batch_size *
-num_workers` records of data.
-
-### Q10
-
-Imagine you have one worker with one shard:
-
-```python
-shard0 = [(1,1),(2,2)]
-grad0 = calc_batch_grad(shard0)
-all_grads = allgather_grads(grad0)  # communication step
-grad_total = sum(all_grads)/len(all_grads)
-```
-
-And you have another worker with a different shard:
-
-```python
-shard1 = [(3,3),(4,4)]
-grad1 = calc_batch_grad(shard1)
-all_grads = allgather_grads(grad1)  # communication step
-grad_total = sum(all_grads)/len(all_grads)
-```
-
-Would you expect each worker's `all_grads` to be the same as or different from
-one worker calculating a single gradient from the full dataset?  Why?
-
-```python
-all_data = [(1,1),(2,2),(3,3),(4,4)]
-grad_total = calc_batch_grad(all_data)
-```
-
-### Q11
-
-The downside of data-parallel training is all of the network communication
-required for every step of the model.  One way to compensate for the network
-communication is to combine data-parallel training with gradient aggregation.
-
-How would gradient aggregation help to address the network communication
-overhead present in data-parallel training?
-
-### Model-Parallel DTrain
-
-If data-parallel dtrain shards your data across multiple GPUs, model-parallel
-training shards your model across multiple GPUs.  This is important for
-training models that have too many parameters to fit on any single GPU.
-
-In data-parallel dtrain, each worker does its own forward pass, then its own
-backward pass, then the workers communicate results.  In model-parallel
-training, the forward pass begins on the first few layers of the model, which
-exist on the first GPU.  The intermediate output is sent to the next shard on
-the next GPU, etc., until the whole model has been run.  Then the backward pass
-goes over each shard in reverse, producing the gradient for just one batch.
-The training loop steps the model and repeats with the next batch.
+However, it is commonly applied to data-parallel dtrain, because it directly
+reduces network communications.  If you always aggregate gradients from 4
+batches before applying them to the model, you only need to communicate
+gradients between workers 1/4th of the time, significantly reducing your
+communication overhead.
