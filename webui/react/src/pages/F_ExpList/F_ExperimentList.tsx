@@ -1,7 +1,6 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
 import { Row } from 'antd';
 import SkeletonButton from 'antd/es/skeleton/Button';
-import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
