@@ -107,6 +107,7 @@ func DefaultConfig() *Config {
 			SegmentWebUIKey:          DefaultSegmentWebUIKey,
 		},
 		EnableCors:  false,
+		LaunchError: true,
 		ClusterName: "",
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
@@ -137,6 +138,7 @@ type Config struct {
 	Root                  string                            `json:"root"`
 	Telemetry             config.TelemetryConfig            `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
+	LaunchError           bool                              `json:"launch_error"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	Observability         ObservabilityConfig               `json:"observability"`
