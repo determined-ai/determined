@@ -165,6 +165,6 @@ def print_json(data: Union[str, Any]) -> None:
         else:
             if isinstance(data, str):
                 data = json.loads(data)
-            print(json.dumps(data, indent=4))
+            print(json.dumps(data, indent=2))  # same as jq's default.
     except json.decoder.JSONDecodeError:
         print(data)
