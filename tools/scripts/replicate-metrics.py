@@ -4,14 +4,14 @@
 connect to Determined's db and replicate various metrics for performance testing purposes.
 """
 
-import psycopg  # pip install "psycopg[binary]"
-import os
-import contextlib
-from typing import Dict, Generator, List, Set, Tuple, Union
-from psycopg.abc import Query
 import concurrent.futures
-import time
 import contextlib
+import os
+import time
+from typing import Any, Dict, Generator, List, Set, Tuple, Union
+
+import psycopg  # pip install "psycopg[binary]"
+from psycopg import sql
 
 DB_NAME = os.environ.get("DET_DB_NAME", "determined")
 DB_USERNAME = os.environ.get("DET_DB_USERNAME", "postgres")
@@ -19,18 +19,22 @@ DB_PASSWORD = os.environ.get("DET_DB_PASSWORD", "postgres")
 DB_HOST = os.environ.get("DET_DB_HOST", "localhost")
 DB_PORT = os.environ.get("DET_DB_PORT", "5432")
 
+Query = Union[str, bytes, sql.SQL, sql.Composable]
+
+
 # a class extending psycopg.Cursor that adds logging around each query execute.
 class LoggingCursor(psycopg.Cursor):
-    def execute(self, query: Union[Query, str], *args, **kwargs) -> None:
+    def execute(self, query: Query, *args: Any, **kwargs: Any) -> "LoggingCursor":
         print(
             f"""====QUERY START====
-{query.strip() if isinstance(query, str) else query}
+{query.strip() if isinstance(query, str) else str(query)}
 ====QUERY END===="""
         )
         start = time.time()
-        super().execute(query, *args, **kwargs)  # type: ignore
+        super().execute(query, *args, **kwargs)
         end = time.time()
         print("query took (ms):", (end - start) * 1000)
+        return self
 
 
 @contextlib.contextmanager
@@ -60,14 +64,14 @@ def get_table_col_names(table: str) -> Set[str]:
         return {row[0] for row in rows}
 
 
-def replicate_rows(table: str, skip_cols: Set[str], multiplier=1, suffix="") -> None:
-    cols = get_table_col_names(table)
-    cols = ", ".join(cols - skip_cols)
+def replicate_rows(table: str, skip_cols: Set[str], multiplier: int = 1, suffix: str = "") -> None:
+    cols = get_table_col_names(table) - skip_cols
+    cols_str = ", ".join(cols)
 
     with db_cursor() as cur:
         query = f"""
-INSERT INTO {table}( {cols} )
-SELECT {cols} FROM {table}
+INSERT INTO {table}( {cols_str} )
+SELECT {cols_str} FROM {table}
 CROSS JOIN generate_series(1, {multiplier}) AS g
 {suffix};
         """
@@ -117,6 +121,7 @@ def submit_db_queries(
     cursor: psycopg.Cursor, queries: List[Tuple[str, str]]
 ) -> Generator[Tuple[str, int], None, None]:
     """
+    submit a set of db queries concurrently yield the changes as they are ready.
     queries: list of (name, query)
     """
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -132,7 +137,9 @@ def submit_db_queries(
 
 
 @contextlib.contextmanager
-def duplicate_table_rows(cur: psycopg.Cursor, table: str, suffix=""):
+def duplicate_table_rows(
+    cur: psycopg.Cursor, table: str, suffix: str = ""
+) -> Generator[int, None, None]:
     """
     duplicate rows of a table and keep a mapping between old and new ids.
     `id` col is assumed to auto increment.
@@ -180,7 +187,7 @@ ALTER TABLE {table} DROP COLUMN og_id;
 
 @contextlib.contextmanager
 def _copy_trials(
-    cur: psycopg.Cursor, suffix="", exclude_single_searcher=True
+    cur: psycopg.Cursor, suffix: str = "", exclude_single_searcher: bool = True
 ) -> Generator[dict, None, None]:
     affected_rows: Dict[str, int] = {}
     table = "trials"
@@ -233,13 +240,10 @@ INNER JOIN {table}_id_map ON {table}_id_map.og_id = rv.trial_id
         affected_rows["validations"] = cur.rowcount
         yield affected_rows
 
-        # for name, rcounts in submit_db_queries(cur, [("steps", steps_query), ("validations", validations_query)]):
-        #     affected_rows[name] = rcounts
-
     cur.execute("COMMIT")
 
 
-def copy_trials(suffix="", exclude_single_searcher=True) -> dict:
+def copy_trials(suffix: str = "", exclude_single_searcher: bool = True) -> dict:
     """
     Duplicate trials and associated metrics for multi trial experiments.
     """
@@ -270,7 +274,7 @@ def copy_experiments() -> dict:
                 - trials_id_map: id, og_id
                 """
                 # update new trials' experiment_id to the newly added experiment id
-                query = f"""
+                query = """
 UPDATE trials
 SET experiment_id = sub.new_exp_id
 FROM (
@@ -290,14 +294,16 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.description = "Replicate trials within experiments for multi-trial experiments or whole experiments at db level in bulk."
+    parser.description = "Replicate trials within experiments for multi-trial experiments\
+        or whole experiments at db level in bulk."
 
     parser.add_argument("mode", type=str, help="mode to run in: trials, experiments")
     parser.add_argument(
         "--suffix",
         type=str,
         default="",
-        help="sql suffix to select the trials to replicate this appends after an existing WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
+        help="sql suffix to select the trials to replicate this appends after an existing\
+        WHERE clause. eg AND state = 'COMPLETED' LIMIT 2",
     )
     parser.add_argument("--trial-id", type=int, default=None, help="trial id to replicate")
     parser.add_argument(
@@ -305,7 +311,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    assert args.suffix is "" or args.trial_id is None, "cannot specify both suffix and trial_id"
+    assert args.suffix == "" or args.trial_id is None, "cannot specify both suffix and trial_id"
     assert args.mode in ["trials", "experiments"], "mode must be either trials or experiments"
 
     start = time.time()
@@ -314,7 +320,7 @@ if __name__ == "__main__":
     for _ in range(args.naive_multiplier or 1):
         if args.mode == "experiments":
             assert args.trial_id is None, "cannot specify trial_id in experiments mode"
-            assert args.suffix is ""
+            assert args.suffix == ""
             row_counts = copy_experiments()
         elif args.mode == "trials":
             if args.trial_id is not None:
