@@ -1,7 +1,7 @@
 import {
   CheckpointState,
   CheckpointStorageType,
-  CheckpointWorkloadExtended,
+  CheckpointWorkloadExtended, CommandState, CommandTask, CommandType,
   ExperimentBase,
   ExperimentSearcherName,
   HyperparameterType,
@@ -262,6 +262,19 @@ export const generateTestExperimentData = (): {
   };
 
   return { checkpoint, experiment, trial };
+};
+
+export const generateTestTaskData = (): CommandTask => {
+  return {
+    id: '6d93f92c-52b7-40f6-b64f-d087bfcd3ecc',
+    name: '',
+    resourcePool: '',
+    startTime: '2023-04-13T00:17:36.885Z',
+    state: CommandState.Running,
+    type: CommandType.JupyterLab,
+    userId: 1,
+    workspaceId: 1,
+  };
 };
 
 export const generateTestProjectData = (overrides: Partial<Project> = {}): Project => {

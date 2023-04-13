@@ -24,7 +24,7 @@ export const sampleUsers = [
   { displayName: '', id: 2, username: 'hamid' },
 ];
 
-function generateTask(idx: number): Type.Task & Type.RecentEvent {
+export function generateTask(idx: number): Type.Task & Type.RecentEvent {
   const now = Date.now();
   const range = Math.random() * 2 * 356 * 24 * 60 * 60 * 1000;
   const startTime = new Date(now - range).toString();
