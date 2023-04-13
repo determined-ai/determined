@@ -5,13 +5,13 @@ import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { ExperimentBase } from 'types';
+import { ExperimentBase, ProjectExperiment } from 'types';
 import handleError from 'utils/error';
 
 export const BUTTON_TEXT = 'Delete';
 
 interface Props {
-  experiment: ExperimentBase;
+  experiment: ExperimentBase | ProjectExperiment;
 }
 
 const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) => {

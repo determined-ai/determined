@@ -156,6 +156,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
 
+  [ExperimentAction.Stop]: (experiment) => !terminalRunStates.has(experiment.state),
+
   [ExperimentAction.Move]: (experiment) => !experiment?.parentArchived && !experiment.archived,
 
   [ExperimentAction.Pause]: (experiment) => pausableRunStates.has(experiment.state),

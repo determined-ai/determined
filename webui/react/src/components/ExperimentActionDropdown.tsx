@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
@@ -14,9 +13,6 @@ import { ExperimentListSettings } from 'pages/ExperimentList.settings';
 import {
   activateExperiment,
   archiveExperiment,
-  cancelExperiment,
-  deleteExperiment,
-  killExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
   unarchiveExperiment,
@@ -26,10 +22,13 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
-import { modal, notification } from 'utils/dialogApi';
+import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
+
+import ExperimentDeleteModalComponent from './ExperimentDeleteModal';
+import ExperimentStopModalComponent from './ExperimentStopModal';
 
 interface Props {
   children?: React.ReactNode;
@@ -48,8 +47,7 @@ const dropdownActions = [
   Action.Pause,
   Action.Archive,
   Action.Unarchive,
-  Action.Cancel,
-  Action.Kill,
+  Action.Stop,
   Action.Move,
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
@@ -68,7 +66,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: Props) => {
   const id = experiment.id;
+  const ExperimentDeleteModal = useModal(ExperimentDeleteModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const ExperimentStopModal = useModal(ExperimentStopModalComponent);
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
@@ -92,10 +92,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           case Action.Archive:
             await archiveExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
-            break;
-          case Action.Cancel:
-            await cancelExperiment({ experimentId: id });
             if (onComplete) onComplete(action);
             break;
           case Action.OpenTensorBoard: {
@@ -125,20 +121,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             updateSettings?.({ pinned: newPinned });
             break;
           }
-          case Action.Kill:
-            modal.confirm({
-              content: `
-              Are you sure you want to kill
-              experiment ${id}?
-            `,
-              icon: <ExclamationCircleOutlined />,
-              okText: 'Kill',
-              onOk: async () => {
-                await killExperiment({ experimentId: id });
-                onComplete?.(action);
-              },
-              title: 'Confirm Experiment Kill',
-            });
+          case Action.Stop:
+            ExperimentStopModal.open();
             break;
           case Action.Pause:
             await pauseExperiment({ experimentId: id });
@@ -149,19 +133,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.Delete:
-            modal.confirm({
-              content: `
-            Are you sure you want to delete
-            experiment ${id}?
-          `,
-              icon: <ExclamationCircleOutlined />,
-              okText: 'Delete',
-              onOk: async () => {
-                await deleteExperiment({ experimentId: id });
-                if (onComplete) onComplete(action);
-              },
-              title: 'Confirm Experiment Deletion',
-            });
+            ExperimentDeleteModal.open();
             break;
           case Action.Move:
             ExperimentMoveModal.open();
@@ -185,7 +157,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
     [
       experiment.projectId,
+      ExperimentDeleteModal,
       ExperimentMoveModal,
+      ExperimentStopModal,
       experiment.workspaceId,
       handleHyperparameterSearch,
       id,
@@ -235,12 +209,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
+      <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onClose={onComplete}
       />
+      <ExperimentStopModal.Component experimentId={id} />
       {modalHyperparameterSearchContextHolder}
     </>
   ) : (
@@ -248,12 +224,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <Button ghost icon={<Icon name="overflow-vertical" />} onClick={stopPropagation} />
       </Dropdown>
+      <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onClose={onComplete}
       />
+      <ExperimentStopModal.Component experimentId={id} />
       {modalHyperparameterSearchContextHolder}
     </div>
   );
