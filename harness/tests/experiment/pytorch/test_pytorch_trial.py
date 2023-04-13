@@ -957,11 +957,11 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-def test_pytorch_11_const(tmp_path: pathlib.Path):
+@pytest.mark.pt_gpu
+@pytest.mark.parametrize("aggregation_frequency", [1, 4])
+def test_pytorch_11_const(aggregation_frequency: int, tmp_path: pathlib.Path):
 
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-    training_metrics = {"A": [], "B": []}
-    validation_metrics = {"A": [], "B": []}
 
     hparams = {
         'learning_rate': 0.001,
@@ -976,10 +976,13 @@ def test_pytorch_11_const(tmp_path: pathlib.Path):
     exp_config = utils.make_default_exp_config(
         hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
     )
-    exp_config['data'] = \
-        {
-            'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'
-        }
+    exp_config['data'] = {
+        'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'
+    }
+
+    exp_config['optimizations'] = {
+        'aggregation_frequency': aggregation_frequency
+    }
 
     example_path = utils.tutorials_path('mnist_pytorch/model_def.py')
     example_context =utils.tutorials_path('mnist_pytorch')
@@ -997,13 +1000,14 @@ def test_pytorch_11_const(tmp_path: pathlib.Path):
         min_validation_batches=1,
         min_checkpoint_batches=1,
         checkpoint_dir=checkpoint_dir,
+        expose_gpus=True
     )
 
     trial_controller_A.run()
 
     assert len(os.listdir(checkpoint_dir)) == 1, "trial did not return a checkpoint UUID"
 
-    # Trial A: restore from checkpoint and train for 100 more batches
+    # Trial A: restore from checkpoint and train for 2 more batches
     trial_A, trial_controller_A = create_trial_and_trial_controller(
         trial_class=trial_class,
         hparams=hparams,
@@ -1015,6 +1019,7 @@ def test_pytorch_11_const(tmp_path: pathlib.Path):
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=os.listdir(checkpoint_dir)[0],
         steps_completed=trial_controller_A.state.batches_trained,
+        expose_gpus=True
     )
     trial_controller_A.run()
 
@@ -1164,7 +1169,7 @@ def create_trial_and_trial_controller(
             exp_conf=exp_config,
             aggregation_frequency=1,
             steps_completed=steps_completed,
-            managed_training=False,
+            managed_training=True, # dev note: this must be True to put model on GPU
             debug_enabled=False,
         )
         trial_context._set_default_gradient_compression(False)
