@@ -2,6 +2,7 @@ import functools
 import re
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
+import _socket
 import pytest
 
 from determined.cli import command
@@ -116,6 +117,9 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
             functools.partial(api.task_logs, session, task_id),
             functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
         )
+    except _socket.timeout:
+        raise TimeoutError(f"timed out waiting for {task_type} with id {task_id}")
+
     finally:
         command._kill(master_url, task_type, task_id)
 
