@@ -148,6 +148,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               project={project}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
+              setExperiments={setExperiments}
               onAction={handleOnAction}
             />
             <GlideTable

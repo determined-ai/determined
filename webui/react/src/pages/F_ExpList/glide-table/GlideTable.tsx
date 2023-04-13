@@ -59,7 +59,7 @@ interface Props {
   clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
-  fetchExperiments: () => void;
+  fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   initialScrollPositionSet: WritableObservable<boolean>;
   sortableColumnIds: ExperimentColumn[];

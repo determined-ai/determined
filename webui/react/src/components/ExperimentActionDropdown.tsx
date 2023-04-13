@@ -196,6 +196,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     ],
   );
 
+  const handleMoveComplete = useCallback(() => {
+    onComplete?.(Action.Move);
+  }, [onComplete]);
+
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
     .filter((action) => action !== Action.SwitchPin || settings)
     .map((action) => {
@@ -239,7 +243,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={onComplete}
+        onSubmit={handleMoveComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </>
@@ -252,7 +256,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
-        onSubmit={onComplete}
+        onSubmit={handleMoveComplete}
       />
       {modalHyperparameterSearchContextHolder}
     </div>

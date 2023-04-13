@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Menu, Space } from 'antd';
 import { ItemType } from 'rc-menu/lib/interface';
-import React, { useCallback, useMemo } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import Dropdown from 'components/Dropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
@@ -28,6 +28,7 @@ import {
   ExperimentItem,
   Project,
   ProjectExperiment,
+  RunState,
 } from 'types';
 import { modal, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
@@ -73,6 +74,7 @@ interface Props {
   onAction: () => Promise<void>;
   selectAll: boolean;
   selectedExperimentIds: number[];
+  setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
   project: Project;
 }
 
@@ -82,6 +84,7 @@ const TableActionBar: React.FC<Props> = ({
   onAction,
   selectAll,
   selectedExperimentIds,
+  setExperiments,
   project,
 }) => {
   const permissions = usePermissions();
@@ -155,6 +158,95 @@ const TableActionBar: React.FC<Props> = ({
     [selectedExperimentIds, selectAll, filters, project?.workspaceId, ExperimentMoveModal],
   );
 
+  const handleUpdateExperimentList = useCallback(
+    (action: BatchAction, successfulIds: number[]) => {
+      const idSet = new Set(successfulIds);
+      switch (action) {
+        case ExperimentAction.OpenTensorBoard:
+          break;
+        case ExperimentAction.Activate:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, state: RunState.Active } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Archive:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, archived: true } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Cancel:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id)
+                  ? { ...experiment, state: RunState.StoppingCanceled }
+                  : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Kill:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id)
+                  ? { ...experiment, state: RunState.StoppingKilled }
+                  : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Pause:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, state: RunState.Paused } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Unarchive:
+          setExperiments((prev) =>
+            prev.map((expLoadable) =>
+              Loadable.map(expLoadable, (experiment) =>
+                idSet.has(experiment.id) ? { ...experiment, archived: false } : experiment,
+              ),
+            ),
+          );
+          break;
+        case ExperimentAction.Move:
+        case ExperimentAction.Delete:
+          setExperiments((prev) =>
+            prev.filter((expLoadable) =>
+              Loadable.match(expLoadable, {
+                Loaded: (experiment) => !idSet.has(experiment.id),
+                NotLoaded: () => true,
+              }),
+            ),
+          );
+          break;
+      }
+    },
+    [setExperiments],
+  );
+
+  const handleSubmitMove = useCallback(
+    async (successfulIds?: number[]) => {
+      if (!successfulIds) return;
+      handleUpdateExperimentList(ExperimentAction.Move, successfulIds);
+      await onAction();
+    },
+    [handleUpdateExperimentList, onAction],
+  );
+
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const submitBatchAction = useCallback(
@@ -162,6 +254,8 @@ const TableActionBar: React.FC<Props> = ({
       try {
         const results = await sendBatchActions(action);
         if (results === undefined) return;
+
+        handleUpdateExperimentList(action, results.successful);
 
         const numSuccesses = results.successful.length;
         const numFailures = results.failed.length;
@@ -218,7 +312,7 @@ const TableActionBar: React.FC<Props> = ({
         onAction();
       }
     },
-    [sendBatchActions, closeNotification, onAction],
+    [sendBatchActions, closeNotification, onAction, handleUpdateExperimentList],
   );
 
   const showConfirmation = useCallback(
@@ -294,7 +388,7 @@ const TableActionBar: React.FC<Props> = ({
         filters={selectAll ? filters : undefined}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
-        onSubmit={onAction}
+        onSubmit={handleSubmitMove}
       />
     </>
   );
