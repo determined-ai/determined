@@ -3,6 +3,8 @@ from argparse import Namespace
 from functools import partial
 from typing import Any, Dict, List, Union, cast
 
+from termcolor import colored
+
 from determined import cli
 from determined.cli import command, render
 from determined.common import api
@@ -78,22 +80,34 @@ def list_tasks(args: Namespace) -> None:
 @authentication.required
 def logs(args: Namespace) -> None:
     task_id = cast(str, command.expand_uuid_prefixes(args, args.task_id))
-    logs = api.task_logs(
-        cli.setup_session(args),
-        task_id,
-        head=args.head,
-        tail=args.tail,
-        follow=args.follow,
-        agent_ids=args.agent_ids,
-        container_ids=args.container_ids,
-        rank_ids=args.rank_ids,
-        sources=args.sources,
-        stdtypes=args.stdtypes,
-        min_level=args.level,
-        timestamp_before=args.timestamp_before,
-        timestamp_after=args.timestamp_after,
-    )
-    api.pprint_task_logs(task_id, logs)
+    try:
+        logs = api.task_logs(
+            cli.setup_session(args),
+            task_id,
+            head=args.head,
+            tail=args.tail,
+            follow=args.follow,
+            agent_ids=args.agent_ids,
+            container_ids=args.container_ids,
+            rank_ids=args.rank_ids,
+            sources=args.sources,
+            stdtypes=args.stdtypes,
+            min_level=args.level,
+            timestamp_before=args.timestamp_before,
+            timestamp_after=args.timestamp_after,
+        )
+        if args.json:
+            api.print_json_logs(logs)
+        else:
+            api.pprint_logs(logs)
+    finally:
+        print(
+            colored(
+                "Task log stream ended. To reopen log stream, run: "
+                "det task logs -f {}".format(task_id),
+                "green",
+            )
+        )
 
 
 common_log_options: List[Any] = [
@@ -182,8 +196,8 @@ args_description: List[Any] = [
                 "list tasks in cluster",
                 [
                     Group(
-                        Arg("--csv", action="store_true", help="print as CSV"),
-                        Arg("--json", action="store_true", help="print as JSON"),
+                        cli.output_format_args["csv"],
+                        cli.output_format_args["json"],
                     )
                 ],
                 is_default=True,
@@ -197,6 +211,7 @@ args_description: List[Any] = [
                 "fetch task logs",
                 [
                     Arg("task_id", help="task ID"),
+                    cli.output_format_args["json"],
                     *common_log_options,
                 ],
             ),
