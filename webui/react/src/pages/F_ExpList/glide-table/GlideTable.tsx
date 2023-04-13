@@ -95,6 +95,7 @@ export const GlideTable: React.FC<Props> = ({
   const [mainTableData, setMainTableData] = useState<Loadable<ExperimentItem>[]>(data);
   const [originalIndex, setOriginalIndex] = useState<number[]>([]);
   const [mainGridScroll, setMainGridScroll] = useState(0);
+  const [pinnedGridScroll, setPinnedGridScroll] = useState(0);
 
   useEffect(() => {
     if (initialScrollPositionSet.get()) return;
@@ -107,20 +108,21 @@ export const GlideTable: React.FC<Props> = ({
     }, 200);
   }, [initialScrollPositionSet, page]);
 
+  const scrollGrid = (ref: React.RefObject<DataEditorRef>, amount: number) => {
+    if (!ref.current) return;
+    ref.current.scrollTo({ amount, unit: 'cell' }, 0, 'horizontal', 0, 0, {
+      hAlign: 'start',
+      vAlign: 'start',
+    });
+  };
+
   useEffect(() => {
-    if (!pinnedGridRef.current) return;
-    pinnedGridRef.current.scrollTo(
-      { amount: mainGridScroll, unit: 'cell' },
-      0,
-      'horizontal',
-      0,
-      0,
-      {
-        hAlign: 'start',
-        vAlign: 'start',
-      },
-    );
+    scrollGrid(pinnedGridRef, mainGridScroll);
   }, [mainGridScroll]);
+
+  useEffect(() => {
+    scrollGrid(gridRef, pinnedGridScroll);
+  }, [pinnedGridScroll]);
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const handleMenuClose = useCallback(() => {
@@ -411,6 +413,16 @@ export const GlideTable: React.FC<Props> = ({
     [pinnedRows.length, mainGridScroll, handleScroll],
   );
 
+  const onScrollPinnedGrid = React.useCallback(
+    (range: Rectangle) => {
+      if (pinnedRows.length !== 0 && range.x !== mainGridScroll) {
+        setPinnedGridScroll(range.x);
+      }
+      handleScroll?.(range);
+    },
+    [pinnedRows.length, mainGridScroll, handleScroll],
+  );
+
   return (
     <div>
       {!!pinnedRows.length && (
@@ -428,6 +440,7 @@ export const GlideTable: React.FC<Props> = ({
           width="100%"
           onCellClicked={onCellClicked}
           onCellContextMenu={(_, event) => onPinnedGridContextMenu(event)}
+          onVisibleRegionChanged={onScrollPinnedGrid}
         />
       )}
       <DataEditor
