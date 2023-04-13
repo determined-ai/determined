@@ -1984,7 +1984,7 @@ func scanMetricName(filter string, index int) string {
 	metricName := ""
 	for index < len(filter) {
 		char := string(filter[index])
-		if char == "<" || char == ":" || char == " " || char == "~" || char == "=" {
+		if char == "<" || char == ":" || char == " " || char == "~" || char == "=" || char == ">" {
 			break
 		}
 		metricName += char
@@ -1996,21 +1996,21 @@ func scanMetricName(filter string, index int) string {
 func buildQuery(filter string) string {
 	general_column_prefix := "general_column."
 	metricPrefixes := map[string]string{
-		"validations.": "besttrials.best_validation->'metrics'->'avg_metrics'->'%s'",
-		"hp.":          "e.config->'hyperparameters'->'%s'",
+		"validation.": "(besttrials.best_validation->'metrics'->'avg_metrics'->>'%s')::float8",
+		"hp.":         "e.config->'hyperparameters'->>'%s'",
 	}
 	orderColMap := map[string]string{
 		"id":              "e.id",
-		"description":     "description",
-		"name":            "name",
+		"description":     "e.config->>'description'",
+		"name":            "e.config->>'name'",
 		"startTime":       "e.start_time",
 		"endTime":         "e.end_time",
 		"state":           "e.state",
-		"numTrials":       "num_trials",
+		"numTrials":       "(SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id)",
 		"progress":        "COALESCE(progress, 0)",
-		"user":            "display_name",
+		"user":            "COALESCE(u.display_name, u.username)",
 		"forkedFrom":      "e.parent_id",
-		"resourcePool":    "resource_pool",
+		"resourcePool":    "e.config->'resources'->>'resource_pool'",
 		"projectId":       "project_id",
 		"checkpointSize":  "checkpoint_size",
 		"checkpointCount": "checkpoint_count",
@@ -2128,22 +2128,22 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 			query = " IS NULL"
 		} else {
 			if valueIsString {
-				value = `"` + value + `"`
+				value = fmt.Sprintf(`'%s'`, value)
 			}
-			query = fmt.Sprintf(" == %v", value)
+			query = fmt.Sprintf(" = %v", value)
 		}
 	}
 	if *operator == "~" {
-		query = " LIKE " + `"%` + value + `%"`
+		query = " LIKE " + `'%` + value + `%'`
 	}
 	if *operator == "-" {
 		if isNull {
 			query = fmt.Sprintf("%v IS NOT NULL", col)
 		} else if comparator == "~" {
-			query = fmt.Sprintf("%v NOT LIKE ", col) + `"%` + value + `%"`
+			query = fmt.Sprintf("%v NOT LIKE ", col) + `'%` + value + `%'`
 		} else if comparator == ":" {
 			if valueIsString {
-				value = `"` + value + `"`
+				value = `'` + value + `'`
 			}
 			query = fmt.Sprintf("%v != %v", col, value)
 		}
@@ -2381,16 +2381,44 @@ func (a *apiServer) SearchExperiments(
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN ch ON ch.trial_id = trials.id AND ch.rank = 1")
 
-	err = db.Bun().NewSelect().
+	bestTrials := db.Bun().NewSelect().
 		With("ex", experimentValues).
 		With("si", searcherInfoQuery).
 		With("v", validationsQuery).
 		With("ch", checkpointsQuery).
 		Model(&trials).
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).
-		Where("trial._metric_rank = 1").
-		Scan(ctx)
+		Where("trial._metric_rank = 1")
 
+	if req.Filter != "" && strings.Contains(req.Filter, "validation.") {
+		experimentQuery.With("besttrials", bestTrials).
+			Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
+
+		if err != nil {
+			return nil, err
+		}
+
+		if req.Filter != "" {
+			filterExpr, err := parseFilter(req.Filter)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
+			}
+			fmt.Println(filterExpr)
+			experimentQuery.Where(filterExpr)
+		}
+
+		resp.Pagination, err = runPagedBunExperimentsQuery(
+			ctx,
+			experimentQuery,
+			int(req.Offset),
+			int(req.Limit),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = bestTrials.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
