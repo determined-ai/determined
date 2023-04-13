@@ -360,7 +360,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        print(json.dumps([resp.to_json() for resp in responses], indent=4))
+        cli.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 

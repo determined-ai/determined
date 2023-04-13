@@ -12,7 +12,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
     if args.json:
-        print(json.dumps(response.json(), indent=4))
+        cli.print_json(response.json())
     else:
         print(yaml.safe_dump(response.json(), default_flow_style=False))
 
@@ -20,7 +20,7 @@ def config(args: Namespace) -> None:
 def get_master(args: Namespace) -> None:
     resp = bindings.get_GetMaster(cli.setup_session(args))
     if args.json:
-        print(json.dumps(resp.to_json(), indent=4))
+        cli.print_json(resp.to_json())
     else:
         print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
 

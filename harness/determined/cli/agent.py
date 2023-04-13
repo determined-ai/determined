@@ -47,7 +47,7 @@ def list_agents(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(agents, indent=4))
+        cli.print_json(agents)
         return
 
     headers = [
@@ -148,7 +148,7 @@ def list_slots(args: argparse.Namespace) -> None:
     ]
 
     if args.json:
-        print(json.dumps(slots, indent=4))
+        cli.print_json(slots)
         return
 
     values = [s.values() for s in slots]

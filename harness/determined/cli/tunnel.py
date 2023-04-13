@@ -1,3 +1,4 @@
+from determined import cli
 """
 tunnel.py will tunnel a TCP connection to the service (typically a shell) with ID equal to
 SERVICE_UUID over a WebSocket connection to a Determined master at MASTER_ADDR.

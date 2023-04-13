@@ -226,7 +226,7 @@ def list_tasks(args: Namespace) -> None:
             )
 
     if getattr(args, "json", None):
-        print(json.dumps(res, indent=4))
+        cli.print_json(res)
         return
 
     values = render.select_values(res, table_header)

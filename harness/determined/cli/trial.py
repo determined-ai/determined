@@ -115,7 +115,7 @@ def describe_trial(args: Namespace) -> None:
     if args.json:
         data = trial_response.to_json()
         data["workloads"] = [w.to_json() for w in workloads]
-        print(json.dumps(data, indent=4))
+        cli.print_json(data)
         return
 
     # Print information about the trial itself.

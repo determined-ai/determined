@@ -30,7 +30,7 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
         return agents
 
     if args.json:
-        print(json.dumps({a: t.to_json() for (a, t) in tasks.items()}, indent=4))
+        cli.print_json({a: t.to_json() for (a, t) in tasks.items()})
         return
 
     headers = [
