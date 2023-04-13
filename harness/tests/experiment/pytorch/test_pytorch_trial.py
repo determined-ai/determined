@@ -957,6 +957,66 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
+def test_pytorch_11_const(tmp_path: pathlib.Path):
+
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    training_metrics = {"A": [], "B": []}
+    validation_metrics = {"A": [], "B": []}
+
+    hparams = {
+        'learning_rate': 0.001,
+        'dropout': 0.5,
+        'global_batch_size': 64,
+        'n_filters1': 40,
+        'n_filters2': 40,
+        'dropout1': 0.5,
+        'dropout2': 0.5
+    }
+
+    exp_config = utils.make_default_exp_config(
+        hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+    )
+    exp_config['data'] = \
+        {
+            'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'
+        }
+
+    example_path = utils.tutorials_path('mnist_pytorch/model_def.py')
+    example_context =utils.tutorials_path('mnist_pytorch')
+    trial_module = utils.import_module("MNistTrial", example_path, example_context)
+    trial_class = getattr(trial_module, "MNistTrial")
+    trial_class._searcher_metric = "validation_loss"
+
+    # Trial A: train 1 batch and checkpoint
+    trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        trial_seed=777,
+        exp_config=exp_config,
+        max_batches=1,
+        min_validation_batches=1,
+        min_checkpoint_batches=1,
+        checkpoint_dir=checkpoint_dir,
+    )
+
+    trial_controller_A.run()
+
+    assert len(os.listdir(checkpoint_dir)) == 1, "trial did not return a checkpoint UUID"
+
+    # Trial A: restore from checkpoint and train for 100 more batches
+    trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        trial_seed=777,
+        exp_config=exp_config,
+        max_batches=2,
+        min_validation_batches=1,
+        min_checkpoint_batches=1,
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=os.listdir(checkpoint_dir)[0],
+        steps_completed=trial_controller_A.state.batches_trained,
+    )
+    trial_controller_A.run()
 
 @pytest.mark.parametrize(
     "ckpt,istrial,trial_spec,trial_kwargs",

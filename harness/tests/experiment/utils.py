@@ -180,6 +180,9 @@ def e2e_fixtures_path(path: str) -> str:
 def cv_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../../examples/computer_vision", path)
 
+def tutorials_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../examples/tutorials", path)
+
 def import_module(module_name: str, module_path: str, model_context: Optional[str] = None) -> Any:
     """
     Use importlib for examples since they are outside of harness.
