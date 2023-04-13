@@ -300,6 +300,9 @@ The master supports the following configuration settings:
          have access to the Slurm/PBS queue and node status commands (``squeue``, ``sinfo``,
          ``pbsnodes``, ``qstat`` ) to discover partitions and to display cluster usage.
 
+         When changing this value, ownership of the ``job_storage_root`` directory tree must be
+         updated accordingly, and the ``determined-master`` service must be restarted.
+
       -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
             shared with other non-privileged users.
 
@@ -307,10 +310,22 @@ The master supports the following configuration settings:
          located. This directory must be visible to the launcher and from the compute nodes. See
          :ref:`slurm-image-config` for more details.
 
-      -  ``job_storage_root``: The shared directory where job-related files will be stored. It is
-         where the needed Determined executables are copied to when the experiment is run, as well
-         as where the Slurm/PBS scripts and log files are created. This directory must be writable
-         by the launcher and the compute nodes.
+      -  ``job_storage_root``: The shared directory where temporary job-related files will be stored
+         for each active HPC job. It hosts the necessary Determined executables for the job, any
+         model and configuration files, space for per-rank ``/tmp`` and working directories,
+         generated Slurm/PBS scripts and any log files. This directory must be writable by the
+         launcher and the compute nodes. It must be owned by the configured ``user_name`` and
+         readable by all users that may launch jobs. If ``user_name`` is configured as ``root``, a
+         directory must be specified, otherwise, the default is ``$HOME/.launcher``.
+
+         The content for an HPC job under this directory is normally removed automatically when the
+         job terminates. Content may be manually purged when there are no active HPC jobs. If
+         ``user_name`` is changed, you can adjust the ownership of this directory using the command
+         of the form:
+
+         .. code::
+
+            chown -R --from={prior_user_name} {user_name}:{group_name} {job_storage_root}
 
       -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS,
          Singularity, Nvidia binaries, etc., in case they are not in a standard location on the
