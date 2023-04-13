@@ -1,0 +1,10 @@
+.pinnedGrid::-webkit-scrollbar,
+.pinnedGRid::-webkit-scrollbar-thumb {
+  display: none;
+  height: 0;
+  width: 0;
+}
+.pinnedGrid {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

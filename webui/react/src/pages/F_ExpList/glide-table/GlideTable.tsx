@@ -39,6 +39,7 @@ import RangeCell from './custom-cells/progress';
 import SparklineCell from './custom-cells/sparkline';
 import SpinnerCell from './custom-cells/spinner';
 import TagsCell from './custom-cells/tags';
+import css from './index.module.scss';
 import {
   contextMenuItems,
   pinnedContextMenuItems,
@@ -108,7 +109,17 @@ export const GlideTable: React.FC<Props> = ({
 
   useEffect(() => {
     if (!pinnedGridRef.current) return;
-    pinnedGridRef.current.scrollTo(mainGridScroll + 2, 0, 'horizontal');
+    pinnedGridRef.current.scrollTo(
+      { amount: mainGridScroll, unit: 'cell' },
+      0,
+      'horizontal',
+      0,
+      0,
+      {
+        hAlign: 'start',
+        vAlign: 'start',
+      },
+    );
   }, [mainGridScroll]);
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);
@@ -205,6 +216,8 @@ export const GlideTable: React.FC<Props> = ({
 
   const onHeaderClicked = React.useCallback(
     (col: number, args: HeaderClickedEventArgs) => {
+      if (pinnedRows.length) return;
+
       const columnId = columnIds[col];
 
       if (columnId === 'selected') {
@@ -219,7 +232,7 @@ export const GlideTable: React.FC<Props> = ({
       setMenuProps((prev) => ({ ...prev, items, title: `${columnId} menu`, x, y }));
       setMenuIsOpen(true);
     },
-    [columnIds, setSelectAll],
+    [columnIds, setSelectAll, pinnedRows.length],
   );
 
   const getCellContent = React.useCallback(
@@ -402,6 +415,7 @@ export const GlideTable: React.FC<Props> = ({
     <div>
       {!!pinnedRows.length && (
         <DataEditor
+          className={css.pinnedGrid}
           columns={dataGridColumns}
           customRenderers={cells}
           freezeColumns={2}
@@ -409,8 +423,6 @@ export const GlideTable: React.FC<Props> = ({
           headerIcons={headerIcons}
           ref={pinnedGridRef}
           rows={pinnedRows.length}
-          smoothScrollX
-          smoothScrollY
           theme={theme}
           verticalBorder={verticalBorder}
           width="100%"
@@ -430,8 +442,6 @@ export const GlideTable: React.FC<Props> = ({
         height={GRID_HEIGHT}
         ref={gridRef}
         rows={mainTableData.length}
-        smoothScrollX
-        smoothScrollY
         theme={theme}
         verticalBorder={verticalBorder}
         width="100%"
