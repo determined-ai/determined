@@ -4,9 +4,9 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
 """
 
 import numpy as np
-from packaging import version
 import tensorflow as tf
 from data import NUM_CLASSES
+from packaging import version
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten, MaxPooling2D
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy

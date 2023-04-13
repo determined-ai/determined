@@ -11,9 +11,9 @@ Based off of: https://medium.com/@nickbortolotti/iris-species-categorization-usi
 """
 from typing import List
 
-from packaging import version
 import pandas as pd
 import tensorflow as tf
+from packaging import version
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
