@@ -1,4 +1,3 @@
-from determined import cli
 import sys
 import webbrowser
 from argparse import Namespace

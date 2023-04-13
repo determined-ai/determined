@@ -1,4 +1,3 @@
-from determined import cli
 import base64
 import csv
 import inspect

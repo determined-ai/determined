@@ -1,4 +1,3 @@
-from determined import cli
 import base64
 from argparse import FileType, Namespace
 from collections import namedtuple

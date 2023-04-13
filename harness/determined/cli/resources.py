@@ -1,4 +1,3 @@
-from determined import cli
 import sys
 from argparse import Namespace
 from typing import Any, List

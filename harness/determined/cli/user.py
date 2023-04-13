@@ -1,4 +1,3 @@
-from determined import cli
 import getpass
 from argparse import Namespace
 from collections import namedtuple

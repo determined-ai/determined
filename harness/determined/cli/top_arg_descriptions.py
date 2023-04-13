@@ -1,4 +1,3 @@
-from determined import cli
 from determined.common.declarative_argparse import Cmd
 
 deploy_cmd = Cmd(

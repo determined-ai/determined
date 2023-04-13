@@ -1,9 +1,8 @@
-from determined import cli
-import json
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Set, Tuple
 
+from determined import cli
 from determined.cli import (
     default_pagination_args,
     render,
