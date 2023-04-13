@@ -186,7 +186,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.12-cpu-d9dd317
+            - run: docker pull determinedai/environments-dev:py-3.8-pytorch-1.12-tf-2.12-cpu-0.21.2
 
   login-docker:
     parameters:
@@ -2002,7 +2002,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.12-gpu-d9dd317
+        default: determinedai/environments-dev:cuda-11.3-pytorch-1.12-tf-2.12-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
