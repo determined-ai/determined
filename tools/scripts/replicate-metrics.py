@@ -23,7 +23,7 @@ Query = Union[str, bytes, sql.SQL, sql.Composable]
 
 
 # a class extending psycopg.Cursor that adds logging around each query execute.
-class LoggingCursor(psycopg.Cursor):
+class LoggingCursor(psycopg.Cursor):  # type: ignore
     def execute(self, query: Query, *args: Any, **kwargs: Any) -> "LoggingCursor":
         print(
             f"""====QUERY START====
@@ -58,7 +58,7 @@ def get_table_col_names(table: str) -> Set[str]:
             """
             SELECT column_name FROM information_schema.columns WHERE table_name = %s
             """,
-            (table,),  # type: ignore
+            (table,),
         )
         rows = cur.fetchall()
         return {row[0] for row in rows}
@@ -113,7 +113,7 @@ SELECT rt.id, {prefixed_validations_cols}
 FROM replicated_trials rt
 JOIN raw_validations rv ON rv.trial_id = %s;
         """
-        cur.execute(query, (trial_id, trial_id, trial_id))  # type: ignore
+        cur.execute(query, (trial_id, trial_id, trial_id))
         cur.execute("COMMIT")
 
 
