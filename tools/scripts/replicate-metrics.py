@@ -23,7 +23,7 @@ Query = Union[str, bytes, sql.SQL, sql.Composable]
 
 
 # a class extending psycopg.Cursor that adds logging around each query execute.
-class LoggingCursor(psycopg.Cursor):
+class LoggingCursor(psycopg.Cursor):  # type: ignore
     def execute(self, query: Query, *args: Any, **kwargs: Any) -> "LoggingCursor":
         print(
             f"""====QUERY START====
