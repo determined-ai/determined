@@ -39,7 +39,7 @@ def test_noop_pause_hpc() -> None:
     # starts from the beginning upon finding that are no checkpoints to start
     # from.  Therefore, wait a while to give the experiment a chance to write at
     # least one checkpoint.
-    wait_for_at_least_one_checkpoint(experiment_id)
+    exp.wait_for_at_least_one_checkpoint(experiment_id)
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check
@@ -82,25 +82,3 @@ def remove_item_from_yaml_file(filename: str, item_name: str) -> str:
     y.dump(data, tmpFile)
 
     return tmpFile.name
-
-
-def has_at_least_one_checkpoint(exp_id: int) -> bool:
-    trials = exp.experiment_trials(exp_id)
-
-    # Check if the most recent trial has any checkpoints.
-    if (
-        len(trials) > 0
-        and len(exp.workloads_with_checkpoint(trials[len(trials) - 1].workloads)) > 0
-    ):
-        return True
-
-    return False
-
-
-def wait_for_at_least_one_checkpoint(experiment_id: int) -> None:
-
-    for _ in range(20):
-        if has_at_least_one_checkpoint(experiment_id):
-            break
-        else:
-            time.sleep(1)

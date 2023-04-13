@@ -182,7 +182,8 @@ def test_slurm_preemption() -> None:
         conf.cv_examples_path("cifar10_pytorch"),
         None,
     )
-    exp.wait_for_experiment_state(cancelable_exp_id, experimentv1State.RUNNING)
+    # Wait for the first cancellable experiment to complete at least one checkpoint.
+    exp.wait_for_at_least_one_checkpoint(cancelable_exp_id, 300)
     # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
     # partition
     high_priority_exp_id = exp.create_experiment(
