@@ -378,7 +378,7 @@ def test_rbac_list_roles() -> None:
         for all_role in all_roles:
             exluded_role = [r for r in exluded_global_roles if r["roleId"] == all_role["roleId"]]
             has_global_role = any(
-                [p for p in all_role["permissions"] if not p["scopeTypeMask"]["workspace"]]
+                p for p in all_role["permissions"] if not p["scopeTypeMask"]["workspace"]
             )
             if len(exluded_role) == 0:
                 # Didn't find our role in exluded role. Needs to have a global only permission.
