@@ -133,7 +133,9 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         experiment_id = exp_id
         operations: Optional[List[searcher.Operation]] = None
         session: client.Session = Mock()
-        super(MockMasterSearchRunner, self).run_experiment(experiment_id, session, operations)
+        super(MockMasterSearchRunner, self).run_experiment(
+            experiment_id, session, operations, sleep_time=0.0
+        )
         return exp_id
 
     def _get_state_path(self, experiment_id: int) -> Path:
