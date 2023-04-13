@@ -16,8 +16,8 @@ import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// Summarized Metric captures a metric's name and downsampled data points.
-message SummarizedMetric {
+// DownsampledMetrics captures a metric's name and downsampled data points.
+message DownsampledMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "data", "type" ] }
   };
@@ -700,7 +700,7 @@ message SummarizeTrialResponse {
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
   // The downsampled datapoints.
-  repeated SummarizedMetric metrics = 2;
+  repeated DownsampledMetrics metrics = 2;
 }
 
 // Container for a requested trial and its metrics.
@@ -712,7 +712,7 @@ message ComparableTrial {
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
   // The downsampled datapoints.
-  repeated SummarizedMetric metrics = 2;
+  repeated DownsampledMetrics metrics = 2;
 }
 
 // Get time-series downsampled metrics from multiple trials.

@@ -1812,10 +1812,10 @@ export interface V1ComparableTrial {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1ComparableTrial
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Response to CompareTrialsRequest.
@@ -2110,7 +2110,7 @@ export interface V1DataPoint {
      * @type {any}
      * @memberof V1DataPoint
      */
-    value: any;
+    values?: any;
     /**
      * The time the measurement is taken.
      * @type {Date}
@@ -2382,6 +2382,25 @@ export interface V1DoubleFieldFilter {
      * @memberof V1DoubleFieldFilter
      */
     gte?: number;
+}
+/**
+ * DownsampledMetrics captures a metric's name and downsampled data points.
+ * @export
+ * @interface V1DownsampledMetrics
+ */
+export interface V1DownsampledMetrics {
+    /**
+     * A possibly down-sampled series of metrics' readings through the progress of the trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1DownsampledMetrics
+     */
+    data: Array<V1DataPoint>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1DownsampledMetrics
+     */
+    type: V1MetricType;
 }
 /**
  * Response to EnableAgentRequest.
@@ -8525,25 +8544,6 @@ export interface V1SSOProvider {
     ssoUrl: string;
 }
 /**
- * Summarized Metric captures a metric's name and downsampled data points.
- * @export
- * @interface V1SummarizedMetric
- */
-export interface V1SummarizedMetric {
-    /**
-     * A possibly down-sampled series of metrics' readings through the progress of the trial.
-     * @type {Array<V1DataPoint>}
-     * @memberof V1SummarizedMetric
-     */
-    data: Array<V1DataPoint>;
-    /**
-     * Type of metrics (training, validation, or unset).
-     * @type {V1MetricType}
-     * @memberof V1SummarizedMetric
-     */
-    type: V1MetricType;
-}
-/**
  * Response to SummarizeTrialRequest.
  * @export
  * @interface V1SummarizeTrialResponse
@@ -8557,10 +8557,10 @@ export interface V1SummarizeTrialResponse {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1SummarizedMetric>}
+     * @type {Array<V1DownsampledMetrics>}
      * @memberof V1SummarizeTrialResponse
      */
-    metrics: Array<V1SummarizedMetric>;
+    metrics: Array<V1DownsampledMetrics>;
 }
 /**
  * Task is the model for a task in the database.

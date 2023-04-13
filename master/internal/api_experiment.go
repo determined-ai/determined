@@ -1571,6 +1571,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		panic("Invalid metric type")
 	}
 	metricMeasurements, err = trials.MetricsTimeSeries(trialID, startTime,
+		[]string{metricName},
 		startBatches, endBatches, xAxisLabelMetrics, maxDatapoints,
 		"batches", nil, metricID)
 	if err != nil {
@@ -1583,11 +1584,11 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 
 	if !seenBefore {
 		for _, in := range metricMeasurements {
-			valueMap, err := structpbmap.NewValue(in.Value)
+			valueMap, err := structpbmap.NewStruct(in.Values)
 			fmt.Printf(err.Error())
 			out := apiv1.DataPoint{
 				Batches: int32(in.Batches),
-				Value:   valueMap,
+				Values:  valueMap,
 				Time:    timestamppb.New(in.Time),
 				Epoch:   in.Epoch,
 			}

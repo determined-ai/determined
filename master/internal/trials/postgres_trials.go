@@ -322,6 +322,7 @@ func BuildFilterTrialsQuery(filters *apiv1.TrialFilters, selectAll bool) (*bun.S
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
 // trial.
 func MetricsTimeSeries(trialID int32, startTime time.Time,
+	metricNames []string,
 	startBatches int, endBatches int, xAxisMetricLabels []string,
 	maxDatapoints int, timeSeriesColumn string,
 	timeSeriesFilter *commonv1.PolymorphicFilter, metricType string) (
@@ -348,14 +349,17 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	default:
 		queryColumn = timeSeriesColumn
 	}
-	measurements := []db.MetricMeasurements{}
 	subq := db.Bun().NewSelect().TableExpr(tableName).
 		ColumnExpr("(select setseed(1)) as _seed").
 		ColumnExpr("total_batches as batches").
 		ColumnExpr("trial_id").ColumnExpr("end_time as time").
-		ColumnExpr("(metrics ->'?' ->> ?)::float8 as value", bun.Safe(metricsObjectName)).
-		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName)).
-		Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * 10)
+		ColumnExpr("(metrics ->'?' ->> 'epoch')::float8 as epoch", bun.Safe(metricsObjectName))
+
+	for _, metricName := range metricNames {
+		subq = subq.ColumnExpr("(metrics ->'?' ->> ?)::float8 as "+metricName, bun.Safe(metricsObjectName), metricName)
+	}
+
+	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").Limit(maxDatapoints * 10)
 	switch timeSeriesFilter {
 	case nil:
 		orderColumn = batches
@@ -369,10 +373,44 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 		}
 	}
+
+	metricMeasurements = []db.MetricMeasurements{}
+	var results []map[string]interface{}
 	err = db.Bun().NewSelect().TableExpr("(?) as downsample", subq).
-		OrderExpr(orderColumn).Scan(context.TODO(), &measurements)
+		OrderExpr(orderColumn).Scan(context.TODO(), &results)
 	if err != nil {
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	return measurements, nil
+	nonMetrics := map[string]bool{
+		"epoch":    true,
+		"time":     true,
+		"batches":  true,
+		"trial_id": true,
+	}
+	for i := range results {
+		valuesMap := make(map[string]interface{})
+		for mName, mVal := range results[i] {
+			if !nonMetrics[mName] {
+				valuesMap[mName] = mVal
+			}
+		}
+		epoch := new(int32)
+		*epoch = int32(results[i]["epoch"].(float64))
+		var endTime time.Time
+		if results[i]["time"] == nil {
+			endTime = time.Time{}
+		} else {
+			endTime = results[i]["time"].(time.Time)
+		}
+		metricM := db.MetricMeasurements{
+			Batches: uint(results[i]["batches"].(int64)),
+			Time:    endTime,
+			Epoch:   epoch,
+			TrialID: int32(results[i]["trial_id"].(int64)),
+			Values:  valuesMap,
+		}
+
+		metricMeasurements = append(metricMeasurements, metricM)
+	}
+	return metricMeasurements, nil
 }

@@ -638,19 +638,22 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 }
 
 func (a *apiServer) formatMetrics(
-	m *apiv1.SummarizedMetric, metricMeasurements []db.MetricMeasurements,
-) {
+	m *apiv1.DownsampledMetrics, metricMeasurements []db.MetricMeasurements,
+) error {
 	for _, in := range metricMeasurements {
-		valueMap, err := structpb.NewValue(in.Value)
-		fmt.Println(err.Error())
+		valueMap, err := structpb.NewStruct(in.Values) // in.Value is a map.
+		if err != nil {
+			return errors.Wrapf(err, "error formating metrics")
+		}
 		out := apiv1.DataPoint{
 			Time:    timestamppb.New(in.Time),
 			Batches: int32(in.Batches),
-			Value:   valueMap,
+			Values:  valueMap,
 			Epoch:   in.Epoch,
 		}
 		m.Data = append(m.Data, &out)
 	}
+	return nil
 }
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
@@ -658,12 +661,11 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	endBatches int, logScale bool,
 	timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
-) ([]*apiv1.SummarizedMetric, error) {
+) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
 	var err error
-	var metrics []*apiv1.SummarizedMetric
+	var metrics []*apiv1.DownsampledMetrics // change this name. minimal impact.
 	var metricMeasurements []db.MetricMeasurements
-	fmt.Println(metricMeasurements)
 	// For now "epoch" is the only custom xAxis metric label supported so we
 	// build the `MetricSeriesEpoch` array. In the future this logic should
 	// be updated to support any number of xAxis metric options
@@ -682,90 +684,121 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 		endBatches = math.MaxInt32
 	}
 
-	metricMeasurements, err = trials.MetricsTimeSeries(
-		trialID, startTime, startBatches, endBatches,
-		xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
-	if err != nil {
-		return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
-	}
-
-	/*
-		for _, name := range metricNames {
-			if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
-				(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-				var metric apiv1.SummarizedMetric
-				metric.Name = name
-				metricMeasurements, err = trials.MetricsTimeSeries(
-					trialID, startTime, name, startBatches, endBatches,
-					xAxisLabelMetrics,
-					maxDatapoints, batches, timeSeriesFilter, "training")
-				if err != nil {
-					return nil, errors.Wrapf(err, "error fetching time series of training metrics")
-				}
-				metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
-				a.formatMetrics(&metric, metricMeasurements)
-				if len(metricMeasurements) > 0 {
-					metrics = append(metrics, &metric)
-				}
+	if len(metricNames) > 0 {
+		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+			var metric apiv1.DownsampledMetrics
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricNames, startBatches, endBatches,
+				xAxisLabelMetrics,
+				maxDatapoints, batches, timeSeriesFilter, "training")
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
-			if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
-				(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
-				var metric apiv1.SummarizedMetric
-				metric.Name = name
-				metricMeasurements, err = trials.MetricsTimeSeries(
-					trialID, startTime, name, startBatches, endBatches,
-					xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
-				if err != nil {
-					return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
+			if len(metricMeasurements) > 0 {
+				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+					return nil, err
 				}
-				metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
-				a.formatMetrics(&metric, metricMeasurements)
-				if len(metricMeasurements) > 0 {
-					metrics = append(metrics, &metric)
-				}
+				metrics = append(metrics, &metric)
 			}
 		}
-		if len(metricIds) > 0 {
-			var timeSeriesColumn *string
 
-			// If no time series filter column name is supplied then default to batches.
-			defaultTimeSeriesColumn := batches
-			if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
-				timeSeriesColumn = &defaultTimeSeriesColumn
-			} else {
-				timeSeriesColumn = timeSeriesFilter.Name
+		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+			var metric apiv1.DownsampledMetrics
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricNames, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, batches, timeSeriesFilter, "validation")
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
+			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 
-			for _, metricID := range metricIds {
-				nameAndType := strings.SplitN(metricID, ".", 2)
-				if len(nameAndType) < 2 {
-					return nil, fmt.Errorf(`error fetching time series of validation metrics
+			if len(metricMeasurements) > 0 {
+				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+					return nil, err
+				}
+				metrics = append(metrics, &metric)
+			}
+		}
+	}
+
+	if len(metricIds) > 0 {
+		var timeSeriesColumn *string
+
+		// If no time series filter column name is supplied then default to batches.
+		defaultTimeSeriesColumn := batches
+		if timeSeriesFilter == nil || timeSeriesFilter.Name == nil {
+			timeSeriesColumn = &defaultTimeSeriesColumn
+		} else {
+			timeSeriesColumn = timeSeriesFilter.Name
+		}
+
+		var metricNamesTraining []string
+		var metricNamesValidation []string
+		for _, metricID := range metricIds {
+			nameAndType := strings.SplitN(metricID, ".", 2)
+			if len(nameAndType) < 2 {
+				return nil, fmt.Errorf(`error fetching time series of validation metrics
 					invalid metricId %v metrics must be in the form metric_type.metric_name`,
-						metricID,
-					)
-				}
-				metricIDName := nameAndType[1]
-				metricIDType := nameAndType[0]
-				var metric apiv1.SummarizedMetric
-				metric.Name = metricID
-				metric.Type = apiv1.MetricType_METRIC_TYPE_UNSPECIFIED
-				if maxDatapoints == 0 {
-					maxDatapoints = 200
-				}
-				metricMeasurements, err = trials.MetricsTimeSeries(
-					trialID, startTime, metricIDName, startBatches, endBatches,
-					xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
-					timeSeriesFilter, metricIDType,
+					metricID,
 				)
-				if err != nil {
-					return nil, errors.Wrapf(err, "error fetching time series of %v metrics", metricIDType)
-				}
-				if len(metricMeasurements) > 0 {
-					a.formatMetrics(&metric, metricMeasurements)
-					metrics = append(metrics, &metric)
-				}
 			}
-		}*/
+			metricIDName := nameAndType[1]
+			metricIDType := nameAndType[0]
+
+			if metricIDType == "training" {
+				metricNamesTraining = append(metricNamesTraining, metricIDName)
+			}
+			if metricIDType == "validation" {
+				metricNamesValidation = append(metricNamesValidation, metricIDName)
+			}
+		}
+		if maxDatapoints == 0 {
+			maxDatapoints = 200
+		}
+
+		if len(metricNamesTraining) > 0 {
+			var metric apiv1.DownsampledMetrics
+
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricNamesTraining, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+				timeSeriesFilter, "training",
+			)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "training")
+			}
+
+			if len(metricMeasurements) > 0 {
+				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+					return nil, err
+				}
+				metrics = append(metrics, &metric)
+			}
+		}
+
+		if len(metricNamesValidation) > 0 {
+			var metric apiv1.DownsampledMetrics
+			metricMeasurements, err = trials.MetricsTimeSeries(
+				trialID, startTime, metricNamesValidation, startBatches, endBatches,
+				xAxisLabelMetrics, maxDatapoints, *timeSeriesColumn,
+				timeSeriesFilter, "validation",
+			)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of %v metrics", "validation")
+			}
+
+			if len(metricMeasurements) > 0 {
+				if err = a.formatMetrics(&metric, metricMeasurements); err != nil {
+					return nil, err
+				}
+				metrics = append(metrics, &metric)
+			}
+		}
+
+	}
 
 	return metrics, nil
 }

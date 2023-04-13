@@ -26,7 +26,7 @@ message DataPoint {
   // Total batches processed by the time this measurement is taken.
   int32 batches = 1;
   // Values of the requested metrics at this point in the trial.
-  google.protobuf.Value value = 2;
+  google.protobuf.Struct values = 2;
   // The time the measurement is taken.
   google.protobuf.Timestamp time = 3;
   // The epoch this measurement is taken.
