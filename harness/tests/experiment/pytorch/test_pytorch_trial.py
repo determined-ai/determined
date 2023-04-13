@@ -963,26 +963,13 @@ def test_pytorch_11_const(aggregation_frequency: int, tmp_path: pathlib.Path):
 
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
-    hparams = {
-        'learning_rate': 0.001,
-        'dropout': 0.5,
-        'global_batch_size': 64,
-        'n_filters1': 40,
-        'n_filters2': 40,
-        'dropout1': 0.5,
-        'dropout2': 0.5
-    }
+    config = utils.load_config(utils.tutorials_path('mnist_pytorch/const.yaml'))
+    hparams = config['hyperparameters']
 
     exp_config = utils.make_default_exp_config(
         hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
     )
-    exp_config['data'] = {
-        'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'
-    }
-
-    exp_config['optimizations'] = {
-        'aggregation_frequency': aggregation_frequency
-    }
+    exp_config.update(config)
 
     example_path = utils.tutorials_path('mnist_pytorch/model_def.py')
     example_context =utils.tutorials_path('mnist_pytorch')
@@ -1022,6 +1009,66 @@ def test_pytorch_11_const(aggregation_frequency: int, tmp_path: pathlib.Path):
         expose_gpus=True
     )
     trial_controller_A.run()
+
+@pytest.mark.pt_gpu
+@pytest.mark.parametrize("api_style", ["apex", "auto", "manual"]) # TODO: test apex
+def test_pytorch_const_with_amp(api_style: str, tmp_path: pathlib.Path):
+
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    config = utils.load_config(utils.e2e_fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
+    hparams = config['hyperparameters']
+
+    exp_config = utils.make_default_exp_config(
+        hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+    )
+    exp_config.update(config)
+
+    module_names = {
+        "apex": "MNistApexAMPTrial",
+        "auto": "MNistAutoAMPTrial",
+        "manual": "MNistManualAMPTrial"
+    }
+
+    example_filename = api_style + '_amp_model_def.py'
+    example_path = utils.e2e_fixtures_path(os.path.join('pytorch_amp', example_filename))
+    example_context = utils.e2e_fixtures_path('pytorch_amp')
+    trial_module = utils.import_module(module_names[api_style], example_path, example_context)
+    trial_class = getattr(trial_module, module_names[api_style])
+    trial_class._searcher_metric = "validation_loss"
+
+    # Trial A: train 1 batch and checkpoint
+    trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        trial_seed=777,
+        exp_config=exp_config,
+        max_batches=1,
+        min_validation_batches=1,
+        min_checkpoint_batches=1,
+        checkpoint_dir=checkpoint_dir,
+        expose_gpus=True
+    )
+
+    trial_controller_A.run()
+
+    assert len(os.listdir(checkpoint_dir)) == 1, "trial did not return a checkpoint UUID"
+
+    # Trial A: restore from checkpoint and train for 2 more batches
+    trial_A, trial_controller_A = create_trial_and_trial_controller(
+        trial_class=trial_class,
+        hparams=hparams,
+        trial_seed=777,
+        exp_config=exp_config,
+        max_batches=2,
+        min_validation_batches=1,
+        min_checkpoint_batches=1,
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=os.listdir(checkpoint_dir)[0],
+        steps_completed=trial_controller_A.state.batches_trained,
+        expose_gpus=True
+    )
+    trial_controller_A.run()
+
 
 @pytest.mark.parametrize(
     "ckpt,istrial,trial_spec,trial_kwargs",

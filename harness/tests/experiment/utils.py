@@ -11,6 +11,7 @@ from tensorflow.keras import utils as keras_utils
 
 import determined as det
 from determined import core, gpu, keras, workload
+from determined.common import util
 
 
 class TrainAndValidate:
@@ -197,6 +198,11 @@ def import_module(module_name: str, module_path: str, model_context: Optional[st
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+def load_config(config_path: str) -> Any:
+    with open(config_path) as f:
+        config = util.safe_load_yaml_with_exceptions(f)
+    return config
 
 
 def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, Any]) -> None:
