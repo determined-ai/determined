@@ -10,10 +10,11 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
+import { useModal } from './kit/Modal';
 import css from './TaskBar.module.scss';
+import TaskKillModalComponent from './TaskKillModal';
 interface Props {
   handleViewLogsClick: () => void;
   id: string;
@@ -29,34 +30,14 @@ export const TaskBar: React.FC<Props> = ({
   resourcePool,
   type,
 }: Props) => {
+  const TaskKillModal = useModal(TaskKillModalComponent);
   const { canModifyWorkspaceNSC } = usePermissions();
   const task = useMemo(() => {
-    const commandTask = { id, name, resourcePool, type } as CommandTask;
-    return commandTask;
+    return { id, name, resourcePool, type } as CommandTask;
   }, [id, name, resourcePool, type]);
 
-  const deleteTask = useCallback((task: CommandTask) => {
-    modal.confirm({
-      content: `
-      Are you sure you want to kill
-      this task?
-    `,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Kill',
-      onOk: async () => {
-        try {
-          await killTask(task);
-          routeToReactUrl(paths.taskList());
-        } catch (e) {
-          handleError(e, {
-            publicMessage: `Unable to kill task ${task.id}.`,
-            publicSubject: 'Kill failed.',
-            silent: false,
-          });
-        }
-      },
-      title: 'Confirm Task Kill',
-    });
+  const onKill = useCallback(() => {
+    routeToReactUrl(paths.taskList());
   }, []);
 
   const dropdownOverlay: DropDownProps['menu'] = useMemo(() => {
@@ -67,7 +48,7 @@ export const TaskBar: React.FC<Props> = ({
 
     const funcs = {
       [MenuKey.Kill]: () => {
-        deleteTask(task);
+        TaskKillModal.open();
       },
       [MenuKey.ViewLogs]: () => {
         handleViewLogsClick();
@@ -88,7 +69,7 @@ export const TaskBar: React.FC<Props> = ({
     ];
 
     return { items: menuItems, onClick: onItemClick };
-  }, [task, deleteTask, handleViewLogsClick, canModifyWorkspaceNSC]);
+  }, [task, handleViewLogsClick, canModifyWorkspaceNSC, TaskKillModal]);
 
   return (
     <div className={css.base}>
@@ -102,6 +83,7 @@ export const TaskBar: React.FC<Props> = ({
           </div>
         </Dropdown>
       </div>
+      <TaskKillModal.Component task={task} onKill={onKill} />
     </div>
   );
 };

@@ -13,11 +13,13 @@ export const BUTTON_TEXT = 'Confirm Task Kill';
 interface Props {
   task: CommandTask;
   onClose?: () => void;
+  onKill?: () => void;
 }
-const TaskKillModalComponent: React.FC<Props> = ({ task, onClose }: Props) => {
+const TaskKillModalComponent: React.FC<Props> = ({ task, onClose, onKill }: Props) => {
   const handleSubmit = async () => {
     try {
       await killTask(task);
+      onKill?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
