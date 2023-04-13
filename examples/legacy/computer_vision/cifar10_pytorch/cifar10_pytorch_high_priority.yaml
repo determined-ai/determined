@@ -18,4 +18,6 @@ searcher:
 entrypoint: model_def:CIFARTrial
 min_validation_period:
   epochs: 1
+min_checkpoint_period:
+  epochs: 1
 max_restarts: 0
