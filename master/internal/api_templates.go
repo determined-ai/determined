@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/templatev1"
 )
@@ -49,7 +50,11 @@ func (a *apiServer) PutTemplate(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
-	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
+	workspaceID := model.DefaultWorkspaceID
+	if req.Template.WorkspaceId != 0 {
+		workspaceID = int(req.Template.WorkspaceId)
+	}
+	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config, workspaceID)
 	return &apiv1.PutTemplateResponse{Template: req.Template},
 		errors.Wrapf(err, "error putting template")
 }
