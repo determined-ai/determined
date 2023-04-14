@@ -34,7 +34,12 @@ import { observable, useObservable, WritableObservable } from 'utils/observable'
 import { PAGE_SIZE } from '../F_ExperimentList';
 
 import { ColumnDef, defaultColumnWidths, ExperimentColumn, getColumnDefs } from './columns';
-import { TableContextMenu, TableContextMenuProps } from './contextMenu';
+import {
+  contextMenuItems,
+  pinnedContextMenuItems,
+  TableContextMenu,
+  TableContextMenuProps,
+} from './contextMenu';
 import UserProfileCell from './custom-cells/avatar';
 import LinksCell from './custom-cells/links';
 import RangeCell from './custom-cells/progress';
@@ -42,13 +47,7 @@ import SparklineCell from './custom-cells/sparkline';
 import SpinnerCell from './custom-cells/spinner';
 import TagsCell from './custom-cells/tags';
 import css from './index.module.scss';
-import {
-  contextMenuItems,
-  pinnedContextMenuItems,
-  placeholderMenuItems,
-  TableActionMenu,
-  TableActionMenuProps,
-} from './menu';
+import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
 import { MapOfIdsToColors } from './useGlasbey';
 import { getTheme, headerIcons } from './utils';
 
@@ -291,18 +290,178 @@ export const GlideTable: React.FC<Props> = ({
     [pinnedRows, columnIds, columnDefs],
   );
 
-  const onContextMenu = React.useCallback(
-    (args: CellClickedEventArgs) => {
-      args.preventDefault();
+  // const onContextMenu = React.useCallback(
+  //   (args: CellClickedEventArgs) => {
+  //     args.preventDefault();
 
-      const { bounds } = args;
-      const items: MenuProps['items'] = contextMenuItems;
-      const x = bounds.x;
-      const y = bounds.y + bounds.height;
-      setMenuProps((prev) => ({
-        ...prev,
+  //     const { bounds } = args;
+  //     const items: MenuProps['items'] = contextMenuItems;
+  //     const x = bounds.x;
+  //     const y = bounds.y + bounds.height;
+  //     setMenuProps((prev) => ({
+  //       ...prev,
+  //       handleClick: () => {
+  //         const rowIndex = args.location[1];
+  //         const originalData = data.map((row) =>
+  //           Loadable.isLoaded(row) ? row.data : ({} as ExperimentItem),
+  //         );
+  //         const mainData = mainTableData.map((row) =>
+  //           Loadable.isLoaded(row) ? row.data : ({} as ExperimentItem),
+  //         );
+
+  //         setOriginalIndex((prev) => {
+  //           prev.push(originalData.findIndex((row) => row.id === mainData[rowIndex].id));
+  //           return [...prev];
+  //         });
+
+  //         setPinnedRows((prev) => {
+  //           prev.push(mainTableData[rowIndex]);
+  //           return [...prev];
+  //         });
+
+  //         setMainTableData((prev) => {
+  //           prev.splice(rowIndex, 1);
+
+  //           return [...prev];
+  //         });
+
+  //         setMenuIsOpen(false);
+  //       },
+  //       isContextMenu: true,
+  //       items,
+  //       title: '',
+  //       x,
+  //       y,
+  //     }));
+  //     setMenuIsOpen(true);
+  //   },
+  //   [mainTableData, data],
+  // );
+
+  // const onPinnedGridContextMenu = React.useCallback(
+  //   (args: CellClickedEventArgs) => {
+  //     args.preventDefault();
+
+  //     const { bounds } = args;
+  //     const items: MenuProps['items'] = pinnedContextMenuItems;
+  //     const x = bounds.x;
+  //     const y = bounds.y + bounds.height;
+  //     setMenuProps((prev) => ({
+  //       ...prev,
+  //       handleClick: () => {
+  //         const rowIndex = args.location[1];
+  //         const prevIndex = originalIndex[rowIndex];
+  //         setOriginalIndex((prev) => {
+  //           prev.splice(rowIndex, 1);
+  //           return [...prev];
+  //         });
+
+  //         setMainTableData((prev) => {
+  //           prev.splice(prevIndex, 0, data[prevIndex]);
+  //           return [...prev];
+  //         });
+
+  //         setPinnedRows((prev) => {
+  //           prev.splice(rowIndex, 1);
+
+  //           return [...prev];
+  //         });
+
+  //         setMenuIsOpen(false);
+  //       },
+  //       isContextMenu: true,
+  //       items,
+  //       title: '',
+  //       x,
+  //       y,
+  //     }));
+  //     setMenuIsOpen(true);
+  //   },
+  //   [originalIndex, data],
+  // );
+  const onPinnedGridContextMenu = React.useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      contextMenuOpen.set(false);
+      const [, row] = cell;
+      const experiment = Loadable.match(data?.[row], {
+        Loaded: (record) => record,
+        NotLoaded: () => null,
+      }); // could also use event.location[1]
+      if (!experiment) return;
+      const items: MenuProps['items'] = pinnedContextMenuItems;
+
+      event.preventDefault();
+      setContextMenuProps({
+        experiment: getProjectExperimentForExperimentItem(experiment, project),
         handleClick: () => {
-          const rowIndex = args.location[1];
+          const rowIndex = event.location[1];
+          const prevIndex = originalIndex[rowIndex];
+          setOriginalIndex((prev) => {
+            prev.splice(rowIndex, 1);
+            return [...prev];
+          });
+
+          setMainTableData((prev) => {
+            prev.splice(prevIndex, 0, data[prevIndex]);
+            return [...prev];
+          });
+
+          setPinnedRows((prev) => {
+            prev.splice(rowIndex, 1);
+
+            return [...prev];
+          });
+
+          setMenuIsOpen(false);
+        },
+        handleClose: (e?: Event) => {
+          if (contextMenuOpen.get()) {
+            e?.stopPropagation();
+          }
+          contextMenuOpen.set(false);
+        },
+        items,
+        x: Math.max(0, event.bounds.x + event.localEventX - 4),
+        y: Math.max(0, event.bounds.y + event.localEventY - 4),
+      });
+      setTimeout(() => contextMenuOpen.set(true), 25);
+    },
+    [data, project, setContextMenuProps, contextMenuOpen, originalIndex],
+  );
+
+  const onCellClicked = React.useCallback(() => {
+    if (menuIsOpen) setMenuIsOpen(false);
+  }, [menuIsOpen]);
+
+  const handleCellClicked = useCallback(
+    (cell: Item) => {
+      if (menuIsOpen) setMenuIsOpen(false);
+      const [, row] = cell;
+      if (row === undefined) return;
+      setSelection(({ rows }: GridSelection) => ({
+        columns: CompactSelection.empty(),
+        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+      }));
+    },
+    [menuIsOpen],
+  );
+
+  const onCellContextMenu = useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      contextMenuOpen.set(false);
+      const [, row] = cell;
+      const experiment = Loadable.match(data?.[row], {
+        Loaded: (record) => record,
+        NotLoaded: () => null,
+      }); // could also use event.location[1]
+      if (!experiment) return;
+      const items: MenuProps['items'] = contextMenuItems;
+
+      event.preventDefault();
+      setContextMenuProps({
+        experiment: getProjectExperimentForExperimentItem(experiment, project),
+        handleClick: () => {
+          const rowIndex = event.location[1];
           const originalData = data.map((row) =>
             Loadable.isLoaded(row) ? row.data : ({} as ExperimentItem),
           );
@@ -328,94 +487,19 @@ export const GlideTable: React.FC<Props> = ({
 
           setMenuIsOpen(false);
         },
-        isContextMenu: true,
-        items,
-        title: '',
-        x,
-        y,
-      }));
-      setMenuIsOpen(true);
-    },
-    [mainTableData, data],
-  );
-
-  const onPinnedGridContextMenu = React.useCallback(
-    (args: CellClickedEventArgs) => {
-      args.preventDefault();
-
-      const { bounds } = args;
-      const items: MenuProps['items'] = pinnedContextMenuItems;
-      const x = bounds.x;
-      const y = bounds.y + bounds.height;
-      setMenuProps((prev) => ({
-        ...prev,
-        handleClick: () => {
-          const rowIndex = args.location[1];
-          const prevIndex = originalIndex[rowIndex];
-          setOriginalIndex((prev) => {
-            prev.splice(rowIndex, 1);
-            return [...prev];
-          });
-
-          setMainTableData((prev) => {
-            prev.splice(prevIndex, 0, data[prevIndex]);
-            return [...prev];
-          });
-
-          setPinnedRows((prev) => {
-            prev.splice(rowIndex, 1);
-
-            return [...prev];
-          });
-
-          setMenuIsOpen(false);
-        },
-        isContextMenu: true,
-        items,
-        title: '',
-        x,
-        y,
-      }));
-      setMenuIsOpen(true);
-    },
-    [originalIndex, data],
-  );
-
-  const handleCellClicked = useCallback((cell: Item) => {
-    if (menuIsOpen) setMenuIsOpen(false);
-    const [, row] = cell;
-    if (row === undefined) return;
-    setSelection(({ rows }: GridSelection) => ({
-      columns: CompactSelection.empty(),
-      rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-    }));
-  }, []);
-
-  const onCellContextMenu = useCallback(
-    (cell: Item, event: CellClickedEventArgs) => {
-      contextMenuOpen.set(false);
-      const [, row] = cell;
-      const experiment = Loadable.match(data?.[row], {
-        Loaded: (record) => record,
-        NotLoaded: () => null,
-      }); // could also use event.location[1]
-      if (!experiment) return;
-
-      event.preventDefault();
-      setContextMenuProps({
-        experiment: getProjectExperimentForExperimentItem(experiment, project),
         handleClose: (e?: Event) => {
           if (contextMenuOpen.get()) {
             e?.stopPropagation();
           }
           contextMenuOpen.set(false);
         },
+        items,
         x: Math.max(0, event.bounds.x + event.localEventX - 4),
         y: Math.max(0, event.bounds.y + event.localEventY - 4),
       });
       setTimeout(() => contextMenuOpen.set(true), 25);
     },
-    [data, project, setContextMenuProps, contextMenuOpen],
+    [data, project, setContextMenuProps, contextMenuOpen, mainTableData],
   );
 
   const onColumnMoved = useCallback(
@@ -477,7 +561,7 @@ export const GlideTable: React.FC<Props> = ({
           verticalBorder={verticalBorder}
           width="100%"
           onCellClicked={onCellClicked}
-          onCellContextMenu={(_, event) => onPinnedGridContextMenu(event)}
+          onCellContextMenu={onPinnedGridContextMenu}
           onVisibleRegionChanged={onScrollPinnedGrid}
         />
       )}

@@ -1,6 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
@@ -39,7 +40,9 @@ interface Props {
   onVisibleChange?: (visible: boolean) => void;
   settings?: ExperimentListSettings;
   updateSettings?: UpdateSettings;
+  handleExtraItemsClick?: () => void;
   workspaceId?: number;
+  items?: ItemType[];
 }
 
 const dropdownActions = [
@@ -66,7 +69,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   settings,
   updateSettings,
   children,
+  items,
+  handleExtraItemsClick,
 }: Props) => {
+  const extraItems = useMemo(() => items ?? [], [items]);
   const id = experiment.id;
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const {
@@ -86,6 +92,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         switch (
           action // Cases should match menu items.
         ) {
+          case 'Pin row to top' as Action:
+            handleExtraItemsClick?.();
+            break;
+          case 'Unpin row' as Action:
+            handleExtraItemsClick?.();
+            break;
           case Action.Activate:
             await activateExperiment({ experimentId: id });
             if (onComplete) onComplete(action);
@@ -193,6 +205,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       onVisibleChange,
       settings?.pinned,
       updateSettings,
+      handleExtraItemsClick,
     ],
   );
 
@@ -210,8 +223,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     });
 
   const menu: DropdownProps['menu'] = useMemo(() => {
-    return { items: [...menuItems], onClick: handleMenuClick };
-  }, [menuItems, handleMenuClick]);
+    return { items: [...extraItems, ...menuItems], onClick: handleMenuClick };
+  }, [menuItems, extraItems, handleMenuClick]);
 
   if (menuItems.length === 0) {
     return (

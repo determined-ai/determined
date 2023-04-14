@@ -35,6 +35,7 @@ export interface TableContextMenuProps extends MenuProps {
   open: boolean;
   experiment: ProjectExperiment;
   handleClose: (e?: Event) => void;
+  handleClick?: () => void;
   x: number;
   y: number;
 }
@@ -43,6 +44,8 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   experiment,
   fetchExperiments,
   handleClose,
+  handleClick,
+  items,
   open,
   x,
   y,
@@ -66,6 +69,8 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
       }}>
       <ExperimentActionDropdown
         experiment={experiment}
+        handleExtraItemsClick={handleClick}
+        items={items}
         makeOpen={open}
         onComplete={onComplete}
         onVisibleChange={onComplete}>
@@ -74,3 +79,18 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
     </div>
   );
 };
+export const contextMenuItems: MenuProps['items'] = [
+  {
+    disabled: false,
+    key: 'Pin row to top',
+    label: 'Pin row',
+  },
+];
+
+export const pinnedContextMenuItems: MenuProps['items'] = [
+  {
+    disabled: false,
+    key: 'Unpin row',
+    label: 'Unpin row',
+  },
+];
