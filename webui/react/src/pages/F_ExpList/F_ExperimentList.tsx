@@ -23,8 +23,6 @@ interface Props {
   project: Project;
 }
 
-const filtersPlaceholder = [];
-
 export const PAGE_SIZE = 100;
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,6 +69,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
     return filters;
   }, [project.id]);
+
+  const numFilters = useMemo(
+    () => Object.values(experimentFilters).filter((x) => x !== undefined).length - 1,
+    [experimentFilters],
+  );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -143,7 +146,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         {isLoading ? (
           <Loading width={width} />
         ) : experiments.length === 0 ? (
-          filtersPlaceholder.length === 0 ? (
+          numFilters === 0 ? (
             <NoExperiments />
           ) : (
             <NoMatches />
