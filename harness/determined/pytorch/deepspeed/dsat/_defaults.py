@@ -55,7 +55,7 @@ AUTOTUNING_ARG_DEFAULTS = {
     "start-profile-step": 3,
     "end-profile-step": 5,
     "deepspeed-config": "deepspeed_config",
-    "metric": "throughput",
+    "metric": "FLOPS_per_gpu",
 }
 
 DEFAULT_SEARCH_RUNNER_CONFIG = {
