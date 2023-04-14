@@ -1883,11 +1883,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 				searcher_metric_value
 			FROM trials t
 			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
+			ORDER BY searcher_metric_value_signed ASC
 			LIMIT 1
 		 ) `,
 	}
@@ -1913,7 +1909,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 		case strings.HasPrefix(paramDetail[0], "validation."):
 			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
 			experimentQuery.OrderExpr(
-				fmt.Sprintf("besttrials.best_validation->'metrics'->'avg_metrics'->'%s' %s",
+				fmt.Sprintf("e.validation_metrics->'%s' %s",
 					metricName, sortDirection))
 		default:
 			if _, ok := orderColMap[paramDetail[0]]; !ok {
@@ -1936,6 +1932,7 @@ func (a *apiServer) SearchExperiments(
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
+		Column("e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -1958,32 +1955,29 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	if req.Sort != nil && strings.Contains(*req.Sort, "validation.") {
-		// If we want to sort on validation metrics,
-		// we need to join trials information first then paginate.
-		// TODO: revisit after unified metrics work lands.
-		err = experimentQuery.Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	if req.Sort != nil {
 		err = sortExperiments(req.Sort, experimentQuery)
-		if err != nil {
-			return nil, err
-		}
-		resp.Pagination, err = runPagedBunExperimentsQuery(
-			ctx,
-			experimentQuery,
-			int(req.Offset),
-			int(req.Limit),
-		)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	resp.Pagination, err = runPagedBunExperimentsQuery(
+		ctx,
+		experimentQuery,
+		int(req.Offset),
+		int(req.Limit),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(experiments) == 0 {
 		return resp, nil
+	}
+
+	if err = a.enrichExperimentState(experiments...); err != nil {
+		return nil, err
 	}
 
 	// get the best trial associated with the experiment.
@@ -1992,6 +1986,12 @@ func (a *apiServer) SearchExperiments(
 	experimentValues := db.Bun().NewValues(&experiments)
 
 	// get info for best/latest validation for best trial
+	vids := db.Bun().NewRaw(`
+		SELECT best_validation_id AS vid 
+		FROM trials WHERE experiment_id IN (SELECT id FROM ex) 
+		UNION 
+		SELECT latest_validation_id AS vid 
+		FROM trials WHERE experiment_id IN (SELECT id FROM ex)`)
 	validationsQuery := db.Bun().NewSelect().
 		Table("validations").
 		Column("id").
@@ -2000,8 +2000,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("proto_time(end_time) AS end_time").
 		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
 		ColumnExpr("metrics->'num_inputs' AS num_inputs").
-		//nolint:lll
-		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
+		Where("id IN (?)", vids)
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2014,12 +2013,6 @@ func (a *apiServer) SearchExperiments(
 		TableExpr("allocations AS a").
 		ColumnExpr("extract(EPOCH FROM sum(coalesce(a.end_time, now()) - a.start_time))").
 		Where("a.task_id = trials.task_id")
-
-	bestTrialID := db.Bun().NewSelect().
-		Table("trials").
-		ColumnExpr("DISTINCT ON (experiment_id) experiment_id").Column("id").
-		Group("experiment_id").Group("id").
-		Order("experiment_id").Order("searcher_metric_value")
 
 	trialsInnerQuery := db.Bun().NewSelect().
 		Table("trials").
@@ -2043,43 +2036,18 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("row_to_json(bv)::jsonb AS best_validation").
 		ColumnExpr("null::jsonb AS best_checkpoint").
 		//nolint:lll
-		Join("JOIN bt ON trials.id = bt.id").
-		Join("JOIN ex ON ex.id = bt.experiment_id").
+		Join("JOIN ex ON ex.best_trial_id = trials.id").
 		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
-		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
+		Join("LEFT JOIN v lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id")
 
-	bestTrials := db.Bun().NewSelect().
+	err = db.Bun().NewSelect().
 		With("ex", experimentValues).
-		With("bt", bestTrialID).
 		With("v", validationsQuery).
 		Model(&trials).
-		ModelTableExpr("(?) AS trial", trialsInnerQuery)
+		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
 
-	if req.Sort != nil && strings.Contains(*req.Sort, "validation.") {
-		experimentQuery.With("besttrials", bestTrials).
-			Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
-		err = sortExperiments(req.Sort, experimentQuery)
-		if err != nil {
-			return nil, err
-		}
-		resp.Pagination, err = runPagedBunExperimentsQuery(
-			ctx,
-			experimentQuery,
-			int(req.Offset),
-			int(req.Limit),
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if err = a.enrichExperimentState(experiments...); err != nil {
-		return nil, err
-	}
-
-	err = bestTrials.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}

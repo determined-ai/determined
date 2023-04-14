@@ -2605,6 +2605,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialSearcherMetric?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    bestTrialId?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
