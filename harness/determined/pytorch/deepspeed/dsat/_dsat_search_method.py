@@ -465,7 +465,6 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
                 metric=metric,
             )
             new_ops_list.extend(additional_ops_list)
-        new_ops_list.append(searcher.Close(request_id))
         return new_ops_list
 
     def on_trial_closed(
