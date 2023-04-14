@@ -1,6 +1,0 @@
-:orphan:
-
-**Deprecated Features**
-
--  HDFS checkpoint storage support has been deprecated and will be removed in a future version.
-   Please contact Determined if you still need it, or else migrate to an different storage backend.

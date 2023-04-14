@@ -9,12 +9,12 @@ from determined.common.experimental import checkpoint
 
 
 class LogLevel(enum.Enum):
-    TRACE = bindings.v1LogLevel.LOG_LEVEL_TRACE.value
-    DEBUG = bindings.v1LogLevel.LOG_LEVEL_DEBUG.value
-    INFO = bindings.v1LogLevel.LOG_LEVEL_INFO.value
-    WARNING = bindings.v1LogLevel.LOG_LEVEL_WARNING.value
-    ERROR = bindings.v1LogLevel.LOG_LEVEL_ERROR.value
-    CRITICAL = bindings.v1LogLevel.LOG_LEVEL_CRITICAL.value
+    TRACE = bindings.v1LogLevel.TRACE.value
+    DEBUG = bindings.v1LogLevel.DEBUG.value
+    INFO = bindings.v1LogLevel.INFO.value
+    WARNING = bindings.v1LogLevel.WARNING.value
+    ERROR = bindings.v1LogLevel.ERROR.value
+    CRITICAL = bindings.v1LogLevel.CRITICAL.value
 
     def _to_bindings(self) -> bindings.v1LogLevel:
         return bindings.v1LogLevel(self.value)
@@ -28,10 +28,10 @@ class CheckpointSortBy(enum.Enum):
     Specifies the field to sort a list of checkpoints on.
     """
 
-    END_TIME = _csb.SORT_BY_END_TIME.value
-    STATE = _csb.SORT_BY_STATE.value
-    UUID = _csb.SORT_BY_UUID.value
-    BATCH_NUMBER = _csb.SORT_BY_BATCH_NUMBER.value
+    END_TIME = _csb.END_TIME.value
+    STATE = _csb.STATE.value
+    UUID = _csb.UUID.value
+    BATCH_NUMBER = _csb.BATCH_NUMBER.value
 
     def _to_bindings(self) -> bindings.v1GetTrialCheckpointsRequestSortBy:
         return _csb(self.value)
@@ -43,8 +43,8 @@ class CheckpointOrderBy(enum.Enum):
     descending order.
     """
 
-    ASC = bindings.v1OrderBy.ORDER_BY_ASC.value
-    DESC = bindings.v1OrderBy.ORDER_BY_DESC.value
+    ASC = bindings.v1OrderBy.ASC.value
+    DESC = bindings.v1OrderBy.DESC.value
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)
@@ -377,17 +377,17 @@ class TrialSortBy(enum.Enum):
     Specifies the field to sort a list of trials on.
     """
 
-    UNSPECIFIED = _tsb.SORT_BY_UNSPECIFIED.value
-    ID = _tsb.SORT_BY_ID.value
-    START_TIME = _tsb.SORT_BY_START_TIME.value
-    END_TIME = _tsb.SORT_BY_END_TIME.value
-    STATE = _tsb.SORT_BY_STATE.value
-    BEST_VALIDATION_METRIC = _tsb.SORT_BY_BEST_VALIDATION_METRIC.value
-    LATEST_VALIDATION_METRIC = _tsb.SORT_BY_LATEST_VALIDATION_METRIC.value
-    BATCHES_PROCESSED = _tsb.SORT_BY_BATCHES_PROCESSED.value
-    DURATION = _tsb.SORT_BY_DURATION.value
-    RESTARTS = _tsb.SORT_BY_RESTARTS.value
-    CHECKPOINT_SIZE = _tsb.SORT_BY_CHECKPOINT_SIZE.value
+    UNSPECIFIED = _tsb.UNSPECIFIED.value
+    ID = _tsb.ID.value
+    START_TIME = _tsb.START_TIME.value
+    END_TIME = _tsb.END_TIME.value
+    STATE = _tsb.STATE.value
+    BEST_VALIDATION_METRIC = _tsb.BEST_VALIDATION_METRIC.value
+    LATEST_VALIDATION_METRIC = _tsb.LATEST_VALIDATION_METRIC.value
+    BATCHES_PROCESSED = _tsb.BATCHES_PROCESSED.value
+    DURATION = _tsb.DURATION.value
+    RESTARTS = _tsb.RESTARTS.value
+    CHECKPOINT_SIZE = _tsb.CHECKPOINT_SIZE.value
 
     def _to_bindings(self) -> bindings.v1GetExperimentTrialsRequestSortBy:
         return _tsb(self.value)
@@ -399,10 +399,10 @@ class TrialOrderBy(enum.Enum):
     descending order.
     """
 
-    ASCENDING = bindings.v1OrderBy.ORDER_BY_ASC.value
-    ASC = bindings.v1OrderBy.ORDER_BY_ASC.value
-    DESCENDING = bindings.v1OrderBy.ORDER_BY_DESC.value
-    DESC = bindings.v1OrderBy.ORDER_BY_DESC.value
+    ASCENDING = bindings.v1OrderBy.ASC.value
+    ASC = bindings.v1OrderBy.ASC.value
+    DESCENDING = bindings.v1OrderBy.DESC.value
+    DESC = bindings.v1OrderBy.DESC.value
 
     def _to_bindings(self) -> bindings.v1OrderBy:
         return bindings.v1OrderBy(self.value)

@@ -7,11 +7,15 @@ html,
 body,
 #root {
   color-scheme: var(--theme-color-scheme);
-  font-family: var(--font-family);
+  font-family: var(--theme-font-family);
   font-size: 16px;
   height: calc(var(--vh, 1vh) * 100);
   line-height: 1.5715;
   width: 100vw;
+
+  @supports (font-variation-settings: normal) {
+    font-family: var(--theme-font-family-var);
+  }
 }
 h1 {
   font-size: 32px;
@@ -38,7 +42,7 @@ h6 {
 code {
   background-color: var(--theme-colors-monochrome-13);
   border-radius: var(--theme-border-radius);
-  font-family: var(--font-family-code);
+  font-family: var(--theme-font-family-code);
   padding: 0 4px;
 }
 code.block {

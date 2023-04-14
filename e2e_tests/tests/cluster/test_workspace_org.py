@@ -109,12 +109,10 @@ def test_workspace_org() -> None:
         test_workspaces.append(workspace2)
         list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
         assert ["Uncategorized", "_TestPatched", "_TestWS"] == [w.name for w in list_test_1]
-        list_test_2 = bindings.get_GetWorkspaces(
-            sess, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
-        ).workspaces
+        list_test_2 = bindings.get_GetWorkspaces(sess, orderBy=bindings.v1OrderBy.DESC).workspaces
         assert ["_TestWS", "_TestPatched", "Uncategorized"] == [w.name for w in list_test_2]
         list_test_3 = bindings.get_GetWorkspaces(
-            sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME
+            sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.NAME
         ).workspaces
         assert ["_TestPatched", "_TestWS", "Uncategorized"] == [w.name for w in list_test_3]
 
@@ -240,13 +238,13 @@ def test_workspace_org() -> None:
         list_test_4 = bindings.get_GetWorkspaceProjects(sess, id=made_workspace.id).projects
         assert ["_TestPatchedProject", "_TestPRJ", "_TestEarly"] == [p.name for p in list_test_4]
         list_test_5 = bindings.get_GetWorkspaceProjects(
-            sess, id=made_workspace.id, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
+            sess, id=made_workspace.id, orderBy=bindings.v1OrderBy.DESC
         ).projects
         assert ["_TestEarly", "_TestPRJ", "_TestPatchedProject"] == [p.name for p in list_test_5]
         list_test_6 = bindings.get_GetWorkspaceProjects(
             sess,
             id=made_workspace.id,
-            sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.SORT_BY_NAME,
+            sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.NAME,
         ).projects
         assert ["_TestEarly", "_TestPatchedProject", "_TestPRJ"] == [p.name for p in list_test_6]
 
@@ -328,7 +326,7 @@ def test_workspace_org() -> None:
         )
         test_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         test_experiments.append(test_exp)
-        wait_for_experiment_state(test_exp_id, bindings.experimentv1State.STATE_COMPLETED)
+        wait_for_experiment_state(test_exp_id, bindings.experimentv1State.COMPLETED)
         assert test_exp.projectId == default_project.id
 
         # Move the test experiment into a user-made project
@@ -483,8 +481,8 @@ def setup_workspaces(
 
 
 TERMINATING_STATES = [
-    bindings.taskv1State.STATE_TERMINATED,
-    bindings.taskv1State.STATE_TERMINATING,
+    bindings.taskv1State.TERMINATED,
+    bindings.taskv1State.TERMINATING,
 ]
 
 

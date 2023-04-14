@@ -45,7 +45,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
@@ -94,14 +93,13 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs         *logger.LogBuffer
-	system       *actor.System
-	echo         *echo.Echo
-	db           *db.PgDB
-	rm           rm.ResourceManager
-	proxy        *actor.Ref
-	taskLogger   *task.Logger
-	hpImportance *actor.Ref
+	logs       *logger.LogBuffer
+	system     *actor.System
+	echo       *echo.Echo
+	db         *db.PgDB
+	rm         rm.ResourceManager
+	proxy      *actor.Ref
+	taskLogger *task.Logger
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  task.LogBackend
@@ -927,12 +925,6 @@ func (m *Master) Run(ctx context.Context) error {
 	allocationmap.InitAllocationMap()
 	portregistry.InitPortRegistry()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
-
-	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
-	if err != nil {
-		return err
-	}
-	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()

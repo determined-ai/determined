@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { ClusterProvider } from 'stores/cluster';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
@@ -15,9 +14,7 @@ vi.mock('services/api', () => ({
 const setup = () => {
   const view = render(
     <UIProvider>
-      <ClusterProvider>
-        <ClusterOverallStats />
-      </ClusterProvider>
+      <ClusterOverallStats />
     </UIProvider>,
   );
   return { view };

@@ -92,13 +92,13 @@ def test_agent_restart_exp_container_failure(restartable_managed_cluster: Manage
         state = exp.experiment_state(exp_id)
         # old STATE_ACTIVE got divided into three states
         assert state in [
-            EXP_STATE.STATE_ACTIVE,
-            EXP_STATE.STATE_QUEUED,
-            EXP_STATE.STATE_PULLING,
-            EXP_STATE.STATE_STARTING,
-            EXP_STATE.STATE_RUNNING,
+            EXP_STATE.ACTIVE,
+            EXP_STATE.QUEUED,
+            EXP_STATE.PULLING,
+            EXP_STATE.STARTING,
+            EXP_STATE.RUNNING,
         ]
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.RUNNING)
         tasks_data = _task_list_json(conf.make_master_url())
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]
@@ -106,7 +106,7 @@ def test_agent_restart_exp_container_failure(restartable_managed_cluster: Manage
         assert exp_task_before["taskId"] == exp_task_after["taskId"]
         assert exp_task_before["allocationId"] != exp_task_after["allocationId"]
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED)
 
 
 @pytest.mark.managed_devcluster
@@ -193,7 +193,7 @@ def test_agent_restart_recover_experiment(
             time.sleep(downtime)
             restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
@@ -218,7 +218,7 @@ def test_agent_reconnect_keep_experiment(restartable_managed_cluster: ManagedClu
         time.sleep(1)
         restartable_managed_cluster.restart_proxy()
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
@@ -278,7 +278,7 @@ def test_queued_experiment_restarts_with_correct_allocation_id(
         conf.fixtures_path("no_op"),
         ["--config", "resources.slots_per_trial=9999"],
     )
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_QUEUED)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.QUEUED)
 
     restartable_managed_cluster.kill_master()
     log_marker = str(uuid.uuid4())

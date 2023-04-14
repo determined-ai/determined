@@ -22,7 +22,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -51,8 +51,8 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
 
-  const loadableUsers = useObservable(usersStore.getUsers());
-  const users = Loadable.map(loadableUsers, ({ users }) => users);
+  const loadableUsers = useObservable(userStore.getUsers());
+  const users = Loadable.getOrElse([], loadableUsers);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -150,10 +150,7 @@ const WorkspaceDetails: React.FC = () => {
   );
 
   const addableUsers = useMemo(
-    () =>
-      Loadable.isLoaded(users)
-        ? users.data.filter((user) => !usersAssignedDirectlyIds.has(user.id))
-        : [],
+    () => users.filter((user) => !usersAssignedDirectlyIds.has(user.id)),
     [users, usersAssignedDirectlyIds],
   );
   const addableUsersAndGroups = useMemo(
@@ -226,7 +223,6 @@ const WorkspaceDetails: React.FC = () => {
     if (!canViewWorkspaceFlag) return;
     await Promise.allSettled([
       fetchWorkspace(),
-      usersStore.ensureUsersFetched(canceler),
       fetchGroups(),
       fetchGroupsAndUsersAssignedToWorkspace(),
       fetchRolesAssignableToScope(),
@@ -234,7 +230,6 @@ const WorkspaceDetails: React.FC = () => {
   }, [
     canViewWorkspaceFlag,
     fetchWorkspace,
-    canceler,
     fetchGroups,
     fetchGroupsAndUsersAssignedToWorkspace,
     fetchRolesAssignableToScope,
@@ -258,11 +253,9 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [canceler]);
+  useEffect(() => userStore.startPolling(), []);
 
-  if (!workspace || Loadable.isLoading(users)) {
+  if (!workspace || Loadable.isLoading(loadableUsers)) {
     return <Spinner spinning tip={`Loading workspace ${workspaceId} details...`} />;
   } else if (isNaN(id)) {
     return <Message title={`Invalid Workspace ID ${workspaceId}`} />;

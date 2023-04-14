@@ -21,6 +21,7 @@ stages:
         root: tools/build
         cache: 
           cache_dir: /tmp/determined-cache
+        launch_error: false
 
   - custom_docker:
       name: agent

@@ -994,17 +994,6 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 				MetricType:   apiv1.MetricType_METRIC_TYPE_TRAINING,
 			}, &mockStream[*apiv1.TrialsSampleResponse]{ctx: ctx})
 		}},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.ComputeHPImportance(ctx, &apiv1.ComputeHPImportanceRequest{
-				ExperimentId: int32(id),
-			})
-			return err
-		}},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			return api.GetHPImportance(&apiv1.GetHPImportanceRequest{
-				ExperimentId: int32(id),
-			}, &mockStream[*apiv1.GetHPImportanceResponse]{ctx: ctx})
-		}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetBestSearcherValidationMetric(ctx,
 				&apiv1.GetBestSearcherValidationMetricRequest{ExperimentId: int32(id)})

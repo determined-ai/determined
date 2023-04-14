@@ -1,10 +1,44 @@
 import { getInfo } from 'services/api';
-import { DeterminedInfo } from 'types';
-import handleError from 'utils/error';
+import { ValueOf } from 'shared/types';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { observable, useObservable } from 'utils/observable';
+import { observable, WritableObservable } from 'utils/observable';
 
-export const initInfo: DeterminedInfo = {
+import PollingStore from './polling';
+
+export interface SsoProvider {
+  name: string;
+  ssoUrl: string;
+}
+
+export const BrandingType = {
+  Determined: 'determined',
+  HPE: 'hpe',
+} as const;
+
+export type BrandingType = ValueOf<typeof BrandingType>;
+
+export interface DeterminedInfo {
+  branding?: BrandingType;
+  checked: boolean;
+  clusterId: string;
+  clusterName: string;
+  externalLoginUri?: string;
+  externalLogoutUri?: string;
+  featureSwitches: string[];
+  isTelemetryEnabled: boolean;
+  masterId: string;
+  rbacEnabled: boolean;
+  ssoProviders?: SsoProvider[];
+  userManagementEnabled: boolean;
+  version: string;
+}
+
+export interface Telemetry {
+  enabled: boolean;
+  segmentKey?: string;
+}
+
+const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
@@ -17,21 +51,31 @@ export const initInfo: DeterminedInfo = {
   version: process.env.VERSION || '',
 };
 
-const info = observable<Loadable<DeterminedInfo>>(NotLoaded);
+class DeterminedStore extends PollingStore {
+  #info: WritableObservable<Loadable<DeterminedInfo>> = observable(NotLoaded);
 
-export const fetchDeterminedInfo = async (canceler: AbortController): Promise<void> => {
-  try {
-    const response = await getInfo({ signal: canceler.signal });
-    info.set(Loaded(response));
-  } catch (e) {
-    info.update((prevInfo) => {
-      const info = Loadable.getOrElse(initInfo, prevInfo);
+  public readonly loadableInfo = this.#info.readOnly();
+
+  public readonly info = this.#info.select((info) => Loadable.getOrElse(initInfo, info));
+
+  public readonly isServerReachable = this.#info.select((info) => {
+    return Loadable.match(info, {
+      Loaded: (info) => !!info.clusterId,
+      NotLoaded: () => false,
+    });
+  });
+
+  protected async poll() {
+    const response = await getInfo({ signal: this.canceler?.signal });
+    this.#info.set(Loaded({ ...response, checked: true }));
+  }
+
+  protected pollCatch(): void {
+    this.#info.update((prev) => {
+      const info = Loadable.getOrElse(initInfo, prev);
       return Loaded({ ...info, checked: true });
     });
-    handleError(e);
   }
-};
+}
 
-export const useDeterminedInfo = (): Loadable<DeterminedInfo> => {
-  return useObservable(info.readOnly());
-};
+export default new DeterminedStore();

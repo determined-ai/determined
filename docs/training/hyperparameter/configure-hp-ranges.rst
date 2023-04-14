@@ -22,7 +22,7 @@ Determined supports the following searchable hyperparameter data types:
 -  ``int``: an integer within a range
 -  ``double``: a floating point number within a range
 -  ``log``: a logarithmically scaled floating point number. Users specify a ``base``, and Determined
-   searches the space of `exponents` within a range.
+   searches the space of ``exponents`` within a range.
 -  ``categorical``: a variable that can take on a value within a specified set of discrete values.
    The values themselves can be of any type.
 

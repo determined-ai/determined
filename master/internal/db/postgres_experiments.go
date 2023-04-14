@@ -400,196 +400,6 @@ type MetricMeasurements struct {
 	TrialID int32
 }
 
-type hpImportanceDataWrapper struct {
-	TrialID int     `db:"trial_id"`
-	Hparams []byte  `db:"hparams"`
-	Batches int     `db:"batches"`
-	Metric  float64 `db:"metric"`
-}
-
-func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportanceTrialData, int,
-	error,
-) {
-	entry := model.HPImportanceTrialData{
-		TrialID: r.TrialID,
-		Metric:  r.Metric,
-	}
-	return entry, r.Batches, json.Unmarshal(r.Hparams, &entry.Hparams)
-}
-
-// FetchHPImportanceTrainingData retrieves all the data needed by the hyperparameter importance
-// algorithm to measure the relative importance of various hyperparameters for one specific training
-// metric across all the trials in an experiment.
-func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
-	map[int][]model.HPImportanceTrialData, error,
-) {
-	var rows []hpImportanceDataWrapper
-	results := make(map[int][]model.HPImportanceTrialData)
-	// TODO: aren't we ignoring overtraining by taking the last?
-	err := db.queryRows(`
-SELECT
-  t.id AS trial_id,
-  t.hparams AS hparams,
-  s.total_batches AS batches,
-  s.metrics->'avg_metrics'->$1 AS metric
-FROM trials t
-  INNER JOIN steps s ON t.id=s.trial_id
-  INNER JOIN (
-    SELECT
-      t.id as trial_id,
-	  s.total_batches AS total_batches,
-	  max(s.total_batches) AS batches
-    FROM trials t
-  	INNER JOIN steps s ON t.id=s.trial_id
-    WHERE t.experiment_id=$2
-    GROUP BY t.id, s.total_batches
-  ) filter
-	ON s.total_batches = filter.total_batches
-	AND t.id = filter.trial_id`, &rows, metric, experimentID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get training metrics for hyperparameter importance")
-	}
-	for _, row := range rows {
-		result, batches, err := unmarshalHPImportanceHParams(row)
-		if err != nil {
-			return nil, errors.Wrap(err,
-				"failed to process training metrics for hyperparameter importance")
-		}
-		results[batches] = append(results[batches], result)
-	}
-	return results, nil
-}
-
-// FetchHPImportanceValidationData retrieves all the data needed by the hyperparameter importance
-// algorithm to measure the relative importance of various hyperparameters for one specific
-// validation metric across all the trials in an experiment.
-func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string) (
-	map[int][]model.HPImportanceTrialData, error,
-) {
-	var rows []hpImportanceDataWrapper
-	results := make(map[int][]model.HPImportanceTrialData)
-	err := db.queryRows(`
-SELECT
-  t.id AS trial_id,
-  t.hparams AS hparams,
-  v.total_batches AS batches,
-  (v.metrics->'validation_metrics'->>$1)::float8 as metric
-FROM trials t
-JOIN validations v ON t.id = v.trial_id
-JOIN (
-  SELECT
-    t.id as trial_id,
-    max(v.total_batches) AS total_batches
-  FROM trials t
-  JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id=$2
-  GROUP BY t.id, v.total_batches
-) filter
-ON v.total_batches = filter.total_batches
-AND t.id = filter.trial_id`, &rows, metric, experimentID)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"failed to get validation metrics for hyperparameter importance")
-	}
-	for _, row := range rows {
-		result, batches, err := unmarshalHPImportanceHParams(row)
-		if err != nil {
-			return nil, errors.Wrap(err,
-				"Failed to process validation metrics for hyperparameter importance")
-		}
-		results[batches] = append(results[batches], result)
-	}
-	return results, nil
-}
-
-// GetHPImportance returns the hyperparameter importance data and status for an experiment.
-func (db *PgDB) GetHPImportance(experimentID int) (result model.ExperimentHPImportance, err error) {
-	var jsonString []byte
-	err = db.sql.Get(&jsonString, "SELECT hpimportance FROM experiments WHERE id=$1", experimentID)
-	if err != nil {
-		return result, errors.Wrap(err, "Error retrieving hyperparameter importance")
-	}
-	if len(jsonString) > 0 {
-		err = json.Unmarshal(jsonString, &result)
-		if err != nil {
-			return result, errors.Wrap(err, "Error unmarshaling hyperparameter importance")
-		}
-	}
-	if result.TrainingMetrics == nil {
-		result.TrainingMetrics = make(map[string]model.MetricHPImportance)
-	}
-	if result.ValidationMetrics == nil {
-		result.ValidationMetrics = make(map[string]model.MetricHPImportance)
-	}
-	return result, err
-}
-
-// SetHPImportance writes the current hyperparameter importance data and status to the database.
-// It should only be called from the HPImportance manager actor, to ensure coherence. It will set
-// hpi.Partial according to the individual metric statuses to facilitate faster querying for any
-// incomplete work.
-func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImportance) error {
-	value.Partial = false
-	for _, metricHpi := range value.TrainingMetrics {
-		if metricHpi.Pending || metricHpi.InProgress {
-			value.Partial = true
-			break
-		}
-	}
-	if !value.Partial {
-		for _, metricHpi := range value.ValidationMetrics {
-			if metricHpi.Pending || metricHpi.InProgress {
-				value.Partial = true
-				break
-			}
-		}
-	}
-	jsonString, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	_, err = db.sql.Exec("UPDATE experiments SET hpimportance=$1 WHERE id=$2",
-		jsonString, experimentID)
-	return err
-}
-
-// GetPartialHPImportance returns all the experiment IDs and their HP importance data if they had
-// any pending or in-progress tasks the last time they were written to the DB.
-func (db *PgDB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
-	type partialHPImportanceRow struct {
-		ID           int    `db:"id"`
-		HPImportance []byte `db:"hpimportance"`
-	}
-
-	var rows []partialHPImportanceRow
-	var ids []int
-	var hpis []model.ExperimentHPImportance
-	err := db.queryRows(`
-SELECT id, hpimportance FROM experiments
-WHERE (hpimportance->>'partial')::boolean=true`, &rows)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err,
-			"failed to request partial hyperparameter importance work")
-	}
-	for _, row := range rows {
-		var hpi model.ExperimentHPImportance
-		err = json.Unmarshal(row.HPImportance, &hpi)
-		if err != nil {
-			return nil, nil, errors.Wrapf(err,
-				"Failed to parse partial hyperparameter importance for experiment %d", row.ID)
-		}
-		if hpi.TrainingMetrics == nil {
-			hpi.TrainingMetrics = make(map[string]model.MetricHPImportance)
-		}
-		if hpi.ValidationMetrics == nil {
-			hpi.ValidationMetrics = make(map[string]model.MetricHPImportance)
-		}
-		hpis = append(hpis, hpi)
-		ids = append(ids, row.ID)
-	}
-	return ids, hpis, nil
-}
-
 // ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
 func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	exp, err := db.ExperimentByID(id)
@@ -760,10 +570,10 @@ func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentID
 	FROM flat
 	WHERE value -> 'type' IS NOT NULL
 	GROUP BY project_id), reset_hp AS (
-        UPDATE projects SET hyperparameters = '[]'::jsonb 
+        UPDATE projects SET hyperparameters = '[]'::jsonb
 		WHERE id IN (SELECT project_id FROM experiments WHERE id IN (?))
     )
-	UPDATE projects SET hyperparameters = flatten.data FROM flatten 
+	UPDATE projects SET hyperparameters = flatten.data FROM flatten
 	WHERE flatten.project_id = projects.id`,
 		bun.In(experimentIDs), bun.In(experimentIDs), bun.In(experimentIDs)).Scan(ctx, &projectIDs)
 	if err != nil {
@@ -796,11 +606,11 @@ func AddProjectHyperparameters(
 		WHERE jsonb_typeof(f.value) = 'object' AND f.value -> 'type' IS NULL
 	), flatten AS (
 	SELECT key AS data
-	FROM flat WHERE value -> 'type' IS NOT NULL 
+	FROM flat WHERE value -> 'type' IS NOT NULL
 	UNION SELECT jsonb_array_elements_text(hyperparameters) FROM projects WHERE id = ?
 	), agg AS (
 		SELECT array_to_json(array_agg(DISTINCT flatten.data)) AS adata FROM flatten
-	) 
+	)
 	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`,
 		bun.In(experimentIDs), projectID, projectID).Scan(ctx, &projectIDs)
 	if err != nil {

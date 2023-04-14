@@ -96,14 +96,11 @@ def instantiate_gpu() -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogManager]]:
-    master_config_path = request.config.getoption("--master-config-path")
-    master_config_path = Path(master_config_path) if master_config_path else None
     master_scheme = request.config.getoption("--master-scheme")
     master_host = request.config.getoption("--master-host")
     master_port = request.config.getoption("--master-port")
     det_version = request.config.getoption("--det-version")
     follow_local_logs = request.config.getoption("--follow-local-logs")
-    compose_file = request.config.getoption("--compose-file")
     compare_stats_enabled = not request.config.getoption("--no-compare-stats")
 
     config.MASTER_SCHEME = master_scheme
@@ -113,9 +110,10 @@ def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogMana
 
     if master_host == "localhost" and follow_local_logs:
         project_name = request.config.getoption("--compose-project-name")
-        project = ["-p", project_name] if project_name else []
         with ClusterLogManager(
-            lambda: subprocess.run(["docker-compose", "-f", compose_file, *project, "logs", "-f"])
+            lambda: subprocess.run(
+                ["det", "deploy", "local", "logs", "--cluster-name", project_name]
+            )
         ) as clm:
             # Yield instead of return so that `__exit__` is called when the
             # testing session is finished.

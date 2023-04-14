@@ -4,11 +4,10 @@ from datetime import datetime
 from typing import Any, List
 
 import pytz
-import yaml
 
 from determined import cli
 from determined.cli import render
-from determined.common import api
+from determined.common import api, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -19,9 +18,7 @@ def ls(args: Namespace) -> None:
     pools = bindings.get_GetResourcePools(cli.setup_session(args))
     is_priority = check_is_priority(pools, args.resource_pool)
 
-    order_by = (
-        bindings.v1OrderBy.ORDER_BY_ASC if not args.reverse else bindings.v1OrderBy.ORDER_BY_DESC
-    )
+    order_by = bindings.v1OrderBy.ASC if not args.reverse else bindings.v1OrderBy.DESC
 
     def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
         return bindings.get_GetJobs(
@@ -58,7 +55,7 @@ def ls(args: Namespace) -> None:
     ]
 
     def computed_job_name(job: bindings.v1Job) -> str:
-        if job.type == bindings.jobv1Type.TYPE_EXPERIMENT:
+        if job.type == bindings.jobv1Type.EXPERIMENT:
             return f"{job.name} ({job.entityId})"
         else:
             return job.name
@@ -131,7 +128,7 @@ def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool:
 
     for pool in pools.resourcePools:
         if (resource_pool is None and pool.defaultComputePool) or resource_pool == pool.name:
-            return pool.schedulerType == bindings.v1SchedulerType.SCHEDULER_TYPE_PRIORITY
+            return pool.schedulerType == bindings.v1SchedulerType.PRIORITY
     raise ValueError(f"Pool {resource_pool} not found")
 
 

@@ -81,7 +81,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
         ["--config", "max_restarts=0", "--config", "resources.slots=1"],
     )
     try:
-        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
+        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
         task_id = _experiment_task_id(exp_id)
 
         proc = subprocess.Popen(
@@ -178,7 +178,7 @@ def test_experiment_proxy_ray_publish() -> None:
             raise
 
         try:
-            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
+            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
             _probe_tunnel(proc)
             _ray_job_submit(exp_path)
         finally:

@@ -81,11 +81,11 @@ def list_slots(args: argparse.Namespace) -> None:
     }
 
     def device_type_string(deviceType: typing.Optional[devicev1Type]) -> str:
-        if deviceType == devicev1Type.TYPE_CUDA:
+        if deviceType == devicev1Type.CUDA:
             return "cuda"
-        if deviceType == devicev1Type.TYPE_ROCM:
+        if deviceType == devicev1Type.ROCM:
             return "rocm"
-        if deviceType == devicev1Type.TYPE_CPU:
+        if deviceType == devicev1Type.CPU:
             return "cpu"
         return "unknown"
 

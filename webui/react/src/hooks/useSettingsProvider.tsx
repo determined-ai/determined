@@ -5,8 +5,8 @@ import React, { createContext, useEffect, useRef, useState } from 'react';
 import { getUserSetting } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
-import { authChecked } from 'stores/auth';
-import usersStore from 'stores/users';
+import authStore from 'stores/auth';
+import userStore from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -35,19 +35,15 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const loadableCurrentUser = useObservable(usersStore.getCurrentUser());
-  const user = Loadable.match(loadableCurrentUser, {
-    Loaded: (cUser) => cUser,
-    NotLoaded: () => undefined,
-  });
-  const checked = useObservable(authChecked);
+  const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
+  const isAuthChecked = useObservable(authStore.isChecked);
   const [canceler] = useState(new AbortController());
   const [isLoading] = useState(() => observable(true));
   const querySettings = useRef('');
   const [settingsState] = useState(() => observable(Map<string, Settings>()));
 
   useEffect(() => {
-    if (!checked) return;
+    if (!isAuthChecked) return;
 
     try {
       getUserSetting({}, { signal: canceler.signal }).then((response) => {
@@ -81,7 +77,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, checked, settingsState, isLoading]);
+  }, [canceler, isAuthChecked, isLoading, settingsState]);
 
   useEffect(() => {
     const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
@@ -94,7 +90,9 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   };
 
   return (
-    <Spinner spinning={useObservable(isLoading) && !(checked && !user)} tip="Loading Page">
+    <Spinner
+      spinning={useObservable(isLoading) && !(isAuthChecked && !currentUser)}
+      tip="Loading Page">
       <UserSettings.Provider
         value={{
           clearQuerySettings,

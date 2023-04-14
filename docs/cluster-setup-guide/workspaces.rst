@@ -65,7 +65,7 @@ CLI
 ===
 
 In the CLI, use the ``det workspace`` and ``det project`` commands to interact with workspaces and
-projects. Use the `-h` flag to get a list of all possible commands.
+projects. Use the ``-h`` flag to get a list of all possible commands.
 
 .. code::
 

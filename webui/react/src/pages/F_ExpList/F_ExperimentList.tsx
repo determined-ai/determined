@@ -9,7 +9,7 @@ import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { searchExperiments } from 'services/api';
 import usePolling from 'shared/hooks/usePolling';
-import usersStore from 'stores/users';
+import userStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -95,11 +95,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [project.id, canceler.signal, page]);
 
-  const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), usersStore.ensureUsersFetched(canceler)]);
-  }, [fetchExperiments, canceler]);
+  const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
-  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
+  useEffect(() => userStore.startPolling(), []);
 
   useEffect(() => {
     return () => {
@@ -125,9 +123,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <GlideTable
             colorMap={colorMap}
             data={experiments}
+            fetchExperiments={fetchExperiments}
             handleScroll={handleScroll}
             initialScrollPositionSet={initialScrollPositionSet}
             page={page}
+            project={project}
             selectAll={selectAll}
             selectedExperimentIds={selectedExperimentIds}
             setSelectAll={setSelectAll}
