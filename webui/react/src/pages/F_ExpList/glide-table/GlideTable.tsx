@@ -1,6 +1,7 @@
 import DataEditor, {
   CellClickedEventArgs,
   CompactSelection,
+  CustomCell,
   DataEditorProps,
   DataEditorRef,
   GridCell,
@@ -43,6 +44,7 @@ import {
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
+import { LinkCell } from './custom-renderers/cells/linkCell';
 import { placeholderMenuItems, TableActionMenu, TableActionMenuProps } from './menu';
 import { useTableTooltip } from './tooltip';
 import { getTheme } from './utils';
@@ -64,6 +66,14 @@ export interface GlideTableProps {
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
+
+type ClickableCell = CustomCell<LinkCell> & {
+  data: {
+    link: {
+      onClick: () => void;
+    };
+  };
+};
 
 /**
  * Number of renders with gridRef.current !== null
@@ -257,14 +267,28 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     [data, columnIds, columnDefs],
   );
 
-  const onCellClicked: DataEditorProps['onCellClicked'] = useCallback((cell: Item) => {
-    const [, row] = cell;
-    if (row === undefined) return;
-    setSelection(({ rows }: GridSelection) => ({
-      columns: CompactSelection.empty(),
-      rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
-    }));
-  }, []);
+  const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
+    (cell: Item) => {
+      const [col, row] = cell;
+      if (row === undefined) return;
+
+      const columnId = columnIds[col];
+      const rowData = data[row];
+      if (Loadable.isLoaded(rowData)) {
+        const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
+        if (String(cell?.data?.kind) === 'link-cell') {
+          cell.data.link?.onClick?.();
+        }
+        return;
+      }
+
+      setSelection(({ rows }: GridSelection) => ({
+        columns: CompactSelection.empty(),
+        rows: rows.hasIndex(row) ? rows.remove(row) : rows.add(row),
+      }));
+    },
+    [data, columnIds, columnDefs],
+  );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
