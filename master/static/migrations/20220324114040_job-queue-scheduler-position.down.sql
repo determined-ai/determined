@@ -1,2 +1,2 @@
 ALTER TABLE public.jobs
-    DROP COLUMN q_position;
+DROP COLUMN q_position;

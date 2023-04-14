@@ -1,9 +1,9 @@
 ALTER TABLE public.trials
-    ADD COLUMN best_validation_id int NULL;
+ADD COLUMN best_validation_id int NULL;
 
 CREATE FUNCTION public.page_info(total bigint, "offset" int, "limit" int)
-    RETURNS json
-    LANGUAGE sql IMMUTABLE
+RETURNS json
+LANGUAGE sql IMMUTABLE
 AS $$
 WITH start_index AS (
     SELECT (CASE WHEN "offset" < 0

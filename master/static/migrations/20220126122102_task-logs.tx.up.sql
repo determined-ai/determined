@@ -1,8 +1,8 @@
 ALTER TABLE public.tasks
-    ADD COLUMN log_version smallint DEFAULT 0;
+ADD COLUMN log_version smallint DEFAULT 0;
 
 CREATE TABLE public.task_logs (
-    id BIGSERIAL,
+    id bigserial,
     task_id text NOT NULL,
     allocation_id text NULL,
     agent_id text NULL,
@@ -16,4 +16,4 @@ CREATE TABLE public.task_logs (
     log bytea NOT NULL
 );
 
-CREATE INDEX ix_task_logs_task_id ON public.task_logs USING btree (task_id);
+CREATE INDEX ix_task_logs_task_id ON public.task_logs USING btree(task_id);

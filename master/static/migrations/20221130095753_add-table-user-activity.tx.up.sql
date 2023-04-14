@@ -1,9 +1,9 @@
-CREATE TYPE public.activity_type as ENUM (
-  'GET'
+CREATE TYPE public.activity_type AS ENUM (
+    'GET'
 );
 
-CREATE TYPE public.entity_type as ENUM (
-  'Project'
+CREATE TYPE public.entity_type AS ENUM (
+    'Project'
 );
 
 CREATE TABLE activity (
@@ -12,5 +12,7 @@ CREATE TABLE activity (
     activity_type public.activity_type NOT NULL,
     entity_type public.entity_type NOT NULL, 
     entity_id integer NOT NULL,
-    CONSTRAINT user_activity_unique UNIQUE (user_id, activity_type, entity_type, entity_id)  
+    CONSTRAINT user_activity_unique UNIQUE (
+        user_id, activity_type, entity_type, entity_id
+    )  
 );

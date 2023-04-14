@@ -5,6 +5,8 @@ CREATE TABLE public.resource_aggregates (
     seconds float NOT NULL
 );
 ALTER TABLE
-    public.resource_aggregates
+public.resource_aggregates
 ADD
-    CONSTRAINT resource_aggregates_keys_unique UNIQUE (date, aggregation_type, aggregation_key);
+CONSTRAINT resource_aggregates_keys_unique UNIQUE (
+    date, aggregation_type, aggregation_key
+);
