@@ -44,7 +44,7 @@ parameters:
     default: v1dev20
   gke-version:
     type: string
-    default: '1.23.16'
+    default: "1.23.16"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -88,7 +88,7 @@ any-upstream: &any-upstream
 
 commands:
   fix-circle-working-directory:
-    description: 'Fix CIRCLE_WORKING_DIRECTORY'
+    description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
@@ -192,7 +192,7 @@ commands:
     parameters:
       repository:
         type: string
-        default: ''
+        default: ""
       username:
         type: string
       password:
@@ -210,6 +210,7 @@ commands:
       - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
+
 
   install-protoc:
     steps:
@@ -246,8 +247,8 @@ commands:
       - save_cache:
           key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
           paths:
-            - '/home/circleci/go/'
-            - '/home/circleci/.cache/go-build/'
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -264,7 +265,7 @@ commands:
       - save_cache:
           key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
           paths:
-            - 'webui/react/node_modules'
+            - "webui/react/node_modules"
 
   install-wheel:
     parameters:
@@ -295,15 +296,15 @@ commands:
         default: true
       extras-requires:
         type: string
-        default: ''
+        default: ""
       extra-requirements-file:
         type: string
-        default: ''
+        default: ""
       executor:
         type: string
       python-version:
         type: string
-        default: '3.8.16'
+        default: "3.8.16"
     steps:
       - when:
           condition: <<parameters.install-python>>
@@ -402,7 +403,7 @@ commands:
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
-            - '/tmp/venv'
+            - "/tmp/venv"
       - run: python --version
       - run: pip --version
       - run: pip freeze --all
@@ -413,31 +414,31 @@ commands:
     parameters:
       mark:
         type: string
-        default: ''
+        default: ""
       junit-path:
         type: string
-        default: '/tmp/test-results/e2e/tests.xml'
+        default: "/tmp/test-results/e2e/tests.xml"
       master-scheme:
         type: string
-        default: 'http'
+        default: "http"
       master-host:
         type: string
-        default: 'localhost'
+        default: "localhost"
       master-port:
         type: string
-        default: '8080'
+        default: "8080"
       master-cert:
         type: string
-        default: ''
+        default: ""
       master-cert-name:
         type: string
-        default: ''
+        default: ""
       managed-devcluster:
         type: boolean
         default: false
       extra-pytest-flags:
         type: string
-        default: ''
+        default: ""
       wait-for-master:
         type: boolean
         default: true
@@ -494,10 +495,10 @@ commands:
     parameters:
       mark:
         type: string
-        default: ''
+        default: ""
       det-version:
         type: string
-        default: ''
+        default: ""
     steps:
       - run:
           name: Run det-deploy tests
@@ -513,30 +514,30 @@ commands:
         type: string
       extra-tags:
         type: string
-        default: ''
+        default: ""
       det-version:
         type: string
       keypair:
         type: string
-        default: 'integrations-test'
+        default: "integrations-test"
       enable-cors:
         type: boolean
         default: false
       master-tls-cert:
         type: string
-        default: ''
+        default: ""
       master-tls-key:
         type: string
-        default: ''
+        default: ""
       master-cert-name:
         type: string
-        default: ''
+        default: ""
       aux-agent-instance-type:
         type: string
-        default: 'm5.large'
+        default: "m5.large"
       compute-agent-instance-type:
         type: string
-        default: 'g4dn.xlarge'
+        default: "g4dn.xlarge"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -545,7 +546,7 @@ commands:
         default: false
       log-group-prefix:
         type: string
-        default: ''
+        default: ""
       reattach-enabled:
         type: boolean
         default: false
@@ -562,9 +563,10 @@ commands:
           steps:
             - run:
                 name: Enable CORS
-                command: 'echo --enable-cors >> /tmp/det-deploy-extra-args'
+                command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition: << parameters.extra-tags >>
+          condition:
+            << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -628,15 +630,15 @@ commands:
         type: string
       extra-tags:
         type: string
-        default: ''
+        default: ""
       det-version:
         type: string
       compute-agent-instance-type:
         type: string
-        default: 'g4dn.xlarge'
+        default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: 'm5.large'
+        default: "m5.large"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -730,10 +732,10 @@ commands:
         type: string
       storage-bucket:
         type: string
-        default: 'det-ci-373'
+        default: "det-ci-373"
       accel-node-taints:
         type: string
-        default: ''
+        default: ""
       cluster-ipv4-cidr:
         type: string
         description: The IP address range for the pods in this cluster.
@@ -744,14 +746,14 @@ commands:
         # So with a "/19", there are 8192 total addresses. After 4096 get used for services there are 4096 left.
         # That's 2^12 / 2^8 = 16 nodes for our tests. Thanks @Danny Sauer!
         # If we find we need more nodes in our tests in the future, we can bump this up.
-        default: '/19'
+        default: "/19"
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
       - set-cluster-labels:
           labels: <<parameters.labels>>
       - gcloud/install:
-          version: '412.0.0'
+          version: "412.0.0"
       - kubernetes/install-kubectl
       - gcloud/initialize:
           gcloud-service-key: <<parameters.gcloud-service-key>>
@@ -805,13 +807,13 @@ commands:
       - helm/install-helm-chart:
           chart: helm/charts/determined
           helm-version: v3.2.4
-          namespace: 'default'
+          namespace: "default"
           wait: true
-          release-name: 'ci'
+          release-name: "ci"
           values-to-override: ${HELM_VALUES}
       - set-master-address-gke:
-          release-name: 'ci'
-          namespace: 'default'
+          release-name: "ci"
+          namespace: "default"
       - when:
           condition: <<parameters.gpus-per-machine>>
           steps:
@@ -908,12 +910,12 @@ commands:
     parameters:
       scheme:
         type: string
-        default: 'http'
+        default: "http"
       host:
         type: string
       port:
         type: string
-        default: '8080'
+        default: "8080"
     steps:
       - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
 
@@ -921,10 +923,10 @@ commands:
     parameters:
       only_on_branch:
         type: string
-        default: ''
+        default: ""
       test_results_path:
         type: string
-        default: ''
+        default: ""
     steps:
       - when:
           condition:
@@ -993,6 +995,7 @@ commands:
           no_output_timeout: 30m
           command: make package
 
+
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1041,9 +1044,9 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: 'tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0'
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
-          extra-requirements-file: 'docs/requirements.txt'
+          extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
       - run: make -C model_hub examples
@@ -1079,7 +1082,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     resource_class: xlarge
     steps:
       - checkout
@@ -1101,17 +1104,17 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - 'master/dist/*linux_amd64.deb'
-            - 'master/dist/*linux_amd64.rpm'
-            - 'agent/dist/*linux_amd64.deb'
-            - 'agent/dist/*linux_amd64.rpm'
-            - 'build/*.image'
+            - "master/dist/*linux_amd64.deb"
+            - "master/dist/*linux_amd64.rpm"
+            - "agent/dist/*linux_amd64.deb"
+            - "agent/dist/*linux_amd64.rpm"
+            - "build/*.image"
 
   package-and-push-system-dev:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     resource_class: xlarge
     steps:
       - checkout
@@ -1152,7 +1155,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
@@ -1182,7 +1185,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
@@ -1227,7 +1230,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     steps:
       - checkout
       - attach_workspace:
@@ -1245,7 +1248,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extras-requires: 'twine'
+          extras-requires: "twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
@@ -1258,7 +1261,7 @@ jobs:
       - skip-if-docs-only
       - setup-python-venv:
           install-python: false
-          extra-requirements-file: 'bindings/requirements.txt'
+          extra-requirements-file: "bindings/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
@@ -1274,7 +1277,7 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           install-python: false
-          extra-requirements-file: 'bindings/requirements.txt'
+          extra-requirements-file: "bindings/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
@@ -1288,7 +1291,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extras-requires: 'awscli'
+          extras-requires: "awscli"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness upload-try-now-template
 
@@ -1357,12 +1360,8 @@ jobs:
       - skip-if-docs-only
       - run: apt-get update && apt-get install make
       - react-get-deps
-      - run: npx playwright install --with-deps && npx playwright install chrome
+      - run: npx playwright install chrome
       - run: make -C webui/react e2e
-      - persist_to_workspace:
-          root: .
-          paths:
-            - webui/react/e2e
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -1372,7 +1371,7 @@ jobs:
     docker:
       - image: cimg/node:16.19.0
         environment:
-          CI: 'true'
+          CI: "true"
     resource_class: xlarge
     steps:
       - checkout-with-sm
@@ -1380,8 +1379,8 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
-          flags: 'web'
-          xtra_args: '-v'
+          flags: "web"
+          xtra_args: "-v"
       - store_test_results:
           path: webui/react/coverage/junit.xml
       - store_artifacts:
@@ -1401,7 +1400,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     resource_class: large
     steps:
       - checkout
@@ -1419,7 +1418,7 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
@@ -1432,14 +1431,14 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - 'master/build'
-            - 'agent/build'
+            - "master/build"
+            - "agent/build"
 
   build-proto:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     steps:
       - checkout
       - reinstall-go
@@ -1448,13 +1447,13 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - 'proto/build/**/*'
+            - "proto/build/**/*"
 
   test-unit-go:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
-          GO111MODULE: 'on'
+          GO111MODULE: "on"
     steps:
       - checkout
       - skip-if-docs-only
@@ -1465,8 +1464,8 @@ jobs:
       - run: make -C master test
       - run: make -C agent test
       - codecov/upload:
-          flags: 'backend'
-          xtra_args: '-v'
+          flags: "backend"
+          xtra_args: "-v"
       - store_test_results:
           path: master/test.junit.xml
       - store_test_results:
@@ -1544,7 +1543,7 @@ jobs:
       - checkout
       - setup-python-venv:
           install-python: false
-          extra-requirements-file: 'docs/requirements.txt'
+          extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C docs check
 
@@ -1571,8 +1570,8 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: 'torch==1.9.0'
-          extra-requirements-file: 'requirements.txt'
+          extras-requires: "torch==1.9.0"
+          extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C cli check
       - run: make -C common check
@@ -1595,8 +1594,8 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: 'tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0'
-          extra-requirements-file: 'harness/tests/requirements/requirements-harness.txt'
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
@@ -1617,8 +1616,8 @@ jobs:
       - install-codecov
       - setup-python-venv:
           determined: true
-          extras-requires: 'tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0'
-          extra-requirements-file: 'harness/tests/requirements/requirements-harness.txt'
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
@@ -1639,8 +1638,8 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: 'tensorflow==2.8.4 torch==1.9.0'
-          extra-requirements-file: 'harness/tests/requirements/requirements-harness.txt'
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
@@ -1661,8 +1660,8 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: 'tensorflow==2.8.4 torch==1.9.0'
-          extra-requirements-file: 'harness/tests/requirements/requirements-harness.txt'
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
@@ -1684,8 +1683,8 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: 'torch==1.9.0 torchvision==0.10.0'
-          extra-requirements-file: 'model_hub/tests/requirements.txt'
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
+          extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
@@ -1706,7 +1705,7 @@ jobs:
           install-python: false
           determined: false
           model-hub: false
-          extras-requires: 'coverage'
+          extras-requires: "coverage"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
@@ -1729,7 +1728,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: 'examples/tests/requirements.txt'
+          extra-requirements-file: "examples/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
@@ -1784,13 +1783,13 @@ jobs:
         default: false
       postgres-version:
         type: string
-        default: '10'
+        default: "10"
       agent-version:
         type: string
-        default: ''
+        default: ""
       extra-pytest-flags:
         type: string
-        default: ''
+        default: ""
       wait-for-master:
         type: boolean
         default: true
@@ -1812,7 +1811,7 @@ jobs:
 
       - setup-python-venv:
           determined: True
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
       - run:
@@ -1855,10 +1854,10 @@ jobs:
     parameters:
       compute-agent-instance-type:
         type: string
-        default: 'g4dn.xlarge'
+        default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: 'm5.large'
+        default: "m5.large"
       cluster-id:
         type: string
         default: determined-${CIRCLE_BRANCH////--}
@@ -1878,7 +1877,7 @@ jobs:
           only-on-branch: master
           # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
-          time: '10000'
+          time: "10000"
       - checkout
       - set-slack-user-id
       - setup-python-venv:
@@ -1896,7 +1895,7 @@ jobs:
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: '${SLACK_USER_ID}'
+          mentions: "${SLACK_USER_ID}"
 
   test-e2e-aws:
     parameters:
@@ -1921,13 +1920,13 @@ jobs:
         default: false
       slack-mentions:
         type: string
-        default: ''
+        default: ""
       slack-channel:
         type: string
-        default: ''
+        default: ""
       environment-gpu-enabled:
         type: string
-        default: '1'
+        default: "1"
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
@@ -1941,7 +1940,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - when:
           condition: <<parameters.enable-tls>>
@@ -1992,13 +1991,13 @@ jobs:
         default: <<pipeline.parameters.gke-version>>
       machine-type:
         type: string
-        default: 'n1-standard-8'
+        default: "n1-standard-8"
       num-machines:
         type: integer
         default: 1
       gpu-type:
         type: string
-        default: 'nvidia-tesla-t4'
+        default: "nvidia-tesla-t4"
       gpus-per-machine:
         type: integer
         default: 1
@@ -2010,25 +2009,25 @@ jobs:
         default: 0
       region:
         type: string
-        default: 'us-west1'
+        default: "us-west1"
       node-locations:
         type: string
-        default: 'us-west1-b'
+        default: "us-west1-b"
       slack-mentions:
         type: string
-        default: ''
+        default: ""
       slack-channel:
         type: string
-        default: ''
+        default: ""
       environment-gpu-enabled:
         type: string
-        default: '1'
+        default: "1"
       environment-image:
         default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string
-        default: ''
+        default: ""
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
@@ -2042,13 +2041,13 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - queue/until_front_of_line:
           only-on-branch: master
           # Basically wait forever -- we would prefer not to fail tests, and
           # we'll likely never be this backed up.
-          time: '10000'
+          time: "10000"
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           labels: test-mark=<<parameters.mark>>
@@ -2110,7 +2109,7 @@ jobs:
 
       - setup-python-venv:
           determined: true
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
       - pull-task-images:
@@ -2144,7 +2143,7 @@ jobs:
 
       - setup-python-venv:
           determined: true
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
       - pull-task-images:
@@ -2171,10 +2170,10 @@ jobs:
         default: 1
       slack-mentions:
         type: string
-        default: ''
+        default: ""
       slack-channel:
         type: string
-        default: ''
+        default: ""
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -2185,7 +2184,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extra-requirements-file: 'e2e_tests/tests/requirements.txt'
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
@@ -2204,7 +2203,7 @@ jobs:
             echo "export DET_MASTER=${MASTER_SCHEME:-http}://${MASTER_HOST}:${MASTER_PORT:-8080}" >> "$BASH_ENV"
       - when:
           condition:
-            equal: [<<parameters.deployment-type>>, 'fsx']
+            equal: [<<parameters.deployment-type>>, "fsx"]
           steps:
             - run:
                 name: Test FSx/Lustre
@@ -2212,7 +2211,7 @@ jobs:
                   det cmd run --config resources.slots=1 'mount | grep lustre && echo MARKER' | grep MARKER
       - when:
           condition:
-            equal: [<<parameters.deployment-type>>, 'efs']
+            equal: [<<parameters.deployment-type>>, "efs"]
           steps:
             - run:
                 name: Test EFS
@@ -2251,7 +2250,7 @@ workflows:
           matrix:
             parameters:
               executor-name:
-                ['python-37', 'python-38', 'python-39', 'win/default']
+                ["python-37", "python-38", "python-39", "win/default"]
 
   test-unit:
     jobs:
@@ -2321,7 +2320,7 @@ workflows:
             - build-go
           parallelism: 1
           tf2: true
-          mark: 'tensorflow2_cpu'
+          mark: "tensorflow2_cpu"
 
       - test-e2e:
           name: test-e2e-tf1
@@ -2329,7 +2328,7 @@ workflows:
             - build-go
           parallelism: 1
           tf1: true
-          mark: 'tensorflow1_cpu'
+          mark: "tensorflow1_cpu"
 
       - test-e2e:
           name: test-e2e-cpu
@@ -2362,7 +2361,7 @@ workflows:
           managed-devcluster: true
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
-          extra-pytest-flags: '--no-compare-stats'
+          extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -2390,7 +2389,7 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
-          postgres-version: '10'
+          postgres-version: "10"
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -2400,7 +2399,7 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
-          postgres-version: '14'
+          postgres-version: "14"
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -2412,7 +2411,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              agent-version: ['0.17.10']
+              agent-version: ["0.17.10"]
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
@@ -2462,11 +2461,11 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['parallel']
-              mark: ['parallel']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -2479,10 +2478,10 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              cluster-id-prefix: ['e2e-gpu']
+              cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
-              mark: ['e2e_gpu']
-              slack-mentions: ['${SLACK_USER_ID}']
+              mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
@@ -2494,10 +2493,10 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-gpu']
-              mark: ['e2e_gpu']
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -2509,11 +2508,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['parallel']
-              mark: ['parallel']
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-32']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 
@@ -2528,10 +2527,10 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-gpu-tfonly']
-              mark: ['e2e_gpu and tensorflow2']
+              cluster-id-prefix: ["e2e-gpu-tfonly"]
+              mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
+              slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -2545,11 +2544,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['parallel-tfonly']
-              mark: ['parallel and tensorflow2']
+              cluster-id-prefix: ["parallel-tfonly"]
+              mark: ["parallel and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-32']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
@@ -2565,14 +2564,14 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-cpu']
-              mark: ['e2e_gpu and not gpu_required']
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-8']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
-              environment-gpu-enabled: ['0']
-              slot-type: ['cpu']
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
 
       - test-e2e-gke:
@@ -2585,16 +2584,16 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-k8s']
-              mark: ['e2e_k8s']
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-8']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
-              environment-gpu-enabled: ['0']
-              slot-type: ['cpu']
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
-              accel-node-taints: ['accel=truth:NoSchedule']
+              accel-node-taints: ["accel=truth:NoSchedule"]
 
       - test-stress:
           name: test-stress
@@ -2604,7 +2603,7 @@ workflows:
           matrix:
             parameters:
               parallelism: [1]
-              mark: ['stress_test']
+              mark: ["stress_test"]
               det-version: [$CIRCLE_SHA1]
 
       - test-det-deploy:
@@ -2614,7 +2613,7 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              mark: ['det_deploy_local']
+              mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
   test-e2e-longrunning:
@@ -2652,11 +2651,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['distributed']
-              mark: ['distributed and not gpu_required']
-              compute-agent-instance-type: ['c5.2xlarge']
-              environment-gpu-enabled: ['0']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
 
       # DeepSpeed tests
@@ -2674,11 +2673,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ['g4dn.12xlarge']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['deepspeed']
-              mark: ['deepspeed']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.12xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
+              slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
       # K8s GPU tests
@@ -2695,10 +2694,10 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-gpu']
-              mark: ['e2e_gpu']
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -2709,11 +2708,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['parallel']
-              mark: ['parallel']
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-32']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 
@@ -2727,10 +2726,10 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-gpu-tfonly']
-              mark: ['e2e_gpu and tensorflow2']
+              cluster-id-prefix: ["e2e-gpu-tfonly"]
+              mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
+              slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -2743,11 +2742,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['parallel-tfonly']
-              mark: ['parallel and tensorflow2']
+              cluster-id-prefix: ["parallel-tfonly"]
+              mark: ["parallel and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-32']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
@@ -2767,14 +2766,14 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-cpu']
-              mark: ['e2e_gpu and not gpu_required']
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-8']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
-              environment-gpu-enabled: ['0']
-              slot-type: ['cpu']
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
 
       - test-e2e-gke:
@@ -2786,16 +2785,16 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['e2e-k8s']
-              mark: ['e2e_k8s']
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ['${SLACK_USER_ID}']
-              machine-type: ['n1-standard-8']
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
-              environment-gpu-enabled: ['0']
-              slot-type: ['cpu']
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
-              accel-node-taints: ['accel=truth:NoSchedule']
+              accel-node-taints: ["accel=truth:NoSchedule"]
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
@@ -2811,10 +2810,10 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ['distributed']
-              mark: ['distributed']
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
       # Nightly tests
@@ -2832,8 +2831,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              cluster-id-prefix: ['nightly']
-              mark: ['nightly']
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
 
       # GPU tests
       - request-gpu-tests:
@@ -2850,11 +2849,11 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['parallel']
-              mark: ['parallel']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -2866,10 +2865,10 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              cluster-id-prefix: ['e2e-gpu']
+              cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
-              mark: ['e2e_gpu']
-              slack-mentions: ['${SLACK_USER_ID}']
+              mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       # mmdetection tests
       - request-mmdetection-tests:
@@ -2885,11 +2884,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['mmdetection']
-              mark: ['model_hub_mmdetection']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
+              slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
       # Transformers tests
@@ -2906,11 +2905,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['transformers']
-              mark: ['model_hub_transformers']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
       - test-e2e-aws:
@@ -2922,11 +2921,11 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
-              cluster-id-prefix: ['transformers-amp']
-              mark: ['model_hub_transformers_amp']
-              slack-mentions: ['${SLACK_USER_ID}']
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
       # Request AWS FS tests
@@ -2943,7 +2942,7 @@ workflows:
             - package-and-push-system-dev
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-mentions: '${SLACK_USER_ID}'
+          slack-mentions: "${SLACK_USER_ID}"
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -2954,12 +2953,12 @@ workflows:
             - package-and-push-system-dev
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-mentions: '${SLACK_USER_ID}'
+          slack-mentions: "${SLACK_USER_ID}"
 
   nightly:
     triggers:
       - schedule:
-          cron: '0 5 * * *'
+          cron: "0 5 * * *"
           filters:
             branches:
               only:
@@ -2971,47 +2970,47 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              cluster-id-prefix: ['nightly']
-              mark: ['nightly']
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['distributed']
-              mark: ['distributed']
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['transformers']
-              mark: ['model_hub_transformers']
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers-amp
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['transformers-amp']
-              mark: ['model_hub_transformers_amp']
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['mmdetection']
-              mark: ['model_hub_mmdetection']
-              compute-agent-instance-type: ['g4dn.metal']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
@@ -3019,35 +3018,35 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['deepspeed']
-              mark: ['deepspeed']
-              compute-agent-instance-type: ['g4dn.12xlarge']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
+              compute-agent-instance-type: ["g4dn.12xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ['distributed']
-              mark: ['distributed and not gpu_required']
-              compute-agent-instance-type: ['c5.2xlarge']
-              environment-gpu-enabled: ['0']
-              aux-agent-instance-type: ['m5.large']
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
           context: aws
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-mentions: '${SLACK_USER_ID}'
+          slack-mentions: "${SLACK_USER_ID}"
 
       - test-aws-fs:
           name: test-aws-fs-efs
           context: aws
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-mentions: '${SLACK_USER_ID}'
+          slack-mentions: "${SLACK_USER_ID}"
 
   release:
     jobs:
@@ -3076,7 +3075,7 @@ workflows:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ['harness', 'common', 'cli', 'deploy', 'model_hub']
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
           context: determined-production
           filters: *rc-filters
           requires:
@@ -3093,7 +3092,7 @@ workflows:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ['harness', 'common', 'cli', 'deploy', 'model_hub']
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
           context: determined-production
           filters: *release-filters
           requires:
