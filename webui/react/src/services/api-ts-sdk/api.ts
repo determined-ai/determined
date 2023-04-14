@@ -1818,19 +1818,6 @@ export interface V1ComparableTrial {
     metrics: Array<V1SummarizedMetric>;
 }
 /**
- * Response to CompareTrialsRequest.
- * @export
- * @interface V1CompareTrialsResponse
- */
-export interface V1CompareTrialsResponse {
-    /**
-     * A list of objects containing trial and metrics information.
-     * @type {Array<V1ComparableTrial>}
-     * @memberof V1CompareTrialsResponse
-     */
-    trials: Array<V1ComparableTrial>;
-}
-/**
  * 
  * @export
  * @interface V1CompleteTrialSearcherValidationResponse
@@ -8839,6 +8826,19 @@ export interface V1TestWebhookResponse {
     completed: boolean;
 }
 /**
+ * Response to TimeSeriesRequest.
+ * @export
+ * @interface V1TimeSeriesResponse
+ */
+export interface V1TimeSeriesResponse {
+    /**
+     * A list of objects containing trial and metrics information.
+     * @type {Array<V1ComparableTrial>}
+     * @memberof V1TimeSeriesResponse
+     */
+    trials: Array<V1ComparableTrial>;
+}
+/**
  * Timestamp filters.
  * @export
  * @interface V1TimestampFieldFilter
@@ -12493,157 +12493,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
-         * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/compare`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (trialIds) {
-                localVarQueryParameter['trialIds'] = trialIds
-            }
-            
-            if (maxDatapoints !== undefined) {
-                localVarQueryParameter['maxDatapoints'] = maxDatapoints
-            }
-            
-            if (metricNames) {
-                localVarQueryParameter['metricNames'] = metricNames
-            }
-            
-            if (startBatches !== undefined) {
-                localVarQueryParameter['startBatches'] = startBatches
-            }
-            
-            if (endBatches !== undefined) {
-                localVarQueryParameter['endBatches'] = endBatches
-            }
-            
-            if (metricType !== undefined) {
-                localVarQueryParameter['metricType'] = metricType
-            }
-            
-            if (scale !== undefined) {
-                localVarQueryParameter['scale'] = scale
-            }
-            
-            if (xAxis !== undefined) {
-                localVarQueryParameter['xAxis'] = xAxis
-            }
-            
-            if (metricIds) {
-                localVarQueryParameter['metricIds'] = metricIds
-            }
-            
-            if (timeSeriesFilterName !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.name'] = timeSeriesFilterName
-            }
-            
-            if (timeSeriesFilterDoubleRangeLt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.lt'] = timeSeriesFilterDoubleRangeLt
-            }
-            
-            if (timeSeriesFilterDoubleRangeLte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.lte'] = timeSeriesFilterDoubleRangeLte
-            }
-            
-            if (timeSeriesFilterDoubleRangeGt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.gt'] = timeSeriesFilterDoubleRangeGt
-            }
-            
-            if (timeSeriesFilterDoubleRangeGte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.gte'] = timeSeriesFilterDoubleRangeGte
-            }
-            
-            if (timeSeriesFilterIntegerRangeLt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.lt'] = timeSeriesFilterIntegerRangeLt
-            }
-            
-            if (timeSeriesFilterIntegerRangeLte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.lte'] = timeSeriesFilterIntegerRangeLte
-            }
-            
-            if (timeSeriesFilterIntegerRangeGt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.gt'] = timeSeriesFilterIntegerRangeGt
-            }
-            
-            if (timeSeriesFilterIntegerRangeGte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.gte'] = timeSeriesFilterIntegerRangeGte
-            }
-            
-            if (timeSeriesFilterIntegerRangeIncl) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.incl'] = timeSeriesFilterIntegerRangeIncl
-            }
-            
-            if (timeSeriesFilterIntegerRangeNotIn) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.notIn'] = timeSeriesFilterIntegerRangeNotIn
-            }
-            
-            if (timeSeriesFilterTimeRangeLt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = timeSeriesFilterTimeRangeLt.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeLte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = timeSeriesFilterTimeRangeLte.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeGt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = timeSeriesFilterTimeRangeGt.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeGte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = timeSeriesFilterTimeRangeGte.toISOString()
-            }
-            
-            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            localVarUrlObj.search = null;
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -13850,6 +13699,157 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
+         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        timeSeries(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/time-series`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
+            }
+            
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints
+            }
+            
+            if (metricNames) {
+                localVarQueryParameter['metricNames'] = metricNames
+            }
+            
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches
+            }
+            
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches
+            }
+            
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType
+            }
+            
+            if (scale !== undefined) {
+                localVarQueryParameter['scale'] = scale
+            }
+            
+            if (xAxis !== undefined) {
+                localVarQueryParameter['xAxis'] = xAxis
+            }
+            
+            if (metricIds) {
+                localVarQueryParameter['metricIds'] = metricIds
+            }
+            
+            if (timeSeriesFilterName !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.name'] = timeSeriesFilterName
+            }
+            
+            if (timeSeriesFilterDoubleRangeLt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.lt'] = timeSeriesFilterDoubleRangeLt
+            }
+            
+            if (timeSeriesFilterDoubleRangeLte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.lte'] = timeSeriesFilterDoubleRangeLte
+            }
+            
+            if (timeSeriesFilterDoubleRangeGt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.gt'] = timeSeriesFilterDoubleRangeGt
+            }
+            
+            if (timeSeriesFilterDoubleRangeGte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.gte'] = timeSeriesFilterDoubleRangeGte
+            }
+            
+            if (timeSeriesFilterIntegerRangeLt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.lt'] = timeSeriesFilterIntegerRangeLt
+            }
+            
+            if (timeSeriesFilterIntegerRangeLte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.lte'] = timeSeriesFilterIntegerRangeLte
+            }
+            
+            if (timeSeriesFilterIntegerRangeGt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.gt'] = timeSeriesFilterIntegerRangeGt
+            }
+            
+            if (timeSeriesFilterIntegerRangeGte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.gte'] = timeSeriesFilterIntegerRangeGte
+            }
+            
+            if (timeSeriesFilterIntegerRangeIncl) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.incl'] = timeSeriesFilterIntegerRangeIncl
+            }
+            
+            if (timeSeriesFilterIntegerRangeNotIn) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.notIn'] = timeSeriesFilterIntegerRangeNotIn
+            }
+            
+            if (timeSeriesFilterTimeRangeLt) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = timeSeriesFilterTimeRangeLt.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeLte) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = timeSeriesFilterTimeRangeLte.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeGt) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = timeSeriesFilterTimeRangeGt.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeGte) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = timeSeriesFilterTimeRangeGte.toISOString()
+            }
+            
+            localVarUrlObj.query = { ...localVarUrlObj.query, ...localVarQueryParameter, ...options.query };
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            localVarUrlObj.search = null;
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -14176,48 +14176,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         cancelExperiments(body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
-         * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14769,6 +14727,48 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
+         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        timeSeries(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TimeSeriesResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).timeSeries(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -14924,39 +14924,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
             return ExperimentsApiFp(configuration).cancelExperiments(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
-         * @param {Array<string>} [metricIds] metric ids for the query.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -15265,6 +15232,39 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
+         * @param {Array<string>} [metricIds] metric ids for the query.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        timeSeries(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+            return ExperimentsApiFp(configuration).timeSeries(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -15396,41 +15396,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).cancelExperiments(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Return downsampled metrics from multiple trials to compare them side-by-side.
-     * @param {Array<number>} [trialIds] The requested trial ids.
-     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-     * @param {Array<string>} [metricNames] The names of selected metrics.
-     * @param {number} [startBatches] Sample from metrics after this batch number.
-     * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
-     * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
-     * @param {Array<string>} [metricIds] metric ids for the query.
-     * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-     * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-     * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-     * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-     * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-     * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-     * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-     * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-     * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-     * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-     * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-     * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-     * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-     * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-     * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -15788,6 +15753,41 @@ export class ExperimentsApi extends BaseAPI {
      */
     public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, options?: any) {
         return ExperimentsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+     * @param {Array<number>} [trialIds] The requested trial ids.
+     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+     * @param {Array<string>} [metricNames] The names of selected metrics.
+     * @param {number} [startBatches] Sample from metrics after this batch number.
+     * @param {number} [endBatches] Sample from metrics before this batch number.
+     * @param {V1MetricType} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1Scale} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {V1XAxis} [xAxis] x-axis selection. Default is in batch.   - X_AXIS_UNSPECIFIED: Unknown x-axis.  - X_AXIS_BATCH: x-axis in batch. This is the default x-axis.  - X_AXIS_TIME: x-axis in time.  - X_AXIS_EPOCH: x-axis in epoch.
+     * @param {Array<string>} [metricIds] metric ids for the query.
+     * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+     * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+     * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+     * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+     * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+     * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+     * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+     * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+     * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+     * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+     * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+     * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
+     * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
+     * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
+     * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public timeSeries(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, scale?: V1Scale, xAxis?: V1XAxis, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+        return ExperimentsApiFp(this.configuration).timeSeries(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -969,17 +969,17 @@ export const moveExperiments: DetApi<
   request: (params, options) => detApi.Experiments.moveExperiments(params, options),
 };
 
-export const compareTrials: DetApi<
+export const timeSeries: DetApi<
   Service.CompareTrialsParams,
-  Api.V1CompareTrialsResponse,
+  Api.V1TimeSeriesResponse,
   Type.TrialSummary[]
 > = {
-  name: 'compareTrials',
-  postProcess: (response: Api.V1CompareTrialsResponse) => {
+  name: 'timeSeries',
+  postProcess: (response: Api.V1TimeSeriesResponse) => {
     return response.trials.map(decoder.decodeTrialSummary);
   },
   request: (params: Service.CompareTrialsParams) =>
-    detApi.Experiments.compareTrials(
+    detApi.Experiments.timeSeries(
       params.trialIds,
       params.maxDatapoints,
       params.metricNames.map((m) => m.name),

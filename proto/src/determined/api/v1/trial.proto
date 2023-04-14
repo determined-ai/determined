@@ -674,18 +674,6 @@ enum Scale {
   SCALE_LOG = 2;
 }
 
-// XAxis options available in metrics charts.
-enum XAxis {
-  // Unknown x-axis.
-  X_AXIS_UNSPECIFIED = 0;
-  // x-axis in batch. This is the default x-axis.
-  X_AXIS_BATCH = 1;
-  // x-axis in time.
-  X_AXIS_TIME = 2;
-  // x-axis in epoch.
-  X_AXIS_EPOCH = 3;
-}
-
 // Get downsampled metrics from a trial.
 message SummarizeTrialRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -730,7 +718,7 @@ message ComparableTrial {
 }
 
 // Get downsampled metrics from multiple trials.
-message CompareTrialsRequest {
+message TimeSeriesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "max_datapoints", "trial_ids" ] }
   };
@@ -748,16 +736,14 @@ message CompareTrialsRequest {
   MetricType metric_type = 6;
   // Scale of metric visualization (linear or log scale).
   Scale scale = 7;
-  // x-axis selection. Default is in batch.
-  XAxis x_axis = 8;
   // metric ids for the query
   repeated string metric_ids = 9;
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
 }
 
-// Response to CompareTrialsRequest.
-message CompareTrialsResponse {
+// Response to TimeSeriesRequest.
+message TimeSeriesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials" ] }
   };

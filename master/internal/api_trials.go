@@ -652,7 +652,7 @@ func (a *apiServer) formatMetrics(
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool, xAxis apiv1.XAxis,
+	endBatches int, logScale bool,
 	timeSeriesFilter *commonv1.PolymorphicFilter,
 	metricIds []string,
 ) ([]*apiv1.SummarizedMetric, error) {
@@ -774,7 +774,7 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-		(req.Scale == apiv1.Scale_SCALE_LOG), apiv1.XAxis_X_AXIS_UNSPECIFIED,
+		(req.Scale == apiv1.Scale_SCALE_LOG),
 		nil, metricIds)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
@@ -784,9 +784,9 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 	return resp, nil
 }
 
-func (a *apiServer) CompareTrials(ctx context.Context,
-	req *apiv1.CompareTrialsRequest,
-) (*apiv1.CompareTrialsResponse, error) {
+func (a *apiServer) TimeSeries(ctx context.Context,
+	req *apiv1.TimeSeriesRequest,
+) (*apiv1.TimeSeriesResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
 		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
@@ -804,15 +804,14 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
-			(req.Scale == apiv1.Scale_SCALE_LOG),
-			req.XAxis, req.TimeSeriesFilter, req.MetricIds)
+			(req.Scale == apiv1.Scale_SCALE_LOG), req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed sampling")
 		}
 		container.Metrics = tsample
 		trials = append(trials, container)
 	}
-	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+	return &apiv1.TimeSeriesResponse{Trials: trials}, nil
 }
 
 func (a *apiServer) GetTrainingMetrics(
