@@ -42,17 +42,17 @@ DO UPDATE SET
 	return nil
 }
 
-// DeleteSnapshotsForExperiment deletes all snapshots for the given experiment.
-func (db *PgDB) DeleteSnapshotsForExperiment(experimentID int) error {
-	return db.withTransaction("delete snapshots", db.deleteSnapshotsForExperiment(experimentID))
+// DeleteSnapshotsForExperiments deletes all snapshots for multiple given experiments.
+func (db *PgDB) DeleteSnapshotsForExperiments(experimentIDs []int) error {
+	return db.withTransaction("delete snapshots", db.deleteSnapshotsForExperiments(experimentIDs))
 }
 
-func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sqlx.Tx) error {
+func (db *PgDB) deleteSnapshotsForExperiments(experimentIDs []int) func(tx *sqlx.Tx) error {
 	return func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 DELETE FROM experiment_snapshots
-WHERE experiment_id = $1`, experimentID); err != nil {
-			return errors.Wrap(err, "failed to delete experiment snapshots")
+WHERE experiment_id IN $1`, experimentIDs); err != nil {
+			return errors.Wrap(err, "failed to delete experiments snapshots")
 		}
 		return nil
 	}

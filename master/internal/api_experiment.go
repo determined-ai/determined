@@ -318,24 +318,19 @@ func (a *apiServer) DeleteExperiment(
 		return nil, err
 	}
 
-	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(int(req.ExperimentId)); {
-	case eErr != nil:
-		return nil, errors.New("failed to check model registry for references")
-	case exists:
-		return nil, status.Errorf(
-			codes.InvalidArgument, "checkpoints are registered as model versions")
+	results, _, err := exputil.DeleteExperiments(ctx, a.m.system,
+		[]int32{req.ExperimentId}, nil)
+
+	if err == nil {
+		if len(results) == 0 {
+			return nil, errors.Errorf("unknown error during delete query.")
+		} else if results[0].Error != nil {
+			return nil, results[0].Error
+		}
 	}
 
-	if !model.ExperimentTransitions[e.State][model.DeletingState] {
-		return nil, fmt.Errorf("cannot delete experiment in %s state", e.State)
-	}
-
-	e.State = model.DeletingState
-	if err := a.m.db.TrySaveExperimentState(e); err != nil {
-		return nil, errors.Wrapf(err, "transitioning to %s", e.State)
-	}
-	go func() {
-		if err := a.deleteExperiment(e, &curUser); err != nil {
+	// go func() {
+		if _, err := a.deleteExperiments(ctx, []*model.Experiment{e}, &curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -344,7 +339,7 @@ func (a *apiServer) DeleteExperiment(
 		} else {
 			logrus.Infof("experiment %d deleted successfully", e.ID)
 		}
-	}()
+	// }()
 
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
@@ -352,70 +347,111 @@ func (a *apiServer) DeleteExperiment(
 func (a *apiServer) DeleteExperiments(
 	ctx context.Context, req *apiv1.DeleteExperimentsRequest,
 ) (*apiv1.DeleteExperimentsResponse, error) {
-	_, _, err := grpcutil.GetUser(ctx)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	return &apiv1.DeleteExperimentsResponse{}, err
+	results, experiments, err := exputil.DeleteExperiments(ctx, a.m.system, req.ExperimentIds, req.Filters)
+
+	// go func() {
+	for i := 0; i < len(experiments); i += 10 {
+		exps := experiments[i : i+10]
+		if expIDs, err := a.deleteExperiments(ctx, exps, curUser); err != nil {
+			for _, id := range expIDs {
+				logrus.WithError(err).Errorf("deleting experiment %d", id)
+			}
+			_, err = db.Bun().NewUpdate().
+				ModelTableExpr("experiments as e").
+				Set("state = ?", model.DeleteFailedState).
+				Where("id IN (?)", bun.In(expIDs)).
+				Exec(ctx)
+			if err != nil {
+				for _, id := range expIDs {
+					logrus.WithError(err).Errorf("transitioning experiment %d to %s", id, model.DeleteFailedState)
+				}
+			}
+		} else {
+			for _, id := range expIDs {
+				logrus.WithError(err).Errorf("deleting experiment %d", id)
+			}
+		}
+	}
+	// }()
+
+	return &apiv1.DeleteExperimentsResponse{Results: exputil.ToAPIResults(results)}, err
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
-	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
-	if err != nil {
-		return err
+func (a *apiServer) deleteExperiments(ctx context.Context, exps []*model.Experiment,
+	userModel *model.User,
+) ([]int, error) {
+	var expIDs []int
+	var jobIDs []model.JobID
+	for _, exp := range exps {
+		expIDs = append(expIDs, exp.ID)
+		jobIDs = append(jobIDs, exp.JobID)
 	}
 
 	taskSpec := *a.m.taskSpec
-	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
-		exp.ID,
-		0,
-		0,
-		0,
-	)
-	if err != nil {
-		return err
-	}
-	if len(checkpoints) > 0 {
-		addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-		jobSubmissionTime := exp.StartTime
-		taskID := model.NewTaskID()
-		ckptGCTask := newCheckpointGCTask(
-			a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+
+	for _, exp := range exps {
+		agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+		if err != nil {
+			return nil, err
+		}
+
+		checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+			exp.ID,
+			0,
+			0,
+			0,
 		)
-		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-			return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+		if err != nil {
+			return nil, err
+		}
+
+		if len(checkpoints) > 0 {
+			addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+			jobSubmissionTime := exp.StartTime
+			taskID := model.NewTaskID()
+			ckptGCTask := newCheckpointGCTask(
+				a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+				exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+			)
+			if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
+				return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+			}
+		}
+
+		// delete jobs per experiment
+		resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
+			JobID: exp.JobID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
+		}
+		if err = <-resp.Err; err != nil {
+			return nil, fmt.Errorf("cleaning up resource mananger resources: %w", err)
 		}
 	}
 
-	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
-		JobID: exp.JobID,
-	})
+	trialIDs, taskIDs, err := a.m.db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), expIDs)
 	if err != nil {
-		return fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
-	}
-	if err = <-resp.Err; err != nil {
-		return fmt.Errorf("cleaning up resource mananger resources: %w", err)
-	}
-
-	trialIDs, taskIDs, err := a.m.db.ExperimentTrialAndTaskIDs(exp.ID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to gather trial IDs for experiment")
+		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
 
 	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIDs); err != nil {
-		return errors.Wrapf(err, "failed to delete trial logs from backend")
+		return nil, errors.Wrapf(err, "failed to delete trial logs from backend")
 	}
 
 	if err = a.m.taskLogBackend.DeleteTaskLogs(taskIDs); err != nil {
-		return errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
+		return nil, errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
-	if err = a.m.db.DeleteExperiment(exp.ID); err != nil {
-		return errors.Wrapf(err, "deleting experiment from database")
+	if err = a.m.db.DeleteExperiments(expIDs); err != nil {
+		return nil, errors.Wrapf(err, "deleting experiments from database")
 	}
-	return nil
+	return expIDs, nil
 }
 
 func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {

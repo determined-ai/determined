@@ -6,6 +6,8 @@ import (
 	api "github.com/determined-ai/determined/master/internal/api"
 	apiv1 "github.com/determined-ai/determined/proto/pkg/apiv1"
 
+	bun "github.com/uptrace/bun"
+
 	context "context"
 
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -392,13 +394,13 @@ func (_m *DB) DeleteAllocationSession(allocationID model.AllocationID) error {
 	return r0
 }
 
-// DeleteExperiment provides a mock function with given fields: id
-func (_m *DB) DeleteExperiment(id int) error {
-	ret := _m.Called(id)
+// DeleteExperiments provides a mock function with given fields: ids
+func (_m *DB) DeleteExperiments(ids []int) error {
+	ret := _m.Called(ids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func([]int) error); ok {
+		r0 = rf(ids)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -406,13 +408,13 @@ func (_m *DB) DeleteExperiment(id int) error {
 	return r0
 }
 
-// DeleteSnapshotsForExperiment provides a mock function with given fields: experimentID
-func (_m *DB) DeleteSnapshotsForExperiment(experimentID int) error {
-	ret := _m.Called(experimentID)
+// DeleteSnapshotsForExperiments provides a mock function with given fields: experimentIDs
+func (_m *DB) DeleteSnapshotsForExperiments(experimentIDs []int) error {
+	ret := _m.Called(experimentIDs)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int) error); ok {
-		r0 = rf(experimentID)
+	if rf, ok := ret.Get(0).(func([]int) error); ok {
+		r0 = rf(experimentIDs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -853,41 +855,6 @@ func (_m *DB) ExperimentTotalStepTime(id int) (float64, error) {
 	return r0, r1
 }
 
-// ExperimentTrialAndTaskIDs provides a mock function with given fields: expID
-func (_m *DB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
-	ret := _m.Called(expID)
-
-	var r0 []int
-	var r1 []model.TaskID
-	var r2 error
-	if rf, ok := ret.Get(0).(func(int) ([]int, []model.TaskID, error)); ok {
-		return rf(expID)
-	}
-	if rf, ok := ret.Get(0).(func(int) []int); ok {
-		r0 = rf(expID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(int) []model.TaskID); ok {
-		r1 = rf(expID)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]model.TaskID)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(int) error); ok {
-		r2 = rf(expID)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
 // ExperimentTrialIDs provides a mock function with given fields: expID
 func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	ret := _m.Called(expID)
@@ -912,6 +879,41 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	}
 
 	return r0, r1
+}
+
+// ExperimentsTrialAndTaskIDs provides a mock function with given fields: ctx, idb, expIDs
+func (_m *DB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int, []model.TaskID, error) {
+	ret := _m.Called(ctx, idb, expIDs)
+
+	var r0 []int
+	var r1 []model.TaskID
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, bun.IDB, []int) ([]int, []model.TaskID, error)); ok {
+		return rf(ctx, idb, expIDs)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, bun.IDB, []int) []int); ok {
+		r0 = rf(ctx, idb, expIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, bun.IDB, []int) []model.TaskID); ok {
+		r1 = rf(ctx, idb, expIDs)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]model.TaskID)
+		}
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, bun.IDB, []int) error); ok {
+		r2 = rf(ctx, idb, expIDs)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // GetExperimentStatus provides a mock function with given fields: experimentID

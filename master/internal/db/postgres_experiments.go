@@ -874,28 +874,28 @@ WHERE id = :id`
 	return db.namedExecOne(query, experiment)
 }
 
-// DeleteExperiment deletes an existing experiment.
-func (db *PgDB) DeleteExperiment(id int) error {
-	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
+// DeleteExperiments deletes one or more experiments.
+func (db *PgDB) DeleteExperiments(ids []int) error {
+	return db.withTransaction("delete experiments", func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 DELETE FROM raw_steps
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id); err != nil {
-			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id IN $1)
+`, ids); err != nil {
+			return errors.Wrapf(err, "error deleting steps for experiments %v", ids)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM raw_validations
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id IN $1)
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
+			return errors.Wrapf(err, "error deleting validations for experiments %v", id)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM raw_checkpoints
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id IN $1)
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
+			return errors.Wrapf(err, "error deleting checkpoints for experiments %v", ids)
 		}
 
 		if _, err := tx.Exec(`
@@ -905,34 +905,34 @@ WHERE task_id IN (
 	FROM tasks tk
 	JOIN trials t ON t.task_id = tk.task_id
 	JOIN experiments e ON t.experiment_id = e.id
-	WHERE experiment_id = $1
+	WHERE experiment_id IN $1
 )`, id); err != nil {
-			return errors.Wrapf(err, "error deleting checkpoints (v2) for experiment %v", id)
+			return errors.Wrapf(err, "error deleting checkpoints (v2) for experiments %v", ids)
 		}
 
-		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
-			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
+		if err := db.deleteSnapshotsForExperiments(ids)(tx); err != nil {
+			return errors.Wrapf(err, "error deleting snapshots for experiments %v", ids)
 		}
 
 		if _, err := tx.Exec(`
 DELETE FROM trials
-WHERE experiment_id = $1;
+WHERE experiment_id IN $1;
 `, id); err != nil {
-			return errors.Wrapf(err, "error deleting trials for experiment %v", id)
+			return errors.Wrapf(err, "error deleting trials for experiments %v", ids)
 		}
 
 		result, err := tx.Exec(`
 DELETE FROM experiments
-WHERE id = $1
-`, id)
+WHERE id IN $1
+`, ids)
 		if err != nil {
-			return errors.Wrapf(err, "error deleting experiment %v", id)
+			return errors.Wrapf(err, "error deleting experiment %v", ids)
 		}
 		switch num, err := result.RowsAffected(); {
 		case err != nil:
-			return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
+			return errors.Wrapf(err, "error in RowsAffected when deleting experiments %v", ids)
 		case num != 1:
-			return errors.Errorf("error deleting non-existing experiment %v", id)
+			return errors.Errorf("error deleting non-existing experiments %v", ids)
 		}
 		return nil
 	})
@@ -1030,18 +1030,20 @@ WHERE trials.experiment_id = $1
 	return trialIDs, nil
 }
 
-// ExperimentTrialAndTaskIDs returns the trial and task IDs for the experiment.
-func (db *PgDB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
+// ExperimentsTrialAndTaskIDs returns the trial and task IDs for one or more experiments.
+func (db *PgDB) ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) ([]int, []model.TaskID, error) {
 	var trialIDRows []struct {
 		ID     int          `db:"id"`
 		TaskID model.TaskID `db:"task_id"`
 	}
-	if err := db.queryRows(`
-SELECT id, task_id
-FROM trials
-WHERE trials.experiment_id = $1
-`, &trialIDRows, expID); err != nil {
-		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+	query := idb.NewSelect().
+		ColumnExpr("id").
+		ColumnExpr("task_id").
+		Table("trials").
+		Model(&trialIDRows).
+		Where("trials.experiment_id IN (?)", bun.In(expIDs))
+	if err := query.Scan(ctx); err != nil {
+		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiments %v", expIDs)
 	}
 	var trialIDs []int
 	var taskIDs []model.TaskID
