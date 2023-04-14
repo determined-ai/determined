@@ -19,7 +19,6 @@ interface LinkCellProps {
   readonly link: {
     readonly title: string;
     readonly href?: string;
-    readonly onClick?: () => void;
   };
 }
 
@@ -98,14 +97,6 @@ const renderer: CustomRenderer<LinkCell> = {
   kind: GridCellKind.Custom,
   needsHover: true,
   needsHoverPosition: true,
-  onClick: (e) => {
-    const hovered = onClickSelect(e);
-    if (hovered !== undefined) {
-      hovered.onClick?.();
-      e.preventDefault();
-    }
-    return undefined;
-  },
 
   onSelect: (e) => {
     if (onClickSelect(e) !== undefined) {
