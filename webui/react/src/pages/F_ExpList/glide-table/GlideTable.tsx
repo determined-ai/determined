@@ -160,6 +160,7 @@ export const GlideTable: React.FC<Props> = ({
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
         .map((idx) => data?.[idx])
+        .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
         .map((record) => record.data.id);
       if (prevIds === selectedIds) return prevIds;
@@ -231,7 +232,7 @@ export const GlideTable: React.FC<Props> = ({
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
       const row = data[rowIdx];
-      if (Loadable.isLoaded(row)) {
+      if (row && Loadable.isLoaded(row)) {
         return columnDefs[columnId].renderer(row.data, rowIdx);
       }
       return {

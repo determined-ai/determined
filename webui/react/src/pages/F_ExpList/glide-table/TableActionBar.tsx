@@ -76,6 +76,7 @@ interface Props {
   selectedExperimentIds: number[];
   setExperiments: Dispatch<SetStateAction<Loadable<ExperimentItem>[]>>;
   project: Project;
+  total: Loadable<number>;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -86,6 +87,7 @@ const TableActionBar: React.FC<Props> = ({
   selectedExperimentIds,
   setExperiments,
   project,
+  total,
 }) => {
   const permissions = usePermissions();
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
@@ -374,7 +376,13 @@ const TableActionBar: React.FC<Props> = ({
         {(selectAll || selectedExperimentIds.length > 0) && (
           <Dropdown content={<Menu items={editMenuItems} onClick={handleAction} />}>
             <Button icon={<Icon name="pencil" />}>
-              Edit ({selectAll ? 'All' : selectedExperimentIds.length})
+              Edit (
+              {selectAll
+                ? Loadable.isLoaded(total)
+                  ? total.data
+                  : 'All'
+                : selectedExperimentIds.length}
+              )
             </Button>
           </Dropdown>
         )}

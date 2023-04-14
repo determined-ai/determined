@@ -34,6 +34,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
+  const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -95,8 +96,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentBeforeCurrentPage,
           ...response.experiments.map((e) => Loaded(e.experiment)),
           ...experimentsAfterCurrentPage,
-        ];
+        ].slice(0, response.pagination.total);
       });
+      setTotal(
+        response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
+      );
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
@@ -149,6 +153,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
               setExperiments={setExperiments}
+              total={total}
               onAction={handleOnAction}
             />
             <GlideTable
