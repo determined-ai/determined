@@ -1985,14 +1985,14 @@ func scanMetricName(filter string, index int) string {
 
 	metricName := ""
 	for index < len(filter) {
-		char := string(filter[index])
+		c := string(filter[index])
 
 		// If we have reached an operator or space then we have parse through the entire metric name
-		if char == "<" || char == ":" || char == " " || char == "~" || char == "=" || char == ">" {
+		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
 			break
 		}
-		metricName += char
-		index += 1
+		metricName += c
+		index++
 	}
 	return metricName
 }
@@ -2002,7 +2002,7 @@ func buildQuery(filter string) string {
 
 	// The prefix for column names mapping to the
 	// experiment information
-	experiment_column_prefix := "experiment."
+	experimentColumnPrefix := "experiment."
 
 	// Prefixes for column names matching to metric value tables
 	metricPrefixes := map[string]string{
@@ -2042,7 +2042,7 @@ func buildQuery(filter string) string {
 
 	// Replace any needed experiment related column names
 	for key, value := range filterExperimentColMap {
-		filter = strings.ReplaceAll(filter, experiment_column_prefix+key, value)
+		filter = strings.ReplaceAll(filter, experimentColumnPrefix+key, value)
 	}
 
 	// Replace all metric related column names
@@ -2074,20 +2074,20 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		if filterIndex > int32(len(filter)-1) {
 			break
 		}
-		char := string(filter[filterIndex])
+		c := string(filter[filterIndex])
 
 		if valueHasStarted && valueIsString && valueTypeKnown {
 			// If the current value is a string and we have reached
 			// a string terminating character then we are at the end
 			// of the value
-			if char == "'" || char == "\"" {
-				filterIndex += 1
+			if c == "'" || c == "\"" {
+				filterIndex++
 				break
 			}
 		} else if valueHasStarted && !valueIsString && valueTypeKnown {
 			// If the current value is a number and the current character
 			// is not numeric then we are at the end of the value
-			if !numericeRegex.MatchString(char) {
+			if !numericeRegex.MatchString(c) {
 				break
 			}
 		}
@@ -2095,10 +2095,10 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 			// The start of the value has been reached so the type of the value
 			// can be determined
 			valueTypeKnown = true
-			if char == "'" || char == "\"" {
+			if c == "'" || c == "\"" { //nolint: gocritic
 				// If the value starts with a quote character then we are at the start of the value
 				valueIsString = true
-				filterIndex += 1
+				filterIndex++
 				continue
 			} else if filterIndex+3 < int32(len(filter)) && filter[filterIndex:filterIndex+4] == "null" {
 				// If the value from this point forward is 'null' then the value is 'NULL'
@@ -2110,33 +2110,33 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 				valueIsString = false
 			}
 		}
-		if char == ":" || char == "~" {
+		if c == ":" || c == "~" {
 			// These characters represent the end of a column name
 			// and the start of the value
 			isCol = false
 			valueHasStarted = true
-			filterIndex += 1
-			comparator = char
+			filterIndex++
+			comparator = c
 			continue
 		}
-		if char == "\\" {
+		if c == "\\" {
 			if filterIndex+1 < int32(len(filter)-1) {
 				nextChar := string(filter[filterIndex+1])
 				// Check to see if a terminated quote has been reached
 				// if so then add it to the sql string.
 				if nextChar == `'` || nextChar == `"` {
-					char = `\` + nextChar
+					c = `\` + nextChar
 				}
-				filterIndex += 1
+				filterIndex++
 			}
 		}
 		switch isCol {
 		case true:
-			col += char
+			col += c
 		case false:
-			value += char
+			value += c
 		}
-		filterIndex += 1
+		filterIndex++
 	}
 	if *operator == ":" {
 		if isNull {
@@ -2152,7 +2152,7 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		query = " LIKE " + `'%` + value + `%'`
 	}
 	if *operator == "-" {
-		if isNull {
+		if isNull { //nolint: gocritic
 			query = fmt.Sprintf("%v IS NOT NULL", col)
 		} else if comparator == "~" {
 			query = fmt.Sprintf("%v NOT LIKE ", col) + `'%` + value + `%'`
@@ -2190,63 +2190,65 @@ func parseFilter(filter string) (*string, error) {
 			break
 		}
 
-		char := string(filter[currentIndex])
+		c := string(filter[currentIndex])
 
 		// Determine the appropriate way to parse the string based on the current character.
 		// If a character is an operator such as ':','-', `<`,'>', or '~' then we need to
 		// determine the correct column name, value name, and sql comparison character.
 
-		switch char {
+		switch c {
 		case "(":
-			openParenCount += 1
-			currentQuery = currentQuery + char
-			currentIndex += 1
+			openParenCount++
+			currentQuery += c
+			currentIndex++
 		case ")":
 			if openParenCount < 1 {
-				return nil, fmt.Errorf("no open parentheses found for character %v at index, %x", char, currentIndex)
+				return nil, fmt.Errorf("no open parentheses found for character %v at index, %x",
+					c,
+					currentIndex)
 			}
-			currentQuery = currentQuery + char
-			openParenCount -= 1
-			currentIndex += 1
+			currentQuery += c
+			openParenCount--
+			currentIndex++
 		case ":":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
-			currentQuery = currentQuery + queryString
+			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
+			currentQuery += queryString
 			currentIndex = int(nextIndex)
 		case "-":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &char, false)
-			currentQuery = currentQuery + queryString
+			queryString, nextIndex := scanString(filter, currentIndex+1, &c, false)
+			currentQuery += queryString
 			currentIndex = int(nextIndex)
 		case "~":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
-			currentQuery = currentQuery + queryString
+			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
+			currentQuery += queryString
 			currentIndex = int(nextIndex)
 		case ">":
-			currentQuery = currentQuery + char
+			currentQuery += c
 			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery = currentQuery + "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &char, true)
-				currentQuery = currentQuery + queryString
+				currentQuery += "="
+				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
+				currentQuery += queryString
 				currentIndex = int(nextIndex)
 			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
-				currentQuery = currentQuery + queryString
+				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
+				currentQuery += queryString
 				currentIndex = int(nextIndex)
 			}
 		case "<":
-			currentQuery = currentQuery + char
+			currentQuery += c
 			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery = currentQuery + "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &char, true)
-				currentQuery = currentQuery + queryString
+				currentQuery += "="
+				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
+				currentQuery += queryString
 				currentIndex = int(nextIndex)
 			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
-				currentQuery = currentQuery + queryString
+				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
+				currentQuery += queryString
 				currentIndex = int(nextIndex)
 			}
 		default:
-			currentQuery = currentQuery + char
-			currentIndex += 1
+			currentQuery += c
+			currentIndex++
 		}
 	}
 	currentQuery = buildQuery(currentQuery)
