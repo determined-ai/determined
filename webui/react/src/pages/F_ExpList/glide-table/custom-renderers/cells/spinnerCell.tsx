@@ -8,7 +8,7 @@ export type SpinnerCell = CustomCell<SpinnerCellProps>;
 
 const renderer: CustomRenderer<SpinnerCell> = {
   draw: (args) => {
-    const { ctx, theme, rect, requestAnimationFrame } = args;
+    const { ctx, rect, requestAnimationFrame } = args;
 
     const progress = (window.performance.now() % 1000) / 1000;
 
@@ -22,7 +22,7 @@ const renderer: CustomRenderer<SpinnerCell> = {
       Math.PI * 2 * progress + Math.PI * 1.5,
     );
 
-    ctx.strokeStyle = theme.textMedium;
+    ctx.strokeStyle = getComputedStyle(ctx.canvas).getPropertyValue('--theme-brand');
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
