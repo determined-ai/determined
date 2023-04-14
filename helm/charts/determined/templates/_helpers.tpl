@@ -106,7 +106,7 @@ spec:
             - key: gpu.nvidia.com/class
               operator: In
               values:
-                - RTX_A5000
+                - RTX_A6000
   containers:
   - name: determined-container
     resources:
