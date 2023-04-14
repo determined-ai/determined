@@ -395,7 +395,9 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			}
 		}
 		epoch := new(int32)
-		*epoch = int32(results[i]["epoch"].(float64))
+		if results[i]["epoch"] != nil {
+			*epoch = int32(results[i]["epoch"].(float64))
+		}
 		var endTime time.Time
 		if results[i]["time"] == nil {
 			endTime = time.Time{}

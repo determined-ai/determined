@@ -238,7 +238,6 @@ func isMultiTrialSampleCorrect(expectedMetrics []*commonv1.Metrics, actualMetric
 }
 
 func TestMultiTrialSampleMetrics(t *testing.T) {
-	fmt.Println("multitrial")
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	trial, expectedTrainMetrics, expectedValMetrics := createTestTrialWithMetrics(
