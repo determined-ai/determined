@@ -9,7 +9,6 @@ class Oauth2ScimClient:
         name: str,
         secret: Optional[str] = None,
     ):
-
         self.id = client_id
         self.secret = secret
         self.domain = domain

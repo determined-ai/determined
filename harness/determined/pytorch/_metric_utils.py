@@ -181,7 +181,6 @@ def _log_tb_metrics(
     metrics: Dict[str, Any],
     batch_metrics: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
-
     if metric_type == "val":
         logging.debug("Write validation metrics for TensorBoard")
     elif metric_type == "train":

@@ -28,7 +28,6 @@ deepspeed_version = version.parse(deepspeed.__version__)
 
 
 def is_using_cuda() -> bool:
-
     val = os.getenv("CUDA_VISIBLE_DEVICES")
 
     if val is None or len(val.strip()) == 0:
@@ -38,7 +37,6 @@ def is_using_cuda() -> bool:
 
 
 def is_nccl_socket_ifname_env_var_set() -> bool:
-
     val = os.getenv("NCCL_SOCKET_IFNAME")
 
     if val is None or len(val.strip()) == 0:

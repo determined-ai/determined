@@ -75,7 +75,6 @@ def test_live_azure_lifecycle(require_secrets: bool, tmp_path: Path) -> None:
 def get_tensorboard_fetcher_azure(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
 ) -> AzureFetcher:
-
     connection_string = os.environ.get("DET_AZURE_TEST_CREDS")
     storage_config = {"connection_string": connection_string, "container": CONTAINER_NAME}
 
@@ -105,7 +104,6 @@ def get_tensorboard_fetcher_azure(
 
 @pytest.mark.cloud
 def test_tensorboard_fetcher_azure(require_secrets: bool, tmp_path: Path) -> None:
-
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, CONTAINER_NAME)
 

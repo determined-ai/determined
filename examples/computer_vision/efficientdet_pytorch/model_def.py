@@ -31,7 +31,6 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 class EffDetTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
-
         self.context = context
         self.hparam = self.context.get_hparam
         self.args = DotDict(self.context.get_hparams())
@@ -178,7 +177,6 @@ class EffDetTrial(PyTorchTrial):
         pin_mem=False,
         anchor_labeler=None,
     ):
-
         if isinstance(input_size, tuple):
             img_size = input_size[-2:]
         else:
@@ -221,7 +219,6 @@ class EffDetTrial(PyTorchTrial):
         return loader
 
     def build_training_data_loader(self):
-
         if self.context.get_hparam("fake_data"):
             dataset_train = FakeBackend()
             self.dataset_eval = dataset_train
@@ -307,7 +304,6 @@ class EffDetTrial(PyTorchTrial):
         torch.nn.utils.clip_grad_norm_(amp.master_params(self.optimizer), self.args.clip_grad)
 
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-
         if epoch_idx != self.cur_epoch and self.lr_scheduler is not None:
             self.cur_epoch = epoch_idx
             self.num_updates = epoch_idx * self.data_length
@@ -343,7 +339,6 @@ class EffDetTrial(PyTorchTrial):
         return {"loss": loss}
 
     def evaluate_batch(self, batch: TorchData):
-
         input, target = batch
         if self.args.prefetcher:
             input = input.float().sub_(self.val_mean).div_(self.val_std)
@@ -388,7 +383,6 @@ class EffDetTrial(PyTorchTrial):
         return {"val_loss": reduced_loss}
 
     def validation_reducer(self, values):
-
         concat_imgs, concat_pred = zip(*values)
 
         new_concat_imgs = []

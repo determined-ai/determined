@@ -101,7 +101,6 @@ def test_gcs_lifecycle(
 def get_tensorboard_fetcher_gcs(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
 ) -> GCSFetcher:
-
     storage_config = {"bucket": BUCKET_NAME}
 
     try:
@@ -123,7 +122,6 @@ def get_tensorboard_fetcher_gcs(
 def test_tensorboard_fetcher_gcs(
     require_secrets: bool, tmp_path: Path, prep_gcs_test_creds: None
 ) -> None:
-
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
 

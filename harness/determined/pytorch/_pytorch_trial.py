@@ -193,7 +193,6 @@ class _PyTorchTrialController:
         det_profiler: Optional[profiler.ProfilerAgent],
         global_batch_size: Optional[int],
     ) -> None:
-
         if not isinstance(trial_inst, PyTorchTrial):
             raise TypeError("PyTorchTrialController requires a PyTorchTrial.")
         self.trial = trial_inst

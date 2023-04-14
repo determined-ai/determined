@@ -129,7 +129,6 @@ class GAN(pl.LightningModule):
 
         # train generator
         if optimizer_idx == 0:
-
             # generate images
             self.generated_imgs = self(z)
 

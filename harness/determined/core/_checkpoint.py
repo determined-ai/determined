@@ -43,9 +43,7 @@ def _merge_metadata(
     key_conflicts: Dict[str, List[int]],
     prev_key: str,
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-
     for key, metadata in rank_metadata.items():
-
         # First, update key_ranks. We will use it later
         if key not in key_ranks:
             key_ranks[key] = {"_ranks_": []}
@@ -139,7 +137,6 @@ def merge_resources(
     uploaders: Dict[str, List] = {}
     merged: Dict[str, int] = {}
     for rank, rscs in enumerate(all_resources):
-
         for name in rscs:
             size = rscs[name]
             if name.endswith(os.sep):

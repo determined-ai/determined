@@ -62,7 +62,6 @@ def make_test_preempt_context(
     dist: core.DistributedContext,
     mode: core.PreemptMode,
 ) -> Tuple[MockPreemptState, core.PreemptContext]:
-
     state = MockPreemptState()
     context = core.PreemptContext(state.mock_session, "allocation_id", dist, mode)
     return state, context
@@ -131,7 +130,6 @@ def test_preempt_workers_ask_chief(dummy: bool, auto_ack: bool) -> None:
 @pytest.mark.parametrize("dummy", [False, True], ids=lambda x: f"dummy:{x}")
 def test_preempt_chief_only(dummy: bool, auto_ack: bool) -> None:
     with parallel.Execution(2) as pex:
-
         # Steal the automatically-created pex.distributed contexts, then test chief/worker serially
         # so we know they're not using distributed comms.
         @pex.run
@@ -177,7 +175,6 @@ def test_preempt_chief_only(dummy: bool, auto_ack: bool) -> None:
 @pytest.mark.parametrize("dummy", [False, True], ids=lambda x: f"dummy:{x}")
 def test_preempt_workers_ask_master(dummy: bool, auto_ack: bool) -> None:
     with parallel.Execution(2) as pex:
-
         # Steal the automatically-created pex.distributed contexts, then test chief/worker serially
         # so we know they're not using distributed comms.
         @pex.run
