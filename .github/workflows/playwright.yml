@@ -9,9 +9,16 @@ on: # yamllint disable-line rule:truthy
       - 'releases/**'
 
 jobs:
-  test:
+  e2e:
+    defaults:
+      run:
+        working-directory: ./webui/react
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      SERVER_URL: https://netlify.determined.ai/dynamic/http/52.89.73.17:8080
+      USER_NAME: ${{ secrets.USER_NAME }}
+      PASSWORD: ${{ secrets.PASSWORD }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -21,11 +28,13 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Build
+        run: SERVER_URL=${{ env.SERVER_URL }} npm run build
       - name: Run Playwright tests
         run: npm run e2e
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: webui/react/e2e/playwright-report
+          path: webui/react/e2e/playwright-report/
           retention-days: 30

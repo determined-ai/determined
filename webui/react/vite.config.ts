@@ -125,6 +125,10 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
+  preview: {
+    port: 3001,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       // needed for react-dnd
