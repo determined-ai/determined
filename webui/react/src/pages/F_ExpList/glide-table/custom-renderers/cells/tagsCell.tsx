@@ -7,7 +7,7 @@ import {
   Rectangle,
 } from '@glideapps/glide-data-grid';
 
-import { roundedRect } from '../draw-fns';
+import { roundedRect } from '../utils';
 
 interface TagsCellProps {
   readonly kind: 'tags-cell';
@@ -56,7 +56,7 @@ const renderer: CustomRenderer<TagsCell> = {
 
       ctx.fillStyle = color;
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#D0D0D0';
+      ctx.strokeStyle = theme.textBubble;
       ctx.beginPath();
       roundedRect(ctx, x, y, width, tagHeight, tagHeight / 2);
       ctx.stroke();

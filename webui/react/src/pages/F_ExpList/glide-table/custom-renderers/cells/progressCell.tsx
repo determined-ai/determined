@@ -1,6 +1,6 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 
-import { roundedRect } from '../draw-fns';
+import { roundedRect } from '../utils';
 
 interface RangeCellProps {
   readonly kind: 'range-cell';
