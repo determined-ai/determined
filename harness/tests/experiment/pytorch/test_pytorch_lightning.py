@@ -221,7 +221,7 @@ class TestLightningAdapter:
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=trial_controller_A.state.batches_trained,
-            expose_gpus=True
+            expose_gpus=expose_gpus
         )
         trial_controller_A.run()
 

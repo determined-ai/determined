@@ -919,6 +919,52 @@ class TestPyTorchTrial:
 
         return (training_metrics["A"], training_metrics["B"])
 
+    def checkpoint_and_restore_no_callbacks(
+        self,
+        hparams: typing.Dict,
+        trial_class: pytorch.PyTorchTrial,
+        tmp_path: pathlib.Path,
+        exp_config: typing.Dict,
+        expose_gpus: bool = False,
+        steps: typing.Tuple[int, int] = (1, 1),
+    ) -> None:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+
+        # Trial A: train 100 batches and checkpoint
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0],
+            min_validation_batches=steps[0],
+            min_checkpoint_batches=steps[0],
+            checkpoint_dir=checkpoint_dir,
+            expose_gpus=expose_gpus
+        )
+
+        trial_controller_A.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 1, "trial did not create a checkpoint"
+
+        # Trial A: restore from checkpoint and train for 100 more batches
+        trial_A, trial_controller_A = create_trial_and_trial_controller(
+            trial_class=trial_class,
+            hparams=hparams,
+            trial_seed=self.trial_seed,
+            exp_config=exp_config,
+            max_batches=steps[0] + steps[1],
+            min_validation_batches=steps[1],
+            min_checkpoint_batches=sys.maxsize,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=os.listdir(checkpoint_dir)[0],
+            steps_completed=trial_controller_A.state.batches_trained,
+            expose_gpus=True
+        )
+        trial_controller_A.run()
+
+        assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
+
     @pytest.mark.parametrize(
         "ckpt",
         [
@@ -957,117 +1003,59 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-@pytest.mark.pt_gpu
-@pytest.mark.parametrize("aggregation_frequency", [1, 4])
-def test_pytorch_11_const(aggregation_frequency: int, tmp_path: pathlib.Path):
+    @pytest.mark.pt_gpu
+    @pytest.mark.parametrize("aggregation_frequency", [1, 4])
+    def test_pytorch_11_const(self, aggregation_frequency: int, tmp_path: pathlib.Path):
 
-    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
 
-    config = utils.load_config(utils.tutorials_path('mnist_pytorch/const.yaml'))
-    hparams = config['hyperparameters']
+        config = utils.load_config(utils.tutorials_path('mnist_pytorch/const.yaml'))
+        hparams = config['hyperparameters']
 
-    exp_config = utils.make_default_exp_config(
-        hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
-    )
-    exp_config.update(config)
+        exp_config = utils.make_default_exp_config(
+            hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+        )
+        exp_config.update(config)
 
-    example_path = utils.tutorials_path('mnist_pytorch/model_def.py')
-    example_context =utils.tutorials_path('mnist_pytorch')
-    trial_module = utils.import_module("MNistTrial", example_path, example_context)
-    trial_class = getattr(trial_module, "MNistTrial")
-    trial_class._searcher_metric = "validation_loss"
+        example_path = utils.tutorials_path('mnist_pytorch/model_def.py')
+        example_context =utils.tutorials_path('mnist_pytorch')
+        trial_module = utils.import_module("MNistTrial", example_path, example_context)
+        trial_class = getattr(trial_module, "MNistTrial")
+        trial_class._searcher_metric = "validation_loss"
 
-    # Trial A: train 1 batch and checkpoint
-    trial_A, trial_controller_A = create_trial_and_trial_controller(
-        trial_class=trial_class,
-        hparams=hparams,
-        trial_seed=777,
-        exp_config=exp_config,
-        max_batches=1,
-        min_validation_batches=1,
-        min_checkpoint_batches=1,
-        checkpoint_dir=checkpoint_dir,
-        expose_gpus=True
-    )
+        self.checkpoint_and_restore_no_callbacks(
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
+        )
 
-    trial_controller_A.run()
+    @pytest.mark.pt_gpu
+    @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"]) # TODO: test apex
+    def test_pytorch_const_with_amp(self, api_style: str, tmp_path: pathlib.Path):
 
-    assert len(os.listdir(checkpoint_dir)) == 1, "trial did not return a checkpoint UUID"
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        config = utils.load_config(utils.e2e_fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
+        hparams = config['hyperparameters']
 
-    # Trial A: restore from checkpoint and train for 2 more batches
-    trial_A, trial_controller_A = create_trial_and_trial_controller(
-        trial_class=trial_class,
-        hparams=hparams,
-        trial_seed=777,
-        exp_config=exp_config,
-        max_batches=2,
-        min_validation_batches=1,
-        min_checkpoint_batches=1,
-        checkpoint_dir=checkpoint_dir,
-        latest_checkpoint=os.listdir(checkpoint_dir)[0],
-        steps_completed=trial_controller_A.state.batches_trained,
-        expose_gpus=True
-    )
-    trial_controller_A.run()
+        exp_config = utils.make_default_exp_config(
+            hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
+        )
+        exp_config.update(config)
 
-@pytest.mark.pt_gpu
-@pytest.mark.parametrize("api_style", ["apex", "auto", "manual"]) # TODO: test apex
-def test_pytorch_const_with_amp(api_style: str, tmp_path: pathlib.Path):
+        module_names = {
+            "apex": "MNistApexAMPTrial",
+            "auto": "MNistAutoAMPTrial",
+            "manual": "MNistManualAMPTrial"
+        }
 
-    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-    config = utils.load_config(utils.e2e_fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
-    hparams = config['hyperparameters']
+        example_filename = api_style + '_amp_model_def.py'
+        example_path = utils.e2e_fixtures_path(os.path.join('pytorch_amp', example_filename))
+        example_context = utils.e2e_fixtures_path('pytorch_amp')
+        trial_module = utils.import_module(module_names[api_style], example_path, example_context)
+        trial_class = getattr(trial_module, module_names[api_style])
+        trial_class._searcher_metric = "validation_loss"
 
-    exp_config = utils.make_default_exp_config(
-        hparams, scheduling_unit=1, searcher_metric="validation_loss", checkpoint_dir=checkpoint_dir
-    )
-    exp_config.update(config)
-
-    module_names = {
-        "apex": "MNistApexAMPTrial",
-        "auto": "MNistAutoAMPTrial",
-        "manual": "MNistManualAMPTrial"
-    }
-
-    example_filename = api_style + '_amp_model_def.py'
-    example_path = utils.e2e_fixtures_path(os.path.join('pytorch_amp', example_filename))
-    example_context = utils.e2e_fixtures_path('pytorch_amp')
-    trial_module = utils.import_module(module_names[api_style], example_path, example_context)
-    trial_class = getattr(trial_module, module_names[api_style])
-    trial_class._searcher_metric = "validation_loss"
-
-    # Trial A: train 1 batch and checkpoint
-    trial_A, trial_controller_A = create_trial_and_trial_controller(
-        trial_class=trial_class,
-        hparams=hparams,
-        trial_seed=777,
-        exp_config=exp_config,
-        max_batches=1,
-        min_validation_batches=1,
-        min_checkpoint_batches=1,
-        checkpoint_dir=checkpoint_dir,
-        expose_gpus=True
-    )
-
-    trial_controller_A.run()
-
-    assert len(os.listdir(checkpoint_dir)) == 1, "trial did not return a checkpoint UUID"
-
-    # Trial A: restore from checkpoint and train for 2 more batches
-    trial_A, trial_controller_A = create_trial_and_trial_controller(
-        trial_class=trial_class,
-        hparams=hparams,
-        trial_seed=777,
-        exp_config=exp_config,
-        max_batches=2,
-        min_validation_batches=1,
-        min_checkpoint_batches=1,
-        checkpoint_dir=checkpoint_dir,
-        latest_checkpoint=os.listdir(checkpoint_dir)[0],
-        steps_completed=trial_controller_A.state.batches_trained,
-        expose_gpus=True
-    )
-    trial_controller_A.run()
+        self.checkpoint_and_restore_no_callbacks(
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
+        )
 
 
 @pytest.mark.parametrize(
