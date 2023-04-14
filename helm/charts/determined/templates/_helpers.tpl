@@ -28,6 +28,22 @@ spec:
       limits:
         memory: 64Gi
         cpu: 32
+    volumeMounts:
+      - mountPath: /dev/shm
+        name: dshm
+      {{- range .Values.mounts }}
+      - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
+        mountPath: {{ .name }}
+      {{- end }}
+  volumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
+    {{- range .Values.mounts }}
+    - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
+      persistentVolumeClaim:
+        claimName: {{ .pvc }}
+    {{- end }}
 {{- end -}}
 
 {{- define "determined.gpuPodSpecRTX_A5000" -}}
