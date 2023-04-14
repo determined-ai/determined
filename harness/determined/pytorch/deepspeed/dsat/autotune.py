@@ -1,7 +1,6 @@
 import argparse
 import os
 import tempfile
-from typing import Any, Dict
 
 from determined.experimental import client
 from determined.pytorch.deepspeed.dsat import _defaults, _utils
