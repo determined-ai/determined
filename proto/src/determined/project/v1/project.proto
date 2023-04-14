@@ -36,7 +36,7 @@ enum ColumnType {
 
 message ProjectColumn {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: ["column", "location", "type"] }
+    json_schema: { required: [ "column", "location", "type" ] }
   };
   // Raw column name.
   string column = 1;
