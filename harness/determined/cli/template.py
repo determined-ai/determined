@@ -6,8 +6,10 @@ from typing import Any, List
 from termcolor import colored
 
 from determined.common import api, util, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.cli.workspace import workspace_arg, get_workspace_id_from_args
+from determined import cli
 
 from . import render
 
@@ -68,7 +70,8 @@ args_description = [
         Cmd("set", set_template, "set config template", [
             Arg("template_name", help="template name"),
             Arg("template_file", type=FileType("r"),
-                help="config template file (.yaml)")
+                help="config template file (.yaml)"),
+            workspace_arg,
         ]),
         Cmd("remove rm", remove_templates,
             "remove config template", [
