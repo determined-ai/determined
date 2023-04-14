@@ -379,7 +379,7 @@ const TableActionBar: React.FC<Props> = ({
               Edit (
               {selectAll
                 ? Loadable.isLoaded(total)
-                  ? total.data
+                  ? total.data.toLocaleString()
                   : 'All'
                 : selectedExperimentIds.length}
               )
