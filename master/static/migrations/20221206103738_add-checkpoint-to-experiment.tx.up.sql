@@ -15,14 +15,14 @@ UPDATE trials SET (checkpoint_size, checkpoint_count) = (size, count) FROM (
     FROM (
         SELECT
             jsonb_each(c.resources) AS size_tuple,
-            trial_id,
-            uuid
-        FROM checkpoints_view c
+            c.trial_id,
+            c.uuid
+        FROM checkpoints_view AS c
         WHERE
-            state != 'DELETED'
+            c.state != 'DELETED'
             AND c.resources != 'null'::jsonb
-    ) r GROUP BY trial_id
-) s RIGHT JOIN (SELECT id FROM trials) t ON id = trial_id  WHERE 
+    ) AS r GROUP BY trial_id
+) AS s RIGHT JOIN (SELECT id FROM trials) AS t ON id = trial_id  WHERE 
     t.id = trials.id; 
 
 UPDATE experiments SET (checkpoint_size, checkpoint_count) = (size, count)
@@ -32,4 +32,4 @@ FROM (
         coalesce(sum(checkpoint_count), 0) AS count,
         experiment_id
     FROM trials GROUP BY experiment_id
-) t WHERE experiments.id = experiment_id;
+) AS t WHERE experiments.id = experiment_id;

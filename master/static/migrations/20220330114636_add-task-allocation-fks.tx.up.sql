@@ -1,7 +1,6 @@
 -- NULLify entries that would cause an integrity error.
 UPDATE trials SET task_id = NULL
-WHERE task_id NOT IN (SELECT task_id FROM tasks)
-;
+WHERE task_id NOT IN (SELECT task_id FROM tasks);
 
 ALTER TABLE trials
 ADD CONSTRAINT task_id_fkey

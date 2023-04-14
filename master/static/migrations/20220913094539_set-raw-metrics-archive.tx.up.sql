@@ -18,7 +18,7 @@ FROM ( -- Get max trial_run_id for each (trial_id, total_batches) pair
                 row_number() 
                 OVER(PARTITION BY uuid ORDER BY id ASC) AS row
             FROM checkpoints_view
-        ) dups WHERE dups.row > 1
+        ) AS dups WHERE dups.row > 1
     )
     GROUP BY (trial_id, total_batches)
 ) AS subquery_res

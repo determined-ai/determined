@@ -5,7 +5,7 @@ UPDATE checkpoints AS c
 SET total_batches = COALESCE(
     (
         SELECT s.prior_batches_processed + s.num_batches AS total_batches
-        FROM steps s
+        FROM steps AS s
         WHERE c.step_id = s.id AND c.trial_id = s.trial_id
     ), 0
 );
@@ -24,7 +24,7 @@ UPDATE validations AS v
 SET total_batches = COALESCE(
     (
         SELECT s.prior_batches_processed + s.num_batches AS total_batches
-        FROM steps s
+        FROM steps AS s
         WHERE v.step_id = s.id AND v.trial_id = s.trial_id
     ), 0
 );
