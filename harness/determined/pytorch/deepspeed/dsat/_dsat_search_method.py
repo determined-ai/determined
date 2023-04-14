@@ -222,6 +222,7 @@ class DSATTrialTracker:
         self.submitted_hps_with_autotuning[_defaults.USE_DSAT_MODE_KEY] = True
 
         self.model_profile_info_trial = None
+        self.best_trial = None
         self.num_trials_since_best_result = 0
         self._all_trials_dict = {}
 
@@ -379,7 +380,6 @@ class DSATTrialTracker:
             )
             if trial_is_best:
                 self.best_trial = trial
-                self.best_autotuning_metric_val = searcher_metric_value
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
