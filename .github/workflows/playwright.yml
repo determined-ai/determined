@@ -35,6 +35,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: webui/react/e2e/playwright-report
-          path: webui/react/e2e/playwright-report/
+          name: webui/react/src/e2e/playwright-report
+          path: webui/react/src/e2e/playwright-report/
           retention-days: 30
