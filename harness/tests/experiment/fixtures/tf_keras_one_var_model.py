@@ -8,7 +8,8 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
 
-if version.parse("2.11.0") <= version.parse(tf.__version__):
+# TODO MLG-443 Migrate from legacy Keras optimizers
+if version.parse(tf.__version__) >= version.parse("2.11.0"):
     from tensorflow.keras.optimizers.legacy import SGD
 else:
     from tensorflow.keras.optimizers import SGD

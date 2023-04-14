@@ -12,7 +12,7 @@ from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
 from tensorflow.raw_ops import ZipDataset
 
-if version.parse("2.11.0") <= version.parse(tf.__version__):
+if version.parse(tf.__version__) >= version.parse("2.11.0"):
     from tensorflow.keras.optimizers.legacy import SGD
 else:
     from tensorflow.keras.optimizers import SGD
