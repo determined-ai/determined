@@ -620,6 +620,7 @@ export const searchExperiments: DetApi<
       params.projectId,
       params.offset,
       params.limit,
+      params.filter,
       options,
     );
   },
