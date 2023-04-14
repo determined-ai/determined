@@ -134,8 +134,19 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	bindMounts := c.BindMounts.ToExpconf()
 	config.RawBindMounts = schemas.Merge(config.RawBindMounts, bindMounts)
 
+	configRawSlurmConfig := config.RawSlurmConfig
 	config.RawSlurmConfig = schemas.Merge(config.RawSlurmConfig, &c.Slurm)
+	if configRawSlurmConfig != nil {
+		config.RawSlurmConfig.RawSbatchArgs = append(
+			c.Slurm.SbatchArgs(), configRawSlurmConfig.SbatchArgs()...)
+	}
+
+	configRawPbsConfig := config.RawPbsConfig
 	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
+	if configRawPbsConfig != nil {
+		config.RawPbsConfig.RawSbatchArgs = append(
+			c.Pbs.SbatchArgs(), configRawPbsConfig.SbatchArgs()...)
+	}
 }
 
 var mergeCopier = copier.Option{IgnoreEmpty: true, DeepCopy: true}
