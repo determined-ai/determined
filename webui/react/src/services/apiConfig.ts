@@ -1589,6 +1589,17 @@ export const getProjectsByUserActivity: DetApi<
     detApi.Projects.getProjectsByUserActivity(params.limit),
 };
 
+export const getProjectColumns: DetApi<
+  Service.GetProjectColumnsParams,
+  Api.V1GetProjectColumnsResponse,
+  Type.ProjectColumns
+> = {
+  name: 'getProjectsColumns',
+  postProcess: (response) => response,
+  request: (params: Service.GetProjectColumnsParams, options) =>
+    detApi.Internal.getProjectColumns(params.id, options),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;
