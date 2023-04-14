@@ -1,8 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import { test } from './global-fixtures';
 
 test.describe('Navigation', () => {
   const USERNAME = process.env.USER_NAME ?? '';
   const PASSWORD = process.env.PASSWORD ?? '';
+
+  test.beforeEach(async ({ dev }) => {
+    await dev.setServerAddress();
+  });
 
   test('Top Level', async ({ page }) => {
     await page.goto('/');
