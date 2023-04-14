@@ -1981,9 +1981,13 @@ func (a *apiServer) GetModelDefFile(
 }
 
 func scanMetricName(filter string, index int) string {
+	// Determine the name of the metric from the filter string
+
 	metricName := ""
 	for index < len(filter) {
 		char := string(filter[index])
+
+		// If we have reached an operator or space then we have parse through the entire metric name
 		if char == "<" || char == ":" || char == " " || char == "~" || char == "=" || char == ">" {
 			break
 		}
@@ -1994,12 +1998,20 @@ func scanMetricName(filter string, index int) string {
 }
 
 func buildQuery(filter string) string {
-	general_column_prefix := "general_column."
+	// Builds the sql query for a filter string
+
+	// The prefix for column names mapping to the
+	// experiment information
+	experiment_column_prefix := "experiment."
+
+	// Prefixes for column names matching to metric value tables
 	metricPrefixes := map[string]string{
 		"validation.": "(besttrials.best_validation->'metrics'->'avg_metrics'->>'%s')::float8",
 		"hp.":         "(e.config->'hyperparameters'->'%s'->>'val')::float8",
 	}
-	orderColMap := map[string]string{
+
+	// Mapping of experiment filter string values to table columns
+	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
 		"description":     "e.config->>'description'",
 		"name":            "e.config->>'name'",
@@ -2028,81 +2040,81 @@ func buildQuery(filter string) string {
 		 ) `,
 	}
 
-	for key, value := range orderColMap {
-		filter = strings.ReplaceAll(filter, general_column_prefix+key, value)
+	// Replace any needed experiment related column names
+	for key, value := range filterExperimentColMap {
+		filter = strings.ReplaceAll(filter, experiment_column_prefix+key, value)
 	}
+
+	// Replace all metric related column names
 	for prefix, replacement := range metricPrefixes {
 		i := strings.Index(filter, prefix)
 		for i != -1 {
-			fmt.Println("Found " + prefix)
-			fmt.Println(i)
-			fmt.Println(filter[i : i+len(prefix)])
 			metricName := scanMetricName(filter, i+len(prefix))
-			fmt.Println(metricName)
 			filter = strings.ReplaceAll(filter, prefix+metricName, fmt.Sprintf(replacement, metricName))
 			i = strings.Index(filter, prefix)
 		}
 	}
+
 	return filter
 }
 
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
+	// Determines the correct column and value name for a sequence in the filter string
 
 	numericeRegex := regexp.MustCompile(`\d|\.|-`)
-	var query string
+	var query, value, col, comparator string
 	var valueIsString bool
 	valueTypeKnown := false
-	value := ""
-	col := ""
 	filterIndex := int32(startIndex)
 	valueHasStarted := valueStart
 	isCol := !valueHasStarted
 	isNull := false
-	comparator := ""
-	fmt.Printf("Starting Scan at index %v", filterIndex)
+
 	for {
 		if filterIndex > int32(len(filter)-1) {
-			fmt.Printf("Ending Scan at index %v reacheded end of filter", filterIndex)
 			break
 		}
 		char := string(filter[filterIndex])
-		fmt.Println(fmt.Sprintf("NOw looking at char %v", char))
+
 		if valueHasStarted && valueIsString && valueTypeKnown {
+			// If the current value is a string and we have reached
+			// a string terminating character then we are at the end
+			// of the value
 			if char == "'" || char == "\"" {
-				fmt.Printf("Ending Scan at index %v reached end of string", filterIndex)
 				filterIndex += 1
 				break
 			}
 		} else if valueHasStarted && !valueIsString && valueTypeKnown {
+			// If the current value is a number and the current character
+			// is not numeric then we are at the end of the value
 			if !numericeRegex.MatchString(char) {
-				fmt.Printf("Ending Scan at index %v reached end of number", filterIndex)
 				break
 			}
 		}
 		if !valueTypeKnown && valueHasStarted {
+			// The start of the value has been reached so the type of the value
+			// can be determined
 			valueTypeKnown = true
-			fmt.Println("Determinging v type")
-			if filterIndex+4 < int32(len(filter)) {
-				fmt.Println(fmt.Sprintf("filter index %v, 4 more is %v, string is %v", filterIndex, filterIndex+4, filter[filterIndex:filterIndex+4]))
-			}
 			if char == "'" || char == "\"" {
-				fmt.Printf("Determined it is string at %v skippingto next index", filterIndex)
+				// If the value starts with a quote character then we are at the start of the value
 				valueIsString = true
 				filterIndex += 1
 				continue
 			} else if filterIndex+3 < int32(len(filter)) && filter[filterIndex:filterIndex+4] == "null" {
-				fmt.Printf("Determined we are looking at null from %d to %d", filterIndex, filterIndex+4)
+				// If the value from this point forward is 'null' then the value is 'NULL'
 				filterIndex += 4
 				isNull = true
 				break
 			} else {
+				// Otherwise the value is a number
 				valueIsString = false
 			}
 		}
 		if char == ":" || char == "~" {
+			// These characters represent the end of a column name
+			// and the start of the value
 			isCol = false
 			valueHasStarted = true
-			fmt.Printf("REached colon string at %v skipping to next index", filterIndex)
 			filterIndex += 1
 			comparator = char
 			continue
@@ -2110,6 +2122,8 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		if char == "\\" {
 			if filterIndex+1 < int32(len(filter)-1) {
 				nextChar := string(filter[filterIndex+1])
+				// Check to see if a terminated quote has been reached
+				// if so then add it to the sql string.
 				if nextChar == `'` || nextChar == `"` {
 					char = `\` + nextChar
 				}
@@ -2155,53 +2169,58 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 	return query, filterIndex
 }
 
-func parseFilter(filter string) (string, error) {
+func parseFilter(filter string) (*string, error) {
+	// Iterate through the filter string and build
+	// the matching sql query
 
 	currentIndex := 0
 	currentQuery := ""
+
+	// Keep track of the number of parentheses to ensure that the
+	// string is valid
 	openParenCount := 0
+
 	for {
-		fmt.Println("Current filter: " + currentQuery)
-		fmt.Printf("Current index: %d", currentIndex)
 		if currentIndex > len(filter)-1 {
-			fmt.Println("At end of string")
+			// If there are still open parantheses at the end of the string
+			// the entire string is invalid
 			if openParenCount != 0 {
-				return "", fmt.Errorf("invalid filter string %v, missing closing parenthesis", filter)
+				return nil, fmt.Errorf("missing closing parentheses")
 			}
 			break
 		}
+
 		char := string(filter[currentIndex])
+
+		// Determine the appropriate way to parse the string based on the current character.
+		// If a character is an operator such as ':','-', `<`,'>', or '~' then we need to
+		// determine the correct column name, value name, and sql comparison character.
+
 		switch char {
 		case "(":
 			openParenCount += 1
-			fmt.Println(fmt.Sprintf("found open paren Open paren count is now %d", openParenCount))
 			currentQuery = currentQuery + char
 			currentIndex += 1
 		case ")":
 			if openParenCount < 1 {
-				return "", fmt.Errorf("invalid filter string %v, no open parenthesis found for character %v at index, %x", filter, char, currentIndex)
+				return nil, fmt.Errorf("no open parentheses found for character %v at index, %x", char, currentIndex)
 			}
 			currentQuery = currentQuery + char
 			openParenCount -= 1
-			fmt.Println(fmt.Sprintf("found close paren Open paren count is now %d", openParenCount))
 			currentIndex += 1
 		case ":":
-			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
 			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
 			currentQuery = currentQuery + queryString
 			currentIndex = int(nextIndex)
 		case "-":
-			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
 			queryString, nextIndex := scanString(filter, currentIndex+1, &char, false)
 			currentQuery = currentQuery + queryString
 			currentIndex = int(nextIndex)
 		case "~":
-			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
 			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
 			currentQuery = currentQuery + queryString
 			currentIndex = int(nextIndex)
 		case ">":
-			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
 			currentQuery = currentQuery + char
 			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
 				currentQuery = currentQuery + "="
@@ -2214,7 +2233,6 @@ func parseFilter(filter string) (string, error) {
 				currentIndex = int(nextIndex)
 			}
 		case "<":
-			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
 			currentQuery = currentQuery + char
 			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
 				currentQuery = currentQuery + "="
@@ -2232,7 +2250,7 @@ func parseFilter(filter string) (string, error) {
 		}
 	}
 	currentQuery = buildQuery(currentQuery)
-	return currentQuery, nil
+	return &currentQuery, nil
 }
 
 func (a *apiServer) SearchExperiments(
@@ -2267,8 +2285,8 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	if req.Filter != "" && strings.Contains(req.Filter, "validation.") {
-		// If we want to sort on validation metrics,
+	if req.Filter != nil && strings.Contains(*req.Filter, "validation.") {
+		// If we want to filter on validation metrics,
 		// we need to join trials information first then paginate.
 		// TODO: revisit after unified metrics work lands.
 		err = experimentQuery.Scan(ctx)
@@ -2276,13 +2294,12 @@ func (a *apiServer) SearchExperiments(
 			return nil, err
 		}
 	} else {
-		if req.Filter != "" {
-			filterExpr, err := parseFilter(req.Filter)
+		if req.Filter != nil {
+			filterExpr, err := parseFilter(*req.Filter)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
 			}
-			fmt.Println(filterExpr)
-			experimentQuery.Where(filterExpr)
+			experimentQuery.Where(*filterExpr)
 		}
 		resp.Pagination, err = runPagedBunExperimentsQuery(
 			ctx,
@@ -2426,7 +2443,7 @@ func (a *apiServer) SearchExperiments(
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).
 		Where("trial._metric_rank = 1")
 
-	if req.Filter != "" && strings.Contains(req.Filter, "validation.") {
+	if req.Filter != nil && strings.Contains(*req.Filter, "validation.") {
 		experimentQuery.With("besttrials", bestTrials).
 			Join("LEFT JOIN besttrials ON e.id = besttrials.experiment_id")
 
@@ -2434,17 +2451,14 @@ func (a *apiServer) SearchExperiments(
 			return nil, err
 		}
 
-		if req.Filter != "" {
-			filterExpr, err := parseFilter(req.Filter)
+		if req.Filter != nil {
+			filterExpr, err := parseFilter(*req.Filter)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
 			}
-			fmt.Println(filterExpr)
-			experimentQuery.Where(filterExpr)
+			experimentQuery.Where(*filterExpr)
 		}
 
-		fmt.Println("LEEEENNNNNNN EXP")
-		fmt.Println(len(experiments))
 		resp.Pagination, err = runPagedBunExperimentsQuery(
 			ctx,
 			experimentQuery,
@@ -2455,8 +2469,6 @@ func (a *apiServer) SearchExperiments(
 			return nil, err
 		}
 	}
-	fmt.Println("LEEEENNNNNNN EXP  22222")
-	fmt.Println(len(experiments))
 
 	if len(experiments) == 0 {
 		return resp, nil
