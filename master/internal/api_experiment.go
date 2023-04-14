@@ -1867,7 +1867,7 @@ func scanMetricName(filter string, index int) string {
 	for index < len(filter) {
 		c := string(filter[index])
 
-		// If we have reached an operator or space then we have parse through the entire metric name
+		// If we have reached an operator or space then we have parsed through the entire metric name
 		if c == "<" || c == ":" || c == " " || c == "~" || c == "=" || c == ">" {
 			break
 		}
@@ -1880,17 +1880,17 @@ func scanMetricName(filter string, index int) string {
 func buildQuery(filter string) string {
 	// Builds the sql query for a filter string
 
-	// The prefix for column names mapping to the
-	// experiment information
+	// The prefix for column names mapping to
+	// experiment table values
 	experimentColumnPrefix := "experiment."
 
-	// Prefixes for column names matching to metric value tables
+	// Prefixes for column names matching to metric related tables
 	metricPrefixes := map[string]string{
 		"validation.": "(besttrials.best_validation->'metrics'->'avg_metrics'->>'%s')::float8",
 		"hp.":         "(e.config->'hyperparameters'->'%s'->>'val')::float8",
 	}
 
-	// Mapping of experiment filter string values to table columns
+	// Mapping of experiment related filter string values to table columns
 	filterExperimentColMap := map[string]string{
 		"id":              "e.id",
 		"description":     "e.config->>'description'",
@@ -1921,11 +1921,13 @@ func buildQuery(filter string) string {
 	}
 
 	// Replace any needed experiment related column names
+	// with the correct sql query
 	for key, value := range filterExperimentColMap {
 		filter = strings.ReplaceAll(filter, experimentColumnPrefix+key, value)
 	}
 
 	// Replace all metric related column names
+	// with the correct sql query
 	for prefix, replacement := range metricPrefixes {
 		i := strings.Index(filter, prefix)
 		for i != -1 {
@@ -1939,7 +1941,7 @@ func buildQuery(filter string) string {
 }
 
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
-	// Determines the correct column and value name for a sequence in the filter string
+	// Determines the correct column and value for a sequence in the filter string
 
 	numericeRegex := regexp.MustCompile(`\d|\.|-`)
 	var query, value, col, comparator string
@@ -1976,7 +1978,7 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 			// can be determined
 			valueTypeKnown = true
 			if c == "'" || c == "\"" { //nolint: gocritic
-				// If the value starts with a quote character then we are at the start of the value
+				// If the value starts with a quote character then the value is a string
 				valueIsString = true
 				filterIndex++
 				continue
@@ -2142,11 +2144,11 @@ func (a *apiServer) SearchExperiments(
 	resp := &apiv1.SearchExperimentsResponse{}
 	var experiments []*experimentv1.Experiment
 	var trials []*trialv1.Trial
-
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Apply(getExperimentColumns)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
