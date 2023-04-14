@@ -813,3 +813,19 @@ export const decodeJobStates = (
     'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
   >;
 };
+
+export const mapV1ExperimentActionResults = (
+  results: Sdk.V1ExperimentActionResult[],
+): types.BulkActionResult => {
+  return results.reduce(
+    (acc, cur) => {
+      if (cur.error.length > 0) {
+        acc.failed.push(cur);
+      } else {
+        acc.successful.push(cur.id);
+      }
+      return acc;
+    },
+    { failed: [], successful: [] } as types.BulkActionResult,
+  );
+};

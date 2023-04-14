@@ -56,17 +56,18 @@ const cells: DataEditorProps['customRenderers'] = [
 ];
 
 interface Props {
+  clearSelectionTrigger?: number;
   colorMap: MapOfIdsToColors;
   data: Loadable<ExperimentItem>[];
-  fetchExperiments: () => void;
+  fetchExperiments: () => Promise<void>;
   handleScroll?: (r: Rectangle) => void;
   initialScrollPositionSet: WritableObservable<boolean>;
   sortableColumnIds: ExperimentColumn[];
   setSortableColumnIds: Dispatch<SetStateAction<ExperimentColumn[]>>;
   page: number;
   project?: Project;
-  selectedExperimentIds: string[];
-  setSelectedExperimentIds: Dispatch<SetStateAction<string[]>>;
+  selectedExperimentIds: number[];
+  setSelectedExperimentIds: Dispatch<SetStateAction<number[]>>;
   selectAll: boolean;
   setSelectAll: Dispatch<SetStateAction<boolean>>;
 }
@@ -76,6 +77,7 @@ const STATIC_COLUMNS: ExperimentColumn[] = ['selected', 'name'];
 export const GlideTable: React.FC<Props> = ({
   data,
   fetchExperiments,
+  clearSelectionTrigger,
   setSelectedExperimentIds,
   sortableColumnIds,
   setSortableColumnIds,
@@ -136,6 +138,11 @@ export const GlideTable: React.FC<Props> = ({
     rows: CompactSelection.empty(),
   });
 
+  useEffect(() => {
+    if (clearSelectionTrigger === 0) return;
+    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
+  }, [clearSelectionTrigger]);
+
   const getRowThemeOverride = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
       if (!data[row]) return;
@@ -153,8 +160,9 @@ export const GlideTable: React.FC<Props> = ({
     setSelectedExperimentIds((prevIds) => {
       const selectedIds = selectedRowIndices
         .map((idx) => data?.[idx])
+        .filter((row) => row !== undefined)
         .filter(Loadable.isLoaded)
-        .map((record) => String(record.data.id));
+        .map((record) => record.data.id);
       if (prevIds === selectedIds) return prevIds;
       return selectedIds;
     });
@@ -224,7 +232,7 @@ export const GlideTable: React.FC<Props> = ({
       const [colIdx, rowIdx] = cell;
       const columnId = columnIds[colIdx];
       const row = data[rowIdx];
-      if (Loadable.isLoaded(row)) {
+      if (row && Loadable.isLoaded(row)) {
         return columnDefs[columnId].renderer(row.data, rowIdx);
       }
       return {

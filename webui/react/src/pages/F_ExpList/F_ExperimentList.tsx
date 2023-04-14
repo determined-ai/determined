@@ -2,12 +2,13 @@ import { Rectangle } from '@glideapps/glide-data-grid';
 import { Row } from 'antd';
 import SkeletonButton from 'antd/es/skeleton/Button';
 import { observable } from 'micro-observables';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import useResize from 'hooks/useResize';
 import { searchExperiments } from 'services/api';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import userStore from 'stores/users';
 import { ExperimentItem, Project } from 'types';
@@ -16,6 +17,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { defaultExperimentColumns } from './glide-table/columns';
 import GlideTable from './glide-table/GlideTable';
+import TableActionBar from './glide-table/TableActionBar';
 import { useGlasbey } from './glide-table/useGlasbey';
 
 interface Props {
@@ -32,6 +34,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<Loadable<ExperimentItem>[]>(
     Array(page * PAGE_SIZE).fill(NotLoaded),
   );
+  const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
 
   useEffect(() => {
     setSearchParams({ page: String(page) });
@@ -39,8 +42,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [page]);
 
   const [sortableColumnIds, setSortableColumnIds] = useState(defaultExperimentColumns);
-  const [selectedExperimentIds, setSelectedExperimentIds] = useState<string[]>([]);
+  const [selectedExperimentIds, setSelectedExperimentIds] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
 
@@ -59,16 +63,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [initialScrollPositionSet],
   );
 
+  const experimentFilters = useMemo(() => {
+    const filters: V1BulkExperimentFilters = {
+      projectId: project.id,
+    };
+    return filters;
+  }, [project.id]);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
 
       const response = await searchExperiments(
         {
+          ...experimentFilters,
           limit: 2 * PAGE_SIZE,
           offset: tableOffset,
-          orderBy: 'ORDER_BY_DESC',
-          projectId: project.id,
         },
         { signal: canceler.signal },
       );
@@ -86,14 +96,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...experimentBeforeCurrentPage,
           ...response.experiments.map((e) => Loaded(e.experiment)),
           ...experimentsAfterCurrentPage,
-        ];
+        ].slice(0, response.pagination.total);
       });
+      setTotal(
+        response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
+      );
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
-  }, [project.id, canceler.signal, page]);
+  }, [page, experimentFilters, canceler.signal]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
@@ -105,6 +118,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
     };
   }, [canceler, stopPolling]);
+
+  const handleOnAction = useCallback(async () => {
+    /*
+     * Deselect selected rows since their states may have changed where they
+     * are no longer part of the filter criteria.
+     */
+    setClearSelectionTrigger((prev) => prev + 1);
+    setSelectAll(false);
+
+    // Refetch experiment list to get updates based on batch action.
+    await fetchExperiments();
+  }, [fetchExperiments]);
 
   return (
     <Page
@@ -120,21 +145,34 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             </Row>
           ))
         ) : (
-          <GlideTable
-            colorMap={colorMap}
-            data={experiments}
-            fetchExperiments={fetchExperiments}
-            handleScroll={handleScroll}
-            initialScrollPositionSet={initialScrollPositionSet}
-            page={page}
-            project={project}
-            selectAll={selectAll}
-            selectedExperimentIds={selectedExperimentIds}
-            setSelectAll={setSelectAll}
-            setSelectedExperimentIds={setSelectedExperimentIds}
-            setSortableColumnIds={setSortableColumnIds}
-            sortableColumnIds={sortableColumnIds}
-          />
+          <>
+            <TableActionBar
+              experiments={experiments}
+              filters={experimentFilters}
+              project={project}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setExperiments={setExperiments}
+              total={total}
+              onAction={handleOnAction}
+            />
+            <GlideTable
+              clearSelectionTrigger={clearSelectionTrigger}
+              colorMap={colorMap}
+              data={experiments}
+              fetchExperiments={fetchExperiments}
+              handleScroll={handleScroll}
+              initialScrollPositionSet={initialScrollPositionSet}
+              page={page}
+              project={project}
+              selectAll={selectAll}
+              selectedExperimentIds={selectedExperimentIds}
+              setSelectAll={setSelectAll}
+              setSelectedExperimentIds={setSelectedExperimentIds}
+              setSortableColumnIds={setSortableColumnIds}
+              sortableColumnIds={sortableColumnIds}
+            />
+          </>
         )}
       </>
     </Page>
