@@ -1,4 +1,3 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
@@ -77,7 +76,6 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
-import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -88,6 +86,8 @@ import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
+
+import ConfirmModalComponent from '../components/ConfirmModal';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -122,6 +122,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [batchAction, setBatchAction] = useState<Action>();
   const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
@@ -672,6 +673,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [settings.columns, transferColumns],
   );
 
+  const ConfirmModal = useModal(ConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
 
   const sendBatchActions = useCallback(
@@ -754,31 +756,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [fetchExperiments, sendBatchActions, updateSettings],
   );
 
-  const showConfirmation = useCallback(
-    (action: Action) => {
-      modal.confirm({
-        content: `
-        Are you sure you want to ${action.toLocaleLowerCase()}
-        all the eligible selected experiments?
-      `,
-        icon: <ExclamationCircleOutlined />,
-        okText: /cancel/i.test(action) ? 'Confirm' : action,
-        onOk: () => submitBatchAction(action),
-        title: 'Confirm Batch Action',
-      });
-    },
-    [submitBatchAction],
-  );
-
   const handleBatchAction = useCallback(
     (action?: string) => {
       if (action === Action.OpenTensorBoard || action === Action.Move) {
         submitBatchAction(action);
-      } else {
-        showConfirmation(action as Action);
+      } else if (action) {
+        setBatchAction(action as Action);
       }
     },
-    [submitBatchAction, showConfirmation],
+    [submitBatchAction],
   );
 
   const handleTableRowSelect = useCallback(
@@ -867,6 +853,27 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     const currentCanceler = canceler.current;
     return () => currentCanceler.abort();
   }, []);
+
+  // Dynamically change the confirmation modal config based on the selected batch action.
+  const confirmModalOptions = useMemo(() => {
+    return batchAction ? {
+      content: (
+        <>
+          Are you sure you want to <b>{batchAction.toLocaleLowerCase()}</b> all the eligible selected experiments?
+        </>
+      ),
+      danger: /(cancel|kill)/i.test(batchAction),
+      okText: /cancel/i.test(batchAction) ? 'Confirm' : batchAction,
+      onClose: () => setBatchAction(undefined),
+      onOk: () => submitBatchAction(batchAction),
+      title: `Confirm Batch ${batchAction}`,
+    } : { content: '', title: '' };
+  }, [batchAction, submitBatchAction]);
+
+  // Open the batch confirmation modal when confirm modal options has a title set.
+  useEffect(() => {
+    if (confirmModalOptions.title) ConfirmModal.open();
+  }, [ConfirmModal, confirmModalOptions.title]);
 
   const tabBarContent = useMemo(() => {
     const getMenuProps = (): DropDownProps['menu'] => {
@@ -975,6 +982,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         defaultVisibleColumns={DEFAULT_COLUMNS}
         initialVisibleColumns={initialVisibleColumns}
         onSave={handleUpdateColumns as (columns: string[]) => void}
+      />
+      <ConfirmModal.Component
+        {...confirmModalOptions}
       />
       <ExperimentMoveModal.Component
         experimentIds={batchMovingExperimentIds ?? []}
