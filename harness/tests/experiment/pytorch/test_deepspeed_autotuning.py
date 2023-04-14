@@ -8,25 +8,27 @@ from argparse import Namespace
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Union
 from unittest import mock
 
-from determined import searcher
-import determined.pytorch.deepspeed as det_deepspeed
 from deepspeed.runtime import config_utils
-from determined.common.api import bindings
 
-from determined import workload
+import determined.pytorch.deepspeed as det_deepspeed
+from determined import searcher, workload
+from determined.common.api import bindings
+from determined.pytorch.deepspeed.dsat import (
+    DSATTrial,
+    DSATTrialTracker,
+    _defaults,
+    _utils,
+    autotune,
+)
+from determined.pytorch.deepspeed.dsat._dsat_search_method import (
+    RandomDSATSearchMethod,
+    SimpleDSATSearchMethod,
+)
+from tests.custom_search_mocks import MockMasterSearchRunner, SimulateMaster
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import deepspeed_linear_model
-from tests.custom_search_mocks import SimulateMaster, MockMasterSearchRunner
-
 
 ######
-
-from determined.pytorch.deepspeed.dsat import autotune, _utils, _defaults
-from determined.pytorch.deepspeed.dsat import DSATTrialTracker, DSATTrial
-from determined.pytorch.deepspeed.dsat._dsat_search_method import (
-    SimpleBatchSearchMethod,
-    DSATRandomSearchMethod,
-)
 
 
 BASE_EXPERIMENT_FIXTURE_PATH = (
@@ -70,7 +72,7 @@ def test_simple_search_method_happy_path() -> None:
 
     with tempfile.TemporaryDirectory() as searcher_dir:
         searcher_dir = pathlib.Path(searcher_dir)
-        search_method = SimpleBatchSearchMethod(
+        search_method = SimpleDSATSearchMethod(
             submitted_config_dict=submitted_config_dict,
             model_dir=model_dir,
         )
@@ -135,7 +137,7 @@ class MockMaster:
         return self.events_queue
 
     def _append_events_for_op(self, op: searcher.Operation) -> None:
-        if type(op) == searcher.ValidateAfter:
+        if isinstance(op, searcher.ValidateAfter):
             index = min(self.metric_index, len(self.all_metrics) - 1)
             metric = self.all_metrics[index]
             validation_completed = bindings.v1ValidationCompleted(
@@ -157,22 +159,22 @@ class MockMaster:
             event = bindings.v1SearcherEvent(id=self.events_count, trialProgress=trial_progress)
             self.events_queue.append(event)
 
-        if type(op) == searcher.Create:
+        if isinstance(op, searcher.Create):
             trial_created = bindings.v1TrialCreated(requestId=str(op.request_id))
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, trialCreated=trial_created)
             self.events_queue.append(event)
 
-        if type(op) == searcher.Progress:  # no events
+        if isinstance(op, searcher.Progress):  # no events
             self.overall_progress
 
-        if type(op) == searcher.Close:
+        if isinstance(op, searcher.Close):
             trial_closed = bindings.v1TrialClosed(requestId=str(op.request_id))
             self.events_count += 1
             event = bindings.v1SearcherEvent(id=self.events_count, trialClosed=trial_closed)
             self.events_queue.append(event)
 
-        if type(op) == searcher.Shutdown:
+        if isinstance(op, searcher.Shutdown):
             exp_state = bindings.experimentv1State.STATE_COMPLETED
             exp_inactive = bindings.v1ExperimentInactive(experimentState=exp_state)
             self.events_count += 1

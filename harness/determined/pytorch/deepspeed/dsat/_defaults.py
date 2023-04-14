@@ -1,8 +1,8 @@
 from determined.pytorch.deepspeed.dsat import _dsat_search_method
 
 ALL_SEARCH_METHOD_CLASSES = {
-    "random": _dsat_search_method.DSATRandomSearchMethod,
-    "simple": _dsat_search_method.SimpleBatchSearchMethod,
+    "random": _dsat_search_method.RandomDSATSearchMethod,
+    "simple": _dsat_search_method.SimpleDSATSearchMethod,
 }
 
 MODEL_INFO_PROFILING_PATH = "model_info.json"
@@ -17,7 +17,8 @@ OVERWRITE_KEY = "overwrite_deepspeed_args"
 
 # Native DS AT uses the below settings for the model info profile run, but also with the the stage
 # set to 3, presumably since that gives a general model the best chance to run without OOMing.
-# However, since some model cannot run with stage 3, we do not enforce that choice here.
+# However, since some model cannot run with stage 3, we do not enforce that choice here and the
+# zero configuration in the submitted deepspeed config will be used.
 MODEL_INFO_PROFILE_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
     "autotuning": {
@@ -31,7 +32,6 @@ MODEL_INFO_PROFILE_DS_CONFIG = {
 
 # Using same defaults as DS. Written as a diff between successive stages for brevity.
 NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
-    0: dict(),
     1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
     2: {
         "overlap_comm": [True, False],

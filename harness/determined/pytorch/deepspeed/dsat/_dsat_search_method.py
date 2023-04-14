@@ -279,6 +279,9 @@ class DSATTrialTracker:
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
+        # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
+        # he probably wants this to be the only constant, in order to hold training dynamics fixed.
+        # We are optimizing different things.
         ds_config = get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots
@@ -382,7 +385,7 @@ class DSATTrialTracker:
                 self.num_trials_since_best_result += 1
 
 
-class DSATSearchMethodBase(searcher.SearchMethod):
+class BaseDSATSearchMethod(searcher.SearchMethod):
     """
     Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
     needs to be written overwritten when subclassing (at a minimum).
@@ -470,9 +473,9 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_closed for {request_id}")
-
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
+
         if self.trial_tracker.should_shutdown:
             new_ops_list = [searcher.Shutdown()]
         else:
@@ -498,9 +501,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
             )
             new_ops_list.append(searcher.Shutdown())
         elif exited_reason == searcher.ExitedReason.ERRORED:
-            if self.trial_tracker.should_shutdown:
-                new_ops_list.append(searcher.Shutdown())
-            elif not self.trial_tracker.all_trials_created:
+            if not self.trial_tracker.all_trials_created:
                 additional_ops_list = self.get_new_searcher_ops_list(
                     searcher_state=searcher_state,
                     request_id=request_id,
@@ -560,7 +561,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         )
 
 
-class DSATRandomSearchMethod(DSATSearchMethodBase):
+class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -666,10 +667,13 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return new_hparams, new_search_data
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        random_zero_stage = random.choice(
-            tuple(self.trial_tracker.model_profile_info_trial.viable_zero_stages)
-        )
-        zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)
+        non_trivial_zero_stages = [
+            stage
+            for stage in self.trial_tracker.model_profile_info_trial.viable_zero_stages
+            if stage != 0
+        ]
+        random_zero_stage = random.choice(non_trivial_zero_stages)
+        zero_optim_config = _utils.get_random_zero_optim_config(random_zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.submitted_hps_with_autotuning)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -688,7 +692,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return (new_hparams, search_data)
 
 
-class SimpleBatchSearchMethod(DSATSearchMethodBase):
+class SimpleDSATSearchMethod(BaseDSATSearchMethod):
     """
     Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
     self.trial_tracker.tuner_num_trials.

@@ -110,22 +110,22 @@ def report_json_results(
         raise AssertionError("Unexpected additional operations found!")
 
 
-def get_zero_optim_keys_and_defaults_per_stage(
+def get_zero_stage_search_space(
     zero_stage: int,
 ) -> Dict[str, List[Union[bool, float]]]:
     default_settings: dict = _defaults.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
-    keys_and_defaults: dict = default_settings[0]
-    for stage in range(1, zero_stage + 1):
-        keys_and_defaults = {**keys_and_defaults, **default_settings[stage]}
-    return keys_and_defaults
+    search_space: dict = default_settings[1]
+    for stage in range(2, zero_stage + 1):
+        search_space = {**search_space, **default_settings[stage]}
+    return search_space
 
 
-def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
-    keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
-    zero_optim_dict = {key: random.choice(defaults) for key, defaults in keys_and_defaults.items()}
+def get_random_zero_optim_config(zero_stage: int) -> Dict[str, Union[bool, float]]:
+    search_space = get_zero_stage_search_space(zero_stage)
+    zero_optim_dict = {k: random.choice(v) for k, v in search_space.items()}
     zero_optim_dict["stage"] = zero_stage
     return zero_optim_dict
 
