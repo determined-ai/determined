@@ -2605,6 +2605,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     bestTrialSearcherMetric?: number;
+    /**
+     * Id of experiment's best trial, calculated by the best searcher metrics value of trial's best validation.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    bestTrialId?: number;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
