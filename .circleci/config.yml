@@ -304,7 +304,7 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.7.15"
+        default: "3.8.16"
     steps:
       - when:
           condition: <<parameters.install-python>>
