@@ -31,6 +31,8 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{"validation.validation_accuracy>1", "(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_accuracy')::float8>1"},
 		{"validation.validation_loss<-1", "(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_loss')::float8<-1"},
 		{"validation.validation_test>-10.98", "(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_test')::float8>-10.98"},
+		{"hp.global_batch_size>=32", "(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8>=32"},
+		{"hp.global_batch_size<=-64", "(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8<=-64"},
 		{`string:null`, `string IS NULL`},
 		{`-value:null`, `value IS NOT NULL`},
 		{`str~"like"`, `str LIKE '%like%'`},
