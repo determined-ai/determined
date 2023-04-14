@@ -643,7 +643,7 @@ func runPagedBunExperimentsQuery(
 
 	// Bun bug treating limit=0 as no limit when it
 	// should be the exact opposite of no records returned.
-	if endIndex-startIndex != 0 {
+	if endIndex-startIndex != 0 || (startIndex == 0 && endIndex == 0) {
 		if err = query.Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -1997,7 +1997,7 @@ func buildQuery(filter string) string {
 	general_column_prefix := "general_column."
 	metricPrefixes := map[string]string{
 		"validation.": "(besttrials.best_validation->'metrics'->'avg_metrics'->>'%s')::float8",
-		"hp.":         "e.config->'hyperparameters'->>'%s'",
+		"hp.":         "(e.config->'hyperparameters'->'%s'->>'val')::float8",
 	}
 	orderColMap := map[string]string{
 		"id":              "e.id",
@@ -2066,6 +2066,7 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 			break
 		}
 		char := string(filter[filterIndex])
+		fmt.Println(fmt.Sprintf("NOw looking at char %v", char))
 		if valueHasStarted && valueIsString && valueTypeKnown {
 			if char == "'" || char == "\"" {
 				fmt.Printf("Ending Scan at index %v reached end of string", filterIndex)
@@ -2148,6 +2149,9 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 			query = fmt.Sprintf("%v != %v", col, value)
 		}
 	}
+	if *operator == "<" || *operator == ">" {
+		query = value
+	}
 	return query, filterIndex
 }
 
@@ -2196,6 +2200,32 @@ func parseFilter(filter string) (string, error) {
 			queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
 			currentQuery = currentQuery + queryString
 			currentIndex = int(nextIndex)
+		case ">":
+			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
+			currentQuery = currentQuery + char
+			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
+				currentQuery = currentQuery + "="
+				queryString, nextIndex := scanString(filter, currentIndex+2, &char, true)
+				currentQuery = currentQuery + queryString
+				currentIndex = int(nextIndex)
+			} else {
+				queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
+				currentQuery = currentQuery + queryString
+				currentIndex = int(nextIndex)
+			}
+		case "<":
+			fmt.Println(fmt.Sprintf("Need to scan because of character %s", char))
+			currentQuery = currentQuery + char
+			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
+				currentQuery = currentQuery + "="
+				queryString, nextIndex := scanString(filter, currentIndex+2, &char, true)
+				currentQuery = currentQuery + queryString
+				currentIndex = int(nextIndex)
+			} else {
+				queryString, nextIndex := scanString(filter, currentIndex+1, &char, true)
+				currentQuery = currentQuery + queryString
+				currentIndex = int(nextIndex)
+			}
 		default:
 			currentQuery = currentQuery + char
 			currentIndex += 1
@@ -2217,14 +2247,6 @@ func (a *apiServer) SearchExperiments(
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Apply(getExperimentColumns)
-	if req.Filter != "" {
-		filterExpr, err := parseFilter(req.Filter)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
-		}
-		fmt.Println(filterExpr)
-		experimentQuery.Where(filterExpr)
-	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
@@ -2245,18 +2267,32 @@ func (a *apiServer) SearchExperiments(
 		return nil, err
 	}
 
-	resp.Pagination, err = runPagedBunExperimentsQuery(
-		ctx,
-		experimentQuery,
-		int(req.Offset),
-		int(req.Limit),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = a.enrichExperimentState(experiments...); err != nil {
-		return nil, err
+	if req.Filter != "" && strings.Contains(req.Filter, "validation.") {
+		// If we want to sort on validation metrics,
+		// we need to join trials information first then paginate.
+		// TODO: revisit after unified metrics work lands.
+		err = experimentQuery.Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if req.Filter != "" {
+			filterExpr, err := parseFilter(req.Filter)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
+			}
+			fmt.Println(filterExpr)
+			experimentQuery.Where(filterExpr)
+		}
+		resp.Pagination, err = runPagedBunExperimentsQuery(
+			ctx,
+			experimentQuery,
+			int(req.Offset),
+			int(req.Limit),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(experiments) == 0 {
@@ -2407,6 +2443,8 @@ func (a *apiServer) SearchExperiments(
 			experimentQuery.Where(filterExpr)
 		}
 
+		fmt.Println("LEEEENNNNNNN EXP")
+		fmt.Println(len(experiments))
 		resp.Pagination, err = runPagedBunExperimentsQuery(
 			ctx,
 			experimentQuery,
@@ -2417,7 +2455,12 @@ func (a *apiServer) SearchExperiments(
 			return nil, err
 		}
 	}
+	fmt.Println("LEEEENNNNNNN EXP  22222")
+	fmt.Println(len(experiments))
 
+	if len(experiments) == 0 {
+		return resp, nil
+	}
 	err = bestTrials.Scan(ctx)
 	if err != nil {
 		return nil, err
