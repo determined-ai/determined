@@ -1,4 +1,6 @@
 name: mnist_pytorch_const
+resources:
+  resource_pool: A40
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
