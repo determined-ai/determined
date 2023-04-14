@@ -1,13 +1,11 @@
 import copy
-import inspect
 import logging
 import pathlib
 import pickle
 import random
 import uuid
 from abc import abstractmethod
-from os import stat
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from determined import searcher
 from determined.pytorch.deepspeed import get_ds_config_from_hparams
@@ -195,17 +193,9 @@ class DSATTrialTracker:
         self,
         submitted_config_dict: Dict[str, Any],
         model_dir: str,
-        all_trials_dict: Optional[Dict[uuid.UUID, DSATTrial]] = None,
-        should_stop: bool = False,
-        best_autotuning_metric_val: Optional[Any] = None,
-        num_trials_since_best_result: int = 0,
     ) -> None:
         self.submitted_config_dict = submitted_config_dict
         self.model_dir = model_dir
-        self.all_trials_dict = all_trials_dict if all_trials_dict is not None else {}
-        self.should_stop = should_stop
-        self.best_autotuning_metric_val = best_autotuning_metric_val
-        self.num_trials_since_best_result = num_trials_since_best_result
 
         # Various derived attributes
         self.slots = self.submitted_config_dict["resources"]["slots_per_trial"]
@@ -231,14 +221,18 @@ class DSATTrialTracker:
         # Also add an internal key to the HP dict which enable the DSAT code path for Trial classes.
         self.submitted_hps_with_autotuning[_defaults.USE_DSAT_MODE_KEY] = True
 
-        # Non-trivial values instantiated after model profiling run
         self.model_profile_info_trial = None
+        self.num_trials_since_best_result = 0
+        self._all_trials_dict = {}
 
     def __len__(self) -> int:
-        return len(self.all_trials_dict)
+        return len(self._all_trials_dict)
 
     def __getitem__(self, request_id: uuid.UUID) -> DSATTrial:
-        return self.all_trials_dict[request_id]
+        return self._all_trials_dict[request_id]
+
+    def __iter__(self) -> Iterator[DSATTrial]:
+        return iter(self._all_trials_dict.values())
 
     def create_trial(
         self,
@@ -260,8 +254,7 @@ class DSATTrialTracker:
             parent=parent_trial,
             search_data=search_data,
         )
-        self.all_trials_dict[trial.request_id] = trial
-        self.update_should_stop()
+        self._all_trials_dict[trial.request_id] = trial
         # TODO: Delete print test.
         logging.info(f"=============Total Trials Created: {len(self)}=============")
         return trial
@@ -280,12 +273,15 @@ class DSATTrialTracker:
         model_profile_info_trial = DSATModelProfileInfoTrial(
             hparams=model_profile_info_hps, model_dir=self.model_dir, slots=self.slots
         )
-        self.all_trials_dict[model_profile_info_trial.request_id] = model_profile_info_trial
+        self._all_trials_dict[model_profile_info_trial.request_id] = model_profile_info_trial
         self.model_profile_info_trial = model_profile_info_trial
         return model_profile_info_trial
 
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
+        # TODO: Talk to Liam about this, because this function adjusts `train_batch_size`, whereas
+        # he probably wants this to be the only constant, in order to hold training dynamics fixed.
+        # We are optimizing different things.
         ds_config = get_ds_config_from_hparams(hparams, self.model_dir)
         batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots
@@ -298,8 +294,9 @@ class DSATTrialTracker:
         """
         Returns the set DSATTrials which are the root element in their lineage.
         """
+        # TODO: Delete if not used anywhere.
         root_trial_set = set()
-        for trial in self.all_trials_dict.values():
+        for trial in self:
             if trial.parent is None:
                 if (
                     isinstance(trial, DSATModelProfileInfoTrial)
@@ -328,61 +325,67 @@ class DSATTrialTracker:
         ops_list = [create_op, validate_after_op]
         return ops_list
 
-    def update_metrics(
+    @property
+    def best_autotuning_metric_val(self) -> bool:
+        autotuning_metric_vals = [
+            t.metric[self.searcher_metric_name]
+            for t in self
+            if self.searcher_metric_name in t.metric
+        ]
+        return max(autotuning_metric_vals) if autotuning_metric_vals else None
+
+    @property
+    def all_trials_created(self) -> bool:
+        return len(self) >= self.tuner_num_trials
+
+    @property
+    def early_stopping_triggered(self) -> bool:
+        return self.num_trials_since_best_result >= self.tuner_early_stopping
+
+    @property
+    def all_trials_closed_or_errored(self) -> bool:
+        return all(t.error or t.metric for t in self)
+
+    @property
+    def should_shutdown(self) -> bool:
+        if self.early_stopping_triggered:
+            logging.info("Early stopping criteria met, searcher will shut down.")
+            return True
+        elif self.all_trials_created and self.all_trials_closed_or_errored:
+            logging.info("All Trials completed, searcher will shut down.")
+            return True
+        else:
+            return False
+
+    def update_trial_metric(
         self,
-        request_id: uuid.UUID,
-        metric: Optional[Dict[str, Any]] = None,
+        trial: DSATTrial,
+        metric: Dict[str, Any],
     ) -> None:
         """
-        Updates the Trial Tracker after metrics have been reported or an error has occurred, in
-        in which case `metrics = None`.
+        Updates the Trial Tracker after metrics have been reported, attaching the reported metrics
+        to the `DSATTrial` instnace and updating early-stopping bookkeeping.
         """
-        last_trial = self[request_id]
-        last_trial.error = metric is None
-        metric = {} if metric is None else metric
-        last_trial.metric = metric
+        trial.metric = metric
 
-        # TODO: Curently not counting explicit OOMs or other errors (which are sometimes also
-        # opaque OOMs) against num_trials_since_best_result
-        # because otherwise early Trials can just all OOM, early stopping is triggered, and no
-        # non-trivial results are returned. Should discuss, though.
-        searcher_metric_value = metric.get(self.searcher_metric_name)
-        if searcher_metric_value is not None:
-            last_trial_is_best = self.best_autotuning_metric_val is None or (
+        # The model info profiling run's metric will not contain the searcher metric key and should
+        # not be counted against the early stopping criteria.
+        if not isinstance(trial, DSATModelProfileInfoTrial):
+            searcher_metric_value = metric.get(self.searcher_metric_name)
+            trial_is_best = self.best_autotuning_metric_val is None or (
                 searcher_metric_value < self.best_autotuning_metric_val
                 if self.smaller_is_better
                 else searcher_metric_value > self.best_autotuning_metric_val
             )
-            if last_trial_is_best:
-                self.best_trial = last_trial
+            if trial_is_best:
+                self.best_trial = trial
                 self.best_autotuning_metric_val = searcher_metric_value
                 self.num_trials_since_best_result = 0
             else:
                 self.num_trials_since_best_result += 1
-            self.update_should_stop()
-
-    def update_should_stop(self) -> None:
-        if not self.should_stop:
-            if self.num_trials_since_best_result == self.tuner_early_stopping:
-                logging.info("Early stopping criteria met, searcher will shut down.")
-                self.should_stop = True
-            if len(self) == self.tuner_num_trials:
-                logging.info("All Trials completed, searcher will shut down.")
-                self.should_stop = True
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        entire_dict = self.__dict__
-        init_args = inspect.signature(self.__init__).parameters
-        state_dict = {k: v for k, v in entire_dict.items() if k in init_args}
-        return state_dict
-
-    @classmethod
-    def from_state_dict(cls, state_dict: Dict[str, Any]) -> "DSATTrialTracker":
-        trial_tracker = cls(**state_dict)
-        return trial_tracker
 
 
-class DSATSearchMethodBase(searcher.SearchMethod):
+class BaseDSATSearchMethod(searcher.SearchMethod):
     """
     Base class for all DS AT searchers. Written so that only the `get_new_searcher_ops_list` method
     needs to be written overwritten when subclassing (at a minimum).
@@ -442,10 +445,11 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_validation_completed for {request_id}")
-        self.trial_tracker.update_metrics(request_id=request_id, metric=metric)
+
+        last_trial = self.trial_tracker[request_id]
+        self.trial_tracker.update_trial_metric(trial=last_trial, metric=metric)
 
         # TODO: remove some of these info logs. Some are just for testing.
-        last_trial = self.trial_tracker[request_id]
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             logging.info(f"Approx. max mbs per stage: {last_trial.max_mbs_per_stage}")
             logging.info(f"Approx. GPU memory per stage: {last_trial.mem_per_gpu_per_stage}")
@@ -454,7 +458,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
 
         # All DS AT Trials should be closed after validation.
         new_ops_list = [searcher.Close(request_id)]
-        if not self.trial_tracker.should_stop:
+        if not self.trial_tracker.all_trials_created:
             additional_ops_list = self.get_new_searcher_ops_list(
                 searcher_state=searcher_state,
                 request_id=request_id,
@@ -470,10 +474,9 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         logging.info(f"Calling on_trial_closed for {request_id}")
         last_trial = self.trial_tracker[request_id]
         logging.info(f"metrics for closed trial {last_trial.metric}")
-        if self.trial_tracker.should_stop:
-            # Shutdown if `should_stop` is True, and this was the last running trial.
-            running_trials = searcher_state.trials_created - searcher_state.trials_closed
-            new_ops_list = [searcher.Shutdown()] if not running_trials else []
+
+        if self.trial_tracker.should_shutdown:
+            new_ops_list = [searcher.Shutdown()]
         else:
             new_ops_list = []
         return new_ops_list
@@ -486,25 +489,24 @@ class DSATSearchMethodBase(searcher.SearchMethod):
     ) -> List[searcher.Operation]:
         # TODO: Remove print tests.
         logging.info(f"Calling on_trial_exited_early for {request_id}")
-        self.trial_tracker.update_metrics(request_id=request_id, metric=None)
 
         last_trial = self.trial_tracker[request_id]
+        last_trial.error = True
+
+        new_ops_list = []
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             logging.info(
                 "**** Shutting down DeepSpeed Autotune: Error in Model Profiling Info Trial ****"
             )
-            new_ops_list = [searcher.Shutdown()]
+            new_ops_list.append(searcher.Shutdown())
         elif exited_reason == searcher.ExitedReason.ERRORED:
-            if self.trial_tracker.should_stop:
-                # Shutdown if `should_stop` is True, once all currently-running trials have completed.
-                running_trials = searcher_state.trials_created - searcher_state.trials_closed
-                new_ops_list = [searcher.Shutdown()] if not running_trials else []
-            else:
-                new_ops_list = self.get_new_searcher_ops_list(
+            if not self.trial_tracker.all_trials_created:
+                additional_ops_list = self.get_new_searcher_ops_list(
                     searcher_state=searcher_state,
                     request_id=request_id,
                     metric=None,
                 )
+                new_ops_list.extend(additional_ops_list)
         else:
             # TODO: this code should never be reached, except for user error or explicit Experiment
             # cancellation. Here as a test due to previous intermittent errors which reached this
@@ -525,16 +527,15 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         return progress
 
     def save_method_state(self, path: pathlib.Path) -> None:
-        checkpoint_path = path.joinpath("state_dict.pkl")
+        checkpoint_path = path.joinpath("trial_tracker.pkl")
         with checkpoint_path.open("wb") as f:
-            pickle.dump(self.trial_tracker.get_state_dict(), f)
+            pickle.dump(self.trial_tracker, f)
 
     def load_method_state(self, path: pathlib.Path) -> None:
         logging.info(f"Restoring searcher state from checkpoint.")
-        checkpoint_path = path.joinpath("state_dict.pkl")
+        checkpoint_path = path.joinpath("trial_tracker.pkl")
         with checkpoint_path.open("rb") as f:
-            state_dict = pickle.load(f)
-            self.trial_tracker = DSATTrialTracker.from_state_dict(state_dict)
+            self.trial_tracker = pickle.load(f)
 
     def _state_print_checks(self, searcher_state) -> None:
         # TODO: Delete when done testing
@@ -559,7 +560,7 @@ class DSATSearchMethodBase(searcher.SearchMethod):
         )
 
 
-class DSATRandomSearchMethod(DSATSearchMethodBase):
+class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -665,10 +666,13 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return new_hparams, new_search_data
 
     def get_random_hparams_and_search_data(self) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        random_zero_stage = random.choice(
-            tuple(self.trial_tracker.model_profile_info_trial.viable_zero_stages)
-        )
-        zero_optim_config = _utils.get_random_zero_optim_dict_for_zero_stage(random_zero_stage)
+        non_trivial_zero_stages = [
+            stage
+            for stage in self.trial_tracker.model_profile_info_trial.viable_zero_stages
+            if stage != 0
+        ]
+        random_zero_stage = random.choice(non_trivial_zero_stages)
+        zero_optim_config = _utils.get_random_zero_optim_config(random_zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.submitted_hps_with_autotuning)
         new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
             new_hparams.get(_defaults.OVERWRITE_KEY, {}),
@@ -687,7 +691,7 @@ class DSATRandomSearchMethod(DSATSearchMethodBase):
         return (new_hparams, search_data)
 
 
-class SimpleBatchSearch(DSATSearchMethodBase):
+class SimpleDSATSearchMethod(BaseDSATSearchMethod):
     """
     Dumb searcher which just submits Trials with linearly increasing batch sizes, from 2 up to
     self.trial_tracker.tuner_num_trials.
