@@ -6,8 +6,9 @@ from typing import Any, List
 from termcolor import colored
 
 from determined.common import api, util, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
+from determined import cli
 
 from . import render
 
@@ -22,10 +23,12 @@ def _parse_config(field: Any) -> Any:
 
 @authentication.required
 def list_template(args: Namespace) -> None:
+    # templates = bindings.get_GetTemplates(cli.setup_session(args)).templates
     templates = [
         render.unmarshal(TemplateAll, t, {"config": _parse_config})
         for t in api.get(args.master, path="templates").json()
     ]
+    print(templates)
     if args.details:
         render.render_objects(TemplateAll, templates, table_fmt="grid")
     else:
