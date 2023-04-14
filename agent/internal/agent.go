@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
+	"github.com/determined-ai/determined/agent/pkg/podman"
 	"github.com/determined-ai/determined/agent/pkg/singularity"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -119,11 +120,22 @@ func (a *Agent) run(ctx context.Context) error {
 		return fmt.Errorf("failed to detect devices: %v", devices)
 	}
 
-	a.log.Trace("setting up container runtime")
+	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
 	var cruntime container.ContainerRuntime
 	var logShipper *fluent.Fluent
 	var logShipperDone chan struct{}
 	switch a.opts.ContainerRuntime {
+	case options.PodmanContainerRuntime:
+		acl, sErr := podman.New(a.opts.PodmanOptions)
+		if sErr != nil {
+			return fmt.Errorf("failed to build podman client: %w", sErr)
+		}
+		defer func() {
+			if cErr := acl.Close(); cErr != nil {
+				a.log.WithError(cErr).Error("failed to close podman client")
+			}
+		}()
+		cruntime = acl
 	case options.SingularityContainerRuntime:
 		acl, sErr := singularity.New(a.opts.SingularityOptions)
 		if sErr != nil {
@@ -164,7 +176,7 @@ func (a *Agent) run(ctx context.Context) error {
 		logShipperDone = fl.Done
 	}
 
-	a.log.Trace("setting up container manager")
+	a.log.Tracef("setting up container manager %s", cruntime == nil)
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes
 	manager, err := containers.New(a.opts, mopts, devices, cruntime, a.sender(outbox))
 	if err != nil {

@@ -55,6 +55,7 @@ type Options struct {
 
 	ContainerRuntime   string             `json:"container_runtime"`
 	SingularityOptions SingularityOptions `json:"singularity_options"`
+	PodmanOptions      PodmanOptions      `json:"podman_options"`
 }
 
 // Validate validates the state of the Options struct.
@@ -152,6 +153,7 @@ type ContainerRuntime string
 const (
 	SingularityContainerRuntime = "singularity"
 	DockerContainerRuntime      = "docker"
+	PodmanContainerRuntime      = "podman"
 )
 
 // SingularityOptions configures how we interact with Singularity.
@@ -160,4 +162,8 @@ type SingularityOptions struct {
 	// up and launches containers into a new network namespace. Disabled by default since this
 	// requires root or a suid installation with /etc/subuid --fakeroot.
 	AllowNetworkCreation bool `json:"allow_network_creation"`
+}
+
+type PodmanOptions struct {
+	AllowNetworkCreation bool `json:"allow_network_creation"`  // review
 }
