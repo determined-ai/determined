@@ -1,6 +1,4 @@
 import { Rectangle } from '@glideapps/glide-data-grid';
-import { Row } from 'antd';
-import SkeletonButton from 'antd/es/skeleton/Button';
 import { observable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -16,9 +14,10 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 import { defaultExperimentColumns } from './glide-table/columns';
-import GlideTable from './glide-table/GlideTable';
+import { Error, Loading, NoExperiments, NoMatches } from './glide-table/exceptions';
+import GlideTable, { SCROLL_SET_COUNT_NEEDED } from './glide-table/GlideTable';
 import TableActionBar from './glide-table/TableActionBar';
-import { useGlasbey } from './glide-table/useGlasbey';
+import { useGlasbey } from './useGlasbey';
 
 interface Props {
   project: Project;
@@ -46,21 +45,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [selectAll, setSelectAll] = useState(false);
   const [clearSelectionTrigger, setClearSelectionTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
   const colorMap = useGlasbey(selectedExperimentIds);
   const pageRef = useRef<HTMLElement>(null);
-  const { width } = useResize(pageRef);
+  const { width, height } = useResize(pageRef);
 
-  const [initialScrollPositionSet] = useState(observable(false));
+  const [scrollPositionSetCount] = useState(observable(0));
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
-      if (!initialScrollPositionSet.get()) return;
+      if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
       const page = Math.floor((y + height) / PAGE_SIZE);
       setPage(page);
     },
-    [initialScrollPositionSet],
+    [scrollPositionSetCount],
   );
 
   const experimentFilters = useMemo(() => {
@@ -69,6 +69,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
     return filters;
   }, [project.id]);
+
+  const numFilters = useMemo(
+    () => Object.values(experimentFilters).filter((x) => x !== undefined).length - 1,
+    [experimentFilters],
+  );
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -139,11 +144,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       id="projectDetails">
       <>
         {isLoading ? (
-          [...Array(22)].map((x, i) => (
-            <Row key={i} style={{ paddingBottom: '4px' }}>
-              <SkeletonButton style={{ width: width - 20 }} />
-            </Row>
-          ))
+          <Loading width={width} />
+        ) : experiments.length === 0 ? (
+          numFilters === 0 ? (
+            <NoExperiments />
+          ) : (
+            <NoMatches />
+          )
+        ) : error ? (
+          <Error />
         ) : (
           <>
             <TableActionBar
@@ -162,9 +171,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               data={experiments}
               fetchExperiments={fetchExperiments}
               handleScroll={handleScroll}
-              initialScrollPositionSet={initialScrollPositionSet}
+              height={height}
               page={page}
               project={project}
+              scrollPositionSetCount={scrollPositionSetCount}
               selectAll={selectAll}
               selectedExperimentIds={selectedExperimentIds}
               setSelectAll={setSelectAll}
