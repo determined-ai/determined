@@ -278,8 +278,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         const cell = columnDefs[columnId].renderer(rowData.data, row) as ClickableCell;
         if (String(cell?.data?.kind) === 'link-cell') {
           cell.data.link?.onClick?.();
+          return;
         }
-        return;
       }
 
       setSelection(({ rows }: GridSelection) => ({
