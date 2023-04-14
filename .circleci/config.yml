@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.21.1-dev0
+    default: 0.21.2-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9d07809
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9b5db1b
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9d07809
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-9b5db1b
 
   login-docker:
     parameters:
@@ -207,7 +207,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.20.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
@@ -216,6 +216,12 @@ commands:
     steps:
       - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
+
+  install-codecov:
+    steps:
+      - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
+      - run: chmod +x $HOME/.local/bin/codecov
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
 
   setup-go-intg-deps:
     steps:
@@ -1120,8 +1126,8 @@ jobs:
       - pre-package-and-push-system:
           check: false
       - make-package
-      - run: make -C master publish-dev
-      - run: make -C agent publish-dev
+      - run: tools/scripts/retry.sh make -C master publish-dev
+      - run: tools/scripts/retry.sh make -C agent publish-dev
       - run:
           name: Build and publish model_hub docker images
           command: |
@@ -1130,11 +1136,11 @@ jobs:
                 # with the git hash as well as the version.  This will make that image available
                 # immediately for nightly tests.
                 make -C model_hub build-docker
-                make -C model_hub publish-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
             else
                 # Otherwise, only tag and publish the environment with the git hash.
                 make -C model_hub build-docker-dev
-                make -C model_hub publish-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
@@ -1165,7 +1171,7 @@ jobs:
       - run: make -C master publish
       - run: make -C agent publish
       - run: make -C model_hub build-docker
-      - run: make -C model_hub publish-docker
+      - run: tools/scripts/retry.sh make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1563,15 +1569,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1585,14 +1592,15 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1605,15 +1613,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1626,15 +1635,16 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.8.4 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1647,16 +1657,17 @@ jobs:
       - checkout
       - skip-if-docs-only
       - skip-if-webui-only
+      - install-codecov
       - setup-python-venv:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
-      - run: codecov -v -F harness
+      - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1991,7 +2002,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2
         type: string
       accel-node-taints:
         type: string

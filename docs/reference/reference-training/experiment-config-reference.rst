@@ -82,7 +82,7 @@ Examples:
 -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
    the top level of the context directory.
 -  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an
-   attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
+   attribute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
 
 These formats follow Python `Entry points
 <https://packaging.python.org/specifications/entry-points/>`_ specification except that the context
@@ -1044,9 +1044,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.1`` for NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.1`` for CPUs.
-   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.1`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.8-gpu-0.21.2`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.12-tf-2.8-cpu-0.21.2`` for CPUs.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.21.2`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
@@ -1060,8 +1060,8 @@ workloads for this experiment. For more information on customizing the trial env
          `Singularity run <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__
          command documentation for a full description of the capabilities.
 
-      -  A Singularity image provided via the `singularity_image_root` configured for the cluster as
-         described in :ref:`slurm-image-config`.
+      -  A Singularity image provided via the ``singularity_image_root`` configured for the cluster
+         as described in :ref:`slurm-image-config`.
 
       -  If none of the above applies, Determined will apply the ``docker://`` prefix to the image.
 
@@ -1112,7 +1112,7 @@ workloads for this experiment. For more information on customizing the trial env
    Only applicable when running Determined on Kubernetes. Applies a pod spec to the pods that are
    launched by Determined for this task. See :ref:`custom-pod-specs` for details.
 
-.. _exp-environment-add-capapbilities:
+.. _exp-environment-add-capabilities:
 
 ``add_capabilities``
    A list of Linux capabilities to grant to task containers. Each entry in the list is equivalent to

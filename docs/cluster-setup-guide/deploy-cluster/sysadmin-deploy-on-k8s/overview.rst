@@ -64,10 +64,10 @@ the `Kubernetes Cluster Autoscaler
 Pod Security
 ============
 
-Determined runs task containers as root by default. However, you can link a determined user to a
-Unix user and group, as long as the Unix user and group exist. Any task launched by that determined
-user will be run as the linked Unix user instead of root. For more details, refer to
-:ref:`run-as-user`.
+By default, Determined runs task containers as root. However, it is possible to associate a
+Determined user with a Unix user and group, provided that the Unix user and group already exist.
+Tasks initiated by the associated Determined user will run under the linked Unix user rather than
+root. For more information, see: :ref:`run-as-user`.
 
 .. _useful-kubectl-commands:
 

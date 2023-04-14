@@ -34,10 +34,11 @@ import { openCommandResponse } from 'utils/wait';
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
+  makeOpen?: boolean;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings: ExperimentListSettings;
-  updateSettings: UpdateSettings;
+  settings?: ExperimentListSettings;
+  updateSettings?: UpdateSettings;
   workspaceId?: number;
 }
 
@@ -59,6 +60,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ExperimentActionDropdown: React.FC<Props> = ({
   experiment,
+  makeOpen,
   onComplete,
   onVisibleChange,
   settings,
@@ -105,7 +107,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.SwitchPin: {
-            const newPinned = { ...(settings.pinned ?? {}) };
+            const newPinned = { ...(settings?.pinned ?? {}) };
             const pinSet = new Set(newPinned[experiment.projectId]);
             if (pinSet.has(id)) {
               pinSet.delete(id);
@@ -120,7 +122,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.add(id);
             }
             newPinned[experiment.projectId] = Array.from(pinSet);
-            updateSettings({ pinned: newPinned });
+            updateSettings?.({ pinned: newPinned });
             break;
           }
           case Action.Kill:
@@ -189,23 +191,23 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       id,
       onComplete,
       onVisibleChange,
-      settings.pinned,
+      settings?.pinned,
       updateSettings,
     ],
   );
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions()).map(
-    (action) => {
+  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
+    .filter((action) => action !== Action.SwitchPin || settings)
+    .map((action) => {
       if (action === Action.SwitchPin) {
-        const label = (settings.pinned?.[experiment.projectId] ?? []).includes(id)
+        const label = (settings?.pinned?.[experiment.projectId] ?? []).includes(id)
           ? 'Unpin'
           : 'Pin';
         return { key: action, label };
       } else {
         return { danger: action === Action.Delete, key: action, label: action };
       }
-    },
-  );
+    });
 
   const menu: DropdownProps['menu'] = useMemo(() => {
     return { items: [...menuItems], onClick: handleMenuClick };
@@ -227,6 +229,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     <>
       <Dropdown
         menu={menu}
+        open={makeOpen}
         placement="bottomLeft"
         trigger={['contextMenu']}
         onOpenChange={onVisibleChange}>

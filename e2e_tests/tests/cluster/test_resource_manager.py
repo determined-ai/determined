@@ -5,8 +5,8 @@ import time
 from typing import List
 
 import pytest
-import yaml
 
+from determined.common import yaml
 from determined.common.api import bindings
 from determined.common.api.bindings import experimentv1State
 from tests import api_utils

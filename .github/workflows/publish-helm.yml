@@ -38,10 +38,10 @@ jobs:
 
       # get the artifact for the chart and the branch for the chart repo
       - name: check out chart repo branch
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3
         with:
           ref: helm-chart-repository
-          token: ${{ secrets.DETERMINED_CI_RELEASE_PAT }}
+          token: ${{ secrets.DETERMINED_TOKEN }}
       - name: get chart artifact
         run: |
           NEW_CHART_DIR=$( mktemp -d )

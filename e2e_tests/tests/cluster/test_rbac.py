@@ -369,23 +369,18 @@ def test_rbac_permission_assignment_errors() -> None:
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_list_roles() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
-        # Test list-roles exluding properly.
         det_cmd(["rbac", "list-roles"], check=True)
         all_roles = det_cmd_json(["rbac", "list-roles", "--json"])["roles"]
-        exluded_global_roles = det_cmd_json(
+
+        # Test list-roles excluding global roles properly.
+        non_excluded_roles = det_cmd_json(
             ["rbac", "list-roles", "--exclude-global-roles", "--json"]
         )["roles"]
-        for all_role in all_roles:
-            exluded_role = [r for r in exluded_global_roles if r["roleId"] == all_role["roleId"]]
-            has_global_role = any(
-                [p for p in all_role["permissions"] if not p["scopeTypeMask"]["workspace"]]
-            )
-            if len(exluded_role) == 0:
-                # Didn't find our role in exluded role. Needs to have a global only permission.
-                assert has_global_role
-            else:
-                # Did find our role in exluded role. Needs to have no global only permissions.
-                assert not has_global_role
+        non_excluded_role_ids = {r["roleId"] for r in non_excluded_roles}
+        for role in all_roles:
+            is_excluded = role["roleId"] not in non_excluded_role_ids
+            is_global = any(not p["scopeTypeMask"]["workspace"] for p in role["permissions"])
+            assert is_excluded == is_global
 
         # Test list-roles pagination.
         json_out = det_cmd_json(["rbac", "list-roles", "--limit=2", "--json"])
@@ -400,7 +395,7 @@ def test_rbac_list_roles() -> None:
         assert json_out["pagination"]["total"] == len(all_roles)
         assert json_out["pagination"]["offset"] == 1
 
-        # Setup group / user to test with.
+        # Set up group/user to test with.
         api_utils.configure_token_store(ADMIN_CREDENTIALS)
         test_user_creds = api_utils.create_test_user()
         group_name = get_random_string()

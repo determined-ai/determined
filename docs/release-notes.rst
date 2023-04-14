@@ -10,6 +10,55 @@
  Version 0.21
 **************
 
+Version 0.21.1
+==============
+
+**Release Date:** April 11, 2023
+
+**Breaking Change**
+
+-  Remove old master logs ``/logs`` endpoint. Users should use ``/api/v1/master/logs`` instead.
+
+**Bug Fixes**
+
+-  Fix an issue introduced in 0.19.9 where ``task_container_defaults`` for the default resource
+   pools were not respected for experiments and tasks unless they specified the resource pool name
+   explicitly.
+
+-  Checkpoints: Fix an issue where checkpoint insertion on a cluster with a lot of checkpoints and
+   reported metrics could take a long time.
+
+-  Kubernetes: Fix a crash affecting zero-slot workloads when ``resources.limits`` and
+   ``resources.requests`` overrides were explicitly specified in the pod spec.
+
+**Deprecated Features**
+
+-  HDFS checkpoint storage support has been deprecated and will be removed in a future version.
+   Please contact Determined if you still need it, or else migrate to a different storage backend.
+
+**Improvement**
+
+-  Cluster: Add HPC Launcher support for JVM resource configuration.
+
+   -  The master configuration option ``resource_manager.launcher_jvm_args`` can be used to override
+      the default HPC Launcher JVM heap configuration. This support requires HPC Launcher version
+      3.2.6 or greater.
+
+**New Features**
+
+-  Python SDK: Add methods for efficient export of training and validation metrics to the Python
+   SDK. The methods are listed below.
+
+   -  :meth:`~determined.experimental.client.stream_trials_training_metrics`
+   -  :meth:`~determined.experimental.client.stream_trials_validation_metrics`
+   -  :meth:`~determined.experimental.client.TrialReference.stream_training_metrics`
+   -  :meth:`~determined.experimental.client.TrialReference.stream_validation_metrics`
+
+**Removed Features**
+
+-  The separate ``det-deploy`` executable was deprecated in 0.15.0 (April 2021) and is now removed.
+   Use the ``det deploy`` subcommand instead.
+
 Version 0.21.0
 ==============
 
@@ -44,8 +93,8 @@ Version 0.21.0
 **Improvements**
 
 -  CLI: Command-line deployments will now default to provisioning Nvidia T4 GPU instances instead of
-      K80 instances. This change is intended to improve the performance/cost and driver support of
-      the default deployment.
+   K80 instances. This change is intended to improve the performance/cost and driver support of the
+   default deployment.
 
 -  Kubernetes: Ease permission requirements in Kubernetes so master no longer requires access to all
    Kubernetes namespaces. This only affects custom modified Helm chart configurations.
@@ -555,7 +604,7 @@ Version 0.19.2
 
 **Improvements**
 
--  API: `GetTrialWorkloads` can now optionally include per-batch metrics when
+-  API: ``GetTrialWorkloads`` can now optionally include per-batch metrics when
    ``includeBatchMetrics`` query parameter is set.
 
 **New Features**

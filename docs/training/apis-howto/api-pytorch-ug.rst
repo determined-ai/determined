@@ -697,8 +697,8 @@ Initializing the Trainer
 
 After defining the PyTorch Trial, initialize the trial and the trainer.
 :meth:`~determined.pytorch.init` returns a :class:`~determined.pytorch.PyTorchTrialContext` for
-instantiating `~determined.pytorch.PyTorchTrial`. Initialize `~determined.pytorch.Trainer` with the
-trial and context.
+instantiating :class:`~determined.pytorch.PyTorchTrial`. Initialize
+:class:`~determined.pytorch.Trainer` with the trial and context.
 
 .. code:: python
 

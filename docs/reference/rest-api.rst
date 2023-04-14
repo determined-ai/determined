@@ -36,7 +36,7 @@ button to make an HTTP request against the endpoint. You need to have the approp
 a running cluster for an interactive request.
 
 If you have access to a running Determined cluster you can try the live-interact version by clicking
-the API icon from the Determined WebUI or by navigating to `/docs/rest-api/` on your Determined
+the API icon from the Determined WebUI or by navigating to ``/docs/rest-api/`` on your Determined
 cluster.
 
 ****************
