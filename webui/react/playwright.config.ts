@@ -17,7 +17,7 @@ export default defineConfig({
   fullyParallel: true,
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  outputDir: './e2e/test-results',
+  outputDir: './src/e2e/test-results',
 
   /* Configure projects for major browsers */
   projects: [
@@ -58,12 +58,12 @@ export default defineConfig({
   ],
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { outputFolder: './e2e/playwright-report' }]],
+  reporter: [['html', { outputFolder: './src/e2e/playwright-report' }]],
 
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
 
-  testDir: './e2e',
+  testDir: './src/e2e',
 
   /* https://playwright.dev/docs/test-timeouts */
   timeout: 5 * 60 * 1000,
