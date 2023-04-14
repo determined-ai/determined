@@ -48,13 +48,3 @@ CREATE TRIGGER autoupdate_exp_best_trial_metrics
 AFTER UPDATE OF best_validation_id ON trials
 FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
 
-
-
-
-
-WITH bt AS (SELECT id, best_validation_id FROM trials WHERE experiment_id = 6749 ORDER BY searcher_metric_value_signed LIMIT 1)
-UPDATE experiments SET best_trial_id = bt.id, 
-validation_metrics = 
-(SELECT metrics FROM validations v WHERE v.id = bt.best_validation_id) FROM bt
-WHERE experiments.id = 6749;
-
