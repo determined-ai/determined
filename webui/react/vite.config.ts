@@ -5,7 +5,7 @@ import path from 'path';
 import react from '@vitejs/plugin-react-swc';
 import MagicString from 'magic-string';
 import { Plugin, UserConfig } from 'vite';
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
@@ -146,6 +146,7 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     environment: 'jsdom',
+    exclude: [...configDefaults.exclude, './src/e2e/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
     css: {

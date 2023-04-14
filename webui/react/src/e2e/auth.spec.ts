@@ -3,8 +3,8 @@ import { expect } from '@playwright/test';
 import { test } from './global-fixtures';
 
 test.describe('Authentication', () => {
-  const USERNAME = process.env.USER_NAME ?? '';
-  const PASSWORD = process.env.PASSWORD ?? '';
+  const USERNAME = process.env.PW_USER_NAME ?? '';
+  const PASSWORD = process.env.PW_PASSWORD ?? '';
 
   test.beforeEach(async ({ dev }) => {
     await dev.setServerAddress();

@@ -16,6 +16,9 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: true,
 
+  /* https://playwright.dev/docs/test-timeouts#global-timeout */
+  globalTimeout: 3 * 60 * 1000, // 3 min
+
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
 
@@ -82,5 +85,5 @@ export default defineConfig({
   },
 
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 4 : undefined,
 });

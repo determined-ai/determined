@@ -20,6 +20,10 @@ node_modules/done.stamp: package-lock.json
 get-deps: node_modules/done.stamp
 	git submodule update --init
 
+.PHONY: e2e
+e2e:
+	npm run e2e
+
 .PHONY: build
 build: build/done.stamp
 
