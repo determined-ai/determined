@@ -29,11 +29,11 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{"anumber<=12.34", "anumber<=12.34"},
 		{"thisnumber>=9.22", "thisnumber>=9.22"},
 		{"validation.validation_accuracy>1",
-			"(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_accuracy')::float8>1"},
+			"(e.validation_metrics->>'validation_accuracy')::float8>1"},
 		{"validation.validation_loss<-1",
-			"(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_loss')::float8<-1"},
+			"(e.validation_metrics->>'validation_loss')::float8<-1"},
 		{"validation.validation_test>-10.98",
-			"(besttrials.best_validation->'metrics'->'avg_metrics'->>'validation_test')::float8>-10.98"},
+			"(e.validation_metrics->>'validation_test')::float8>-10.98"},
 		{"hp.global_batch_size>=32",
 			"(e.config->'hyperparameters'->'global_batch_size'->>'val')::float8>=32"},
 		{"hp.global_batch_size<=-64",
@@ -45,7 +45,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`(experiment.description~"experiment description" AND (-experiment.id:456 OR -experiment.resourcePool~"test\"s comma value\"s"))`, //nolint: lll
 			`(e.config->>'description' LIKE '%experiment description%' AND (e.id != 456 OR e.config->'resources'->>'resource_pool' NOT LIKE '%test\"s comma value\"s%'))`}, //nolint: lll
 		{`(experiment.forkedFrom:5 OR (-validation.error:1 AND hp.hyperparameter<=10))`,
-			`(e.parent_id = 5 OR ((besttrials.best_validation->'metrics'->'avg_metrics'->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`}, //nolint: lll
+			`(e.parent_id = 5 OR ((e.validation_metrics->>'error')::float8 != 1 AND (e.config->'hyperparameters'->'hyperparameter'->>'val')::float8<=10))`}, //nolint: lll
 	}
 	for _, c := range validTestCases {
 		result, err := parseFilter(c[0])
