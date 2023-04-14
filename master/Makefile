@@ -111,8 +111,8 @@ check: check-gen
 
 .PHONY: fmt-sql
 fmt-sql:
-	sqlfluff fix -p 0 --dialect postgres . || exit 0
 	sqlfluff format -p 0 --dialect postgres . || exit 0
+	# sqlfluff fix -p 0 --dialect postgres . || exit 0
 
 .PHONY: fmt
 fmt:
