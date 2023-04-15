@@ -1,13 +1,7 @@
 ALTER TABLE trials ADD COLUMN searcher_metric_value_signed float8 DEFAULT NULL;
 CREATE INDEX ix_trials_metric_value ON trials USING btree (searcher_metric_value_signed);
 
-ALTER TABLE trials ADD COLUMN latest_validation_id int DEFAULT NULL;
-CREATE INDEX ix_trials_latest_validation ON trials USING btree (latest_validation_id);
-CREATE INDEX ix_trials_best_validation ON trials USING btree (best_validation_id);
-
-
 ALTER TABLE experiments ADD COLUMN best_trial_id int DEFAULT NULL;
-CREATE INDEX ix_experiments_best_trial ON experiments USING btree (best_trial_id);
 
 ALTER TABLE experiments ADD COLUMN validation_metrics JSONB NULL;
 CREATE INDEX ix_experiments_validation_metrics ON experiments USING GIN (validation_metrics);
@@ -21,10 +15,6 @@ WHEN coalesce((ex.config->'searcher'->>'smaller_is_better')::boolean, true)
 END AS sign
 FROM experiments ex)
 UPDATE trials SET searcher_metric_value_signed = si.sign * searcher_metric_value FROM si WHERE experiment_id = si.id;
-
-WITH lv AS (
-SELECT DISTINCT ON (trial_id) id, trial_id FROM validations GROUP BY trial_id, id, end_time ORDER BY trial_id, end_time DESC
-) UPDATE trials SET latest_validation_id = lv.id FROM lv WHERE trials.id = lv.trial_id;
 
 WITH sv AS (
 SELECT DISTINCT ON (experiment_id) experiment_id, id, searcher_metric_value_signed FROM trials WHERE searcher_metric_value_signed IS NOT NULL GROUP BY experiment_id, id ORDER BY experiment_id, searcher_metric_value_signed)

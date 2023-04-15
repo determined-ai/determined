@@ -255,7 +255,8 @@ type Experiment struct {
 	// The metrics and hyperparameters associated with the best trial by searcher
 	// metric.
 	BestTrialSearcherMetric *float64 `protobuf:"fixed64,31,opt,name=best_trial_searcher_metric,json=bestTrialSearcherMetric,proto3,oneof" json:"best_trial_searcher_metric,omitempty"`
-	// Id of experiment's best trial, calculated by the best searcher metrics value of trial's best validation.
+	// Id of experiment's best trial, calculated by the best searcher metrics
+	// value of trial's best validation.
 	BestTrialId *int32 `protobuf:"varint,32,opt,name=best_trial_id,json=bestTrialId,proto3,oneof" json:"best_trial_id,omitempty"`
 }
 
