@@ -107,7 +107,7 @@ commands:
       - run:
           name: check for docs-only changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "docs" ] ; then
               echo "docs-only change detected, halting job now"
@@ -122,7 +122,7 @@ commands:
       - run:
           name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
             if [ "$DIFF_DIRS" = "webui" ] ; then
               echo "webui-only change detected, halting job now"
@@ -138,7 +138,7 @@ commands:
       - run:
           name: check for shared changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
             # check "shared" is in the list of changed directories
             if [[ "$DIFF_DIRS" == *"shared"* ]]; then
