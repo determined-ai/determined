@@ -1,7 +1,7 @@
 import base64
 from argparse import FileType, Namespace
 from collections import namedtuple
-from typing import Any, List
+from typing import Any, Dict, List
 
 from termcolor import colored
 
@@ -16,31 +16,28 @@ TemplateClean = namedtuple("TemplateClean", ["name"])
 TemplateAll = namedtuple("TemplateAll", ["name", "config"])
 
 
-def _parse_config(field: Any) -> Any:
+def _parse_config(data: Dict[str, Any]) -> Any:
     # Pretty print the config field.
-    return yaml.safe_dump(yaml.safe_load(base64.b64decode(field)), default_flow_style=False)
+    return yaml.safe_dump(data, default_flow_style=False)
 
 
 @authentication.required
 def list_template(args: Namespace) -> None:
-    templates = bindings.get_GetTemplates(cli.setup_session(args)).templates
-    # formatted_tpls = [
-    #     render.unmarshal(TemplateAll, t, {"config": _parse_config})
-    #     for t in [tpl.to_json() for tpl in templates]
-    # ]
-    # print(formatted_tpls)
+    templates: List[TemplateAll] = []
+    for tpl in bindings.get_GetTemplates(cli.setup_session(args)).templates:
+        templates.append(TemplateAll(tpl.name, _parse_config(tpl.config)))
     if args.details:
-        render.render_objects(bindings.v1Template, templates, table_fmt="grid")
+        render.render_objects(TemplateAll, templates, table_fmt="grid")
     else:
-        render.render_objects(bindings.v1Template, templates, table_fmt="grid")
-        # render.render_objects(TemplateClean, formatted_tpls)
+        render.render_objects(TemplateClean, templates)
 
 
 @authentication.required
 def describe_template(args: Namespace) -> None:
-    resp = api.get(args.master, path="templates/{}".format(args.template_name)).json()
-    template = render.unmarshal(TemplateAll, resp, {"config": _parse_config})
-    print(template.config)
+    tpl = bindings.get_GetTemplate(
+        cli.setup_session(args), templateName=args.template_name
+    ).template
+    print(_parse_config(tpl.config))
 
 
 @authentication.required
