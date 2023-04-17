@@ -137,6 +137,7 @@ func (ColumnType) EnumDescriptor() ([]byte, []int) {
 	return file_determined_project_v1_project_proto_rawDescGZIP(), []int{1}
 }
 
+// Project Column is a description of a column used on experiments in the project
 type ProjectColumn struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
