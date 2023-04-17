@@ -10,15 +10,40 @@
 spec:
   priorityClassName: determined-system-priority
   enableServiceLinks: false
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: topology.kubernetes.io/region
+              operator: In
+              values:
+                - {{ .Values.region | upper }}
   containers:
   - name: determined-container
     resources:
       requests:
-        memory: {{ .Values.resources.memory }}
-        cpu: {{ .Values.resources.cpu }}
+        memory: 64Gi
+        cpu: 32
       limits:
-        memory: {{ .Values.resources.memory }}
-        cpu: {{ .Values.resources.cpu }}
+        memory: 64Gi
+        cpu: 32
+    volumeMounts:
+      - mountPath: /dev/shm
+        name: dshm
+      {{- range .Values.mounts }}
+      - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
+        mountPath: {{ .name }}
+      {{- end }}
+  volumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
+    {{- range .Values.mounts }}
+    - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
+      persistentVolumeClaim:
+        claimName: {{ .pvc }}
+    {{- end }}
 {{- end -}}
 
 {{- define "determined.gpuPodSpec" -}}

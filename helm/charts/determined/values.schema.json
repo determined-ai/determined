@@ -52,17 +52,12 @@
           "gpuType": {
             "type": "string",
             "enum": [
-              "RTX_A4000",
               "RTX_A5000",
               "RTX_A6000",
               "A100_NVLINK",
               "A100_NVLINK_80GB",
-              "A100_PCIE_40GB",
-              "A100_PCIE_80GB",
-              "A40",
-              "Tesla_V100_NVLINK",
-              "Quadro_RTX_5000",
-              "Quadro_RTX_4000"
+              "H100_NVLINK_80GB",
+              "A40"
             ],
             "form": true,
             "title": "GPU Type"
