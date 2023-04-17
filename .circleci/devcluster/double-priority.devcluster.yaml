@@ -21,6 +21,7 @@ stages:
         root: tools/build
         cache:
           cache_dir: /tmp/determined-cache
+        launch_error: false
         security:
           authz:
             rbac_ui_enabled: true

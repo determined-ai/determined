@@ -1,6 +1,6 @@
 import pytest
-import yaml
 
+from determined.common import yaml
 from tests import command as cmd
 from tests import config as conf
 from tests import template as tpl

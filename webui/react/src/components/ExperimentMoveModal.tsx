@@ -8,9 +8,11 @@ import Select, { Option } from 'components/kit/Select';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { moveExperiment } from 'services/api';
+import { moveExperiments } from 'services/api';
+import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
+import { pluralizer } from 'shared/utils/string';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
@@ -23,27 +25,17 @@ type FormInputs = {
 };
 
 interface Props {
-  onClose?: () => void;
+  onSubmit?: (successfulIds?: number[]) => void;
   experimentIds: number[];
+  filters?: V1BulkExperimentFilters;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
 }
 
-const moveExperimentWithHandler = async (
-  experimentId: number,
-  destinationProjectId: number,
-): Promise<number> => {
-  try {
-    await moveExperiment({ destinationProjectId, experimentId });
-    return 0;
-  } catch (e) {
-    return 1;
-  }
-};
-
 const ExperimentMoveModalComponent: React.FC<Props> = ({
-  onClose,
+  onSubmit,
   experimentIds,
+  filters,
   sourceProjectId,
   sourceWorkspaceId,
 }: Props) => {
@@ -81,37 +73,37 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    const results = await Promise.allSettled(
-      experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projId)),
-    );
-    const numFailures = results.filter(
-      (res) => res.status !== 'fulfilled' || res.value === 1,
-    ).length;
+    const results = await moveExperiments({ destinationProjectId: projId, experimentIds, filters });
 
-    const experimentText =
-      experimentIds.length === 1
-        ? `Experiment ${experimentIds[0]}`
-        : `${experimentIds.length} experiments`;
+    onSubmit?.(results.successful);
+
+    const numSuccesses = results.successful.length;
+    const numFailures = results.failed.length;
 
     const destinationProjectName =
       Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
 
-    if (numFailures === 0) {
+    if (numSuccesses === 0 && numFailures === 0) {
+      notification.open({
+        description: 'No selected experiments were eligible for moving',
+        message: 'No eligible experiments',
+      });
+    } else if (numFailures === 0) {
       notification.open({
         btn: null,
         description: (
           <div onClick={closeNotification}>
             <p>
-              {experimentText} moved to project {destinationProjectName}
+              {results.successful.length} experiments moved to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
         ),
         message: 'Move Success',
       });
-    } else if (numFailures === experimentIds.length) {
+    } else if (numSuccesses === 0) {
       notification.warning({
-        description: `Unable to move ${experimentText}`,
+        description: `Unable to move ${numFailures} experiments`,
         message: 'Move Failure',
       });
     } else {
@@ -119,8 +111,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         description: (
           <div onClick={closeNotification}>
             <p>
-              {numFailures} out of {experimentIds.length} experiments failed to move to project{' '}
-              {destinationProjectName}
+              {numFailures} out of {numFailures + numSuccesses} eligible experiments failed to move
+              to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(projId)}>View Project</Link>
           </div>
@@ -144,10 +136,16 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       submit={{
         disabled,
         handler: handleSubmit,
-        text: `Move Experiment${experimentIds.length > 1 ? 's' : ''}`,
+        text:
+          filters !== undefined
+            ? 'Move Experiments'
+            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
       }}
-      title={`Move Experiment${experimentIds.length > 1 ? 's' : ''}`}
-      onClose={onClose}>
+      title={
+        filters !== undefined
+          ? 'Move Experiments'
+          : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
+      }>
       <Form form={form} layout="vertical">
         <Form.Item
           label="Workspace"

@@ -99,7 +99,7 @@ const isShownAnimation = (state: CompoundRunState): boolean => {
 
 interface Props {
   experiment: ExperimentBase;
-  fetchExperimentDetails: () => void;
+  fetchExperimentDetails: () => Promise<void>;
   name?: string;
   trial?: TrialItem;
   // TODO: separate components for
@@ -146,7 +146,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
-  const handleModalClose = useCallback(() => fetchExperimentDetails(), [fetchExperimentDetails]);
+  const handleModalClose = useCallback(
+    async () => await fetchExperimentDetails(),
+    [fetchExperimentDetails],
+  );
 
   const expPermissions = usePermissions();
   const isMovable =
@@ -540,7 +543,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         experimentIds={isMovable ? [experiment.id] : []}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
-        onClose={handleModalClose}
+        onSubmit={handleModalClose}
       />
       <ExperimentStopModal.Component
         experimentId={experiment.id}

@@ -980,7 +980,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         experimentIds={batchMovingExperimentIds ?? []}
         sourceProjectId={project?.id}
         sourceWorkspaceId={project?.workspaceId}
-        onClose={handleActionComplete}
+        onSubmit={handleActionComplete}
       />
     </Page>
   );
