@@ -2,6 +2,7 @@ package docker
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 
@@ -67,7 +68,7 @@ func (s *credentialStore) get() (types.AuthConfig, error) {
 
 	creds, err := hclient.Get(s.store, s.registry)
 	if err != nil {
-		return ret, err
+		return ret, fmt.Errorf("error getting docker credentials from a native store: %w", err)
 	}
 
 	if creds.Username == tokenUsername {

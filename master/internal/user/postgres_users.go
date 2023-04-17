@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/o1egl/paseto"
@@ -29,7 +30,7 @@ WHERE u.id = ?`
 			return nil, db.ErrNotFound
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("error getting user by id %d: %w", userID, err)
 	}
 
 	return &fu, nil
@@ -45,7 +46,7 @@ func UserByUsername(username string) (*model.User, error) {
 			return nil, db.ErrNotFound
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("error getting user by username %s: %w", username, err)
 	}
 	return &user, nil
 }
@@ -54,7 +55,11 @@ func UserByUsername(username string) (*model.User, error) {
 func SetDisplayName(userID int32, displayName *string) error {
 	_, err := db.Bun().NewUpdate().Model((*model.User)(nil)).Set("display_name = ?", displayName).
 		Where("id = ?", userID).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error setting user id %d display name: %w", userID, err)
+	}
+
+	return nil
 }
 
 // AddUserExec execs an INSERT to create a new user.
@@ -62,7 +67,7 @@ func AddUserExec(user *model.User) error {
 	ctx := context.TODO()
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("error starting add user exec transcation: %w", err)
 	}
 	defer func() {
 		txErr := tx.Rollback()
@@ -128,7 +133,7 @@ func UserByToken(token string, ext *model.ExternalSessions) (
 
 	err = db.Bun().NewSelect().Model(&session).Where("id = ?", session.ID).Scan(context.Background())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting session by id: %w", err)
 	}
 
 	if session.Expiry.Before(time.Now()) {
@@ -143,7 +148,7 @@ func UserByToken(token string, ext *model.ExternalSessions) (
 
 	err = db.Bun().NewRaw(query, session.ID).Scan(context.Background(), &user)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting user by session: %w", err)
 	}
 
 	return &user, &session, nil

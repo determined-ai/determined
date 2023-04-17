@@ -50,12 +50,19 @@ type delayWriter struct {
 }
 
 func (w *delayWriter) Write(p []byte) (int, error) {
-	return w.next.Write(p)
+	b, err := w.next.Write(p)
+	if err != nil {
+		return 0, fmt.Errorf("error writing with delay writier: %w", err)
+	}
+	return b, nil
 }
 
 // Close flushes the buffer if it is nonempty.
 func (w *delayWriter) Close() error {
-	return w.next.Flush()
+	if err := w.next.Flush(); err != nil {
+		return fmt.Errorf("error flushing delayed writer: %w", err)
+	}
+	return nil
 }
 
 func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {

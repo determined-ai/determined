@@ -423,6 +423,10 @@ func TestPostUserActivity(t *testing.T) {
 }
 
 func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
-	return db.Bun().NewSelect().Model((*model.UserActivity)(nil)).Where("user_id = ?",
+	c, err := db.Bun().NewSelect().Model((*model.UserActivity)(nil)).Where("user_id = ?",
 		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("error getting user activity entry: %w", err)
+	}
+	return c, nil
 }

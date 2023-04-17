@@ -11,8 +11,12 @@ import (
 
 var parsers = map[reflect.Kind]func(v string) (interface{}, error){
 	reflect.String: func(v string) (interface{}, error) { return v, nil },
-	reflect.Int:    func(v string) (interface{}, error) { return strconv.Atoi(v) },
-	reflect.Bool:   func(v string) (interface{}, error) { return strconv.ParseBool(v) },
+	reflect.Int: func(v string) (interface{}, error) {
+		return strconv.Atoi(v) //nolint: wrapcheck
+	},
+	reflect.Bool: func(v string) (interface{}, error) {
+		return strconv.ParseBool(v) //nolint: wrapcheck
+	},
 }
 
 // BindArgs binds path and query parameters in the context to struct fields.

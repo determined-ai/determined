@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"go.opentelemetry.io/otel"
@@ -56,7 +57,11 @@ func newExporter(ctx context.Context, endpoint string) (*otlptrace.Exporter, err
 	}
 
 	client := otlptracegrpc.NewClient(opts...)
-	return otlptrace.New(ctx, client)
+	exporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("error creating opentel exporter: %w", err)
+	}
+	return exporter, nil
 }
 
 func newTraceProvider(exp *otlptrace.Exporter, serviceName string) *sdktrace.TracerProvider {

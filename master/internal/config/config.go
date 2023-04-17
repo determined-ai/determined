@@ -220,7 +220,7 @@ func (c *Config) Resolve() error {
 
 	root, err := filepath.Abs(c.Root)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting absolute filepath while resolving master config: %w", err)
 	}
 	c.Root = root
 
@@ -233,7 +233,7 @@ func (c *Config) Resolve() error {
 	if c.Webhooks.SigningKey == "" {
 		b := make([]byte, 6)
 		if _, err := rand.Read(b); err != nil {
-			return err
+			return fmt.Errorf("error generating webhook signing key: %w", err)
 		}
 		c.Webhooks.SigningKey = hex.EncodeToString(b)
 	}
@@ -319,7 +319,11 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 		return nil, nil
 	}
 	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
-	return &cert, err
+	if err != nil {
+		return nil, fmt.Errorf("error loading tls config cert key pair: %w", err)
+	}
+
+	return &cert, nil
 }
 
 // InternalConfig is the configuration for internal knobs.

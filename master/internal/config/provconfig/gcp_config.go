@@ -88,12 +88,12 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 
 	if len(c.Project) == 0 {
 		if c.Project, err = metadata.ProjectID(); err != nil {
-			return err
+			return fmt.Errorf("error getting default project ID from gcloud metadata: %w", err)
 		}
 	}
 	if len(c.Zone) == 0 {
 		if c.Zone, err = metadata.Zone(); err != nil {
-			return err
+			return fmt.Errorf("error getting default zone from gcloud metadata: %w", err)
 		}
 	}
 

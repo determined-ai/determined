@@ -505,7 +505,9 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(context.TODO()); err != nil {
-		return nil, config, nil, false, nil, err
+		return nil, config, nil, false, nil,
+			fmt.Errorf("error getting workspace storage config for workspace id %d: %w",
+				project.WorkspaceId, err)
 	}
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, w.CheckpointStorageConfig)
@@ -575,7 +577,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading postExperiment body: %w", err)
 	}
 
 	user := c.(*detContext.DetContext).MustGetUser()

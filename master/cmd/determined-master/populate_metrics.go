@@ -58,7 +58,7 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 	}
 	batches, err := strconv.Atoi(args[0])
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing first arg of batches as int: %w", err)
 	}
 	trivial := "trivial"
 	isTrivial := false

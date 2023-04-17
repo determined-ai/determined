@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
@@ -143,7 +144,7 @@ func (t *TLSClientConfig) Resolve() error {
 	}
 	certBytes, err := ioutil.ReadFile(t.CertificatePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading tls certificate file: %w", err)
 	}
 	t.CertBytes = certBytes
 	return nil

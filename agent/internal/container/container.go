@@ -307,7 +307,7 @@ func (c *Container) wait(ctx context.Context, dc *docker.Container) error {
 
 		case <-ctx.Done():
 			c.log.Trace("container context canceled")
-			return ctx.Err()
+			return fmt.Errorf("container wait context done: %w", ctx.Err())
 		}
 	}
 }

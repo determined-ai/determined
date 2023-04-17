@@ -202,7 +202,7 @@ func (c *awsCluster) legacyListActiveSpotInstanceRequests(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error describing legacy aws active spot instance requestes: %w", err)
 	}
 
 	ret := newSetOfSpotRequests()

@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,8 +74,12 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return e.clientSet.CoreV1().Events(e.namespace).Watch(
+			w, err := e.clientSet.CoreV1().Events(e.namespace).Watch(
 				context.TODO(), metaV1.ListOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("error watching k8s events: %w", err)
+			}
+			return w, nil
 		},
 	})
 	if err != nil {

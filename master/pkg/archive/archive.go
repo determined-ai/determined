@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -111,7 +112,10 @@ type byteString []byte
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
 func (b *byteString) UnmarshalText(text []byte) (err error) {
 	*b, err = base64.StdEncoding.DecodeString(string(text))
-	return err
+	if err != nil {
+		return fmt.Errorf("error unmarshaling byte string text: %w", err)
+	}
+	return nil
 }
 
 // MarshalText implements the encoding.TextMarshaler interface.
@@ -164,14 +168,17 @@ func tarArchive(prefix string, ar Archive, writer io.Writer) error {
 			Gid:      item.GroupID,
 			ModTime:  item.ModifiedTime.Time,
 		}); err != nil {
-			return err
+			return fmt.Errorf("error writing tar archive header: %w", err)
 		}
 		if _, err := io.Copy(w, bytes.NewBuffer(content)); err != nil {
-			return err
+			return fmt.Errorf("error copying tar archive contents: %w", err)
 		}
 	}
 
-	return w.Close()
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("error closing tar archive: %w", err)
+	}
+	return nil
 }
 
 // ToIOReader converts the files in an Archive to an io.Reader bytes buffer.
@@ -202,7 +209,7 @@ func ToRelocatedTarGz(prefix string, ar Archive) ([]byte, error) {
 	}
 
 	if err := gzipWriter.Close(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error closing tar writer: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -213,7 +220,7 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 	byteReader := bytes.NewReader(zippedTarfile)
 	gzipReader, err := gzip.NewReader(byteReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating tar reader: %w", err)
 	}
 
 	tarReader := tar.NewReader(gzipReader)
@@ -227,7 +234,7 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting next tar file to read: %w", err)
 		}
 
 		item := Item{
@@ -245,7 +252,7 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 			var err error
 			item.Content, err = ioutil.ReadAll(tarReader)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error reading tar item contents: %w", err)
 			}
 		} else if header.Typeflag == tar.TypeSymlink {
 			item.Content = byteString(header.Linkname)

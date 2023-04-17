@@ -314,12 +314,18 @@ func (d *Client) RunContainer(
 // SignalContainer signals the container, by docker container ID, with the requested signal,
 // returning an error if the Docker daemon is unable to process our request.
 func (d *Client) SignalContainer(ctx context.Context, id string, sig syscall.Signal) error {
-	return d.cl.ContainerKill(ctx, id, unix.SignalName(sig))
+	if err := d.cl.ContainerKill(ctx, id, unix.SignalName(sig)); err != nil {
+		return fmt.Errorf("error signaling container id %s: %w", id, err)
+	}
+	return nil
 }
 
 // RemoveContainer removes a Docker container by ID.
 func (d *Client) RemoveContainer(ctx context.Context, id string, force bool) error {
-	return d.cl.ContainerRemove(ctx, id, types.ContainerRemoveOptions{Force: force})
+	if err := d.cl.ContainerRemove(ctx, id, types.ContainerRemoveOptions{Force: force}); err != nil {
+		return fmt.Errorf("error removing container id %s: %w", id, err)
+	}
+	return nil
 }
 
 // ListRunningContainers lists running Docker containers satisfying the given filters.
@@ -330,7 +336,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 	// This doesn't include Fluent Bit or containers spawned by other agents.
 	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{All: false, Filters: fs})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing running containers: %w", err)
 	}
 
 	result := make(map[cproto.ID]types.Container, len(containers))
@@ -425,7 +431,7 @@ func registryToString(reg types.AuthConfig) (string, error) {
 	if reg.Auth != "" {
 		bytes, err := base64.StdEncoding.DecodeString(reg.Auth)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error decoding docker registry auth string: %w", err)
 		}
 		userAndPass := strings.SplitN(string(bytes), ":", 2)
 		if len(userAndPass) != 2 {
@@ -458,7 +464,7 @@ func (d *Client) sendPullLogs(ctx context.Context, r io.Reader, p events.Publish
 		}
 
 		if err := p.Publish(ctx, NewLogEvent(model.LogLevelInfo, *logMsg)); err != nil {
-			return err
+			return fmt.Errorf("error publishing pull log events: %w", err)
 		}
 	}
 	// Always print the complete progress bar, regardless of the backoff time.
@@ -466,5 +472,9 @@ func (d *Client) sendPullLogs(ctx context.Context, r io.Reader, p events.Publish
 	if err := p.Publish(ctx, NewLogEvent(model.LogLevelInfo, finalLogMsg)); err != nil {
 		return err
 	}
-	return scanner.Err()
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error scanning pull logs: %w", err)
+	}
+	return nil
 }

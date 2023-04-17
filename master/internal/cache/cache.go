@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -64,16 +65,16 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	err := db.Bun().NewSelect().TableExpr(
 		"experiments").Column("model_definition").Where("id = ?", expID).Scan(context.Background(), &exp)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting model definition for experiment id %d: %w", expID, err)
 	}
 	var fileTree []*experimentv1.FileNode
 	arc, err := archive.FromTarGz(exp.ModelDefinition)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating tar archive for experiment id %d: %w", expID, err)
 	}
 	err = os.MkdirAll(f.genPath(expID, ""), 0o700)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating cache directory for experiment id %d: %w", expID, err)
 	}
 	for _, ar := range arc {
 		path, err := f.genPathWithValidation(expID, ar.Path)
@@ -86,7 +87,8 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 			err = os.WriteFile(path, ar.Content, 0o600)
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(
+				"error adding archive file or directory for experiment id %d: %w", expID, err)
 		}
 		fileTree = append(fileTree, &experimentv1.FileNode{
 			Path:          ar.Path,
@@ -129,7 +131,7 @@ func (f *FileCache) genPathWithValidation(expID int, path string) (string, error
 	p := f.genPath(expID, path)
 	rp, err := filepath.Rel(f.genPath(expID, ""), p)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting relative path for experiment id %d cache: %w", expID, err)
 	}
 	if strings.HasPrefix(rp, "..") {
 		return "", errors.Errorf("%s is not a valid path.", path)
@@ -179,9 +181,10 @@ File system cache is about to re-initialize.`,
 						f.rootDir)
 					return f.fileContentAfterReset(expID, path)
 				}
-				return []byte{}, err
+				return []byte{}, fmt.Errorf(
+					"error reading file cache content for experiment id %d: %w", expID, err)
 			}
-			return file, err
+			return file, nil
 		}
 	}
 	return nil, fs.ErrNotExist
@@ -198,14 +201,24 @@ func (f *FileCache) fileContentAfterReset(expID int, path string) ([]byte, error
 	}
 	folder.lock.Lock()
 	defer folder.lock.Unlock()
-	return os.ReadFile(f.genPath(expID, path))
+
+	b, err := os.ReadFile(f.genPath(expID, path))
+	if err != nil {
+		return []byte{}, fmt.Errorf(
+			"error reading cache file content after reset for experiment id %d: %w", expID, err)
+	}
+	return b, nil
 }
 
 func (f *FileCache) resetCache(expID int) error {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 	delete(f.caches, expID)
-	return os.RemoveAll(f.genPath(expID, ""))
+
+	if err := os.RemoveAll(f.genPath(expID, "")); err != nil {
+		return fmt.Errorf("error reseting cache for experiment id %d: %w", expID, err)
+	}
+	return nil
 }
 
 // This function assumes fileTree is a valid input generated from file system.

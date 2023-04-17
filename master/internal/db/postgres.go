@@ -207,7 +207,10 @@ const (
 
 // Close closes the underlying pq connection.
 func (db *PgDB) Close() error {
-	return db.sql.Close()
+	if err := db.sql.Close(); err != nil {
+		return fmt.Errorf("error closing database connection: %w", err)
+	}
+	return nil
 }
 
 // namedGet is a convenience method for a named query for a single value.
@@ -306,7 +309,9 @@ func (db *PgDB) query(q string, obj interface{}, args ...interface{}) error {
 
 // query executes a query returning a single row and unmarshals the result into a slice.
 func (db *PgDB) queryRows(query string, v interface{}, args ...interface{}) error {
-	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	parser := func(rows *sqlx.Rows, val interface{}) error {
+		return rows.StructScan(val) //nolint: wrapcheck
+	}
 	return db.queryRowsWithParser(query, parser, v, args...)
 }
 
@@ -315,7 +320,7 @@ func (db *PgDB) queryRowsWithParser(
 ) error {
 	rows, err := db.sql.Queryx(query, args...)
 	if err != nil {
-		return err
+		return err //nolint: wrapcheck
 	}
 
 	// Defer once now, ignoring errors, to ensure cleanup occurs.  Also close at the end, capturing
@@ -367,7 +372,9 @@ func (db *PgDB) queryRowsWithParser(
 // Query returns the result of the query. Any placeholder parameters are replaced
 // with supplied params.
 func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) error {
-	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	parser := func(rows *sqlx.Rows, val interface{}) error {
+		return rows.StructScan(val) //nolint: wrapcheck
+	}
 	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, params...)
 }
 
@@ -376,7 +383,9 @@ func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) er
 func (db *PgDB) QueryF(
 	queryName string, args []interface{}, v interface{}, params ...interface{},
 ) error {
-	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	parser := func(rows *sqlx.Rows, val interface{}) error {
+		return rows.StructScan(val) //nolint: wrapcheck
+	}
 	query := db.queries.getOrLoad(queryName)
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
@@ -387,7 +396,7 @@ func (db *PgDB) QueryF(
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
 // replaced with supplied params.
 func (db *PgDB) RawQuery(queryName string, params ...interface{}) ([]byte, error) {
-	return db.rawQuery(db.queries.getOrLoad(queryName), params...)
+	return db.rawQuery(db.queries.getOrLoad(queryName), params...) //nolint: wrapcheck
 }
 
 // withTransaction executes a function with a transaction.

@@ -69,7 +69,7 @@ func createMockCheckpointS3(bucket string, prefix string) error {
 		Region: &region,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating s3 session: %w", err)
 	}
 	s3client := s3.New(sess)
 
@@ -80,7 +80,7 @@ func createMockCheckpointS3(bucket string, prefix string) error {
 			Body:   aws.ReadSeekCloser(strings.NewReader(v)),
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("error putting item into s3 bucket: %w", err)
 		}
 	}
 

@@ -38,7 +38,7 @@ func stdinData() map[string]interface{} {
 func toYaml(v interface{}) (string, error) {
 	data, err := yaml.Marshal(v)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error marshaling to yaml: %w", err)
 	}
 	return string(data), nil
 }

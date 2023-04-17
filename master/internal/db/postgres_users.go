@@ -28,7 +28,7 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 
 	query := "INSERT INTO user_sessions (user_id, expiry) VALUES (:user_id, :expiry) RETURNING id"
 	if err := db.namedGet(&userSession.ID, query, *userSession); err != nil {
-		return "", err
+		return "", fmt.Errorf("error starting user session: %w", err)
 	}
 
 	v2 := paseto.NewV2()
@@ -55,7 +55,11 @@ func (db *PgDB) DeleteUserSessionByToken(token string) error {
 // DeleteUserSessionByID deletes the user session with the given ID.
 func (db *PgDB) DeleteUserSessionByID(sessionID model.SessionID) error {
 	_, err := db.sql.Exec("DELETE FROM user_sessions WHERE id=$1", sessionID)
-	return err
+	if err != nil {
+		return fmt.Errorf("error deleting user session: %w", err)
+	}
+
+	return nil
 }
 
 func addUser(tx *sqlx.Tx, user *model.User) (model.UserID, error) {
@@ -322,24 +326,38 @@ func UpdateUserSetting(setting *model.UserWebSetting) error {
 			"user_id = ?", setting.UserID).Where(
 			"storage_path = ?", setting.StoragePath).Where(
 			"key = ?", setting.Key).Exec(context.TODO())
-		return err
+		if err != nil {
+			return fmt.Errorf("error removing old user settings during update: %w", err)
+		}
 	}
 
 	_, err := Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
 		Set("value = EXCLUDED.value").Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating user settings: %w", err)
+	}
+
+	return nil
 }
 
 // GetUserSetting gets user setting.
 func GetUserSetting(userID model.UserID) ([]*userv1.UserWebSetting, error) {
 	setting := []*userv1.UserWebSetting{}
 	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userID).Scan(context.TODO())
-	return setting, err
+	if err != nil {
+		return nil, fmt.Errorf("error getting user id %d settings: %w", userID, err)
+	}
+
+	return setting, nil
 }
 
 // ResetUserSetting resets user setting.
 func ResetUserSetting(userID model.UserID) error {
 	var setting model.UserWebSetting
 	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userID).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error resetting user id %d settings: %w", userID, err)
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -49,7 +50,7 @@ func New(
 		analytics.Config{Logger: debugLogger{}},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating new telemetry client: %w", err)
 	}
 
 	if err := client.Enqueue(analytics.Identify{

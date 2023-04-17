@@ -32,13 +32,13 @@ func (d *GCSDownloader) fileDownload(
 ) error {
 	r, err := b.Object(o.Name).NewReader(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating gcs object reader: %w", err)
 	}
 	defer func() {
 		_ = r.Close()
 	}()
 	if err := d.aw.WriteHeader(strings.TrimPrefix(o.Name, d.prefix), o.Size); err != nil {
-		return err
+		return fmt.Errorf("error writing gcs object header: %w", err)
 	}
 	remaining := o.Size
 	for {
@@ -47,10 +47,10 @@ func (d *GCSDownloader) fileDownload(
 		}
 		sizeRead, err := r.Read(d.buffer)
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading from gcs object buffer: %w", err)
 		}
 		if _, err := d.aw.Write(d.buffer[:sizeRead]); err != nil {
-			return err
+			return fmt.Errorf("error writing gcs object buffer result: %w", err)
 		}
 		remaining -= int64(sizeRead)
 	}
@@ -60,7 +60,7 @@ func (d *GCSDownloader) fileDownload(
 func (d *GCSDownloader) download(ctx context.Context) error {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating new gcs storage client: %w", err)
 	}
 	defer func() {
 		_ = client.Close()
@@ -73,10 +73,10 @@ func (d *GCSDownloader) download(ctx context.Context) error {
 			break
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting next bucket object from gcs: %w", err)
 		}
 		if err = d.fileDownload(ctx, bucket, item); err != nil {
-			return err
+			return fmt.Errorf("error downloading file from gcs bucket: %w", err)
 		}
 	}
 	return nil
@@ -92,7 +92,10 @@ func (d *GCSDownloader) Download(ctx context.Context) error {
 
 // Close closes the underlying ArchiveWriter.
 func (d *GCSDownloader) Close() error {
-	return d.aw.Close()
+	if err := d.aw.Close(); err != nil {
+		return fmt.Errorf("error closing gcs downloader: %w", err)
+	}
+	return nil
 }
 
 // NewGCSDownloader returns a new GCSDownloader.

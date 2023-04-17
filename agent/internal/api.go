@@ -47,11 +47,20 @@ func (a *agentAPIServer) serve() error {
 	bindAddr := fmt.Sprintf("%s:%d", a.opts.BindIP, a.opts.BindPort)
 	logrus.Infof("starting agent server on [%s]", bindAddr)
 	if a.opts.TLS {
-		return a.server.StartTLS(bindAddr, a.opts.CertFile, a.opts.KeyFile)
+		if err := a.server.StartTLS(bindAddr, a.opts.CertFile, a.opts.KeyFile); err != nil {
+			return fmt.Errorf("error serving agent API server tls: %w", err)
+		}
 	}
-	return a.server.Start(bindAddr)
+
+	if err := a.server.Start(bindAddr); err != nil {
+		return fmt.Errorf("error serving agent API server: %w", err)
+	}
+	return nil
 }
 
 func (a *agentAPIServer) close() error {
-	return a.server.Close()
+	if err := a.server.Close(); err != nil {
+		return fmt.Errorf("error closing agent API server: %w", err)
+	}
+	return nil
 }

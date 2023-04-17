@@ -1,6 +1,7 @@
 package template
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/ghodss/yaml"
@@ -42,7 +43,7 @@ func (m *manager) put(c echo.Context) (interface{}, error) {
 	name := args.Name
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading request body to get template: %w", err)
 	}
 	if err := yaml.Unmarshal(body, make(map[interface{}]interface{})); err != nil {
 		return nil, errors.Wrap(err, "invalid YAML for template")

@@ -2,6 +2,7 @@ package taskmodel
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/uptrace/bun"
 
@@ -46,7 +47,10 @@ func NewResourcesState(r sproto.Resources, rank int) ResourcesWithState {
 func WipeResourcesState() error {
 	// Bun requires at least one WHERE for updates and deletes.
 	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).Where("1=1").Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error wiping resources state: %w", err)
+	}
+	return nil
 }
 
 // CleanupResourcesState deletes resources for all closed allocations.
@@ -59,7 +63,11 @@ func CleanupResourcesState() error {
 
 	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).
 		Where("allocation_id IN (?)", closedAllocations).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error cleaning up closed allocation's resources: %w", err)
+	}
+
+	return nil
 }
 
 // Persist saves the data to the database.
@@ -67,5 +75,9 @@ func (r *ResourcesWithState) Persist() error {
 	_, err := db.Bun().NewInsert().Model(r).
 		On("CONFLICT (resource_id) DO UPDATE").
 		Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error persisting allocation ID %s resources: %w", r.AllocationID, err)
+	}
+
+	return nil
 }

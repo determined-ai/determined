@@ -301,8 +301,11 @@ func (p *pod) createPriorityClass(name string, priority int32) error {
 			Description:      "temporary priorityClass for determined",
 			PreemptionPolicy: &preemptionPolicy,
 		}, metaV1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("error creating k8s priority class: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func (p *pod) configurePodSpec(

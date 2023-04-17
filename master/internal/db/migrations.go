@@ -19,13 +19,13 @@ func makeGoPgOpts(dbURL string) (*pg.Options, error) {
 	url := re.ReplaceAllString(dbURL, "")
 	opts, err := pg.ParseURL(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parsing postgres url: %w", err)
 	}
 
 	if opts.TLSConfig != nil {
 		pgxConfig, err := pgconn.ParseConfig(dbURL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing pgxConfig: %w", err)
 		}
 		opts.TLSConfig = pgxConfig.TLSConfig
 	}
@@ -46,7 +46,7 @@ func tablesExist(tx *pg.Tx, tableNames []string) (map[string]bool, error) {
 		pg.In(tableNames),
 	)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("error checking if postgres tables exist: %w", err)
 	}
 
 	for _, tn := range existingTables {
@@ -65,7 +65,7 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	// On fresh installations, just run init.
 	if !exist["gopg_migrations"] && !exist["schema_migrations"] {
 		_, _, err = migrations.Run(tx, "init")
-		return err
+		return fmt.Errorf("error running init migration on fresh install: %w", err)
 	}
 
 	if exist["gopg_migrations"] || !exist["schema_migrations"] {
@@ -81,7 +81,7 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 
 	rows := []GoMigrateEntry{}
 	if _, err = tx.Query(&rows, `SELECT version, dirty FROM schema_migrations`); err != nil {
-		return err
+		return fmt.Errorf("error getting version from schema_migrations: %w", err)
 	}
 
 	// Unrecognized table state.
@@ -97,16 +97,16 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	}
 	goMigrateVersion, err := strconv.ParseInt(goMigrateEntry.Version, 10, 64)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing go migration entry version: %w", err)
 	}
 
 	// CREATE gopg_migrations table,
 	// and INSERT the initial version from go-migrate.
 	if _, _, err := migrations.Run(tx, "init"); err != nil {
-		return err
+		return fmt.Errorf("error running init migration: %w", err)
 	}
 	if err := migrations.SetVersion(tx, goMigrateVersion); err != nil {
-		return err
+		return fmt.Errorf("error setting migration version: %w", err)
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 
 	tx, err := pgConn.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("error starting postgres connection: %w", err)
 	}
 
 	defer func() {
@@ -148,7 +148,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 
 	_, err = tx.Exec("SELECT pg_advisory_xact_lock(?)", MigrationLockID)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting postgres migration lock: %w", err)
 	}
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
@@ -156,7 +156,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	}
 
 	if err = tx.Commit(); err != nil {
-		return err
+		return fmt.Errorf("error committing migration transcation upgrade: %w", err)
 	}
 
 	log.Infof("running DB migrations from %s; this might take a while...", migrationURL)
@@ -170,7 +170,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	collection := migrations.NewCollection()
 	collection.DisableSQLAutodiscover(true)
 	if err = collection.DiscoverSQLMigrations(match[1]); err != nil {
-		return err
+		return fmt.Errorf("error discovering SQL migrations: %w", err)
 	}
 	if len(collection.Migrations()) == 0 {
 		return errors.New("failed to discover any migrations")

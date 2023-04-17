@@ -301,7 +301,11 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 		// and it expects to find files:
 		//   - /var/run/secrets/kubernetes.io/serviceaccount/token
 		//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-		return rest.InClusterConfig()
+		conf, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("error loading k8s in cluster config: %w", err)
+		}
+		return conf, nil
 	}
 
 	// A special case for rapid determined+k8s development: build a rest.Config from a specially
@@ -311,7 +315,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
 	server, err := ioutil.ReadFile(filepath.Join(credsDir, "server"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading k8s client config file: %w", err)
 	}
 
 	server = bytes.Trim(server, " \t\r\n")
@@ -320,7 +324,7 @@ func readClientConfig(credsDir string) (*rest.Config, error) {
 	//nolint:gosec // Yes, we intend to read from this file specified in the config.
 	token, err := ioutil.ReadFile(tokenFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading k8s client config token file: %w", err)
 	}
 
 	return &rest.Config{
@@ -944,7 +948,7 @@ func (p *pods) summarize(ctx *actor.Context) (map[string]model.AgentSummary, err
 	for namespace := range p.namespaceToPoolName {
 		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
 		if err != nil && !k8serrors.IsNotFound(err) {
-			return nil, err
+			return nil, fmt.Errorf("error getting quotas to summarize resources: %w", err)
 		} else if k8serrors.IsNotFound(err) || quotaList == nil {
 			continue
 		}

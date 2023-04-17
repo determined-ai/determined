@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -115,7 +116,7 @@ func (user *User) UpdatePasswordHash(password string) error {
 			BCryptCost,
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error generating password hash: %w", err)
 		}
 
 		user.PasswordHash = null.StringFrom(string(passwordHash))

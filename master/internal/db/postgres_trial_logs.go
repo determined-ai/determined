@@ -116,7 +116,7 @@ WHERE trial_id = $1
 `, fragment)
 	var count int
 	if err := db.sql.QueryRow(query, params...).Scan(&count); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error getting trial id %d log count: %w", trialID, err)
 	}
 	return count, nil
 }
@@ -125,5 +125,9 @@ WHERE trial_id = $1
 func (db *PgDB) TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	var fields apiv1.TrialLogsFieldsResponse
 	err := db.QueryProto("get_trial_log_fields", &fields, trialID)
-	return &fields, err
+	if err != nil {
+		return nil, fmt.Errorf("error getting trial id %d log fields: %w", trialID, err)
+	}
+
+	return &fields, nil
 }

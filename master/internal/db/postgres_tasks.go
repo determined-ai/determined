@@ -25,7 +25,11 @@ DELETE FROM allocation_sessions WHERE allocation_id in (
 	SELECT allocation_id FROM allocations
 	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
 )`)
-	return err
+	if err != nil {
+		return fmt.Errorf("error removing all closed allocation sessions: %w", err)
+	}
+
+	return nil
 }
 
 // queryHandler is an interface for a query handler to use tx/db for same queries.
@@ -46,7 +50,11 @@ EXISTS(
   FROM tasks
   WHERE task_id = $1
 )`, id).Scan(&exists)
-	return exists, err
+	if err != nil {
+		return false, fmt.Errorf("error checking task id %s exists: %w", id, err)
+	}
+
+	return exists, nil
 }
 
 // AddTask UPSERT's the existence of a task.
@@ -96,7 +104,7 @@ WHERE task_id = $1
 // the master restarts and the trial run ID increment is not persisted, but it is the same
 // allocation so this is OK.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
-	return db.namedExecOne(`
+	err := db.namedExecOne(`
 INSERT INTO allocations
 	(task_id, allocation_id, slots, resource_pool, start_time, state, ports)
 VALUES
@@ -107,6 +115,11 @@ DO UPDATE SET
 	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
 	start_time=EXCLUDED.start_time, state=EXCLUDED.state, ports=EXCLUDED.ports
 `, a)
+	if err != nil {
+		return fmt.Errorf("error adding allocation id %s: %w", a.AllocationID, err)
+	}
+
+	return nil
 }
 
 // CompleteAllocation persists the end of an allocation lifetime.
@@ -119,13 +132,16 @@ func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 UPDATE allocations
 SET start_time = $2, end_time = $3
 WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
+	if err != nil {
+		return fmt.Errorf("error completing allocation id %s: %w", a.AllocationID, err)
+	}
 
-	return err
+	return nil
 }
 
 // CompleteAllocationTelemetry returns the analytics of an allocation for the telemetry.
 func (db *PgDB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error) {
-	return db.rawQuery(`
+	b, err := db.rawQuery(`
 SELECT json_build_object(
 	'allocation_id', a.allocation_id,
 	'job_id', t.job_id,
@@ -136,6 +152,11 @@ FROM allocations as a JOIN tasks as t
 ON a.task_id = t.task_id
 WHERE a.allocation_id = $1;
 `, aID)
+	if err != nil {
+		return nil, fmt.Errorf("error completing allocation telemetry allocation id %s: %w", aID, err)
+	}
+
+	return b, err
 }
 
 // AllocationByID retrieves an allocation by its ID.
@@ -143,7 +164,7 @@ func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error
 	var a model.Allocation
 	if err := Bun().NewSelect().Model(&a).Where("allocation_id = ?", aID).
 		Scan(context.TODO()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting allocation id %s by id: %w", aID, err)
 	}
 	return &a, nil
 }
@@ -163,7 +184,7 @@ func (db *PgDB) StartAllocationSession(
 INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 	(:allocation_id, :owner_id) RETURNING id`
 	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
-		return "", err
+		return "", fmt.Errorf("error adding allocation session: %w", err)
 	}
 
 	v2 := paseto.NewV2()
@@ -178,7 +199,11 @@ INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
 func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
 	_, err := db.sql.Exec(
 		"DELETE FROM allocation_sessions WHERE allocation_id=$1", allocationID)
-	return err
+	if err != nil {
+		return fmt.Errorf("error deleting allocation session: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateAllocationState stores the latest task state and readiness.
@@ -188,7 +213,11 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 		SET state=$2, is_ready=$3
 		WHERE allocation_id=$1
 	`, a.AllocationID, a.State, a.IsReady)
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating allocation state allocation id %s: %w", a.AllocationID, err)
+	}
+
+	return nil
 }
 
 // UpdateAllocationPorts stores the latest task state and readiness.
@@ -197,7 +226,11 @@ func UpdateAllocationPorts(a model.Allocation) error {
 		Set("ports = ?", a.Ports).
 		Where("allocation_id = ?", a.AllocationID).
 		Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating allocation ports allocation id %s: %w", a.AllocationID, err)
+	}
+
+	return nil
 }
 
 // UpdateAllocationStartTime stores the latest start time.
@@ -207,7 +240,11 @@ func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
 		SET start_time = $2
 		WHERE allocation_id = $1
 	`, a.AllocationID, a.StartTime)
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating start time allocation id %s: %w", a.AllocationID, err)
+	}
+
+	return nil
 }
 
 // CloseOpenAllocations finds all allocations that were open when the master crashed
@@ -291,7 +328,7 @@ ORDER BY l.id %s LIMIT $2
 
 	var b []*model.TaskLog
 	if err := db.queryRows(query, &b, params...); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting task logs for task id %s: %w", taskID, err)
 	}
 
 	if len(b) > 0 {
@@ -359,7 +396,7 @@ WHERE task_id = $1
 `, fragment)
 	var count int
 	if err := db.sql.QueryRow(query, params...).Scan(&count); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error getting count of task logs task id %s: %w", taskID, err)
 	}
 	return count, nil
 }
@@ -372,7 +409,11 @@ func (db *PgDB) RecordTaskStats(stats *model.TaskStats) error {
 // RecordTaskStatsBun record stats for tasks with bun.
 func RecordTaskStatsBun(stats *model.TaskStats) error {
 	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error recording task stats: %w", err)
+	}
+
+	return nil
 }
 
 // RecordTaskEndStats record end stats for tasks.
@@ -385,7 +426,11 @@ func RecordTaskEndStatsBun(stats *model.TaskStats) error {
 	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
 		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
 	).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error recording task stats end: %w", err)
+	}
+
+	return nil
 }
 
 // EndAllTaskStats called at master starts, in case master previously crashed.
@@ -396,13 +441,21 @@ FROM cluster_id, allocations
 WHERE allocations.allocation_id = task_stats.allocation_id
 AND allocations.end_time IS NOT NULL
 AND task_stats.end_time IS NULL`)
-	return err
+	if err != nil {
+		return fmt.Errorf("error ending all task stats: %w", err)
+	}
+
+	return nil
 }
 
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.
 func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error) {
 	var fields apiv1.TaskLogsFieldsResponse
 	err := db.QueryProto("get_task_logs_fields", &fields, taskID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting task log fields task id %s: %w", taskID, err)
+	}
+
 	return &fields, err
 }
 

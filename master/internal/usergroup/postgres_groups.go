@@ -3,6 +3,7 @@ package usergroup
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -154,12 +155,12 @@ func SearchGroupsPaginated(ctx context.Context,
 
 	err = paginatedQuery.Scan(ctx, &groups)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, fmt.Errorf("error getting group search results: %w", err)
 	}
 
 	count, err := query.Count(ctx)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, fmt.Errorf("error counting group search results: %w", err)
 	}
 
 	var counts []int32
@@ -169,7 +170,7 @@ func SearchGroupsPaginated(ctx context.Context,
 		Group("id").
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, fmt.Errorf("error getting number of members for group search: %w", err)
 	}
 
 	searchResults := make([]*groupv1.GroupSearchResult, len(groups))
@@ -180,7 +181,7 @@ func SearchGroupsPaginated(ctx context.Context,
 		}
 	}
 
-	return groups, counts, count, err
+	return groups, counts, count, nil
 }
 
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the

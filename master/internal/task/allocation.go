@@ -1062,8 +1062,12 @@ func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
 	_, err := db.Bun().NewDelete().Model((*taskmodel.ResourcesWithState)(nil)).
 		Where("allocation_id = ?", a.model.AllocationID).
 		Exec(context.TODO())
+	if err != nil {
+		return fmt.Errorf("error deleting allocation id %s restorable resources: %w",
+			a.model.AllocationID, err)
+	}
 
-	return err
+	return nil
 }
 
 const killedLogSubstr = "exit code 137"

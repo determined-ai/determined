@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
@@ -26,13 +27,18 @@ func EndAgentStats(a *model.AgentStats) error {
 		"end_time = (SELECT CURRENT_TIMESTAMP)").Where(
 		"agent_id = ?", a.AgentID).Where("end_time IS NULL").Exec(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf("error updating end time of agent instance: %w", err)
 	}
+
 	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf(
+			"error getting rows affected when updating end time of agent instance: %w", err)
+	}
 	if count != 1 {
 		log.Debugf("End agent stats call affects %d row(s), this number is suppose to be 1.", count)
 	}
-	return err
+	return nil
 }
 
 // EndAllAgentStats called at master starts, in case master previously crushed
@@ -41,5 +47,8 @@ func (db *PgDB) EndAllAgentStats() error {
 	_, err := db.sql.Exec(`
 UPDATE agent_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id
 WHERE end_time IS NULL`)
-	return err
+	if err != nil {
+		return fmt.Errorf("error ending all agent stats: %w", err)
+	}
+	return nil
 }

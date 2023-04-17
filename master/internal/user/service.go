@@ -237,7 +237,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading login request body: %w", err)
 	}
 
 	var params request
@@ -350,7 +350,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading patchUser request body: %w", err)
 	}
 
 	args := struct {
@@ -449,7 +449,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading patchUsername body: %w", err)
 	}
 
 	args := struct {
@@ -526,7 +526,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading postUser request body: %w", err)
 	}
 
 	var params request

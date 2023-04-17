@@ -23,7 +23,7 @@ func getAgentUserGroupFromUser(userID model.UserID) (*model.AgentUserGroup, erro
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("error getting agent user group from user id %d: %w", userID, err)
 	}
 
 	return &aug, nil
@@ -45,13 +45,16 @@ func getAgentUserGroupFromExperiment(e *model.Experiment) (*optionalAgentUserGro
 		return &aug, nil
 	}
 
-	err := db.Bun().NewRaw(`
+	if err := db.Bun().NewRaw(`
 SELECT
 	uid, user_ as user, gid, group_ as group
 FROM workspaces JOIN projects ON workspaces.id = projects.workspace_id
 WHERE projects.id = ?`,
-		e.ProjectID).Scan(context.TODO(), &aug)
-	return &aug, err
+		e.ProjectID).Scan(context.TODO(), &aug); err != nil {
+		return nil, fmt.Errorf("error getting agent user groupf or experiment id %d: %w", e.ID, err)
+	}
+
+	return &aug, nil
 }
 
 // GetAgentUserGroup returns AgentUserGroup for a user + (optional) experiment.

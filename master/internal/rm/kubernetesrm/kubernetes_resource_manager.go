@@ -547,7 +547,7 @@ func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
 		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
 		Order("date ASC").Scan(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching k8s resource aggregates: %w", err)
 	}
 	res := make([]*jobv1.AggregateQueueStats, 0)
 	for _, record := range aggregates {
@@ -566,7 +566,7 @@ func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
 		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
 		Scan(context.TODO(), &today)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching k8s average queued time: %w", err)
 	}
 	res = append(res, &jobv1.AggregateQueueStats{
 		PeriodStart: time.Now().Format("2006-01-02"),

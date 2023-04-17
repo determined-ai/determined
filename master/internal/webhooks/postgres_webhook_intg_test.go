@@ -4,6 +4,7 @@ package webhooks
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -337,5 +338,9 @@ func clearWebhooksTables(ctx context.Context, t *testing.T) {
 
 // CountEvents returns the total number of events from the DB.
 func CountEvents(ctx context.Context) (int, error) {
-	return db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
+	c, err := db.Bun().NewSelect().Model((*Event)(nil)).Count(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("error counting webhook events: %w", err)
+	}
+	return c, nil
 }

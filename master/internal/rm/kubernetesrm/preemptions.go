@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
@@ -72,8 +73,12 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return p.clientSet.CoreV1().Pods(p.namespace).Watch(
+			w, err := p.clientSet.CoreV1().Pods(p.namespace).Watch(
 				context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
+			if err != nil {
+				return nil, fmt.Errorf("error watching k8s pods for preemptions: %w", err)
+			}
+			return w, nil
 		},
 	})
 	if err != nil {

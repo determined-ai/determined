@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/labstack/echo/v4"
@@ -15,7 +16,7 @@ import (
 func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	bytes, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading getSearcherPreview body: %w", err)
 	}
 
 	// Parse the provided experiment config.

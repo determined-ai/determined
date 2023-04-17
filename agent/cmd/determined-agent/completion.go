@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -22,14 +23,21 @@ func newCompletionCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch shell := args[0]; shell {
 			case bashCompletion:
-				return newRootCmd().GenBashCompletion(os.Stdout)
+				if err := newRootCmd().GenBashCompletion(os.Stdout); err != nil {
+					return fmt.Errorf("error generating agent command bash completion: %w", err)
+				}
 			case zshCompletion:
-				return newRootCmd().GenZshCompletion(os.Stdout)
+				if err := newRootCmd().GenZshCompletion(os.Stdout); err != nil {
+					return fmt.Errorf("error generating agent command zsh completion: %w", err)
+				}
 			case powerShellCompletion:
-				return newRootCmd().GenPowerShellCompletion(os.Stdout)
+				if err := newRootCmd().GenPowerShellCompletion(os.Stdout); err != nil {
+					return fmt.Errorf("error generating agent command power shell completion: %w", err)
+				}
 			default:
 				return errors.Errorf("unexpected shell provided: %s", shell)
 			}
+			return nil
 		},
 	}
 }

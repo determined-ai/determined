@@ -24,12 +24,12 @@ func (w *seqWriterAt) WriteAt(p []byte, off int64) (int, error) {
 			off, w.written)
 	}
 	n, err := w.next.Write(p)
-	w.written += int64(n)
+	w.written += int64(n) // TODO should we write before checking this error?
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error writing with s3 sequential writer: %w", err)
 	}
 
-	return n, err
+	return n, nil
 }
 
 // GetS3BucketRegion returns the region name of the specified bucket.
@@ -46,7 +46,7 @@ func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
 		Bucket: &bucket,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting s3 bucket region: %w", err)
 	}
 
 	return *out.LocationConstraint, nil
@@ -70,7 +70,7 @@ func (d *S3Downloader) Download(ctx context.Context) error {
 		Region: &region,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error starting aws session to download bucket: %w", err)
 	}
 	// We do not pass in credentials explicitly. Instead, we reply on
 	// the existing AWS credentials.

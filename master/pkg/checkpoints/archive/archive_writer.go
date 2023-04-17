@@ -62,7 +62,7 @@ func (ac *archiveClosers) Close() error {
 	for i := len(ac.closers) - 1; i >= 0; i-- {
 		err := ac.closers[i].Close()
 		if err != nil {
-			return err
+			return fmt.Errorf("error closing archive: %w", err)
 		}
 	}
 	return nil
@@ -83,11 +83,18 @@ func (aw *tarArchiveWriter) WriteHeader(path string, size int64) error {
 		// This a directory
 		hdr.Mode = 0o777
 	}
-	return aw.tw.WriteHeader(&hdr)
+	if err := aw.tw.WriteHeader(&hdr); err != nil {
+		return fmt.Errorf("error writing tar archive header: %w", err)
+	}
+	return nil
 }
 
 func (aw *tarArchiveWriter) Write(p []byte) (int, error) {
-	return aw.tw.Write(p)
+	b, err := aw.tw.Write(p)
+	if err != nil {
+		return 0, fmt.Errorf("error writing tar archive: %w", err)
+	}
+	return b, nil
 }
 
 type zipArchiveWriter struct {
@@ -100,7 +107,7 @@ func (aw *zipArchiveWriter) WriteHeader(path string, size int64) error {
 	// Zip by default sets mode 0666 and 0777 for files and folders respectively.
 	zwc, err := aw.zw.Create(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating zip archive: %w", err)
 	}
 	aw.zwContent = zwc
 	return nil
@@ -113,5 +120,9 @@ func (aw *zipArchiveWriter) Write(p []byte) (int, error) {
 	if aw.zwContent == nil {
 		return 0, nil
 	}
-	return aw.zwContent.Write(p)
+	b, err := aw.zwContent.Write(p)
+	if err != nil {
+		return 0, fmt.Errorf("error writing zip archive: %w", err)
+	}
+	return b, nil
 }

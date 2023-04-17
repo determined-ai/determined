@@ -137,7 +137,8 @@ func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.Host
 		for _, symlink := range devPaths {
 			resolved, err := filepath.EvalSymlinks(symlink)
 			if err != nil {
-				return err
+				return fmt.Errorf(
+					"error eval sym links while injecting rocm device requests: %w", err)
 			}
 			mappedDevices = append(mappedDevices, resolved)
 		}
@@ -197,7 +198,7 @@ func (m *Manager) unmakeContainerDockerLabels(cont types.Container) (
 		for _, slotID := range slotIDs {
 			number, err := strconv.ParseInt(slotID, 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error parsing docker device label slot IDs: %w", err)
 			}
 			devices = append(devices, m.devices[number])
 		}

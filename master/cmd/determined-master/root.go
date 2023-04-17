@@ -59,7 +59,7 @@ func runRoot() error {
 	err = os.MkdirAll(config.Cache.CacheDir, 0o700)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to make cache directory (%s)", config.Cache.CacheDir)
-		return err
+		return fmt.Errorf("error making master cache directory: %w", err)
 	}
 
 	m := internal.New(logStore, config)

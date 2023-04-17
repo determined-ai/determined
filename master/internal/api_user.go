@@ -154,7 +154,7 @@ func (a *apiServer) GetUsers(
 	err := db.Bun().NewRaw(query,
 		req.Name, nameFilterExpr, nameFilterExpr).Scan(context.Background(), &users)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing users: %w", err)
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -576,7 +576,7 @@ func (a *apiServer) PostUserActivity(
 	)).On("CONFLICT (user_id, activity_type, entity_type, entity_id) DO UPDATE").
 		Set("activity_time = ?", timestamp).
 		Exec(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error adding user activity: %w", err)
 	}
 	return &apiv1.PostUserActivityResponse{}, err
 }

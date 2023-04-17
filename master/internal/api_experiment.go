@@ -609,7 +609,7 @@ func runPagedBunExperimentsQuery(
 	// Count number of items without any limits or offsets.
 	total, err := query.Count(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error counting row results for query: %w", err)
 	}
 
 	// Calculate end and start indexes.
@@ -643,7 +643,7 @@ func runPagedBunExperimentsQuery(
 	// should be the exact opposite of no records returned.
 	if endIndex-startIndex != 0 {
 		if err = query.Scan(ctx); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error executing paged query: %w", err)
 		}
 	}
 
@@ -688,7 +688,7 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 	}
 
 	if err = query.Scan(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting experiment labels: %w", err)
 	}
 
 	// Sort labels by usage.
@@ -2038,7 +2038,7 @@ func (a *apiServer) SearchExperiments(
 		Scan(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error searching experiments: %w", err)
 	}
 
 	trialsByExperimentID := make(map[int32]*trialv1.Trial, len(trials))

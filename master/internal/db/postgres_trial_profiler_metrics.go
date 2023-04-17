@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,7 +18,11 @@ func (db *PgDB) InsertTrialProfilerMetricsBatch(
 INSERT INTO trial_profiler_metrics (values, batches, ts, labels)
 VALUES ($1, $2, $3, $4)
 `, values, batches, timestamps, labels)
-	return err
+	if err != nil {
+		return fmt.Errorf("error adding trial profiler metric batch: %w", err)
+	}
+
+	return nil
 }
 
 // GetTrialProfilerMetricsBatches gets a batch of profiler metric batches from the database.
@@ -35,7 +40,7 @@ WHERE m.labels @> $1::jsonb
 ORDER by m.id
 OFFSET $2 LIMIT $3`, labelsJSON, offset, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting trial profiler metric batches: %w", err)
 	}
 	defer rows.Close()
 

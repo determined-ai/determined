@@ -181,7 +181,7 @@ func (f *Fluent) monitor(ctx context.Context, cID string) error {
 		}
 		return fmt.Errorf("unexpected Fluent Bit exit (%d)", exit.StatusCode)
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("fluent monitor context done: %w", ctx.Err())
 	}
 }
 
@@ -293,7 +293,7 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		f.opts.Fluent.ContainerName,
 	)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating fluent docker container: %w", err)
 	}
 
 	var fluentArchive archive.Archive
@@ -308,7 +308,7 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 
 	filesReader, err := archive.ToIOReader(fluentArchive)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating fluentArchive file reader: %w", err)
 	}
 
 	err = f.docker.Inner().CopyToContainer(
@@ -319,12 +319,12 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		types.CopyToContainerOptions{},
 	)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error copying fluentArchive file reader to container: %w", err)
 	}
 
 	err = f.docker.Inner().ContainerStart(ctx, createResponse.ID, types.ContainerStartOptions{})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error starting fluent container: %w", err)
 	}
 
 	log.Infof("Fluent Bit listening on host port %d", f.opts.Fluent.Port)
@@ -350,17 +350,17 @@ func pullImageByName(ctx context.Context, docker *docker.Client, imageName strin
 		log.Infof("pulling Docker image %s", imageName)
 		pullResponse, pErr := docker.Inner().ImagePull(ctx, imageName, types.ImagePullOptions{})
 		if pErr != nil {
-			return pErr
+			return fmt.Errorf("error pulling docker image name %s: %w", imageName, pErr)
 		}
 		if _, pErr = io.ReadAll(pullResponse); pErr != nil {
-			return pErr
+			return fmt.Errorf("error reading docker image name %s pull response: %w", imageName, pErr)
 		}
 		if pErr = pullResponse.Close(); pErr != nil {
-			return pErr
+			return fmt.Errorf("error closing docker image name %s pull response: %w", imageName, pErr)
 		}
 	default:
 		// Something unexpected happened; propagate the error.
-		return err
+		return fmt.Errorf("error pulling docker image %s: %w", imageName, err)
 	}
 	return nil
 }

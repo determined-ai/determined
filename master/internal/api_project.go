@@ -67,7 +67,7 @@ func (a *apiServer) getProjectColumnsByID(
 		NewSelect().Table("projects").Column("hyperparameters").Where(
 		"id = ?", id).Scan(ctx, &hyperparameters)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting project id %d hyperparameters: %w", id, err)
 	}
 
 	// Get metrics columns
@@ -82,7 +82,7 @@ func (a *apiServer) getProjectColumnsByID(
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
 		Where("project_id = ?", id).Scan(ctx, &metricNames)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting project id %d metric names: %w", id, err)
 	}
 	for _, mn := range metricNames {
 		for _, mnv := range mn.Vname {
@@ -466,7 +466,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 	`, curUser.ID, limit).
 		Scan(ctx, &p)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting projects by user activity: %w", err)
 	}
 
 	projects := model.ProjectsToProto(p)

@@ -177,7 +177,7 @@ func (rp *resourcePool) restoreResources(
 		Where("resources_with_state.allocation_id = ?", allocationID).
 		Scan(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting container snapshots to restore: %w", err)
 	}
 
 	if len(containerSnapshots) == 0 {

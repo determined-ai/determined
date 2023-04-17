@@ -61,7 +61,7 @@ FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing project experiments for project id %d: %w", id, err)
 	}
 	defer rows.Close()
 
@@ -113,8 +113,10 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 	row := db.sql.QueryRow(
 		"SELECT state, COALESCE(progress, 0) as progress FROM experiments WHERE id=$1",
 		experimentID)
-	err = row.Scan(&state, &progress)
-	return state, progress, err
+	if err = row.Scan(&state, &progress); err != nil {
+		return "", 0.0, fmt.Errorf("error getting experiment id %d status: %w", experimentID, err)
+	}
+	return state, progress, nil
 }
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
@@ -360,7 +362,12 @@ SELECT t.id FROM (
   ORDER BY best_metric %s NULLS LAST
   LIMIT $3
 ) t;`, aggregate, order), metric, experimentID, maxTrials)
-	return trials, err
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error getting top trials by metric for experiment id %d: %w", experimentID, err)
+	}
+
+	return trials, nil
 }
 
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
@@ -387,7 +394,12 @@ SELECT t.id FROM (
   ORDER BY progress DESC, best_metric %s
   LIMIT $3
 ) t;`, aggregate, order), metric, experimentID, maxTrials)
-	return trials, err
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error getting top trials by training length for experiment id %d: %w", experimentID, err)
+	}
+
+	return trials, nil
 }
 
 // MetricMeasurements represents a metric measured by all possible
@@ -438,7 +450,11 @@ EXISTS(
   FROM experiments
   WHERE id = $1
 )`, id).Scan(&exists)
-	return exists, err
+	if err != nil {
+		return false, fmt.Errorf("error checking experiment id %d exists: %w", id, err)
+	}
+
+	return exists, nil
 }
 
 // CheckTrialExists checks if the trial exists.
@@ -451,7 +467,11 @@ EXISTS(
   FROM trials
   WHERE id = $1
 )`, id).Scan(&exists)
-	return exists, err
+	if err != nil {
+		return false, fmt.Errorf("error checking trial id %d exists: %w", id, err)
+	}
+
+	return exists, nil
 }
 
 // TrialExperimentAndRequestID returns the trial's experiment and request ID.
@@ -475,10 +495,14 @@ WHERE t.experiment_id = e.id
 
 // ExperimentConfigRaw returns the full config object for an experiment as a JSON string.
 func (db *PgDB) ExperimentConfigRaw(id int) ([]byte, error) {
-	return db.rawQuery(`
+	b, err := db.rawQuery(`
 SELECT config
 FROM experiments
 WHERE id = $1`, id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting raw config for experiment id %d: %w", id, err)
+	}
+	return b, nil
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
@@ -545,7 +569,11 @@ func (db *PgDB) AddExperiment(
 		ctx, tx, int32(experiment.ProjectID), []int32{int32(experiment.ID)}); err != nil {
 		return errors.Wrapf(err, "error updating hyperparameters")
 	}
-	return tx.Commit()
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction for adding experiment: %w", err)
+	}
+	return nil
 }
 
 // RemoveProjectHyperparameters take a list of experiment ids,
@@ -577,7 +605,7 @@ func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentID
 	WHERE flatten.project_id = projects.id`,
 		bun.In(experimentIDs), bun.In(experimentIDs), bun.In(experimentIDs)).Scan(ctx, &projectIDs)
 	if err != nil {
-		return err
+		return fmt.Errorf("error removing project hyperparameters for experiments: %w", err)
 	}
 	if len(projectIDs) > 1 {
 		return errors.New("error removing experiment hyperparameters")
@@ -614,7 +642,7 @@ func AddProjectHyperparameters(
 	UPDATE "projects" SET hyperparameters = agg.adata FROM agg WHERE (id = ?) RETURNING id`,
 		bun.In(experimentIDs), projectID, projectID).Scan(ctx, &projectIDs)
 	if err != nil {
-		return err
+		return fmt.Errorf("error adding project hyperparameters for experiments: %w", err)
 	}
 	if len(projectIDs) > 1 {
 		return errors.New("error adding experiment hyperparameters")
@@ -633,7 +661,7 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = $1`, &experiment, id); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error looking up experiment %d: %w", id, err)
 	}
 
 	return &experiment, nil
@@ -652,7 +680,7 @@ FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON (e.owner_id = u.id)
 WHERE t.id = $1`, &experiment, trialID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting experiment by trial id %d: %w", trialID, err)
 	}
 
 	return &experiment, nil
@@ -672,7 +700,7 @@ FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON e.owner_id = u.id
 WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting experiment by task id %s: %w", taskID, err)
 	}
 
 	return &experiment, nil
@@ -840,7 +868,11 @@ UPDATE experiments
 SET config=$1
 WHERE id = $2`
 	_, err := db.sql.Exec(query, config, id)
-	return err
+	if err != nil {
+		return fmt.Errorf("error saving config for experiment id %d: %w", id, err)
+	}
+
+	return nil
 }
 
 // SaveExperimentState saves the current experiment state to the database.
@@ -881,7 +913,11 @@ func (db *PgDB) SaveExperimentArchiveStatus(experiment *model.Experiment) error 
 UPDATE experiments
 SET archived=:archived
 WHERE id = :id`
-	return db.namedExecOne(query, experiment)
+	if err := db.namedExecOne(query, experiment); err != nil {
+		return fmt.Errorf(
+			"error saving experiment archive status for experiment id %d: %w", experiment.ID, err)
+	}
+	return nil
 }
 
 // DeleteExperiment deletes an existing experiment.
@@ -960,7 +996,12 @@ EXISTS(
    JOIN model_versions mv ON mv.checkpoint_uuid = c.uuid
    WHERE e.id = $1
 )`, id).Scan(&exists)
-	return exists, err
+	if err != nil {
+		return false, fmt.Errorf(
+			"error checking if experiment id %d has checkpoints in model registry: %w", id, err)
+	}
+
+	return exists, nil
 }
 
 // SaveExperimentProgress stores the progress for an experiment in the database.
@@ -984,7 +1025,8 @@ SELECT config
 FROM experiments
 WHERE id = $1`, id)
 	if err != nil {
-		return expconf.ExperimentConfig{}, err
+		return expconf.ExperimentConfig{}, fmt.Errorf(
+			"error getting active config for experiment id %d: %w", id, err)
 	}
 	expConfig, err := expconf.ParseAnyExperimentConfigYAML(expConfigBytes)
 	if err != nil {
@@ -1078,10 +1120,14 @@ WHERE t.experiment_id = $1 AND s.trial_id = t.id
 // ExperimentModelDefinitionRaw returns the zipped model definition for an experiment as a byte
 // array.
 func (db *PgDB) ExperimentModelDefinitionRaw(id int) ([]byte, error) {
-	return db.rawQuery(`
+	b, err := db.rawQuery(`
 SELECT model_definition
 FROM experiments
 WHERE id = $1`, id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting raw model definition for experiment id %d: %w", id, err)
+	}
+	return b, nil
 }
 
 // ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints

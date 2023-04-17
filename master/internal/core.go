@@ -207,7 +207,7 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 		"experiment_id", "kind", "username", "labels", "slots", "start_time", "end_time", "seconds",
 	}
 	if err := csvWriter.Write(header); err != nil {
-		return err
+		return fmt.Errorf("error writing raw resource allocation csv header: %s", err)
 	}
 
 	for _, entry := range resp.ResourceEntries {
@@ -221,7 +221,7 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 			fmt.Sprintf("%f", entry.Seconds),
 		}
 		if err := csvWriter.Write(fields); err != nil {
-			return err
+			return fmt.Errorf("error writing raw resource allocation csv header: %s", err)
 		}
 	}
 	csvWriter.Flush()
@@ -417,9 +417,8 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		Join("LEFT JOIN image_pull_times ip ON a.allocation_id = ip.allocation_id").
 		Order("a.start_time").
 		Rows(c.Request().Context())
-
-	if err != nil && rows.Err() != nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("error getting resource allocations: %w", err)
 	}
 	defer rows.Close()
 
@@ -452,14 +451,14 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 
 	csvWriter := csv.NewWriter(c.Response())
 	if err = csvWriter.Write(header); err != nil {
-		return err
+		return fmt.Errorf("error writing csv header for getting resource allocations: %w", err)
 	}
 
 	// Write each entry to the output CSV
 	for rows.Next() {
 		allocationMetadata := new(AllocationMetadata)
 		if err := db.Bun().ScanRow(c.Request().Context(), rows, allocationMetadata); err != nil {
-			return err
+			return fmt.Errorf("error scanning allocation metadata: %w", err)
 		}
 		fields := []string{
 			allocationMetadata.AllocationID.String(),
@@ -473,9 +472,14 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			formatDuration(allocationMetadata.ImagepullingTime),
 		}
 		if err := csvWriter.Write(fields); err != nil {
-			return err
+			return fmt.Errorf("error writing csv data for getting resource allocations: %w", err)
 		}
 	}
+
+	if rows.Err() != nil {
+		return fmt.Errorf("error getting resource allocations rows: %w", err)
+	}
+
 	csvWriter.Flush()
 	return nil
 }
@@ -523,11 +527,17 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 
 	header := []string{"aggregation_type", "aggregation_key", "date", "seconds"}
 	if err = csvWriter.Write(header); err != nil {
-		return err
+		return fmt.Errorf(
+			"error writing csv header for getting aggregated resource allocations: %w", err)
 	}
 
 	write := func(aggType, aggKey, start string, seconds float32) error {
-		return csvWriter.Write([]string{aggType, aggKey, start, fmt.Sprintf("%f", seconds)})
+		err := csvWriter.Write([]string{aggType, aggKey, start, fmt.Sprintf("%f", seconds)})
+		if err != nil {
+			return fmt.Errorf(
+				"error writing csv data for getting aggregated resource allocations: %w", err)
+		}
+		return nil
 	}
 
 	for _, entry := range resp.ResourceEntries {
@@ -577,17 +587,17 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 
 	file, err := tcpListener.File()
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error getting tcp listener file to find listening port: %w", err)
 	}
 	link, err := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", file.Fd()))
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error reading file descriptor link to find listening port: %w", err)
 	}
 	matches := regexp.MustCompile(`socket:\[(.*)\]`).FindStringSubmatch(link)
 	inode := matches[1]
 	tcp, err := os.Open("/proc/self/net/tcp")
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error reading file descriptor to find listening port: %w", err)
 	}
 	defer func() {
 		_ = tcp.Close()
@@ -600,7 +610,7 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 			addr := fields[1]
 			port, err := strconv.ParseInt(strings.Split(addr, ":")[1], 16, 16)
 			if err != nil {
-				return 0, err
+				return 0, fmt.Errorf("error parsing listening port: %w", err)
 			}
 			return uint16(port), nil
 		}
@@ -628,7 +638,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	default:
 		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
 		if err != nil {
-			return err
+			return fmt.Errorf("error starting master tcp server: %w", err)
 		}
 	}
 	defer closeWithErrCheck("base", baseListener)
@@ -699,7 +709,10 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
 		// To be fixed by https://github.com/soheilhy/cmux/pull/69 which makes cmux an io.Closer.
-		return gRPCServer.Serve(grpcListener)
+		if err := gRPCServer.Serve(grpcListener); err != nil {
+			return fmt.Errorf("error starting master gRPCServer: %w", err)
+		}
+		return nil
 	})
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
@@ -719,7 +732,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	case err := <-errs:
 		return err
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("master service context done: %w", ctx.Err())
 	}
 }
 

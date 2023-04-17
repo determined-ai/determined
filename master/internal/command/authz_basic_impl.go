@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 
@@ -55,7 +56,7 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 	if requestedScope == 0 {
 		err := db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &ids)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error finding accessible scopes: %w", err)
 		}
 
 		for _, id := range ids {

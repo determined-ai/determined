@@ -493,7 +493,12 @@ func (a *agentState) persist() error {
 		On("CONFLICT (uuid) DO UPDATE").
 		On("CONFLICT (agent_id) DO UPDATE").
 		Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf(
+			"error persisting agent id %s state snapshot: %w", a.Handler.Address().Local(), err)
+	}
+
+	return nil
 }
 
 func (a *agentState) restore() error {
@@ -502,7 +507,8 @@ func (a *agentState) restore() error {
 		Where("agent_id = ?", a.Handler.Address().Local()).
 		Scan(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"error restoring agent id %s state snapshot: %w", a.Handler.Address().Local(), err)
 	}
 	log.Debugf("restored agent state snapshot: %v", snapshot)
 
@@ -513,7 +519,12 @@ func (a *agentState) delete() error {
 	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
 		Where("agent_id = ?", a.Handler.Address().Local()).
 		Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf(
+			"error deleting agent id %s state snapshot: %w", a.Handler.Address().Local(), err)
+	}
+
+	return nil
 }
 
 func (a *agentState) clearUnlessRecovered(
@@ -587,7 +598,7 @@ func retrieveAgentStates() (map[agentID]agentState, error) {
 		Where("resource_pool_name IN (?)", bun.In(rpNames)).
 		Scan(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting agent snapshots: %w", err)
 	}
 
 	result := make(map[agentID]agentState, len(snapshots))
@@ -607,7 +618,7 @@ func retrieveAgentStates() (map[agentID]agentState, error) {
 func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 	parsedUUID, err := uuid.Parse(as.UUID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parsing agent snapshot %s as uuid: %w", as.UUID, err)
 	}
 
 	slotStates := make(map[device.ID]*slot)
@@ -639,7 +650,7 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 			Where("container_id IN (?)", bun.In(as.Containers)).
 			Scan(context.TODO())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting container snapshots: %w", err)
 		}
 
 		for _, containerSnapshot := range containerSnapshots {
@@ -687,8 +698,11 @@ func (a *agentState) restoreContainersField() error {
 
 func clearAgentStates(agentIds []agentID) error {
 	_, err := db.Bun().NewDelete().Where("agent_id in (?)", agentIds).Exec(context.TODO())
+	if err != nil {
+		return fmt.Errorf("error clearing agent states state: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func updateContainerState(c *cproto.Container) error {
@@ -697,8 +711,11 @@ func updateContainerState(c *cproto.Container) error {
 		Where("container_id = ?", snapshot.ID).
 		Column("state", "devices").
 		Exec(context.TODO())
+	if err != nil {
+		return fmt.Errorf("error updating container state: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func loadContainersToAllocationIds(
@@ -718,7 +735,7 @@ func loadContainersToAllocationIds(
 		Column("container_id", "allocation_id").
 		Scan(context.TODO(), &result)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error loading container allocation snapshots: %w", err)
 	}
 
 	for _, row := range result {

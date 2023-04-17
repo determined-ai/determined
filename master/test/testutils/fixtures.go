@@ -131,7 +131,7 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 func DefaultMasterConfig() (*config.Config, error) {
 	c := config.DefaultConfig()
 	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unmarshaling default master conf yaml: %w", err)
 	}
 
 	pgCfg, err := pgconn.ParseConfig(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))

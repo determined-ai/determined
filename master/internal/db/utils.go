@@ -30,7 +30,7 @@ func MustHaveAffectedRows(result sql.Result, err error) error {
 	if err == nil {
 		rowsAffected, affectedErr := result.RowsAffected()
 		if affectedErr != nil {
-			return affectedErr
+			return affectedErr //nolint: wrapcheck
 		}
 		if rowsAffected == 0 {
 			return ErrNotFound

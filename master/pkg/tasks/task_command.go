@@ -3,6 +3,7 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -27,13 +28,13 @@ type genericCommandSpecMetadata struct {
 func (metadata *genericCommandSpecMetadata) MarshalToMap() (map[string]interface{}, error) {
 	data, err := json.Marshal(metadata)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error marshaling generic command spec: %w", err)
 	}
 
 	result := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unmarshaling generic command spec to map: %w", err)
 	}
 
 	return result, nil

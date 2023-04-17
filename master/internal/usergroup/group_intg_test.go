@@ -421,5 +421,8 @@ func usersContain(users []model.User, id model.UserID) int {
 
 func deleteUser(ctx context.Context, id model.UserID) error {
 	_, err := db.Bun().NewDelete().Table("users").Where("id = ?", id).Exec(ctx)
-	return err
+	if err != nil {
+		return fmt.Errorf("error deleting user: %w", err)
+	}
+	return nil
 }

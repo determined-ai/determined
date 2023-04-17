@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -20,11 +22,11 @@ func newRootCmd() *cobra.Command {
 		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := bindEnv("DET_", cmd); err != nil {
-				return err
+				return fmt.Errorf("error agent binding `DET_` environment: %w", err)
 			}
 			level, err := log.ParseLevel(opts.logLevel)
 			if err != nil {
-				return err
+				return fmt.Errorf("error parsing agent log level: %w", err)
 			}
 			log.SetLevel(level)
 			log.SetFormatter(&log.TextFormatter{

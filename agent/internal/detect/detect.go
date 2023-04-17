@@ -47,7 +47,7 @@ func Detect(slotType, agentID, visibleGPUs string, artificialSlots int) ([]devic
 		for i := 0; i < artificialSlots; i++ {
 			u, rErr := uuid.NewRandomFromReader(rnd)
 			if rErr != nil {
-				return nil, rErr
+				return nil, fmt.Errorf("error generating uuid for artifcial slots: %w", rErr)
 			}
 			id := u.String()
 			detected = append(detected, device.Device{

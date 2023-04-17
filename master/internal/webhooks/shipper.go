@@ -164,7 +164,7 @@ func (w *worker) shipBatch(ctx context.Context) (int, error) {
 	}
 	wg.Wait()
 	if err := ctx.Err(); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("context error after shipping webhook batch: %w", err)
 	}
 
 	if err := b.commit(); err != nil {

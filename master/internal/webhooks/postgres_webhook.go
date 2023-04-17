@@ -21,10 +21,10 @@ import (
 
 // AddWebhook adds a Webhook and its Triggers to the DB.
 func AddWebhook(ctx context.Context, w *Webhook) error {
-	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().Model(w).Exec(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("error adding webhook model: %w", err)
 		}
 		for _, t := range w.Triggers {
 			t.WebhookID = w.ID
@@ -33,11 +33,15 @@ func AddWebhook(ctx context.Context, w *Webhook) error {
 		if len(w.Triggers) != 0 {
 			_, err = tx.NewInsert().Model(&w.Triggers).Exec(ctx)
 			if err != nil {
-				return err
+				return fmt.Errorf("error adding webhook trigger: %w", err)
 			}
 		}
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("error adding webhook: %w", err)
+	}
+	return nil
 }
 
 // GetWebhook returns a single Webhooks from the DB.
@@ -49,7 +53,7 @@ func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 		Where("id = ?", webhookID).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting webhook ID %d: %w", webhookID, err)
 	}
 	return &webhook, nil
 }
@@ -62,7 +66,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 		Relation("Triggers").
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing webhooks: %w", err)
 	}
 	return webhooks, nil
 }
@@ -71,7 +75,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 func DeleteWebhook(ctx context.Context, id WebhookID) error {
 	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error deleting webhook ID %d: %w", id, err)
 	}
 	return nil
 }
@@ -93,7 +97,7 @@ func ReportExperimentStateChanged(
 		Where("condition->>'state' = ?", e.State).
 		Scan(ctx); {
 	case err != nil:
-		return err
+		return fmt.Errorf("error getting webhooks with trigger state changed: %w", err)
 	case len(ts) == 0:
 		return nil
 	}
@@ -109,7 +113,7 @@ func ReportExperimentStateChanged(
 		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
-		return err
+		return fmt.Errorf("error adding webhook trigger state changed events: %w", err)
 	}
 
 	singletonShipper.Wake()
@@ -286,7 +290,9 @@ type eventBatch struct {
 
 func (b *eventBatch) rollback() error {
 	if !b.consumed {
-		return b.tx.Rollback()
+		if err := b.tx.Rollback(); err != nil {
+			return fmt.Errorf("error rolling back events batch: %w", err)
+		}
 	}
 	return nil
 }
@@ -302,7 +308,7 @@ func (b *eventBatch) commit() error {
 func dequeueEvents(ctx context.Context, limit int) (*eventBatch, error) {
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error starting tx for dequeue webhook events: %w", err)
 	}
 	var events []Event
 	if err = tx.NewRaw(`

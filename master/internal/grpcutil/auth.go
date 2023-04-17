@@ -3,6 +3,7 @@ package grpcutil
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -74,7 +75,7 @@ func allocationSessionByTokenBun(token string) (*model.AllocationSession, error)
 	} else if err != nil {
 		log.WithError(err).WithField("allocation_sessions.id", session.ID).
 			Debug("failed to lookup allocation_session")
-		return nil, err
+		return nil, fmt.Errorf("error looking up allocation session: %w", err)
 	}
 
 	return &session, nil

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -57,7 +58,7 @@ func (w *Workspace) ToProto() (*workspacev1.Workspace, error) {
 		}
 		storageConfig = &structpb.Struct{}
 		if err = storageConfig.UnmarshalJSON(bytes); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshaling workspace storage config: %w", err)
 		}
 	}
 

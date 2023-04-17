@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -21,18 +22,26 @@ type websocketReadWriter struct {
 
 func (w *websocketReadWriter) Read(buf []byte) (int, error) {
 	if w.buf.Len() > 0 {
-		return w.buf.Read(buf)
+		b, err := w.buf.Read(buf)
+		if err != nil {
+			return 0, fmt.Errorf("error reading from websocket buffer: %w", err)
+		}
+		return b, nil
 	}
 	for {
 		switch msg, data, err := w.ws.ReadMessage(); {
 		case err != nil:
-			return 0, err
+			return 0, fmt.Errorf("error reading message from websocket: %w", err)
 		case msg == websocket.CloseMessage:
 			return 0, io.EOF
 		case msg == websocket.BinaryMessage:
 			if len(data) > 0 {
 				w.buf.Write(data)
-				return w.buf.Read(buf)
+				b, err := w.buf.Read(buf)
+				if err != nil {
+					return 0, fmt.Errorf("error reading from websocket buffer binary msg: %w", err)
+				}
+				return b, nil
 			}
 		}
 	}
@@ -40,7 +49,7 @@ func (w *websocketReadWriter) Read(buf []byte) (int, error) {
 
 func (w *websocketReadWriter) Write(buf []byte) (int, error) {
 	if err := w.ws.WriteMessage(websocket.BinaryMessage, buf); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error writing websocket binary message: %w", err)
 	}
 	return len(buf), nil
 }

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -79,9 +80,13 @@ func (a *apiServer) GetMasterConfig(
 	}
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling master config into proto struct: %w", err)
+	}
+
 	return &apiv1.GetMasterConfigResponse{
 		Config: configStruct,
-	}, err
+	}, nil
 }
 
 func (a *apiServer) MasterLogs(

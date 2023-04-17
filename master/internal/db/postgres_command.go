@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -25,7 +26,7 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 		if errors.Cause(err) == sql.ErrNoRows {
 			return 0, ErrNotFound
 		}
-		return 0, err
+		return 0, fmt.Errorf("error getting command owner id task id %s: %w", taskID, err)
 	}
 
 	return ownerIDBun.OwnerID, nil
@@ -54,7 +55,7 @@ func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error
 		if errors.Cause(err) == sql.ErrNoRows {
 			return metadata, ErrNotFound
 		}
-		return metadata, err
+		return metadata, fmt.Errorf("error identifying task: %w", err)
 	}
 	return metadata, nil
 }

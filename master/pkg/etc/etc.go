@@ -3,6 +3,7 @@
 package etc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -54,7 +55,7 @@ var staticRoot string
 func SetRootPath(root string) error {
 	root, err := filepath.Abs(root)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting absolute path from %s: %s", root, err)
 	}
 	staticRoot = root
 	return nil

@@ -168,7 +168,7 @@ func (a *Agent) run(ctx context.Context) error {
 		ContainersReattached: reattached,
 	}}:
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("context done on sending agent started message: %w", ctx.Err())
 	}
 
 	a.log.Trace("watching for ws requests and system events")
@@ -300,7 +300,7 @@ func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[containe
 			case out <- &msg:
 				return nil
 			case <-ctx.Done():
-				return ctx.Err()
+				return fmt.Errorf("context done on agent MasterMessage sender: %w", ctx.Err())
 			}
 		},
 	)
@@ -357,7 +357,8 @@ func (a *Agent) reconnectFlow(
 		ContainersReattached: reattached,
 	}}:
 	case <-ctx.Done():
-		return nil, nil, ctx.Err()
+		return nil, nil, fmt.Errorf("context done on sending agent started message reconnect: %w",
+			ctx.Err())
 	}
 
 	a.log.Trace("sending sentinel message into output stream")
@@ -366,7 +367,7 @@ func (a *Agent) reconnectFlow(
 		case outbox <- nil:
 			return nil
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("context done on sending sentinel message: %w", ctx.Err())
 		}
 	})
 
@@ -393,10 +394,12 @@ func (a *Agent) reconnectFlow(
 			select {
 			case socket.Outbox <- msg:
 			case <-ctx.Done():
-				return nil, nil, ctx.Err()
+				return nil, nil, fmt.Errorf(
+					"context done on agent sending from outbox during reconnect: %w", ctx.Err())
 			}
 		case <-ctx.Done():
-			return nil, nil, ctx.Err()
+			return nil, nil, fmt.Errorf(
+				"context done on getting messages from outbox during reconnect: %w", ctx.Err())
 		}
 	}
 }
@@ -419,7 +422,7 @@ func (a *Agent) reconnect(ctx context.Context) (*MasterWebsocket, error) {
 		select {
 		case <-time.After(time.Duration(a.opts.AgentReconnectBackoff) * time.Second):
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("context done waiting for agent reconnect backoff: %w", ctx.Err())
 		}
 	}
 }
@@ -444,7 +447,7 @@ func (a *Agent) restartFluent(
 		select {
 		case <-time.After(fluentBackoff):
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("context done waiting for fluent restart backoff: %w", ctx.Err())
 		}
 	}
 }

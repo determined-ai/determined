@@ -34,20 +34,20 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	// Convert to expconf.
 	bytes, err := w.CheckpointStorageConfig.MarshalJSON()
 	if err != nil {
-		return err
+		return fmt.Errorf("error marshaling workspace checkpoint storage config: %w", err)
 	}
 	var checkpointStorageConfig expconf.CheckpointStorageConfig
 	if err = (&checkpointStorageConfig).UnmarshalJSON(bytes); err != nil {
-		return err
+		return fmt.Errorf("error unmarshaling workspace checkpoint storage config: %w", err)
 	}
 
 	// Convert back to proto.Struct with .Printable() called.
 	bytes, err = checkpointStorageConfig.Printable().MarshalJSON()
 	if err != nil {
-		return err
+		return fmt.Errorf("error marshaling printable workspace checkpoint storage config: %w", err)
 	}
 	if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
-		return err
+		return fmt.Errorf("error unmarshaling printable workspace checkpoint storage config: %w", err)
 	}
 	return nil
 }
@@ -307,7 +307,7 @@ func (a *apiServer) PostWorkspace(
 
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error starting transcation for creating workspaces: %w", err)
 	}
 	defer func() {
 		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
@@ -328,12 +328,12 @@ func (a *apiServer) PostWorkspace(
 		var bytes []byte
 		bytes, err = req.CheckpointStorageConfig.MarshalJSON()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error marshaling requested checkpoint storage config: %w", err)
 		}
 		var sc expconf.CheckpointStorageConfig
 		w.CheckpointStorageConfig = &sc
 		if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error unmarshaling requested checkpoint storage config: %w", err)
 		}
 		if err = schemas.IsComplete(w.CheckpointStorageConfig); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -429,12 +429,13 @@ func (a *apiServer) PatchWorkspace(
 			var bytes []byte
 			bytes, err = req.Workspace.CheckpointStorageConfig.MarshalJSON()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error marshaling requested checkpoint storage config: %w", err)
 			}
 			var sc expconf.CheckpointStorageConfig
 			updatedWorkspace.CheckpointStorageConfig = &sc
 			if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
-				return nil, err
+				return nil, fmt.Errorf(
+					"error unmarshaling requested checkpoint storage config: %w", err)
 			}
 			if err = schemas.IsComplete(updatedWorkspace.CheckpointStorageConfig); err != nil {
 				return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -456,7 +457,7 @@ func (a *apiServer) PatchWorkspace(
 			return nil,
 				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
 		}
-		return nil, err
+		return nil, fmt.Errorf("error patching workspace id %d: %w", req.Id, err)
 	}
 
 	// TODO(ilia): Avoid second refetch.

@@ -1,6 +1,9 @@
 package events
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // Publisher defines an interface on which the Docker lib publishes asynchronous events, such as
 // logs or stats.
@@ -31,7 +34,7 @@ func ChannelPublisher[T any](events chan<- T) FuncPublisher[T] {
 		case events <- e:
 			return nil
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("channel publisher context done: %w", ctx.Err())
 		}
 	}
 }

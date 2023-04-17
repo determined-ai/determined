@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
@@ -45,5 +47,9 @@ func (db *PgDB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) e
 UPDATE jobs
 SET q_position = $2
 WHERE job_id = $1`, jobID, position)
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating job position: %w", err)
+	}
+
+	return nil
 }

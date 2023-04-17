@@ -1,6 +1,7 @@
 package protoutils
 
 import (
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -19,7 +20,7 @@ func ToTimestamp(t time.Time) *timestamp.Timestamp {
 // ToTime converts a *timestamppb.Timestamp to a *time.Time.
 func ToTime(pt *timestamppb.Timestamp) (time.Time, error) {
 	if err := pt.CheckValid(); err != nil {
-		return time.Time{}, err
+		return time.Time{}, fmt.Errorf("error validating proto timestamp: %w", err)
 	}
 	return pt.AsTime(), nil
 }

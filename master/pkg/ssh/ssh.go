@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 
 	"github.com/pkg/errors"
 	sshlib "golang.org/x/crypto/ssh"
@@ -29,7 +30,7 @@ func GenerateKey(rsaKeySize int, passphrase *string) (PrivateAndPublicKeys, erro
 	}
 
 	if err = privateKey.Validate(); err != nil {
-		return generatedKeys, err
+		return generatedKeys, fmt.Errorf("error validating private key after generating: %w", err)
 	}
 
 	block := &pem.Block{

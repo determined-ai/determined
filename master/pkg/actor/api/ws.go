@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net"
 	"reflect"
 	"strconv"
@@ -55,7 +56,11 @@ func (w WebSocketConnected) Accept(
 
 // IsReconnect checks if agent is reconnecting after a network failure.
 func (w *WebSocketConnected) IsReconnect() (bool, error) {
-	return strconv.ParseBool(w.Ctx.QueryParam("reconnect"))
+	resp, err := strconv.ParseBool(w.Ctx.QueryParam("reconnect"))
+	if err != nil {
+		return false, fmt.Errorf("error parsing reconnect parameter: %w", err)
+	}
+	return resp, nil
 }
 
 // WriteMessage is a message to a websocketActor asking it to write out the
@@ -134,7 +139,10 @@ func (s *websocketActor) Receive(ctx *actor.Context) error {
 		go s.runReadLoop(ctx)
 		return nil
 	case actor.PostStop:
-		return s.conn.Close()
+		if err := s.conn.Close(); err != nil {
+			return fmt.Errorf("error closing websocket connection: %w", err)
+		}
+		return nil
 	case error: // Socket read errors.
 		return msg
 	case []byte: // Incoming messages on the socket.
@@ -148,13 +156,13 @@ func (s *websocketActor) Receive(ctx *actor.Context) error {
 	case WriteMessage:
 		var buf bytes.Buffer
 		if err := json.NewEncoder(&buf).Encode(msg.Message); err != nil {
-			return err
+			return fmt.Errorf("error encoding message to send to websocket: %w", err)
 		}
 		return s.processWriteMessage(ctx, buf)
 	case WriteRawMessage:
 		var buf bytes.Buffer
 		if _, err := buf.WriteString(msg.Message.(string)); err != nil {
-			return err
+			return fmt.Errorf("error writing message to websocket buffer: %w", err)
 		}
 		return s.processWriteMessage(ctx, buf)
 	default:
@@ -173,7 +181,10 @@ func (s *websocketActor) processWriteMessage(
 
 	ctx.Respond(WriteResponse{})
 
-	return s.conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	if err := s.conn.WriteMessage(websocket.TextMessage, buf.Bytes()); err != nil {
+		return fmt.Errorf("error writing websocket message to connection: %w", err)
+	}
+	return nil
 }
 
 func isClosingError(err error) bool {
@@ -245,7 +256,7 @@ func (s *websocketActor) ping() error {
 		// Temporary is deprecated but not sure the better alternative.
 		return nil
 	} else if err != nil {
-		return err
+		return fmt.Errorf("error pinging websocket: %w", err)
 	}
 
 	s.pendingPings[id] = deadline
@@ -286,7 +297,7 @@ func (s *websocketActor) runReadLoop(ctx *actor.Context) {
 	read := func() ([]byte, error) {
 		msgType, msg, err := s.conn.ReadMessage()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading from websocket connection: %w", err)
 		}
 		if msgType != websocket.TextMessage && msgType != websocket.BinaryMessage {
 			return nil, errors.Errorf("unexpected message type: %d", msgType)
@@ -318,7 +329,7 @@ func parseMsg(raw []byte, msgType reflect.Type) (interface{}, error) {
 		parsed = reflect.New(msgType).Interface()
 	}
 	if err := json.Unmarshal(raw, parsed); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unmarshaling websocket message: %w", err)
 	}
 
 	if msgType.Kind() == reflect.Ptr {

@@ -48,7 +48,7 @@ func (m *Master) canDoActionOnCheckpoint(
 ) error {
 	uuid, err := uuid.Parse(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing checkpoint %s UUID: %w", id, err)
 	}
 
 	checkpoint, err := m.db.CheckpointByUUID(uuid)
@@ -115,7 +115,7 @@ func (a *apiServer) GetCheckpoint(
 	if errE != nil {
 		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing checkpoint %s UUID: %w", req.CheckpointUuid, err)
 		}
 		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
 		if errM != nil {

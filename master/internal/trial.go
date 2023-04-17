@@ -680,7 +680,7 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 	// Do we have an open allocation?
 	err := selectQuery.Scan(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing open allocations: %w", err)
 	}
 
 	openAllocs := len(allocations)

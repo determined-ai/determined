@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -63,7 +64,7 @@ func newRunCmd() *cobra.Command {
 		if opts.AgentID == "" {
 			hostname, hErr := os.Hostname()
 			if hErr != nil {
-				return hErr
+				return fmt.Errorf("error getting hostname running agent: %w", hErr)
 			}
 			opts.AgentID = hostname
 		}

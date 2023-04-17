@@ -153,7 +153,7 @@ func remakeCommandsByType(
 		Scan(context.TODO())
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("failed to restore task type %s", taskType)
-		return nil, err
+		return nil, fmt.Errorf("error finding NTSC to restore: %w", err)
 	}
 
 	results := []*command{}
@@ -709,5 +709,8 @@ func (c *command) persist() error {
 	_, err := db.Bun().NewInsert().Model(snapshot).
 		On("CONFLICT (task_id) DO UPDATE").
 		Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error persisting NTSC snapshot: %w", err)
+	}
+	return nil
 }

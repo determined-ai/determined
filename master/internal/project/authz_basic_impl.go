@@ -51,7 +51,7 @@ func shouldBeAdminOrOwnWorkspaceOrProject(
 		Where("id = ?", project.WorkspaceId).
 		Where("user_id = ?", curUser.ID).Exists(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking ownership of workspace: %w", err)
 	}
 	if !exists {
 		return fmt.Errorf("non admin users need to own the project or workspace")

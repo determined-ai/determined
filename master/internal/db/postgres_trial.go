@@ -380,7 +380,11 @@ SELECT state
 FROM trials
 WHERE id = $1
 `, trialID).Scan(&state)
-	return state, err
+	if err != nil {
+		return "", fmt.Errorf("error getting trial id %d state: %w", trialID, err)
+	}
+
+	return state, nil
 }
 
 // TrialStatus returns the current status of the given trial, including the end time
@@ -396,6 +400,10 @@ SELECT state, end_time
 FROM trials
 WHERE id = $1
 `, &status, trialID)
+	if err != nil {
+		return "", nil, fmt.Errorf("error getting trial id %d status: %w", trialID, err)
+	}
+
 	return status.State, status.EndTime, err
 }
 

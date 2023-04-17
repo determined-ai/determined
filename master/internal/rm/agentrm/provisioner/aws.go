@@ -298,7 +298,7 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 	}
 	result, err := c.client.DescribeInstances(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error describing aws instances: %w", err)
 	}
 	var instances []*ec2.Instance
 	for _, rsv := range result.Reservations {
@@ -322,7 +322,7 @@ func (c *awsCluster) describeInstancesByID(
 	}
 	result, err := c.client.DescribeInstances(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error describing aws instances by ID: %w", err)
 	}
 	var instances []*ec2.Instance
 	for _, rsv := range result.Reservations {
@@ -418,7 +418,12 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 		}
 	}
 
-	return c.client.RunInstances(input)
+	reservations, err := c.client.RunInstances(input)
+	if err != nil {
+		return nil, fmt.Errorf("error launching aws instances: %w", err)
+	}
+
+	return reservations, nil
 }
 
 func (c *awsCluster) terminateInstances(
@@ -430,5 +435,11 @@ func (c *awsCluster) terminateInstances(
 	input := &ec2.TerminateInstancesInput{
 		InstanceIds: ids,
 	}
-	return c.client.TerminateInstances(input)
+
+	out, err := c.client.TerminateInstances(input)
+	if err != nil {
+		return nil, fmt.Errorf("error terminating aws instances: %w", err)
+	}
+
+	return out, nil
 }

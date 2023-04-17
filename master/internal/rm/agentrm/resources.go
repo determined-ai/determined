@@ -96,7 +96,11 @@ func (c containerResources) persist() error {
 		AgentID:    agentID,
 	}
 	_, err := db.Bun().NewInsert().Model(&snapshot).Exec(context.TODO())
-	return err
+	if err != nil {
+		return fmt.Errorf("error persisting container id %s snapshot: %w", c.containerID, err)
+	}
+
+	return nil
 }
 
 // Single asserts there's a single element in the map and take it.

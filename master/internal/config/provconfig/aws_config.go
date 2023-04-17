@@ -94,7 +94,7 @@ func (c *AWSClusterConfig) InitDefaultValues() error {
 
 	if len(c.Region) == 0 {
 		if c.Region, err = metadata.Region(); err != nil {
-			return err
+			return fmt.Errorf("error getting aws cluster config region: %w", err)
 		}
 	}
 
@@ -405,7 +405,12 @@ func getEC2Metadata(field string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ec2Metadata.GetMetadata(field)
+
+	m, err := ec2Metadata.GetMetadata(field)
+	if err != nil {
+		return "", fmt.Errorf("error getting EC2 metadata for field %s: %w", field, err)
+	}
+	return m, nil
 }
 
 func onEC2() bool {

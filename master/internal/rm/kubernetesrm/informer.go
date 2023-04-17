@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/watch"
@@ -76,8 +77,12 @@ func (i *informer) startInformer(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return i.podInterface.Watch(
+			w, err := i.podInterface.Watch(
 				context.TODO(), metaV1.ListOptions{LabelSelector: determinedLabel})
+			if err != nil {
+				return nil, fmt.Errorf("error watching k8s pods: %w", err)
+			}
+			return w, nil
 		},
 	})
 	if err != nil {

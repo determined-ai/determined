@@ -62,7 +62,7 @@ func loadMultiExperimentActionResults(results []ExperimentActionResult,
 	for ref, actorResp := range resps {
 		originalID, err := strconv.ParseInt(ref.Address().Local(), 10, 32)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing experiment ID from address: %w", err)
 		}
 		if actorResp == nil {
 			results = append(results, ExperimentActionResult{
@@ -155,7 +155,7 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	query = queryBulkExperiments(query, filters)
 
 	if err := query.Scan(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting experiment IDs from filters: %w", err)
 	}
 	return experimentIDList, nil
 }
@@ -193,8 +193,10 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		return nil, err
 	}
 
-	err = query.Scan(ctx)
-	return expIDs, err
+	if err = query.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("error getting editable experiment IDs: %w", err)
+	}
+	return expIDs, nil
 }
 
 // ToAPIResults converts ExperimentActionResult type with error object to error strings.
@@ -380,7 +382,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	}
 
 	if err = query.Scan(ctx); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting experiment IDs to delete: %w", err)
 	}
 
 	var results []ExperimentActionResult
@@ -427,7 +429,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 			Model(&acceptedExperiments).
 			Exec(ctx)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("error bulk updating experiment states to delete: %w", err)
 		}
 
 		for _, exp := range acceptedExperiments {
@@ -476,7 +478,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 
 	err = query.Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting archivable experiments: %w", err)
 	}
 
 	var results []ExperimentActionResult
@@ -520,7 +522,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error bulk archiving experiments: %w", err)
 		}
 
 		for _, acceptID := range acceptedIDs {
@@ -569,7 +571,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 
 	err = query.Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting unarchivable experiments: %w", err)
 	}
 
 	var results []ExperimentActionResult
@@ -613,7 +615,7 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error bulk unarchiving experiments: %w", err)
 		}
 
 		for _, acceptID := range acceptedIDs {
@@ -660,7 +662,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	}
 	err = getQ.Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting movable experiments: %w", err)
 	}
 
 	var results []ExperimentActionResult
@@ -690,7 +692,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 	if len(validIDs) > 0 {
 		tx, err := db.Bun().BeginTx(ctx, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error starting transaction for bulk move experiments: %w", err)
 		}
 		defer func() {
 			txErr := tx.Rollback()
@@ -705,7 +707,8 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			Where("e.experiment_id IN (?)", bun.In(validIDs)).
 			Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(
+				"error updating metrics name project_id for bulk move experiments: %w", err)
 		}
 		err = db.RemoveProjectHyperparameters(ctx, tx, validIDs)
 		if err != nil {
@@ -725,7 +728,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error updating project_id for bulk move experiments: %w", err)
 		}
 
 		for _, acceptID := range acceptedIDs {
@@ -735,7 +738,7 @@ func MoveExperiments(ctx context.Context, system *actor.System,
 			})
 		}
 		if err = tx.Commit(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error committing transcation for bulk move experiments: %w", err)
 		}
 	}
 	return results, nil

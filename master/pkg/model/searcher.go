@@ -46,7 +46,7 @@ func (r RequestID) MarshalText() ([]byte, error) {
 func (r *RequestID) UnmarshalText(data []byte) error {
 	u, err := uuid.ParseBytes(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing request id to uuid while unmarshaling: %w", err)
 	}
 	*r = RequestID(u)
 	return nil
@@ -66,7 +66,7 @@ func (r RequestID) String() string {
 func ParseRequestID(s string) (RequestID, error) {
 	parsed, err := uuid.Parse(s)
 	if err != nil {
-		return RequestID{}, err
+		return RequestID{}, fmt.Errorf("error parsing request id %s as uuid: %w", s, err)
 	}
 	return RequestID(parsed), nil
 }

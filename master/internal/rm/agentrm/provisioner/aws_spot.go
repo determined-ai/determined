@@ -341,8 +341,12 @@ func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpo
 			},
 		},
 	}
+
 	_, err := c.client.CreateTags(input)
-	return err
+	if err != nil {
+		return fmt.Errorf("error tagging aws spot instances: %w", err)
+	}
+	return nil
 }
 
 // Create a spot request to try to approximate how different the local clock is
@@ -498,10 +502,10 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 			}
 		} else {
 			ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
-			return nil, err
+			return nil, fmt.Errorf("error launching spot instance: %w", err)
 		}
 	}
-	return nil, err
+	return nil, nil
 }
 
 func (c *awsCluster) createSpotInstanceRequest(
@@ -594,7 +598,11 @@ func (c *awsCluster) createSpotInstanceRequest(
 		}
 	}
 
-	return c.client.RequestSpotInstances(spotInput)
+	out, err := c.client.RequestSpotInstances(spotInput)
+	if err != nil {
+		return nil, fmt.Errorf("error requests aws spot instances: %w", err)
+	}
+	return out, nil
 }
 
 func (c *awsCluster) listCanceledButInstanceRunningSpotRequests(
@@ -680,7 +688,7 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error describing aws active spot instance requestes: %w", err)
 	}
 
 	ret := newSetOfSpotRequests()
@@ -738,7 +746,7 @@ func (c *awsCluster) listSpotRequestsByID(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error describing aws spot instance requestes: %w", err)
 	}
 
 	ret := newSetOfSpotRequests()
@@ -769,5 +777,10 @@ func (c *awsCluster) terminateSpotInstanceRequests(
 		SpotInstanceRequestIds: spotRequestIds,
 	}
 
-	return c.client.CancelSpotInstanceRequests(input)
+	out, err := c.client.CancelSpotInstanceRequests(input)
+	if err != nil {
+		return nil, fmt.Errorf("error canceling spot instance requests: %w", err)
+	}
+
+	return out, nil
 }

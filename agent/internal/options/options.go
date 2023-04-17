@@ -3,6 +3,7 @@ package options
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 
@@ -127,7 +128,11 @@ func (t TLSOptions) ReadClientCertificate() (*tls.Certificate, error) {
 		return nil, nil
 	}
 	cert, err := tls.LoadX509KeyPair(t.ClientCert, t.ClientKey)
-	return &cert, err
+	if err != nil {
+		return nil, fmt.Errorf("error loading client certificate key pair: %w", err)
+	}
+
+	return &cert, nil
 }
 
 // FluentOptions stores configurable Fluent Bit-related options.
