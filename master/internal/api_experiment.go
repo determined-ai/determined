@@ -2046,6 +2046,9 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		}
 	}
 	if *operator == "<" || *operator == ">" {
+		if valueIsString {
+			value = fmt.Sprintf(`'%s'`, value)
+		}
 		query = value
 	}
 	return query, filterIndex
