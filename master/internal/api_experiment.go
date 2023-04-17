@@ -118,11 +118,7 @@ func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experimen
 
 // Return if experiment state is Active or any of its sub-states.
 func isActiveExperimentState(state experimentv1.State) bool {
-	return slices.Contains([]experimentv1.State{
-		experimentv1.State_STATE_ACTIVE,
-		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
-		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
-	}, state)
+	return slices.Contains(exputil.ActiveExperimentStates, state)
 }
 
 // Return a single experiment with enriched state, if the user can access it.
