@@ -147,56 +147,25 @@ func (a *apiServer) getProjectColumnsByID(
 		},
 	}
 
-	// Get hyperpatameters columns
-	hyperparametersQuery := db.Bun().NewSelect().
-		ColumnExpr("jsonb_array_elements_text(hyperparameters) as hyperparameter").
-		Table("projects").
-		Where("id = ?", id)
-
-	trialsQuery := db.Bun().NewSelect().
-		Column("hparams").
-		Table("trials").
-		Join("experiments on trials.experiment_id = experiments.id").
-		Where("experiments.project_id = ?", id)
-
-	hyperParametersWithExamples := []struct {
+	hyperparameters := []struct {
 		Hyperparameter string
-		ExampleType    string
 	}{}
 
-	/**
-	 * Note -- this scales badly on the trials table. can we either
-	 *   - guarantee that all trials for an experiment have the same hparam
-	 *     setup? if so we can use best_trial_id instead of joining all trials to
-	 *     experiments in the project.
-	 *   - say all hyperparameters are unspecified types? if so this isn't necessary.
-	 **/
+	// Get hyperpatameters columns
 	err := db.Bun().NewSelect().
-		DistinctOn("h.hyperparameter").
-		Column("h.hyperparameter").
-		ColumnExpr("jsonb_typeof(t.hparams #>(string_to_array(h.hyperparameter, '.'))) AS example_type").
-		TableExpr("(?) AS h", hyperparametersQuery).
-		// nolint:lll
-		Join("LEFT JOIN (?) t on t.hparams #>>(string_to_array(h.hyperparameter, '.')) IS NOT NULL", trialsQuery).
-		Scan(ctx, &hyperParametersWithExamples)
+		ColumnExpr("jsonb_array_elements_text(hyperparameters) as hyperparameter").
+		Table("projects").
+		Where("id = ?", id).
+		Scan(ctx, &hyperparameters)
 
 	if err != nil {
 		return nil, err
 	}
-	for _, h := range hyperParametersWithExamples {
-		var columnType projectv1.ColumnType
-		switch h.ExampleType {
-		case "number":
-			columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-		case "string":
-			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-		default:
-			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-		}
+	for _, h := range hyperparameters {
 		columns = append(columns, &projectv1.ProjectColumn{
 			Column:   h.Hyperparameter,
 			Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
-			Type:     columnType,
+			Type:     projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
 		})
 	}
 
