@@ -41,13 +41,6 @@ type deleteExperimentOKResult struct {
 	State    experimentv1.State
 }
 
-// ActiveExperimentStates includes Active state and its sub-states.
-var ActiveExperimentStates = []experimentv1.State{
-	experimentv1.State_STATE_ACTIVE,
-	experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
-	experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
-}
-
 var completedExperimentStates = []string{"CANCELED", "COMPLETED", "ERROR"}
 
 // ExperimentsAddr is the address to direct experiment actions.
@@ -263,7 +256,7 @@ func CancelExperiments(ctx context.Context, system *actor.System,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil {
 		if filters.States == nil {
-			filters.States = ActiveExperimentStates
+			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 		}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
@@ -307,7 +300,7 @@ func KillExperiments(ctx context.Context, system *actor.System,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil {
 		if filters.States == nil {
-			filters.States = ActiveExperimentStates
+			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 		}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
@@ -351,7 +344,7 @@ func PauseExperiments(ctx context.Context, system *actor.System,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil {
 		if filters.States == nil {
-			filters.States = ActiveExperimentStates
+			filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 		}
 	}
 	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
