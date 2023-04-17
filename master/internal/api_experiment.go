@@ -2202,12 +2202,6 @@ func (a *apiServer) SearchExperiments(
 	experimentValues := db.Bun().NewValues(&experiments)
 
 	// get info for best/latest validation for best trial
-	vids := db.Bun().NewRaw(`
-	SELECT best_validation_id AS vid 
-	FROM trials WHERE experiment_id IN (SELECT id FROM ex) 
-	UNION 
-	SELECT latest_validation_id AS vid 
-	FROM trials WHERE experiment_id IN (SELECT id FROM ex)`)
 	validationsQuery := db.Bun().NewSelect().
 		Table("validations").
 		Column("id").
@@ -2216,7 +2210,8 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("proto_time(end_time) AS end_time").
 		ColumnExpr("json_build_object('avg_metrics', metrics->'validation_metrics') AS metrics").
 		ColumnExpr("metrics->'num_inputs' AS num_inputs").
-		Where("id IN (?)", vids)
+		//nolint:lll
+		ColumnExpr("row_number() OVER(PARTITION BY validations.trial_id ORDER BY total_batches DESC NULLS LAST) AS latest_rank")
 
 	stepsQuery := db.Bun().NewSelect().
 		TableExpr("steps AS s").
@@ -2254,7 +2249,7 @@ func (a *apiServer) SearchExperiments(
 		//nolint:lll
 		Join("JOIN ex ON ex.best_trial_id = trials.id").
 		Join("LEFT JOIN v bv ON trials.best_validation_id = bv.id").
-		Join("LEFT JOIN v lv ON trials.latest_validation_id = lv.id").
+		Join("LEFT JOIN v lv ON trials.id = lv.trial_id AND lv.latest_rank = 1").
 		Join("LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = trials.warm_start_checkpoint_id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id")
 
@@ -2263,6 +2258,7 @@ func (a *apiServer) SearchExperiments(
 		With("v", validationsQuery).
 		Model(&trials).
 		ModelTableExpr("(?) AS trial", trialsInnerQuery).Scan(ctx)
+
 	if err != nil {
 		return nil, err
 	}
