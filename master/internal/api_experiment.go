@@ -1940,7 +1940,7 @@ func scanMetricName(filter string, index int) string {
 	return metricName
 }
 
-func buildQuery(filter string) string {
+func buildQuery(filter string) (string, error) {
 	// Builds the sql query for a filter string
 
 	// The prefix for column names mapping to
@@ -1983,9 +1983,17 @@ func buildQuery(filter string) string {
 		 ) `,
 	}
 
+	// If the entire query does not contain at least one valid
+	// column name for an experiment, metric, or hyperparameter,
+	// then the filter is not valid
+	hasValidColumns := false
+
 	// Replace any needed experiment related column names
 	// with the correct sql query
 	for key, value := range filterExperimentColMap {
+		if strings.Contains(filter, experimentColumnPrefix+key) {
+			hasValidColumns = true
+		}
 		filter = strings.ReplaceAll(filter, experimentColumnPrefix+key, value)
 	}
 
@@ -1994,13 +2002,17 @@ func buildQuery(filter string) string {
 	for prefix, replacement := range metricPrefixes {
 		i := strings.Index(filter, prefix)
 		for i != -1 {
+			hasValidColumns = true
 			metricName := scanMetricName(filter, i+len(prefix))
 			filter = strings.ReplaceAll(filter, prefix+metricName, fmt.Sprintf(replacement, metricName))
 			i = strings.Index(filter, prefix)
 		}
 	}
 
-	return filter
+	if !hasValidColumns {
+		return filter, fmt.Errorf("does not contain any valid query expressions")
+	}
+	return filter, nil
 }
 
 func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
@@ -2209,7 +2221,11 @@ func parseFilter(filter string) (*string, error) {
 			currentIndex++
 		}
 	}
-	currentQuery = buildQuery(currentQuery)
+	currentQuery, err := buildQuery(currentQuery)
+	if err != nil {
+		return &currentQuery, err
+	}
+
 	return &currentQuery, nil
 }
 
