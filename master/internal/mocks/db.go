@@ -394,13 +394,27 @@ func (_m *DB) DeleteAllocationSession(allocationID model.AllocationID) error {
 	return r0
 }
 
-// DeleteExperiments provides a mock function with given fields: ids
-func (_m *DB) DeleteExperiments(ids []int) error {
-	ret := _m.Called(ids)
+// DeleteExperiments provides a mock function with given fields: ctx, ids
+func (_m *DB) DeleteExperiments(ctx context.Context, ids []int) error {
+	ret := _m.Called(ctx, ids)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]int) error); ok {
-		r0 = rf(ids)
+	if rf, ok := ret.Get(0).(func(context.Context, []int) error); ok {
+		r0 = rf(ctx, ids)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteSnapshotsForExperiment provides a mock function with given fields: experimentID
+func (_m *DB) DeleteSnapshotsForExperiment(experimentID int) error {
+	ret := _m.Called(experimentID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int) error); ok {
+		r0 = rf(experimentID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -409,14 +423,16 @@ func (_m *DB) DeleteExperiments(ids []int) error {
 }
 
 // DeleteSnapshotsForExperiments provides a mock function with given fields: experimentIDs
-func (_m *DB) DeleteSnapshotsForExperiments(experimentIDs []int) error {
+func (_m *DB) DeleteSnapshotsForExperiments(experimentIDs []int) func(context.Context, *bun.Tx) error {
 	ret := _m.Called(experimentIDs)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func([]int) error); ok {
+	var r0 func(context.Context, *bun.Tx) error
+	if rf, ok := ret.Get(0).(func([]int) func(context.Context, *bun.Tx) error); ok {
 		r0 = rf(experimentIDs)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(func(context.Context, *bun.Tx) error)
+		}
 	}
 
 	return r0

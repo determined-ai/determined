@@ -1,7 +1,10 @@
 package db
 
 import (
+	"context"
+
 	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
 )
@@ -42,16 +45,31 @@ DO UPDATE SET
 	return nil
 }
 
-// DeleteSnapshotsForExperiments deletes all snapshots for multiple given experiments.
-func (db *PgDB) DeleteSnapshotsForExperiments(experimentIDs []int) error {
-	return db.withTransaction("delete snapshots", db.deleteSnapshotsForExperiments(experimentIDs))
+// DeleteSnapshotsForExperiment deletes all snapshots for one given experiment.
+func (db *PgDB) DeleteSnapshotsForExperiment(experimentID int) error {
+	return db.withTransaction("delete snapshots", db.deleteSnapshotsForExperiment(experimentID))
 }
 
-func (db *PgDB) deleteSnapshotsForExperiments(experimentIDs []int) func(tx *sqlx.Tx) error {
+func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sqlx.Tx) error {
 	return func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 DELETE FROM experiment_snapshots
-WHERE experiment_id IN $1`, experimentIDs); err != nil {
+WHERE experiment_id = $1`, experimentID); err != nil {
+			return errors.Wrap(err, "failed to delete experiment snapshots")
+		}
+		return nil
+	}
+}
+
+// DeleteSnapshotsForExperiments deletes all snapshots for multiple given experiments.
+func (db *PgDB) DeleteSnapshotsForExperiments(experimentIDs []int) func(ctx context.Context,
+	tx *bun.Tx) error {
+	return func(ctx context.Context, tx *bun.Tx) error {
+		var snapIDs []int
+		if _, err := tx.NewDelete().Model(&snapIDs).Table("experiment_snapshots").
+			Where("experiment_id IN (?)", bun.In(experimentIDs)).
+			Returning("id").
+			Exec(ctx); err != nil {
 			return errors.Wrap(err, "failed to delete experiments snapshots")
 		}
 		return nil

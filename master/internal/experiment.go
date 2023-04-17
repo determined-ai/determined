@@ -425,7 +425,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Self().System().ActorOf(addr, ckptGCTask)
 		}
 
-		if err := e.db.DeleteSnapshotsForExperiments([]int{e.Experiment.ID}); err != nil {
+		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 		}

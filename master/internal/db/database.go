@@ -40,7 +40,7 @@ type DB interface {
 	SaveExperimentConfig(id int, config expconf.ExperimentConfig) error
 	SaveExperimentState(experiment *model.Experiment) error
 	SaveExperimentArchiveStatus(experiment *model.Experiment) error
-	DeleteExperiments(ids []int) error
+	DeleteExperiments(ctx context.Context, ids []int) error
 	ExperimentHasCheckpointsInRegistry(id int) (bool, error)
 	SaveExperimentProgress(id int, progress *float64) error
 	ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error)
@@ -122,7 +122,9 @@ type DB interface {
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,
 	) error
-	DeleteSnapshotsForExperiments(experimentIDs []int) error
+	DeleteSnapshotsForExperiment(experimentID int) error
+	DeleteSnapshotsForExperiments(experimentIDs []int) func(ctx context.Context,
+		tx *bun.Tx) error
 	DeleteSnapshotsForTerminalExperiments() error
 	QueryProto(queryName string, v interface{}, args ...interface{}) error
 	QueryProtof(
