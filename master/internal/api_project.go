@@ -53,45 +53,179 @@ func (a *apiServer) getProjectColumnsByID(
 	} else if !ok {
 		return nil, notFoundErr
 	}
-	// Get general columns
-	generalColumns := make([]projectv1.GeneralColumn, 0, len(projectv1.GeneralColumn_value))
-	for gc := range projectv1.GeneralColumn_value {
-		generalColumns = append(
-			generalColumns, projectv1.GeneralColumn(projectv1.GeneralColumn_value[gc]))
+
+	columns := []*projectv1.ProjectColumn{
+		{
+			Column:      "id",
+			DisplayName: "ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "name",
+			DisplayName: "Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "description",
+			DisplayName: "Description",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "tags",
+			DisplayName: "Tags",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT, // is this right?
+		},
+		{
+			Column:      "forked",
+			DisplayName: "Forked",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "start_time",
+			DisplayName: "Start time",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		},
+		{
+			Column:      "duration",
+			DisplayName: "Duration",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER, // ?
+		},
+		{
+			Column:      "num_trials",
+			DisplayName: "Trial count",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "state",
+			DisplayName: "State",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcher_type",
+			DisplayName: "Searcher type",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "resource_pool",
+			DisplayName: "Resource pool",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "progress",
+			DisplayName: "Progress",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpoint_size",
+			DisplayName: "Checkpoint size",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpoint_count",
+			DisplayName: "Checkpoint count",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "username",
+			DisplayName: "User",
+			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
 	}
+
 	// Get hyperpatameters columns
-	hyperparameters := struct {
-		Hyperparameters []string
+	hyperparametersQuery := db.Bun().NewSelect().
+		ColumnExpr("jsonb_array_elements_text(hyperparameters) as hyperparameter").
+		Table("projects").
+		Where("id = ?", id)
+
+	trialsQuery := db.Bun().NewSelect().
+		Column("hparams").
+		Table("trials").
+		Join("experiments on trials.experiment_id = experiments.id").
+		Where("experiments.project_id = ?", id)
+
+	hyperParametersWithExamples := []struct {
+		Hyperparameter string
+		ExampleType    string
 	}{}
-	err := db.Bun().
-		NewSelect().Table("projects").Column("hyperparameters").Where(
-		"id = ?", id).Scan(ctx, &hyperparameters)
+
+	/**
+	 * Note -- this scales badly on the trials table. can we either
+	 *   - guarantee that all trials for an experiment have the same hparam
+	 *     setup? if so we can use best_trial_id instead of joining all trials to
+	 *     experiments in the project.
+	 *   - say all hyperparameters are unspecified types? if so this isn't necessary.
+	 **/
+	err := db.Bun().NewSelect().
+		DistinctOn("h.hyperparameter").
+		Column("h.hyperparameter").
+		ColumnExpr("jsonb_typeof(t.hparams #>(string_to_array(h.hyperparameter, '.'))) AS example_type").
+		TableExpr("(?) AS h", hyperparametersQuery).
+		// nolint:lll
+		Join("LEFT JOIN (?) t on t.hparams #>>(string_to_array(h.hyperparameter, '.')) IS NOT NULL", trialsQuery).
+		Scan(ctx, &hyperParametersWithExamples)
+
 	if err != nil {
 		return nil, err
+	}
+	for _, h := range hyperParametersWithExamples {
+		var columnType projectv1.ColumnType
+		switch h.ExampleType {
+		case "number":
+			columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+		case "string":
+			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+		default:
+			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+		}
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   h.Hyperparameter,
+			Location: projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS,
+			Type:     columnType,
+		})
 	}
 
 	// Get metrics columns
 	metricNames := []struct {
 		Vname []string
 	}{}
-	metricColumns := make([]string, 0)
 	err = db.Bun().
 		NewSelect().
 		TableExpr("exp_metrics_name").
 		TableExpr("LATERAL json_array_elements_text(vname) AS vnames").
 		ColumnExpr("array_to_json(array_agg(DISTINCT vnames)) AS vname").
-		Where("project_id = ?", id).Scan(ctx, &metricNames)
+		Where("project_id = ?", id).
+		Scan(ctx, &metricNames)
 	if err != nil {
 		return nil, err
 	}
 	for _, mn := range metricNames {
 		for _, mnv := range mn.Vname {
-			metricColumns = append(metricColumns, fmt.Sprintf("%s.%s", "validation", mnv))
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("validation.%s", mnv),
+				Location: projectv1.LocationType_LOCATION_TYPE_VALIDATIONS,
+				Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+			})
 		}
 	}
 
 	return &apiv1.GetProjectColumnsResponse{
-		General: generalColumns, Hyperparameters: hyperparameters.Hyperparameters, Metrics: metricColumns,
+		Columns: columns,
 	}, nil
 }
 
