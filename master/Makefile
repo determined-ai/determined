@@ -118,7 +118,7 @@ fmt-sql:
 
 .PHONY: check-sql
 check-sql:
-	make fmt-sql
+	$(MAKE) fmt-sql
 	# Checking that automatically fixable formatting is applied to all sql files
 	# by running `make fmt-sql`.
 	test -z "$(shell git status --porcelain './static/*')"
