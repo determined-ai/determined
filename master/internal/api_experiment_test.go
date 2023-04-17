@@ -43,7 +43,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		{`str~"like"`, `str LIKE '%like%'`},
 		{`(str~"like" AND -otherstr~"notlike")`, `(str LIKE '%like%' AND otherstr NOT LIKE '%notlike%')`},
 		{`experiment.startTime>="2023-01-06T19:06:25.053893089Z" OR experiment.endTime<="2023-01-06T19:08:33.219618082Z"`, //nolint: lll
-			`e.start_time>='2023-01-06T19:06:25.053893089Z' OR e.end_time<='2023-01-06T19:08:33.219618082Z'`},
+			`e.start_time>='2023-01-06T19:06:25.053893089Z' OR e.end_time<='2023-01-06T19:08:33.219618082Z'`}, //nolint: lll
 		{`(experiment.description~"experiment description" AND (-experiment.id:456 OR -experiment.resourcePool~"test\"s comma value\"s"))`, //nolint: lll
 			`(e.config->>'description' LIKE '%experiment description%' AND (e.id != 456 OR e.config->'resources'->>'resource_pool' NOT LIKE '%test\"s comma value\"s%'))`}, //nolint: lll
 		{`(experiment.forkedFrom:5 OR (-validation.error:1 AND hp.hyperparameter<=10))`,
