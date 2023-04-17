@@ -8,9 +8,9 @@
    :description: Learn how to view epoch-based metric data in the WebUI by reporting metrics to the Core API.
    :keywords: CoreAPI, WebUI, epoch-based, metrics, metric data
 
-You can view epoch-based metric data in the WebUI when you report metrics to the Determined master
-via the Core API. To do this, you'll need to define an epoch metric. This metric is used as the
-``x-axis`` label in the WebUI.
+You can view epoch-based metric data in the WebUI by reporting an epoch metric to the Determined
+master via the Core API. To do this, you'll need to define an epoch metric. This metric is used as
+the ``x-axis`` label in the WebUI.
 
 This article shows you how to view epoch-based metric data in the WebUI.
 
@@ -163,5 +163,5 @@ In this article, you learned how to add a few lines of code to a script for the 
 training and validation metrics to the Determined master via the Core API and viewing epoch-based
 metric data in the WebUI.
 
-You can visit the :doc:`/tutorials/index` to learn the basics of working with
-Determined and how to port your existing code to the Determined environment.
+You can visit the :doc:`/tutorials/index` to learn the basics of working with Determined and how to
+port your existing code to the Determined environment.
