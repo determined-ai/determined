@@ -1531,12 +1531,9 @@ func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	dispatcherHistogram.WithLabelValues("launch").Observe(time.Since(start).Seconds())
 	if err != nil {
 		dispatcherErrors.WithLabelValues("launch").Inc()
-		httpStatus := ""
 		if response != nil {
-			// So we can show the HTTP status code, if available.
-			httpStatus = fmt.Sprintf("(HTTP status %d)", response.StatusCode)
-			return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error %s, response: {%v}. "+
-				"Verify that the launcher service is up and reachable.", httpStatus, response.Body)
+			return "", errors.Wrapf(err, m.apiClient.handleLauncherError(
+				response, "LaunchApi.LaunchAsync() failed", err))
 		}
 		if strings.Contains(err.Error(), "EOF") {
 			return "", errors.Wrapf(err, "LaunchApi.LaunchAsync() returned an error. "+

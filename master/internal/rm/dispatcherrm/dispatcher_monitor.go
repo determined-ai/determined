@@ -440,7 +440,7 @@ func (m *launcherMonitor) queuesFromCluster(ctx *actor.Context) map[string]map[s
 
 	dispatchInfo, r, err := m.apiClient.launchHPCQueueJob() //nolint:bodyclose
 	if err != nil {
-		m.apiClient.handleServiceQueryError(r, err)
+		m.apiClient.handleLauncherError(r, "Failed to retrieve HPC job queue from launcher", err)
 		return result
 	}
 	dispatchID := dispatchInfo.GetDispatchId()

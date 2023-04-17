@@ -139,7 +139,7 @@ func (c *hpcResourceDetailsCache) fetchHpcResourceDetails() (
 ) {
 	dispatchInfo, resp, err := c.cl.launchHPCResourcesJob() //nolint:bodyclose
 	if err != nil {
-		c.cl.handleServiceQueryError(resp, err)
+		c.cl.handleLauncherError(resp, "Failed to retrieve HPC resources from launcher", err)
 		return nil, false
 	}
 	dispatchID := dispatchInfo.GetDispatchId()
