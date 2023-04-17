@@ -1995,11 +1995,13 @@ func scanString(filter string, startIndex int, operator *string, valueStart bool
 		if c == ":" || c == "~" {
 			// These characters represent the end of a column name
 			// and the start of the value
-			isCol = false
-			valueHasStarted = true
-			filterIndex++
-			comparator = c
-			continue
+			if isCol {
+				isCol = false
+				valueHasStarted = true
+				filterIndex++
+				comparator = c
+				continue
+			}
 		}
 		if c == "\\" {
 			if filterIndex+1 < int32(len(filter)-1) {
