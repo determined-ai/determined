@@ -194,7 +194,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		Model(&expIDs).
 		Column("e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Where("NOT archived").
+		Where("NOT e.archived").
 		Where("e.id IN (?)", bun.In(experimentIDList))
 
 	if query, err = AuthZProvider.Get().
@@ -493,7 +493,7 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
-			Where("NOT archived").
+			Where("NOT e.archived").
 			Where("e.state IN (?)", bun.In(completedExperimentStates))
 	}
 
