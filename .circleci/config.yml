@@ -818,7 +818,9 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
+                no_output_timeout: 30m
                 command: |
+                  (sleep 29.5m && pkill python3) &
                   gcloud container node-pools create accel \
                     --cluster ${CLUSTER_ID} \
                     --region '<<parameters.region>>' \
@@ -830,7 +832,10 @@ commands:
                     || (
                       curl "$SLACK_WEBHOOK" \
                         -H 'Content-Type: application/json' \
-                        -d "{\"text\":\"GKE node pool creation failed! $CIRCLE_BUILD_URL\"}"
+                        -d "{\"text\":\"GKE node pool creation failed on branch \`$CIRCLE_BRANCH\`! $CIRCLE_BUILD_URL\"}"
+                      echo "================"
+                      echo "GKE node pool creation failed, but we are marking the job as successful because this is not directly our problem. Ask the infrastructure engineering team about increasing the quota if you want."
+                      echo "================"
                       circleci-agent step halt
                     )
                 name: Create GPU node pool
