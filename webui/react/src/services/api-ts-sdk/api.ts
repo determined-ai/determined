@@ -3913,13 +3913,13 @@ export interface V1GetTemplatesResponse {
      * @type {Array<V1Template>}
      * @memberof V1GetTemplatesResponse
      */
-    templates?: Array<V1Template>;
+    templates: Array<V1Template>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTemplatesResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 /**
  * Response to GetTensorboardRequest.
