@@ -13,7 +13,7 @@ ALTER TABLE public.models ALTER COLUMN id SET DEFAULT nextval(
 );
 ALTER TABLE public.models DROP CONSTRAINT models_pkey CASCADE;
 ALTER TABLE public.models ADD PRIMARY KEY (id);
-ALTER TABLE public.models ADD COLUMN labels text[];
+ALTER TABLE public.models ADD COLUMN labels text [];
 ALTER TABLE public.models ADD COLUMN readme text;
 ALTER TABLE public.models ADD COLUMN user_id integer;
 WITH det_id AS (SELECT id FROM public.users WHERE username LIKE 'determined'
@@ -26,10 +26,10 @@ WHERE user_id IS NULL
 /* ALTER TABLE public.models ALTER COLUMN user_id SET NOT NULL; */
 ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (
     user_id
-) REFERENCES public.users(id);
+) REFERENCES public.users (id);
 ALTER TABLE public.models ADD COLUMN archived boolean DEFAULT false NOT NULL;
 
-ALTER TABLE public.model_versions ADD COLUMN model_id integer REFERENCES public.models(
+ALTER TABLE public.model_versions ADD COLUMN model_id integer REFERENCES public.models (
     id
 );
 WITH id_name_map AS (

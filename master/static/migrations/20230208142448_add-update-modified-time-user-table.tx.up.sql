@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.set_modified_time ()
+CREATE OR REPLACE FUNCTION public.set_modified_time()
 RETURNS TRIGGER
 AS $$
 BEGIN

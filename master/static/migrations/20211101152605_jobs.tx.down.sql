@@ -3,4 +3,4 @@ DROP COLUMN job_id;
 
 DROP TABLE public.jobs;
 
-DROP TYPE public.job_type;
+DROP TYPE public . JOB_TYPE;

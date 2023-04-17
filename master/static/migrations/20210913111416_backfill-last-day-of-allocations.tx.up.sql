@@ -1,7 +1,7 @@
 UPDATE
 trials
 SET
-    task_id = 'backported.' || id :: text;
+    task_id = 'backported.' || id::text;
 
 INSERT INTO
 tasks (
@@ -34,14 +34,14 @@ allocations (
         || '.'
         || all_workloads.kind
         || '.'
-        || all_workloads.id :: text AS allocation_id,
+        || all_workloads.id::text AS allocation_id,
         coalesce(
             e.config #>> '{resources, resource_pool}',
             'default'
         ) AS resource_pool,
         lower(const.period * range) AS start_time,
         upper(const.period * range) AS end_time,
-        (e.config -> 'resources' ->> 'slots_per_trial') :: smallint AS slots,
+        (e.config -> 'resources' ->> 'slots_per_trial')::smallint AS slots,
         coalesce(e.config #>> '{resources, agent_label}', '') AS agent_label
     FROM
         (

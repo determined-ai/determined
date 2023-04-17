@@ -1,2 +1,2 @@
 ALTER TABLE models
-DROP workspace_id; 
+DROP workspace_id;

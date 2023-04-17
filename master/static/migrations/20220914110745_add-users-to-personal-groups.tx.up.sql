@@ -1,11 +1,11 @@
-INSERT INTO groups(group_name, user_id)
+INSERT INTO groups (group_name, user_id)
 SELECT
     username || 'DeterminedPersonalGroup' AS group_name,
     id AS user_id
 FROM users
 ;
 
-INSERT INTO user_group_membership(user_id, group_id)
+INSERT INTO user_group_membership (user_id, group_id)
 SELECT
     user_id AS user_id,
     id AS group_id

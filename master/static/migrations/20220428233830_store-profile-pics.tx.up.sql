@@ -3,8 +3,8 @@ CREATE TABLE user_profile_images (
     user_id INT,
     file_data BYTEA NOT NULL,
     CONSTRAINT photo_for_user
-    FOREIGN KEY(user_id)
-    REFERENCES users(id)
+    FOREIGN KEY (user_id)
+    REFERENCES users (id)
     ON DELETE CASCADE
 );
 

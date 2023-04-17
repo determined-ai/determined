@@ -22,8 +22,8 @@ UPDATE trials SET (checkpoint_size, checkpoint_count) = (size, count) FROM (
             state != 'DELETED'
             AND c.resources != 'null'::jsonb
     ) r GROUP BY trial_id
-) s RIGHT JOIN (SELECT id FROM trials) t ON id = trial_id  WHERE 
-    t.id = trials.id; 
+) s RIGHT JOIN (SELECT id FROM trials) t ON id = trial_id WHERE
+    t.id = trials.id;
 
 UPDATE experiments SET (checkpoint_size, checkpoint_count) = (size, count)
 FROM (
