@@ -6,7 +6,9 @@ region: ORD1
 
 # Default resources to use for CPU/GPU pods.
 resources:
-  resourcePool: A40
+  cpu: "8"
+  memory: 64Gi
+  gpuType: RTX_A5000
 
 # Install Determined enterprise edition.
 enterpriseEdition: false
@@ -47,7 +49,7 @@ db:
   # scale.
   storageSize: 100Gi
   cpuRequest: 4
-  memRequest: 16Gi
+  memRequest: 64Gi
 
   # useNodePortForDB configures whether ClusterIP or NodePort service type is used for the
   # Determined deployed DB. By default ClusterIP is used.
@@ -116,7 +118,7 @@ maxSlotsPerPod: 8
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
 masterCpuRequest: 8
-masterMemRequest: 32Gi
+masterMemRequest: 64Gi
 
 ## Configure the task container defaults. Tasks include trials, commands, TensorBoards, notebooks,
 ## and shells. For all task containers, shm_size_bytes and network_mode are configurable. For
