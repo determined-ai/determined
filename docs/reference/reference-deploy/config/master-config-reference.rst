@@ -35,7 +35,7 @@ The TCP port on which the master accepts incoming connections. If TLS has been e
 *****************************
 
 Specifies defaults for all task containers. A task represents a single schedulable unit, such as a
-trial, command, or tensorboard.
+trial, command, or TensorBoard.
 
 ``shm_size_bytes``
 ==================
@@ -79,7 +79,7 @@ Defines the default pod spec which will be applied to all GPU tasks when running
 =========
 
 Defines the default docker image to use when executing the workload. If a docker image is specified
-in the :ref:`experiment config <exp-environment-image>` this default is overriden. This image must
+in the :ref:`experiment config <exp-environment-image>` this default is overridden. This image must
 be accessible via ``docker pull`` to every Determined agent machine in the cluster. Users can
 configure different container images for NVIDIA GPU tasks using the ``cuda`` key (``gpu`` prior to
 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key. Default
@@ -104,7 +104,7 @@ keys.
 
 Defines the default policy for forcibly pulling images from the docker registry and bypassing the
 docker cache. If a pull policy is specified in the :ref:`experiment config <exp-environment-image>`
-this default value is overriden. Please note that as of November 1st, 2020 unauthenticated users
+this default value is overridden. Please note that as of November 1st, 2020, unauthenticated users
 will be `capped at 100 pulls from Docker per 6 hours
 <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
 Defaults to ``false``.
@@ -114,9 +114,9 @@ Defaults to ``false``.
 
 Defines the default `docker registry credentials
 <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a custom
-base docker image, if needed. If credentials are specified is in the :ref:`experiment config
-<exp-environment-image>` this default value is overriden. Credentials are specified as the following
-nested fields:
+base docker image, if needed. If credentials are specified in the :ref:`experiment config
+<exp-environment-image>` this default value is overridden. Credentials are specified as the
+following nested fields:
 
 -  ``username`` (required)
 -  ``password`` (required)
@@ -182,14 +182,14 @@ master would break on startup if it does not have access to create this default 
 ******************
 
 Optional. Specifies whether to refuse an experiment or task if the slots requested exceeds the
-cluster capacity. This option has no effect for kubernetes or slurm clusters. If ``false``, only a
+cluster capacity. This option has no effect for Kubernetes or Slurm clusters. If ``false``, only a
 warning is returned. The default value is ``true``.
 
 ******************
  ``cluster_name``
 ******************
 
-Optional.: Specify a human readable name for this cluster.
+Optional. Specify a human-readable name for this cluster.
 
 *************************
  ``tensorboard_timeout``
@@ -205,8 +205,8 @@ timeout is ``300`` (5 minutes).
  ``notebook_timeout``
 **********************
 
-Specifies the duration in seconds before idle notebook instances are automatically terminated. A
-notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
+Specifies the duration in seconds before idle Notebook instances are automatically terminated. A
+Notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not
 otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`task configuration
 <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
 
@@ -214,7 +214,7 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
  ``resource_manager``
 **********************
 
-The resource manager to use to acquire resources. Defaults to ``agent``.
+The resource manager used to acquire resources. Defaults to ``agent``.
 
 ``type: agent``
 ===============
@@ -232,21 +232,21 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
 ^^^^^^^^
 
 The scheduling policy to use when allocating resources between different tasks (experiments,
-notebooks, etc.). Defaults to ``fair_share``.
+Notebooks, etc.). Defaults to ``fair_share``.
 
 -  ``fair_share``: Tasks receive a proportional amount of the available resources depending on the
    resource they require and their weight.
 
--  ``round_robin``: Tasks are scheduled in the order which they arrive at the cluster.
+-  ``round_robin``: Tasks are scheduled in the order in which they arrive at the cluster.
 
 -  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1 to
-   99 inclusive. Lower priority numbers indicate higher priority tasks. A lower priority task will
-   never be scheduled while a higher priority task is pending. Zero-slot tasks (e.g., CPU-only
-   notebooks, tensorboards) are prioritized separately from tasks requiring slots (e.g., experiments
+   99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task will
+   never be scheduled while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only
+   Notebooks, TensorBoards) are prioritized separately from tasks requiring slots (e.g., experiments
    running on GPUs). Task priority can be assigned using the ``resources.priority`` field. If a task
    does not specify a priority it is assigned the ``default_priority``.
 
-   -  ``preemption``: Specifies whether lower priority tasks should be preempted to schedule higher
+   -  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule higher
       priority tasks. Tasks are preempted in order of lowest priority first.
    -  ``default_priority``: The priority that is assigned to tasks that do not specify a priority.
       Can be configured to 1 to 99 inclusively. Defaults to ``42``.
@@ -263,7 +263,7 @@ The scheduling policy to use when assigning tasks to agents in the cluster. Defa
 ``allow_heterogeneous_fits``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Fit distributed jobs to onto agents of different sizes. When enabled, we still prefer to fit jobs on
+Fit distributed jobs onto agents of different sizes. When enabled, we still prefer to fit jobs on
 same sized nodes but will fallback to allow heterogeneous fits. Sizes should be powers of two for
 the fitting algorithm to work.
 
@@ -419,7 +419,7 @@ used when using Apptainer.
 ``auth_file``
 -------------
 
-The location of a file which contains an authorization token to communicate with the launcher. It is
+The location of a file that contains an authorization token to communicate with the launcher. It is
 automatically updated by the launcher as needed when the launcher is started. The specified path
 must be writable by the launcher, and readable by the Determined master.
 
@@ -481,8 +481,8 @@ accordingly, and the ``determined-master`` service must be restarted.
 ``group_name``
 --------------
 
-The group that the Launcher will belong to. It should be a group that is not
-   shared with other non-privileged users.
+The group that the Launcher will belong to. It should be a group that is not shared with other
+non-privileged users.
 
 ``singularity_image_root``
 --------------------------
@@ -495,7 +495,7 @@ the launcher and from the compute nodes. See :ref:`slurm-image-config` for more 
 
 The shared directory where temporary job-related files will be stored for each active HPC job. It
 hosts the necessary Determined executables for the job, any model and configuration files, space for
-per-rank ``/tmp`` and working directories, generated Slurm/PBS scripts and any log files. This
+per-rank ``/tmp`` and working directories, generated Slurm/PBS scripts, and any log files. This
 directory must be writable by the launcher and the compute nodes. It must be owned by the configured
 ``user_name`` and readable by all users that may launch jobs. If ``user_name`` is configured as
 ``root``, a directory must be specified, otherwise, the default is ``$HOME/.launcher``.
@@ -573,7 +573,7 @@ Interface used to proxy the master for services running on compute nodes
 ``slot_type``
 ^^^^^^^^^^^^^
 
-Resource type used for tasks
+The resource type used for tasks
 
 ``task_container_defaults``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -623,8 +623,8 @@ specified.
 ``job_project_source``
 ----------------------
 
-Configures labelling of jobs on the HPC cluster (via Slurm ``--wckey`` or PBS ``-P``). Allowed
-values are:
+Configures labeling of jobs on the HPC cluster (via Slurm ``--wckey`` or PBS ``-P``). Allowed values
+are:
 
 ``project``
 ^^^^^^^^^^^
@@ -641,10 +641,14 @@ Use the workspace name of the project (if no workspace, nothing is passed to wor
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Use the value from the experiment configuration tags list (if no matching tags, nothing is passed to
-workload manager). If a tag begins with the specified ``prefix``, remove the prefix and use the
-remainder as the value for the WCKey/Project. If multiple tag values begin with ``prefix``, the
-remainders are concatenated with a comma (,) separator on Slurm or underscore (_) with PBS. If a
-``prefix`` is not specified or empty, all tags will be matched (and therefore concatenated).
+workload manager).
+
+If a tag in the list begins with the specified ``prefix``, remove the prefix and use the remainder
+as the value for the WCKey/Project. If multiple tag values begin with ``prefix``, the remainders are
+concatenated with a comma (,) separator for Slurm or underscore (_) for PBS.
+
+If a ``prefix`` is not specified or empty, all tags will be matched (and therefore concatenated).
+
 Workload managers do not generally support multiple WCKey/Project values so it is recommended that
 ``prefix`` is configured to match a single label to enable use of the workload manager reporting
 tools that summarize usage by each WCKey/Project value.
@@ -713,7 +717,7 @@ pool will override the global one. For more on scheduling behavior in Determined
 --------
 
 The scheduling policy to use when allocating resources between different tasks (experiments,
-notebooks, etc.). Defaults to ``fair_share``.
+Notebooks, etc.). Defaults to ``fair_share``.
 
 ``fair_share``
 ^^^^^^^^^^^^^^
@@ -724,19 +728,19 @@ require and their weight.
 ``round_robin``
 ^^^^^^^^^^^^^^^
 
-Tasks are scheduled in the order which they arrive at the cluster.
+Tasks are scheduled in the order in which they arrive at the cluster.
 
 ``priority``
 ^^^^^^^^^^^^
 
 Tasks are scheduled based on their priority, which can range from the values 1 to 99 inclusive.
-Lower priority numbers indicate higher priority tasks. A lower priority task will never be scheduled
-while a higher priority task is pending. Zero-slot tasks (e.g., CPU-only notebooks, tensorboards)
+Lower priority numbers indicate higher-priority tasks. A lower-priority task will never be scheduled
+while a higher-priority task is pending. Zero-slot tasks (e.g., CPU-only Notebooks, TensorBoards)
 are prioritized separately from tasks requiring slots (e.g., experiments running on GPUs). Task
 priority can be assigned using the ``resources.priority`` field. If a task does not specify a
 priority it is assigned the ``default_priority``.
 
--  ``preemption``: Specifies whether lower priority tasks should be preempted to schedule higher
+-  ``preemption``: Specifies whether lower-priority tasks should be preempted to schedule higher
    priority tasks. Tasks are preempted in order of lowest priority first.
 -  ``default_priority``: The priority that is assigned to tasks that do not specify a priority. Can
    be configured to 1 to 99 inclusively. Defaults to ``42``.
@@ -850,7 +854,7 @@ Max number of Determined agent instances. Defaults to ``5``.
 ``type: aws``
 -------------
 
-Specifies running dynamic agents on AWS. (*Required*)
+Required. Specifies running dynamic agents on AWS.
 
 ``region``
 ^^^^^^^^^^
@@ -868,7 +872,7 @@ Size of the root volume of the Determined agent in GB. We recommend at least 100
 ``image_id``
 ^^^^^^^^^^^^
 
-The AMI ID of the Determined agent. Defaults to the latest GCP agent image. (*Optional*)
+Optional. The AMI ID of the Determined agent. Defaults to the latest GCP agent image.
 
 ``tag_key``
 ^^^^^^^^^^^
@@ -899,7 +903,7 @@ Name to set for the Determined agent instances. Defaults to ``determined-ai-agen
 ``ssh_key_name``
 ^^^^^^^^^^^^^^^^
 
-The name of the SSH key registered with AWS for SSH key access to the agent instances. (*Required*)
+Required. The name of the SSH key registered with AWS for SSH key access to the agent instances.
 
 ``iam_instance_profile_arn``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -915,9 +919,9 @@ Network interface to set for the Determined agent instances.
    :ref:`aws-network-requirements` for instructions on whether a public IP should be used. Defaults
    to ``true``.
 
--  ``security_group_id``: The ID of the security group to run the Determined agents as. This should
-   be the security group you identified or created in :ref:`aws-network-requirements`. Defaults to
-   the default security group of the specified VPC.
+-  ``security_group_id``: The ID of the security group that will be used to run the Determined
+   agents. This should be the security group you identified or created in
+   :ref:`aws-network-requirements`. Defaults to the default security group of the specified VPC.
 
 -  ``subnet_id``: The ID of the subnet to run the Determined agents in. Defaults to the default
    subnet of the default VPC.
@@ -937,9 +941,9 @@ instances this must be one of the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, 
 ^^^^^^^^^^^^^^^^^^
 
 The optional number of GPUs for the AWS instance type. This is used in conjunction with the
-``instance_type`` in order to specify types which are not listed in the ``instance_type`` list
-above. Note that some GPUs may not be supported. **WARNING**: *be sure to specify the correct number
-of GPUs to ensure that provisioner launches the correct number of instances.*
+``instance_type`` in order to specify types that are not listed in the ``instance_type`` list above.
+Note that some GPUs may not be supported. **WARNING**: *be sure to specify the correct number of
+GPUs to ensure that provisioner launches the correct number of instances.*
 
 ``cpu_slots_allowed``
 ^^^^^^^^^^^^^^^^^^^^^
@@ -965,7 +969,7 @@ Defaults to the on-demand price for the given instance type.
 ``type: gcp``
 -------------
 
-Specifies running dynamic agents on GCP. (*Required*)
+Required. Specifies running dynamic agents on GCP.
 
 ``base_config``
 ^^^^^^^^^^^^^^^
@@ -993,10 +997,9 @@ Size of the root volume of the Determined agent in GB. We recommend at least 100
 ``boot_disk_source_image``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The boot disk source image of the Determined agent that was shared with you. To use a specific
-version of the Determined agent image from a specific project, it should be set in the format:
-``projects/<project-id>/global/images/<image-id>``. Defaults to the latest GCP agent image.
-(*Optional*)
+Optional. The boot disk source image of the Determined agent that was shared with you. To use a
+specific version of the Determined agent image from a specific project, it should be set in the
+format: ``projects/<project-id>/global/images/<image-id>``. Defaults to the latest GCP agent image.
 
 ``label_key``
 ^^^^^^^^^^^^^
@@ -1019,16 +1022,16 @@ master is on GCP otherwise ``determined-ai-determined``.
 ``network_interface``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Network configuration for the Determined agent instances. See the :ref:`gcp-api-access` section for
-the suggested configuration. (*Required*)
+Required. Network configuration for the Determined agent instances. See the :ref:`gcp-api-access`
+section for the suggested configuration.
 
--  ``network``: Network resource for the Determined agent instances. The network configuration
-   should specify the project ID of the network. It should be set in the format:
-   ``projects/<project>/global/networks/<network>``. (*Required*)
+-  ``network``: Required. Network resource for the Determined agent instances. The network
+   configuration should specify the project ID of the network. It should be set in the format:
+   ``projects/<project>/global/networks/<network>``.
 
--  ``subnetwork``: Subnetwork resource for the Determined agent instances. The subnet configuration
-   should specify the project ID and the region of the subnetwork. It should be set in the format:
-   ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``. (*Required*)
+-  ``subnetwork``: Required. Subnetwork resource for the Determined agent instances. The subnet
+   configuration should specify the project ID and the region of the subnetwork. It should be set in
+   the format: ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
 
 -  ``external_ip``: Whether to use external IP addresses for the Determined agent instances. See
    :ref:`gcp-network-requirements` for instructions on whether an external IP should be set.
@@ -1075,15 +1078,21 @@ they'll be used for compute slots instead. Defaults to ``false``.
 ``operation_timeout_period``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The timeout period for tracking a GCP operation. This string is a sequence of decimal numbers, each
-with optional fraction and a unit suffix, such as "30s", "1h", or "1m30s". Valid time units are "s",
-"m", "h". The default value is ``5m``.
+Default value is ``5m``.
+
+The amount of time that a GCP operation can be tracked before timing out. The timeout period is
+specified using a string that consists of a sequence of decimal numbers, each with optional
+fraction, followed by a unit suffix. Valid time units are "s" for seconds, "m" for minutes, and "h"
+for hours.
+
+For example, you could set the timeout period to 30 seconds by using "30s", or to 1 minute and 30
+seconds by using "1m30s".
 
 ``type: hpc``
 -------------
 
-Specifies a custom resource pool that submits work to an underlying Slurm/PBS partition on an HPC
-cluster. (*Required*)
+Required. Specifies a custom resource pool that submits work to an underlying Slurm/PBS partition on
+an HPC cluster.
 
 One resource pool is automatically created for each Slurm partition or PBS queue on an HPC cluster.
 This provider enables the creation of additional resource pools with different submission options to
@@ -1214,8 +1223,8 @@ The optional endpoint to use for S3 clones, e.g., ``http://127.0.0.1:8080/``.
 ``type: azure``
 ===============
 
-Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is
-   performed by providing either a connection string, or an account URL and an optional credential.
+Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is performed by providing
+either a connection string or an account URL and an optional credential.
 
 ``container``
 -------------
@@ -1282,27 +1291,27 @@ Specifies the configuration of the database.
 ``user``
 ========
 
-The database user to use when logging in the database. (*Required*)
+Required. The database user to use when logging into the database.
 
 ``password``
 ============
 
-The password to use when logging in the database. (*Required*)
+Required. The password to use when logging into the database.
 
 ``host``
 ========
 
-The database host to use. (*Required*)
+Required. The database host to use.
 
 ``port``
 ========
 
-The database port to use. (*Required*)
+Required. The database port to use.
 
 ``name``
 ========
 
-The database name to use. (*Required*)
+Required. The database name to use.
 
 ``ssl_mode``
 ============
