@@ -3890,7 +3890,7 @@ export interface V1GetTemplateResponse {
      * @type {V1Template}
      * @memberof V1GetTemplateResponse
      */
-    template?: V1Template;
+    template: V1Template;
 }
 /**
  * Sorts templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
