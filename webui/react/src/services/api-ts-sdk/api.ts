@@ -2606,7 +2606,7 @@ export interface V1Experiment {
      */
     bestTrialSearcherMetric?: number;
     /**
-     * 
+     * Id of experiment's best trial, calculated by the best searcher metrics value of trial's best validation.
      * @type {number}
      * @memberof V1Experiment
      */
