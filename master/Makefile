@@ -111,8 +111,10 @@ check: check-gen
 
 .PHONY: fmt-sql
 fmt-sql:
+	# there are complaints from this tool that cannot be auto-fixed
+	# and we ignore them for now.
 	sqlfluff format -p 0 --dialect postgres . || exit 0
-	sqlfluff fix -p 0 --dialect postgres . || exit 0
+	# sqlfluff fix -p 0 --dialect postgres . || exit 0
 
 .PHONY: fmt
 fmt:
