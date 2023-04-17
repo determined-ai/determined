@@ -176,7 +176,7 @@ func (a *Agent) run(ctx context.Context) error {
 		logShipperDone = fl.Done
 	}
 
-	a.log.Tracef("setting up container manager %s", cruntime == nil)
+	a.log.Tracef("setting up container manager %t", cruntime == nil)
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes
 	manager, err := containers.New(a.opts, mopts, devices, cruntime, a.sender(outbox))
 	if err != nil {
