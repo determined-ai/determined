@@ -1354,13 +1354,21 @@ jobs:
   test-e2e-react:
     docker:
       - image: mcr.microsoft.com/playwright:v1.32.0-focal
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
-      - run: apt-get update && apt-get install make
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.18
+      - run: apt-get update && apt-get -y install make sudo iproute2 docker.io
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
+      - install-devcluster
+      - start-devcluster
       - react-get-deps
-      - run: npx playwright install chrome
+      - run: npx playwright install --with-deps && npx playwright install chrome
       - run: make -C webui/react e2e
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
