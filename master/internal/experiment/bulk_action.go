@@ -48,6 +48,8 @@ var ActiveExperimentStates = []experimentv1.State{
 	experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
 }
 
+var completedExperimentStates = []string{"CANCELED", "COMPLETED", "ERROR"}
+
 // ExperimentsAddr is the address to direct experiment actions.
 var ExperimentsAddr = actor.Addr("experiments")
 
@@ -399,7 +401,7 @@ func DeleteExperiments(ctx context.Context, system *actor.System,
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("versions = 0").
-			Where("state IN (?)", bun.In([]string{"CANCELED", "COMPLETED", "ERROR"}))
+			Where("state IN (?)", bun.In(completedExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -485,22 +487,14 @@ func ArchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In([]string{
-			"CANCELED",
-			"COMPLETED",
-			"ERROR",
-		}))
+		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("NOT archived").
-			Where("e.state IN (?)", bun.In([]string{
-				"CANCELED",
-				"COMPLETED",
-				"ERROR",
-			}))
+			Where("e.state IN (?)", bun.In(completedExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
@@ -584,22 +578,14 @@ func UnarchiveExperiments(ctx context.Context, system *actor.System,
 		Model(&expChecks).
 		Column("e.archived").
 		Column("e.id").
-		ColumnExpr("e.state IN (?) AS state", bun.In([]string{
-			"CANCELED",
-			"COMPLETED",
-			"ERROR",
-		}))
+		ColumnExpr("e.state IN (?) AS state", bun.In(completedExperimentStates))
 
 	if filters == nil {
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("archived").
-			Where("e.state IN (?)", bun.In([]string{
-				"CANCELED",
-				"COMPLETED",
-				"ERROR",
-			}))
+			Where("e.state IN (?)", bun.In(completedExperimentStates))
 	}
 
 	query, err = AuthZProvider.Get().
