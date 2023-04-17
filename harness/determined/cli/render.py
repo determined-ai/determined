@@ -47,13 +47,17 @@ def unmarshal(
 def render_objects(
     generic: Any, values: Iterable[Any], default_value: str = "N/A", table_fmt: str = _FORMAT
 ) -> None:
-    keys = inspect.getfullargspec(generic).args[1:]
-    headers = [key.replace("_", " ").title() for key in keys]
-    if len(headers) == 0:
-        raise ValueError("must have at least one header to display")
+    args = inspect.getfullargspec(generic).args[1:]
+    kw_args = inspect.getfullargspec(generic).kwonlyargs
+    if not args:
+        if not kw_args:
+            raise ValueError("must have at least one header to display")
+        # we avoid merging these two to preserve existing behavior.
+        args = kw_args
+    headers = [key.replace("_", " ").title() for key in args]
 
     def _coerce(r: Any) -> Iterable[Any]:
-        for key in keys:
+        for key in args:
             value = getattr(r, key)
             if value is None:
                 yield default_value

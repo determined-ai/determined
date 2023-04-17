@@ -23,16 +23,17 @@ def _parse_config(field: Any) -> Any:
 
 @authentication.required
 def list_template(args: Namespace) -> None:
-    # templates = bindings.get_GetTemplates(cli.setup_session(args)).templates
-    templates = [
-        render.unmarshal(TemplateAll, t, {"config": _parse_config})
-        for t in api.get(args.master, path="templates").json()
-    ]
-    print(templates)
+    templates = bindings.get_GetTemplates(cli.setup_session(args)).templates
+    # formatted_tpls = [
+    #     render.unmarshal(TemplateAll, t, {"config": _parse_config})
+    #     for t in [tpl.to_json() for tpl in templates]
+    # ]
+    # print(formatted_tpls)
     if args.details:
-        render.render_objects(TemplateAll, templates, table_fmt="grid")
+        render.render_objects(bindings.v1Template, templates, table_fmt="grid")
     else:
-        render.render_objects(TemplateClean, templates)
+        render.render_objects(bindings.v1Template, templates, table_fmt="grid")
+        # render.render_objects(TemplateClean, formatted_tpls)
 
 
 @authentication.required
