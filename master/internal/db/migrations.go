@@ -65,7 +65,10 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	// On fresh installations, just run init.
 	if !exist["gopg_migrations"] && !exist["schema_migrations"] {
 		_, _, err = migrations.Run(tx, "init")
-		return fmt.Errorf("error running init migration on fresh install: %w", err)
+		if err != nil {
+			return fmt.Errorf("error running init migration on fresh install: %w", err)
+		}
+		return nil
 	}
 
 	if exist["gopg_migrations"] || !exist["schema_migrations"] {
