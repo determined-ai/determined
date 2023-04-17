@@ -432,8 +432,9 @@ WITH const AS (
 )
 UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
-searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv)
-WHERE t.id = $1;
+searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv),
+searcher_metric_value_signed = 
+(SELECT bv.searcher_metric_value * const.sign FROM best_validation bv, const);
 `, trialID, trialRunID, stepsCompleted)
 	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }

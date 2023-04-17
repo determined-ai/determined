@@ -815,6 +815,8 @@ message SearchExperimentsRequest {
   int32 offset = 2;
   // How many results to show
   int32 limit = 3;
+  // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+  optional string sort = 4;
 }
 
 // combination of experiment and best trial with metrics
