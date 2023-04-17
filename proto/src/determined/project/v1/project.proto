@@ -34,7 +34,8 @@ enum ColumnType {
   COLUMN_TYPE_DATE = 3;
 }
 
-// Project Column is a description of a column used on experiments in the project
+// Project Column is a description of a column used on experiments in the
+// project.
 message ProjectColumn {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "column", "location", "type" ] }
