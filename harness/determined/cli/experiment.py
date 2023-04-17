@@ -140,8 +140,17 @@ def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
 
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     print(f"Following first trial with ID {first_trial_id}")
-    tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
-    logs.pprint_trial_logs(first_trial_id, tlogs)
+    try:
+        tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
+        logs.pprint_logs(tlogs)
+    finally:
+        print(
+            termcolor.colored(
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(first_trial_id),
+                "green",
+            )
+        )
 
 
 def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
@@ -211,8 +220,17 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
         elif exp.state == bindings.experimentv1State.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = trials[0].id
-            tlogs = logs.trial_logs(sess, trial_id)
-            logs.pprint_trial_logs(trial_id, tlogs)
+            try:
+                tlogs = logs.trial_logs(sess, trial_id)
+                logs.pprint_logs(tlogs)
+            finally:
+                print(
+                    termcolor.colored(
+                        "Trial log stream ended. To reopen log stream, run: "
+                        "det trial logs -f {}".format(trial_id),
+                        "green",
+                    )
+                )
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)
@@ -582,23 +600,34 @@ def experiment_logs(args: Namespace) -> None:
         )
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
-
-    logs = api.trial_logs(
-        cli.setup_session(args),
-        first_trial_id,
-        head=args.head,
-        tail=args.tail,
-        follow=args.follow,
-        agent_ids=args.agent_ids,
-        container_ids=args.container_ids,
-        rank_ids=args.rank_ids,
-        sources=args.sources,
-        stdtypes=args.stdtypes,
-        min_level=args.level,
-        timestamp_before=args.timestamp_before,
-        timestamp_after=args.timestamp_after,
-    )
-    api.pprint_trial_logs(first_trial_id, logs)
+    try:
+        logs = api.trial_logs(
+            cli.setup_session(args),
+            first_trial_id,
+            head=args.head,
+            tail=args.tail,
+            follow=args.follow,
+            agent_ids=args.agent_ids,
+            container_ids=args.container_ids,
+            rank_ids=args.rank_ids,
+            sources=args.sources,
+            stdtypes=args.stdtypes,
+            min_level=args.level,
+            timestamp_before=args.timestamp_before,
+            timestamp_after=args.timestamp_after,
+        )
+        if args.json:
+            api.print_json_logs(logs)
+        else:
+            api.pprint_logs(logs)
+    finally:
+        print(
+            termcolor.colored(
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(first_trial_id),
+                "green",
+            )
+        )
 
 
 @authentication.required
@@ -963,8 +992,8 @@ main_cmd = Cmd(
                 Arg("experiment_ids", help="comma-separated list of experiment IDs to describe"),
                 Arg("--metrics", action="store_true", help="display full metrics"),
                 Group(
-                    Arg("--csv", action="store_true", help="print as CSV"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.output_format_args["csv"],
+                    cli.output_format_args["json"],
                     Arg("--outdir", type=Path, help="directory to save output"),
                 ),
             ],
@@ -975,6 +1004,7 @@ main_cmd = Cmd(
             "fetch logs of the first trial of an experiment",
             [
                 experiment_id_arg("experiment ID"),
+                cli.output_format_args["json"],
             ]
             + logs_args_description,
         ),

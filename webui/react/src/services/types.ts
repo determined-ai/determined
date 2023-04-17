@@ -103,6 +103,11 @@ export interface SearchExperimentsParams extends PaginationParams {
   options?: any;
 }
 
+export interface BulkActionParams {
+  experimentIds: number[];
+  filters?: Api.V1BulkExperimentFilters;
+}
+
 export interface GetExperimentParams {
   id: number;
 }
@@ -262,6 +267,7 @@ export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
   workspaceId?: number;
+  filters?: Api.V1BulkExperimentFilters;
 }
 
 export interface LaunchJupyterLabParams {

@@ -1903,6 +1903,22 @@ func buildQuery(filter string) string {
 		"user":            "COALESCE(u.display_name, u.username)",
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
+func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error {
+	if sortString == nil {
+		return nil
+	}
+	orderColMap := map[string]string{
+		"id":              "id",
+		"description":     "description",
+		"name":            "name",
+		"startTime":       "e.start_time",
+		"endTime":         "e.end_time",
+		"state":           "e.state",
+		"numTrials":       "num_trials",
+		"progress":        "COALESCE(progress, 0)",
+		"user":            "display_name",
+		"forkedFrom":      "e.parent_id",
+		"resourcePool":    "resource_pool",
 		"projectId":       "project_id",
 		"checkpointSize":  "checkpoint_size",
 		"checkpointCount": "checkpoint_count",
@@ -1911,235 +1927,43 @@ func buildQuery(filter string) string {
 				searcher_metric_value
 			FROM trials t
 			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
+			ORDER BY searcher_metric_value_signed ASC
 			LIMIT 1
 		 ) `,
 	}
-
-	// Replace any needed experiment related column names
-	// with the correct sql query
-	for key, value := range filterExperimentColMap {
-		filter = strings.ReplaceAll(filter, experimentColumnPrefix+key, value)
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
 	}
-
-	// Replace all metric related column names
-	// with the correct sql query
-	for prefix, replacement := range metricPrefixes {
-		i := strings.Index(filter, prefix)
-		for i != -1 {
-			metricName := scanMetricName(filter, i+len(prefix))
-			filter = strings.ReplaceAll(filter, prefix+metricName, fmt.Sprintf(replacement, metricName))
-			i = strings.Index(filter, prefix)
+	sortParams := strings.Split(*sortString, ",")
+	for _, sortParam := range sortParams {
+		paramDetail := strings.Split(sortParam, "=")
+		if len(paramDetail) != 2 {
+			return status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
 		}
-	}
-
-	return filter
-}
-
-func scanString(filter string, startIndex int, operator *string, valueStart bool) (string, int32) {
-	// Determines the correct column and value for a sequence in the filter string
-
-	numericeRegex := regexp.MustCompile(`\d|\.|-`)
-	var query, value, col, comparator string
-	var valueIsString bool
-	valueTypeKnown := false
-	filterIndex := int32(startIndex)
-	valueHasStarted := valueStart
-	isCol := !valueHasStarted
-	isNull := false
-
-	for {
-		if filterIndex > int32(len(filter)-1) {
-			break
+		if _, ok := sortByMap[paramDetail[1]]; !ok {
+			return status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
 		}
-		c := string(filter[filterIndex])
-
-		if valueHasStarted && valueIsString && valueTypeKnown {
-			// If the current value is a string and we have reached
-			// a string terminating character then we are at the end
-			// of the value
-			if c == "'" || c == "\"" {
-				filterIndex++
-				break
-			}
-		} else if valueHasStarted && !valueIsString && valueTypeKnown {
-			// If the current value is a number and the current character
-			// is not numeric then we are at the end of the value
-			if !numericeRegex.MatchString(c) {
-				break
-			}
-		}
-		if !valueTypeKnown && valueHasStarted {
-			// The start of the value has been reached so the type of the value
-			// can be determined
-			valueTypeKnown = true
-			if c == "'" || c == "\"" { //nolint: gocritic
-				// If the value starts with a quote character then the value is a string
-				valueIsString = true
-				filterIndex++
-				continue
-			} else if filterIndex+3 < int32(len(filter)) && filter[filterIndex:filterIndex+4] == "null" {
-				// If the value from this point forward is 'null' then the value is 'NULL'
-				filterIndex += 4
-				isNull = true
-				break
-			} else {
-				// Otherwise the value is a number
-				valueIsString = false
-			}
-		}
-		if c == ":" || c == "~" {
-			// These characters represent the end of a column name
-			// and the start of the value
-			if isCol {
-				isCol = false
-				valueHasStarted = true
-				filterIndex++
-				comparator = c
-				continue
-			}
-		}
-		if c == "\\" {
-			if filterIndex+1 < int32(len(filter)-1) {
-				nextChar := string(filter[filterIndex+1])
-				// Check to see if a terminated quote has been reached
-				// if so then add it to the sql string.
-				if nextChar == `'` || nextChar == `"` {
-					c = `\` + nextChar
-				}
-				filterIndex++
-			}
-		}
-		switch isCol {
-		case true:
-			col += c
-		case false:
-			value += c
-		}
-		filterIndex++
-	}
-	if *operator == ":" {
-		if isNull {
-			query = " IS NULL"
-		} else {
-			if valueIsString {
-				value = fmt.Sprintf(`'%s'`, value)
-			}
-			query = fmt.Sprintf(" = %v", value)
-		}
-	}
-	if *operator == "~" {
-		query = " LIKE " + `'%` + value + `%'`
-	}
-	if *operator == "-" {
-		if isNull { //nolint: gocritic
-			query = fmt.Sprintf("%v IS NOT NULL", col)
-		} else if comparator == "~" {
-			query = fmt.Sprintf("%v NOT LIKE ", col) + `'%` + value + `%'`
-		} else if comparator == ":" {
-			if valueIsString {
-				value = `'` + value + `'`
-			}
-			query = fmt.Sprintf("%v != %v", col, value)
-		}
-	}
-	if *operator == "<" || *operator == ">" {
-		if valueIsString {
-			value = fmt.Sprintf(`'%s'`, value)
-		}
-		query = value
-	}
-	return query, filterIndex
-}
-
-func parseFilter(filter string) (*string, error) {
-	// Iterate through the filter string and build
-	// the matching sql query
-
-	currentIndex := 0
-	currentQuery := ""
-
-	// Keep track of the number of parentheses to ensure that the
-	// string is valid
-	openParenCount := 0
-
-	for {
-		if currentIndex > len(filter)-1 {
-			// If there are still open parantheses at the end of the string
-			// the entire string is invalid
-			if openParenCount != 0 {
-				return nil, fmt.Errorf("missing closing parentheses")
-			}
-			break
-		}
-
-		c := string(filter[currentIndex])
-
-		// Determine the appropriate way to parse the string based on the current character.
-		// If a character is an operator such as ':','-', `<`,'>', or '~' then we need to
-		// determine the correct column name, value name, and sql comparison character.
-
-		switch c {
-		case "(":
-			openParenCount++
-			currentQuery += c
-			currentIndex++
-		case ")":
-			if openParenCount < 1 {
-				return nil, fmt.Errorf("no open parentheses found for character %v at index, %x",
-					c,
-					currentIndex)
-			}
-			currentQuery += c
-			openParenCount--
-			currentIndex++
-		case ":":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case "-":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, false)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case "~":
-			queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-			currentQuery += queryString
-			currentIndex = int(nextIndex)
-		case ">":
-			currentQuery += c
-			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery += "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			}
-		case "<":
-			currentQuery += c
-			if (currentIndex+1 < len(filter)-1) && string(filter[currentIndex+1]) == "=" {
-				currentQuery += "="
-				queryString, nextIndex := scanString(filter, currentIndex+2, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			} else {
-				queryString, nextIndex := scanString(filter, currentIndex+1, &c, true)
-				currentQuery += queryString
-				currentIndex = int(nextIndex)
-			}
+		sortDirection := sortByMap[paramDetail[1]]
+		switch {
+		case strings.HasPrefix(paramDetail[0], "hp."):
+			hps := strings.ReplaceAll(strings.TrimPrefix(paramDetail[0], "hp."), ".", "'->'")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+		case strings.HasPrefix(paramDetail[0], "validation."):
+			metricName := strings.TrimPrefix(paramDetail[0], "validation.")
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("e.validation_metrics->'%s' %s",
+					metricName, sortDirection))
 		default:
-			currentQuery += c
-			currentIndex++
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			experimentQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
 		}
 	}
-	currentQuery = buildQuery(currentQuery)
-	return &currentQuery, nil
+	return nil
 }
 
 func (a *apiServer) SearchExperiments(
@@ -2152,6 +1976,7 @@ func (a *apiServer) SearchExperiments(
 	experimentQuery := db.Bun().NewSelect().
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
+		Column("e.best_trial_id").
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -2180,6 +2005,11 @@ func (a *apiServer) SearchExperiments(
 			return nil, status.Errorf(codes.Internal, "failed to parse filter string: %s", err)
 		}
 		experimentQuery.Where(*filterExpr)
+	if req.Sort != nil {
+		err = sortExperiments(req.Sort, experimentQuery)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(
