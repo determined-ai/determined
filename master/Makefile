@@ -104,7 +104,7 @@ build-race: gen
 		./cmd/determined-master
 
 .PHONY: check
-check: check-gen check-sql
+check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run -v --timeout 10m

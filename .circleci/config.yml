@@ -1380,6 +1380,19 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - run: make -C webui/react test-shared
 
+  lint-sql:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - setup-python-venv:
+          install-python: false
+          extras-requires: "sqlfluff"
+          executor: <<pipeline.parameters.docker-image>>
+      - run: make -C master check-sql
+
   lint-go:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2225,6 +2238,7 @@ workflows:
       - lint-docs
       - lint-python
       - lint-go
+      - lint-sql
       - lint-react
       - lint-secrets
 
