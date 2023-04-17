@@ -6,11 +6,17 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
 import numpy as np
 import tensorflow as tf
 from data import NUM_CLASSES
+from packaging import version
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten, MaxPooling2D
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import RMSprop
+
+# TODO MLG-443 Migrate from legacy Keras optimizers
+if version.parse(tf.__version__) >= version.parse("2.11.0"):
+    from tensorflow.keras.optimizers.legacy import RMSprop
+else:
+    from tensorflow.keras.optimizers import RMSprop
 
 # Constants about the data set.
 IMAGE_SIZE = 32

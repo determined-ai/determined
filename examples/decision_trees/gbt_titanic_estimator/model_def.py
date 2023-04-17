@@ -15,6 +15,9 @@ import tensorflow as tf
 
 from determined.estimator import EstimatorTrial, EstimatorTrialContext
 
+# TODO needs migration to Decision Forests [MLG-442],
+#  see https://blog.tensorflow.org/2022/04/how-to-migrate-from-boostedtrees.html
+
 
 class BoostedTreesTrial(EstimatorTrial):
     def __init__(self, context: EstimatorTrialContext) -> None:
