@@ -153,12 +153,13 @@ def yes_or_no(prompt: str) -> bool:
         return False
 
 
-def print_json(data: Union[str, Any]) -> None:
+def print_json(data: Union[str, Any], skip_coloring: bool = False) -> None:
     """
     Print JSON data in a human-readable format.
+    skip_coloring: if True, do not colorize the output.
     """
     try:
-        if shutil.which("jq") is not None:
+        if not skip_coloring and shutil.which("jq") is not None:
             if not isinstance(data, str):
                 data = json.dumps(data)
             subprocess.run(["jq", "."], input=data, text=True)

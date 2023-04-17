@@ -97,7 +97,7 @@ def logs(args: Namespace) -> None:
         )
         if args.json:
             for log in logs:
-                render.print_json(log.to_json())
+                render.print_json(log.to_json(), skip_coloring=True)
         else:
             api.pprint_logs(logs)
     finally:
