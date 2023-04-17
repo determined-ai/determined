@@ -44,13 +44,16 @@ def describe_template(args: Namespace) -> None:
 def set_template(args: Namespace) -> None:
     with args.template_file:
         body = util.safe_load_yaml_with_exceptions(args.template_file)
-        api.put(args.master, path="templates/" + args.template_name, json=body)
+        v1_template = bindings.v1Template(name=args.template_name, config=body)
+        bindings.put_PutTemplate(
+            cli.setup_session(args), template_name=args.template_name, body=v1_template
+        )
         print(colored("Set template {}".format(args.template_name), "green"))
 
 
 @authentication.required
 def remove_templates(args: Namespace) -> None:
-    api.delete(args.master, path="templates/" + args.template_name)
+    bindings.delete_DeleteTemplate(cli.setup_session(args), templateName=args.template_name)
     print(colored("Removed template {}".format(args.template_name), "green"))
 
 
