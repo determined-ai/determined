@@ -202,7 +202,7 @@ class TestLightningAdapter:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            expose_gpus=expose_gpus
+            expose_gpus=True
         )
 
         trial_controller_A.run()
@@ -221,19 +221,20 @@ class TestLightningAdapter:
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=os.listdir(checkpoint_dir)[0],
             steps_completed=trial_controller_A.state.batches_trained,
-            expose_gpus=expose_gpus
+            expose_gpus=True
         )
         trial_controller_A.run()
 
         assert len(os.listdir(checkpoint_dir)) == 2, "trial did not create a checkpoint"
 
-    @pytest.mark.pt_gpu
+    @pytest.mark.GPU
+    @pytest.mark.PyTorchLightning
     @pytest.mark.parametrize("api_style", ["apex", "auto"])
     def test_pl_const_with_amp(self, api_style: str, tmp_path: pathlib.Path) -> None:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         exp_dir = "pytorch_lightning_amp"
-        config = utils.load_config(utils.e2e_fixtures_path(exp_dir + "/" + api_style + "_amp.yaml"))
+        config = utils.load_config(utils.fixtures_path(exp_dir + "/" + api_style + "_amp.yaml"))
 
         hparams = config['hyperparameters']
 
@@ -248,17 +249,18 @@ class TestLightningAdapter:
         }
 
         example_filename = api_style + '_amp_model_def.py'
-        example_path = utils.e2e_fixtures_path(os.path.join(exp_dir, example_filename))
-        example_context = utils.e2e_fixtures_path(exp_dir)
+        example_path = utils.fixtures_path(os.path.join(exp_dir, example_filename))
+        example_context = utils.fixtures_path(exp_dir)
         trial_module = utils.import_module(module_names[api_style], example_path, example_context)
         trial_class = getattr(trial_module, module_names[api_style])
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.e2e_cpu
+    @pytest.mark.CPU
+    @pytest.mark.PyTorchLightning
     def test_pl_mnist_gan(self, tmp_path: pathlib.Path) -> None:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -282,7 +284,8 @@ class TestLightningAdapter:
             trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.e2e_cpu
+    @pytest.mark.CPU
+    @pytest.mark.PyTorchLightning
     def test_pl_mnist(self, tmp_path: pathlib.Path) -> None:
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))

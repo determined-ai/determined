@@ -22,7 +22,6 @@ def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     exp.assert_performed_initial_validation(exp_id)
 
 
-@pytest.mark.tensorflow2
 @pytest.mark.parametrize(
     "tf2",
     [

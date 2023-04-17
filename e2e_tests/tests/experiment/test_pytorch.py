@@ -7,7 +7,6 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_gpu
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
 def test_pytorch_11_const(
@@ -49,7 +48,6 @@ def test_pytorch_11_const(
     collect_trial_profiles(trial_id)
 
 
-@pytest.mark.e2e_cpu
 @pytest.mark.parametrize("image_type", ["PT", "TF2"])
 def test_pytorch_const_warm_start(image_type: str) -> None:
     """
@@ -100,8 +98,6 @@ def test_pytorch_const_warm_start(image_type: str) -> None:
         assert t.trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
-@pytest.mark.e2e_gpu
-@pytest.mark.gpu_required
 @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
 def test_pytorch_const_with_amp(
     api_style: str, collect_trial_profiles: Callable[[int], None]

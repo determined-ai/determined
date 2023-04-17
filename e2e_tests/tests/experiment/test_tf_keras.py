@@ -32,7 +32,6 @@ def export_and_load_model(experiment_id: int) -> None:
     assert p.exitcode == 0, p.exitcode
 
 
-@pytest.mark.tensorflow2
 @pytest.mark.parametrize(
     "tf2",
     [
@@ -120,8 +119,6 @@ def test_tf_keras_parallel(
     exp.assert_patterns_in_trial_logs(trials[0].trial.id, patterns)
 
 
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
 @pytest.mark.parametrize("tf2", [True, False])
 def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
@@ -157,8 +154,6 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
     collect_trial_profiles(trials[0].trial.id)
 
 
-@pytest.mark.tensorflow2_cpu
-@pytest.mark.tensorflow2
 def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) -> None:
     """Keras on tf2 with tf2 and eager execution disabled."""
     config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))

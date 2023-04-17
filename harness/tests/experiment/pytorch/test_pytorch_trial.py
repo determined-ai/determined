@@ -925,7 +925,6 @@ class TestPyTorchTrial:
         trial_class: pytorch.PyTorchTrial,
         tmp_path: pathlib.Path,
         exp_config: typing.Dict,
-        expose_gpus: bool = False,
         steps: typing.Tuple[int, int] = (1, 1),
     ) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -940,7 +939,7 @@ class TestPyTorchTrial:
             min_validation_batches=steps[0],
             min_checkpoint_batches=steps[0],
             checkpoint_dir=checkpoint_dir,
-            expose_gpus=expose_gpus
+            expose_gpus=True
         )
 
         trial_controller_A.run()
@@ -1003,7 +1002,7 @@ class TestPyTorchTrial:
         assert state.batches_trained == 1, "batches_trained does not match"
         assert state.epochs_trained == 0, "epochs_trained does not match"
 
-    @pytest.mark.pt_gpu
+    @pytest.mark.GPU
     @pytest.mark.parametrize("aggregation_frequency", [1, 4])
     def test_pytorch_11_const(self, aggregation_frequency: int, tmp_path: pathlib.Path):
 
@@ -1024,15 +1023,16 @@ class TestPyTorchTrial:
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
-    @pytest.mark.pt_gpu
+    @pytest.mark.GPU
+    @pytest.mark.PyTorch
     @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"]) # TODO: test apex
     def test_pytorch_const_with_amp(self, api_style: str, tmp_path: pathlib.Path):
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
-        config = utils.load_config(utils.e2e_fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
+        config = utils.load_config(utils.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
         hparams = config['hyperparameters']
 
         exp_config = utils.make_default_exp_config(
@@ -1047,14 +1047,14 @@ class TestPyTorchTrial:
         }
 
         example_filename = api_style + '_amp_model_def.py'
-        example_path = utils.e2e_fixtures_path(os.path.join('pytorch_amp', example_filename))
-        example_context = utils.e2e_fixtures_path('pytorch_amp')
+        example_path = utils.fixtures_path(os.path.join('pytorch_amp', example_filename))
+        example_context = utils.fixtures_path('pytorch_amp')
         trial_module = utils.import_module(module_names[api_style], example_path, example_context)
         trial_class = getattr(trial_module, module_names[api_style])
         trial_class._searcher_metric = "validation_loss"
 
         self.checkpoint_and_restore_no_callbacks(
-            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, expose_gpus=True, steps=(1, 1)
+            trial_class=trial_class, hparams=hparams, tmp_path=tmp_path, exp_config=exp_config, steps=(1, 1)
         )
 
 
