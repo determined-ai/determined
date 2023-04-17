@@ -114,8 +114,8 @@ The master supports the following configuration settings:
       access to create this default directory.
 
 -  ``launch_error`` (optional): Specifies whether to refuse an experiment or task if the slots
-   requested exceeds the cluster capacity. If ``false``, only a warning is returned. The default
-   value is ``true``.
+   requested exceeds the cluster capacity. This option has no effect for kubernetes or slurm
+   clusters. If ``false``, only a warning is returned. The default value is ``true``.
 
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 
